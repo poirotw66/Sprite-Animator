@@ -1,0 +1,5 @@
+{
+  "name": "角色幀動畫生成器 (Sprite Animator)",
+  "description": "上傳靜態角色圖片，利用 Gemini Image 模型生成連續動作幀並組合成動畫。",
+  "requestFramePermissions": []
+}
