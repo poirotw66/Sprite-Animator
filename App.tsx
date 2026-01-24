@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, Play, RefreshCw, Wand2, ImageIcon, Download, Loader2, Layers, Zap, FileVideo, Archive, Film, Settings, X } from './components/Icons';
-import { generateAnimationFrames } from './services/geminiService';
+import { Upload, Play, RefreshCw, Wand2, ImageIcon, Download, Loader2, Layers, Zap, FileVideo, Archive, Film, Settings, X, Grid3X3, Film as FilmIcon } from './components/Icons';
+import { generateAnimationFrames, generateSpriteSheet } from './services/geminiService';
 import { AnimationConfig } from './types';
 import UPNG from 'upng-js';
 import JSZip from 'jszip';
@@ -9,6 +9,7 @@ import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 const App: React.FC = () => {
   // Global Settings State
   const [apiKey, setApiKey] = useState('');
+  // Default to gemini-2.5-flash-image as requested
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash-image');
   const [showSettings, setShowSettings] = useState(false);
 
@@ -19,11 +20,16 @@ const App: React.FC = () => {
     frameCount: 4, // Default to 4 frames for quick sprites
     speed: 5,      // 5 * 2 = 10 FPS default
     scale: 100,
+    mode: 'sheet', // Default mode changed to 'sheet'
+    gridCols: 3,
+    gridRows: 2,
   });
   
   const [isGenerating, setIsGenerating] = useState(false);
+  const [statusText, setStatusText] = useState("AI 正在思考中..."); 
   const [isExporting, setIsExporting] = useState(false);
   const [generatedFrames, setGeneratedFrames] = useState<string[]>([]);
+  const [spriteSheetImage, setSpriteSheetImage] = useState<string | null>(null); // New: Store raw sheet
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   
@@ -34,8 +40,17 @@ const App: React.FC = () => {
   useEffect(() => {
     const storedKey = localStorage.getItem('gemini_api_key');
     const storedModel = localStorage.getItem('gemini_model');
+    
     if (storedKey) setApiKey(storedKey);
-    if (storedModel) setSelectedModel(storedModel);
+    
+    // Validate stored model or force update to the recommended one
+    if (storedModel && (storedModel === 'gemini-2.5-flash-image' || storedModel === 'gemini-2.0-flash-exp')) {
+      setSelectedModel(storedModel);
+    } else {
+      // Force default if stored model is old or invalid
+      setSelectedModel('gemini-2.5-flash-image');
+      localStorage.setItem('gemini_model', 'gemini-2.5-flash-image');
+    }
 
     // If no key is found, show settings automatically
     if (!storedKey && !process.env.API_KEY) {
@@ -45,9 +60,10 @@ const App: React.FC = () => {
 
   // Save settings helper
   const saveSettings = (key: string, model: string) => {
-    setApiKey(key);
+    const trimmedKey = key.trim();
+    setApiKey(trimmedKey);
     setSelectedModel(model);
-    localStorage.setItem('gemini_api_key', key);
+    localStorage.setItem('gemini_api_key', trimmedKey);
     localStorage.setItem('gemini_model', model);
     setShowSettings(false);
   };
@@ -73,6 +89,7 @@ const App: React.FC = () => {
   const handleReset = () => {
     setSourceImage(null);
     setGeneratedFrames([]);
+    setSpriteSheetImage(null);
     setError(null);
     setCurrentFrameIndex(0);
     setConfig(prev => ({ ...prev, prompt: '' }));
@@ -88,6 +105,7 @@ const App: React.FC = () => {
       reader.onload = (event) => {
         setSourceImage(event.target?.result as string);
         setGeneratedFrames([]);
+        setSpriteSheetImage(null);
       };
       reader.readAsDataURL(file);
     }
@@ -101,13 +119,60 @@ const App: React.FC = () => {
       reader.onload = (event) => {
         setSourceImage(event.target?.result as string);
         setGeneratedFrames([]);
+        setSpriteSheetImage(null);
       };
       reader.readAsDataURL(file);
     }
   };
 
+  /**
+   * Slice a single sprite sheet image into multiple frames
+   */
+  const sliceSpriteSheet = async (base64Image: string, cols: number, rows: number): Promise<string[]> => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            const frames: string[] = [];
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            if (!ctx) {
+                reject(new Error("Canvas context failed"));
+                return;
+            }
+
+            const frameWidth = Math.floor(img.width / cols);
+            const frameHeight = Math.floor(img.height / rows);
+
+            canvas.width = frameWidth;
+            canvas.height = frameHeight;
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    // Clear canvas for transparency safety
+                    ctx.clearRect(0, 0, frameWidth, frameHeight);
+                    
+                    // Draw slice
+                    ctx.drawImage(
+                        img,
+                        c * frameWidth, r * frameHeight, frameWidth, frameHeight, // Source
+                        0, 0, frameWidth, frameHeight // Destination
+                    );
+                    
+                    frames.push(canvas.toDataURL('image/png'));
+                }
+            }
+            resolve(frames);
+        };
+        img.onerror = (e) => reject(e);
+        img.src = base64Image;
+    });
+  };
+
   const handleGenerate = async () => {
-    const effectiveKey = apiKey || process.env.API_KEY;
+    // Explicitly prefer the user's key state over environment
+    const userKey = apiKey.trim();
+    const effectiveKey = userKey || process.env.API_KEY;
 
     if (!effectiveKey) {
       setShowSettings(true);
@@ -127,19 +192,59 @@ const App: React.FC = () => {
     setIsGenerating(true);
     setError(null);
     setGeneratedFrames([]);
+    setSpriteSheetImage(null); // Clear previous
+    
+    // Strategy Optimization based on 17 RPM (approx 1 req every 3.53s)
+    const delayBetweenFrames = userKey ? 2000 : 5000;
 
     try {
-      const frames = await generateAnimationFrames(
-        sourceImage, 
-        config.prompt, 
-        config.frameCount,
-        effectiveKey,
-        selectedModel
-      );
-      setGeneratedFrames(frames);
+      if (config.mode === 'sheet') {
+          setStatusText(`準備生成精靈圖 (使用模型: ${selectedModel})...`);
+          
+          // 1. Generate single big image
+          const sheetImage = await generateSpriteSheet(
+              sourceImage,
+              config.prompt,
+              config.gridCols,
+              config.gridRows,
+              effectiveKey,
+              selectedModel,
+              (status) => setStatusText(status)
+          );
+
+          setSpriteSheetImage(sheetImage); // Save the raw sheet
+
+          // 2. Slice it
+          setStatusText("正在裁切網格...");
+          const frames = await sliceSpriteSheet(sheetImage, config.gridCols, config.gridRows);
+          setGeneratedFrames(frames);
+
+      } else {
+          // Frame by Frame mode
+          setStatusText(`準備開始逐幀生成 (使用模型: ${selectedModel})`);
+          const frames = await generateAnimationFrames(
+            sourceImage, 
+            config.prompt, 
+            config.frameCount,
+            effectiveKey,
+            selectedModel,
+            (status) => setStatusText(status),
+            delayBetweenFrames
+          );
+          setGeneratedFrames(frames);
+      }
       
     } catch (err: any) {
-      setError("生成失敗: " + (err.message || "Unknown error"));
+      const rawMsg = err.message || "Unknown error";
+      let displayMsg = "生成失敗";
+      
+      if (rawMsg.includes("429") || rawMsg.includes("Quota") || rawMsg.includes("RESOURCE_EXHAUSTED")) {
+         displayMsg = "API 請求過於頻繁 (429)。系統正在冷卻中，請稍後再試。";
+      } else {
+         displayMsg = `生成發生錯誤: ${rawMsg}`;
+      }
+      
+      setError(displayMsg);
     } finally {
       setIsGenerating(false);
     }
@@ -175,6 +280,16 @@ const App: React.FC = () => {
       });
     }
     return { imagesData, width, height };
+  };
+
+  const handleDownloadSpriteSheet = () => {
+    if (!spriteSheetImage) return;
+    const link = document.createElement('a');
+    link.href = spriteSheetImage;
+    link.download = `sprite_sheet_${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleDownloadApng = async () => {
@@ -353,8 +468,9 @@ const App: React.FC = () => {
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setShowSettings(true)}
-            className="p-2 text-gray-500 hover:text-gray-800 hover:bg-white bg-white/50 rounded-full transition-all shadow-sm border border-transparent hover:border-gray-200"
-            title="設定"
+            className={`p-2 rounded-full transition-all shadow-sm border border-transparent 
+              ${apiKey ? 'text-orange-600 bg-orange-50 hover:bg-orange-100 border-orange-200' : 'text-gray-500 hover:text-gray-800 bg-white/50 hover:bg-white hover:border-gray-200'}`}
+            title={apiKey ? "使用自訂 Key" : "使用系統 Key (設定)"}
           >
             <Settings className="w-5 h-5" />
           </button>
@@ -419,6 +535,26 @@ const App: React.FC = () => {
               幀動畫參數
             </h2>
 
+            {/* Mode Switcher */}
+            <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
+                <button 
+                  onClick={() => setConfig({...config, mode: 'frame'})}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-lg transition-all
+                  ${config.mode === 'frame' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  <FilmIcon className="w-4 h-4" />
+                  逐幀模式
+                </button>
+                <button 
+                  onClick={() => setConfig({...config, mode: 'sheet'})}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-lg transition-all
+                  ${config.mode === 'sheet' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  <Grid3X3 className="w-4 h-4" />
+                  精靈圖模式
+                </button>
+            </div>
+
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">動作提示詞</label>
@@ -431,24 +567,59 @@ const App: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                 <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1.5 flex justify-between">
-                      幀數 (Frame Count) <span className="text-orange-500 font-bold">{config.frameCount}</span>
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-gray-400" />
-                      <input 
-                        type="range" 
-                        min="2" 
-                        max="30" 
-                        step="1"
-                        value={config.frameCount}
-                        onChange={(e) => setConfig({...config, frameCount: Number(e.target.value)})}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                      />
-                    </div>
-                    <div className="text-[10px] text-gray-400 mt-1 text-right">建議 4-12 幀 (上限 30)</div>
-                 </div>
+                 
+                 {/* Conditionally Render Frame Count OR Grid Controls */}
+                 {config.mode === 'frame' ? (
+                   <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1.5 flex justify-between">
+                        幀數 (Frame Count) <span className="text-orange-500 font-bold">{config.frameCount}</span>
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-gray-400" />
+                        <input 
+                          type="range" 
+                          min="2" 
+                          max="30" 
+                          step="1"
+                          value={config.frameCount}
+                          onChange={(e) => setConfig({...config, frameCount: Number(e.target.value)})}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+                      <div className="text-[10px] text-gray-400 mt-1 text-right">API 請求次數: {config.frameCount}</div>
+                   </div>
+                 ) : (
+                    <>
+                       <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1.5 flex justify-between">
+                          網格列 (Cols) <span className="text-orange-500 font-bold">{config.gridCols}</span>
+                        </label>
+                        <input 
+                          type="range" 
+                          min="2" 
+                          max="6" 
+                          step="1"
+                          value={config.gridCols}
+                          onChange={(e) => setConfig({...config, gridCols: Number(e.target.value)})}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                       </div>
+                       <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1.5 flex justify-between">
+                          網格行 (Rows) <span className="text-orange-500 font-bold">{config.gridRows}</span>
+                        </label>
+                        <input 
+                          type="range" 
+                          min="1" 
+                          max="4" 
+                          step="1"
+                          value={config.gridRows}
+                          onChange={(e) => setConfig({...config, gridRows: Number(e.target.value)})}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                       </div>
+                    </>
+                 )}
                  
                  <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1.5 flex justify-between">
@@ -467,6 +638,14 @@ const App: React.FC = () => {
                     </div>
                  </div>
               </div>
+
+               {/* Hint Text for Modes */}
+              {config.mode === 'sheet' && (
+                  <div className="text-xs text-green-600 bg-green-50 p-2 rounded border border-green-100 flex items-center gap-2">
+                      <Zap className="w-3 h-3" />
+                      精靈圖模式僅需消耗 1 次 API 請求，大幅節省配額！
+                  </div>
+              )}
 
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5 flex justify-between">
@@ -500,12 +679,12 @@ const App: React.FC = () => {
                 {isGenerating ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    AI 規劃與繪製 {config.frameCount} 張動作幀...
+                    <span className="truncate max-w-[200px]">{statusText}</span>
                   </>
                 ) : (
                   <>
                     <Wand2 className="w-5 h-5" />
-                    開始生成
+                    {config.mode === 'sheet' ? '生成精靈圖 (1 Request)' : '開始逐幀生成'}
                   </>
                 )}
               </button>
@@ -514,8 +693,56 @@ const App: React.FC = () => {
         </div>
 
         {/* Right Column: Result Preview */}
-        <div className="lg:col-span-7">
-          <div className="bg-white rounded-2xl shadow-sm p-6 h-full flex flex-col">
+        <div className="lg:col-span-7 flex flex-col gap-6">
+
+          {/* New Sprite Sheet Block (Only in Sheet Mode) */}
+          {config.mode === 'sheet' && (
+            <div className="bg-white rounded-2xl shadow-sm p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+               <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-sm font-semibold text-gray-500 flex items-center gap-2">
+                    <span className="bg-gray-100 text-gray-600 w-6 h-6 rounded-full flex items-center justify-center text-xs">S</span>
+                    精靈圖原圖 (Sprite Sheet)
+                  </h2>
+                  {spriteSheetImage && (
+                    <button 
+                      onClick={handleDownloadSpriteSheet}
+                      className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-colors font-medium"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      下載原圖
+                    </button>
+                  )}
+               </div>
+
+               <div className="bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 min-h-[200px] flex items-center justify-center relative overflow-hidden group">
+                   
+                   {!spriteSheetImage && !isGenerating && (
+                      <div className="text-center p-6 opacity-50">
+                        <Grid3X3 className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                        <p className="text-gray-400 text-sm">生成的網格原圖將顯示於此</p>
+                      </div>
+                   )}
+
+                   {!spriteSheetImage && isGenerating && (
+                      <div className="flex flex-col items-center">
+                         <Loader2 className="w-8 h-8 text-orange-400 animate-spin mb-2" />
+                         <p className="text-xs text-gray-400">生成中...</p>
+                      </div>
+                   )}
+
+                   {spriteSheetImage && (
+                      <img 
+                        src={spriteSheetImage} 
+                        alt="Sprite Sheet" 
+                        className="max-w-full max-h-[300px] object-contain pixelated shadow-sm rounded-lg"
+                      />
+                   )}
+               </div>
+            </div>
+          )}
+
+          {/* Existing Animation Preview Block */}
+          <div className="bg-white rounded-2xl shadow-sm p-6 flex-1 flex flex-col min-h-[500px]">
             <h2 className="text-sm font-semibold text-gray-500 mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="bg-gray-100 text-gray-600 w-6 h-6 rounded-full flex items-center justify-center text-xs">3</span>
@@ -528,7 +755,7 @@ const App: React.FC = () => {
               )}
             </h2>
             
-            <div className="flex-1 min-h-[400px] bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center relative overflow-hidden group">
+            <div className="flex-1 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center relative overflow-hidden group">
               
               {!isGenerating && generatedFrames.length === 0 && (
                 <div className="text-center p-8 opacity-50">
@@ -541,13 +768,13 @@ const App: React.FC = () => {
               )}
 
               {isGenerating && (
-                <div className="text-center z-10">
+                <div className="text-center z-10 p-6 max-w-sm">
                    <div className="relative w-16 h-16 mx-auto mb-4">
                       <div className="absolute inset-0 border-4 border-orange-100 rounded-full"></div>
                       <div className="absolute inset-0 border-4 border-orange-500 rounded-full border-t-transparent animate-spin"></div>
                    </div>
                    <h3 className="text-lg font-medium text-gray-800 animate-pulse">正在繪製...</h3>
-                   <p className="text-gray-500 mt-2 text-sm">Gemini 正在規劃分鏡並生成每一幀</p>
+                   <p className="text-gray-500 mt-2 text-sm">{statusText}</p>
                 </div>
               )}
 
