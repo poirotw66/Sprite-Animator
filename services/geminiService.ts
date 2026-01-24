@@ -5,17 +5,21 @@ export type ProgressCallback = (status: string) => void;
 // Helper for delay
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Helper to check if error is related to quota
+// Helper to check if error is related to quota or overloading
 const isQuotaError = (error: any): boolean => {
     const msg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
     return (
         error.status === 429 || 
         error.code === 429 || 
+        error.status === 503 || 
+        error.code === 503 ||
         msg.includes('429') || 
+        msg.includes('503') ||
         msg.includes('Quota') || 
-        msg.includes('RESOURCE_EXHAUSTED') ||
+        msg.includes('RESOURCE_EXHAUSTED') || 
         msg.includes('quota') ||
-        msg.includes('exceeded')
+        msg.includes('exceeded') ||
+        msg.includes('Overloaded')
     );
 };
 
@@ -23,7 +27,7 @@ const isQuotaError = (error: any): boolean => {
 async function retryOperation<T>(
   operation: () => Promise<T>, 
   onStatusUpdate?: (msg: string) => void,
-  retries = 5, // Increased retries to handle stricter limits
+  retries = 5, 
   baseDelay = 4000 
 ): Promise<T> {
   let lastError: any;
@@ -38,16 +42,16 @@ async function retryOperation<T>(
         const delay = baseDelay * Math.pow(2, i) + (Math.random() * 1000); 
         const waitSeconds = Math.round(delay / 1000);
         
-        console.warn(`Rate limit hit (Attempt ${i + 1}/${retries}). Retrying in ${waitSeconds}s...`);
+        console.warn(`Rate limit/Overload hit (Attempt ${i + 1}/${retries}). Retrying in ${waitSeconds}s...`);
         if (onStatusUpdate) {
-          onStatusUpdate(`API 繁忙 (429)，等待 ${waitSeconds} 秒後重試... (嘗試 ${i + 1}/${retries})`);
+          onStatusUpdate(`API 繁忙 (429/503)，等待 ${waitSeconds} 秒後重試... (嘗試 ${i + 1}/${retries})`);
         }
         
         await wait(delay);
         continue;
       }
       
-      // If it's not a recoverable error (or not quota), throw immediately
+      // If it's not a recoverable error, throw immediately
       throw error;
     }
   }
@@ -56,42 +60,23 @@ async function retryOperation<T>(
 
 /**
  * Determines the optimal Aspect Ratio for a given grid configuration.
- * This ensures individual cells are roughly square or portrait, preventing squashed sprites.
+ * Finds the supported Gemini aspect ratio closest to the grid's natural shape (cols/rows).
  */
 function getBestAspectRatio(cols: number, rows: number): string {
-    const ratio = cols / rows;
+    const targetRatio = cols / rows;
     
-    // Explicit overrides for common configurations to ensure best "Cell Shape"
-    // We want cells to be square (1:1) or slightly tall for characters.
-    const key = `${cols}x${rows}`;
-    const overrides: Record<string, string> = {
-        "2x1": "16:9", // Wide strip
-        "3x1": "16:9",
-        "4x1": "16:9", 
-        "2x2": "1:1",  // Perfect square
-        "3x2": "4:3",  // 1.5 ratio -> 1.33 (Cells slightly tall)
-        "4x2": "16:9", // 2.0 ratio -> 1.77 (Cells slightly tall)
-        "5x2": "16:9", 
-        "3x3": "1:1",  // Perfect square
-        "4x3": "4:3",  // 1.33 ratio -> 1.33 (Perfect)
-        "1x4": "9:16", // Tall strip
-    };
-
-    if (overrides[key]) {
-        return overrides[key];
-    }
-
-    // Fallback logic for unusual grids
-    const targets = [
+    // Supported ratios by Gemini 2.5 Flash Image / Imagen
+    const supported = [
         { str: "1:1", val: 1.0 },
         { str: "3:4", val: 0.75 }, 
-        { str: "4:3", val: 1.33 }, 
+        { str: "4:3", val: 1.333 }, 
         { str: "9:16", val: 0.5625 }, 
-        { str: "16:9", val: 1.77 }, 
+        { str: "16:9", val: 1.778 }, 
     ];
-    // Find closest ratio
-    return targets.reduce((prev, curr) => 
-        Math.abs(curr.val - ratio) < Math.abs(prev.val - ratio) ? curr : prev
+
+    // Find closest ratio to prevent squashing/stretching sprites
+    return supported.reduce((prev, curr) => 
+        Math.abs(curr.val - targetRatio) < Math.abs(prev.val - targetRatio) ? curr : prev
     ).str;
 }
 
@@ -204,31 +189,38 @@ export const generateSpriteSheet = async (
     // 1. Determine best aspect ratio config to force correct layout
     const targetAspectRatio = getBestAspectRatio(cols, rows);
     
-    // 2. Construct a prompt that enforces specific geometry
+    // 2. Construct a prompt that enforces specific geometry AND animation continuity
     const fullPrompt = `
-    Reference Image: A game character.
-    Task: Generate a 2D Sprite Sheet.
+    Role: Professional Game Asset Artist.
+    Task: Create a cohesive 2D Sprite Sheet from the reference character.
     
-    Action: "${prompt}"
+    [INPUT SPECIFICATIONS]
+    - Action: "${prompt}"
+    - Grid Layout: ${cols} Columns x ${rows} Rows.
+    - Total Frames: ${cols * rows}.
     
-    [STRICT GRID CONFIGURATION]
-    - Columns: ${cols}
-    - Rows: ${rows}
-    - Total Sprites: ${cols * rows}
+    [STRICT GRID LAYOUT - CRITICAL]
+    1. **Edge-to-Edge Grid**: The output image must be a PERFECT GRID with NO outer padding or borders. The character cells must extend to the very edge of the image.
+    2. **Invisible Grid**: Programmatically, I will slice this image by dividing the total Width by ${cols} and Height by ${rows}. 
+    3. **Centering**: Place exactly one character pose in the visual center of each calculated cell. Do NOT offset them.
+
+    [ANIMATION RULES]
+    1. **Sequence**: Animation reads Left-to-Right, Top-to-Bottom. Frame 0 is Top-Left.
+    2. **Consistency**: The character size (head to toe) must be identical in every frame. 
+    3. **Grounding**: Ensure the character's feet touch the same imaginary ground line within every cell. This prevents "jittering" when the animation plays.
+    4. **Looping**: If the action implies a cycle, make the last frame connect smoothly to the first.
+
+    [VISUAL STYLE]
+    - Flat 2D style.
+    - Solid Pure White Background (#FFFFFF).
+    - NO visible grid lines. 
+    - NO text or labels.
     
-    [GEOMETRY RULES]
-    1. The output image aspect ratio is set to ${targetAspectRatio}.
-    2. Divide this space into a perfect ${cols}x${rows} grid.
-    3. Center EXACTLY ONE character pose in the middle of each grid cell.
-    4. Ensure equal spacing and margins around every character so they can be sliced programmatically.
-    5. Order: Top-left to bottom-right.
-    6. DO NOT add any outer borders or frames to the image. Background must be solid white.
-    7. DO NOT change the grid count. If I ask for ${cols}x${rows}, do not give me 3x3.
-    
-    Style: Consistent with reference. Flat 2D.
+    [ASPECT RATIO TARGET]
+    The requested aspect ratio is ${targetAspectRatio}. Distribute the ${cols}x${rows} frames evenly to fill this shape completely.
     `;
 
-    if (onProgress) onProgress(`正在生成 ${cols}x${rows} 精靈圖 (比例 ${targetAspectRatio})...`);
+    if (onProgress) onProgress(`正在生成 ${cols}x${rows} 連貫動作精靈圖 (比例 ${targetAspectRatio})...`);
 
     const response = await retryOperation(async () => {
         return await ai.models.generateContent({
@@ -260,6 +252,7 @@ export const generateSpriteSheet = async (
 
 /**
  * Generates animation frames using Gemini (Frame-by-Frame mode).
+ * Optimized for continuity by passing the previous frame as context.
  */
 export const generateAnimationFrames = async (
   imageBase64: string,
@@ -281,33 +274,50 @@ export const generateAnimationFrames = async (
   // Step 1: Generate the Storyboard
   const frameDescriptions = await getAnimationStoryboard(ai, imageBase64, prompt, frameCount, onProgress);
 
-  // Define single frame generator function
-  const generateFrame = async (frameDesc: string, i: number) => {
-    const fullPrompt = `
-    Reference Image: A game character.
-    Task: Generate Frame ${i + 1} of ${frameCount} for a sprite sheet.
+  // Define single frame generator function with Previous Frame Context
+  const generateFrame = async (frameDesc: string, i: number, prevFrameBase64: string | null) => {
     
+    // Construct parts array for multimodal input
+    const parts: any[] = [];
+    
+    // 1. Original Reference
+    parts.push({ inlineData: { mimeType: 'image/png', data: cleanBase64 } });
+    parts.push({ text: "Reference Character (Style/Design Source)" });
+
+    // 2. Previous Frame (if exists) for Continuity
+    if (prevFrameBase64) {
+        const prevClean = prevFrameBase64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
+        parts.push({ inlineData: { mimeType: 'image/png', data: prevClean } });
+        parts.push({ text: `Previous Frame ${i} (Motion Context)` });
+    }
+
+    const fullPrompt = `
+    Task: Generate Frame ${i + 1} of ${frameCount} for a sprite sheet.
     Action: "${prompt}".
     Pose Description: ${frameDesc}.
     
-    Style: Keep EXACT character design, colors, and white background. Flat 2D style.
+    [STRICT RULES]
+    1. STYLE: Match "Reference Character" exactly (Colors, Proportions, Shading).
+    2. BACKGROUND: Solid White (#FFFFFF).
+    3. CONTINUITY: ${prevFrameBase64 ? 'The new frame must logically follow "Previous Frame" to create smooth animation.' : 'Start the animation sequence.'}
+    4. ANCHOR: Keep the character size and ground position consistent.
+    5. FORMAT: Single character, centered.
     `;
+    
+    parts.push({ text: fullPrompt });
 
     const response = await retryOperation(async () => {
         return await ai.models.generateContent({
             model: model, 
             contents: {
-                parts: [
-                    { inlineData: { mimeType: 'image/png', data: cleanBase64 } },
-                    { text: fullPrompt }
-                ]
+                parts: parts
             }
         });
     }, onProgress);
 
-    const parts = response.candidates?.[0]?.content?.parts;
-    if (parts) {
-        for (const part of parts) {
+    const resultParts = response.candidates?.[0]?.content?.parts;
+    if (resultParts) {
+        for (const part of resultParts) {
             if (part.inlineData && part.inlineData.data) {
                 return `data:image/png;base64,${part.inlineData.data}`;
             }
@@ -318,6 +328,7 @@ export const generateAnimationFrames = async (
 
   // Step 2: Generate Frames Serially
   const results: string[] = [];
+  let previousFrame: string | null = null;
   
   if (onProgress) onProgress("分鏡規劃完成，準備繪製...");
   await wait(2000);
@@ -333,11 +344,16 @@ export const generateAnimationFrames = async (
             }
             await wait(interFrameDelayMs); 
             
+            // Re-update status after wait
             if (onProgress) onProgress(`正在繪製第 ${i + 1} / ${frameDescriptions.length} 幀...`);
         }
         
-        const frameResult = await generateFrame(desc, i);
+        // Pass previousFrame to context
+        const frameResult: string = await generateFrame(desc, i, previousFrame);
         results.push(frameResult);
+        
+        // Update previous frame for next iteration
+        previousFrame = frameResult;
 
       } catch (error: any) {
         console.error(`Generation failed at frame ${i + 1}`, error);

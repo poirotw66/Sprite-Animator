@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, Play, RefreshCw, Wand2, ImageIcon, Download, Loader2, Layers, Zap, FileVideo, Archive, Film, Settings, X, Grid3X3, Film as FilmIcon } from './components/Icons';
+import { Upload, Play, RefreshCw, Wand2, ImageIcon, Download, Loader2, Layers, Zap, FileVideo, Archive, Film, Settings, X, Grid3X3, Film as FilmIcon, Eraser } from './components/Icons';
 import { generateAnimationFrames, generateSpriteSheet } from './services/geminiService';
 import { AnimationConfig } from './types';
 import UPNG from 'upng-js';
@@ -25,6 +25,9 @@ const App: React.FC = () => {
     gridRows: 2,
   });
   
+  // New: Background removal state
+  const [removeBackground, setRemoveBackground] = useState(true);
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusText, setStatusText] = useState("AI 正在思考中..."); 
   const [isExporting, setIsExporting] = useState(false);
@@ -87,6 +90,26 @@ const App: React.FC = () => {
     };
   }, [generatedFrames, config.speed, isPlaying]);
 
+  // Re-slice when toggle changes or sheet image updates
+  useEffect(() => {
+    if (spriteSheetImage && config.mode === 'sheet') {
+        const reSlice = async () => {
+            try {
+                const frames = await sliceSpriteSheet(
+                    spriteSheetImage, 
+                    config.gridCols, 
+                    config.gridRows, 
+                    removeBackground
+                );
+                setGeneratedFrames(frames);
+            } catch (e) {
+                console.error("Re-slice failed", e);
+            }
+        };
+        reSlice();
+    }
+  }, [removeBackground, spriteSheetImage, config.gridCols, config.gridRows]);
+
   const handleReset = () => {
     setSourceImage(null);
     setGeneratedFrames([]);
@@ -128,48 +151,83 @@ const App: React.FC = () => {
   };
 
   /**
-   * Slice a single sprite sheet image into multiple frames
-   * Updated to use floating point math for more accurate slicing
+   * Slice a single sprite sheet image into multiple frames.
+   * Uses "Strict Grid" logic with floating point precision.
+   * This assumes the sprite sheet is perfectly divided into [cols] x [rows].
    */
-  const sliceSpriteSheet = async (base64Image: string, cols: number, rows: number): Promise<string[]> => {
+  const sliceSpriteSheet = async (
+      base64Image: string, 
+      cols: number, 
+      rows: number, 
+      removeBg: boolean
+  ): Promise<string[]> => {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
             const frames: string[] = [];
             const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
             
             if (!ctx) {
                 reject(new Error("Canvas context failed"));
                 return;
             }
 
-            // Use floating point for precision during loop
-            const frameWidth = img.width / cols;
-            const frameHeight = img.height / rows;
+            const totalWidth = img.width;
+            const totalHeight = img.height;
 
-            // Canvas size must be integer, we take floor to be safe from bleeding
-            const canvasW = Math.floor(frameWidth);
-            const canvasH = Math.floor(frameHeight);
+            // Strict Grid Calculation (Floating Point)
+            // This ensures we cover 100% of the image without gaps or drift.
+            const cellWidth = totalWidth / cols;
+            const cellHeight = totalHeight / rows;
 
-            canvas.width = canvasW;
-            canvas.height = canvasH;
+            // Standardize Output Size (Integers)
+            // We use floor to ensure we don't accidentally grab a sub-pixel transparent edge from outside bounds.
+            const frameWidth = Math.floor(cellWidth);
+            const frameHeight = Math.floor(cellHeight);
+
+            canvas.width = frameWidth;
+            canvas.height = frameHeight;
+
+            // Optional: Disable smoothing to keep pixel art crisp during the slice copy
+            ctx.imageSmoothingEnabled = false;
 
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
-                    ctx.clearRect(0, 0, canvasW, canvasH);
+                    ctx.clearRect(0, 0, frameWidth, frameHeight);
                     
-                    // Calculate precise source position
-                    const sx = c * frameWidth;
-                    const sy = r * frameHeight;
-
-                    // Draw slice using float coordinates (browser handles sub-pixel rendering or rounding)
-                    // We map the precise float region from source to the integer canvas destination
+                    // Precise Source Coordinates
+                    const sx = c * cellWidth;
+                    const sy = r * cellHeight;
+                    
+                    // Draw strict grid cell to canvas
+                    // This maps the float source rectangle (sx, sy, cellWidth, cellHeight)
+                    // exactly to the integer destination canvas (0, 0, frameWidth, frameHeight).
+                    // This handles any sub-pixel scaling automatically.
                     ctx.drawImage(
                         img,
-                        sx, sy, frameWidth, frameHeight, // Source (Float)
-                        0, 0, canvasW, canvasH // Destination (Int)
+                        sx, sy, cellWidth, cellHeight, 
+                        0, 0, frameWidth, frameHeight 
                     );
+
+                    // Background Removal (White Keying)
+                    if (removeBg) {
+                        const imageData = ctx.getImageData(0, 0, frameWidth, frameHeight);
+                        const data = imageData.data;
+                        const threshold = 230; // Threshold for "white"
+                        
+                        for (let i = 0; i < data.length; i += 4) {
+                            const red = data[i];
+                            const green = data[i + 1];
+                            const blue = data[i + 2];
+                            
+                            // If pixel is very light (white/near white), make it transparent
+                            if (red > threshold && green > threshold && blue > threshold) {
+                                data[i + 3] = 0; // Alpha = 0
+                            }
+                        }
+                        ctx.putImageData(imageData, 0, 0);
+                    }
                     
                     frames.push(canvas.toDataURL('image/png'));
                 }
@@ -227,9 +285,14 @@ const App: React.FC = () => {
 
           setSpriteSheetImage(sheetImage); // Save the raw sheet
 
-          // 2. Slice it
+          // 2. Slice it (using current removeBackground setting)
           setStatusText("正在裁切網格...");
-          const frames = await sliceSpriteSheet(sheetImage, config.gridCols, config.gridRows);
+          const frames = await sliceSpriteSheet(
+              sheetImage, 
+              config.gridCols, 
+              config.gridRows,
+              removeBackground
+          );
           setGeneratedFrames(frames);
 
       } else {
@@ -583,7 +646,7 @@ const App: React.FC = () => {
                 <textarea
                   value={config.prompt}
                   onChange={(e) => setConfig({...config, prompt: e.target.value})}
-                  placeholder="描述動作，例如：跑步、揮手、跳躍..."
+                  placeholder="描述連續動作，例如：跑步循環 (Run Cycle)、跳躍 (Jump)、揮劍攻擊 (Sword Attack)..."
                   className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-orange-200 focus:border-orange-400 outline-none resize-none h-20 transition-all"
                 />
               </div>
@@ -663,9 +726,28 @@ const App: React.FC = () => {
 
                {/* Hint Text for Modes */}
               {config.mode === 'sheet' && (
-                  <div className="text-xs text-green-600 bg-green-50 p-2 rounded border border-green-100 flex items-center gap-2">
-                      <Zap className="w-3 h-3" />
-                      精靈圖模式僅需消耗 1 次 API 請求，大幅節省配額！
+                  <div className="space-y-2">
+                    <div className="text-xs text-green-600 bg-green-50 p-2 rounded border border-green-100 flex items-center gap-2">
+                        <Zap className="w-3 h-3" />
+                        精靈圖模式僅需消耗 1 次 API 請求，大幅節省配額！
+                    </div>
+                    
+                    {/* Background Removal Toggle */}
+                    <div className="flex items-center justify-between p-2 rounded border border-gray-100 bg-gray-50">
+                        <span className="text-xs text-gray-600 flex items-center gap-1.5 font-medium">
+                            <Eraser className="w-3.5 h-3.5" />
+                            去除白色背景
+                        </span>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                className="sr-only peer" 
+                                checked={removeBackground}
+                                onChange={(e) => setRemoveBackground(e.target.checked)}
+                            />
+                            <div className="w-9 h-5 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
+                        </label>
+                    </div>
                   </div>
               )}
 
