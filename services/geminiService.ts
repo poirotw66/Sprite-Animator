@@ -55,11 +55,33 @@ async function retryOperation<T>(
 }
 
 /**
- * Calculates the best supported aspect ratio for the given grid cols/rows.
- * Supported by Gemini: "1:1", "3:4", "4:3", "9:16", "16:9".
+ * Determines the optimal Aspect Ratio for a given grid configuration.
+ * This ensures individual cells are roughly square or portrait, preventing squashed sprites.
  */
 function getBestAspectRatio(cols: number, rows: number): string {
     const ratio = cols / rows;
+    
+    // Explicit overrides for common configurations to ensure best "Cell Shape"
+    // We want cells to be square (1:1) or slightly tall for characters.
+    const key = `${cols}x${rows}`;
+    const overrides: Record<string, string> = {
+        "2x1": "16:9", // Wide strip
+        "3x1": "16:9",
+        "4x1": "16:9", 
+        "2x2": "1:1",  // Perfect square
+        "3x2": "4:3",  // 1.5 ratio -> 1.33 (Cells slightly tall)
+        "4x2": "16:9", // 2.0 ratio -> 1.77 (Cells slightly tall)
+        "5x2": "16:9", 
+        "3x3": "1:1",  // Perfect square
+        "4x3": "4:3",  // 1.33 ratio -> 1.33 (Perfect)
+        "1x4": "9:16", // Tall strip
+    };
+
+    if (overrides[key]) {
+        return overrides[key];
+    }
+
+    // Fallback logic for unusual grids
     const targets = [
         { str: "1:1", val: 1.0 },
         { str: "3:4", val: 0.75 }, 
@@ -75,8 +97,6 @@ function getBestAspectRatio(cols: number, rows: number): string {
 
 /**
  * Helper to get a storyboard plan from Gemini.
- * NOTE: We deliberately use a text-optimized model here to save quota on the image model
- * and to avoid hitting the RPM limit of the image model before we even start drawing.
  */
 async function getAnimationStoryboard(
   ai: GoogleGenAI, 
@@ -184,24 +204,28 @@ export const generateSpriteSheet = async (
     // 1. Determine best aspect ratio config to force correct layout
     const targetAspectRatio = getBestAspectRatio(cols, rows);
     
+    // 2. Construct a prompt that enforces specific geometry
     const fullPrompt = `
     Reference Image: A game character.
     Task: Generate a 2D Sprite Sheet.
     
     Action: "${prompt}"
-    Layout: A grid with EXACTLY ${cols} columns and ${rows} rows.
-    Total Frames: ${cols * rows}.
     
-    CRITICAL LAYOUT INSTRUCTIONS:
-    1. The output image MUST contain exactly ${cols * rows} distinct character poses.
-    2. DO NOT generate a 3x3 grid if I asked for ${cols}x${rows}.
-    3. The character must be centered in each of the ${cols * rows} imaginary grid cells.
-    4. Maintain equal spacing between sprites.
-    5. Sequence: Top-left to bottom-right order.
+    [STRICT GRID CONFIGURATION]
+    - Columns: ${cols}
+    - Rows: ${rows}
+    - Total Sprites: ${cols * rows}
     
-    Requirements:
-    - Background: Solid WHITE (hex #FFFFFF).
-    - Character Style: Consistent with reference. Flat 2D.
+    [GEOMETRY RULES]
+    1. The output image aspect ratio is set to ${targetAspectRatio}.
+    2. Divide this space into a perfect ${cols}x${rows} grid.
+    3. Center EXACTLY ONE character pose in the middle of each grid cell.
+    4. Ensure equal spacing and margins around every character so they can be sliced programmatically.
+    5. Order: Top-left to bottom-right.
+    6. DO NOT add any outer borders or frames to the image. Background must be solid white.
+    7. DO NOT change the grid count. If I ask for ${cols}x${rows}, do not give me 3x3.
+    
+    Style: Consistent with reference. Flat 2D.
     `;
 
     if (onProgress) onProgress(`正在生成 ${cols}x${rows} 精靈圖 (比例 ${targetAspectRatio})...`);
@@ -255,7 +279,6 @@ export const generateAnimationFrames = async (
   const cleanBase64 = imageBase64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
 
   // Step 1: Generate the Storyboard
-  // We use a separate logic for storyboard to avoid rate limiting the main image model
   const frameDescriptions = await getAnimationStoryboard(ai, imageBase64, prompt, frameCount, onProgress);
 
   // Define single frame generator function
@@ -272,7 +295,7 @@ export const generateAnimationFrames = async (
 
     const response = await retryOperation(async () => {
         return await ai.models.generateContent({
-            model: model, // This uses the Image model (e.g., gemini-2.5-flash-image)
+            model: model, 
             contents: {
                 parts: [
                     { inlineData: { mimeType: 'image/png', data: cleanBase64 } },
@@ -296,8 +319,6 @@ export const generateAnimationFrames = async (
   // Step 2: Generate Frames Serially
   const results: string[] = [];
   
-  // Initial delay before starting the heavy image generation loop
-  // Even though we used a text model for storyboard, we add a pause to be safe.
   if (onProgress) onProgress("分鏡規劃完成，準備繪製...");
   await wait(2000);
 
@@ -306,14 +327,12 @@ export const generateAnimationFrames = async (
       try {
         if (onProgress) onProgress(`正在繪製第 ${i + 1} / ${frameDescriptions.length} 幀...`);
 
-        // Add delay BEFORE the request (except the first one)
         if (i > 0) {
             if (onProgress && interFrameDelayMs > 1000) {
                onProgress(`等待 API 冷卻 (${Math.round(interFrameDelayMs/1000)}秒)... 準備繪製第 ${i + 1} 幀`);
             }
             await wait(interFrameDelayMs); 
             
-            // Re-update status after waiting
             if (onProgress) onProgress(`正在繪製第 ${i + 1} / ${frameDescriptions.length} 幀...`);
         }
         

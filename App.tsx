@@ -31,6 +31,7 @@ const App: React.FC = () => {
   const [generatedFrames, setGeneratedFrames] = useState<string[]>([]);
   const [spriteSheetImage, setSpriteSheetImage] = useState<string | null>(null); // New: Store raw sheet
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true); // Control playback state manually
   const [error, setError] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -70,7 +71,7 @@ const App: React.FC = () => {
 
   // Animation Loop
   useEffect(() => {
-    if (generatedFrames.length > 0) {
+    if (generatedFrames.length > 0 && isPlaying) {
       const fps = Math.max(1, config.speed * 2); 
       const intervalMs = 1000 / fps;
 
@@ -84,7 +85,7 @@ const App: React.FC = () => {
         clearInterval(animationIntervalRef.current);
       }
     };
-  }, [generatedFrames, config.speed]);
+  }, [generatedFrames, config.speed, isPlaying]);
 
   const handleReset = () => {
     setSourceImage(null);
@@ -92,6 +93,7 @@ const App: React.FC = () => {
     setSpriteSheetImage(null);
     setError(null);
     setCurrentFrameIndex(0);
+    setIsPlaying(true);
     setConfig(prev => ({ ...prev, prompt: '' }));
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -127,6 +129,7 @@ const App: React.FC = () => {
 
   /**
    * Slice a single sprite sheet image into multiple frames
+   * Updated to use floating point math for more accurate slicing
    */
   const sliceSpriteSheet = async (base64Image: string, cols: number, rows: number): Promise<string[]> => {
     return new Promise((resolve, reject) => {
@@ -141,22 +144,31 @@ const App: React.FC = () => {
                 return;
             }
 
-            const frameWidth = Math.floor(img.width / cols);
-            const frameHeight = Math.floor(img.height / rows);
+            // Use floating point for precision during loop
+            const frameWidth = img.width / cols;
+            const frameHeight = img.height / rows;
 
-            canvas.width = frameWidth;
-            canvas.height = frameHeight;
+            // Canvas size must be integer, we take floor to be safe from bleeding
+            const canvasW = Math.floor(frameWidth);
+            const canvasH = Math.floor(frameHeight);
+
+            canvas.width = canvasW;
+            canvas.height = canvasH;
 
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
-                    // Clear canvas for transparency safety
-                    ctx.clearRect(0, 0, frameWidth, frameHeight);
+                    ctx.clearRect(0, 0, canvasW, canvasH);
                     
-                    // Draw slice
+                    // Calculate precise source position
+                    const sx = c * frameWidth;
+                    const sy = r * frameHeight;
+
+                    // Draw slice using float coordinates (browser handles sub-pixel rendering or rounding)
+                    // We map the precise float region from source to the integer canvas destination
                     ctx.drawImage(
                         img,
-                        c * frameWidth, r * frameHeight, frameWidth, frameHeight, // Source
-                        0, 0, frameWidth, frameHeight // Destination
+                        sx, sy, frameWidth, frameHeight, // Source (Float)
+                        0, 0, canvasW, canvasH // Destination (Int)
                     );
                     
                     frames.push(canvas.toDataURL('image/png'));
@@ -193,6 +205,7 @@ const App: React.FC = () => {
     setError(null);
     setGeneratedFrames([]);
     setSpriteSheetImage(null); // Clear previous
+    setIsPlaying(true);
     
     // Strategy Optimization based on 17 RPM (approx 1 req every 3.53s)
     const delayBetweenFrames = userKey ? 2000 : 5000;
@@ -397,6 +410,15 @@ const App: React.FC = () => {
     } finally {
       setIsExporting(false);
     }
+  };
+
+  const handleFrameClick = (index: number) => {
+    setCurrentFrameIndex(index);
+    setIsPlaying(false); // Pause when user manually selects a frame
+  };
+
+  const togglePlay = () => {
+    setIsPlaying(!isPlaying);
   };
 
   return (
@@ -755,7 +777,10 @@ const App: React.FC = () => {
               )}
             </h2>
             
-            <div className="flex-1 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center relative overflow-hidden group">
+            <div className="flex-1 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center relative overflow-hidden group min-h-[300px]"
+                 onClick={togglePlay}
+                 title="點擊暫停/播放"
+            >
               
               {!isGenerating && generatedFrames.length === 0 && (
                 <div className="text-center p-8 opacity-50">
@@ -779,7 +804,7 @@ const App: React.FC = () => {
               )}
 
               {generatedFrames.length > 0 && (
-                <div className="relative w-full h-full flex flex-col items-center justify-center bg-[url('https://bg-patterns.com/wp-content/uploads/2021/04/check-pattern-d01.png')] bg-repeat bg-[length:20px_20px] rounded-lg overflow-hidden">
+                <div className="relative w-full h-full flex flex-col items-center justify-center bg-[url('https://bg-patterns.com/wp-content/uploads/2021/04/check-pattern-d01.png')] bg-repeat bg-[length:20px_20px] rounded-lg overflow-hidden cursor-pointer">
                   
                   {/* The Frame Player */}
                   <img 
@@ -794,8 +819,17 @@ const App: React.FC = () => {
                     }}
                   />
 
+                  {/* Playback Status Icon */}
+                  {!isPlaying && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[1px]">
+                       <div className="bg-black/50 text-white p-3 rounded-full backdrop-blur-sm">
+                          <Play className="w-6 h-6 fill-white" />
+                       </div>
+                    </div>
+                  )}
+
                   {/* Controls Overlay */}
-                  <div className="absolute bottom-4 right-4 flex flex-col gap-2">
+                  <div className="absolute bottom-4 right-4 flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
                      <button 
                       onClick={handleDownloadApng}
                       disabled={isExporting}
@@ -825,25 +859,34 @@ const App: React.FC = () => {
                     </div>
                   </div>
                   
-                  {/* Frame Strip Preview at bottom */}
-                  <div className="absolute bottom-4 left-4 flex gap-1 bg-black/20 p-1 rounded-lg backdrop-blur-sm">
-                    {generatedFrames.map((frame, idx) => (
-                      <div 
-                        key={idx}
-                        className={`w-8 h-8 rounded border-2 overflow-hidden cursor-pointer bg-white ${idx === currentFrameIndex ? 'border-orange-500' : 'border-transparent opacity-60'}`}
-                        onClick={() => setCurrentFrameIndex(idx)}
-                      >
-                        <img src={frame} className="w-full h-full object-cover" />
-                      </div>
-                    ))}
-                  </div>
-
                 </div>
               )}
             </div>
 
+            {/* Sliced Frames Grid */}
+            {generatedFrames.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                    <h3 className="text-xs font-semibold text-gray-500 mb-2 flex items-center justify-between">
+                       動作分解 (Extracted Frames)
+                       <span className="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-500">點擊切換</span>
+                    </h3>
+                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+                        {generatedFrames.map((frame, idx) => (
+                            <div 
+                                key={idx}
+                                className={`aspect-square rounded-lg border-2 overflow-hidden cursor-pointer bg-white transition-all hover:scale-105 active:scale-95 shadow-sm
+                                    ${idx === currentFrameIndex ? 'border-orange-500 ring-2 ring-orange-100' : 'border-gray-200 hover:border-orange-300'}`}
+                                onClick={() => handleFrameClick(idx)}
+                            >
+                                <img src={frame} className="w-full h-full object-contain p-1" style={{imageRendering: 'pixelated'}} />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div className="mt-4 text-xs text-gray-400 text-center">
-               提示：APNG 支援全彩半透明，GIF 支援 256 色透明。ZIP 包含原始 PNG 序列。
+               提示：點擊上方預覽區可暫停/播放。APNG 支援全彩半透明。
             </div>
           </div>
         </div>
