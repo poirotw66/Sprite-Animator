@@ -39,8 +39,10 @@ export const useSpriteSheet = (
   // Process sprite sheet: remove chroma key background first
   useEffect(() => {
     if (spriteSheetImage && mode === 'sheet') {
+      setProcessedSpriteSheet(null); // Reset while processing
       const processImage = async () => {
         try {
+          console.log('Starting chroma key removal...');
           // Step 1: Remove chroma key (magenta #FF00FF) with fuzz tolerance
           // This is the "correct" background removal similar to ImageMagick
           const chromaKeyRemoved = await removeChromaKey(
@@ -48,6 +50,7 @@ export const useSpriteSheet = (
             CHROMA_KEY_COLOR,
             CHROMA_KEY_FUZZ
           );
+          console.log('Chroma key removal completed');
           setProcessedSpriteSheet(chromaKeyRemoved);
         } catch (e) {
           console.error('Chroma key removal failed', e);
@@ -104,14 +107,34 @@ export const useSpriteSheet = (
     mode,
   ]);
 
+  // Update dimensions when processed sprite sheet is ready
+  useEffect(() => {
+    if (processedSpriteSheet) {
+      const img = new Image();
+      img.onload = () => {
+        setSheetDimensions({
+          width: img.width,
+          height: img.height,
+        });
+      };
+      img.onerror = () => {
+        console.error('Failed to load processed sprite sheet');
+      };
+      img.src = processedSpriteSheet;
+    }
+  }, [processedSpriteSheet]);
+
   const handleImageLoad = useMemo(
     () => (e: React.SyntheticEvent<HTMLImageElement>) => {
-      setSheetDimensions({
-        width: e.currentTarget.naturalWidth,
-        height: e.currentTarget.naturalHeight,
-      });
+      // Only update dimensions if we don't have processed sprite sheet yet
+      if (!processedSpriteSheet) {
+        setSheetDimensions({
+          width: e.currentTarget.naturalWidth,
+          height: e.currentTarget.naturalHeight,
+        });
+      }
     },
-    []
+    [processedSpriteSheet]
   );
 
   return {

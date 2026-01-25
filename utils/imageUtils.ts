@@ -237,28 +237,123 @@ export const removeChromaKey = async (
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
 
-      // Calculate fuzz tolerance (2% of 255 = ~5.1)
+      // Calculate total pixels first
+      const totalPixels = data.length / 4;
+
+      // First pass: Detect the actual background color by sampling corners and edges
+      // These areas are most likely to be background
+      const width = canvas.width;
+      const height = canvas.height;
+      const sampleSize = Math.min(100, Math.floor(Math.sqrt(totalPixels) / 10));
+      const colorMap = new Map<string, number>();
+      
+      // Sample corners and edges for background color detection
+      const samplePoints: Array<[number, number]> = [];
+      for (let y = 0; y < sampleSize; y++) {
+        for (let x = 0; x < sampleSize; x++) {
+          // Top-left corner
+          samplePoints.push([x, y]);
+          // Top-right corner
+          samplePoints.push([width - 1 - x, y]);
+          // Bottom-left corner
+          samplePoints.push([x, height - 1 - y]);
+          // Bottom-right corner
+          samplePoints.push([width - 1 - x, height - 1 - y]);
+        }
+      }
+      
+      // Count color occurrences in sample areas
+      for (const [x, y] of samplePoints) {
+        const idx = (y * width + x) * 4;
+        if (idx < data.length) {
+          const r = data[idx];
+          const g = data[idx + 1];
+          const b = data[idx + 2];
+          const key = `${r},${g},${b}`;
+          colorMap.set(key, (colorMap.get(key) || 0) + 1);
+        }
+      }
+      
+      // Find the most common color (likely the background)
+      let mostCommonColor = chromaKey;
+      let maxCount = 0;
+      for (const [key, count] of colorMap.entries()) {
+        if (count > maxCount) {
+          const [r, g, b] = key.split(',').map(Number);
+          // Check if it's magenta-like (high R, low G, high B)
+          if (r > 180 && g < 100 && b > 100) {
+            mostCommonColor = { r, g, b };
+            maxCount = count;
+          }
+        }
+      }
+      
+      console.log(`Detected background color: R=${mostCommonColor.r}, G=${mostCommonColor.g}, B=${mostCommonColor.b} (appeared ${maxCount} times in samples)`);
+      
+      // Use detected color or fallback to provided chromaKey
+      const targetColor = maxCount > 10 ? mostCommonColor : chromaKey;
+      
+      // Calculate fuzz tolerance - use a more permissive approach
       const fuzz = (fuzzPercent / 100) * 255;
+      
+      let transparentCount = 0;
+      let samplePixels: Array<{ r: number; g: number; b: number; distance?: number }> = [];
+      let sampleCount = 0;
 
       // Process each pixel
       for (let i = 0; i < data.length; i += 4) {
         const red = data[i];
         const green = data[i + 1];
         const blue = data[i + 2];
+        const alpha = data[i + 3];
 
-        // Calculate color distance from chroma key
-        const rDiff = Math.abs(red - chromaKey.r);
-        const gDiff = Math.abs(green - chromaKey.g);
-        const bDiff = Math.abs(blue - chromaKey.b);
+        // Skip if already transparent
+        if (alpha === 0) {
+          transparentCount++;
+          continue;
+        }
 
-        // Use Euclidean distance for color matching
+        // Sample first 10 pixels for debugging
+        if (sampleCount < 10) {
+          const rDiff = red - targetColor.r;
+          const gDiff = green - targetColor.g;
+          const bDiff = blue - targetColor.b;
+          const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
+          samplePixels.push({ r: red, g: green, b: blue, distance });
+          sampleCount++;
+        }
+
+        // Calculate Euclidean distance from detected background color
+        const rDiff = red - targetColor.r;
+        const gDiff = green - targetColor.g;
+        const bDiff = blue - targetColor.b;
         const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
 
-        // If within fuzz tolerance, make transparent
-        if (distance <= fuzz) {
+        // More permissive matching: Check if it's close to detected background color
+        // Also check if it follows magenta-like pattern (high R, low G, high B)
+        const rClose = Math.abs(red - targetColor.r) <= fuzz;
+        const gClose = Math.abs(green - targetColor.g) <= fuzz;
+        const bClose = Math.abs(blue - targetColor.b) <= fuzz;
+        
+        // Pattern-based matching for magenta-like colors
+        const isMagentaLike = red > 180 && green < 100 && blue > 100;
+        const isWithinDistance = distance <= fuzz;
+        const isCloseToTarget = rClose && gClose && bClose;
+        
+        // Match if it's close to detected color OR follows magenta pattern
+        if (isCloseToTarget || isWithinDistance || (isMagentaLike && distance < fuzz * 5)) {
           data[i + 3] = 0; // Set alpha to 0 (transparent)
+          transparentCount++;
         }
       }
+      
+      // Debug: Show sample pixels with actual values
+      if (samplePixels.length > 0) {
+        console.log('Sample pixels (first 10):', JSON.stringify(samplePixels, null, 2));
+        console.log(`Using target color: R=${targetColor.r}, G=${targetColor.g}, B=${targetColor.b}, Fuzz=${fuzz.toFixed(1)}`);
+      }
+      
+      console.log(`Chroma key removal: ${transparentCount}/${totalPixels} pixels made transparent (${((transparentCount/totalPixels)*100).toFixed(1)}%)`);
 
       // Put processed data back
       ctx.putImageData(imageData, 0, 0);
