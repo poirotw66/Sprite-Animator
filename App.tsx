@@ -18,18 +18,18 @@ const App: React.FC = () => {
   const [config, setConfig] = useState<AnimationConfig>({
     prompt: '',
     frameCount: 4, // Default to 4 frames for quick sprites
-    speed: 5,      // 5 * 2 = 10 FPS default
+    speed: 8,      // Default speed updated to 8
     scale: 100,
     mode: 'sheet', // Default mode changed to 'sheet'
-    gridCols: 3,
-    gridRows: 2,
+    gridCols: 4,   // Default cols updated to 4
+    gridRows: 4,   // Default rows updated to 4
   });
 
   // Manual Slicing Settings (Independent of generation config)
   // Updated: Split 'Offset' into 'Padding' (Size reduction) and 'Shift' (Position move)
   const [sliceSettings, setSliceSettings] = useState({
-      cols: 3,
-      rows: 2,
+      cols: 4,    // Default cols updated to 4
+      rows: 4,    // Default rows updated to 4
       paddingX: 0,
       paddingY: 0,
       shiftX: 0,
@@ -165,8 +165,8 @@ const App: React.FC = () => {
     setCurrentFrameIndex(0);
     setIsPlaying(true);
     setConfig(prev => ({ ...prev, prompt: '' }));
-    // Reset slice settings
-    setSliceSettings({ cols: 3, rows: 2, paddingX: 0, paddingY: 0, shiftX: 0, shiftY: 0 }); 
+    // Reset slice settings to defaults
+    setSliceSettings({ cols: 4, rows: 4, paddingX: 0, paddingY: 0, shiftX: 0, shiftY: 0 }); 
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }

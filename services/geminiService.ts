@@ -191,102 +191,79 @@ export const generateSpriteSheet = async (
     
     // 2. Construct a prompt that enforces specific geometry AND animation continuity
     const fullPrompt = `
- Role: Professional Game Asset Artist specialized in 2D sprite animation.
+Role: Professional Game Asset Artist specialized in 2D sprite animation.
 
 Task:
-Create a single, perfectly aligned 2D sprite sheet of a character performing:
+Create a single 2D sprite sheet image of a character performing:
 "${prompt}"
 
-The output must be a SINGLE IMAGE containing a ${cols} x ${rows} grid
-(${cols * rows} total animation frames).
+The result must be ONE continuous image containing
+${cols * rows} animation poses arranged evenly
+from left to right, top to bottom.
 
-────────────────────────────
-[ABSOLUTE HARD CONSTRAINTS]
-────────────────────────────
+ABSOLUTE RULES (MUST FOLLOW):
 
-1. NO TEXT, NO SYMBOLS, NO NUMBERS
-- Do NOT draw numbers, letters, labels, UI elements, arrows, or annotations of any kind.
+- Do NOT draw text, numbers, symbols, UI, labels, or watermarks.
+- Do NOT draw borders, boxes, panels, dividers, frames, or separators of any kind.
+- Do NOT visually indicate rows, columns, grids, or sections.
+- The canvas must appear as ONE uninterrupted transparent space.
 
-2. NO BORDERS, NO LINES, NO FRAMES
-- Do NOT draw visible grid lines, separators, outlines, or image frames.
-- The grid must be INVISIBLE and implied only by placement.
+BACKGROUND:
 
-3. PURE SOLID BACKGROUND ONLY
-- Background color MUST be pure white (#FFFFFF).
-- No gradients, no noise, no texture.
-- All four corners must be exactly #FFFFFF.
+- Use a single, flat, solid chroma key background color.
+- Background color: pure magenta (#FF00FF).
+- No gradients, no texture, no pattern.
+- The background must be a single uniform color across the entire canvas.
 
-4. NO SHADOWS / NO VIGNETTE
-- No drop shadows.
-- No ambient occlusion.
-- No lighting falloff.
-- No darkening near edges or corners.
+LAYOUT & PLACEMENT (CRITICAL):
 
-────────────────────────────
-[GRID & ALIGNMENT — CRITICAL]
-────────────────────────────
+- The canvas has no padding or margins.
+- Characters are evenly spaced in fixed positions
+  forming ${cols} positions per row and ${rows} rows total.
+- Place exactly one character pose at each position.
+- All poses must be perfectly centered on their position.
 
-1. EDGE-TO-EDGE CANVAS
-- The sprite sheet must fill the entire canvas.
-- ZERO outer padding or margins.
+CONSISTENCY RULES:
 
-2. PERFECT MATHEMATICAL GRID
-- The image will be sliced by:
-  cell_width  = total_width  / ${cols}
-  cell_height = total_height / ${rows}
+- Character size must be identical in every pose.
+- No scaling, no zooming, no rotation drift.
+- Feet must align to the same horizontal ground line
+  (approximately 85% of the canvas height per row).
 
-3. EXACT CENTERING
-- Each animation pose must be positioned EXACTLY at the visual center of its cell.
-- Do NOT shift left, right, up, or down between frames.
+CONTAINMENT (ANTI-OVERLAP):
 
-4. CONSISTENT SCALE
-- Character height (head to toe) must be IDENTICAL in every frame.
-- No zoom in / zoom out between frames.
+- Each pose must remain within an invisible safe area.
+- Maximum movement and limb extension must stay inside this safe area.
+- No part of the character may overlap another pose.
 
-5. FIXED GROUND LINE (ANTI-JITTER)
-- The character’s feet MUST touch the same horizontal ground line in every frame.
-- Ground line position = approximately 85% of each cell’s height from the top.
-- Feet must NEVER float or sink.
+ANIMATION FLOW:
 
-────────────────────────────
-[ANIMATION SEQUENCE]
-────────────────────────────
-
-- Frame order: Left → Right, Top → Bottom
-- First frame is at the TOP-LEFT cell.
+- Order reads left to right, then top to bottom.
 - Motion must be smooth, continuous, and loop-ready.
-- No sudden jumps, rotations, or pose resets.
 
-────────────────────────────
-[VISUAL STYLE]
-────────────────────────────
+STYLE:
 
-- Flat 2D illustration style.
+- Flat 2D illustration.
 - Clean, sharp outlines.
-- Even, neutral studio lighting.
-- No perspective distortion.
-- Character fully visible in every frame (no cropping).
+- Even neutral lighting.
+- No shadows, no depth effects.
 
-────────────────────────────
-[ASPECT RATIO]
-────────────────────────────
+FAIL-SAFE PRIORITY:
 
-Target aspect ratio: ${targetAspectRatio}
+If any artistic choice conflicts with clean layout,
+containment, or alignment,
+always prioritize containment and spacing.
 
-Distribute the ${cols} x ${rows} grid evenly to fill this ratio exactly.
-Do NOT add padding to preserve aspect ratio.
+NEGATIVE PROMPT:
 
-────────────────────────────
-[Negative Prompt]
-────────────────────────────
-text, numbers, letters, labels, UI, watermark,
-grid lines, borders, frames, separators,
-drop shadow, cast shadow, vignette, dark corners,
-gradient background, gray background, off-white background,
-lighting falloff, glow, bloom,
-motion blur,
-cropped body, cut-off feet,
-inconsistent scale, jitter, floating feet
+grid, grid lines, frame, border, panel, box, tile,
+cell background, section background,
+comic layout, storyboard,
+white outline, white halo, fringe,
+shadow, glow, vignette,
+background color, off-white,
+motion blur, jitter, scaling inconsistency,
+checkerboard, transparency pattern, alpha grid
     `;
 
     if (onProgress) onProgress(`正在生成 ${cols}x${rows} 連貫動作精靈圖 (比例 ${targetAspectRatio})...`);
