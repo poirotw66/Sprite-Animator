@@ -1,10 +1,5 @@
 # 角色幀動畫生成器 (Sprite Animator)
-
-一個使用 Google Gemini AI 生成 2D 角色動畫的工具，支持逐幀模式和精靈圖模式。
-
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+[English](./README_en.md) | [繁體中文](./README.md)
 
 ## ✨ 功能特色
 
@@ -15,8 +10,9 @@
 - 🖼️ **靈活的精靈圖處理**：
   - 可調整網格切分（Cols/Rows）
   - 支持 Padding（縮放）和 Shift（位移）調整
-  - 自動去除白色背景
+  - **自動精確去背**：類似 ImageMagick 的洋紅色去背（#FF00FF，容差 2%）
   - 實時預覽網格切分效果
+  - **工業級切分**：整數座標、邊界檢查、像素完美對齊
 
 - 📤 **多種導出格式**：
   - APNG（高清，支持透明）
@@ -27,12 +23,15 @@
   - React 性能優化（useMemo, useCallback, React.memo）
   - 代碼分割（動態導入）
   - 使用 requestAnimationFrame 實現流暢動畫
+  - **Web Worker 去背處理**：後台處理，不阻塞 UI
+  - **進度指示器**：實時顯示處理進度
 
 - 🛡️ **穩定性**：
   - 完整的 TypeScript 類型支持
   - 錯誤邊界（Error Boundary）
   - 統一的錯誤處理
   - 自動重試機制（帶指數退避）
+  - 生產環境日誌管理（開發/生產環境自動切換）
 
 ## 🚀 快速開始
 
@@ -86,8 +85,13 @@
 
 - **網格切分設定**：調整 Cols 和 Rows 來匹配生成的精靈圖
 - **Padding（縮放）**：減少有效區域大小，去除邊緣
-- **Shift（位移）**：微調切分位置
-- **去除背景**：自動移除白色/淺色背景
+- **Shift（位移）**：微調切分位置（支持負數，自動調整到有效範圍）
+- **自動精確去背**：
+  - 自動檢測背景顏色（採樣四個角落）
+  - 使用類似 ImageMagick 的算法（`-fuzz 2% -transparent "#FF00FF"`）
+  - Web Worker 後台處理，不阻塞 UI
+  - 實時進度顯示（0-100%）
+  - 確保無白邊、無棋盤格、無框限錯覺
 
 ## 🏗️ 專案結構
 
@@ -111,7 +115,11 @@ Sprite-Animator/
 │   └── geminiService.ts
 ├── utils/               # 工具函數
 │   ├── constants.ts
-│   └── imageUtils.ts
+│   ├── imageUtils.ts
+│   ├── chromaKeyProcessor.ts  # 去背處理器（Web Worker）
+│   └── logger.ts              # 日誌工具
+├── workers/            # Web Workers
+│   └── chromaKeyWorker.ts     # 去背處理 Worker
 ├── types/               # TypeScript 類型定義
 │   ├── index.ts
 │   └── errors.ts
@@ -170,12 +178,23 @@ npm run preview
 
 ## 📄 許可證
 
-本專案為開源專案。
+本專案採用 [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](LICENSE.txt) 授權。
+
+詳情請參閱 [LICENSE.txt](./LICENSE.txt)
 
 ## 🤝 貢獻
 
 歡迎提交 Issue 和 Pull Request！
 
+## 📚 相關文檔
+
+- [精靈圖切分分析](./SPRITE_SLICING_ANALYSIS.md) - 切分功能優化詳情
+- [去背改進說明](./CHROMA_KEY_IMPROVEMENT.md) - 去背功能技術細節
+- [專案優化路線圖](./PROJECT_OPTIMIZATION_ROADMAP.md) - 未來優化計劃
+
 ---
 
-**在 AI Studio 中查看**：https://ai.studio/apps/drive/1Yl3nv0fPcJJk8Z_0QgnH7CcCaDni6Ce3
+**最後更新**：2026-01-25  
+**版本**：v1.1.0
+
+

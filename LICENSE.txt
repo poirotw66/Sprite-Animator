@@ -1,0 +1,54 @@
+**Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License**
+
+Copyright (c) 2026 Justin
+
+本作品採用**創用 CC 姓名標示-非商業性-相同方式分享 4.0 國際版**授權條款進行授權。
+
+This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+
+要查看本授權條款的副本，請造訪：
+To view a copy of this license, visit:
+https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+或者寄信至：
+Or send a letter to:
+Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+
+---
+
+### 個人使用授權 (Personal Use License)
+
+**您可以自由地：**
+You are free to:
+
+* **分享** — 在任何媒介以任何形式複製、發行本作品
+Share — copy and redistribute the material in any medium or format
+* **衍生** — 修改、轉換或依本作品進行創作
+Adapt — remix, transform, and build upon the material
+
+**惟需遵守下列條件：**
+Under the following terms:
+
+* **姓名標示** — 您必須給予適當的署名，並提供本授權條款的連結
+Attribution — You must give appropriate credit and provide a link to the license
+* **非商業性** — 您不得將本作品用於商業目的
+NonCommercial — You may not use the material for commercial purposes
+* **相同方式分享** — 如果您改變、轉變或依據本作品進行創作，您必須採用與原先授權條款相同的授權方式來散布您的貢獻
+ShareAlike — If you remix, transform, or build upon the material, you must distribute your contributions under the same license
+
+---
+
+### 商業授權 (Commercial License)
+
+如需將本專案用於商業目的，請聯繫作者以取得商業授權：
+For commercial use, please contact the author for a commercial license:
+
+* **GitHub:** https://github.com/poirotw66
+* **Project Issues:** https://github.com/poirotw66/Sprite-Animator
+
+---
+
+### 免責聲明 (Disclaimer)
+
+本軟體按「現狀」提供，不提供任何形式的明示或暗示擔保。
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
