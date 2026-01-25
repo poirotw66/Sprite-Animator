@@ -156,27 +156,37 @@ export const loadImagesData = async (
   let width = 0;
   let height = 0;
 
-  for (const frameSrc of frames) {
+  for (let i = 0; i < frames.length; i++) {
     await new Promise<void>((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
-        if (width === 0) {
-          width = img.width;
-          height = img.height;
+        try {
+          if (width === 0) {
+            width = img.width;
+            height = img.height;
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d', { willReadFrequently: true });
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
+            const imgData = ctx.getImageData(0, 0, img.width, img.height);
+            imagesData.push({ data: imgData.data, width: img.width, height: img.height });
+          }
+          resolve();
+        } catch (err) {
+          console.error(`Error processing frame ${i + 1}:`, err);
+          reject(err);
         }
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        if (ctx) {
-          ctx.drawImage(img, 0, 0);
-          const imgData = ctx.getImageData(0, 0, img.width, img.height);
-          imagesData.push({ data: imgData.data, width: img.width, height: img.height });
-        }
-        resolve();
       };
-      img.onerror = reject;
-      img.src = frameSrc;
+      img.onerror = (err) => {
+        console.error(`Failed to load frame ${i + 1}`, err);
+        reject(new Error(`Failed to load frame ${i + 1}`));
+      };
+      // Set crossOrigin to avoid CORS issues
+      img.crossOrigin = 'anonymous';
+      img.src = frames[i];
     });
   }
   return { imagesData, width, height };

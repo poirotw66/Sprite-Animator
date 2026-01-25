@@ -49,8 +49,11 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
       link.download = 'animation.png';
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      // Use setTimeout to ensure download starts before revoking URL
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
     } catch (err) {
       console.error('APNG Export failed', err);
       throw new Error('APNG 導出失敗');
@@ -91,8 +94,11 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
       link.download = 'animation.gif';
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      // Use setTimeout to ensure download starts before revoking URL
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
     } catch (err) {
       console.error('GIF Export failed', err);
       throw new Error('GIF 導出失敗');
@@ -122,8 +128,11 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
       link.download = 'frames_archive.zip';
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      // Use setTimeout to ensure download starts before revoking URL
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
     } catch (err) {
       console.error('Zip Export failed', err);
       throw new Error('ZIP 打包失敗');
