@@ -191,38 +191,102 @@ export const generateSpriteSheet = async (
     
     // 2. Construct a prompt that enforces specific geometry AND animation continuity
     const fullPrompt = `
-    Role: Professional Game Asset Artist.
-    Task: Create a cohesive 2D Sprite Sheet from the reference character.
-    
-    [INPUT SPECIFICATIONS]
-    - Action: "${prompt}"
-    - Grid Layout: ${cols} Columns x ${rows} Rows.
-    - Total Frames: ${cols * rows}.
+ Role: Professional Game Asset Artist specialized in 2D sprite animation.
 
-    [CRITICAL RESTRICTIONS - MUST FOLLOW]
-    1. **NO TEXT / NO NUMBERS**: Do NOT write frame numbers (1, 2, 3...), labels, or annotations anywhere on the image.
-    2. **NO BORDERS / NO GRID LINES**: Do NOT draw visible lines separating the cells. Do NOT draw a frame around the image. The background must be continuous.
-    3. **SOLID BACKGROUND**: Use a pure, solid white (#FFFFFF) background only.
-    4. **NO VIGNETTING / NO SHADOWS**: The image corners (especially top-left) MUST be pure white (#FFFFFF). Eliminate all lighting falloff or dark artifacts at the edges.
-    
-    [STRICT GRID LAYOUT]
-    1. **Edge-to-Edge Grid**: The output image must be a PERFECT GRID with NO outer padding.
-    2. **Invisible Grid**: Programmatically, I will slice this image by dividing the total Width by ${cols} and Height by ${rows}. 
-    3. **Centering**: Place exactly one character pose in the visual center of each calculated cell. Do NOT offset them.
+Task:
+Create a single, perfectly aligned 2D sprite sheet of a character performing:
+"${prompt}"
 
-    [ANIMATION RULES]
-    1. **Sequence**: Animation reads Left-to-Right, Top-to-Bottom. Start at the Top-Left cell.
-    2. **Consistency**: The character size (head to toe) must be identical in every frame. 
-    3. **Grounding**: Ensure the character's feet touch the same imaginary ground line within every cell. This prevents "jittering" when the animation plays.
-    4. **Looping**: If the action implies a cycle, make the last frame connect smoothly to the first.
+The output must be a SINGLE IMAGE containing a ${cols} x ${rows} grid
+(${cols * rows} total animation frames).
 
-    [VISUAL STYLE]
-    - Flat 2D style.
-    - **Lighting**: Flat, even studio lighting. Absolutely NO dark corners or vignettes.
-    - Solid Pure White Background (#FFFFFF) extending to all edges.
-    
-    [ASPECT RATIO TARGET]
-    The requested aspect ratio is ${targetAspectRatio}. Distribute the ${cols}x${rows} frames evenly to fill this shape completely.
+────────────────────────────
+[ABSOLUTE HARD CONSTRAINTS]
+────────────────────────────
+
+1. NO TEXT, NO SYMBOLS, NO NUMBERS
+- Do NOT draw numbers, letters, labels, UI elements, arrows, or annotations of any kind.
+
+2. NO BORDERS, NO LINES, NO FRAMES
+- Do NOT draw visible grid lines, separators, outlines, or image frames.
+- The grid must be INVISIBLE and implied only by placement.
+
+3. PURE SOLID BACKGROUND ONLY
+- Background color MUST be pure white (#FFFFFF).
+- No gradients, no noise, no texture.
+- All four corners must be exactly #FFFFFF.
+
+4. NO SHADOWS / NO VIGNETTE
+- No drop shadows.
+- No ambient occlusion.
+- No lighting falloff.
+- No darkening near edges or corners.
+
+────────────────────────────
+[GRID & ALIGNMENT — CRITICAL]
+────────────────────────────
+
+1. EDGE-TO-EDGE CANVAS
+- The sprite sheet must fill the entire canvas.
+- ZERO outer padding or margins.
+
+2. PERFECT MATHEMATICAL GRID
+- The image will be sliced by:
+  cell_width  = total_width  / ${cols}
+  cell_height = total_height / ${rows}
+
+3. EXACT CENTERING
+- Each animation pose must be positioned EXACTLY at the visual center of its cell.
+- Do NOT shift left, right, up, or down between frames.
+
+4. CONSISTENT SCALE
+- Character height (head to toe) must be IDENTICAL in every frame.
+- No zoom in / zoom out between frames.
+
+5. FIXED GROUND LINE (ANTI-JITTER)
+- The character’s feet MUST touch the same horizontal ground line in every frame.
+- Ground line position = approximately 85% of each cell’s height from the top.
+- Feet must NEVER float or sink.
+
+────────────────────────────
+[ANIMATION SEQUENCE]
+────────────────────────────
+
+- Frame order: Left → Right, Top → Bottom
+- First frame is at the TOP-LEFT cell.
+- Motion must be smooth, continuous, and loop-ready.
+- No sudden jumps, rotations, or pose resets.
+
+────────────────────────────
+[VISUAL STYLE]
+────────────────────────────
+
+- Flat 2D illustration style.
+- Clean, sharp outlines.
+- Even, neutral studio lighting.
+- No perspective distortion.
+- Character fully visible in every frame (no cropping).
+
+────────────────────────────
+[ASPECT RATIO]
+────────────────────────────
+
+Target aspect ratio: ${targetAspectRatio}
+
+Distribute the ${cols} x ${rows} grid evenly to fill this ratio exactly.
+Do NOT add padding to preserve aspect ratio.
+
+────────────────────────────
+[Negative Prompt]
+────────────────────────────
+text, numbers, letters, labels, UI, watermark,
+grid lines, borders, frames, separators,
+drop shadow, cast shadow, vignette, dark corners,
+gradient background, gray background, off-white background,
+lighting falloff, glow, bloom,
+motion blur,
+cropped body, cut-off feet,
+inconsistent scale, jitter, floating feet
     `;
 
     if (onProgress) onProgress(`正在生成 ${cols}x${rows} 連貫動作精靈圖 (比例 ${targetAspectRatio})...`);
