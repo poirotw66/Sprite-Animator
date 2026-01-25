@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { sliceSpriteSheet, SliceSettings, removeChromaKey } from '../utils/imageUtils';
+import { sliceSpriteSheet, SliceSettings } from '../utils/imageUtils';
+import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { BACKGROUND_REMOVAL_THRESHOLD, DEBOUNCE_DELAY, CHROMA_KEY_COLOR, CHROMA_KEY_FUZZ } from '../utils/constants';
+import { logger } from '../utils/logger';
 
 /**
  * Custom hook for managing sprite sheet slicing and frame generation.
@@ -35,32 +37,45 @@ export const useSpriteSheet = (
   const [generatedFrames, setGeneratedFrames] = useState<string[]>([]);
   const [sheetDimensions, setSheetDimensions] = useState({ width: 0, height: 0 });
   const [processedSpriteSheet, setProcessedSpriteSheet] = useState<string | null>(null);
+  const [chromaKeyProgress, setChromaKeyProgress] = useState<number>(0);
+  const [isProcessingChromaKey, setIsProcessingChromaKey] = useState<boolean>(false);
 
   // Process sprite sheet: remove chroma key background first
   useEffect(() => {
     if (spriteSheetImage && mode === 'sheet') {
       setProcessedSpriteSheet(null); // Reset while processing
+      setChromaKeyProgress(0);
+      setIsProcessingChromaKey(true);
+      
       const processImage = async () => {
         try {
-          console.log('Starting chroma key removal...');
-          // Step 1: Remove chroma key (magenta #FF00FF) with fuzz tolerance
+          logger.debug('Starting chroma key removal with Web Worker');
+          // Step 1: Remove chroma key (magenta #FF00FF) with fuzz tolerance using Web Worker
           // This is the "correct" background removal similar to ImageMagick
-          const chromaKeyRemoved = await removeChromaKey(
+          const chromaKeyRemoved = await removeChromaKeyWithWorker(
             spriteSheetImage,
             CHROMA_KEY_COLOR,
-            CHROMA_KEY_FUZZ
+            CHROMA_KEY_FUZZ,
+            (progress) => {
+              setChromaKeyProgress(progress);
+            }
           );
-          console.log('Chroma key removal completed');
+          logger.debug('Chroma key removal completed');
           setProcessedSpriteSheet(chromaKeyRemoved);
+          setChromaKeyProgress(100);
         } catch (e) {
-          console.error('Chroma key removal failed', e);
+          logger.error('Chroma key removal failed', e);
           // Fallback to original image if processing fails
           setProcessedSpriteSheet(spriteSheetImage);
+        } finally {
+          setIsProcessingChromaKey(false);
         }
       };
       processImage();
     } else {
       setProcessedSpriteSheet(null);
+      setChromaKeyProgress(0);
+      setIsProcessingChromaKey(false);
     }
   }, [spriteSheetImage, mode]);
 
@@ -84,7 +99,7 @@ export const useSpriteSheet = (
           );
           setGeneratedFrames(frames);
         } catch (e) {
-          console.error('Re-slice failed', e);
+          logger.error('Re-slice failed', e);
         }
       };
       // Small debounce to keep UI responsive while dragging sliders
@@ -118,7 +133,7 @@ export const useSpriteSheet = (
         });
       };
       img.onerror = () => {
-        console.error('Failed to load processed sprite sheet');
+        logger.error('Failed to load processed sprite sheet');
       };
       img.src = processedSpriteSheet;
     }
@@ -144,5 +159,7 @@ export const useSpriteSheet = (
     setSheetDimensions,
     handleImageLoad,
     processedSpriteSheet, // The chroma-key-removed version for display
+    chromaKeyProgress, // Progress of chroma key removal (0-100)
+    isProcessingChromaKey, // Whether chroma key removal is in progress
   };
 };

@@ -33,6 +33,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // ErrorBoundary errors should always be logged, even in production
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     this.setState({
       error,

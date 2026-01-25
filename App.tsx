@@ -63,6 +63,8 @@ const App: React.FC = () => {
     setSheetDimensions,
     handleImageLoad,
     processedSpriteSheet, // Chroma-key-removed sprite sheet for display
+    chromaKeyProgress, // Progress of chroma key removal (0-100)
+    isProcessingChromaKey, // Whether chroma key removal is in progress
   } = useSpriteSheet(spriteSheetImage, sliceSettings, removeBackground, config.mode);
 
   // Frame-by-frame mode frames
@@ -383,6 +385,8 @@ const App: React.FC = () => {
                 setSliceSettings={setSliceSettings}
                 onImageLoad={handleImageLoad}
                 onDownload={wrappedDownloadSpriteSheet}
+                chromaKeyProgress={chromaKeyProgress}
+                isProcessingChromaKey={isProcessingChromaKey}
               />
             </Suspense>
           )}

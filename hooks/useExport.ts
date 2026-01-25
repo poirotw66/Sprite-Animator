@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { AnimationConfig } from '../types';
 import { loadImagesData } from '../utils/imageUtils';
 import { ANIMATION_FPS_MULTIPLIER } from '../utils/constants';
+import { logger } from '../utils/logger';
 import UPNG from 'upng-js';
 import JSZip from 'jszip';
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
@@ -55,7 +56,7 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
         URL.revokeObjectURL(url);
       }, 100);
     } catch (err) {
-      console.error('APNG Export failed', err);
+      logger.error('APNG Export failed', err);
       throw new Error('APNG 導出失敗');
     } finally {
       setIsExporting(false);
@@ -100,7 +101,7 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
         URL.revokeObjectURL(url);
       }, 100);
     } catch (err) {
-      console.error('GIF Export failed', err);
+      logger.error('GIF Export failed', err);
       throw new Error('GIF 導出失敗');
     } finally {
       setIsExporting(false);
@@ -134,7 +135,7 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
         URL.revokeObjectURL(url);
       }, 100);
     } catch (err) {
-      console.error('Zip Export failed', err);
+      logger.error('Zip Export failed', err);
       throw new Error('ZIP 打包失敗');
     } finally {
       setIsExporting(false);

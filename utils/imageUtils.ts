@@ -4,6 +4,8 @@
  * @module imageUtils
  */
 
+import { logger } from './logger';
+
 /**
  * Configuration for slicing a sprite sheet into individual frames
  */
@@ -122,12 +124,23 @@ export const sliceSpriteSheet = async (
           return;
         }
 
-        // Effective Grid Area: Reduced by padding (from both sides)
-        const effectiveWidth = totalWidth - paddingX * 2;
-        const effectiveHeight = totalHeight - paddingY * 2;
+        // Calculate start position first (before calculating effective area)
+        let startX = Math.round(paddingX + shiftX);
+        let startY = Math.round(paddingY + shiftY);
+
+        // Auto-adjust start position if out of bounds (clamp to valid range)
+        startX = Math.max(0, Math.min(startX, totalWidth - 1));
+        startY = Math.max(0, Math.min(startY, totalHeight - 1));
+
+        // Effective Grid Area: Reduced by padding from the start position
+        // Account for remaining padding on the right/bottom after shift
+        const remainingPaddingX = Math.max(0, paddingX - shiftX);
+        const remainingPaddingY = Math.max(0, paddingY - shiftY);
+        const effectiveWidth = totalWidth - startX - remainingPaddingX;
+        const effectiveHeight = totalHeight - startY - remainingPaddingY;
 
         if (effectiveWidth <= 0 || effectiveHeight <= 0) {
-          reject(new Error(`Invalid effective area after padding: ${effectiveWidth}x${effectiveHeight}. Padding too large.`));
+          reject(new Error(`Invalid effective area: ${effectiveWidth}x${effectiveHeight}. Please adjust padding (${paddingX}, ${paddingY}) or shift (${shiftX}, ${shiftY}) values.`));
           return;
         }
 
@@ -152,16 +165,6 @@ export const sliceSpriteSheet = async (
         // Disable image smoothing for pixel-perfect rendering
         ctx.imageSmoothingEnabled = false;
         ctx.imageSmoothingQuality = 'low';
-
-        // Calculate start position (integer coordinates)
-        const startX = Math.round(paddingX + shiftX);
-        const startY = Math.round(paddingY + shiftY);
-
-        // Validate start position
-        if (startX < 0 || startY < 0 || startX >= totalWidth || startY >= totalHeight) {
-          reject(new Error(`Start position out of bounds: (${startX}, ${startY}) for image ${totalWidth}x${totalHeight}`));
-          return;
-        }
 
         // Process each frame
         for (let r = 0; r < rows; r++) {
@@ -268,12 +271,12 @@ export const loadImagesData = async (
           }
           resolve();
         } catch (err) {
-          console.error(`Error processing frame ${i + 1}:`, err);
+          logger.error(`Error processing frame ${i + 1}:`, err);
           reject(err);
         }
       };
       img.onerror = (err) => {
-        console.error(`Failed to load frame ${i + 1}`, err);
+        logger.error(`Failed to load frame ${i + 1}`, err);
         reject(new Error(`Failed to load frame ${i + 1}`));
       };
       // Set crossOrigin to avoid CORS issues
@@ -390,7 +393,10 @@ export const removeChromaKey = async (
         }
       }
       
-      console.log(`Detected background color: R=${mostCommonColor.r}, G=${mostCommonColor.g}, B=${mostCommonColor.b} (appeared ${maxCount} times in samples)`);
+      logger.debug('Background color detection', {
+        color: mostCommonColor,
+        count: maxCount,
+      });
       
       // Use detected color or fallback to provided chromaKey
       const targetColor = maxCount > 10 ? mostCommonColor : chromaKey;
@@ -449,13 +455,15 @@ export const removeChromaKey = async (
         }
       }
       
-      // Debug: Show sample pixels with actual values
-      if (samplePixels.length > 0) {
-        console.log('Sample pixels (first 10):', JSON.stringify(samplePixels, null, 2));
-        console.log(`Using target color: R=${targetColor.r}, G=${targetColor.g}, B=${targetColor.b}, Fuzz=${fuzz.toFixed(1)}`);
-      }
-      
-      console.log(`Chroma key removal: ${transparentCount}/${totalPixels} pixels made transparent (${((transparentCount/totalPixels)*100).toFixed(1)}%)`);
+      // Debug: Log processing results (only in development)
+      logger.debug('Chroma key removal', {
+        targetColor,
+        fuzz: fuzz.toFixed(1),
+        transparentPixels: transparentCount,
+        totalPixels,
+        percentage: ((transparentCount/totalPixels)*100).toFixed(1),
+        samplePixels: samplePixels.slice(0, 3), // Only log first 3 in dev
+      });
 
       // Put processed data back
       ctx.putImageData(imageData, 0, 0);

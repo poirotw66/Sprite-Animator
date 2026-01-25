@@ -11,6 +11,8 @@ interface SpriteSheetViewerProps {
   setSliceSettings: React.Dispatch<React.SetStateAction<SliceSettings>>;
   onImageLoad: (e: React.SyntheticEvent<HTMLImageElement>) => void;
   onDownload: () => void;
+  chromaKeyProgress?: number; // Progress of chroma key removal (0-100)
+  isProcessingChromaKey?: boolean; // Whether chroma key removal is in progress
 }
 
 export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
@@ -21,6 +23,8 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   setSliceSettings,
   onImageLoad,
   onDownload,
+  chromaKeyProgress = 0,
+  isProcessingChromaKey = false,
 }) => {
   const handleColsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSliceSettings((p) => ({ ...p, cols: Math.max(1, Number(e.target.value)) }));
@@ -47,7 +51,25 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   }, [setSliceSettings]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="bg-white rounded-2xl shadow-sm p-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+      {/* Chroma Key Processing Progress Indicator */}
+      {isProcessingChromaKey && (
+        <div className="absolute inset-0 bg-white/90 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-10">
+          <div className="text-center space-y-4">
+            <Loader2 className="w-8 h-8 text-orange-500 animate-spin mx-auto" />
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-700">正在處理去背...</p>
+              <div className="w-64 bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-orange-500 h-full transition-all duration-300 ease-out"
+                  style={{ width: `${chromaKeyProgress}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-500">{chromaKeyProgress}%</p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-sm font-semibold text-gray-500 flex items-center gap-2">
           <span className="bg-gray-100 text-gray-600 w-6 h-6 rounded-full flex items-center justify-center text-xs">

@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { isQuotaError as checkQuotaError, getErrorMessage, type ApiError } from '../types/errors';
+import { logger } from '../utils/logger';
 
 export type ProgressCallback = (status: string) => void;
 
@@ -30,7 +31,7 @@ async function retryOperation<T>(
         const delay = baseDelay * Math.pow(2, i) + (Math.random() * 1000); 
         const waitSeconds = Math.round(delay / 1000);
         
-        console.warn(`Rate limit/Overload hit (Attempt ${i + 1}/${retries}). Retrying in ${waitSeconds}s...`);
+        logger.warn(`Rate limit/Overload hit (Attempt ${i + 1}/${retries}). Retrying in ${waitSeconds}s...`);
         if (onStatusUpdate) {
           onStatusUpdate(`API 繁忙 (429/503)，等待 ${waitSeconds} 秒後重試... (嘗試 ${i + 1}/${retries})`);
         }
@@ -172,11 +173,11 @@ async function getAnimationStoryboard(
 
   } catch (e: unknown) {
     if (isQuotaError(e)) {
-        console.error("Quota exceeded during storyboard generation. Aborting.");
+        logger.error("Quota exceeded during storyboard generation. Aborting.");
         throw e;
     }
 
-    console.warn("Storyboard generation failed (non-quota error), falling back to algorithmic descriptions.", e);
+    logger.warn("Storyboard generation failed (non-quota error), falling back to algorithmic descriptions.", e);
     // Fallback descriptions for non-critical errors (e.g. parsing issues)
     return Array.from({ length: frameCount }, (_, i) => {
         const progress = i / (frameCount - 1 || 1);
@@ -469,7 +470,7 @@ export const generateAnimationFrames = async (
         previousFrame = frameResult;
 
       } catch (error: unknown) {
-        console.error(`Generation failed at frame ${i + 1}`, error);
+        logger.error(`Generation failed at frame ${i + 1}`, error);
         throw error;
       }
   }
