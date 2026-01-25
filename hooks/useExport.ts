@@ -6,6 +6,25 @@ import UPNG from 'upng-js';
 import JSZip from 'jszip';
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 
+/**
+ * Custom hook for exporting animation frames in various formats.
+ * Supports APNG (high quality with transparency), GIF, and ZIP formats.
+ * Automatically handles resource cleanup (URL.revokeObjectURL).
+ * 
+ * @param generatedFrames - Array of base64 encoded frame images
+ * @param config - Animation configuration including speed
+ * @returns Object containing export state and export functions
+ * 
+ * @example
+ * ```typescript
+ * const {
+ *   isExporting,
+ *   handleDownloadApng,
+ *   handleDownloadGif,
+ *   handleDownloadZip
+ * } = useExport(frames, config);
+ * ```
+ */
 export const useExport = (generatedFrames: string[], config: AnimationConfig) => {
   const [isExporting, setIsExporting] = useState(false);
 

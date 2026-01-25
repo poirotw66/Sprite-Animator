@@ -2,6 +2,24 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { AnimationConfig } from '../types';
 import { ANIMATION_FPS_MULTIPLIER } from '../utils/constants';
 
+/**
+ * Custom hook for managing animation playback using requestAnimationFrame.
+ * Provides smooth frame-by-frame animation with configurable FPS.
+ * 
+ * @param generatedFrames - Array of base64 encoded frame images
+ * @param config - Animation configuration including speed
+ * @param isPlaying - Whether the animation should be playing
+ * @returns Object containing current frame index and frame click handler
+ * 
+ * @example
+ * ```typescript
+ * const { currentFrameIndex, handleFrameClick } = useAnimation(
+ *   frames,
+ *   config,
+ *   isPlaying
+ * );
+ * ```
+ */
 export const useAnimation = (
   generatedFrames: string[],
   config: AnimationConfig,

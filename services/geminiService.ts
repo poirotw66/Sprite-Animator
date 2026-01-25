@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { isQuotaError as checkQuotaError, getErrorMessage, type ApiError } from '../types/errors';
 
 export type ProgressCallback = (status: string) => void;
 
@@ -6,21 +7,8 @@ export type ProgressCallback = (status: string) => void;
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Helper to check if error is related to quota or overloading
-const isQuotaError = (error: any): boolean => {
-    const msg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
-    return (
-        error.status === 429 || 
-        error.code === 429 || 
-        error.status === 503 || 
-        error.code === 503 ||
-        msg.includes('429') || 
-        msg.includes('503') ||
-        msg.includes('Quota') || 
-        msg.includes('RESOURCE_EXHAUSTED') || 
-        msg.includes('quota') ||
-        msg.includes('exceeded') ||
-        msg.includes('Overloaded')
-    );
+const isQuotaError = (error: unknown): boolean => {
+    return checkQuotaError(error);
 };
 
 // Helper for retrying operations with exponential backoff
@@ -30,11 +18,11 @@ async function retryOperation<T>(
   retries = 5, 
   baseDelay = 4000 
 ): Promise<T> {
-  let lastError: any;
+  let lastError: unknown;
   for (let i = 0; i < retries; i++) {
     try {
       return await operation();
-    } catch (error: any) {
+    } catch (error: unknown) {
       lastError = error;
       
       if (isQuotaError(error) && i < retries - 1) {
@@ -61,6 +49,16 @@ async function retryOperation<T>(
 /**
  * Determines the optimal Aspect Ratio for a given grid configuration.
  * Finds the supported Gemini aspect ratio closest to the grid's natural shape (cols/rows).
+ * 
+ * @param cols - Number of columns in the sprite sheet grid
+ * @param rows - Number of rows in the sprite sheet grid
+ * @returns The closest supported aspect ratio string (e.g., "1:1", "4:3", "16:9")
+ * 
+ * @example
+ * ```typescript
+ * const ratio = getBestAspectRatio(4, 4); // Returns "1:1"
+ * const ratio = getBestAspectRatio(4, 3); // Returns "4:3"
+ * ```
  */
 function getBestAspectRatio(cols: number, rows: number): string {
     const targetRatio = cols / rows;
@@ -81,7 +79,28 @@ function getBestAspectRatio(cols: number, rows: number): string {
 }
 
 /**
- * Helper to get a storyboard plan from Gemini.
+ * Generates an animation storyboard by breaking down the action into sequential keyframes.
+ * Uses Gemini's multimodal capabilities to analyze the character and create a frame-by-frame plan.
+ * 
+ * @param ai - Initialized GoogleGenAI instance
+ * @param imageBase64 - Base64 encoded source character image
+ * @param userPrompt - User's animation prompt (e.g., "Run Cycle", "Jump")
+ * @param frameCount - Number of frames to generate in the storyboard
+ * @param onProgress - Optional callback to report progress status
+ * @returns Promise resolving to an array of frame descriptions
+ * 
+ * @throws {Error} If storyboard generation fails and fallback also fails
+ * 
+ * @example
+ * ```typescript
+ * const storyboard = await getAnimationStoryboard(
+ *   ai,
+ *   base64Image,
+ *   "Run Cycle",
+ *   8,
+ *   (status) => console.log(status)
+ * );
+ * ```
  */
 async function getAnimationStoryboard(
   ai: GoogleGenAI, 
@@ -151,7 +170,7 @@ async function getAnimationStoryboard(
     }
     return storyboard;
 
-  } catch (e: any) {
+  } catch (e: unknown) {
     if (isQuotaError(e)) {
         console.error("Quota exceeded during storyboard generation. Aborting.");
         throw e;
@@ -169,8 +188,32 @@ async function getAnimationStoryboard(
 }
 
 /**
- * Generates a single Sprite Sheet image.
- * This is much more quota-efficient (1 request).
+ * Generates a single sprite sheet image containing multiple animation frames in a grid layout.
+ * This is much more quota-efficient than frame-by-frame generation (only 1 API request).
+ * 
+ * @param imageBase64 - Base64 encoded source character image
+ * @param prompt - Animation action description (e.g., "Run Cycle", "Jump")
+ * @param cols - Number of columns in the sprite sheet grid
+ * @param rows - Number of rows in the sprite sheet grid
+ * @param apiKey - Gemini API key for authentication
+ * @param model - Model name to use (e.g., "gemini-2.5-flash-image")
+ * @param onProgress - Optional callback to report generation progress
+ * @returns Promise resolving to base64 encoded sprite sheet image
+ * 
+ * @throws {Error} If API key is missing or image generation fails
+ * 
+ * @example
+ * ```typescript
+ * const spriteSheet = await generateSpriteSheet(
+ *   base64Image,
+ *   "Run Cycle",
+ *   4,
+ *   4,
+ *   apiKey,
+ *   "gemini-2.5-flash-image",
+ *   (status) => console.log(status)
+ * );
+ * ```
  */
 export const generateSpriteSheet = async (
     imageBase64: string,
@@ -297,8 +340,32 @@ checkerboard, transparency pattern, alpha grid
 };
 
 /**
- * Generates animation frames using Gemini (Frame-by-Frame mode).
- * Optimized for continuity by passing the previous frame as context.
+ * Generates animation frames sequentially using Gemini's frame-by-frame mode.
+ * Optimized for continuity by passing the previous frame as context to each generation.
+ * 
+ * @param imageBase64 - Base64 encoded source character image
+ * @param prompt - Animation action description (e.g., "Run Cycle", "Jump")
+ * @param frameCount - Number of frames to generate
+ * @param apiKey - Gemini API key for authentication
+ * @param model - Model name to use (e.g., "gemini-2.5-flash-image")
+ * @param onProgress - Optional callback to report generation progress
+ * @param interFrameDelayMs - Delay between frame generations to avoid rate limiting (default: 4000ms)
+ * @returns Promise resolving to an array of base64 encoded frame images
+ * 
+ * @throws {Error} If API key is missing or frame generation fails
+ * 
+ * @example
+ * ```typescript
+ * const frames = await generateAnimationFrames(
+ *   base64Image,
+ *   "Run Cycle",
+ *   8,
+ *   apiKey,
+ *   "gemini-2.5-flash-image",
+ *   (status) => console.log(status),
+ *   2000
+ * );
+ * ```
  */
 export const generateAnimationFrames = async (
   imageBase64: string,
@@ -324,7 +391,7 @@ export const generateAnimationFrames = async (
   const generateFrame = async (frameDesc: string, i: number, prevFrameBase64: string | null) => {
     
     // Construct parts array for multimodal input
-    const parts: any[] = [];
+    const parts: Array<{ inlineData?: { mimeType: string; data: string }; text?: string }> = [];
     
     // 1. Original Reference
     parts.push({ inlineData: { mimeType: 'image/png', data: cleanBase64 } });
@@ -401,7 +468,7 @@ export const generateAnimationFrames = async (
         // Update previous frame for next iteration
         previousFrame = frameResult;
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`Generation failed at frame ${i + 1}`, error);
         throw error;
       }

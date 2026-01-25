@@ -2,6 +2,30 @@ import { useState, useEffect, useMemo } from 'react';
 import { sliceSpriteSheet, SliceSettings } from '../utils/imageUtils';
 import { BACKGROUND_REMOVAL_THRESHOLD, DEBOUNCE_DELAY } from '../utils/constants';
 
+/**
+ * Custom hook for managing sprite sheet slicing and frame generation.
+ * Automatically re-slices the sprite sheet when settings change.
+ * 
+ * @param spriteSheetImage - Base64 encoded sprite sheet image
+ * @param sliceSettings - Configuration for slicing (cols, rows, padding, shift)
+ * @param removeBackground - Whether to remove white/light backgrounds
+ * @param mode - Current generation mode ('frame' or 'sheet')
+ * @returns Object containing generated frames, sheet dimensions, and image load handler
+ * 
+ * @example
+ * ```typescript
+ * const {
+ *   generatedFrames,
+ *   sheetDimensions,
+ *   handleImageLoad
+ * } = useSpriteSheet(
+ *   spriteSheetImage,
+ *   sliceSettings,
+ *   removeBackground,
+ *   config.mode
+ * );
+ * ```
+ */
 export const useSpriteSheet = (
   spriteSheetImage: string | null,
   sliceSettings: SliceSettings,

@@ -1,7 +1,12 @@
 /**
- * Utility functions for image processing
+ * Utility functions for image processing and manipulation
+ * 
+ * @module imageUtils
  */
 
+/**
+ * Configuration for slicing a sprite sheet into individual frames
+ */
 export interface SliceSettings {
   cols: number;
   rows: number;
@@ -12,7 +17,33 @@ export interface SliceSettings {
 }
 
 /**
- * Slice a sprite sheet image into multiple frames
+ * Slices a sprite sheet image into multiple individual frame images.
+ * Supports padding (size reduction) and shift (position adjustment) for fine-tuning.
+ * 
+ * @param base64Image - Base64 encoded sprite sheet image
+ * @param cols - Number of columns in the grid
+ * @param rows - Number of rows in the grid
+ * @param paddingX - Horizontal padding (reduces effective width from both sides)
+ * @param paddingY - Vertical padding (reduces effective height from both sides)
+ * @param shiftX - Horizontal shift offset
+ * @param shiftY - Vertical shift offset
+ * @param removeBg - Whether to remove white/light backgrounds
+ * @param threshold - Color threshold for background removal (default: 230)
+ * @returns Promise resolving to an array of base64 encoded frame images
+ * 
+ * @throws {Error} If canvas context creation fails or image loading fails
+ * 
+ * @example
+ * ```typescript
+ * const frames = await sliceSpriteSheet(
+ *   spriteSheetBase64,
+ *   4, 4,  // 4x4 grid
+ *   10, 10, // 10px padding on each side
+ *   5, 5,   // 5px shift
+ *   true,   // Remove background
+ *   230     // Threshold
+ * );
+ * ```
  */
 export const sliceSpriteSheet = async (
   base64Image: string,
@@ -105,7 +136,18 @@ export const sliceSpriteSheet = async (
 };
 
 /**
- * Load images and extract their raw data
+ * Loads multiple images and extracts their raw pixel data for export processing.
+ * 
+ * @param frames - Array of base64 encoded image strings
+ * @returns Promise resolving to image data including pixel arrays, width, and height
+ * 
+ * @throws {Error} If any image fails to load
+ * 
+ * @example
+ * ```typescript
+ * const { imagesData, width, height } = await loadImagesData(frameArray);
+ * // imagesData contains Uint8ClampedArray pixel data for each frame
+ * ```
  */
 export const loadImagesData = async (
   frames: string[]
@@ -141,7 +183,16 @@ export const loadImagesData = async (
 };
 
 /**
- * Clean base64 data URL prefix
+ * Removes the data URL prefix from a base64 encoded image string.
+ * 
+ * @param base64 - Base64 string with optional data URL prefix
+ * @returns Clean base64 string without prefix
+ * 
+ * @example
+ * ```typescript
+ * const clean = cleanBase64("data:image/png;base64,iVBORw0KG...");
+ * // Returns: "iVBORw0KG..."
+ * ```
  */
 export const cleanBase64 = (base64: string): string => {
   return base64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');

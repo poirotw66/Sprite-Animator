@@ -1,11 +1,19 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { RefreshCw, Settings, Zap } from './components/Icons';
+import React, { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
+import { RefreshCw, Settings, Zap, Loader2 } from './components/Icons';
 import { SettingsModal } from './components/SettingsModal';
 import { ImageUpload } from './components/ImageUpload';
 import { AnimationConfigPanel } from './components/AnimationConfig';
-import { SpriteSheetViewer } from './components/SpriteSheetViewer';
-import { AnimationPreview } from './components/AnimationPreview';
-import { FrameGrid } from './components/FrameGrid';
+
+// Lazy load heavy components for code splitting
+const SpriteSheetViewer = lazy(() => 
+  import('./components/SpriteSheetViewer').then(module => ({ default: module.SpriteSheetViewer }))
+);
+const AnimationPreview = lazy(() => 
+  import('./components/AnimationPreview').then(module => ({ default: module.AnimationPreview }))
+);
+const FrameGrid = lazy(() => 
+  import('./components/FrameGrid').then(module => ({ default: module.FrameGrid }))
+);
 import { generateAnimationFrames, generateSpriteSheet } from './services/geminiService';
 import { AnimationConfig as AnimationConfigType } from './types';
 import { useSettings } from './hooks/useSettings';
@@ -357,42 +365,66 @@ const App: React.FC = () => {
         <div className="lg:col-span-7 flex flex-col gap-6">
           {/* Sprite Sheet Viewer (Only in Sheet Mode) */}
           {config.mode === 'sheet' && (
-            <SpriteSheetViewer
-              spriteSheetImage={spriteSheetImage}
-              isGenerating={isGenerating}
-              sheetDimensions={sheetDimensions}
-              sliceSettings={sliceSettings}
-              setSliceSettings={setSliceSettings}
-              onImageLoad={handleImageLoad}
-              onDownload={wrappedDownloadSpriteSheet}
-            />
+            <Suspense
+              fallback={
+                <div className="bg-white rounded-2xl shadow-sm p-6 flex items-center justify-center min-h-[200px]">
+                  <Loader2 className="w-6 h-6 text-orange-500 animate-spin" />
+                </div>
+              }
+            >
+              <SpriteSheetViewer
+                spriteSheetImage={spriteSheetImage}
+                isGenerating={isGenerating}
+                sheetDimensions={sheetDimensions}
+                sliceSettings={sliceSettings}
+                setSliceSettings={setSliceSettings}
+                onImageLoad={handleImageLoad}
+                onDownload={wrappedDownloadSpriteSheet}
+              />
+            </Suspense>
           )}
 
           {/* Animation Preview */}
           <div className="space-y-6">
-            <AnimationPreview
-              generatedFrames={generatedFrames}
-              currentFrameIndex={currentFrameIndex}
-              isGenerating={isGenerating}
-              statusText={statusText}
-              isPlaying={isPlaying}
-              isExporting={isExporting}
-              config={config}
-              onTogglePlay={togglePlay}
-              onDownloadApng={wrappedDownloadApng}
-              onDownloadGif={wrappedDownloadGif}
-              onDownloadZip={wrappedDownloadZip}
-            />
+            <Suspense
+              fallback={
+                <div className="bg-white rounded-2xl shadow-sm p-6 flex items-center justify-center min-h-[500px]">
+                  <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
+                </div>
+              }
+            >
+              <AnimationPreview
+                generatedFrames={generatedFrames}
+                currentFrameIndex={currentFrameIndex}
+                isGenerating={isGenerating}
+                statusText={statusText}
+                isPlaying={isPlaying}
+                isExporting={isExporting}
+                config={config}
+                onTogglePlay={togglePlay}
+                onDownloadApng={wrappedDownloadApng}
+                onDownloadGif={wrappedDownloadGif}
+                onDownloadZip={wrappedDownloadZip}
+              />
+            </Suspense>
 
             {/* Frame Grid */}
             {generatedFrames.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-sm p-6">
-                <FrameGrid
-                  frames={generatedFrames}
-                  currentFrameIndex={currentFrameIndex}
-                  onFrameClick={handleFrameClick}
-                />
-              </div>
+              <Suspense
+                fallback={
+                  <div className="bg-white rounded-2xl shadow-sm p-6 flex items-center justify-center min-h-[100px]">
+                    <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                  </div>
+                }
+              >
+                <div className="bg-white rounded-2xl shadow-sm p-6">
+                  <FrameGrid
+                    frames={generatedFrames}
+                    currentFrameIndex={currentFrameIndex}
+                    onFrameClick={handleFrameClick}
+                  />
+                </div>
+              </Suspense>
             )}
           </div>
         </div>

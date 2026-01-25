@@ -4,6 +4,24 @@ import { DEFAULT_MODEL, SUPPORTED_MODELS } from '../utils/constants';
 const API_KEY_STORAGE_KEY = 'gemini_api_key';
 const MODEL_STORAGE_KEY = 'gemini_model';
 
+/**
+ * Custom hook for managing application settings including API key and model selection.
+ * Handles localStorage persistence and environment variable fallback.
+ * 
+ * @returns Object containing settings state and management functions
+ * 
+ * @example
+ * ```typescript
+ * const {
+ *   apiKey,
+ *   setApiKey,
+ *   selectedModel,
+ *   showSettings,
+ *   saveSettings,
+ *   getEffectiveApiKey
+ * } = useSettings();
+ * ```
+ */
 export const useSettings = () => {
   const [apiKey, setApiKey] = useState('');
   const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL);
@@ -19,7 +37,7 @@ export const useSettings = () => {
     }
 
     // Validate stored model or force update to the recommended one
-    if (storedModel && SUPPORTED_MODELS.includes(storedModel as any)) {
+    if (storedModel && (SUPPORTED_MODELS as readonly string[]).includes(storedModel)) {
       setSelectedModel(storedModel);
     } else {
       // Force default if stored model is old or invalid
