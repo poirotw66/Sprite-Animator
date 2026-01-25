@@ -26,11 +26,14 @@ const App: React.FC = () => {
   });
 
   // Manual Slicing Settings (Independent of generation config)
+  // Updated: Split 'Offset' into 'Padding' (Size reduction) and 'Shift' (Position move)
   const [sliceSettings, setSliceSettings] = useState({
       cols: 3,
       rows: 2,
-      offsetX: 0,
-      offsetY: 0
+      paddingX: 0,
+      paddingY: 0,
+      shiftX: 0,
+      shiftY: 0
   });
   
   // Track sheet dimensions for accurate SVG grid and slider limits
@@ -136,8 +139,10 @@ const App: React.FC = () => {
                     spriteSheetImage, 
                     sliceSettings.cols, 
                     sliceSettings.rows, 
-                    sliceSettings.offsetX,
-                    sliceSettings.offsetY,
+                    sliceSettings.paddingX,
+                    sliceSettings.paddingY,
+                    sliceSettings.shiftX,
+                    sliceSettings.shiftY,
                     removeBackground
                 );
                 setGeneratedFrames(frames);
@@ -160,7 +165,8 @@ const App: React.FC = () => {
     setCurrentFrameIndex(0);
     setIsPlaying(true);
     setConfig(prev => ({ ...prev, prompt: '' }));
-    setSliceSettings({ cols: 3, rows: 2, offsetX: 0, offsetY: 0 }); // Reset slice settings
+    // Reset slice settings
+    setSliceSettings({ cols: 3, rows: 2, paddingX: 0, paddingY: 0, shiftX: 0, shiftY: 0 }); 
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -195,14 +201,16 @@ const App: React.FC = () => {
 
   /**
    * Slice a single sprite sheet image into multiple frames.
-   * Updated to support Offset X/Y and dynamic Col/Row adjustments.
+   * Updated to support Padding (Size) and Shift (Position).
    */
   const sliceSpriteSheet = async (
       base64Image: string, 
       cols: number, 
       rows: number, 
-      offsetX: number,
-      offsetY: number,
+      paddingX: number,
+      paddingY: number,
+      shiftX: number,
+      shiftY: number,
       removeBg: boolean
   ): Promise<string[]> => {
     return new Promise((resolve, reject) => {
@@ -220,12 +228,12 @@ const App: React.FC = () => {
             const totalWidth = img.width;
             const totalHeight = img.height;
 
-            // Effective area calculation
-            const effectiveWidth = totalWidth - (offsetX * 2);
-            const effectiveHeight = totalHeight - (offsetY * 2);
+            // Effective Grid Area: Reduced by padding (from both sides)
+            const effectiveWidth = totalWidth - (paddingX * 2);
+            const effectiveHeight = totalHeight - (paddingY * 2);
 
             if (effectiveWidth <= 0 || effectiveHeight <= 0) {
-                resolve([]); // Invalid settings (offsets crossed)
+                resolve([]); // Invalid settings
                 return;
             }
 
@@ -248,9 +256,13 @@ const App: React.FC = () => {
                 for (let c = 0; c < cols; c++) {
                     ctx.clearRect(0, 0, frameWidth, frameHeight);
                     
-                    // Source X/Y includes the Offset
-                    const sx = offsetX + (c * cellWidth);
-                    const sy = offsetY + (r * cellHeight);
+                    // Source X/Y = Start Position + Grid Index
+                    // Start Position = Padding (inset) + Shift (move)
+                    const startX = paddingX + shiftX;
+                    const startY = paddingY + shiftY;
+
+                    const sx = startX + (c * cellWidth);
+                    const sy = startY + (r * cellHeight);
                     
                     ctx.drawImage(
                         img,
@@ -316,8 +328,10 @@ const App: React.FC = () => {
     setSliceSettings({
         cols: config.gridCols,
         rows: config.gridRows,
-        offsetX: 0,
-        offsetY: 0
+        paddingX: 0,
+        paddingY: 0,
+        shiftX: 0,
+        shiftY: 0
     });
     
     // If using user key, we assume higher limits and reduce artificial delay
@@ -934,12 +948,12 @@ const App: React.FC = () => {
                                     border: '1px solid rgba(59,130,246,0.3)' 
                                   }}
                                >
-                                  {/* Draw Outer Offset Rect */}
+                                  {/* Draw Outer Rect (Grid Area) - defined by Padding and Shift */}
                                   <rect 
-                                    x={sliceSettings.offsetX} 
-                                    y={sliceSettings.offsetY} 
-                                    width={Math.max(0, sheetDimensions.width - sliceSettings.offsetX * 2)} 
-                                    height={Math.max(0, sheetDimensions.height - sliceSettings.offsetY * 2)} 
+                                    x={sliceSettings.paddingX + sliceSettings.shiftX} 
+                                    y={sliceSettings.paddingY + sliceSettings.shiftY} 
+                                    width={Math.max(0, sheetDimensions.width - sliceSettings.paddingX * 2)} 
+                                    height={Math.max(0, sheetDimensions.height - sliceSettings.paddingY * 2)} 
                                     fill="none" 
                                     stroke="rgba(59,130,246,0.6)" 
                                     strokeWidth="2"
@@ -947,14 +961,17 @@ const App: React.FC = () => {
 
                                   {/* Draw Vertical Grid Lines */}
                                   {Array.from({ length: sliceSettings.cols - 1 }).map((_, i) => {
-                                      const effectiveWidth = sheetDimensions.width - sliceSettings.offsetX * 2;
+                                      const effectiveWidth = sheetDimensions.width - sliceSettings.paddingX * 2;
                                       const cellWidth = effectiveWidth / sliceSettings.cols;
-                                      const x = sliceSettings.offsetX + (i + 1) * cellWidth;
+                                      const startX = sliceSettings.paddingX + sliceSettings.shiftX;
+                                      const startY = sliceSettings.paddingY + sliceSettings.shiftY;
+                                      const height = sheetDimensions.height - sliceSettings.paddingY * 2;
+                                      const x = startX + (i + 1) * cellWidth;
                                       return (
                                         <line 
                                           key={`v-${i}`} 
-                                          x1={x} y1={sliceSettings.offsetY} 
-                                          x2={x} y2={sheetDimensions.height - sliceSettings.offsetY} 
+                                          x1={x} y1={startY} 
+                                          x2={x} y2={startY + height} 
                                           stroke="rgba(59,130,246,0.5)" 
                                           strokeWidth="1" 
                                           strokeDasharray="4 2"
@@ -964,14 +981,17 @@ const App: React.FC = () => {
 
                                   {/* Draw Horizontal Grid Lines */}
                                   {Array.from({ length: sliceSettings.rows - 1 }).map((_, i) => {
-                                      const effectiveHeight = sheetDimensions.height - sliceSettings.offsetY * 2;
+                                      const effectiveHeight = sheetDimensions.height - sliceSettings.paddingY * 2;
                                       const cellHeight = effectiveHeight / sliceSettings.rows;
-                                      const y = sliceSettings.offsetY + (i + 1) * cellHeight;
+                                      const startX = sliceSettings.paddingX + sliceSettings.shiftX;
+                                      const startY = sliceSettings.paddingY + sliceSettings.shiftY;
+                                      const width = sheetDimensions.width - sliceSettings.paddingX * 2;
+                                      const y = startY + (i + 1) * cellHeight;
                                       return (
                                         <line 
                                           key={`h-${i}`} 
-                                          x1={sliceSettings.offsetX} y1={y} 
-                                          x2={sheetDimensions.width - sliceSettings.offsetX} y2={y} 
+                                          x1={startX} y1={y} 
+                                          x2={startX + width} y2={y} 
                                           stroke="rgba(59,130,246,0.5)" 
                                           strokeWidth="1" 
                                           strokeDasharray="4 2"
@@ -987,60 +1007,100 @@ const App: React.FC = () => {
 
                {/* Manual Slicing Controls Toolbar */}
                {spriteSheetImage && sheetDimensions.width > 0 && (
-                    <div className="mt-4 p-3 bg-blue-50/50 border border-blue-100 rounded-xl flex flex-wrap items-center gap-4 text-sm animate-in fade-in slide-in-from-top-2">
-                        <div className="flex items-center gap-2 text-blue-700 font-semibold mr-2">
+                    <div className="mt-4 p-3 bg-blue-50/50 border border-blue-100 rounded-xl flex flex-col gap-3 text-sm animate-in fade-in slide-in-from-top-2">
+                        <div className="flex items-center gap-2 text-blue-700 font-semibold border-b border-blue-200 pb-2">
                             <Sliders className="w-4 h-4" />
-                            網格切分設定
+                            網格切分設定 (Manual Slicing)
                         </div>
                         
-                        <div className="flex items-center gap-2 bg-white px-2 py-1 rounded shadow-sm border border-blue-100">
-                            <span className="text-xs text-gray-500">Cols</span>
-                            <input 
-                                type="number" 
-                                min="1" max="10"
-                                value={sliceSettings.cols}
-                                onChange={(e) => setSliceSettings(p => ({...p, cols: Math.max(1, Number(e.target.value))}))}
-                                className="w-10 text-center text-sm font-medium outline-none text-gray-700"
-                            />
+                        <div className="flex items-center gap-4 flex-wrap">
+                            <div className="flex items-center gap-2 bg-white px-2 py-1 rounded shadow-sm border border-blue-100">
+                                <span className="text-xs text-gray-500">Cols</span>
+                                <input 
+                                    type="number" 
+                                    min="1" max="10"
+                                    value={sliceSettings.cols}
+                                    onChange={(e) => setSliceSettings(p => ({...p, cols: Math.max(1, Number(e.target.value))}))}
+                                    className="w-10 text-center text-sm font-medium outline-none text-gray-700"
+                                />
+                            </div>
+
+                            <div className="flex items-center gap-2 bg-white px-2 py-1 rounded shadow-sm border border-blue-100">
+                                <span className="text-xs text-gray-500">Rows</span>
+                                <input 
+                                    type="number" 
+                                    min="1" max="10"
+                                    value={sliceSettings.rows}
+                                    onChange={(e) => setSliceSettings(p => ({...p, rows: Math.max(1, Number(e.target.value))}))}
+                                    className="w-10 text-center text-sm font-medium outline-none text-gray-700"
+                                />
+                            </div>
                         </div>
 
-                        <div className="flex items-center gap-2 bg-white px-2 py-1 rounded shadow-sm border border-blue-100">
-                            <span className="text-xs text-gray-500">Rows</span>
-                            <input 
-                                type="number" 
-                                min="1" max="10"
-                                value={sliceSettings.rows}
-                                onChange={(e) => setSliceSettings(p => ({...p, rows: Math.max(1, Number(e.target.value))}))}
-                                className="w-10 text-center text-sm font-medium outline-none text-gray-700"
-                            />
+                        {/* X Axis Controls */}
+                        <div className="flex items-center gap-4 border-t border-blue-100 pt-2">
+                             <div className="text-xs font-bold text-blue-400 w-4">X</div>
+                             
+                             {/* Size/Padding X */}
+                             <div className="flex items-center gap-2 flex-1">
+                                <span className="text-[10px] text-gray-500 w-12">縮放 (Pad)</span>
+                                <input 
+                                    type="range" 
+                                    min="0" 
+                                    max={Math.floor(sheetDimensions.width * 0.4)} 
+                                    value={sliceSettings.paddingX}
+                                    onChange={(e) => setSliceSettings(p => ({...p, paddingX: Number(e.target.value)}))}
+                                    className="flex-1 h-1.5 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                                />
+                                <span className="text-[10px] text-blue-600 w-8 text-right">{sliceSettings.paddingX}</span>
+                             </div>
+
+                             {/* Position/Shift X */}
+                             <div className="flex items-center gap-2 flex-1">
+                                <span className="text-[10px] text-gray-500 w-12">位移 (Shift)</span>
+                                <input 
+                                    type="range" 
+                                    min={-100} 
+                                    max={100} 
+                                    value={sliceSettings.shiftX}
+                                    onChange={(e) => setSliceSettings(p => ({...p, shiftX: Number(e.target.value)}))}
+                                    className="flex-1 h-1.5 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                                />
+                                <span className="text-[10px] text-blue-600 w-8 text-right">{sliceSettings.shiftX}</span>
+                             </div>
                         </div>
 
-                        <div className="h-4 w-px bg-blue-200 mx-1"></div>
+                         {/* Y Axis Controls */}
+                         <div className="flex items-center gap-4 border-t border-blue-100 pt-2">
+                             <div className="text-xs font-bold text-blue-400 w-4">Y</div>
+                             
+                             {/* Size/Padding Y */}
+                             <div className="flex items-center gap-2 flex-1">
+                                <span className="text-[10px] text-gray-500 w-12">縮放 (Pad)</span>
+                                <input 
+                                    type="range" 
+                                    min="0" 
+                                    max={Math.floor(sheetDimensions.height * 0.4)} 
+                                    value={sliceSettings.paddingY}
+                                    onChange={(e) => setSliceSettings(p => ({...p, paddingY: Number(e.target.value)}))}
+                                    className="flex-1 h-1.5 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                                />
+                                <span className="text-[10px] text-blue-600 w-8 text-right">{sliceSettings.paddingY}</span>
+                             </div>
 
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">Offset X</span>
-                            <input 
-                                type="range" 
-                                min="0" 
-                                max={Math.floor(sheetDimensions.width * 0.4)} // Max 40% of width
-                                value={sliceSettings.offsetX}
-                                onChange={(e) => setSliceSettings(p => ({...p, offsetX: Number(e.target.value)}))}
-                                className="w-20 h-1.5 bg-blue-200 rounded-lg appearance-none cursor-pointer"
-                            />
-                            <span className="text-xs w-6 text-right text-blue-600">{sliceSettings.offsetX}px</span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">Offset Y</span>
-                            <input 
-                                type="range" 
-                                min="0" 
-                                max={Math.floor(sheetDimensions.height * 0.4)}
-                                value={sliceSettings.offsetY}
-                                onChange={(e) => setSliceSettings(p => ({...p, offsetY: Number(e.target.value)}))}
-                                className="w-20 h-1.5 bg-blue-200 rounded-lg appearance-none cursor-pointer"
-                            />
-                            <span className="text-xs w-6 text-right text-blue-600">{sliceSettings.offsetY}px</span>
+                             {/* Position/Shift Y */}
+                             <div className="flex items-center gap-2 flex-1">
+                                <span className="text-[10px] text-gray-500 w-12">位移 (Shift)</span>
+                                <input 
+                                    type="range" 
+                                    min={-100} 
+                                    max={100} 
+                                    value={sliceSettings.shiftY}
+                                    onChange={(e) => setSliceSettings(p => ({...p, shiftY: Number(e.target.value)}))}
+                                    className="flex-1 h-1.5 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                                />
+                                <span className="text-[10px] text-blue-600 w-8 text-right">{sliceSettings.shiftY}</span>
+                             </div>
                         </div>
                     </div>
                )}

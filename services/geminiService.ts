@@ -203,6 +203,7 @@ export const generateSpriteSheet = async (
     1. **NO TEXT / NO NUMBERS**: Do NOT write frame numbers (1, 2, 3...), labels, or annotations anywhere on the image.
     2. **NO BORDERS / NO GRID LINES**: Do NOT draw visible lines separating the cells. Do NOT draw a frame around the image. The background must be continuous.
     3. **SOLID BACKGROUND**: Use a pure, solid white (#FFFFFF) background only.
+    4. **NO VIGNETTING / NO SHADOWS**: The image corners (especially top-left) MUST be pure white (#FFFFFF). Eliminate all lighting falloff or dark artifacts at the edges.
     
     [STRICT GRID LAYOUT]
     1. **Edge-to-Edge Grid**: The output image must be a PERFECT GRID with NO outer padding.
@@ -210,14 +211,15 @@ export const generateSpriteSheet = async (
     3. **Centering**: Place exactly one character pose in the visual center of each calculated cell. Do NOT offset them.
 
     [ANIMATION RULES]
-    1. **Sequence**: Animation reads Left-to-Right, Top-to-Bottom. Frame 0 is Top-Left.
+    1. **Sequence**: Animation reads Left-to-Right, Top-to-Bottom. Start at the Top-Left cell.
     2. **Consistency**: The character size (head to toe) must be identical in every frame. 
     3. **Grounding**: Ensure the character's feet touch the same imaginary ground line within every cell. This prevents "jittering" when the animation plays.
     4. **Looping**: If the action implies a cycle, make the last frame connect smoothly to the first.
 
     [VISUAL STYLE]
     - Flat 2D style.
-    - Solid Pure White Background (#FFFFFF).
+    - **Lighting**: Flat, even studio lighting. Absolutely NO dark corners or vignettes.
+    - Solid Pure White Background (#FFFFFF) extending to all edges.
     
     [ASPECT RATIO TARGET]
     The requested aspect ratio is ${targetAspectRatio}. Distribute the ${cols}x${rows} frames evenly to fill this shape completely.
