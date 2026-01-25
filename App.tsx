@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, Play, RefreshCw, Wand2, ImageIcon, Download, Loader2, Layers, Zap, FileVideo, Archive, Film, Settings, X, Grid3X3, Film as FilmIcon, Eraser } from './components/Icons';
+import { Upload, Play, RefreshCw, Wand2, ImageIcon, Download, Loader2, Layers, Zap, FileVideo, Archive, Film, Settings, X, Grid3X3, Film as FilmIcon, Eraser, Move, Sliders, ShieldCheck, ShieldAlert } from './components/Icons';
 import { generateAnimationFrames, generateSpriteSheet } from './services/geminiService';
 import { AnimationConfig } from './types';
 import UPNG from 'upng-js';
@@ -24,7 +24,18 @@ const App: React.FC = () => {
     gridCols: 3,
     gridRows: 2,
   });
+
+  // Manual Slicing Settings (Independent of generation config)
+  const [sliceSettings, setSliceSettings] = useState({
+      cols: 3,
+      rows: 2,
+      offsetX: 0,
+      offsetY: 0
+  });
   
+  // Track sheet dimensions for accurate SVG grid and slider limits
+  const [sheetDimensions, setSheetDimensions] = useState({ width: 0, height: 0 });
+
   // New: Background removal state
   const [removeBackground, setRemoveBackground] = useState(true);
 
@@ -62,12 +73,27 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Sync slice settings with config when config changes (initial setup)
+  useEffect(() => {
+      setSliceSettings(prev => ({
+          ...prev,
+          cols: config.gridCols,
+          rows: config.gridRows
+      }));
+  }, [config.gridCols, config.gridRows]);
+
   // Save settings helper
   const saveSettings = (key: string, model: string) => {
     const trimmedKey = key.trim();
     setApiKey(trimmedKey);
     setSelectedModel(model);
-    localStorage.setItem('gemini_api_key', trimmedKey);
+    
+    if (trimmedKey) {
+        localStorage.setItem('gemini_api_key', trimmedKey);
+    } else {
+        localStorage.removeItem('gemini_api_key');
+    }
+    
     localStorage.setItem('gemini_model', model);
     setShowSettings(false);
   };
@@ -79,7 +105,11 @@ const App: React.FC = () => {
       const intervalMs = 1000 / fps;
 
       animationIntervalRef.current = window.setInterval(() => {
-        setCurrentFrameIndex((prev) => (prev + 1) % generatedFrames.length);
+        // Use functional update to ensure we always have the latest state
+        setCurrentFrameIndex((prev) => {
+             const next = prev + 1;
+             return next >= generatedFrames.length ? 0 : next;
+        });
       }, intervalMs);
     }
 
@@ -88,17 +118,26 @@ const App: React.FC = () => {
         clearInterval(animationIntervalRef.current);
       }
     };
-  }, [generatedFrames, config.speed, isPlaying]);
+  }, [generatedFrames.length, config.speed, isPlaying]);
 
-  // Re-slice when toggle changes or sheet image updates
+  // Safe index check: if generatedFrames shrinks, reset index
+  useEffect(() => {
+     if (generatedFrames.length > 0 && currentFrameIndex >= generatedFrames.length) {
+         setCurrentFrameIndex(0);
+     }
+  }, [generatedFrames.length]);
+
+  // Re-slice when Slice Settings, Toggle or Image updates
   useEffect(() => {
     if (spriteSheetImage && config.mode === 'sheet') {
         const reSlice = async () => {
             try {
                 const frames = await sliceSpriteSheet(
                     spriteSheetImage, 
-                    config.gridCols, 
-                    config.gridRows, 
+                    sliceSettings.cols, 
+                    sliceSettings.rows, 
+                    sliceSettings.offsetX,
+                    sliceSettings.offsetY,
                     removeBackground
                 );
                 setGeneratedFrames(frames);
@@ -106,18 +145,22 @@ const App: React.FC = () => {
                 console.error("Re-slice failed", e);
             }
         };
-        reSlice();
+        // Small debounce to keep UI responsive while dragging sliders
+        const timer = setTimeout(reSlice, 50); 
+        return () => clearTimeout(timer);
     }
-  }, [removeBackground, spriteSheetImage, config.gridCols, config.gridRows]);
+  }, [removeBackground, spriteSheetImage, sliceSettings]); // Depend on sliceSettings
 
   const handleReset = () => {
     setSourceImage(null);
     setGeneratedFrames([]);
     setSpriteSheetImage(null);
+    setSheetDimensions({ width: 0, height: 0 });
     setError(null);
     setCurrentFrameIndex(0);
     setIsPlaying(true);
     setConfig(prev => ({ ...prev, prompt: '' }));
+    setSliceSettings({ cols: 3, rows: 2, offsetX: 0, offsetY: 0 }); // Reset slice settings
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -152,13 +195,14 @@ const App: React.FC = () => {
 
   /**
    * Slice a single sprite sheet image into multiple frames.
-   * Uses "Strict Grid" logic with floating point precision.
-   * This assumes the sprite sheet is perfectly divided into [cols] x [rows].
+   * Updated to support Offset X/Y and dynamic Col/Row adjustments.
    */
   const sliceSpriteSheet = async (
       base64Image: string, 
       cols: number, 
       rows: number, 
+      offsetX: number,
+      offsetY: number,
       removeBg: boolean
   ): Promise<string[]> => {
     return new Promise((resolve, reject) => {
@@ -176,54 +220,56 @@ const App: React.FC = () => {
             const totalWidth = img.width;
             const totalHeight = img.height;
 
-            // Strict Grid Calculation (Floating Point)
-            // This ensures we cover 100% of the image without gaps or drift.
-            const cellWidth = totalWidth / cols;
-            const cellHeight = totalHeight / rows;
+            // Effective area calculation
+            const effectiveWidth = totalWidth - (offsetX * 2);
+            const effectiveHeight = totalHeight - (offsetY * 2);
 
-            // Standardize Output Size (Integers)
-            // We use floor to ensure we don't accidentally grab a sub-pixel transparent edge from outside bounds.
+            if (effectiveWidth <= 0 || effectiveHeight <= 0) {
+                resolve([]); // Invalid settings (offsets crossed)
+                return;
+            }
+
+            const cellWidth = effectiveWidth / cols;
+            const cellHeight = effectiveHeight / rows;
+
             const frameWidth = Math.floor(cellWidth);
             const frameHeight = Math.floor(cellHeight);
 
+            if (frameWidth <= 0 || frameHeight <= 0) {
+                 resolve([]);
+                 return;
+            }
+
             canvas.width = frameWidth;
             canvas.height = frameHeight;
-
-            // Optional: Disable smoothing to keep pixel art crisp during the slice copy
             ctx.imageSmoothingEnabled = false;
 
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
                     ctx.clearRect(0, 0, frameWidth, frameHeight);
                     
-                    // Precise Source Coordinates
-                    const sx = c * cellWidth;
-                    const sy = r * cellHeight;
+                    // Source X/Y includes the Offset
+                    const sx = offsetX + (c * cellWidth);
+                    const sy = offsetY + (r * cellHeight);
                     
-                    // Draw strict grid cell to canvas
-                    // This maps the float source rectangle (sx, sy, cellWidth, cellHeight)
-                    // exactly to the integer destination canvas (0, 0, frameWidth, frameHeight).
-                    // This handles any sub-pixel scaling automatically.
                     ctx.drawImage(
                         img,
                         sx, sy, cellWidth, cellHeight, 
                         0, 0, frameWidth, frameHeight 
                     );
 
-                    // Background Removal (White Keying)
+                    // Background Removal
                     if (removeBg) {
                         const imageData = ctx.getImageData(0, 0, frameWidth, frameHeight);
                         const data = imageData.data;
-                        const threshold = 230; // Threshold for "white"
+                        const threshold = 230; 
                         
                         for (let i = 0; i < data.length; i += 4) {
                             const red = data[i];
                             const green = data[i + 1];
                             const blue = data[i + 2];
-                            
-                            // If pixel is very light (white/near white), make it transparent
                             if (red > threshold && green > threshold && blue > threshold) {
-                                data[i + 3] = 0; // Alpha = 0
+                                data[i + 3] = 0; 
                             }
                         }
                         ctx.putImageData(imageData, 0, 0);
@@ -240,7 +286,8 @@ const App: React.FC = () => {
   };
 
   const handleGenerate = async () => {
-    // Explicitly prefer the user's key state over environment
+    // Logic: If apiKey is set in state (from input or localStorage), use it.
+    // Otherwise fallback to process.env.API_KEY.
     const userKey = apiKey.trim();
     const effectiveKey = userKey || process.env.API_KEY;
 
@@ -265,14 +312,21 @@ const App: React.FC = () => {
     setSpriteSheetImage(null); // Clear previous
     setIsPlaying(true);
     
-    // Strategy Optimization based on 17 RPM (approx 1 req every 3.53s)
+    // Reset Slice Settings to match Config on new generation
+    setSliceSettings({
+        cols: config.gridCols,
+        rows: config.gridRows,
+        offsetX: 0,
+        offsetY: 0
+    });
+    
+    // If using user key, we assume higher limits and reduce artificial delay
     const delayBetweenFrames = userKey ? 2000 : 5000;
 
     try {
       if (config.mode === 'sheet') {
           setStatusText(`準備生成精靈圖 (使用模型: ${selectedModel})...`);
           
-          // 1. Generate single big image
           const sheetImage = await generateSpriteSheet(
               sourceImage,
               config.prompt,
@@ -283,18 +337,9 @@ const App: React.FC = () => {
               (status) => setStatusText(status)
           );
 
-          setSpriteSheetImage(sheetImage); // Save the raw sheet
-
-          // 2. Slice it (using current removeBackground setting)
-          setStatusText("正在裁切網格...");
-          const frames = await sliceSpriteSheet(
-              sheetImage, 
-              config.gridCols, 
-              config.gridRows,
-              removeBackground
-          );
-          setGeneratedFrames(frames);
-
+          setSpriteSheetImage(sheetImage);
+          // Actual slicing happens in useEffect via sliceSettings change/init
+          
       } else {
           // Frame by Frame mode
           setStatusText(`準備開始逐幀生成 (使用模型: ${selectedModel})`);
@@ -483,6 +528,9 @@ const App: React.FC = () => {
   const togglePlay = () => {
     setIsPlaying(!isPlaying);
   };
+  
+  // Determine key status for UI
+  const hasCustomKey = !!apiKey.trim();
 
   return (
     <div className="min-h-screen bg-[#F5F7FA] p-4 md:p-8 font-sans">
@@ -503,14 +551,35 @@ const App: React.FC = () => {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Gemini API Key</label>
-                <input 
-                  type="password" 
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="AIzaSy..."
-                  className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
-                />
-                <p className="text-xs text-gray-500 mt-1">
+                <div className="relative">
+                    <input 
+                    type="password" 
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder={process.env.API_KEY ? "已檢測到系統 Key (可覆蓋)" : "AIzaSy..."}
+                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 outline-none pr-10"
+                    />
+                    {hasCustomKey && (
+                        <div className="absolute right-3 top-2.5 text-green-500" title="使用中">
+                            <ShieldCheck className="w-4 h-4" />
+                        </div>
+                    )}
+                </div>
+                
+                {/* Status Indicator */}
+                <div className="mt-2 flex items-center gap-2 text-xs">
+                    {hasCustomKey ? (
+                        <span className="text-green-600 flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
+                            <ShieldCheck className="w-3 h-3" /> 使用自訂 Key (優先)
+                        </span>
+                    ) : (
+                        <span className="text-gray-500 flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
+                            <ShieldAlert className="w-3 h-3" /> 使用預設/系統 Key
+                        </span>
+                    )}
+                </div>
+                
+                <p className="text-xs text-gray-500 mt-2">
                   您的 Key 僅會儲存在本地瀏覽器中。
                   <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-orange-500 hover:underline ml-1">
                     獲取 Key
@@ -535,7 +604,7 @@ const App: React.FC = () => {
                   onClick={() => saveSettings(apiKey, selectedModel)}
                   className="w-full bg-gray-900 text-white py-2.5 rounded-lg font-medium hover:bg-gray-800 transition-colors"
                 >
-                  儲存設定
+                  儲存並應用
                 </button>
               </div>
             </div>
@@ -553,11 +622,12 @@ const App: React.FC = () => {
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setShowSettings(true)}
-            className={`p-2 rounded-full transition-all shadow-sm border border-transparent 
-              ${apiKey ? 'text-orange-600 bg-orange-50 hover:bg-orange-100 border-orange-200' : 'text-gray-500 hover:text-gray-800 bg-white/50 hover:bg-white hover:border-gray-200'}`}
-            title={apiKey ? "使用自訂 Key" : "使用系統 Key (設定)"}
+            className={`p-2 rounded-full transition-all shadow-sm border border-transparent flex items-center gap-2
+              ${hasCustomKey ? 'text-green-600 bg-green-50 hover:bg-green-100 border-green-200' : 'text-gray-500 hover:text-gray-800 bg-white/50 hover:bg-white hover:border-gray-200'}`}
+            title={hasCustomKey ? "使用自訂 Key" : "使用系統 Key (設定)"}
           >
             <Settings className="w-5 h-5" />
+            {hasCustomKey && <span className="text-xs font-medium pr-1">Custom Key</span>}
           </button>
           <button 
             onClick={handleReset}
@@ -807,15 +877,17 @@ const App: React.FC = () => {
                     <span className="bg-gray-100 text-gray-600 w-6 h-6 rounded-full flex items-center justify-center text-xs">S</span>
                     精靈圖原圖 (Sprite Sheet)
                   </h2>
-                  {spriteSheetImage && (
-                    <button 
-                      onClick={handleDownloadSpriteSheet}
-                      className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-colors font-medium"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      下載原圖
-                    </button>
-                  )}
+                  <div className="flex gap-2">
+                    {spriteSheetImage && (
+                        <button 
+                        onClick={handleDownloadSpriteSheet}
+                        className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-colors font-medium"
+                        >
+                        <Download className="w-3.5 h-3.5" />
+                        下載原圖
+                        </button>
+                    )}
+                  </div>
                </div>
 
                <div className="bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 min-h-[200px] flex items-center justify-center relative overflow-hidden group">
@@ -835,13 +907,143 @@ const App: React.FC = () => {
                    )}
 
                    {spriteSheetImage && (
-                      <img 
-                        src={spriteSheetImage} 
-                        alt="Sprite Sheet" 
-                        className="max-w-full max-h-[300px] object-contain pixelated shadow-sm rounded-lg"
-                      />
+                      <div className="relative inline-block mx-auto max-w-full">
+                         {/* Wrapper with Grid Background for Transparency Check */}
+                         <div className="bg-[url('https://bg-patterns.com/wp-content/uploads/2021/04/check-pattern-d01.png')] bg-repeat bg-[length:20px_20px] rounded-lg overflow-hidden border border-gray-200 relative">
+                             
+                             {/* The generated image */}
+                             <img 
+                                src={spriteSheetImage} 
+                                alt="Sprite Sheet" 
+                                className="block max-w-full h-auto object-contain pixelated"
+                                onLoad={(e) => {
+                                  setSheetDimensions({
+                                    width: e.currentTarget.naturalWidth,
+                                    height: e.currentTarget.naturalHeight
+                                  });
+                                }}
+                             />
+                             
+                             {/* SVG Overlay: Uses ViewBox to match image's natural dimensions. 
+                                 This ensures grid lines align perfectly with pixels even when image is scaled by CSS. */}
+                             {sheetDimensions.width > 0 && (
+                               <svg
+                                  viewBox={`0 0 ${sheetDimensions.width} ${sheetDimensions.height}`}
+                                  className="absolute inset-0 w-full h-full pointer-events-none"
+                                  style={{
+                                    border: '1px solid rgba(59,130,246,0.3)' 
+                                  }}
+                               >
+                                  {/* Draw Outer Offset Rect */}
+                                  <rect 
+                                    x={sliceSettings.offsetX} 
+                                    y={sliceSettings.offsetY} 
+                                    width={Math.max(0, sheetDimensions.width - sliceSettings.offsetX * 2)} 
+                                    height={Math.max(0, sheetDimensions.height - sliceSettings.offsetY * 2)} 
+                                    fill="none" 
+                                    stroke="rgba(59,130,246,0.6)" 
+                                    strokeWidth="2"
+                                  />
+
+                                  {/* Draw Vertical Grid Lines */}
+                                  {Array.from({ length: sliceSettings.cols - 1 }).map((_, i) => {
+                                      const effectiveWidth = sheetDimensions.width - sliceSettings.offsetX * 2;
+                                      const cellWidth = effectiveWidth / sliceSettings.cols;
+                                      const x = sliceSettings.offsetX + (i + 1) * cellWidth;
+                                      return (
+                                        <line 
+                                          key={`v-${i}`} 
+                                          x1={x} y1={sliceSettings.offsetY} 
+                                          x2={x} y2={sheetDimensions.height - sliceSettings.offsetY} 
+                                          stroke="rgba(59,130,246,0.5)" 
+                                          strokeWidth="1" 
+                                          strokeDasharray="4 2"
+                                        />
+                                      );
+                                  })}
+
+                                  {/* Draw Horizontal Grid Lines */}
+                                  {Array.from({ length: sliceSettings.rows - 1 }).map((_, i) => {
+                                      const effectiveHeight = sheetDimensions.height - sliceSettings.offsetY * 2;
+                                      const cellHeight = effectiveHeight / sliceSettings.rows;
+                                      const y = sliceSettings.offsetY + (i + 1) * cellHeight;
+                                      return (
+                                        <line 
+                                          key={`h-${i}`} 
+                                          x1={sliceSettings.offsetX} y1={y} 
+                                          x2={sheetDimensions.width - sliceSettings.offsetX} y2={y} 
+                                          stroke="rgba(59,130,246,0.5)" 
+                                          strokeWidth="1" 
+                                          strokeDasharray="4 2"
+                                        />
+                                      );
+                                  })}
+                               </svg>
+                             )}
+                         </div>
+                      </div>
                    )}
                </div>
+
+               {/* Manual Slicing Controls Toolbar */}
+               {spriteSheetImage && sheetDimensions.width > 0 && (
+                    <div className="mt-4 p-3 bg-blue-50/50 border border-blue-100 rounded-xl flex flex-wrap items-center gap-4 text-sm animate-in fade-in slide-in-from-top-2">
+                        <div className="flex items-center gap-2 text-blue-700 font-semibold mr-2">
+                            <Sliders className="w-4 h-4" />
+                            網格切分設定
+                        </div>
+                        
+                        <div className="flex items-center gap-2 bg-white px-2 py-1 rounded shadow-sm border border-blue-100">
+                            <span className="text-xs text-gray-500">Cols</span>
+                            <input 
+                                type="number" 
+                                min="1" max="10"
+                                value={sliceSettings.cols}
+                                onChange={(e) => setSliceSettings(p => ({...p, cols: Math.max(1, Number(e.target.value))}))}
+                                className="w-10 text-center text-sm font-medium outline-none text-gray-700"
+                            />
+                        </div>
+
+                        <div className="flex items-center gap-2 bg-white px-2 py-1 rounded shadow-sm border border-blue-100">
+                            <span className="text-xs text-gray-500">Rows</span>
+                            <input 
+                                type="number" 
+                                min="1" max="10"
+                                value={sliceSettings.rows}
+                                onChange={(e) => setSliceSettings(p => ({...p, rows: Math.max(1, Number(e.target.value))}))}
+                                className="w-10 text-center text-sm font-medium outline-none text-gray-700"
+                            />
+                        </div>
+
+                        <div className="h-4 w-px bg-blue-200 mx-1"></div>
+
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">Offset X</span>
+                            <input 
+                                type="range" 
+                                min="0" 
+                                max={Math.floor(sheetDimensions.width * 0.4)} // Max 40% of width
+                                value={sliceSettings.offsetX}
+                                onChange={(e) => setSliceSettings(p => ({...p, offsetX: Number(e.target.value)}))}
+                                className="w-20 h-1.5 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                            />
+                            <span className="text-xs w-6 text-right text-blue-600">{sliceSettings.offsetX}px</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">Offset Y</span>
+                            <input 
+                                type="range" 
+                                min="0" 
+                                max={Math.floor(sheetDimensions.height * 0.4)}
+                                value={sliceSettings.offsetY}
+                                onChange={(e) => setSliceSettings(p => ({...p, offsetY: Number(e.target.value)}))}
+                                className="w-20 h-1.5 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                            />
+                            <span className="text-xs w-6 text-right text-blue-600">{sliceSettings.offsetY}px</span>
+                        </div>
+                    </div>
+               )}
             </div>
           )}
 
@@ -890,7 +1092,7 @@ const App: React.FC = () => {
                   
                   {/* The Frame Player */}
                   <img 
-                    src={generatedFrames[currentFrameIndex]}
+                    src={generatedFrames[currentFrameIndex % generatedFrames.length]} 
                     alt={`Frame ${currentFrameIndex}`}
                     className="object-contain pixelated transition-none"
                     style={{

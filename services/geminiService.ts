@@ -198,9 +198,14 @@ export const generateSpriteSheet = async (
     - Action: "${prompt}"
     - Grid Layout: ${cols} Columns x ${rows} Rows.
     - Total Frames: ${cols * rows}.
+
+    [CRITICAL RESTRICTIONS - MUST FOLLOW]
+    1. **NO TEXT / NO NUMBERS**: Do NOT write frame numbers (1, 2, 3...), labels, or annotations anywhere on the image.
+    2. **NO BORDERS / NO GRID LINES**: Do NOT draw visible lines separating the cells. Do NOT draw a frame around the image. The background must be continuous.
+    3. **SOLID BACKGROUND**: Use a pure, solid white (#FFFFFF) background only.
     
-    [STRICT GRID LAYOUT - CRITICAL]
-    1. **Edge-to-Edge Grid**: The output image must be a PERFECT GRID with NO outer padding or borders. The character cells must extend to the very edge of the image.
+    [STRICT GRID LAYOUT]
+    1. **Edge-to-Edge Grid**: The output image must be a PERFECT GRID with NO outer padding.
     2. **Invisible Grid**: Programmatically, I will slice this image by dividing the total Width by ${cols} and Height by ${rows}. 
     3. **Centering**: Place exactly one character pose in the visual center of each calculated cell. Do NOT offset them.
 
@@ -213,8 +218,6 @@ export const generateSpriteSheet = async (
     [VISUAL STYLE]
     - Flat 2D style.
     - Solid Pure White Background (#FFFFFF).
-    - NO visible grid lines. 
-    - NO text or labels.
     
     [ASPECT RATIO TARGET]
     The requested aspect ratio is ${targetAspectRatio}. Distribute the ${cols}x${rows} frames evenly to fill this shape completely.
