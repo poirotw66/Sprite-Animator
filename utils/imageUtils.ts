@@ -45,6 +45,35 @@ export interface SliceSettings {
  * );
  * ```
  */
+/**
+ * Slices a sprite sheet image into multiple individual frame images with industrial-grade precision.
+ * Uses integer coordinates to prevent texture bleeding and ensure pixel-perfect alignment.
+ * 
+ * @param base64Image - Base64 encoded sprite sheet image
+ * @param cols - Number of columns in the grid
+ * @param rows - Number of rows in the grid
+ * @param paddingX - Horizontal padding (reduces effective width from both sides)
+ * @param paddingY - Vertical padding (reduces effective height from both sides)
+ * @param shiftX - Horizontal shift offset
+ * @param shiftY - Vertical shift offset
+ * @param removeBg - Whether to remove white/light backgrounds (legacy, not used after chroma key removal)
+ * @param threshold - Color threshold for background removal (default: 230)
+ * @returns Promise resolving to an array of base64 encoded frame images
+ * 
+ * @throws {Error} If canvas context creation fails, image loading fails, or invalid parameters
+ * 
+ * @example
+ * ```typescript
+ * const frames = await sliceSpriteSheet(
+ *   spriteSheetBase64,
+ *   4, 4,  // 4x4 grid
+ *   10, 10, // 10px padding on each side
+ *   5, 5,   // 5px shift
+ *   false,  // Background already removed
+ *   230     // Threshold (not used)
+ * );
+ * ```
+ */
 export const sliceSpriteSheet = async (
   base64Image: string,
   cols: number,
@@ -57,80 +86,143 @@ export const sliceSpriteSheet = async (
   threshold: number = 230
 ): Promise<string[]> => {
   return new Promise((resolve, reject) => {
+    // Input validation
+    if (cols <= 0 || rows <= 0 || !Number.isInteger(cols) || !Number.isInteger(rows)) {
+      reject(new Error(`Invalid grid dimensions: cols=${cols}, rows=${rows}. Must be positive integers.`));
+      return;
+    }
+
+    if (paddingX < 0 || paddingY < 0) {
+      reject(new Error(`Invalid padding: paddingX=${paddingX}, paddingY=${paddingY}. Must be non-negative.`));
+      return;
+    }
+
     const img = new Image();
     img.onload = () => {
-      const frames: string[] = [];
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      try {
+        const frames: string[] = [];
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { 
+          willReadFrequently: true,
+          alpha: true,
+          desynchronized: false // Ensure consistent rendering
+        });
 
-      if (!ctx) {
-        reject(new Error('Canvas context failed'));
-        return;
-      }
-
-      const totalWidth = img.width;
-      const totalHeight = img.height;
-
-      // Effective Grid Area: Reduced by padding (from both sides)
-      const effectiveWidth = totalWidth - paddingX * 2;
-      const effectiveHeight = totalHeight - paddingY * 2;
-
-      if (effectiveWidth <= 0 || effectiveHeight <= 0) {
-        resolve([]); // Invalid settings
-        return;
-      }
-
-      const cellWidth = effectiveWidth / cols;
-      const cellHeight = effectiveHeight / rows;
-
-      const frameWidth = Math.floor(cellWidth);
-      const frameHeight = Math.floor(cellHeight);
-
-      if (frameWidth <= 0 || frameHeight <= 0) {
-        resolve([]);
-        return;
-      }
-
-      canvas.width = frameWidth;
-      canvas.height = frameHeight;
-      ctx.imageSmoothingEnabled = false;
-
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          ctx.clearRect(0, 0, frameWidth, frameHeight);
-
-          // Source X/Y = Start Position + Grid Index
-          // Start Position = Padding (inset) + Shift (move)
-          const startX = paddingX + shiftX;
-          const startY = paddingY + shiftY;
-
-          const sx = startX + c * cellWidth;
-          const sy = startY + r * cellHeight;
-
-          ctx.drawImage(img, sx, sy, cellWidth, cellHeight, 0, 0, frameWidth, frameHeight);
-
-          // Background Removal
-          if (removeBg) {
-            const imageData = ctx.getImageData(0, 0, frameWidth, frameHeight);
-            const data = imageData.data;
-
-            for (let i = 0; i < data.length; i += 4) {
-              const red = data[i];
-              const green = data[i + 1];
-              const blue = data[i + 2];
-              if (red > threshold && green > threshold && blue > threshold) {
-                data[i + 3] = 0; // Set alpha to 0
-              }
-            }
-            ctx.putImageData(imageData, 0, 0);
-          }
-
-          frames.push(canvas.toDataURL('image/png'));
+        if (!ctx) {
+          reject(new Error('Canvas context creation failed. Browser may not support canvas.'));
+          return;
         }
+
+        const totalWidth = img.width;
+        const totalHeight = img.height;
+
+        // Validate image dimensions
+        if (totalWidth <= 0 || totalHeight <= 0) {
+          reject(new Error(`Invalid image dimensions: ${totalWidth}x${totalHeight}`));
+          return;
+        }
+
+        // Effective Grid Area: Reduced by padding (from both sides)
+        const effectiveWidth = totalWidth - paddingX * 2;
+        const effectiveHeight = totalHeight - paddingY * 2;
+
+        if (effectiveWidth <= 0 || effectiveHeight <= 0) {
+          reject(new Error(`Invalid effective area after padding: ${effectiveWidth}x${effectiveHeight}. Padding too large.`));
+          return;
+        }
+
+        // Calculate cell dimensions with precise rounding
+        // Use Math.round for better accuracy than Math.floor
+        const cellWidth = effectiveWidth / cols;
+        const cellHeight = effectiveHeight / rows;
+
+        // Ensure frame dimensions are integers (pixel-perfect alignment)
+        const frameWidth = Math.round(cellWidth);
+        const frameHeight = Math.round(cellHeight);
+
+        if (frameWidth <= 0 || frameHeight <= 0) {
+          reject(new Error(`Invalid frame dimensions: ${frameWidth}x${frameHeight}`));
+          return;
+        }
+
+        // Set canvas size once (reused for all frames)
+        canvas.width = frameWidth;
+        canvas.height = frameHeight;
+        
+        // Disable image smoothing for pixel-perfect rendering
+        ctx.imageSmoothingEnabled = false;
+        ctx.imageSmoothingQuality = 'low';
+
+        // Calculate start position (integer coordinates)
+        const startX = Math.round(paddingX + shiftX);
+        const startY = Math.round(paddingY + shiftY);
+
+        // Validate start position
+        if (startX < 0 || startY < 0 || startX >= totalWidth || startY >= totalHeight) {
+          reject(new Error(`Start position out of bounds: (${startX}, ${startY}) for image ${totalWidth}x${totalHeight}`));
+          return;
+        }
+
+        // Process each frame
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            // Clear canvas for this frame
+            ctx.clearRect(0, 0, frameWidth, frameHeight);
+
+            // Calculate source coordinates using integer rounding to prevent texture bleeding
+            // This ensures pixel-perfect alignment and consistent behavior across browsers
+            const sx = Math.round(startX + c * cellWidth);
+            const sy = Math.round(startY + r * cellHeight);
+
+            // Boundary checking: ensure source coordinates are within image bounds
+            const sourceX = Math.max(0, Math.min(sx, totalWidth - 1));
+            const sourceY = Math.max(0, Math.min(sy, totalHeight - 1));
+            
+            // Calculate actual source dimensions (may be reduced if near edges)
+            const sourceWidth = Math.min(frameWidth, totalWidth - sourceX);
+            const sourceHeight = Math.min(frameHeight, totalHeight - sourceY);
+
+            // Draw the source region to canvas
+            // Use integer coordinates for both source and destination to prevent texture bleeding
+            ctx.drawImage(
+              img,
+              sourceX, sourceY, sourceWidth, sourceHeight, // Source rectangle (integer coords)
+              0, 0, frameWidth, frameHeight // Destination rectangle
+            );
+
+            // Legacy background removal (not used after chroma key removal, but kept for compatibility)
+            if (removeBg) {
+              const imageData = ctx.getImageData(0, 0, frameWidth, frameHeight);
+              const data = imageData.data;
+
+              for (let i = 0; i < data.length; i += 4) {
+                const red = data[i];
+                const green = data[i + 1];
+                const blue = data[i + 2];
+                if (red > threshold && green > threshold && blue > threshold) {
+                  data[i + 3] = 0; // Set alpha to 0
+                }
+              }
+              ctx.putImageData(imageData, 0, 0);
+            }
+
+            // Convert to base64
+            frames.push(canvas.toDataURL('image/png'));
+          }
+        }
+
+        resolve(frames);
+      } catch (error) {
+        reject(error instanceof Error ? error : new Error(`Slicing failed: ${String(error)}`));
       }
-      resolve(frames);
     };
-    img.onerror = (e) => reject(e);
+    
+    img.onerror = (e) => {
+      reject(new Error('Failed to load sprite sheet image. The image may be corrupted or in an unsupported format.'));
+    };
+    
+    // Set crossOrigin to avoid CORS issues
+    img.crossOrigin = 'anonymous';
     img.src = base64Image;
   });
 };
