@@ -62,6 +62,7 @@ const App: React.FC = () => {
     sheetDimensions,
     setSheetDimensions,
     handleImageLoad,
+    processedSpriteSheet, // Chroma-key-removed sprite sheet for display
   } = useSpriteSheet(spriteSheetImage, sliceSettings, removeBackground, config.mode);
 
   // Frame-by-frame mode frames
@@ -290,10 +291,12 @@ const App: React.FC = () => {
   }, [handleDownloadZip, handleExportError]);
 
   const wrappedDownloadSpriteSheet = useCallback(() => {
-    if (spriteSheetImage) {
-      handleDownloadSpriteSheet(spriteSheetImage);
+    // Download the processed (chroma-key-removed) version if available
+    const imageToDownload = processedSpriteSheet || spriteSheetImage;
+    if (imageToDownload) {
+      handleDownloadSpriteSheet(imageToDownload);
     }
-  }, [spriteSheetImage, handleDownloadSpriteSheet]);
+  }, [processedSpriteSheet, spriteSheetImage, handleDownloadSpriteSheet]);
 
   return (
     <div className="min-h-screen bg-[#F5F7FA] p-4 md:p-8 font-sans">
@@ -373,7 +376,7 @@ const App: React.FC = () => {
               }
             >
               <SpriteSheetViewer
-                spriteSheetImage={spriteSheetImage}
+                spriteSheetImage={processedSpriteSheet || spriteSheetImage}
                 isGenerating={isGenerating}
                 sheetDimensions={sheetDimensions}
                 sliceSettings={sliceSettings}

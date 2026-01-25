@@ -197,3 +197,122 @@ export const loadImagesData = async (
 export const cleanBase64 = (base64: string): string => {
   return base64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
 };
+
+/**
+ * Removes chroma key (magenta #FF00FF) background from an image using fuzz tolerance.
+ * Similar to ImageMagick's: magick sprite.png -fuzz 2% -transparent "#FF00FF" output.png
+ * 
+ * @param base64Image - Base64 encoded image with chroma key background
+ * @param chromaKey - RGB color to remove (default: {r: 255, g: 0, b: 255} for #FF00FF)
+ * @param fuzzPercent - Tolerance percentage (0-100, default: 2)
+ * @returns Promise resolving to base64 encoded image with transparent background
+ * 
+ * @example
+ * ```typescript
+ * const processed = await removeChromaKey(spriteSheetBase64, {r: 255, g: 0, b: 255}, 2);
+ * ```
+ */
+export const removeChromaKey = async (
+  base64Image: string,
+  chromaKey: { r: number; g: number; b: number } = { r: 255, g: 0, b: 255 },
+  fuzzPercent: number = 2
+): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+      if (!ctx) {
+        reject(new Error('Canvas context failed'));
+        return;
+      }
+
+      // Draw the image
+      ctx.drawImage(img, 0, 0);
+
+      // Get image data
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      // Calculate fuzz tolerance (2% of 255 = ~5.1)
+      const fuzz = (fuzzPercent / 100) * 255;
+
+      // Process each pixel
+      for (let i = 0; i < data.length; i += 4) {
+        const red = data[i];
+        const green = data[i + 1];
+        const blue = data[i + 2];
+
+        // Calculate color distance from chroma key
+        const rDiff = Math.abs(red - chromaKey.r);
+        const gDiff = Math.abs(green - chromaKey.g);
+        const bDiff = Math.abs(blue - chromaKey.b);
+
+        // Use Euclidean distance for color matching
+        const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
+
+        // If within fuzz tolerance, make transparent
+        if (distance <= fuzz) {
+          data[i + 3] = 0; // Set alpha to 0 (transparent)
+        }
+      }
+
+      // Put processed data back
+      ctx.putImageData(imageData, 0, 0);
+
+      // Return as base64
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = (e) => reject(e);
+    img.src = base64Image;
+  });
+};
+
+/**
+ * Removes white/light background from an image (legacy method).
+ * Used for preview display before proper chroma key removal.
+ * 
+ * @param base64Image - Base64 encoded image
+ * @param threshold - Color threshold (default: 230)
+ * @returns Promise resolving to base64 encoded image with transparent background
+ */
+export const removeWhiteBackground = async (
+  base64Image: string,
+  threshold: number = 230
+): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+      if (!ctx) {
+        reject(new Error('Canvas context failed'));
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const red = data[i];
+        const green = data[i + 1];
+        const blue = data[i + 2];
+        if (red > threshold && green > threshold && blue > threshold) {
+          data[i + 3] = 0; // Set alpha to 0
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = (e) => reject(e);
+    img.src = base64Image;
+  });
+};

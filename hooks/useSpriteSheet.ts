@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { sliceSpriteSheet, SliceSettings } from '../utils/imageUtils';
-import { BACKGROUND_REMOVAL_THRESHOLD, DEBOUNCE_DELAY } from '../utils/constants';
+import { sliceSpriteSheet, SliceSettings, removeChromaKey } from '../utils/imageUtils';
+import { BACKGROUND_REMOVAL_THRESHOLD, DEBOUNCE_DELAY, CHROMA_KEY_COLOR, CHROMA_KEY_FUZZ } from '../utils/constants';
 
 /**
  * Custom hook for managing sprite sheet slicing and frame generation.
@@ -34,21 +34,49 @@ export const useSpriteSheet = (
 ) => {
   const [generatedFrames, setGeneratedFrames] = useState<string[]>([]);
   const [sheetDimensions, setSheetDimensions] = useState({ width: 0, height: 0 });
+  const [processedSpriteSheet, setProcessedSpriteSheet] = useState<string | null>(null);
+
+  // Process sprite sheet: remove chroma key background first
+  useEffect(() => {
+    if (spriteSheetImage && mode === 'sheet') {
+      const processImage = async () => {
+        try {
+          // Step 1: Remove chroma key (magenta #FF00FF) with fuzz tolerance
+          // This is the "correct" background removal similar to ImageMagick
+          const chromaKeyRemoved = await removeChromaKey(
+            spriteSheetImage,
+            CHROMA_KEY_COLOR,
+            CHROMA_KEY_FUZZ
+          );
+          setProcessedSpriteSheet(chromaKeyRemoved);
+        } catch (e) {
+          console.error('Chroma key removal failed', e);
+          // Fallback to original image if processing fails
+          setProcessedSpriteSheet(spriteSheetImage);
+        }
+      };
+      processImage();
+    } else {
+      setProcessedSpriteSheet(null);
+    }
+  }, [spriteSheetImage, mode]);
 
   // Re-slice when Slice Settings, Toggle or Image updates
   useEffect(() => {
-    if (spriteSheetImage && mode === 'sheet') {
+    if (processedSpriteSheet && mode === 'sheet') {
       const reSlice = async () => {
         try {
+          // Step 2: Slice the processed (chroma-key-removed) sprite sheet
+          // No need for additional background removal since it's already processed
           const frames = await sliceSpriteSheet(
-            spriteSheetImage,
+            processedSpriteSheet,
             sliceSettings.cols,
             sliceSettings.rows,
             sliceSettings.paddingX,
             sliceSettings.paddingY,
             sliceSettings.shiftX,
             sliceSettings.shiftY,
-            removeBackground,
+            false, // No additional white background removal needed
             BACKGROUND_REMOVAL_THRESHOLD
           );
           setGeneratedFrames(frames);
@@ -62,10 +90,11 @@ export const useSpriteSheet = (
     } else if (mode !== 'sheet') {
       // Clear frames when switching away from sheet mode
       setGeneratedFrames([]);
+      setProcessedSpriteSheet(null);
     }
   }, [
     removeBackground,
-    spriteSheetImage,
+    processedSpriteSheet,
     sliceSettings.cols,
     sliceSettings.rows,
     sliceSettings.paddingX,
@@ -91,5 +120,6 @@ export const useSpriteSheet = (
     sheetDimensions,
     setSheetDimensions,
     handleImageLoad,
+    processedSpriteSheet, // The chroma-key-removed version for display
   };
 };

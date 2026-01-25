@@ -25,9 +25,13 @@ export const SUPPORTED_MODELS = [
 
 export const DEFAULT_MODEL = 'gemini-2.5-flash-image';
 
-export const BACKGROUND_REMOVAL_THRESHOLD = 230;
+export const BACKGROUND_REMOVAL_THRESHOLD = 230; // For white background removal
 
 export const DEBOUNCE_DELAY = 50; // ms for re-slicing
+
+// Chroma key (magenta) removal settings
+export const CHROMA_KEY_COLOR = { r: 255, g: 0, b: 255 }; // #FF00FF
+export const CHROMA_KEY_FUZZ = 2; // 2% tolerance (0-100)
 
 export const ANIMATION_FPS_MULTIPLIER = 2;
 
