@@ -148,6 +148,60 @@ npm run build
 npm run preview
 ```
 
+## 🚀 Deploy to GitHub Pages
+
+### Automatic Deployment (Recommended)
+
+The project is configured with GitHub Actions for automatic deployment. Simply:
+
+1. **Enable GitHub Pages**:
+   - Go to repository `Settings` → `Pages`
+   - Select `GitHub Actions` in the `Source` dropdown (not `Deploy from a branch`)
+   - Save settings
+
+2. **Push code**:
+   ```bash
+   git add .
+   git commit -m "Add GitHub Pages deployment"
+   git push origin main
+   ```
+   - GitHub Actions will automatically build and deploy
+
+3. **Check deployment status**:
+   - Go to the `Actions` tab to view deployment progress
+   - After deployment completes, visit: `https://poirotw66.github.io/Sprite-Animator/`
+
+### Manual Trigger
+
+To deploy immediately:
+- Go to the `Actions` tab
+- Select the `Deploy to GitHub Pages` workflow
+- Click `Run workflow`
+
+### Manual Build (Local Testing)
+
+To test GitHub Pages build locally:
+
+```bash
+# Set GitHub Pages environment variable
+export GITHUB_PAGES=true
+
+# Build the project
+npm run build
+
+# Build output is in dist/ directory
+# Preview the build result
+npm run preview
+```
+
+### Important Notes
+
+- ✅ After deployment, the app automatically uses `/Sprite-Animator/` as the base path
+- ✅ Make sure to select `GitHub Actions` as the source in GitHub Pages settings
+- ✅ First deployment may take 2-5 minutes
+- ✅ Every push to `main` branch will automatically trigger a redeployment
+- ⚠️ If repository name changes, update the base path in `vite.config.ts`
+
 ## 📝 Tech Stack
 
 - **React 19** - UI Framework
@@ -198,5 +252,5 @@ Issues and Pull Requests are welcome!
 
 ---
 
-**Last Updated**: 2026-01-25  
-**Version**: v1.1.0
+**Last Updated**: 2026-01-26  
+**Version**: v1.2.0
