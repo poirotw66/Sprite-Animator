@@ -31,23 +31,23 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
   onDownloadZip,
 }) => {
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6 flex-1 flex flex-col min-h-[500px]">
-      <h2 className="text-sm font-semibold text-gray-500 mb-4 flex items-center justify-between">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex-1 flex flex-col min-h-[500px]">
+      <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="bg-gray-100 text-gray-600 w-6 h-6 rounded-full flex items-center justify-center text-xs">
+          <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
             3
           </span>
           動畫預覽
         </div>
         {generatedFrames.length > 0 && (
-          <span className="text-xs text-orange-500 bg-orange-50 px-2 py-1 rounded-full">
+          <span className="text-xs text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full font-semibold border border-orange-200">
             Frame {currentFrameIndex + 1} / {generatedFrames.length}
           </span>
         )}
       </h2>
 
       <div
-        className="flex-1 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center relative overflow-hidden group min-h-[300px]"
+        className="flex-1 bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center relative overflow-hidden group min-h-[300px] cursor-pointer transition-colors hover:border-slate-400 hover:bg-slate-100/50"
         onClick={onTogglePlay}
         title="點擊暫停/播放"
         role="button"
@@ -61,12 +61,12 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
         }}
       >
         {!isGenerating && generatedFrames.length === 0 && (
-          <div className="text-center p-8 opacity-50">
-            <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Play className="w-8 h-8 text-gray-400 ml-1" />
+          <div className="text-center p-8 opacity-60">
+            <div className="w-20 h-20 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+              <Play className="w-8 h-8 text-slate-500 ml-1" />
             </div>
-            <h3 className="text-lg font-medium text-gray-600">動畫預覽區域</h3>
-            <p className="text-gray-400 mt-2">將生成多張靜態圖並串接播放</p>
+            <h3 className="text-lg font-semibold text-slate-700">動畫預覽區域</h3>
+            <p className="text-slate-500 mt-2 text-sm">將生成多張靜態圖並串接播放</p>
           </div>
         )}
 
@@ -76,8 +76,8 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
               <div className="absolute inset-0 border-4 border-orange-100 rounded-full"></div>
               <div className="absolute inset-0 border-4 border-orange-500 rounded-full border-t-transparent animate-spin"></div>
             </div>
-            <h3 className="text-lg font-medium text-gray-800 animate-pulse">正在繪製...</h3>
-            <p className="text-gray-500 mt-2 text-sm">{statusText}</p>
+            <h3 className="text-lg font-semibold text-slate-800 animate-pulse">正在繪製...</h3>
+            <p className="text-slate-600 mt-2 text-sm">{statusText}</p>
           </div>
         )}
 
@@ -113,7 +113,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
               <button
                 onClick={onDownloadApng}
                 disabled={isExporting}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg flex items-center justify-center gap-2 transition-all backdrop-blur-sm disabled:opacity-70 disabled:cursor-wait"
+                className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 disabled:cursor-wait cursor-pointer hover:shadow-xl"
                 aria-label="下載 APNG"
               >
                 {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileVideo className="w-4 h-4" />}
@@ -124,7 +124,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
                 <button
                   onClick={onDownloadGif}
                   disabled={isExporting}
-                  className="flex-1 bg-white/90 hover:bg-white text-gray-800 px-3 py-2 rounded-lg text-sm font-medium shadow-lg flex items-center justify-center gap-2 transition-all backdrop-blur-sm disabled:opacity-70"
+                  className="flex-1 bg-white/95 hover:bg-white text-slate-800 px-3 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 cursor-pointer hover:shadow-xl border border-slate-200/50"
                   aria-label="下載 GIF"
                 >
                   <Film className="w-4 h-4 text-purple-600" />
@@ -133,7 +133,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
                 <button
                   onClick={onDownloadZip}
                   disabled={isExporting}
-                  className="flex-1 bg-white/90 hover:bg-white text-gray-800 px-3 py-2 rounded-lg text-sm font-medium shadow-lg flex items-center justify-center gap-2 transition-all backdrop-blur-sm disabled:opacity-70"
+                  className="flex-1 bg-white/95 hover:bg-white text-slate-800 px-3 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 cursor-pointer hover:shadow-xl border border-slate-200/50"
                   aria-label="下載 ZIP"
                 >
                   <Archive className="w-4 h-4 text-blue-600" />
@@ -145,7 +145,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
         )}
       </div>
 
-      <div className="mt-4 text-xs text-gray-400 text-center">
+      <div className="mt-4 text-xs text-slate-500 text-center">
         提示：點擊上方預覽區可暫停/播放。APNG 支援全彩半透明。
       </div>
     </div>

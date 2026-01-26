@@ -51,28 +51,28 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   }, [setSliceSettings]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
       {/* Chroma Key Processing Progress Indicator */}
       {isProcessingChromaKey && (
-        <div className="absolute inset-0 bg-white/90 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-10">
+        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-10">
           <div className="text-center space-y-4">
             <Loader2 className="w-8 h-8 text-orange-500 animate-spin mx-auto" />
             <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-700">正在處理去背...</p>
-              <div className="w-64 bg-gray-200 rounded-full h-2 overflow-hidden">
+              <p className="text-sm font-semibold text-slate-700">正在處理去背...</p>
+              <div className="w-64 bg-slate-200 rounded-full h-2.5 overflow-hidden shadow-inner">
                 <div
-                  className="bg-orange-500 h-full transition-all duration-300 ease-out"
+                  className="bg-gradient-to-r from-orange-500 to-orange-600 h-full transition-all duration-300 ease-out rounded-full"
                   style={{ width: `${chromaKeyProgress}%` }}
                 />
               </div>
-              <p className="text-xs text-gray-500">{chromaKeyProgress}%</p>
+              <p className="text-xs text-slate-600 font-medium">{chromaKeyProgress}%</p>
             </div>
           </div>
         </div>
       )}
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-sm font-semibold text-gray-500 flex items-center gap-2">
-          <span className="bg-gray-100 text-gray-600 w-6 h-6 rounded-full flex items-center justify-center text-xs">
+        <h2 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+          <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
             S
           </span>
           精靈圖原圖 (Sprite Sheet)
@@ -81,7 +81,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
           {spriteSheetImage && (
             <button
               onClick={onDownload}
-              className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-colors font-medium"
+              className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-all duration-200 font-semibold cursor-pointer border border-orange-200 hover:border-orange-300 hover:shadow-sm"
               aria-label="下載精靈圖"
             >
               <Download className="w-3.5 h-3.5" />
@@ -91,18 +91,18 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
         </div>
       </div>
 
-      <div className="bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 min-h-[200px] flex items-center justify-center relative overflow-hidden group">
+      <div className="bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 min-h-[200px] flex items-center justify-center relative overflow-hidden group">
         {!spriteSheetImage && !isGenerating && (
-          <div className="text-center p-6 opacity-50">
-            <Grid3X3 className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-            <p className="text-gray-400 text-sm">生成的網格原圖將顯示於此</p>
+          <div className="text-center p-6 opacity-60">
+            <Grid3X3 className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+            <p className="text-slate-500 text-sm">生成的網格原圖將顯示於此</p>
           </div>
         )}
 
         {!spriteSheetImage && isGenerating && (
           <div className="flex flex-col items-center">
-            <Loader2 className="w-8 h-8 text-orange-400 animate-spin mb-2" />
-            <p className="text-xs text-gray-400">生成中...</p>
+            <Loader2 className="w-8 h-8 text-orange-500 animate-spin mb-2" />
+            <p className="text-xs text-slate-600 font-medium">生成中...</p>
           </div>
         )}
 
@@ -193,107 +193,107 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
 
       {/* Manual Slicing Controls Toolbar */}
       {spriteSheetImage && sheetDimensions.width > 0 && (
-        <div className="mt-4 p-3 bg-blue-50/50 border border-blue-100 rounded-xl flex flex-col gap-3 text-sm animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-center gap-2 text-blue-700 font-semibold border-b border-blue-200 pb-2">
+        <div className="mt-4 p-4 bg-blue-50/60 border border-blue-200 rounded-xl flex flex-col gap-3 text-sm animate-in fade-in slide-in-from-top-2 shadow-sm">
+          <div className="flex items-center gap-2 text-blue-800 font-bold border-b border-blue-300 pb-2">
             <Sliders className="w-4 h-4" />
             網格切分設定 (Manual Slicing)
           </div>
 
           <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-2 bg-white px-2 py-1 rounded shadow-sm border border-blue-100">
-              <span className="text-xs text-gray-500">Cols</span>
+            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg shadow-sm border border-blue-200">
+              <span className="text-xs text-slate-600 font-medium">Cols</span>
               <input
                 type="number"
                 min="1"
                 max="10"
                 value={sliceSettings.cols}
                 onChange={handleColsChange}
-                className="w-10 text-center text-sm font-medium outline-none text-gray-700"
+                className="w-12 text-center text-sm font-bold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded"
                 aria-label="列數"
               />
             </div>
 
-            <div className="flex items-center gap-2 bg-white px-2 py-1 rounded shadow-sm border border-blue-100">
-              <span className="text-xs text-gray-500">Rows</span>
+            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg shadow-sm border border-blue-200">
+              <span className="text-xs text-slate-600 font-medium">Rows</span>
               <input
                 type="number"
                 min="1"
                 max="10"
                 value={sliceSettings.rows}
                 onChange={handleRowsChange}
-                className="w-10 text-center text-sm font-medium outline-none text-gray-700"
+                className="w-12 text-center text-sm font-bold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded"
                 aria-label="行數"
               />
             </div>
           </div>
 
           {/* X Axis Controls */}
-          <div className="flex items-center gap-4 border-t border-blue-100 pt-2">
-            <div className="text-xs font-bold text-blue-400 w-4">X</div>
+          <div className="flex items-center gap-4 border-t border-blue-300 pt-3">
+            <div className="text-xs font-bold text-blue-600 w-4">X</div>
 
             {/* Size/Padding X */}
             <div className="flex items-center gap-2 flex-1">
-              <span className="text-[10px] text-gray-500 w-12">縮放 (Pad)</span>
+              <span className="text-[10px] text-slate-600 font-medium w-14">縮放 (Pad)</span>
               <input
                 type="range"
                 min="0"
                 max={Math.floor(sheetDimensions.width * 0.4)}
                 value={sliceSettings.paddingX}
                 onChange={handlePaddingXChange}
-                className="flex-1 h-1.5 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                className="flex-1 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
                 aria-label="X軸縮放"
               />
-              <span className="text-[10px] text-blue-600 w-8 text-right">{sliceSettings.paddingX}</span>
+              <span className="text-[10px] text-blue-700 w-10 text-right font-bold">{sliceSettings.paddingX}</span>
             </div>
 
             {/* Position/Shift X */}
             <div className="flex items-center gap-2 flex-1">
-              <span className="text-[10px] text-gray-500 w-12">位移 (Shift)</span>
+              <span className="text-[10px] text-slate-600 font-medium w-14">位移 (Shift)</span>
               <input
                 type="range"
                 min={-100}
                 max={100}
                 value={sliceSettings.shiftX}
                 onChange={handleShiftXChange}
-                className="flex-1 h-1.5 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                className="flex-1 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
                 aria-label="X軸位移"
               />
-              <span className="text-[10px] text-blue-600 w-8 text-right">{sliceSettings.shiftX}</span>
+              <span className="text-[10px] text-blue-700 w-10 text-right font-bold">{sliceSettings.shiftX}</span>
             </div>
           </div>
 
           {/* Y Axis Controls */}
-          <div className="flex items-center gap-4 border-t border-blue-100 pt-2">
-            <div className="text-xs font-bold text-blue-400 w-4">Y</div>
+          <div className="flex items-center gap-4 border-t border-blue-300 pt-3">
+            <div className="text-xs font-bold text-blue-600 w-4">Y</div>
 
             {/* Size/Padding Y */}
             <div className="flex items-center gap-2 flex-1">
-              <span className="text-[10px] text-gray-500 w-12">縮放 (Pad)</span>
+              <span className="text-[10px] text-slate-600 font-medium w-14">縮放 (Pad)</span>
               <input
                 type="range"
                 min="0"
                 max={Math.floor(sheetDimensions.height * 0.4)}
                 value={sliceSettings.paddingY}
                 onChange={handlePaddingYChange}
-                className="flex-1 h-1.5 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                className="flex-1 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
                 aria-label="Y軸縮放"
               />
-              <span className="text-[10px] text-blue-600 w-8 text-right">{sliceSettings.paddingY}</span>
+              <span className="text-[10px] text-blue-700 w-10 text-right font-bold">{sliceSettings.paddingY}</span>
             </div>
 
             {/* Position/Shift Y */}
             <div className="flex items-center gap-2 flex-1">
-              <span className="text-[10px] text-gray-500 w-12">位移 (Shift)</span>
+              <span className="text-[10px] text-slate-600 font-medium w-14">位移 (Shift)</span>
               <input
                 type="range"
                 min={-100}
                 max={100}
                 value={sliceSettings.shiftY}
                 onChange={handleShiftYChange}
-                className="flex-1 h-1.5 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                className="flex-1 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
                 aria-label="Y軸位移"
               />
-              <span className="text-[10px] text-blue-600 w-8 text-right">{sliceSettings.shiftY}</span>
+              <span className="text-[10px] text-blue-700 w-10 text-right font-bold">{sliceSettings.shiftY}</span>
             </div>
           </div>
         </div>

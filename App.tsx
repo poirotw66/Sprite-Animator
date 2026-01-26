@@ -301,7 +301,7 @@ const App: React.FC = () => {
   }, [processedSpriteSheet, spriteSheetImage, handleDownloadSpriteSheet]);
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA] p-4 md:p-8 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 p-4 md:p-6 lg:p-8 font-sans">
       <SettingsModal
         apiKey={apiKey}
         setApiKey={setApiKey}
@@ -312,42 +312,46 @@ const App: React.FC = () => {
         onSave={saveSettings}
       />
 
-      <header className="max-w-6xl mx-auto mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <div className="bg-orange-500 p-1.5 rounded-lg">
-            <Zap className="w-6 h-6 text-white" />
+      <header className="max-w-7xl mx-auto mb-6 md:mb-8">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-200/60 p-4 md:p-5 flex items-center justify-between">
+          <h1 className="text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-3">
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-2 rounded-xl shadow-md">
+              <Zap className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            </div>
+            <span className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+              角色幀動畫小工具
+            </span>
+          </h1>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowSettings(true)}
+              className={`p-2.5 rounded-xl transition-all duration-200 shadow-sm border flex items-center gap-2 cursor-pointer
+                ${
+                  hasCustomKey
+                    ? 'text-green-700 bg-green-50 hover:bg-green-100 border-green-200 hover:shadow-md'
+                    : 'text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 hover:shadow-md'
+                }`}
+              title={hasCustomKey ? '使用自訂 Key' : '使用系統 Key (設定)'}
+              aria-label="開啟設定"
+            >
+              <Settings className="w-5 h-5" />
+              {hasCustomKey && <span className="text-xs font-semibold pr-1">Custom Key</span>}
+            </button>
+            <button
+              onClick={handleReset}
+              className="p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 bg-white rounded-xl transition-all duration-200 shadow-sm border border-slate-200 hover:border-slate-300 hover:shadow-md cursor-pointer"
+              title="重置畫布"
+              aria-label="重置"
+            >
+              <RefreshCw className="w-5 h-5" />
+            </button>
           </div>
-          角色幀動畫小工具
-        </h1>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowSettings(true)}
-            className={`p-2 rounded-full transition-all shadow-sm border border-transparent flex items-center gap-2
-              ${
-                hasCustomKey
-                  ? 'text-green-600 bg-green-50 hover:bg-green-100 border-green-200'
-                  : 'text-gray-500 hover:text-gray-800 bg-white/50 hover:bg-white hover:border-gray-200'
-              }`}
-            title={hasCustomKey ? '使用自訂 Key' : '使用系統 Key (設定)'}
-            aria-label="開啟設定"
-          >
-            <Settings className="w-5 h-5" />
-            {hasCustomKey && <span className="text-xs font-medium pr-1">Custom Key</span>}
-          </button>
-          <button
-            onClick={handleReset}
-            className="p-2 text-gray-500 hover:text-gray-800 hover:bg-white bg-white/50 rounded-full transition-all shadow-sm border border-transparent hover:border-gray-200"
-            title="重置畫布"
-            aria-label="重置"
-          >
-            <RefreshCw className="w-5 h-5" />
-          </button>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
         {/* Left Column: Upload & Settings */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="lg:col-span-5 space-y-4 md:space-y-6">
           <ImageUpload
             sourceImage={sourceImage}
             onImageUpload={handleImageUpload}
@@ -367,12 +371,12 @@ const App: React.FC = () => {
         </div>
 
         {/* Right Column: Result Preview */}
-        <div className="lg:col-span-7 flex flex-col gap-6">
+        <div className="lg:col-span-7 flex flex-col gap-4 md:gap-6">
           {/* Sprite Sheet Viewer (Only in Sheet Mode) */}
           {config.mode === 'sheet' && (
             <Suspense
               fallback={
-                <div className="bg-white rounded-2xl shadow-sm p-6 flex items-center justify-center min-h-[200px]">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex items-center justify-center min-h-[200px]">
                   <Loader2 className="w-6 h-6 text-orange-500 animate-spin" />
                 </div>
               }
@@ -395,7 +399,7 @@ const App: React.FC = () => {
           <div className="space-y-6">
             <Suspense
               fallback={
-                <div className="bg-white rounded-2xl shadow-sm p-6 flex items-center justify-center min-h-[500px]">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex items-center justify-center min-h-[500px]">
                   <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
                 </div>
               }
@@ -419,12 +423,12 @@ const App: React.FC = () => {
             {generatedFrames.length > 0 && (
               <Suspense
                 fallback={
-                  <div className="bg-white rounded-2xl shadow-sm p-6 flex items-center justify-center min-h-[100px]">
-                    <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex items-center justify-center min-h-[100px]">
+                    <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
                   </div>
                 }
               >
-                <div className="bg-white rounded-2xl shadow-sm p-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                   <FrameGrid
                     frames={generatedFrames}
                     currentFrameIndex={currentFrameIndex}

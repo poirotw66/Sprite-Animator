@@ -53,7 +53,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="settings-modal-title"
@@ -65,26 +65,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
     >
       <div
         ref={modalRef}
-        className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 border border-slate-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-          <h3 id="settings-modal-title" className="font-bold text-gray-800 flex items-center gap-2">
-            <Settings className="w-5 h-5 text-gray-600" aria-hidden="true" />
+        <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
+          <h3 id="settings-modal-title" className="font-bold text-slate-900 flex items-center gap-2 text-lg">
+            <Settings className="w-5 h-5 text-slate-600" aria-hidden="true" />
             設定
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-slate-400 hover:text-slate-700 transition-colors duration-200 p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
             aria-label="關閉設定"
             type="button"
           >
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-5">
           <div>
-            <label htmlFor="api-key-input" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="api-key-input" className="block text-sm font-semibold text-slate-700 mb-2">
               Gemini API Key
             </label>
             <div className="relative">
@@ -94,13 +94,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder={hasEnvKey ? '已檢測到系統 Key (可覆蓋)' : 'AIzaSy...'}
-                className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 outline-none pr-10"
+                className="w-full border border-slate-300 rounded-lg p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 outline-none pr-10 bg-white transition-all"
                 aria-label="Gemini API Key"
                 aria-describedby="api-key-description"
                 autoComplete="off"
               />
               {hasCustomKey && (
-                <div className="absolute right-3 top-2.5 text-green-500" title="使用中">
+                <div className="absolute right-3 top-3 text-green-600" title="使用中">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
               )}
@@ -109,23 +109,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
             {/* Status Indicator */}
             <div className="mt-2 flex items-center gap-2 text-xs">
               {hasCustomKey ? (
-                <span className="text-green-600 flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
-                  <ShieldCheck className="w-3 h-3" /> 使用自訂 Key (優先)
+                <span className="text-green-700 flex items-center gap-1.5 bg-green-50 px-2.5 py-1.5 rounded-lg border border-green-200 font-medium">
+                  <ShieldCheck className="w-3.5 h-3.5" /> 使用自訂 Key (優先)
                 </span>
               ) : (
-                <span className="text-gray-500 flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
-                  <ShieldAlert className="w-3 h-3" /> 使用預設/系統 Key
+                <span className="text-slate-600 flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200 font-medium">
+                  <ShieldAlert className="w-3.5 h-3.5" /> 使用預設/系統 Key
                 </span>
               )}
             </div>
 
-            <p id="api-key-description" className="text-xs text-gray-500 mt-2">
+            <p id="api-key-description" className="text-xs text-slate-500 mt-3">
               您的 Key 僅會儲存在本地瀏覽器中。
               <a
                 href="https://aistudio.google.com/app/apikey"
                 target="_blank"
                 rel="noreferrer"
-                className="text-orange-500 hover:underline ml-1"
+                className="text-orange-600 hover:text-orange-700 hover:underline ml-1 font-medium transition-colors"
                 aria-label="在新視窗中打開獲取 API Key 頁面"
               >
                 獲取 Key
@@ -134,14 +134,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
           </div>
 
           <div>
-            <label htmlFor="model-select" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="model-select" className="block text-sm font-semibold text-slate-700 mb-2">
               模型選擇
             </label>
             <select
               id="model-select"
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 outline-none bg-white"
+              className="w-full border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 outline-none bg-white transition-all cursor-pointer"
               aria-label="選擇模型"
             >
               {SUPPORTED_MODELS.map((model) => (
@@ -155,7 +155,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
           <div className="pt-2">
             <button
               onClick={() => onSave(apiKey, selectedModel)}
-              className="w-full bg-gray-900 text-white py-2.5 rounded-lg font-medium hover:bg-gray-800 transition-colors focus:ring-2 focus:ring-orange-500 focus:outline-none"
+              className="w-full bg-gradient-to-r from-slate-900 to-slate-800 text-white py-3 rounded-lg font-semibold hover:from-slate-800 hover:to-slate-700 transition-all duration-200 focus:ring-2 focus:ring-orange-500/50 focus:outline-none shadow-md hover:shadow-lg cursor-pointer"
               type="button"
               aria-label="儲存設定並關閉對話框"
             >
