@@ -20,7 +20,7 @@ export const DEFAULT_SLICE_SETTINGS = {
 
 export const SUPPORTED_MODELS = [
   'gemini-2.5-flash-image',
-  'gemini-2.0-flash-exp',
+  'gemini-3-pro-image-preview',
 ] as const;
 
 export const DEFAULT_MODEL = 'gemini-2.5-flash-image';

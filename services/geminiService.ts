@@ -197,7 +197,7 @@ async function getAnimationStoryboard(
  * @param cols - Number of columns in the sprite sheet grid
  * @param rows - Number of rows in the sprite sheet grid
  * @param apiKey - Gemini API key for authentication
- * @param model - Model name to use (e.g., "gemini-2.5-flash-image")
+ * @param model - Model name to use (e.g., "gemini-2.5-flash-image" or "gemini-3-pro-image-preview")
  * @param onProgress - Optional callback to report generation progress
  * @returns Promise resolving to base64 encoded sprite sheet image
  * 
@@ -348,7 +348,7 @@ checkerboard, transparency pattern, alpha grid
  * @param prompt - Animation action description (e.g., "Run Cycle", "Jump")
  * @param frameCount - Number of frames to generate
  * @param apiKey - Gemini API key for authentication
- * @param model - Model name to use (e.g., "gemini-2.5-flash-image")
+ * @param model - Model name to use (e.g., "gemini-2.5-flash-image" or "gemini-3-pro-image-preview")
  * @param onProgress - Optional callback to report generation progress
  * @param interFrameDelayMs - Delay between frame generations to avoid rate limiting (default: 4000ms)
  * @returns Promise resolving to an array of base64 encoded frame images

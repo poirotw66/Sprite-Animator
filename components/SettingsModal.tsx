@@ -144,11 +144,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
               className="w-full border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 outline-none bg-white transition-all cursor-pointer"
               aria-label="選擇模型"
             >
-              {SUPPORTED_MODELS.map((model) => (
-                <option key={model} value={model}>
-                  {model === 'gemini-2.5-flash-image' ? 'Gemini 2.5 Flash Image (推薦)' : 'Gemini 2.0 Flash Exp'}
-                </option>
-              ))}
+              {SUPPORTED_MODELS.map((model) => {
+                let displayName = '';
+                if (model === 'gemini-2.5-flash-image') {
+                  displayName = 'Gemini 2.5 Flash Image (推薦)';
+                } else if (model === 'gemini-3-pro-image-preview') {
+                  displayName = 'Gemini 3 Pro Image Preview';
+                } else {
+                  displayName = model;
+                }
+                return (
+                  <option key={model} value={model}>
+                    {displayName}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
