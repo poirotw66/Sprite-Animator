@@ -2,7 +2,7 @@
 
 export const DEFAULT_CONFIG = {
   frameCount: 4,
-  speed: 8,
+  speed: 4, // Default FPS = speed * ANIMATION_FPS_MULTIPLIER (4 * 2 = 8 FPS)
   scale: 100,
   mode: 'sheet' as const,
   gridCols: 4,

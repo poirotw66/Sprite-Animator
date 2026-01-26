@@ -17,7 +17,7 @@ async function retryOperation<T>(
   operation: () => Promise<T>, 
   onStatusUpdate?: (msg: string) => void,
   retries = 5, 
-  baseDelay = 4000 
+  baseDelay = 4000
 ): Promise<T> {
   let lastError: unknown;
   for (let i = 0; i < retries; i++) {
@@ -245,6 +245,12 @@ The result must be ONE continuous image containing
 ${cols * rows} animation poses arranged evenly
 from left to right, top to bottom.
 
+CRITICAL REQUIREMENT - SEAMLESS ANIMATION:
+Each frame must flow PERFECTLY into the next frame, creating a smooth,
+continuous animation loop. The character should appear to move naturally
+from one pose to the next with no visual breaks, jumps, or inconsistencies.
+Think of this as capturing a single continuous motion, not separate static poses.
+
 ABSOLUTE RULES (MUST FOLLOW):
 
 - Do NOT draw text, numbers, symbols, UI, labels, or watermarks.
@@ -280,10 +286,53 @@ CONTAINMENT (ANTI-OVERLAP):
 - Maximum movement and limb extension must stay inside this safe area.
 - No part of the character may overlap another pose.
 
-ANIMATION FLOW:
+ANIMATION FLOW & CONTINUITY (CRITICAL):
 
 - Order reads left to right, then top to bottom.
-- Motion must be smooth, continuous, and loop-ready.
+- Motion must be PERFECTLY SMOOTH and SEAMLESSLY CONTINUOUS.
+- Each frame must logically flow into the next with no visual gaps or jumps.
+
+Frame-to-Frame Continuity (MANDATORY):
+- Each pose must be a natural progression from the previous pose.
+- Body parts must move in predictable, physics-based trajectories.
+- Calculate intermediate positions: if arm is at position A in frame 1 and position C in frame 3, 
+  frame 2 must show the arm at position B (midpoint).
+- NO sudden position changes, NO teleporting, NO disappearing/reappearing body parts.
+
+Motion Arc & Easing:
+- All limb movements follow smooth arcs (not straight lines).
+- Use natural easing: movements start slow, accelerate in the middle, slow down at the end.
+- Anticipation: before major movements, show slight backward motion (wind-up).
+- Follow-through: after major movements, show slight overshoot and settle.
+- Secondary motion: hair, clothing, accessories lag slightly behind primary motion.
+
+Temporal Consistency:
+- Maintain consistent timing: if frame 1-2 shows a fast movement, frame 2-3 should continue that pace.
+- Avoid inconsistent pacing: don't mix slow and fast movements randomly.
+- For cyclic animations (run, walk, idle), ensure the last frame seamlessly loops to the first frame.
+
+Spatial Consistency:
+- Keep feet anchored to the same ground line across ALL frames (approximately 85% of canvas height per row).
+- Maintain consistent character size: measure from head to feet, keep identical across all frames.
+- Center of gravity should move in smooth curves, not jump between positions.
+- Avoid vertical or horizontal drift: character should stay in the same relative position.
+
+Progressive Motion Breakdown:
+- Frame 1 → Frame 2: Show 25% of total movement
+- Frame 2 → Frame 3: Show next 25% of movement
+- Continue this progressive breakdown for all frames
+- Each frame should feel like a natural "in-between" of the previous and next frames
+
+Body Part Coordination:
+- When one limb moves forward, the opposite limb typically moves backward (walking/running).
+- Head should bob naturally with body movement (subtle, not exaggerated).
+- Torso rotation should be gradual and match limb movement.
+- Maintain natural weight distribution: character should never appear off-balance.
+
+Loop Seamlessness (for cyclic actions):
+- The last frame must visually connect to the first frame.
+- If the action is a cycle (run, walk, idle), ensure the final pose can naturally transition back to the first pose.
+- Position, pose, and momentum should create a perfect loop.
 
 STYLE:
 
@@ -307,7 +356,12 @@ white outline, white halo, fringe,
 shadow, glow, vignette,
 background color, off-white,
 motion blur, jitter, scaling inconsistency,
-checkerboard, transparency pattern, alpha grid
+checkerboard, transparency pattern, alpha grid,
+discontinuous motion, teleporting, position jump,
+abrupt movement, sudden change, frame gap,
+inconsistent timing, erratic pacing,
+body part disappearing, limb teleportation,
+character drift, size variation, scale jump
     `;
 
     if (onProgress) onProgress(`正在生成 ${cols}x${rows} 連貫動作精靈圖 (比例 ${targetAspectRatio})...`);
