@@ -237,6 +237,10 @@ export const generateSpriteSheet = async (
     const fullPrompt = `
 Role: Professional Game Asset Artist specialized in 2D sprite animation.
 
+⚠️ CRITICAL: This is a PURE SPRITE SHEET - ONLY character poses allowed.
+NO text, NO numbers, NO lines, NO borders, NO labels, NO decorative elements.
+Violation of this rule will result in unusable output.
+
 Task:
 Create a single 2D sprite sheet image of a character performing:
 "${prompt}"
@@ -245,18 +249,37 @@ The result must be ONE continuous image containing
 ${cols * rows} animation poses arranged evenly
 from left to right, top to bottom.
 
+OUTPUT REQUIREMENTS:
+- Pure character animation poses ONLY
+- Solid magenta (#FF00FF) background
+- NO bottom border lines
+- NO frame numbers (1, 2, 3, etc.)
+- NO text, labels, or annotations
+- NO grid lines or separators
+- NO decorative elements
+
 CRITICAL REQUIREMENT - SEAMLESS ANIMATION:
 Each frame must flow PERFECTLY into the next frame, creating a smooth,
 continuous animation loop. The character should appear to move naturally
 from one pose to the next with no visual breaks, jumps, or inconsistencies.
 Think of this as capturing a single continuous motion, not separate static poses.
 
-ABSOLUTE RULES (MUST FOLLOW):
+ABSOLUTE RULES (MUST FOLLOW - VIOLATION WILL RESULT IN REJECTION):
 
-- Do NOT draw text, numbers, symbols, UI, labels, or watermarks.
-- Do NOT draw borders, boxes, panels, dividers, frames, or separators of any kind.
-- Do NOT visually indicate rows, columns, grids, or sections.
+FORBIDDEN ELEMENTS (NEVER DRAW THESE):
+- NO text of any kind (numbers, letters, words, labels, captions).
+- NO frame numbers (1, 2, 3, etc.) or sequence indicators.
+- NO borders, lines, boxes, panels, dividers, or separators of any kind.
+- NO bottom border lines, base lines, ground lines, or horizontal dividers.
+- NO grid lines, cell boundaries, or section markers.
+- NO UI elements, watermarks, symbols, or decorative elements.
+- NO visual indicators of rows, columns, grids, or sections.
+- NO frame labels, position markers, or coordinate indicators.
+
+CANVAS REQUIREMENTS:
 - The canvas must appear as ONE uninterrupted transparent space.
+- Only the character poses should be visible - nothing else.
+- No structural elements, no organizational markers, no reference lines.
 
 BACKGROUND:
 
@@ -343,25 +366,67 @@ STYLE:
 
 FAIL-SAFE PRIORITY:
 
-If any artistic choice conflicts with clean layout,
-containment, or alignment,
-always prioritize containment and spacing.
+1. FIRST PRIORITY: No forbidden elements (text, numbers, lines, borders).
+2. SECOND PRIORITY: Clean layout and proper containment.
+3. THIRD PRIORITY: Alignment and spacing consistency.
 
-NEGATIVE PROMPT:
+If any artistic choice conflicts with these priorities,
+ALWAYS prioritize removing forbidden elements first.
+A clean sprite sheet with perfect poses is better than
+a sprite sheet with correct poses but unwanted elements.
 
-grid, grid lines, frame, border, panel, box, tile,
-cell background, section background,
-comic layout, storyboard,
-white outline, white halo, fringe,
-shadow, glow, vignette,
-background color, off-white,
+FINAL CHECKLIST BEFORE OUTPUT:
+✓ No text or numbers anywhere
+✓ No lines or borders anywhere
+✓ No bottom border lines or base lines
+✓ No frame numbers or labels
+✓ Only character poses visible
+✓ Solid magenta background only
+✓ Clean, uninterrupted canvas
+
+NEGATIVE PROMPT (STRICTLY FORBIDDEN):
+
+VISUAL STRUCTURE (FORBIDDEN):
+grid, grid lines, frame lines, border lines, bottom border, base line, ground line,
+horizontal line, vertical line, divider line, separator line,
+panel, box, tile, cell boundary, section marker,
+frame number, frame label, position number, sequence number,
+text, numbers, letters, digits, labels, captions, annotations,
+watermark, signature, copyright, UI element, HUD element,
+comic layout, storyboard, reference line, guide line,
+checkerboard, transparency pattern, alpha grid, background pattern
+
+DECORATIVE ELEMENTS (FORBIDDEN):
+white outline, white halo, fringe, border decoration,
+shadow, glow, vignette, frame decoration,
+background color variation, off-white, gradient background
+
+ANIMATION ERRORS (FORBIDDEN):
 motion blur, jitter, scaling inconsistency,
-checkerboard, transparency pattern, alpha grid,
 discontinuous motion, teleporting, position jump,
 abrupt movement, sudden change, frame gap,
 inconsistent timing, erratic pacing,
 body part disappearing, limb teleportation,
 character drift, size variation, scale jump
+
+CRITICAL REMINDER:
+The output must be PURE CHARACTER POSES ONLY.
+No lines, no numbers, no borders, no labels, no structural elements.
+Just the character animation frames on a solid magenta background.
+
+⚠️ FINAL VERIFICATION BEFORE GENERATING:
+Before you output the image, mentally scan it and verify:
+1. Can you see ANY numbers? → REMOVE THEM
+2. Can you see ANY lines (especially bottom borders)? → REMOVE THEM
+3. Can you see ANY text or labels? → REMOVE THEM
+4. Is the background pure magenta with NO decorative elements? → YES, KEEP IT CLEAN
+5. Are ONLY character poses visible? → YES, PERFECT
+
+If you see ANY forbidden elements, DO NOT OUTPUT THE IMAGE.
+Generate again without those elements.
+
+Remember: A sprite sheet is a technical asset, not an illustration.
+It must be clean, pure, and contain ONLY the character animation frames.
     `;
 
     if (onProgress) onProgress(`正在生成 ${cols}x${rows} 連貫動作精靈圖 (比例 ${targetAspectRatio})...`);

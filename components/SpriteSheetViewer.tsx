@@ -35,19 +35,35 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   }, [setSliceSettings]);
 
   const handlePaddingXChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSliceSettings((p) => ({ ...p, paddingX: Number(e.target.value) }));
+    setSliceSettings((p) => ({ 
+      ...p, 
+      paddingX: Number(e.target.value),
+      autoOptimized: { ...p.autoOptimized, paddingX: false }
+    }));
   }, [setSliceSettings]);
 
   const handlePaddingYChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSliceSettings((p) => ({ ...p, paddingY: Number(e.target.value) }));
+    setSliceSettings((p) => ({ 
+      ...p, 
+      paddingY: Number(e.target.value),
+      autoOptimized: { ...p.autoOptimized, paddingY: false }
+    }));
   }, [setSliceSettings]);
 
   const handleShiftXChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSliceSettings((p) => ({ ...p, shiftX: Number(e.target.value) }));
+    setSliceSettings((p) => ({ 
+      ...p, 
+      shiftX: Number(e.target.value),
+      autoOptimized: { ...p.autoOptimized, shiftX: false }
+    }));
   }, [setSliceSettings]);
 
   const handleShiftYChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSliceSettings((p) => ({ ...p, shiftY: Number(e.target.value) }));
+    setSliceSettings((p) => ({ 
+      ...p, 
+      shiftY: Number(e.target.value),
+      autoOptimized: { ...p.autoOptimized, shiftY: false }
+    }));
   }, [setSliceSettings]);
 
   // Calculate real-time information
@@ -339,8 +355,17 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                   <label className="text-xs text-slate-600 font-medium flex items-center gap-1.5">
                     <span>縮放 (Padding)</span>
                     <span className="text-[10px] text-slate-400">去除邊緣</span>
+                    {sliceSettings.autoOptimized?.paddingX && (
+                      <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-semibold border border-green-200">
+                        自動優化
+                      </span>
+                    )}
                   </label>
-                  <span className="text-xs text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded">
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                    sliceSettings.autoOptimized?.paddingX 
+                      ? 'text-green-700 bg-green-50 border border-green-200' 
+                      : 'text-blue-700 bg-blue-50'
+                  }`}>
                     {sliceSettings.paddingX}px
                   </span>
                 </div>
@@ -356,6 +381,22 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                     aria-label="X軸縮放"
                   />
                   <span className="text-[10px] text-slate-400 w-8">{Math.floor(sheetDimensions.width * 0.4)}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max={Math.floor(sheetDimensions.width * 0.4)}
+                    value={sliceSettings.paddingX}
+                    onChange={(e) => {
+                      const value = Math.max(0, Math.min(Math.floor(sheetDimensions.width * 0.4), Number(e.target.value)));
+                      setSliceSettings((p) => ({ 
+                        ...p, 
+                        paddingX: value,
+                        autoOptimized: { ...p.autoOptimized, paddingX: false }
+                      }));
+                    }}
+                    className="w-16 text-center text-xs font-semibold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200"
+                    aria-label="X軸縮放數值"
+                  />
                 </div>
               </div>
 
@@ -365,8 +406,17 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                   <label className="text-xs text-slate-600 font-medium flex items-center gap-1.5">
                     <span>位移 (Shift)</span>
                     <span className="text-[10px] text-slate-400">微調位置</span>
+                    {sliceSettings.autoOptimized?.shiftX && (
+                      <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-semibold border border-green-200">
+                        自動優化
+                      </span>
+                    )}
                   </label>
-                  <span className="text-xs text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded">
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                    sliceSettings.autoOptimized?.shiftX 
+                      ? 'text-green-700 bg-green-50 border border-green-200' 
+                      : 'text-blue-700 bg-blue-50'
+                  }`}>
                     {sliceSettings.shiftX > 0 ? '+' : ''}{sliceSettings.shiftX}px
                   </span>
                 </div>
@@ -382,6 +432,22 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                     aria-label="X軸位移"
                   />
                   <span className="text-[10px] text-slate-400 w-8">+100</span>
+                  <input
+                    type="number"
+                    min={-100}
+                    max={100}
+                    value={sliceSettings.shiftX}
+                    onChange={(e) => {
+                      const value = Math.max(-100, Math.min(100, Number(e.target.value)));
+                      setSliceSettings((p) => ({ 
+                        ...p, 
+                        shiftX: value,
+                        autoOptimized: { ...p.autoOptimized, shiftX: false }
+                      }));
+                    }}
+                    className="w-16 text-center text-xs font-semibold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200"
+                    aria-label="X軸位移數值"
+                  />
                 </div>
               </div>
             </div>
@@ -400,8 +466,17 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                   <label className="text-xs text-slate-600 font-medium flex items-center gap-1.5">
                     <span>縮放 (Padding)</span>
                     <span className="text-[10px] text-slate-400">去除邊緣</span>
+                    {sliceSettings.autoOptimized?.paddingY && (
+                      <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-semibold border border-green-200">
+                        自動優化
+                      </span>
+                    )}
                   </label>
-                  <span className="text-xs text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded">
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                    sliceSettings.autoOptimized?.paddingY 
+                      ? 'text-green-700 bg-green-50 border border-green-200' 
+                      : 'text-blue-700 bg-blue-50'
+                  }`}>
                     {sliceSettings.paddingY}px
                   </span>
                 </div>
@@ -417,6 +492,22 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                     aria-label="Y軸縮放"
                   />
                   <span className="text-[10px] text-slate-400 w-8">{Math.floor(sheetDimensions.height * 0.4)}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max={Math.floor(sheetDimensions.height * 0.4)}
+                    value={sliceSettings.paddingY}
+                    onChange={(e) => {
+                      const value = Math.max(0, Math.min(Math.floor(sheetDimensions.height * 0.4), Number(e.target.value)));
+                      setSliceSettings((p) => ({ 
+                        ...p, 
+                        paddingY: value,
+                        autoOptimized: { ...p.autoOptimized, paddingY: false }
+                      }));
+                    }}
+                    className="w-16 text-center text-xs font-semibold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200"
+                    aria-label="Y軸縮放數值"
+                  />
                 </div>
               </div>
 
@@ -426,8 +517,17 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                   <label className="text-xs text-slate-600 font-medium flex items-center gap-1.5">
                     <span>位移 (Shift)</span>
                     <span className="text-[10px] text-slate-400">微調位置</span>
+                    {sliceSettings.autoOptimized?.shiftY && (
+                      <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-semibold border border-green-200">
+                        自動優化
+                      </span>
+                    )}
                   </label>
-                  <span className="text-xs text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded">
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                    sliceSettings.autoOptimized?.shiftY 
+                      ? 'text-green-700 bg-green-50 border border-green-200' 
+                      : 'text-blue-700 bg-blue-50'
+                  }`}>
                     {sliceSettings.shiftY > 0 ? '+' : ''}{sliceSettings.shiftY}px
                   </span>
                 </div>
@@ -443,6 +543,22 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                     aria-label="Y軸位移"
                   />
                   <span className="text-[10px] text-slate-400 w-8">+100</span>
+                  <input
+                    type="number"
+                    min={-100}
+                    max={100}
+                    value={sliceSettings.shiftY}
+                    onChange={(e) => {
+                      const value = Math.max(-100, Math.min(100, Number(e.target.value)));
+                      setSliceSettings((p) => ({ 
+                        ...p, 
+                        shiftY: value,
+                        autoOptimized: { ...p.autoOptimized, shiftY: false }
+                      }));
+                    }}
+                    className="w-16 text-center text-xs font-semibold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200"
+                    aria-label="Y軸位移數值"
+                  />
                 </div>
               </div>
             </div>

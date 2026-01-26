@@ -16,6 +16,13 @@ export interface SliceSettings {
   paddingY: number;
   shiftX: number;
   shiftY: number;
+  // Optional: Track which values were auto-optimized
+  autoOptimized?: {
+    paddingX?: boolean;
+    paddingY?: boolean;
+    shiftX?: boolean;
+    shiftY?: boolean;
+  };
 }
 
 /**
@@ -225,6 +232,192 @@ export const sliceSpriteSheet = async (
     };
     
     // Set crossOrigin to avoid CORS issues
+    img.crossOrigin = 'anonymous';
+    img.src = base64Image;
+  });
+};
+
+/**
+ * Automatically optimizes slice settings by analyzing the sprite sheet image.
+ * Detects content boundaries and calculates optimal padding and shift values.
+ * 
+ * @param base64Image - Base64 encoded sprite sheet image
+ * @param cols - Number of columns in the grid
+ * @param rows - Number of rows in the grid
+ * @returns Promise resolving to optimized slice settings
+ * 
+ * @example
+ * ```typescript
+ * const optimized = await optimizeSliceSettings(spriteSheetBase64, 4, 4);
+ * // Returns: { paddingX: 10, paddingY: 10, shiftX: 5, shiftY: 5 }
+ * ```
+ */
+export const optimizeSliceSettings = async (
+  base64Image: string,
+  cols: number,
+  rows: number
+): Promise<{ paddingX: number; paddingY: number; shiftX: number; shiftY: number }> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        if (!ctx) {
+          reject(new Error('Canvas context creation failed'));
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // Helper function to check if pixel is transparent or background
+        const isTransparent = (r: number, g: number, b: number, a: number) => {
+          if (a < 10) return true; // Transparent
+          // Magenta chroma key (#FF00FF or close)
+          if (r > 180 && g < 100 && b > 100) return true;
+          // Black background
+          if (r < 30 && g < 30 && b < 30) return true;
+          return false;
+        };
+
+        // Scan edges to find content boundaries
+        // Top edge: find first non-transparent row
+        let topPadding = 0;
+        for (let y = 0; y < height; y++) {
+          let hasContent = false;
+          for (let x = 0; x < width; x++) {
+            const idx = (y * width + x) * 4;
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+            const a = data[idx + 3];
+            if (!isTransparent(r, g, b, a)) {
+              hasContent = true;
+              break;
+            }
+          }
+          if (hasContent) {
+            topPadding = y;
+            break;
+          }
+        }
+
+        // Bottom edge: find last non-transparent row
+        let bottomPadding = 0;
+        for (let y = height - 1; y >= 0; y--) {
+          let hasContent = false;
+          for (let x = 0; x < width; x++) {
+            const idx = (y * width + x) * 4;
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+            const a = data[idx + 3];
+            if (!isTransparent(r, g, b, a)) {
+              hasContent = true;
+              break;
+            }
+          }
+          if (hasContent) {
+            bottomPadding = height - 1 - y;
+            break;
+          }
+        }
+
+        // Left edge: find first non-transparent column
+        let leftPadding = 0;
+        for (let x = 0; x < width; x++) {
+          let hasContent = false;
+          for (let y = 0; y < height; y++) {
+            const idx = (y * width + x) * 4;
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+            const a = data[idx + 3];
+            if (!isTransparent(r, g, b, a)) {
+              hasContent = true;
+              break;
+            }
+          }
+          if (hasContent) {
+            leftPadding = x;
+            break;
+          }
+        }
+
+        // Right edge: find last non-transparent column
+        let rightPadding = 0;
+        for (let x = width - 1; x >= 0; x--) {
+          let hasContent = false;
+          for (let y = 0; y < height; y++) {
+            const idx = (y * width + x) * 4;
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+            const a = data[idx + 3];
+            if (!isTransparent(r, g, b, a)) {
+              hasContent = true;
+              break;
+            }
+          }
+          if (hasContent) {
+            rightPadding = width - 1 - x;
+            break;
+          }
+        }
+
+        // Calculate optimal padding (use minimum of left/right and top/bottom)
+        // This ensures we don't cut off content
+        const optimalPaddingX = Math.min(leftPadding, rightPadding);
+        const optimalPaddingY = Math.min(topPadding, bottomPadding);
+
+        // Calculate effective area after padding
+        const effectiveWidth = width - optimalPaddingX * 2;
+        const effectiveHeight = height - optimalPaddingY * 2;
+        const cellWidth = effectiveWidth / cols;
+        const cellHeight = effectiveHeight / rows;
+
+        // Calculate optimal shift to center the grid
+        // This centers the content within the available space
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const gridCenterX = optimalPaddingX + effectiveWidth / 2;
+        const gridCenterY = optimalPaddingY + effectiveHeight / 2;
+        const optimalShiftX = Math.round(centerX - gridCenterX);
+        const optimalShiftY = Math.round(centerY - gridCenterY);
+
+        // Clamp values to reasonable ranges
+        const paddingX = Math.max(0, Math.min(optimalPaddingX, Math.floor(width * 0.1)));
+        const paddingY = Math.max(0, Math.min(optimalPaddingY, Math.floor(height * 0.1)));
+        const shiftX = Math.max(-50, Math.min(50, optimalShiftX));
+        const shiftY = Math.max(-50, Math.min(50, optimalShiftY));
+
+        logger.debug('Auto-optimized slice settings', {
+          paddingX,
+          paddingY,
+          shiftX,
+          shiftY,
+          original: { left: leftPadding, right: rightPadding, top: topPadding, bottom: bottomPadding },
+        });
+
+        resolve({ paddingX, paddingY, shiftX, shiftY });
+      } catch (error) {
+        logger.error('Auto-optimization failed', error);
+        // Return default values on error
+        resolve({ paddingX: 0, paddingY: 0, shiftX: 0, shiftY: 0 });
+      }
+    };
+
+    img.onerror = () => {
+      reject(new Error('Failed to load image for optimization'));
+    };
+
     img.crossOrigin = 'anonymous';
     img.src = base64Image;
   });

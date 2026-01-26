@@ -21,6 +21,7 @@ import { useAnimation } from './hooks/useAnimation';
 import { useSpriteSheet } from './hooks/useSpriteSheet';
 import { useExport } from './hooks/useExport';
 import { DEFAULT_CONFIG, DEFAULT_SLICE_SETTINGS } from './utils/constants';
+import { optimizeSliceSettings } from './utils/imageUtils';
 
 const App: React.FC = () => {
   // Settings
@@ -184,6 +185,30 @@ const App: React.FC = () => {
         );
 
         setSpriteSheetImage(sheetImage);
+
+        // Auto-optimize slice settings after generating sprite sheet
+        try {
+          setStatusText('正在自動優化切分參數...');
+          const optimized = await optimizeSliceSettings(
+            sheetImage,
+            config.gridCols,
+            config.gridRows
+          );
+          setSliceSettings((prev) => ({
+            ...prev,
+            ...optimized,
+            autoOptimized: {
+              paddingX: true,
+              paddingY: true,
+              shiftX: true,
+              shiftY: true,
+            },
+          }));
+          setStatusText('切分參數已自動優化');
+        } catch (err) {
+          // If optimization fails, continue with default settings
+          console.warn('Auto-optimization failed, using default settings:', err);
+        }
       } else {
         // Frame by Frame mode
         setStatusText(`準備開始逐幀生成 (使用模型: ${selectedModel})`);
