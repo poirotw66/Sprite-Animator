@@ -4,7 +4,12 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
+    // Set base path for GitHub Pages deployment
+    // If deploying to root, use '/', otherwise use '/repository-name/'
+    const base = process.env.GITHUB_PAGES === 'true' ? '/Sprite-Animator/' : '/';
+    
     return {
+      base,
       server: {
         port: 3000,
         host: '0.0.0.0',
@@ -20,6 +25,11 @@ export default defineConfig(({ mode }) => {
       },
       worker: {
         format: 'es',
+      },
+      build: {
+        outDir: 'dist',
+        assetsDir: 'assets',
+        sourcemap: false,
       }
     };
 });
