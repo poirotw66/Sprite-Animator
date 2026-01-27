@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Pencil, RotateCcw, X } from './Icons';
 import { GripVertical } from 'lucide-react';
-import { getCellRectForFrame, type FrameOverride, type SliceSettings } from '../utils/imageUtils';
+import { getCellRectForFrame, getContentCentroidOffset, type FrameOverride, type SliceSettings } from '../utils/imageUtils';
 
 const OFFSET_MIN = -500;
 const OFFSET_MAX = 500;
@@ -44,6 +44,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
   const [panelPosition, setPanelPosition] = useState<{ x: number; y: number } | null>(null);
   const [usePrevAsRef, setUsePrevAsRef] = useState(false);
   const [prevRefOpacity, setPrevRefOpacity] = useState(45);
+  const [isAutoAligning, setIsAutoAligning] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const latestOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const editPanelRef = useRef<HTMLDivElement>(null);
@@ -404,21 +405,65 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
             {frames.length > 1 &&
              setFrameOverrides &&
              (frameOverrides[0] && Object.keys(frameOverrides[0]).length > 0) && (
-              <button
-                type="button"
-                onClick={() => {
-                  const first = { ...(frameOverrides[0] ?? {}) };
-                  setFrameOverrides((prev) => {
-                    const n = prev.slice();
-                    for (let i = 1; i < frames.length; i++) n[i] = { ...first };
-                    return n;
-                  });
-                }}
-                className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-2.5 py-1.5 rounded-lg border border-orange-200 transition-colors"
-                title="將第一幀的切割參數（位子、框型大小）套用到其餘所有幀"
-              >
-                從第一幀套用至其餘
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const first = { ...(frameOverrides[0] ?? {}) };
+                    setFrameOverrides((prev) => {
+                      const n = prev.slice();
+                      for (let i = 1; i < frames.length; i++) n[i] = { ...first };
+                      return n;
+                    });
+                  }}
+                  className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-2.5 py-1.5 rounded-lg border border-orange-200 transition-colors"
+                  title="將第一幀的切割參數（位子、框型大小）套用到其餘所有幀"
+                >
+                  從第一幀套用至其餘
+                </button>
+                {processedSpriteSheet &&
+                 sliceSettings &&
+                 sheetDimensions &&
+                 sheetDimensions.width > 0 &&
+                 sheetDimensions.height > 0 && (
+                  <button
+                    type="button"
+                    disabled={isAutoAligning}
+                    onClick={async () => {
+                      if (!setFrameOverrides || !processedSpriteSheet || !sliceSettings || !sheetDimensions) return;
+                      setIsAutoAligning(true);
+                      try {
+                        const prev = frameOverrides ?? [];
+                        const next = prev.slice();
+                        const scale = prev[0]?.scale ?? 1;
+                        for (let i = 1; i < frames.length; i++) {
+                          const cellRect = getCellRectForFrame(
+                            sheetDimensions.width,
+                            sheetDimensions.height,
+                            sliceSettings.cols,
+                            sliceSettings.rows,
+                            sliceSettings.paddingX,
+                            sliceSettings.paddingY,
+                            sliceSettings.shiftX,
+                            sliceSettings.shiftY,
+                            i
+                          );
+                          if (!cellRect) continue;
+                          const res = await getContentCentroidOffset(processedSpriteSheet, cellRect);
+                          next[i] = { offsetX: res.offsetX, offsetY: res.offsetY, scale };
+                        }
+                        setFrameOverrides(() => next);
+                      } finally {
+                        setIsAutoAligning(false);
+                      }
+                    }}
+                    className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-2.5 py-1.5 rounded-lg border border-orange-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="以第一幀的 scale 為準，其餘幀依各格內容質心自動算 offset，使剪輯對齊主體"
+                  >
+                    {isAutoAligning ? '自動對齊中…' : '從第一幀套用並自動對齊其餘'}
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

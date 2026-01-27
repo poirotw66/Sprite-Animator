@@ -241,50 +241,96 @@ Task:
 Create ONE single 2D sprite sheet image showing:
 "${prompt}"
 
-LAYOUT (HIGHEST PRIORITY):
+This is a TECHNICAL ANIMATION ASSET intended for GIF generation.
+
+────────────────────────────────
+LAYOUT (HIGHEST PRIORITY)
+────────────────────────────────
 - Arrange EXACTLY ${cols * rows} character poses
 - Layout forms ${cols} poses per row and ${rows} rows total
-- Evenly spaced, fixed positions
+- Fixed, evenly spaced positions
 - Read order: left → right, top → bottom
-- One unique character pose per cell
-- NO duplicated poses, NO repeated rows
+- Each cell contains exactly ONE character pose
+- All poses belong to the SAME continuous animation timeline
+- Rows do NOT represent different actions or cycles
 
-CANVAS & BACKGROUND:
+────────────────────────────────
+CANVAS & BACKGROUND
+────────────────────────────────
 - One continuous canvas (no padding, no margins)
-- Solid background color: pure magenta (#FF00FF)
-- No gradients, no texture
+- Solid flat background color: pure magenta (#FF00FF)
+- Background must be ONE uninterrupted color
+- No seams, no divisions, no visual separation
 
-STRICTLY FORBIDDEN (MOST CRITICAL):
-- NO text, NO numbers
-- NO lines of any kind
-- NO borders / frames / boxes / grids
-- NO cell outlines, NO rectangular shapes
-- NO ground line / floor line under feet
-- NO UI elements or decorations
-- NO alignment guides, NO helper lines, NO separators, even faint or subtle
-- Background must be ONE continuous flat color with no seams or divisions
+────────────────────────────────
+STRICTLY FORBIDDEN (MOST CRITICAL)
+────────────────────────────────
+- NO text, NO numbers, NO letters
+- NO lines of any kind (including faint or subtle)
+- NO borders, frames, boxes, grids, or rectangular shapes
+- NO cell outlines or separators
+- NO alignment guides or helper lines
+- NO ground line / floor line / baseline under feet
+- NO UI elements, watermarks, or decorations
+- NO shadows, glow, gradients, or background variation
 
+────────────────────────────────
+SPRITE CONSISTENCY
+────────────────────────────────
+- Flat 2D illustration style
+- Clean outlines only (no outline borders)
+- Neutral, even lighting
+- Character size MUST be identical in every frame
+- Character centered within each layout position
+- Feet aligned horizontally across ALL frames
+- No scaling, no rotation drift, no camera movement
+- No position snapping or frame-to-frame offset
 
-SPRITE REQUIREMENTS:
-- Flat 2D illustration
-- Clean outlines, no shadows or glow
-- Character size identical in every frame
-- Character centered in each grid cell
-- Feet aligned horizontally across all frames
-- No scaling, no rotation drift, no position jump
+────────────────────────────────
+ANIMATION CONTINUITY (CRITICAL FOR GIF)
+────────────────────────────────
+- Frames form ONE continuous motion
+- This is NOT a pose collection — it is a time sequence
+- Each frame advances only slightly from the previous one
+- Small incremental motion is preferred over large pose changes
+- Frames may appear visually similar; this is intentional
+- NO frame should look like a reset or new action
 
-ANIMATION QUALITY (FOR GIF USE):
-- Frames must form ONE continuous, smooth motion
-- Each frame is a natural in-between (no teleporting)
-- Smooth arcs, easing, anticipation, follow-through
-- Limbs move progressively and consistently
-- Last frame must loop seamlessly to first frame
-- All frames are unique poses
+Between adjacent frames:
+- No large jumps in limb angle, body position, or orientation
+- Movement follows smooth arcs (not straight snaps)
+- Use natural easing (slow-in, accelerate, slow-out)
+- Include anticipation before major motion
+- Include follow-through after major motion
+- Secondary motion (hair, clothing) lags subtly behind
 
-IMPORTANT:
-This is a technical sprite sheet asset.
-Output must contain ONLY character animation poses on magenta background.
-If grid size or forbidden elements are wrong, the result is unusable.
+────────────────────────────────
+ACTION PHASE STRUCTURE (IMPORTANT)
+────────────────────────────────
+The animation represents ONE action broken into phases:
+- Early frames: anticipation / wind-up
+- Middle frames: main action at peak motion
+- Late frames: follow-through / recovery
+
+Each phase transitions gradually into the next.
+No abrupt changes between phases.
+
+────────────────────────────────
+LOOP REQUIREMENT
+────────────────────────────────
+- Final frame must transition seamlessly back to the first frame
+- Pose, momentum, and balance must allow perfect looping
+- No visible jump when looping
+
+────────────────────────────────
+IMPORTANT FINAL RULE
+────────────────────────────────
+Output must contain ONLY character animation poses
+on a solid magenta background.
+
+If animation continuity is broken,
+or if any forbidden element appears,
+the output is unusable.
 
 negative prompt:
 text, numbers, letters,
@@ -295,7 +341,8 @@ faint line, thin line, seam,
 ground line, floor line, baseline,
 panel, UI, watermark,
 shadow, glow, gradient,
-duplicate frame, repeated pose
+duplicate frame, repeated pose,
+pose reset, abrupt motion, jump cut
 
     `;
 

@@ -637,6 +637,92 @@ export const getCellRectForFrame = (
   };
 };
 
+/** Clamp for centroid-derived offset to match OFFSET_MIN/MAX used in FrameGrid */
+const CENTROID_OFFSET_CLAMP = 500;
+
+/**
+ * Computes the offset (offsetX, offsetY) so that the crop box centers on the
+ * content centroid within the given cell. Pixels with alpha > 20 are treated as
+ * content; magenta-like pixels are excluded as background.
+ *
+ * @param sheetBase64 - Base64 (or data URL) of the sprite sheet
+ * @param cellRect - { x, y, width, height } in sheet coords
+ * @returns { offsetX, offsetY } or { offsetX: 0, offsetY: 0 } if no content
+ */
+export const getContentCentroidOffset = async (
+  sheetBase64: string,
+  cellRect: { x: number; y: number; width: number; height: number }
+): Promise<{ offsetX: number; offsetY: number }> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const x0 = Math.max(0, Math.floor(cellRect.x));
+        const y0 = Math.max(0, Math.floor(cellRect.y));
+        const x1 = Math.min(img.width, Math.ceil(cellRect.x + cellRect.width));
+        const y1 = Math.min(img.height, Math.ceil(cellRect.y + cellRect.height));
+        if (x1 <= x0 || y1 <= y0) {
+          resolve({ offsetX: 0, offsetY: 0 });
+          return;
+        }
+        const w = x1 - x0;
+        const h = y1 - y0;
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) {
+          resolve({ offsetX: 0, offsetY: 0 });
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(x0, y0, w, h);
+        const data = imageData.data;
+        let sumCellX = 0;
+        let sumCellY = 0;
+        let count = 0;
+        for (let dy = 0; dy < h; dy++) {
+          for (let dx = 0; dx < w; dx++) {
+            const ix = x0 + dx;
+            const iy = y0 + dy;
+            const idx = (dy * w + dx) * 4;
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+            const a = data[idx + 3];
+            if (a <= 20) continue;
+            const isMagentaLike = (r > 180 && g < 100 && b > 100) ||
+              (r > 150 && g < 80 && b > 150) ||
+              (r > 200 && g < 50 && b > 200);
+            if (isMagentaLike) continue;
+            const cellX = ix - cellRect.x;
+            const cellY = iy - cellRect.y;
+            sumCellX += cellX;
+            sumCellY += cellY;
+            count++;
+          }
+        }
+        if (count === 0) {
+          resolve({ offsetX: 0, offsetY: 0 });
+          return;
+        }
+        const centroidX = sumCellX / count;
+        const centroidY = sumCellY / count;
+        let offsetX = centroidX - cellRect.width / 2;
+        let offsetY = centroidY - cellRect.height / 2;
+        offsetX = Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, offsetX));
+        offsetY = Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, offsetY));
+        resolve({ offsetX, offsetY });
+      } catch (e) {
+        reject(e instanceof Error ? e : new Error(String(e)));
+      }
+    };
+    img.onerror = () => reject(new Error('Failed to load sprite sheet for centroid'));
+    img.crossOrigin = 'anonymous';
+    img.src = sheetBase64;
+  });
+};
+
 export const cleanBase64 = (base64: string): string => {
   return base64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
 };
