@@ -235,306 +235,68 @@ export const generateSpriteSheet = async (
     
     // 2. Construct a prompt that enforces specific geometry AND animation continuity
     const fullPrompt = `
-Role: Professional Game Asset Artist specialized in 2D sprite animation.
-
-⚠️ CRITICAL: This is a PURE SPRITE SHEET - ONLY character poses allowed.
-NO text, NO numbers, NO lines, NO borders, NO boxes, NO frames, NO dividers, NO labels, NO decorative elements.
-⚠️ ABSOLUTELY NO BORDER LINES (框線) - NO rectangular borders, NO cell borders, NO frame borders, NO outline borders.
-Violation of this rule will result in unusable output.
-
-🎯 MANDATORY GRID DIMENSIONS (NON-NEGOTIABLE - HIGHEST PRIORITY):
-
-MATHEMATICAL REQUIREMENT:
-You MUST create a grid with EXACTLY ${cols} COLUMNS (horizontal) and ${rows} ROWS (vertical).
-
-Grid Structure:
-┌─────────────────────────────────────┐
-│ Column 1 │ Column 2 │ ... │ Column ${cols} │  ← Row 1 (${cols} poses)
-├─────────────────────────────────────┤
-│ Column 1 │ Column 2 │ ... │ Column ${cols} │  ← Row 2 (${cols} poses)
-├─────────────────────────────────────┤
-${rows > 2 ? `│ Column 1 │ Column 2 │ ... │ Column ${cols} │  ← Row 3 (${cols} poses)\n├─────────────────────────────────────┤\n` : ''}${rows > 3 ? `│ Column 1 │ Column 2 │ ... │ Column ${cols} │  ← Row 4 (${cols} poses)\n├─────────────────────────────────────┤\n` : ''}└─────────────────────────────────────┘
-
-Grid Formula:
-- Horizontal divisions: ${cols} columns
-- Vertical divisions: ${rows} rows  
-- Total cells: ${cols} × ${rows} = ${cols * rows} character poses
-- Grid ratio: ${cols}:${rows} (width:height)
-
-CRITICAL RULES:
-1. EXACTLY ${cols} poses per row (count horizontally)
-2. EXACTLY ${rows} rows total (count vertically)
-3. EXACTLY ${cols * rows} total character poses
-4. NO MORE than ${cols} columns - if you see ${cols + 1} or more, it's WRONG
-5. NO LESS than ${cols} columns - if you see ${cols - 1} or fewer, it's WRONG
-6. NO MORE than ${rows} rows - if you see ${rows + 1} or more, it's WRONG
-7. NO LESS than ${rows} rows - if you see ${rows - 1} or fewer, it's WRONG
-8. ⚠️ NO DUPLICATE ROWS / 禁止多列重複同一循環: Each row must show DIFFERENT poses. Do NOT repeat the same animation cycle across multiple rows. Every cell must be visually distinct (每格須不同) - no two cells may be identical or indistinguishable.
-
-⚠️ VERIFICATION REQUIRED BEFORE OUTPUT:
-Step 1: Count columns (left to right) - Must be EXACTLY ${cols}
-Step 2: Count rows (top to bottom) - Must be EXACTLY ${rows}
-Step 3: Multiply ${cols} × ${rows} - Must equal ${cols * rows} total poses
-
-If ANY count is wrong, DO NOT OUTPUT. Regenerate with correct dimensions.
+Role: Professional 2D game sprite artist.
 
 Task:
-Create a single 2D sprite sheet image of a character performing:
+Create ONE single 2D sprite sheet image showing:
 "${prompt}"
 
-The result must be ONE continuous image containing
-EXACTLY ${cols * rows} animation poses arranged in a grid of
-${cols} columns (horizontal) × ${rows} rows (vertical).
+LAYOUT (HIGHEST PRIORITY):
+- Arrange EXACTLY ${cols * rows} character poses
+- Layout forms ${cols} poses per row and ${rows} rows total
+- Evenly spaced, fixed positions
+- Read order: left → right, top → bottom
+- One unique character pose per cell
+- NO duplicated poses, NO repeated rows
 
-OUTPUT REQUIREMENTS:
-- Pure character animation poses ONLY
-- Solid magenta (#FF00FF) background
-- ⚠️ ABSOLUTELY NO BORDER LINES (框線) of any kind
-- NO rectangular borders around cells or frames
-- NO outline borders around characters
-- NO bottom border lines
-- NO frame numbers (1, 2, 3, etc.)
-- NO text, labels, or annotations
-- NO grid lines or separators
-- NO decorative elements
-- NO boxes, NO frames, NO panels
+CANVAS & BACKGROUND:
+- One continuous canvas (no padding, no margins)
+- Solid background color: pure magenta (#FF00FF)
+- No gradients, no texture
 
-CRITICAL REQUIREMENT - SEAMLESS ANIMATION:
-Each frame must flow PERFECTLY into the next frame, creating a smooth,
-continuous animation loop. The character should appear to move naturally
-from one pose to the next with no visual breaks, jumps, or inconsistencies.
-Think of this as capturing a single continuous motion, not separate static poses.
+STRICTLY FORBIDDEN (MOST CRITICAL):
+- NO text, NO numbers
+- NO lines of any kind
+- NO borders / frames / boxes / grids
+- NO cell outlines, NO rectangular shapes
+- NO ground line / floor line under feet
+- NO UI elements or decorations
+- NO alignment guides, NO helper lines, NO separators, even faint or subtle
+- Background must be ONE continuous flat color with no seams or divisions
 
-ABSOLUTE RULES (MUST FOLLOW - VIOLATION WILL RESULT IN REJECTION):
 
-FORBIDDEN ELEMENTS (NEVER DRAW THESE):
-- NO text of any kind (numbers, letters, words, labels, captions).
-- NO frame numbers (1, 2, 3, etc.) or sequence indicators.
-- ⚠️ ABSOLUTELY NO BORDER LINES (框線) - This is the MOST CRITICAL rule:
-  * NO rectangular borders around individual cells
-  * NO rectangular borders around the entire grid
-  * NO outline borders around characters
-  * NO frame borders, NO cell borders, NO box borders
-  * NO borders of any shape, size, or color
-  * NO borders even if they are the same color as background
-  * NO borders even if they are transparent or semi-transparent
-- NO borders, lines, boxes, panels, dividers, or separators of any kind.
-- NO bottom border lines, base lines, ground lines, floor lines, or horizontal dividers.
-- ⚠️ CRITICAL: NO floor line (直線地板) beneath character feet - characters float on transparent/background only.
-- NO ground indicator lines, base reference lines, or horizontal reference lines.
-- NO grid lines, cell boundaries, or section markers.
-- NO UI elements, watermarks, symbols, or decorative elements.
-- NO visual indicators of rows, columns, grids, or sections.
-- NO frame labels, position markers, or coordinate indicators.
+SPRITE REQUIREMENTS:
+- Flat 2D illustration
+- Clean outlines, no shadows or glow
+- Character size identical in every frame
+- Character centered in each grid cell
+- Feet aligned horizontally across all frames
+- No scaling, no rotation drift, no position jump
 
-CANVAS REQUIREMENTS:
-- The canvas must appear as ONE uninterrupted transparent space.
-- Only the character poses should be visible - nothing else.
-- No structural elements, no organizational markers, no reference lines.
+ANIMATION QUALITY (FOR GIF USE):
+- Frames must form ONE continuous, smooth motion
+- Each frame is a natural in-between (no teleporting)
+- Smooth arcs, easing, anticipation, follow-through
+- Limbs move progressively and consistently
+- Last frame must loop seamlessly to first frame
+- All frames are unique poses
 
-BACKGROUND:
+IMPORTANT:
+This is a technical sprite sheet asset.
+Output must contain ONLY character animation poses on magenta background.
+If grid size or forbidden elements are wrong, the result is unusable.
 
-- Use a single, flat, solid chroma key background color.
-- Background color: pure magenta (#FF00FF).
-- No gradients, no texture, no pattern.
-- The background must be a single uniform color across the entire canvas.
+negative prompt:
+text, numbers, letters,
+border, frame, box, grid, outline,
+cell edge, cell boundary, separator,
+alignment line, guide line,
+faint line, thin line, seam,
+ground line, floor line, baseline,
+panel, UI, watermark,
+shadow, glow, gradient,
+duplicate frame, repeated pose
 
-CANVAS ASPECT RATIO:
-- The canvas aspect ratio is set to ${targetAspectRatio} to match the grid layout.
-- This aspect ratio is calculated specifically for ${cols} columns × ${rows} rows grid.
-- Grid ratio: ${cols}:${rows} (columns:rows) = ${(cols/rows).toFixed(3)}:1
-- The canvas dimensions will be automatically adjusted to maintain this ratio.
-- Ensure the grid fills the entire canvas evenly with EXACTLY ${cols} columns and ${rows} rows.
-
-LAYOUT & PLACEMENT (CRITICAL - GRID DIMENSIONS ARE MANDATORY):
-
-⚠️ GRID STRUCTURE (MUST BE EXACT):
-- The canvas must be divided into a grid of EXACTLY ${cols} columns × ${rows} rows.
-- This creates ${cols * rows} equal-sized cells.
-- Each cell contains exactly ONE character pose.
-- NO MORE THAN ${cols} columns, NO MORE THAN ${rows} rows.
-- NO FEWER THAN ${cols} columns, NO FEWER THAN ${rows} rows.
-
-Grid Calculation:
-- Horizontal division: ${cols} equal columns
-- Vertical division: ${rows} equal rows
-- Total cells: ${cols} × ${rows} = ${cols * rows}
-
-Placement Rules:
-- The canvas has no padding or margins.
-- Characters are evenly spaced in fixed positions.
-- Row 1: ${cols} poses (left to right)
-- Row 2: ${cols} poses (left to right)
-${rows > 2 ? `- Row 3: ${cols} poses (left to right)\n${rows > 3 ? `- Row 4: ${cols} poses (left to right)\n` : ''}` : ''}
-- Place exactly one character pose at each grid cell.
-- All poses must be perfectly centered within their grid cell.
-- The grid must be perfectly uniform - all cells the same size.
-
-CONSISTENCY RULES:
-
-- Character size must be identical in every pose.
-- No scaling, no zooming, no rotation drift.
-- Feet must align to the same horizontal position across all frames
-  (approximately 85% of the canvas height per row).
-- ⚠️ IMPORTANT: Characters should appear to stand on an invisible ground plane.
-  DO NOT draw any visible floor line, ground line, or base line.
-  The character's feet should simply align horizontally without any visible line beneath them.
-
-CONTAINMENT (ANTI-OVERLAP):
-
-- Each pose must remain within an invisible safe area.
-- Maximum movement and limb extension must stay inside this safe area.
-- No part of the character may overlap another pose.
-
-ANIMATION FLOW & CONTINUITY (CRITICAL):
-
-- Order reads left to right, then top to bottom.
-- Motion must be PERFECTLY SMOOTH and SEAMLESSLY CONTINUOUS.
-- Each frame must logically flow into the next with no visual gaps or jumps.
-
-Frame-to-Frame Continuity (MANDATORY):
-- Each pose must be a natural progression from the previous pose.
-- Body parts must move in predictable, physics-based trajectories.
-- Calculate intermediate positions: if arm is at position A in frame 1 and position C in frame 3, 
-  frame 2 must show the arm at position B (midpoint).
-- NO sudden position changes, NO teleporting, NO disappearing/reappearing body parts.
-
-Motion Arc & Easing:
-- All limb movements follow smooth arcs (not straight lines).
-- Use natural easing: movements start slow, accelerate in the middle, slow down at the end.
-- Anticipation: before major movements, show slight backward motion (wind-up).
-- Follow-through: after major movements, show slight overshoot and settle.
-- Secondary motion: hair, clothing, accessories lag slightly behind primary motion.
-
-Temporal Consistency:
-- Maintain consistent timing: if frame 1-2 shows a fast movement, frame 2-3 should continue that pace.
-- Avoid inconsistent pacing: don't mix slow and fast movements randomly.
-- For cyclic animations (run, walk, idle), ensure the last frame seamlessly loops to the first frame.
-
-Spatial Consistency:
-- Keep feet anchored to the same horizontal position across ALL frames (approximately 85% of canvas height per row).
-- ⚠️ NO visible ground line or floor line - feet alignment is invisible, not drawn.
-- Maintain consistent character size: measure from head to feet, keep identical across all frames.
-- Center of gravity should move in smooth curves, not jump between positions.
-- Avoid vertical or horizontal drift: character should stay in the same relative position.
-
-Progressive Motion Breakdown:
-- Frame 1 → Frame 2: Show 25% of total movement
-- Frame 2 → Frame 3: Show next 25% of movement
-- Continue this progressive breakdown for all frames
-- Each frame should feel like a natural "in-between" of the previous and next frames
-
-Body Part Coordination:
-- When one limb moves forward, the opposite limb typically moves backward (walking/running).
-- Head should bob naturally with body movement (subtle, not exaggerated).
-- Torso rotation should be gradual and match limb movement.
-- Maintain natural weight distribution: character should never appear off-balance.
-
-Loop Seamlessness (for cyclic actions):
-- The last frame must visually connect to the first frame.
-- If the action is a cycle (run, walk, idle), ensure the final pose can naturally transition back to the first pose.
-- Position, pose, and momentum should create a perfect loop.
-- ⚠️ EVEN FOR CYCLES: Do NOT copy the same cycle to fill multiple rows. If the grid has multiple rows, each row must be a different phase or variation of the motion - never identical to another row (禁止多列重複同一循環). Every cell must be a unique pose (每格須不同).
-
-STYLE:
-
-- Flat 2D illustration.
-- Clean, sharp outlines.
-- Even neutral lighting.
-- No shadows, no depth effects.
-
-FAIL-SAFE PRIORITY:
-
-1. FIRST PRIORITY: No forbidden elements (text, numbers, lines, borders).
-2. SECOND PRIORITY: Clean layout and proper containment.
-3. THIRD PRIORITY: Alignment and spacing consistency.
-
-If any artistic choice conflicts with these priorities,
-ALWAYS prioritize removing forbidden elements first.
-A clean sprite sheet with perfect poses is better than
-a sprite sheet with correct poses but unwanted elements.
-
-FINAL CHECKLIST BEFORE OUTPUT:
-✓ Grid dimensions: EXACTLY ${cols} columns × ${rows} rows (verify by counting!)
-✓ Total frames: EXACTLY ${cols * rows} character poses
-✓ ⚠️ NO duplicate rows (禁止多列重複同一循環) - each row has DIFFERENT poses, each cell unique (每格須不同)
-✓ ⚠️ NO BORDER LINES (框線) - Check for rectangular borders around cells or grid
-✓ ⚠️ NO BORDER LINES - Check for outline borders around characters
-✓ ⚠️ NO BORDER LINES - Check for any rectangular shapes or frames
-✓ No text or numbers anywhere
-✓ No lines or borders anywhere
-✓ No bottom border lines or base lines
-✓ No frame numbers or labels
-✓ Only character poses visible
-✓ Solid magenta background only
-✓ Clean, uninterrupted canvas
-
-NEGATIVE PROMPT (STRICTLY FORBIDDEN):
-
-VISUAL STRUCTURE (FORBIDDEN):
-框線, border line, border, rectangular border, cell border, frame border, outline border,
-box border, square border, rectangle border, border frame, border box,
-grid, grid lines, frame lines, border lines, bottom border, base line, ground line,
-floor line, 直線地板, ground indicator, floor indicator, base reference line,
-horizontal line, vertical line, divider line, separator line,
-panel, box, tile, cell boundary, section marker, rectangular frame,
-frame number, frame label, position number, sequence number,
-text, numbers, letters, digits, labels, captions, annotations,
-watermark, signature, copyright, UI element, HUD element,
-comic layout, storyboard, reference line, guide line,
-checkerboard, transparency pattern, alpha grid, background pattern,
-line beneath feet, line under character, ground mark, floor mark,
-rectangular outline, cell outline, frame outline, border rectangle
-
-DECORATIVE ELEMENTS (FORBIDDEN):
-white outline, white halo, fringe, border decoration,
-shadow, glow, vignette, frame decoration,
-background color variation, off-white, gradient background
-
-ANIMATION ERRORS (FORBIDDEN):
-motion blur, jitter, scaling inconsistency,
-discontinuous motion, teleporting, position jump,
-abrupt movement, sudden change, frame gap,
-inconsistent timing, erratic pacing,
-body part disappearing, limb teleportation,
-character drift, size variation, scale jump,
-duplicate rows, repeating the same cycle across multiple rows, identical cells, 多列重複同一循環, 每格相同
-
-CRITICAL REMINDER:
-The output must be PURE CHARACTER POSES ONLY.
-No lines, no numbers, no borders, no labels, no structural elements.
-Just the character animation frames on a solid magenta background.
-
-⚠️ FINAL VERIFICATION BEFORE GENERATING:
-Before you output the image, mentally scan it and verify:
-
-GRID DIMENSION CHECK (MOST CRITICAL):
-0. Count the columns: Is it EXACTLY ${cols}? → If NO, DO NOT OUTPUT, regenerate with ${cols} columns
-1. Count the rows: Is it EXACTLY ${rows}? → If NO, DO NOT OUTPUT, regenerate with ${rows} rows
-2. Total count: Are there EXACTLY ${cols * rows} character poses? → If NO, DO NOT OUTPUT
-
-BORDER LINE CHECK (CRITICAL - CHECK THIS FIRST):
-3. ⚠️ Can you see ANY rectangular borders (框線) around cells? → REMOVE THEM IMMEDIATELY
-4. ⚠️ Can you see ANY rectangular borders around the grid? → REMOVE THEM IMMEDIATELY
-5. ⚠️ Can you see ANY outline borders around characters? → REMOVE THEM IMMEDIATELY
-6. ⚠️ Can you see ANY boxes, frames, or rectangular shapes? → REMOVE THEM IMMEDIATELY
-7. ⚠️ Are there ANY lines forming rectangles or squares? → REMOVE THEM IMMEDIATELY
-
-CONTENT CHECK:
-8. Can you see ANY numbers? → REMOVE THEM
-9. Can you see ANY lines (especially bottom borders, floor lines, ground lines)? → REMOVE THEM
-10. Can you see ANY floor line (直線地板) beneath character feet? → REMOVE IT IMMEDIATELY
-11. Can you see ANY text or labels? → REMOVE THEM
-12. Is the background pure magenta with NO decorative elements? → YES, KEEP IT CLEAN
-13. Are ONLY character poses visible (no lines, no numbers, no borders, no boxes)? → YES, PERFECT
-
-If you see ANY border lines (框線), DO NOT OUTPUT THE IMAGE - regenerate without borders.
-If the grid dimensions are wrong (not ${cols}×${rows}), DO NOT OUTPUT THE IMAGE.
-If you see ANY forbidden elements, DO NOT OUTPUT THE IMAGE.
-Generate again with the CORRECT dimensions and WITHOUT any borders or forbidden elements.
-
-Remember: A sprite sheet is a technical asset, not an illustration.
-It must be clean, pure, and contain ONLY the character animation frames.
     `;
 
     if (onProgress) onProgress(`正在生成 ${cols}x${rows} 連貫動作精靈圖 (比例 ${targetAspectRatio})...`);
