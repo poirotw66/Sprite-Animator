@@ -200,11 +200,79 @@ export const sliceSpriteSheet = async (
               0, 0, frameWidth, frameHeight // Destination rectangle
             );
 
-            // Legacy background removal (not used after chroma key removal, but kept for compatibility)
+            // Post-processing: Remove floor lines and optimize content
+            const imageData = ctx.getImageData(0, 0, frameWidth, frameHeight);
+            const data = imageData.data;
+            
+            // Step 1: Remove floor lines (horizontal lines near bottom, typically magenta/pink)
+            // Floor lines are usually thin horizontal lines at the bottom of the frame
+            // Check bottom 20% of frame for floor lines
+            const floorLineDetectionHeight = Math.max(10, Math.floor(frameHeight * 0.2));
+            const floorLineStartY = frameHeight - floorLineDetectionHeight;
+            
+            // Detect and remove floor lines row by row
+            for (let y = floorLineStartY; y < frameHeight; y++) {
+              let linePixelCount = 0;
+              let magentaLikeCount = 0;
+              let continuousLineLength = 0;
+              let maxContinuousLength = 0;
+              
+              // Scan horizontal line to detect floor line pattern
+              for (let x = 0; x < frameWidth; x++) {
+                const idx = (y * frameWidth + x) * 4;
+                const r = data[idx];
+                const g = data[idx + 1];
+                const b = data[idx + 2];
+                const a = data[idx + 3];
+                
+                // Check if pixel is part of a floor line
+                // Floor lines are typically: high R, low G, high B (magenta pattern)
+                // Also check for darker magenta variants (like #C800C8)
+                const isMagentaLike = (r > 180 && g < 100 && b > 100) || 
+                                      (r > 150 && g < 80 && b > 150) ||
+                                      (r > 200 && g < 50 && b > 200);
+                const isLinePixel = a > 10 && isMagentaLike;
+                
+                if (isLinePixel) {
+                  linePixelCount++;
+                  magentaLikeCount++;
+                  continuousLineLength++;
+                  maxContinuousLength = Math.max(maxContinuousLength, continuousLineLength);
+                } else {
+                  continuousLineLength = 0;
+                }
+              }
+              
+              // Floor line detection criteria:
+              // 1. At least 25% of the row width should be line pixels
+              // 2. At least 60% of line pixels should be magenta-like
+              // 3. There should be a continuous line segment of at least 20% width
+              const lineThreshold = frameWidth * 0.25;
+              const continuousThreshold = frameWidth * 0.2;
+              const magentaRatio = linePixelCount > 0 ? magentaLikeCount / linePixelCount : 0;
+              
+              if (linePixelCount > lineThreshold && 
+                  magentaRatio > 0.6 && 
+                  maxContinuousLength > continuousThreshold) {
+                // This is a floor line - remove it
+                for (let x = 0; x < frameWidth; x++) {
+                  const idx = (y * frameWidth + x) * 4;
+                  const r = data[idx];
+                  const g = data[idx + 1];
+                  const b = data[idx + 2];
+                  // Only remove magenta-like pixels to avoid removing character parts
+                  const isMagentaLike = (r > 180 && g < 100 && b > 100) || 
+                                        (r > 150 && g < 80 && b > 150) ||
+                                        (r > 200 && g < 50 && b > 200);
+                  if (isMagentaLike) {
+                    data[idx + 3] = 0; // Make transparent
+                  }
+                }
+              }
+            }
+            
+            // Step 2: Legacy background removal (not used after chroma key removal, but kept for compatibility)
             if (removeBg) {
-              const imageData = ctx.getImageData(0, 0, frameWidth, frameHeight);
-              const data = imageData.data;
-
               for (let i = 0; i < data.length; i += 4) {
                 const red = data[i];
                 const green = data[i + 1];
@@ -213,10 +281,13 @@ export const sliceSpriteSheet = async (
                   data[i + 3] = 0; // Set alpha to 0
                 }
               }
-              ctx.putImageData(imageData, 0, 0);
             }
+            
+            // Put processed image data back
+            ctx.putImageData(imageData, 0, 0);
 
             // Convert to base64
+            // Note: All frames maintain uniform dimensions for consistent animation playback
             frames.push(canvas.toDataURL('image/png'));
           }
         }

@@ -238,25 +238,65 @@ export const generateSpriteSheet = async (
 Role: Professional Game Asset Artist specialized in 2D sprite animation.
 
 ⚠️ CRITICAL: This is a PURE SPRITE SHEET - ONLY character poses allowed.
-NO text, NO numbers, NO lines, NO borders, NO labels, NO decorative elements.
+NO text, NO numbers, NO lines, NO borders, NO boxes, NO frames, NO dividers, NO labels, NO decorative elements.
+⚠️ ABSOLUTELY NO BORDER LINES (框線) - NO rectangular borders, NO cell borders, NO frame borders, NO outline borders.
 Violation of this rule will result in unusable output.
+
+🎯 MANDATORY GRID DIMENSIONS (NON-NEGOTIABLE - HIGHEST PRIORITY):
+
+MATHEMATICAL REQUIREMENT:
+You MUST create a grid with EXACTLY ${cols} COLUMNS (horizontal) and ${rows} ROWS (vertical).
+
+Grid Structure:
+┌─────────────────────────────────────┐
+│ Column 1 │ Column 2 │ ... │ Column ${cols} │  ← Row 1 (${cols} poses)
+├─────────────────────────────────────┤
+│ Column 1 │ Column 2 │ ... │ Column ${cols} │  ← Row 2 (${cols} poses)
+├─────────────────────────────────────┤
+${rows > 2 ? `│ Column 1 │ Column 2 │ ... │ Column ${cols} │  ← Row 3 (${cols} poses)\n├─────────────────────────────────────┤\n` : ''}${rows > 3 ? `│ Column 1 │ Column 2 │ ... │ Column ${cols} │  ← Row 4 (${cols} poses)\n├─────────────────────────────────────┤\n` : ''}└─────────────────────────────────────┘
+
+Grid Formula:
+- Horizontal divisions: ${cols} columns
+- Vertical divisions: ${rows} rows  
+- Total cells: ${cols} × ${rows} = ${cols * rows} character poses
+- Grid ratio: ${cols}:${rows} (width:height)
+
+CRITICAL RULES:
+1. EXACTLY ${cols} poses per row (count horizontally)
+2. EXACTLY ${rows} rows total (count vertically)
+3. EXACTLY ${cols * rows} total character poses
+4. NO MORE than ${cols} columns - if you see ${cols + 1} or more, it's WRONG
+5. NO LESS than ${cols} columns - if you see ${cols - 1} or fewer, it's WRONG
+6. NO MORE than ${rows} rows - if you see ${rows + 1} or more, it's WRONG
+7. NO LESS than ${rows} rows - if you see ${rows - 1} or fewer, it's WRONG
+
+⚠️ VERIFICATION REQUIRED BEFORE OUTPUT:
+Step 1: Count columns (left to right) - Must be EXACTLY ${cols}
+Step 2: Count rows (top to bottom) - Must be EXACTLY ${rows}
+Step 3: Multiply ${cols} × ${rows} - Must equal ${cols * rows} total poses
+
+If ANY count is wrong, DO NOT OUTPUT. Regenerate with correct dimensions.
 
 Task:
 Create a single 2D sprite sheet image of a character performing:
 "${prompt}"
 
 The result must be ONE continuous image containing
-${cols * rows} animation poses arranged evenly
-from left to right, top to bottom.
+EXACTLY ${cols * rows} animation poses arranged in a grid of
+${cols} columns (horizontal) × ${rows} rows (vertical).
 
 OUTPUT REQUIREMENTS:
 - Pure character animation poses ONLY
 - Solid magenta (#FF00FF) background
+- ⚠️ ABSOLUTELY NO BORDER LINES (框線) of any kind
+- NO rectangular borders around cells or frames
+- NO outline borders around characters
 - NO bottom border lines
 - NO frame numbers (1, 2, 3, etc.)
 - NO text, labels, or annotations
 - NO grid lines or separators
 - NO decorative elements
+- NO boxes, NO frames, NO panels
 
 CRITICAL REQUIREMENT - SEAMLESS ANIMATION:
 Each frame must flow PERFECTLY into the next frame, creating a smooth,
@@ -269,8 +309,18 @@ ABSOLUTE RULES (MUST FOLLOW - VIOLATION WILL RESULT IN REJECTION):
 FORBIDDEN ELEMENTS (NEVER DRAW THESE):
 - NO text of any kind (numbers, letters, words, labels, captions).
 - NO frame numbers (1, 2, 3, etc.) or sequence indicators.
+- ⚠️ ABSOLUTELY NO BORDER LINES (框線) - This is the MOST CRITICAL rule:
+  * NO rectangular borders around individual cells
+  * NO rectangular borders around the entire grid
+  * NO outline borders around characters
+  * NO frame borders, NO cell borders, NO box borders
+  * NO borders of any shape, size, or color
+  * NO borders even if they are the same color as background
+  * NO borders even if they are transparent or semi-transparent
 - NO borders, lines, boxes, panels, dividers, or separators of any kind.
-- NO bottom border lines, base lines, ground lines, or horizontal dividers.
+- NO bottom border lines, base lines, ground lines, floor lines, or horizontal dividers.
+- ⚠️ CRITICAL: NO floor line (直線地板) beneath character feet - characters float on transparent/background only.
+- NO ground indicator lines, base reference lines, or horizontal reference lines.
 - NO grid lines, cell boundaries, or section markers.
 - NO UI elements, watermarks, symbols, or decorative elements.
 - NO visual indicators of rows, columns, grids, or sections.
@@ -288,20 +338,46 @@ BACKGROUND:
 - No gradients, no texture, no pattern.
 - The background must be a single uniform color across the entire canvas.
 
-LAYOUT & PLACEMENT (CRITICAL):
+CANVAS ASPECT RATIO:
+- The canvas aspect ratio is set to ${targetAspectRatio} to match the grid layout.
+- This aspect ratio is calculated specifically for ${cols} columns × ${rows} rows grid.
+- Grid ratio: ${cols}:${rows} (columns:rows) = ${(cols/rows).toFixed(3)}:1
+- The canvas dimensions will be automatically adjusted to maintain this ratio.
+- Ensure the grid fills the entire canvas evenly with EXACTLY ${cols} columns and ${rows} rows.
 
+LAYOUT & PLACEMENT (CRITICAL - GRID DIMENSIONS ARE MANDATORY):
+
+⚠️ GRID STRUCTURE (MUST BE EXACT):
+- The canvas must be divided into a grid of EXACTLY ${cols} columns × ${rows} rows.
+- This creates ${cols * rows} equal-sized cells.
+- Each cell contains exactly ONE character pose.
+- NO MORE THAN ${cols} columns, NO MORE THAN ${rows} rows.
+- NO FEWER THAN ${cols} columns, NO FEWER THAN ${rows} rows.
+
+Grid Calculation:
+- Horizontal division: ${cols} equal columns
+- Vertical division: ${rows} equal rows
+- Total cells: ${cols} × ${rows} = ${cols * rows}
+
+Placement Rules:
 - The canvas has no padding or margins.
-- Characters are evenly spaced in fixed positions
-  forming ${cols} positions per row and ${rows} rows total.
-- Place exactly one character pose at each position.
-- All poses must be perfectly centered on their position.
+- Characters are evenly spaced in fixed positions.
+- Row 1: ${cols} poses (left to right)
+- Row 2: ${cols} poses (left to right)
+${rows > 2 ? `- Row 3: ${cols} poses (left to right)\n${rows > 3 ? `- Row 4: ${cols} poses (left to right)\n` : ''}` : ''}
+- Place exactly one character pose at each grid cell.
+- All poses must be perfectly centered within their grid cell.
+- The grid must be perfectly uniform - all cells the same size.
 
 CONSISTENCY RULES:
 
 - Character size must be identical in every pose.
 - No scaling, no zooming, no rotation drift.
-- Feet must align to the same horizontal ground line
+- Feet must align to the same horizontal position across all frames
   (approximately 85% of the canvas height per row).
+- ⚠️ IMPORTANT: Characters should appear to stand on an invisible ground plane.
+  DO NOT draw any visible floor line, ground line, or base line.
+  The character's feet should simply align horizontally without any visible line beneath them.
 
 CONTAINMENT (ANTI-OVERLAP):
 
@@ -335,7 +411,8 @@ Temporal Consistency:
 - For cyclic animations (run, walk, idle), ensure the last frame seamlessly loops to the first frame.
 
 Spatial Consistency:
-- Keep feet anchored to the same ground line across ALL frames (approximately 85% of canvas height per row).
+- Keep feet anchored to the same horizontal position across ALL frames (approximately 85% of canvas height per row).
+- ⚠️ NO visible ground line or floor line - feet alignment is invisible, not drawn.
 - Maintain consistent character size: measure from head to feet, keep identical across all frames.
 - Center of gravity should move in smooth curves, not jump between positions.
 - Avoid vertical or horizontal drift: character should stay in the same relative position.
@@ -376,6 +453,11 @@ A clean sprite sheet with perfect poses is better than
 a sprite sheet with correct poses but unwanted elements.
 
 FINAL CHECKLIST BEFORE OUTPUT:
+✓ Grid dimensions: EXACTLY ${cols} columns × ${rows} rows (verify by counting!)
+✓ Total frames: EXACTLY ${cols * rows} character poses
+✓ ⚠️ NO BORDER LINES (框線) - Check for rectangular borders around cells or grid
+✓ ⚠️ NO BORDER LINES - Check for outline borders around characters
+✓ ⚠️ NO BORDER LINES - Check for any rectangular shapes or frames
 ✓ No text or numbers anywhere
 ✓ No lines or borders anywhere
 ✓ No bottom border lines or base lines
@@ -387,14 +469,19 @@ FINAL CHECKLIST BEFORE OUTPUT:
 NEGATIVE PROMPT (STRICTLY FORBIDDEN):
 
 VISUAL STRUCTURE (FORBIDDEN):
+框線, border line, border, rectangular border, cell border, frame border, outline border,
+box border, square border, rectangle border, border frame, border box,
 grid, grid lines, frame lines, border lines, bottom border, base line, ground line,
+floor line, 直線地板, ground indicator, floor indicator, base reference line,
 horizontal line, vertical line, divider line, separator line,
-panel, box, tile, cell boundary, section marker,
+panel, box, tile, cell boundary, section marker, rectangular frame,
 frame number, frame label, position number, sequence number,
 text, numbers, letters, digits, labels, captions, annotations,
 watermark, signature, copyright, UI element, HUD element,
 comic layout, storyboard, reference line, guide line,
-checkerboard, transparency pattern, alpha grid, background pattern
+checkerboard, transparency pattern, alpha grid, background pattern,
+line beneath feet, line under character, ground mark, floor mark,
+rectangular outline, cell outline, frame outline, border rectangle
 
 DECORATIVE ELEMENTS (FORBIDDEN):
 white outline, white halo, fringe, border decoration,
@@ -416,14 +503,31 @@ Just the character animation frames on a solid magenta background.
 
 ⚠️ FINAL VERIFICATION BEFORE GENERATING:
 Before you output the image, mentally scan it and verify:
-1. Can you see ANY numbers? → REMOVE THEM
-2. Can you see ANY lines (especially bottom borders)? → REMOVE THEM
-3. Can you see ANY text or labels? → REMOVE THEM
-4. Is the background pure magenta with NO decorative elements? → YES, KEEP IT CLEAN
-5. Are ONLY character poses visible? → YES, PERFECT
 
+GRID DIMENSION CHECK (MOST CRITICAL):
+0. Count the columns: Is it EXACTLY ${cols}? → If NO, DO NOT OUTPUT, regenerate with ${cols} columns
+1. Count the rows: Is it EXACTLY ${rows}? → If NO, DO NOT OUTPUT, regenerate with ${rows} rows
+2. Total count: Are there EXACTLY ${cols * rows} character poses? → If NO, DO NOT OUTPUT
+
+BORDER LINE CHECK (CRITICAL - CHECK THIS FIRST):
+3. ⚠️ Can you see ANY rectangular borders (框線) around cells? → REMOVE THEM IMMEDIATELY
+4. ⚠️ Can you see ANY rectangular borders around the grid? → REMOVE THEM IMMEDIATELY
+5. ⚠️ Can you see ANY outline borders around characters? → REMOVE THEM IMMEDIATELY
+6. ⚠️ Can you see ANY boxes, frames, or rectangular shapes? → REMOVE THEM IMMEDIATELY
+7. ⚠️ Are there ANY lines forming rectangles or squares? → REMOVE THEM IMMEDIATELY
+
+CONTENT CHECK:
+8. Can you see ANY numbers? → REMOVE THEM
+9. Can you see ANY lines (especially bottom borders, floor lines, ground lines)? → REMOVE THEM
+10. Can you see ANY floor line (直線地板) beneath character feet? → REMOVE IT IMMEDIATELY
+11. Can you see ANY text or labels? → REMOVE THEM
+12. Is the background pure magenta with NO decorative elements? → YES, KEEP IT CLEAN
+13. Are ONLY character poses visible (no lines, no numbers, no borders, no boxes)? → YES, PERFECT
+
+If you see ANY border lines (框線), DO NOT OUTPUT THE IMAGE - regenerate without borders.
+If the grid dimensions are wrong (not ${cols}×${rows}), DO NOT OUTPUT THE IMAGE.
 If you see ANY forbidden elements, DO NOT OUTPUT THE IMAGE.
-Generate again without those elements.
+Generate again with the CORRECT dimensions and WITHOUT any borders or forbidden elements.
 
 Remember: A sprite sheet is a technical asset, not an illustration.
 It must be clean, pure, and contain ONLY the character animation frames.
