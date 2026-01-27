@@ -269,6 +269,7 @@ CRITICAL RULES:
 5. NO LESS than ${cols} columns - if you see ${cols - 1} or fewer, it's WRONG
 6. NO MORE than ${rows} rows - if you see ${rows + 1} or more, it's WRONG
 7. NO LESS than ${rows} rows - if you see ${rows - 1} or fewer, it's WRONG
+8. ⚠️ NO DUPLICATE ROWS / 禁止多列重複同一循環: Each row must show DIFFERENT poses. Do NOT repeat the same animation cycle across multiple rows. Every cell must be visually distinct (每格須不同) - no two cells may be identical or indistinguishable.
 
 ⚠️ VERIFICATION REQUIRED BEFORE OUTPUT:
 Step 1: Count columns (left to right) - Must be EXACTLY ${cols}
@@ -433,6 +434,7 @@ Loop Seamlessness (for cyclic actions):
 - The last frame must visually connect to the first frame.
 - If the action is a cycle (run, walk, idle), ensure the final pose can naturally transition back to the first pose.
 - Position, pose, and momentum should create a perfect loop.
+- ⚠️ EVEN FOR CYCLES: Do NOT copy the same cycle to fill multiple rows. If the grid has multiple rows, each row must be a different phase or variation of the motion - never identical to another row (禁止多列重複同一循環). Every cell must be a unique pose (每格須不同).
 
 STYLE:
 
@@ -455,6 +457,7 @@ a sprite sheet with correct poses but unwanted elements.
 FINAL CHECKLIST BEFORE OUTPUT:
 ✓ Grid dimensions: EXACTLY ${cols} columns × ${rows} rows (verify by counting!)
 ✓ Total frames: EXACTLY ${cols * rows} character poses
+✓ ⚠️ NO duplicate rows (禁止多列重複同一循環) - each row has DIFFERENT poses, each cell unique (每格須不同)
 ✓ ⚠️ NO BORDER LINES (框線) - Check for rectangular borders around cells or grid
 ✓ ⚠️ NO BORDER LINES - Check for outline borders around characters
 ✓ ⚠️ NO BORDER LINES - Check for any rectangular shapes or frames
@@ -494,7 +497,8 @@ discontinuous motion, teleporting, position jump,
 abrupt movement, sudden change, frame gap,
 inconsistent timing, erratic pacing,
 body part disappearing, limb teleportation,
-character drift, size variation, scale jump
+character drift, size variation, scale jump,
+duplicate rows, repeating the same cycle across multiple rows, identical cells, 多列重複同一循環, 每格相同
 
 CRITICAL REMINDER:
 The output must be PURE CHARACTER POSES ONLY.
