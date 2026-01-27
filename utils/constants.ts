@@ -2,16 +2,16 @@
 
 export const DEFAULT_CONFIG = {
   frameCount: 4,
-  speed: 4, // Default FPS = speed * ANIMATION_FPS_MULTIPLIER (4 * 2 = 8 FPS)
+  speed: 2, // Default FPS = speed * ANIMATION_FPS_MULTIPLIER (2 * 2 = 4 FPS)
   scale: 100,
   mode: 'sheet' as const,
-  gridCols: 4,
-  gridRows: 4,
+  gridCols: 3,
+  gridRows: 2,
 };
 
 export const DEFAULT_SLICE_SETTINGS = {
-  cols: 4,
-  rows: 4,
+  cols: 3,
+  rows: 2,
   paddingX: 0,
   paddingY: 0,
   shiftX: 0,

@@ -642,8 +642,8 @@ const CENTROID_OFFSET_CLAMP = 500;
 
 /**
  * Computes the offset (offsetX, offsetY) so that the crop box centers on the
- * content centroid within the given cell. Pixels with alpha > 20 are treated as
- * content; magenta-like pixels are excluded as background.
+ * content bounding-box center within the given cell. More stable than centroid
+ * when limbs extend. Pixels with alpha > 20 are content; magenta-like excluded.
  *
  * @param sheetBase64 - Base64 (or data URL) of the sprite sheet
  * @param cellRect - { x, y, width, height } in sheet coords
@@ -678,9 +678,7 @@ export const getContentCentroidOffset = async (
         ctx.drawImage(img, 0, 0);
         const imageData = ctx.getImageData(x0, y0, w, h);
         const data = imageData.data;
-        let sumCellX = 0;
-        let sumCellY = 0;
-        let count = 0;
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
         for (let dy = 0; dy < h; dy++) {
           for (let dx = 0; dx < w; dx++) {
             const ix = x0 + dx;
@@ -697,19 +695,20 @@ export const getContentCentroidOffset = async (
             if (isMagentaLike) continue;
             const cellX = ix - cellRect.x;
             const cellY = iy - cellRect.y;
-            sumCellX += cellX;
-            sumCellY += cellY;
-            count++;
+            minX = Math.min(minX, cellX);
+            maxX = Math.max(maxX, cellX);
+            minY = Math.min(minY, cellY);
+            maxY = Math.max(maxY, cellY);
           }
         }
-        if (count === 0) {
+        if (minX === Infinity) {
           resolve({ offsetX: 0, offsetY: 0 });
           return;
         }
-        const centroidX = sumCellX / count;
-        const centroidY = sumCellY / count;
-        let offsetX = centroidX - cellRect.width / 2;
-        let offsetY = centroidY - cellRect.height / 2;
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        let offsetX = centerX - cellRect.width / 2;
+        let offsetY = centerY - cellRect.height / 2;
         offsetX = Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, offsetX));
         offsetY = Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, offsetY));
         resolve({ offsetX, offsetY });
@@ -720,6 +719,172 @@ export const getContentCentroidOffset = async (
     img.onerror = () => reject(new Error('Failed to load sprite sheet for centroid'));
     img.crossOrigin = 'anonymous';
     img.src = sheetBase64;
+  });
+};
+
+/**
+ * Crops one cell from the sheet using the same logic as sliceSpriteSheet.
+ * Used for template-matching search. No post-processing (floor line, removeBg).
+ */
+export function cropCellFromImage(
+  img: HTMLImageElement,
+  cellRect: { x: number; y: number; width: number; height: number },
+  offsetX: number,
+  offsetY: number,
+  scale: number,
+  sheetWidth: number,
+  sheetHeight: number
+): ImageData {
+  const cellWidth = cellRect.width;
+  const cellHeight = cellRect.height;
+  const frameW = Math.round(cellWidth);
+  const frameH = Math.round(cellHeight);
+  const s = Math.max(0.25, Math.min(1, scale));
+  const cropW = cellWidth * s;
+  const cropH = cellHeight * s;
+  const sx = cellRect.x + (cellWidth - cropW) / 2 + offsetX;
+  const sy = cellRect.y + (cellHeight - cropH) / 2 + offsetY;
+  const srcLeft = Math.max(0, sx);
+  const srcTop = Math.max(0, sy);
+  const srcRight = Math.min(sheetWidth, sx + cropW);
+  const srcBottom = Math.min(sheetHeight, sy + cropH);
+  const srcW = srcRight - srcLeft;
+  const srcH = srcBottom - srcTop;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = frameW;
+  canvas.height = frameH;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return new ImageData(1, 1); // fallback
+  ctx.imageSmoothingEnabled = false;
+  if (srcW > 0 && srcH > 0) {
+    const dstX = ((srcLeft - sx) / cropW) * frameW;
+    const dstY = ((srcTop - sy) / cropH) * frameH;
+    const dstW = (srcW / cropW) * frameW;
+    const dstH = (srcH / cropH) * frameH;
+    ctx.drawImage(img, srcLeft, srcTop, srcW, srcH, dstX, dstY, dstW, dstH);
+  }
+  return ctx.getImageData(0, 0, frameW, frameH);
+}
+
+/** Alpha overlap: sum min(ref, cand) / (sum ref + 1e-6). Downscales to 32x32 for speed. */
+function computeTemplateMatchScore(ref: ImageData, cand: ImageData): number {
+  const DS = 32;
+  let sumMin = 0;
+  let sumRef = 0;
+  for (let j = 0; j < DS; j++) {
+    for (let i = 0; i < DS; i++) {
+      const ri = Math.min(ref.width - 1, ((i * ref.width) / DS) | 0);
+      const rj = Math.min(ref.height - 1, ((j * ref.height) / DS) | 0);
+      const ci = Math.min(cand.width - 1, ((i * cand.width) / DS) | 0);
+      const cj = Math.min(cand.height - 1, ((j * cand.height) / DS) | 0);
+      const rA = ref.data[(rj * ref.width + ri) * 4 + 3];
+      const cA = cand.data[(cj * cand.width + ci) * 4 + 3];
+      sumMin += Math.min(rA, cA);
+      sumRef += rA;
+    }
+  }
+  return sumMin / (sumRef + 1e-6);
+}
+
+const TEMPLATE_MATCH_OFFSET_CLAMP = 500;
+
+function runTemplateSearch(
+  img: HTMLImageElement,
+  cellRect: { x: number; y: number; width: number; height: number },
+  refImageData: ImageData,
+  scale: number,
+  sheetWidth: number,
+  sheetHeight: number,
+  opts?: { prevOffsetX: number; prevOffsetY: number; maxDelta: number }
+): { offsetX: number; offsetY: number } {
+  const STEP = 2;
+  let oxMin: number, oxMax: number, oyMin: number, oyMax: number;
+  if (opts && opts.maxDelta > 0) {
+    oxMin = opts.prevOffsetX - opts.maxDelta;
+    oxMax = opts.prevOffsetX + opts.maxDelta;
+    oyMin = opts.prevOffsetY - opts.maxDelta;
+    oyMax = opts.prevOffsetY + opts.maxDelta;
+  } else {
+    const R = Math.min(80, Math.floor(cellRect.width / 2));
+    oxMin = -R;
+    oxMax = R;
+    oyMin = -R;
+    oyMax = R;
+  }
+
+  let bestScore = -1;
+  let bestOx = opts?.prevOffsetX ?? 0;
+  let bestOy = opts?.prevOffsetY ?? 0;
+
+  for (let oy = oyMin; oy <= oyMax; oy += STEP) {
+    for (let ox = oxMin; ox <= oxMax; ox += STEP) {
+      const cand = cropCellFromImage(img, cellRect, ox, oy, scale, sheetWidth, sheetHeight);
+      const score = computeTemplateMatchScore(refImageData, cand);
+      if (score > bestScore) {
+        bestScore = score;
+        bestOx = ox;
+        bestOy = oy;
+      }
+    }
+  }
+
+  // Refine: try ±2 around best for finer alignment
+  for (const dox of [-2, -1, 0, 1, 2]) {
+    for (const doy of [-2, -1, 0, 1, 2]) {
+      if (dox === 0 && doy === 0) continue;
+      const ox = bestOx + dox;
+      const oy = bestOy + doy;
+      if (ox < oxMin || ox > oxMax || oy < oyMin || oy > oyMax) continue;
+      const cand = cropCellFromImage(img, cellRect, ox, oy, scale, sheetWidth, sheetHeight);
+      const score = computeTemplateMatchScore(refImageData, cand);
+      if (score > bestScore) {
+        bestScore = score;
+        bestOx = ox;
+        bestOy = oy;
+      }
+    }
+  }
+
+  bestOx = Math.max(-TEMPLATE_MATCH_OFFSET_CLAMP, Math.min(TEMPLATE_MATCH_OFFSET_CLAMP, bestOx));
+  bestOy = Math.max(-TEMPLATE_MATCH_OFFSET_CLAMP, Math.min(TEMPLATE_MATCH_OFFSET_CLAMP, bestOy));
+  return { offsetX: bestOx, offsetY: bestOy };
+}
+
+/**
+ * Finds (offsetX, offsetY) that best aligns the cell crop with the reference image
+ * by template matching (alpha overlap). Accepts sheet as base64 string or
+ * pre-loaded HTMLImageElement. When opts.prevOffsetX/Y and maxDelta are given,
+ * searches within ±maxDelta of the previous offset.
+ */
+export const getBestOffsetByTemplateMatch = async (
+  sheetBase64OrImage: string | HTMLImageElement,
+  cellRect: { x: number; y: number; width: number; height: number },
+  refImageData: ImageData,
+  scale: number,
+  sheetWidth: number,
+  sheetHeight: number,
+  opts?: { prevOffsetX: number; prevOffsetY: number; maxDelta: number }
+): Promise<{ offsetX: number; offsetY: number }> => {
+  if (typeof sheetBase64OrImage !== 'string') {
+    try {
+      return Promise.resolve(runTemplateSearch(sheetBase64OrImage, cellRect, refImageData, scale, sheetWidth, sheetHeight, opts));
+    } catch (e) {
+      return Promise.reject(e instanceof Error ? e : new Error(String(e)));
+    }
+  }
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        resolve(runTemplateSearch(img, cellRect, refImageData, scale, sheetWidth, sheetHeight, opts));
+      } catch (e) {
+        reject(e instanceof Error ? e : new Error(String(e)));
+      }
+    };
+    img.onerror = () => reject(new Error('Failed to load sprite sheet for template match'));
+    img.crossOrigin = 'anonymous';
+    img.src = sheetBase64OrImage;
   });
 };
 

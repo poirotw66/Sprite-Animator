@@ -1,12 +1,14 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Pencil, RotateCcw, X } from './Icons';
 import { GripVertical } from 'lucide-react';
-import { getCellRectForFrame, getContentCentroidOffset, type FrameOverride, type SliceSettings } from '../utils/imageUtils';
+import { getCellRectForFrame, getContentCentroidOffset, getBestOffsetByTemplateMatch, cropCellFromImage, type FrameOverride, type SliceSettings } from '../utils/imageUtils';
 
 const OFFSET_MIN = -500;
 const OFFSET_MAX = 500;
 const SCALE_MIN = 0.25;
 const SCALE_MAX = 1;
+/** Max pixels each frame may deviate from the previous when "reference previous frame" is on */
+const AUTO_ALIGN_MAX_DELTA = 10;
 
 interface FrameGridProps {
   frames: string[];
@@ -45,6 +47,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
   const [usePrevAsRef, setUsePrevAsRef] = useState(false);
   const [prevRefOpacity, setPrevRefOpacity] = useState(45);
   const [isAutoAligning, setIsAutoAligning] = useState(false);
+  const [autoAlignRefPrev, setAutoAlignRefPrev] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const latestOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const editPanelRef = useRef<HTMLDivElement>(null);
@@ -426,42 +429,123 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                  sheetDimensions &&
                  sheetDimensions.width > 0 &&
                  sheetDimensions.height > 0 && (
-                  <button
-                    type="button"
-                    disabled={isAutoAligning}
-                    onClick={async () => {
-                      if (!setFrameOverrides || !processedSpriteSheet || !sliceSettings || !sheetDimensions) return;
-                      setIsAutoAligning(true);
-                      try {
-                        const prev = frameOverrides ?? [];
-                        const next = prev.slice();
-                        const scale = prev[0]?.scale ?? 1;
-                        for (let i = 1; i < frames.length; i++) {
-                          const cellRect = getCellRectForFrame(
-                            sheetDimensions.width,
-                            sheetDimensions.height,
-                            sliceSettings.cols,
-                            sliceSettings.rows,
-                            sliceSettings.paddingX,
-                            sliceSettings.paddingY,
-                            sliceSettings.shiftX,
-                            sliceSettings.shiftY,
-                            i
-                          );
-                          if (!cellRect) continue;
-                          const res = await getContentCentroidOffset(processedSpriteSheet, cellRect);
-                          next[i] = { offsetX: res.offsetX, offsetY: res.offsetY, scale };
+                  <>
+                    <label className="flex items-center gap-2 cursor-pointer" title="勾選時：依序以「前一幀裁切」為模板匹配、±10 px 搜尋，完成後做 3 點時序平滑，減少抖動">
+                      <input
+                        type="checkbox"
+                        checked={autoAlignRefPrev}
+                        onChange={(e) => setAutoAlignRefPrev(e.target.checked)}
+                        className="rounded border-slate-300 text-orange-500 focus:ring-orange-500/30"
+                      />
+                      <span className="text-xs text-slate-600">參考前一幀（依序匹配 + 時序平滑 ±{AUTO_ALIGN_MAX_DELTA} px）</span>
+                    </label>
+                    <button
+                      type="button"
+                      disabled={isAutoAligning}
+                      onClick={async () => {
+                        if (!setFrameOverrides || !processedSpriteSheet || !sliceSettings || !sheetDimensions) return;
+                        setIsAutoAligning(true);
+                        try {
+                          const prev = frameOverrides ?? [];
+                          const next = prev.slice();
+                          const scale = prev[0]?.scale ?? 1;
+                          const W = sheetDimensions.width;
+                          const H = sheetDimensions.height;
+
+                          let sheetImg: HTMLImageElement | null = null;
+                          let refImageData: ImageData | null = null;
+
+                          if (autoAlignRefPrev) {
+                            sheetImg = await new Promise<HTMLImageElement>((res, rej) => {
+                              const im = new Image();
+                              im.onload = () => res(im);
+                              im.onerror = () => rej(new Error('Failed to load sprite sheet'));
+                              im.crossOrigin = 'anonymous';
+                              im.src = processedSpriteSheet;
+                            });
+                            if (frames[0]) {
+                              refImageData = await new Promise<ImageData>((res, rej) => {
+                                const im = new Image();
+                                im.onload = () => {
+                                  const c = document.createElement('canvas');
+                                  c.width = im.width;
+                                  c.height = im.height;
+                                  const ctx = c.getContext('2d');
+                                  if (!ctx) { rej(new Error('Canvas')); return; }
+                                  ctx.drawImage(im, 0, 0);
+                                  res(ctx.getImageData(0, 0, im.width, im.height));
+                                };
+                                im.onerror = () => rej(new Error('Failed to load frame 0'));
+                                im.crossOrigin = 'anonymous';
+                                im.src = frames[0];
+                              });
+                            }
+                          }
+
+                          for (let i = 1; i < frames.length; i++) {
+                            const cellRect = getCellRectForFrame(
+                              W, H,
+                              sliceSettings.cols,
+                              sliceSettings.rows,
+                              sliceSettings.paddingX,
+                              sliceSettings.paddingY,
+                              sliceSettings.shiftX,
+                              sliceSettings.shiftY,
+                              i
+                            );
+                            if (!cellRect) continue;
+
+                            let offX: number;
+                            let offY: number;
+                            if (autoAlignRefPrev && sheetImg && refImageData) {
+                              const p = next[i - 1] ?? {};
+                              const prevRect = getCellRectForFrame(W, H, sliceSettings.cols, sliceSettings.rows, sliceSettings.paddingX, sliceSettings.paddingY, sliceSettings.shiftX, sliceSettings.shiftY, i - 1);
+                              const ref = i === 1 || !prevRect
+                                ? refImageData
+                                : cropCellFromImage(sheetImg, prevRect, p.offsetX ?? 0, p.offsetY ?? 0, scale, W, H);
+                              const res = await getBestOffsetByTemplateMatch(
+                                sheetImg,
+                                cellRect,
+                                ref,
+                                scale,
+                                W,
+                                H,
+                                { prevOffsetX: p.offsetX ?? 0, prevOffsetY: p.offsetY ?? 0, maxDelta: AUTO_ALIGN_MAX_DELTA }
+                              );
+                              offX = res.offsetX;
+                              offY = res.offsetY;
+                            } else {
+                              const res = await getContentCentroidOffset(processedSpriteSheet, cellRect);
+                              offX = res.offsetX;
+                              offY = res.offsetY;
+                            }
+                            next[i] = { offsetX: offX, offsetY: offY, scale };
+                          }
+
+                          if (autoAlignRefPrev && frames.length > 1) {
+                            for (let i = 1; i < frames.length; i++) {
+                              const a = next[i - 1] ?? {};
+                              const b = next[i] ?? {};
+                              const c = next[i + 1] ?? b;
+                              next[i] = {
+                                ...b,
+                                offsetX: ((a.offsetX ?? 0) + (b.offsetX ?? 0) + (c.offsetX ?? b.offsetX ?? 0)) / 3,
+                                offsetY: ((a.offsetY ?? 0) + (b.offsetY ?? 0) + (c.offsetY ?? b.offsetY ?? 0)) / 3,
+                              };
+                            }
+                          }
+
+                          setFrameOverrides(() => next);
+                        } finally {
+                          setIsAutoAligning(false);
                         }
-                        setFrameOverrides(() => next);
-                      } finally {
-                        setIsAutoAligning(false);
-                      }
-                    }}
-                    className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-2.5 py-1.5 rounded-lg border border-orange-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="以第一幀的 scale 為準，其餘幀依各格內容質心自動算 offset，使剪輯對齊主體"
-                  >
-                    {isAutoAligning ? '自動對齊中…' : '從第一幀套用並自動對齊其餘'}
-                  </button>
+                      }}
+                      className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-2.5 py-1.5 rounded-lg border border-orange-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="以第一幀的 scale 為準。勾選「參考前一幀」：依序以「前一幀裁切」做模板匹配、±10 px、±2 細搜、時序平滑；未勾選：以內容包絡框中心算 offset"
+                    >
+                      {isAutoAligning ? '自動對齊中…' : '從第一幀套用並自動對齊其餘'}
+                    </button>
+                  </>
                 )}
               </>
             )}
