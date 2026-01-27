@@ -78,21 +78,43 @@ const App: React.FC = () => {
     return config.mode === 'sheet' ? spriteSheetFrames : frameModeFrames;
   }, [config.mode, spriteSheetFrames, frameModeFrames]);
 
-  // Animation hook
+  // Per-frame include toggle for custom animation (which frames to use in playback/export)
+  const [frameIncluded, setFrameIncluded] = useState<boolean[]>([]);
+  useEffect(() => {
+    setFrameIncluded((prev) => {
+      const L = generatedFrames.length;
+      if (prev.length === L) return prev;
+      return Array(L).fill(true);
+    });
+  }, [generatedFrames.length]);
+
+  // Animation frames = only included; used for preview, playback, export
+  const animationFrames = useMemo(
+    () => generatedFrames.filter((_, i) => frameIncluded[i] !== false),
+    [generatedFrames, frameIncluded]
+  );
+
+  // Animation hook (uses filtered frames)
   const { currentFrameIndex, setCurrentFrameIndex, handleFrameClick: onFrameClick } = useAnimation(
-    generatedFrames,
+    animationFrames,
     config,
     isPlaying
   );
 
-  // Export hook
+  // Export hook (uses filtered frames)
   const {
     isExporting,
     handleDownloadApng,
     handleDownloadGif,
     handleDownloadZip,
     handleDownloadSpriteSheet,
-  } = useExport(generatedFrames, config);
+  } = useExport(animationFrames, config);
+
+  // Map animation index -> grid index for FrameGrid highlight
+  const currentGridIndex = useMemo(() => {
+    const indices = generatedFrames.map((_, i) => i).filter((i) => frameIncluded[i] !== false);
+    return indices[currentFrameIndex] ?? -1;
+  }, [generatedFrames, frameIncluded, currentFrameIndex]);
 
   // Sync slice settings with config when config changes
   useEffect(() => {
@@ -273,13 +295,15 @@ const App: React.FC = () => {
     }
   }, [setSpriteSheetFrames, setCurrentFrameIndex, setSheetDimensions]);
 
-  // Handle frame click (pause when user manually selects a frame)
+  // Handle frame click from grid (grid index -> animation index; only when frame is included)
   const handleFrameClick = useCallback(
-    (index: number) => {
-      onFrameClick(index);
+    (gridIndex: number) => {
+      if (frameIncluded[gridIndex] === false) return;
+      const animIdx = frameIncluded.slice(0, gridIndex).filter(Boolean).length;
+      onFrameClick(animIdx);
       setIsPlaying(false);
     },
-    [onFrameClick]
+    [onFrameClick, frameIncluded]
   );
 
   const togglePlay = useCallback(() => {
@@ -432,7 +456,7 @@ const App: React.FC = () => {
               }
             >
               <AnimationPreview
-                generatedFrames={generatedFrames}
+                generatedFrames={animationFrames}
                 currentFrameIndex={currentFrameIndex}
                 isGenerating={isGenerating}
                 statusText={statusText}
@@ -458,7 +482,7 @@ const App: React.FC = () => {
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                   <FrameGrid
                     frames={generatedFrames}
-                    currentFrameIndex={currentFrameIndex}
+                    currentFrameIndex={currentGridIndex}
                     onFrameClick={handleFrameClick}
                     frameOverrides={frameOverrides}
                     setFrameOverrides={setFrameOverrides}
@@ -466,6 +490,8 @@ const App: React.FC = () => {
                     processedSpriteSheet={config.mode === 'sheet' ? processedSpriteSheet : undefined}
                     sliceSettings={config.mode === 'sheet' ? sliceSettings : undefined}
                     sheetDimensions={config.mode === 'sheet' ? sheetDimensions : undefined}
+                    frameIncluded={frameIncluded}
+                    setFrameIncluded={setFrameIncluded}
                   />
                 </div>
               </Suspense>

@@ -19,6 +19,9 @@ interface FrameGridProps {
   processedSpriteSheet?: string | null;
   sliceSettings?: SliceSettings;
   sheetDimensions?: { width: number; height: number };
+  /** Per-frame include in animation/export; unchecked = exclude from playback and export */
+  frameIncluded?: boolean[];
+  setFrameIncluded?: React.Dispatch<React.SetStateAction<boolean[]>>;
 }
 
 const CANVAS_SIZE = 400;
@@ -33,6 +36,8 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
   processedSpriteSheet = null,
   sliceSettings,
   sheetDimensions = { width: 0, height: 0 },
+  frameIncluded = [],
+  setFrameIncluded,
 }) => {
   const [editingFrameIndex, setEditingFrameIndex] = useState<number | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
@@ -387,7 +392,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
               <p className="text-[10px] text-slate-400 mt-1">25% ~ 100%</p>
             </div>
           </div>
-          <div className="flex gap-2 mt-3">
+          <div className="flex flex-wrap gap-2 mt-3">
             <button
               type="button"
               onClick={resetOverride}
@@ -396,17 +401,61 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
               <RotateCcw className="w-3.5 h-3.5" />
               重置
             </button>
+            {frames.length > 1 &&
+             setFrameOverrides &&
+             (frameOverrides[0] && Object.keys(frameOverrides[0]).length > 0) && (
+              <button
+                type="button"
+                onClick={() => {
+                  const first = { ...(frameOverrides[0] ?? {}) };
+                  setFrameOverrides((prev) => {
+                    const n = prev.slice();
+                    for (let i = 1; i < frames.length; i++) n[i] = { ...first };
+                    return n;
+                  });
+                }}
+                className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-2.5 py-1.5 rounded-lg border border-orange-200 transition-colors"
+                title="將第一幀的切割參數（位子、框型大小）套用到其餘所有幀"
+              >
+                從第一幀套用至其餘
+              </button>
+            )}
           </div>
         </div>
       )}
 
+      {setFrameIncluded && (
+        <p className="text-[10px] text-slate-500 mb-2">勾選納入動圖與匯出；取消勾選則排除</p>
+      )}
       <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2.5">
         {frames.map((frame, idx) => (
           <div
             key={idx}
             className={`relative aspect-square rounded-lg border-2 overflow-hidden bg-white transition-all duration-200 shadow-sm hover:shadow-md group
-              ${idx === currentFrameIndex ? 'border-orange-500 ring-2 ring-orange-200 shadow-md' : 'border-slate-200 hover:border-orange-400'}`}
+              ${idx === currentFrameIndex ? 'border-orange-500 ring-2 ring-orange-200 shadow-md' : 'border-slate-200 hover:border-orange-400'}
+              ${frameIncluded[idx] === false ? 'opacity-50' : ''}`}
           >
+            {setFrameIncluded && (
+              <label
+                className="absolute top-1 left-1 z-10 flex items-center justify-center w-6 h-6 rounded bg-white/95 border border-slate-200 cursor-pointer hover:bg-slate-50"
+                onClick={(e) => e.stopPropagation()}
+                title={frameIncluded[idx] === false ? '納入動圖' : '排除於動圖'}
+              >
+                <input
+                  type="checkbox"
+                  checked={frameIncluded[idx] !== false}
+                  onChange={() => {
+                    setFrameIncluded((prev) => {
+                      const n = prev.slice();
+                      while (n.length <= idx) n.push(true);
+                      n[idx] = !(n[idx] !== false);
+                      return n;
+                    });
+                  }}
+                  className="rounded border-slate-300 text-orange-500 focus:ring-orange-500/30 w-3.5 h-3.5"
+                />
+              </label>
+            )}
             <div
               className="w-full h-full cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95"
               onClick={() => onFrameClick(idx)}

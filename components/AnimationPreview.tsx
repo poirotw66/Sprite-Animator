@@ -112,7 +112,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
             <div className="absolute bottom-4 right-4 flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
               <button
                 onClick={onDownloadApng}
-                disabled={isExporting}
+                disabled={isExporting || generatedFrames.length === 0}
                 className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 disabled:cursor-wait cursor-pointer hover:shadow-xl"
                 aria-label="下載 APNG"
               >
@@ -123,7 +123,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
               <div className="flex gap-2">
                 <button
                   onClick={onDownloadGif}
-                  disabled={isExporting}
+                  disabled={isExporting || generatedFrames.length === 0}
                   className="flex-1 bg-white/95 hover:bg-white text-slate-800 px-3 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 cursor-pointer hover:shadow-xl border border-slate-200/50"
                   aria-label="下載 GIF"
                 >
@@ -132,7 +132,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
                 </button>
                 <button
                   onClick={onDownloadZip}
-                  disabled={isExporting}
+                  disabled={isExporting || generatedFrames.length === 0}
                   className="flex-1 bg-white/95 hover:bg-white text-slate-800 px-3 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 cursor-pointer hover:shadow-xl border border-slate-200/50"
                   aria-label="下載 ZIP"
                 >
