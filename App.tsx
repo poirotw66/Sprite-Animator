@@ -66,6 +66,8 @@ const App: React.FC = () => {
     processedSpriteSheet, // Chroma-key-removed sprite sheet for display
     chromaKeyProgress, // Progress of chroma key removal (0-100)
     isProcessingChromaKey, // Whether chroma key removal is in progress
+    frameOverrides,
+    setFrameOverrides,
   } = useSpriteSheet(spriteSheetImage, sliceSettings, removeBackground, config.mode);
 
   // Frame-by-frame mode frames
@@ -458,6 +460,12 @@ const App: React.FC = () => {
                     frames={generatedFrames}
                     currentFrameIndex={currentFrameIndex}
                     onFrameClick={handleFrameClick}
+                    frameOverrides={frameOverrides}
+                    setFrameOverrides={setFrameOverrides}
+                    enablePerFrameEdit={config.mode === 'sheet'}
+                    processedSpriteSheet={config.mode === 'sheet' ? processedSpriteSheet : undefined}
+                    sliceSettings={config.mode === 'sheet' ? sliceSettings : undefined}
+                    sheetDimensions={config.mode === 'sheet' ? sheetDimensions : undefined}
                   />
                 </div>
               </Suspense>

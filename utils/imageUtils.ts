@@ -26,6 +26,17 @@ export interface SliceSettings {
 }
 
 /**
+ * Per-frame override for cutting position and crop size.
+ * - offsetX, offsetY: Position offset in pixels from the cell center (-60 to 60).
+ * - scale: Crop size ratio 0.25–1 (25%–100%), aspect ratio fixed to the cell.
+ */
+export interface FrameOverride {
+  offsetX?: number;
+  offsetY?: number;
+  scale?: number;
+}
+
+/**
  * Slices a sprite sheet image into multiple individual frame images.
  * Supports padding (size reduction) and shift (position adjustment) for fine-tuning.
  * 
@@ -92,7 +103,8 @@ export const sliceSpriteSheet = async (
   shiftX: number,
   shiftY: number,
   removeBg: boolean,
-  threshold: number = 230
+  threshold: number = 230,
+  frameOverrides?: FrameOverride[]
 ): Promise<string[]> => {
   return new Promise((resolve, reject) => {
     // Input validation
@@ -176,29 +188,43 @@ export const sliceSpriteSheet = async (
         // Process each frame
         for (let r = 0; r < rows; r++) {
           for (let c = 0; c < cols; c++) {
-            // Clear canvas for this frame
+            const frameIndex = r * cols + c;
+            const override = frameOverrides?.[frameIndex];
+
+            // Apply per-frame overrides: position (offsetX, offsetY) and size (scale, aspect fixed)
+            const scale = Math.max(0.25, Math.min(1, override?.scale ?? 1));
+            const cropW = cellWidth * scale;
+            const cropH = cellHeight * scale;
+            const offX = override?.offsetX ?? 0;
+            const offY = override?.offsetY ?? 0;
+
+            // Base cell top-left
+            const baseSx = startX + c * cellWidth;
+            const baseSy = startY + r * cellHeight;
+            // Center crop + position offset (allowed to overflow cell; samples from original sheet)
+            const sx = baseSx + (cellWidth - cropW) / 2 + offX;
+            const sy = baseSy + (cellHeight - cropH) / 2 + offY;
+
+            // Intersect crop with image: overflow shows sheet, out-of-image stays transparent
+            const srcLeft = Math.max(0, sx);
+            const srcTop = Math.max(0, sy);
+            const srcRight = Math.min(totalWidth, sx + cropW);
+            const srcBottom = Math.min(totalHeight, sy + cropH);
+            const srcW = srcRight - srcLeft;
+            const srcH = srcBottom - srcTop;
+
             ctx.clearRect(0, 0, frameWidth, frameHeight);
-
-            // Calculate source coordinates using integer rounding to prevent texture bleeding
-            // This ensures pixel-perfect alignment and consistent behavior across browsers
-            const sx = Math.round(startX + c * cellWidth);
-            const sy = Math.round(startY + r * cellHeight);
-
-            // Boundary checking: ensure source coordinates are within image bounds
-            const sourceX = Math.max(0, Math.min(sx, totalWidth - 1));
-            const sourceY = Math.max(0, Math.min(sy, totalHeight - 1));
-            
-            // Calculate actual source dimensions (may be reduced if near edges)
-            const sourceWidth = Math.min(frameWidth, totalWidth - sourceX);
-            const sourceHeight = Math.min(frameHeight, totalHeight - sourceY);
-
-            // Draw the source region to canvas
-            // Use integer coordinates for both source and destination to prevent texture bleeding
-            ctx.drawImage(
-              img,
-              sourceX, sourceY, sourceWidth, sourceHeight, // Source rectangle (integer coords)
-              0, 0, frameWidth, frameHeight // Destination rectangle
-            );
+            if (srcW > 0 && srcH > 0) {
+              const dstX = ((srcLeft - sx) / cropW) * frameWidth;
+              const dstY = ((srcTop - sy) / cropH) * frameHeight;
+              const dstW = (srcW / cropW) * frameWidth;
+              const dstH = (srcH / cropH) * frameHeight;
+              ctx.drawImage(
+                img,
+                srcLeft, srcTop, srcW, srcH,
+                dstX, dstY, dstW, dstH
+              );
+            }
 
             // Post-processing: Remove floor lines and optimize content
             const imageData = ctx.getImageData(0, 0, frameWidth, frameHeight);
@@ -563,6 +589,54 @@ export const loadImagesData = async (
  * // Returns: "iVBORw0KG..."
  * ```
  */
+/**
+ * Returns the source rectangle (in sheet pixel coords) for a given frame index.
+ * Uses the same formulas as sliceSpriteSheet so the crop box aligns with actual slicing.
+ *
+ * @param sheetWidth - Sprite sheet image width
+ * @param sheetHeight - Sprite sheet image height
+ * @param cols - Number of columns
+ * @param rows - Number of rows
+ * @param paddingX - Horizontal padding
+ * @param paddingY - Vertical padding
+ * @param shiftX - Horizontal shift
+ * @param shiftY - Vertical shift
+ * @param frameIndex - Frame index (0-based, row-major)
+ * @returns { x, y, width, height } in sheet coords, or null if frameIndex is out of bounds
+ */
+export const getCellRectForFrame = (
+  sheetWidth: number,
+  sheetHeight: number,
+  cols: number,
+  rows: number,
+  paddingX: number,
+  paddingY: number,
+  shiftX: number,
+  shiftY: number,
+  frameIndex: number
+): { x: number; y: number; width: number; height: number } | null => {
+  if (frameIndex < 0 || frameIndex >= cols * rows) return null;
+  let startX = Math.round(paddingX + shiftX);
+  let startY = Math.round(paddingY + shiftY);
+  startX = Math.max(0, Math.min(startX, sheetWidth - 1));
+  startY = Math.max(0, Math.min(startY, sheetHeight - 1));
+  const remainingPaddingX = Math.max(0, paddingX - shiftX);
+  const remainingPaddingY = Math.max(0, paddingY - shiftY);
+  const effectiveWidth = sheetWidth - startX - remainingPaddingX;
+  const effectiveHeight = sheetHeight - startY - remainingPaddingY;
+  if (effectiveWidth <= 0 || effectiveHeight <= 0) return null;
+  const cellWidth = effectiveWidth / cols;
+  const cellHeight = effectiveHeight / rows;
+  const r = Math.floor(frameIndex / cols);
+  const c = frameIndex % cols;
+  return {
+    x: startX + c * cellWidth,
+    y: startY + r * cellHeight,
+    width: cellWidth,
+    height: cellHeight,
+  };
+};
+
 export const cleanBase64 = (base64: string): string => {
   return base64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
 };

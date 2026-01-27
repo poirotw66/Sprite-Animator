@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { sliceSpriteSheet, SliceSettings } from '../utils/imageUtils';
+import { sliceSpriteSheet, SliceSettings, FrameOverride } from '../utils/imageUtils';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { BACKGROUND_REMOVAL_THRESHOLD, DEBOUNCE_DELAY, CHROMA_KEY_COLOR, CHROMA_KEY_FUZZ } from '../utils/constants';
 import { logger } from '../utils/logger';
@@ -39,6 +39,7 @@ export const useSpriteSheet = (
   const [processedSpriteSheet, setProcessedSpriteSheet] = useState<string | null>(null);
   const [chromaKeyProgress, setChromaKeyProgress] = useState<number>(0);
   const [isProcessingChromaKey, setIsProcessingChromaKey] = useState<boolean>(false);
+  const [frameOverrides, setFrameOverrides] = useState<FrameOverride[]>([]);
 
   // Process sprite sheet: remove chroma key background first
   useEffect(() => {
@@ -95,7 +96,8 @@ export const useSpriteSheet = (
             sliceSettings.shiftX,
             sliceSettings.shiftY,
             false, // No additional white background removal needed
-            BACKGROUND_REMOVAL_THRESHOLD
+            BACKGROUND_REMOVAL_THRESHOLD,
+            frameOverrides
           );
           setGeneratedFrames(frames);
         } catch (e) {
@@ -119,8 +121,14 @@ export const useSpriteSheet = (
     sliceSettings.paddingY,
     sliceSettings.shiftX,
     sliceSettings.shiftY,
+    frameOverrides,
     mode,
   ]);
+
+  // Reset per-frame overrides when image or grid dimensions change
+  useEffect(() => {
+    setFrameOverrides([]);
+  }, [processedSpriteSheet, sliceSettings.cols, sliceSettings.rows]);
 
   // Update dimensions when processed sprite sheet is ready
   useEffect(() => {
@@ -161,5 +169,7 @@ export const useSpriteSheet = (
     processedSpriteSheet, // The chroma-key-removed version for display
     chromaKeyProgress, // Progress of chroma key removal (0-100)
     isProcessingChromaKey, // Whether chroma key removal is in progress
+    frameOverrides,
+    setFrameOverrides,
   };
 };
