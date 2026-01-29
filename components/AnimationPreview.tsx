@@ -145,8 +145,9 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
         )}
       </div>
 
-      <div className="mt-4 text-xs text-slate-500 text-center">
-        提示：點擊上方預覽區可暫停/播放。APNG 支援全彩半透明。
+      <div className="mt-4 text-xs text-slate-500 text-center space-y-1">
+        <p>提示：點擊上方預覽區可暫停/播放。APNG 支援全彩半透明。</p>
+        <p className="text-green-600">✨ GIF/APNG 導出自動補幀，生成絲滑動畫 (24 FPS)</p>
       </div>
     </div>
   );

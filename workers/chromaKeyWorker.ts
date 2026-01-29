@@ -102,11 +102,45 @@ function processChromaKey(
     const gClose = Math.abs(green - targetColor.g) <= fuzz;
     const bClose = Math.abs(blue - targetColor.b) <= fuzz;
     
+    // Detect if target is magenta-like or green-like
+    const targetIsMagenta = targetColor.r > 200 && targetColor.g < 100 && targetColor.b > 200;
+    const targetIsGreen = targetColor.g > 150 && targetColor.r < 150 && targetColor.b < 150;
+    
+    // Expanded magenta/pink detection (when target is magenta):
+    const isPureMagenta = red > 200 && green < 50 && blue > 200;
     const isMagentaLike = red > 180 && green < 100 && blue > 100;
+    const isPinkVariant = red > 200 && green < 150 && blue > 150 && (red - green) > 80;
+    const isLightPink = red > 220 && green < 180 && blue > 180 && green < red && green < blue;
+    
+    // Expanded green detection (when target is green) - much wider range:
+    const isPureGreen = green > 200 && red < 80 && blue < 80;
+    const isGreenLike = green > 150 && red < 120 && blue < 120 && green > red && green > blue;
+    const isLightGreen = green > 180 && red < 180 && blue < 180 && (green - red) > 50 && (green - blue) > 50;
+    const isYellowGreen = green > 150 && red < 180 && blue < 100 && green > red && green > blue;
+    const isDarkGreen = green > 100 && red < 80 && blue < 80 && green > red * 1.5;
+    const isMintGreen = green > 180 && red < 200 && blue < 200 && green > red && green > blue && (green - Math.max(red, blue)) > 30;
+    const isNeonGreen = green > 200 && red < 150 && blue < 100;
+    
     const isWithinDistance = distance <= fuzz;
     const isCloseToTarget = rClose && gClose && bClose;
     
-    if (isCloseToTarget || isWithinDistance || (isMagentaLike && distance < fuzz * 5)) {
+    // Apply appropriate detection based on target color
+    const magentaMatch = targetIsMagenta && (isPureMagenta || 
+        (isMagentaLike && distance < fuzz * 3) || 
+        (isPinkVariant && distance < fuzz * 4) ||
+        (isLightPink && distance < fuzz * 5));
+    
+    const greenMatch = targetIsGreen && (isPureGreen ||
+        isGreenLike ||
+        isLightGreen ||
+        isYellowGreen ||
+        isDarkGreen ||
+        isMintGreen ||
+        isNeonGreen ||
+        (distance < fuzz * 2));
+    
+    // Remove if: close to target color, within fuzz distance, or matches color family
+    if (isCloseToTarget || isWithinDistance || magentaMatch || greenMatch) {
       data[i + 3] = 0;
       transparentCount++;
     }

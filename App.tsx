@@ -68,7 +68,7 @@ const App: React.FC = () => {
     isProcessingChromaKey, // Whether chroma key removal is in progress
     frameOverrides,
     setFrameOverrides,
-  } = useSpriteSheet(spriteSheetImage, sliceSettings, removeBackground, config.mode);
+  } = useSpriteSheet(spriteSheetImage, sliceSettings, removeBackground, config.mode, config.chromaKeyColor);
 
   // Frame-by-frame mode frames
   const [frameModeFrames, setFrameModeFrames] = useState<string[]>([]);
@@ -205,7 +205,8 @@ const App: React.FC = () => {
           config.gridRows,
           effectiveKey,
           selectedModel,
-          (status) => setStatusText(status)
+          (status) => setStatusText(status),
+          config.chromaKeyColor
         );
 
         setSpriteSheetImage(sheetImage);

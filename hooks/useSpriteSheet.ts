@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { sliceSpriteSheet, SliceSettings, FrameOverride } from '../utils/imageUtils';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
-import { BACKGROUND_REMOVAL_THRESHOLD, DEBOUNCE_DELAY, CHROMA_KEY_COLOR, CHROMA_KEY_FUZZ } from '../utils/constants';
+import { BACKGROUND_REMOVAL_THRESHOLD, DEBOUNCE_DELAY, CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ } from '../utils/constants';
 import { logger } from '../utils/logger';
+import type { ChromaKeyColorType } from '../types';
 
 /**
  * Custom hook for managing sprite sheet slicing and frame generation.
@@ -12,6 +13,7 @@ import { logger } from '../utils/logger';
  * @param sliceSettings - Configuration for slicing (cols, rows, padding, shift)
  * @param removeBackground - Whether to remove white/light backgrounds
  * @param mode - Current generation mode ('frame' or 'sheet')
+ * @param chromaKeyColor - Which chroma key color to use ('magenta' or 'green')
  * @returns Object containing generated frames, sheet dimensions, and image load handler
  * 
  * @example
@@ -24,7 +26,8 @@ import { logger } from '../utils/logger';
  *   spriteSheetImage,
  *   sliceSettings,
  *   removeBackground,
- *   config.mode
+ *   config.mode,
+ *   config.chromaKeyColor
  * );
  * ```
  */
@@ -32,7 +35,8 @@ export const useSpriteSheet = (
   spriteSheetImage: string | null,
   sliceSettings: SliceSettings,
   removeBackground: boolean,
-  mode: 'frame' | 'sheet'
+  mode: 'frame' | 'sheet',
+  chromaKeyColor: ChromaKeyColorType = 'magenta'
 ) => {
   const [generatedFrames, setGeneratedFrames] = useState<string[]>([]);
   const [sheetDimensions, setSheetDimensions] = useState({ width: 0, height: 0 });
@@ -40,6 +44,9 @@ export const useSpriteSheet = (
   const [chromaKeyProgress, setChromaKeyProgress] = useState<number>(0);
   const [isProcessingChromaKey, setIsProcessingChromaKey] = useState<boolean>(false);
   const [frameOverrides, setFrameOverrides] = useState<FrameOverride[]>([]);
+
+  // Get the actual chroma key color based on selection
+  const activeChromaKeyColor = CHROMA_KEY_COLORS[chromaKeyColor];
 
   // Process sprite sheet: remove chroma key background first
   useEffect(() => {
@@ -50,12 +57,11 @@ export const useSpriteSheet = (
       
       const processImage = async () => {
         try {
-          logger.debug('Starting chroma key removal with Web Worker');
-          // Step 1: Remove chroma key (magenta #FF00FF) with fuzz tolerance using Web Worker
-          // This is the "correct" background removal similar to ImageMagick
+          logger.debug(`Starting chroma key removal with Web Worker (color: ${chromaKeyColor})`);
+          // Step 1: Remove chroma key with fuzz tolerance using Web Worker
           const chromaKeyRemoved = await removeChromaKeyWithWorker(
             spriteSheetImage,
-            CHROMA_KEY_COLOR,
+            activeChromaKeyColor,
             CHROMA_KEY_FUZZ,
             (progress) => {
               setChromaKeyProgress(progress);
@@ -78,7 +84,7 @@ export const useSpriteSheet = (
       setChromaKeyProgress(0);
       setIsProcessingChromaKey(false);
     }
-  }, [spriteSheetImage, mode]);
+  }, [spriteSheetImage, mode, chromaKeyColor, activeChromaKeyColor]);
 
   // Re-slice when Slice Settings, Toggle or Image updates
   useEffect(() => {

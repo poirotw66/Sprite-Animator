@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { AnimationConfig } from '../types';
-import { loadImagesData } from '../utils/imageUtils';
-import { ANIMATION_FPS_MULTIPLIER } from '../utils/constants';
+import { loadImagesData, generateSmoothAnimation } from '../utils/imageUtils';
+import { ANIMATION_FPS_MULTIPLIER, GIF_TARGET_FPS, DEFAULT_INTERPOLATION_FRAMES, ENABLE_FRAME_INTERPOLATION } from '../utils/constants';
 import { logger } from '../utils/logger';
 import UPNG from 'upng-js';
 import JSZip from 'jszip';
@@ -34,12 +34,33 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
 
     setIsExporting(true);
     try {
-      const { imagesData, width, height } = await loadImagesData(generatedFrames);
+      // Step 1: Generate smooth animation with frame interpolation
+      const originalFps = Math.max(1, config.speed * ANIMATION_FPS_MULTIPLIER);
+      
+      let framesToExport = generatedFrames;
+      
+      // Apply frame interpolation for smoother animation
+      if (ENABLE_FRAME_INTERPOLATION && generatedFrames.length >= 2) {
+        logger.debug(`APNG: Interpolating frames: ${generatedFrames.length} -> target ${GIF_TARGET_FPS} FPS`);
+        framesToExport = await generateSmoothAnimation(generatedFrames, {
+          interpolationFrames: DEFAULT_INTERPOLATION_FRAMES,
+          easing: 'ease-in-out',
+          loopMode: 'loop',
+          targetFps: GIF_TARGET_FPS,
+          originalFps: originalFps,
+        });
+        logger.debug(`APNG: Interpolation complete: ${framesToExport.length} frames`);
+      }
+
+      // Step 2: Load image data
+      const { imagesData, width, height } = await loadImagesData(framesToExport);
 
       const buffers = imagesData.map((d) => d.data.buffer);
-      const fps = Math.max(1, config.speed * ANIMATION_FPS_MULTIPLIER);
-      const delayMs = Math.round(1000 / fps);
-      const delays = generatedFrames.map(() => delayMs);
+      
+      // Calculate delay based on interpolated frame count
+      const effectiveFps = ENABLE_FRAME_INTERPOLATION ? GIF_TARGET_FPS : originalFps;
+      const delayMs = Math.round(1000 / effectiveFps);
+      const delays = framesToExport.map(() => delayMs);
 
       const apngBuffer = UPNG.encode(buffers, width, height, 0, delays);
 
@@ -68,20 +89,46 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
 
     setIsExporting(true);
     try {
-      const { imagesData, width, height } = await loadImagesData(generatedFrames);
+      // Step 1: Generate smooth animation with frame interpolation
+      const originalFps = Math.max(1, config.speed * ANIMATION_FPS_MULTIPLIER);
+      
+      let framesToExport = generatedFrames;
+      
+      // Apply frame interpolation for smoother animation
+      if (ENABLE_FRAME_INTERPOLATION && generatedFrames.length >= 2) {
+        logger.debug(`Interpolating frames: ${generatedFrames.length} -> target ${GIF_TARGET_FPS} FPS`);
+        framesToExport = await generateSmoothAnimation(generatedFrames, {
+          interpolationFrames: DEFAULT_INTERPOLATION_FRAMES,
+          easing: 'ease-in-out',
+          loopMode: 'loop',
+          targetFps: GIF_TARGET_FPS,
+          originalFps: originalFps,
+        });
+        logger.debug(`Interpolation complete: ${framesToExport.length} frames`);
+      }
 
+      // Step 2: Load image data for all frames
+      const { imagesData, width, height } = await loadImagesData(framesToExport);
+
+      // Step 3: Create GIF with optimized settings
       const gif = new GIFEncoder();
-      const fps = Math.max(1, config.speed * ANIMATION_FPS_MULTIPLIER);
-      const delayMs = Math.round(1000 / fps);
+      
+      // Calculate delay based on interpolated frame count
+      // Target smooth playback at GIF_TARGET_FPS
+      const effectiveFps = ENABLE_FRAME_INTERPOLATION ? GIF_TARGET_FPS : originalFps;
+      const delayMs = Math.round(1000 / effectiveFps);
 
       for (const { data } of imagesData) {
+        // Use 256 colors for best quality
         const palette = quantize(data, 256);
         const index = applyPalette(data, palette);
+        
         gif.writeFrame(index, width, height, {
           palette,
           delay: delayMs,
           transparent: true,
-          dispose: -1,
+          transparentIndex: 0, // Specify transparent color index
+          dispose: 2, // Restore to background - prevents ghosting artifacts
         });
       }
 

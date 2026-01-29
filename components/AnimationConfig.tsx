@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { Play, Layers, Zap, Eraser, Wand2, Loader2, Film as FilmIcon, Grid3X3 } from './Icons';
-import { AnimationConfig } from '../types';
-import { ANIMATION_FPS_MULTIPLIER } from '../utils/constants';
+import { AnimationConfig, ChromaKeyColorType } from '../types';
+import { ANIMATION_FPS_MULTIPLIER, CHROMA_KEY_COLORS } from '../utils/constants';
 
 interface AnimationConfigPanelProps {
   config: AnimationConfig;
@@ -50,6 +50,10 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
 
   const handleScaleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setConfig((prev) => ({ ...prev, scale: Number(e.target.value) }));
+  }, [setConfig]);
+
+  const handleChromaKeyColorChange = useCallback((color: ChromaKeyColorType) => {
+    setConfig((prev) => ({ ...prev, chromaKeyColor: color }));
   }, [setConfig]);
 
   return (
@@ -180,6 +184,46 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
             <div className="text-xs text-green-700 bg-green-50 p-3 rounded-lg border border-green-200 flex items-center gap-2 shadow-sm">
               <Zap className="w-3.5 h-3.5" />
               <span className="font-medium">精靈圖模式僅需消耗 1 次 API 請求，大幅節省配額！</span>
+            </div>
+
+            {/* Chroma Key Color Selection */}
+            <div className="p-3 rounded-lg border border-slate-200 bg-slate-50">
+              <span className="text-xs text-slate-700 font-semibold block mb-2">
+                🎨 背景顏色 (去背用)
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleChromaKeyColorChange('magenta')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer border-2 ${
+                    config.chromaKeyColor === 'magenta'
+                      ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-fuchsia-300'
+                  }`}
+                  aria-label="使用洋紅色背景"
+                >
+                  <div className="w-4 h-4 rounded-full bg-fuchsia-500 border border-fuchsia-600"></div>
+                  洋紅色
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChromaKeyColorChange('green')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer border-2 ${
+                    config.chromaKeyColor === 'green'
+                      ? 'border-green-500 bg-green-50 text-green-700'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-green-300'
+                  }`}
+                  aria-label="使用綠幕背景"
+                >
+                  <div className="w-4 h-4 rounded-full bg-green-500 border border-green-600"></div>
+                  綠幕
+                </button>
+              </div>
+              <p className="text-[10px] text-slate-500 mt-2">
+                {config.chromaKeyColor === 'magenta' 
+                  ? '💡 預設選項。若角色有粉色/紅色部分，請改用綠幕。'
+                  : '💡 適合粉色/紅色角色。若角色有綠色部分，請改用洋紅色。'}
+              </p>
             </div>
 
             {/* Background Removal Toggle */}

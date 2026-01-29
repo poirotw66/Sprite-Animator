@@ -1,3 +1,5 @@
+export type ChromaKeyColorType = 'magenta' | 'green';
+
 export interface AnimationConfig {
   prompt: string;
   frameCount: number; // Used for 'frame' mode
@@ -6,6 +8,7 @@ export interface AnimationConfig {
   mode: 'frame' | 'sheet'; // New: Generation mode
   gridCols: number;   // New: Used for 'sheet' mode (default 3)
   gridRows: number;   // New: Used for 'sheet' mode (default 2)
+  chromaKeyColor: ChromaKeyColorType; // Background color for chroma key removal
 }
 
 export interface GenerationResult {

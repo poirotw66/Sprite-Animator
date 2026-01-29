@@ -230,20 +230,45 @@ export const sliceSpriteSheet = async (
             const imageData = ctx.getImageData(0, 0, frameWidth, frameHeight);
             const data = imageData.data;
             
-            // Step 1: Remove floor lines (horizontal lines near bottom, typically magenta/pink)
-            // Floor lines are usually thin horizontal lines at the bottom of the frame
-            // Check bottom 20% of frame for floor lines
-            const floorLineDetectionHeight = Math.max(10, Math.floor(frameHeight * 0.2));
-            const floorLineStartY = frameHeight - floorLineDetectionHeight;
-            
-            // Detect and remove floor lines row by row
-            for (let y = floorLineStartY; y < frameHeight; y++) {
-              let linePixelCount = 0;
-              let magentaLikeCount = 0;
-              let continuousLineLength = 0;
-              let maxContinuousLength = 0;
+            // Step 1: Remove ALL chroma key pixels throughout the frame
+            // Supports both magenta (#FF00FF) and green (#00FF00) backgrounds
+            for (let i = 0; i < data.length; i += 4) {
+              const r = data[i];
+              const g = data[i + 1];
+              const b = data[i + 2];
+              const a = data[i + 3];
               
-              // Scan horizontal line to detect floor line pattern
+              if (a === 0) continue;
+              
+              // Comprehensive magenta/pink detection
+              const isPureMagenta = r > 200 && g < 50 && b > 200;
+              const isMagentaLike = r > 180 && g < 100 && b > 100;
+              const isPinkVariant = r > 200 && g < 150 && b > 150 && (r - g) > 80;
+              const isLightPink = r > 220 && g < 180 && b > 180 && g < r && g < b;
+              const isDarkMagenta = r > 150 && g < 80 && b > 150;
+              
+              // Comprehensive green screen detection - wider range
+              const isPureGreen = g > 200 && r < 80 && b < 80;
+              const isGreenLike = g > 150 && r < 120 && b < 120 && g > r && g > b;
+              const isLightGreen = g > 180 && r < 180 && b < 180 && (g - r) > 50 && (g - b) > 50;
+              const isYellowGreen = g > 150 && r < 180 && b < 100 && g > r && g > b;
+              const isDarkGreen = g > 100 && r < 80 && b < 80 && g > r * 1.5;
+              const isMintGreen = g > 180 && r < 200 && b < 200 && g > r && g > b && (g - Math.max(r, b)) > 30;
+              const isNeonGreen = g > 200 && r < 150 && b < 100;
+              
+              const isMagentaFamily = isPureMagenta || isMagentaLike || isPinkVariant || isLightPink || isDarkMagenta;
+              const isGreenFamily = isPureGreen || isGreenLike || isLightGreen || isYellowGreen || isDarkGreen || isMintGreen || isNeonGreen;
+              
+              if (isMagentaFamily || isGreenFamily) {
+                data[i + 3] = 0; // Make transparent
+              }
+            }
+            
+            // Step 2: Extra pass for floor/ground area (bottom 30% of frame)
+            // More aggressive removal for the foot region
+            const floorRegionStartY = Math.floor(frameHeight * 0.7);
+            
+            for (let y = floorRegionStartY; y < frameHeight; y++) {
               for (let x = 0; x < frameWidth; x++) {
                 const idx = (y * frameWidth + x) * 4;
                 const r = data[idx];
@@ -251,53 +276,29 @@ export const sliceSpriteSheet = async (
                 const b = data[idx + 2];
                 const a = data[idx + 3];
                 
-                // Check if pixel is part of a floor line
-                // Floor lines are typically: high R, low G, high B (magenta pattern)
-                // Also check for darker magenta variants (like #C800C8)
-                const isMagentaLike = (r > 180 && g < 100 && b > 100) || 
-                                      (r > 150 && g < 80 && b > 150) ||
-                                      (r > 200 && g < 50 && b > 200);
-                const isLinePixel = a > 10 && isMagentaLike;
+                if (a === 0) continue;
                 
-                if (isLinePixel) {
-                  linePixelCount++;
-                  magentaLikeCount++;
-                  continuousLineLength++;
-                  maxContinuousLength = Math.max(maxContinuousLength, continuousLineLength);
-                } else {
-                  continuousLineLength = 0;
-                }
-              }
-              
-              // Floor line detection criteria:
-              // 1. At least 25% of the row width should be line pixels
-              // 2. At least 60% of line pixels should be magenta-like
-              // 3. There should be a continuous line segment of at least 20% width
-              const lineThreshold = frameWidth * 0.25;
-              const continuousThreshold = frameWidth * 0.2;
-              const magentaRatio = linePixelCount > 0 ? magentaLikeCount / linePixelCount : 0;
-              
-              if (linePixelCount > lineThreshold && 
-                  magentaRatio > 0.6 && 
-                  maxContinuousLength > continuousThreshold) {
-                // This is a floor line - remove it
-                for (let x = 0; x < frameWidth; x++) {
-                  const idx = (y * frameWidth + x) * 4;
-                  const r = data[idx];
-                  const g = data[idx + 1];
-                  const b = data[idx + 2];
-                  // Only remove magenta-like pixels to avoid removing character parts
-                  const isMagentaLike = (r > 180 && g < 100 && b > 100) || 
-                                        (r > 150 && g < 80 && b > 150) ||
-                                        (r > 200 && g < 50 && b > 200);
-                  if (isMagentaLike) {
-                    data[idx + 3] = 0; // Make transparent
-                  }
+                // In foot region, be more aggressive with chroma key removal
+                // Magenta variants
+                const hasMoreRedThanGreen = r > g + 30;
+                const hasMoreBlueThanGreen = b > g + 30;
+                const isAnyPink = hasMoreRedThanGreen && hasMoreBlueThanGreen && r > 150 && b > 100;
+                const isSubtleMagenta = r > 170 && g < 120 && b > 120;
+                
+                // Green variants - more aggressive for foot region
+                const hasMoreGreenThanRed = g > r + 20;
+                const hasMoreGreenThanBlue = g > b + 20;
+                const isAnyGreen = hasMoreGreenThanRed && hasMoreGreenThanBlue && g > 120;
+                const isSubtleGreen = g > 140 && r < 150 && b < 150 && g > r && g > b;
+                const isBrightGreen = g > 180 && r < 180 && b < 180;
+                
+                if (isAnyPink || isSubtleMagenta || isAnyGreen || isSubtleGreen || isBrightGreen) {
+                  data[idx + 3] = 0;
                 }
               }
             }
             
-            // Step 2: Legacy background removal (not used after chroma key removal, but kept for compatibility)
+            // Step 3: Legacy background removal (not used after chroma key removal, but kept for compatibility)
             if (removeBg) {
               for (let i = 0; i < data.length; i += 4) {
                 const red = data[i];
@@ -1109,4 +1110,292 @@ export const removeWhiteBackground = async (
     img.onerror = (e) => reject(e);
     img.src = base64Image;
   });
+};
+
+/**
+ * Interpolation settings for frame blending
+ */
+export interface InterpolationSettings {
+  /** Number of intermediate frames to generate between each keyframe */
+  insertFrames: number;
+  /** Easing function type: 'linear' | 'ease-in-out' | 'ease-in' | 'ease-out' */
+  easing: 'linear' | 'ease-in-out' | 'ease-in' | 'ease-out';
+  /** Whether to create a smooth loop (interpolate between last and first frame) */
+  smoothLoop: boolean;
+}
+
+/**
+ * Easing functions for smoother animation transitions
+ */
+const easingFunctions = {
+  'linear': (t: number) => t,
+  'ease-in': (t: number) => t * t,
+  'ease-out': (t: number) => t * (2 - t),
+  'ease-in-out': (t: number) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
+};
+
+/**
+ * Blends two images together with pixel-level cross-fade interpolation.
+ * Creates a smooth transition frame between two keyframes.
+ * Uses proper alpha-aware blending for transparent sprites.
+ * 
+ * @param frame1Base64 - First frame (base64 encoded)
+ * @param frame2Base64 - Second frame (base64 encoded)
+ * @param t - Interpolation factor (0 = frame1, 1 = frame2)
+ * @param easing - Easing function to apply
+ * @returns Promise resolving to blended frame (base64 encoded)
+ */
+export const blendFrames = async (
+  frame1Base64: string,
+  frame2Base64: string,
+  t: number,
+  easing: 'linear' | 'ease-in-out' | 'ease-in' | 'ease-out' = 'ease-in-out'
+): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img1 = new Image();
+    const img2 = new Image();
+    let loaded = 0;
+
+    const onBothLoaded = () => {
+      loaded++;
+      if (loaded < 2) return;
+
+      try {
+        const width = Math.max(img1.width, img2.width);
+        const height = Math.max(img1.height, img2.height);
+        
+        // Create canvases for both images
+        const canvas1 = document.createElement('canvas');
+        const canvas2 = document.createElement('canvas');
+        const outputCanvas = document.createElement('canvas');
+        
+        canvas1.width = canvas2.width = outputCanvas.width = width;
+        canvas1.height = canvas2.height = outputCanvas.height = height;
+        
+        const ctx1 = canvas1.getContext('2d', { willReadFrequently: true });
+        const ctx2 = canvas2.getContext('2d', { willReadFrequently: true });
+        const ctxOut = outputCanvas.getContext('2d', { willReadFrequently: true });
+
+        if (!ctx1 || !ctx2 || !ctxOut) {
+          reject(new Error('Canvas context failed'));
+          return;
+        }
+
+        // Draw both images
+        ctx1.drawImage(img1, 0, 0, width, height);
+        ctx2.drawImage(img2, 0, 0, width, height);
+
+        // Get pixel data
+        const imageData1 = ctx1.getImageData(0, 0, width, height);
+        const imageData2 = ctx2.getImageData(0, 0, width, height);
+        const outputData = ctxOut.createImageData(width, height);
+        
+        const data1 = imageData1.data;
+        const data2 = imageData2.data;
+        const dataOut = outputData.data;
+
+        // Apply easing to the interpolation factor
+        const easedT = easingFunctions[easing](t);
+
+        // Pixel-level blending with proper alpha handling
+        for (let i = 0; i < data1.length; i += 4) {
+          const r1 = data1[i];
+          const g1 = data1[i + 1];
+          const b1 = data1[i + 2];
+          const a1 = data1[i + 3];
+
+          const r2 = data2[i];
+          const g2 = data2[i + 1];
+          const b2 = data2[i + 2];
+          const a2 = data2[i + 3];
+
+          // Alpha-aware blending
+          const alpha1 = a1 / 255;
+          const alpha2 = a2 / 255;
+          
+          // Interpolate alpha
+          const outAlpha = alpha1 * (1 - easedT) + alpha2 * easedT;
+          
+          if (outAlpha > 0) {
+            // Pre-multiplied alpha blending for correct color mixing
+            const weight1 = alpha1 * (1 - easedT);
+            const weight2 = alpha2 * easedT;
+            const totalWeight = weight1 + weight2;
+            
+            if (totalWeight > 0) {
+              dataOut[i] = Math.round((r1 * weight1 + r2 * weight2) / totalWeight);
+              dataOut[i + 1] = Math.round((g1 * weight1 + g2 * weight2) / totalWeight);
+              dataOut[i + 2] = Math.round((b1 * weight1 + b2 * weight2) / totalWeight);
+            } else {
+              dataOut[i] = 0;
+              dataOut[i + 1] = 0;
+              dataOut[i + 2] = 0;
+            }
+            dataOut[i + 3] = Math.round(outAlpha * 255);
+          } else {
+            dataOut[i] = 0;
+            dataOut[i + 1] = 0;
+            dataOut[i + 2] = 0;
+            dataOut[i + 3] = 0;
+          }
+        }
+
+        ctxOut.putImageData(outputData, 0, 0);
+        resolve(outputCanvas.toDataURL('image/png'));
+      } catch (err) {
+        reject(err);
+      }
+    };
+
+    img1.onload = onBothLoaded;
+    img2.onload = onBothLoaded;
+    img1.onerror = (e) => reject(new Error('Failed to load frame 1 for blending'));
+    img2.onerror = (e) => reject(new Error('Failed to load frame 2 for blending'));
+    
+    img1.crossOrigin = 'anonymous';
+    img2.crossOrigin = 'anonymous';
+    img1.src = frame1Base64;
+    img2.src = frame2Base64;
+  });
+};
+
+/**
+ * Generates interpolated frames between keyframes for smoother animation.
+ * Uses pixel blending to create smooth transitions between poses.
+ * 
+ * @param keyframes - Array of keyframe images (base64 encoded)
+ * @param settings - Interpolation settings
+ * @returns Promise resolving to array of all frames including interpolated ones
+ * 
+ * @example
+ * ```typescript
+ * // Input: 6 keyframes, insert 2 frames between each
+ * // Output: 6 + (6 * 2) = 18 frames (with loop) or 6 + (5 * 2) = 16 frames (no loop)
+ * const smoothFrames = await interpolateFrames(keyframes, {
+ *   insertFrames: 2,
+ *   easing: 'ease-in-out',
+ *   smoothLoop: true
+ * });
+ * ```
+ */
+export const interpolateFrames = async (
+  keyframes: string[],
+  settings: InterpolationSettings
+): Promise<string[]> => {
+  if (keyframes.length < 2) {
+    return keyframes;
+  }
+
+  const { insertFrames, easing, smoothLoop } = settings;
+  
+  if (insertFrames <= 0) {
+    return keyframes;
+  }
+
+  const result: string[] = [];
+  const frameCount = keyframes.length;
+
+  for (let i = 0; i < frameCount; i++) {
+    // Add the keyframe
+    result.push(keyframes[i]);
+
+    // Determine the next frame (wrap around for loop)
+    const nextIndex = (i + 1) % frameCount;
+    
+    // Skip interpolation for the last frame if not looping
+    if (!smoothLoop && i === frameCount - 1) {
+      continue;
+    }
+
+    // Generate intermediate frames
+    for (let j = 1; j <= insertFrames; j++) {
+      const t = j / (insertFrames + 1);
+      try {
+        const blendedFrame = await blendFrames(
+          keyframes[i],
+          keyframes[nextIndex],
+          t,
+          easing
+        );
+        result.push(blendedFrame);
+      } catch (err) {
+        logger.error(`Failed to blend frame ${i} -> ${nextIndex} at t=${t}`, err);
+        // On error, skip this interpolated frame
+      }
+    }
+  }
+
+  return result;
+};
+
+/**
+ * Creates a smooth looping animation by ensuring the last frame transitions well to the first.
+ * Optionally duplicates the animation in reverse (ping-pong effect).
+ * 
+ * @param frames - Array of frame images (base64 encoded)
+ * @param mode - 'loop' for standard loop, 'pingpong' for forward-then-backward
+ * @returns Array of frames optimized for looping
+ */
+export const createLoopingAnimation = (
+  frames: string[],
+  mode: 'loop' | 'pingpong' = 'loop'
+): string[] => {
+  if (frames.length < 2) return frames;
+
+  if (mode === 'pingpong') {
+    // Forward + Backward (excluding first and last to avoid duplicate frames)
+    const reversed = frames.slice(1, -1).reverse();
+    return [...frames, ...reversed];
+  }
+
+  // Standard loop - frames already form a loop
+  return frames;
+};
+
+/**
+ * Generates a complete smooth animation from keyframes.
+ * Combines interpolation and loop optimization.
+ * 
+ * @param keyframes - Original keyframe images
+ * @param options - Animation generation options
+ * @returns Promise resolving to smooth animation frames
+ */
+export const generateSmoothAnimation = async (
+  keyframes: string[],
+  options: {
+    interpolationFrames?: number;
+    easing?: 'linear' | 'ease-in-out' | 'ease-in' | 'ease-out';
+    loopMode?: 'loop' | 'pingpong' | 'none';
+    targetFps?: number;
+    originalFps?: number;
+  } = {}
+): Promise<string[]> => {
+  const {
+    interpolationFrames = 2,
+    easing = 'ease-in-out',
+    loopMode = 'loop',
+    targetFps = 24,
+    originalFps = 12,
+  } = options;
+
+  // Calculate how many frames to insert based on FPS ratio
+  let framesToInsert = interpolationFrames;
+  if (targetFps && originalFps && targetFps > originalFps) {
+    // Auto-calculate based on desired FPS increase
+    framesToInsert = Math.max(1, Math.round(targetFps / originalFps) - 1);
+  }
+
+  // Step 1: Interpolate between keyframes
+  const interpolatedFrames = await interpolateFrames(keyframes, {
+    insertFrames: framesToInsert,
+    easing,
+    smoothLoop: loopMode === 'loop',
+  });
+
+  // Step 2: Apply loop mode
+  if (loopMode === 'pingpong') {
+    return createLoopingAnimation(interpolatedFrames, 'pingpong');
+  }
+
+  return interpolatedFrames;
 };

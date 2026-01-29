@@ -1,6 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { isQuotaError as checkQuotaError, getErrorMessage, type ApiError } from '../types/errors';
 import { logger } from '../utils/logger';
+import { CHROMA_KEY_COLORS } from '../utils/constants';
+import type { ChromaKeyColorType } from '../types';
 
 export type ProgressCallback = (status: string) => void;
 
@@ -223,128 +225,166 @@ export const generateSpriteSheet = async (
     rows: number,
     apiKey: string,
     model: string,
-    onProgress?: ProgressCallback
+    onProgress?: ProgressCallback,
+    chromaKeyColor: ChromaKeyColorType = 'magenta'
 ): Promise<string> => {
     if (!apiKey) throw new Error("API Key is missing");
 
     const ai = new GoogleGenAI({ apiKey: apiKey });
+    
+    // Get the selected background color
+    const bgColor = CHROMA_KEY_COLORS[chromaKeyColor];
+    const bgColorName = chromaKeyColor === 'magenta' ? 'magenta' : 'green';
+    const bgColorHex = bgColor.hex;
     const cleanBase64 = imageBase64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
 
     // 1. Determine best aspect ratio config to force correct layout
     const targetAspectRatio = getBestAspectRatio(cols, rows);
     
-    // 2. Construct a prompt that enforces specific geometry AND animation continuity
+    // Calculate total frames and timing
+    const totalFrames = cols * rows;
+    
+    // Generate detailed per-frame description with TINY increments
+    const frameDescriptions = Array.from({ length: totalFrames }, (_, i) => {
+      const progress = i / totalFrames; // 0 to ~0.83 for 6 frames
+      const degrees = Math.round(progress * 360 / totalFrames * 10) / 10;
+      return `Frame ${i + 1}: ${degrees}° into the motion cycle (TINY change from ${i === 0 ? 'Frame ' + totalFrames : 'Frame ' + i})`;
+    }).join('\n');
+    
+    // 2. Construct a prompt that enforces MINIMAL frame-to-frame changes
     const fullPrompt = `
-Role: Professional 2D game sprite artist.
+You are creating a sprite sheet for ULTRA-SMOOTH looping animation.
 
-Task:
-Create ONE single 2D sprite sheet image showing:
-"${prompt}"
+══════════════════════════════════════════════════════════════
+THE MOST IMPORTANT RULE - READ THIS FIRST
+══════════════════════════════════════════════════════════════
+Imagine recording a video at ${totalFrames * 4} FPS, then keeping only every 4th frame.
+Each frame should look almost IDENTICAL to its neighbors.
+The difference between Frame N and Frame N+1 should be BARELY NOTICEABLE.
 
-This is a TECHNICAL ANIMATION ASSET intended for GIF generation.
+If someone quickly glances at all ${totalFrames} frames, they should think:
+"These all look almost the same - just tiny differences"
 
-────────────────────────────────
-LAYOUT (HIGHEST PRIORITY)
-────────────────────────────────
-- Arrange EXACTLY ${cols * rows} character poses
-- Layout forms ${cols} poses per row and ${rows} rows total
-- Fixed, evenly spaced positions
-- Read order: left → right, top → bottom
-- Each cell contains exactly ONE character pose
-- All poses belong to the SAME continuous animation timeline
-- Rows do NOT represent different actions or cycles
+This is CORRECT. This is what makes smooth animation.
 
-────────────────────────────────
-CANVAS & BACKGROUND
-────────────────────────────────
-- One continuous canvas (no padding, no margins)
-- Solid flat background color: pure magenta (#FF00FF)
-- Background must be ONE uninterrupted color
-- No seams, no divisions, no visual separation
+══════════════════════════════════════════════════════════════
+TASK
+══════════════════════════════════════════════════════════════
+Action: "${prompt}"
+Layout: ${totalFrames} poses in a ${cols}×${rows} grid (left→right, top→bottom)
+Background: Solid pure ${bgColorName} ${bgColorHex} (no lines, no borders, no separators)
 
-────────────────────────────────
-STRICTLY FORBIDDEN (MOST CRITICAL)
-────────────────────────────────
-- NO text, NO numbers, NO letters
-- NO lines of any kind (including faint or subtle)
-- NO borders, frames, boxes, grids, or rectangular shapes
-- NO cell outlines or separators
-- NO alignment guides or helper lines
-- NO ground line / floor line / baseline under feet
-- NO UI elements, watermarks, or decorations
-- NO shadows, glow, gradients, or background variation
+══════════════════════════════════════════════════════════════
+FRAME-BY-FRAME MICRO-MOVEMENTS
+══════════════════════════════════════════════════════════════
+${frameDescriptions}
 
-────────────────────────────────
-SPRITE CONSISTENCY
-────────────────────────────────
-- Flat 2D illustration style
-- Clean outlines only (no outline borders)
-- Neutral, even lighting
-- Character size MUST be identical in every frame
-- Character centered within each layout position
-- Feet aligned horizontally across ALL frames
-- No scaling, no rotation drift, no camera movement
-- No position snapping or frame-to-frame offset
+Between ANY two consecutive frames:
+• Limbs rotate by only ~${Math.max(3, Math.round(15 / totalFrames))}° to ${Math.max(5, Math.round(25 / totalFrames))}° MAX
+• Body shifts by only ~${Math.max(1, Math.round(5 / totalFrames))}% to ${Math.max(2, Math.round(8 / totalFrames))}% of height MAX
+• Head tilts by only ~${Math.max(1, Math.round(5 / totalFrames))}° to ${Math.max(2, Math.round(8 / totalFrames))}° MAX
+• Facial expression: NO change or microscopic change only
 
-────────────────────────────────
-ANIMATION CONTINUITY (CRITICAL FOR GIF)
-────────────────────────────────
-- Frames form ONE continuous motion
-- This is NOT a pose collection — it is a time sequence
-- Each frame advances only slightly from the previous one
-- Small incremental motion is preferred over large pose changes
-- Frames may appear visually similar; this is intentional
-- NO frame should look like a reset or new action
+THESE ARE MAXIMUM VALUES - smaller is better!
 
-Between adjacent frames:
-- No large jumps in limb angle, body position, or orientation
-- Movement follows smooth arcs (not straight snaps)
-- Use natural easing (slow-in, accelerate, slow-out)
-- Include anticipation before major motion
-- Include follow-through after major motion
-- Secondary motion (hair, clothing) lags subtly behind
+══════════════════════════════════════════════════════════════
+VISUALIZATION: ONION SKIN TEST
+══════════════════════════════════════════════════════════════
+If you overlay Frame 1 and Frame 2 at 50% opacity each:
+→ The character should appear as ONE slightly blurry figure
+→ NOT as two clearly separate poses
 
-────────────────────────────────
-ACTION PHASE STRUCTURE (IMPORTANT)
-────────────────────────────────
-The animation represents ONE action broken into phases:
-- Early frames: anticipation / wind-up
-- Middle frames: main action at peak motion
-- Late frames: follow-through / recovery
+If you overlay ALL ${totalFrames} frames:
+→ Should look like ONE character with motion blur
+→ NOT like ${totalFrames} different characters
 
-Each phase transitions gradually into the next.
-No abrupt changes between phases.
+══════════════════════════════════════════════════════════════
+WHAT "SMALL MOTION" ACTUALLY MEANS
+══════════════════════════════════════════════════════════════
+For "${prompt}":
 
-────────────────────────────────
-LOOP REQUIREMENT
-────────────────────────────────
-- Final frame must transition seamlessly back to the first frame
-- Pose, momentum, and balance must allow perfect looping
-- No visible jump when looping
+If the action involves arm movement:
+- Total arm swing across ALL frames: ~30-60°
+- Per frame: only ${Math.round(45 / totalFrames)}° change
 
-────────────────────────────────
-IMPORTANT FINAL RULE
-────────────────────────────────
-Output must contain ONLY character animation poses
-on a solid magenta background.
+If the action involves body bobbing:
+- Total bob across ALL frames: ~5-15% of body height  
+- Per frame: only ${Math.round(10 / totalFrames)}% change
 
-If animation continuity is broken,
-or if any forbidden element appears,
-the output is unusable.
+If the action involves stepping:
+- Total foot movement: ~10-20% of body width
+- Per frame: only ${Math.round(15 / totalFrames)}% change
 
-negative prompt:
-text, numbers, letters,
-border, frame, box, grid, outline,
-cell edge, cell boundary, separator,
-alignment line, guide line,
-faint line, thin line, seam,
-ground line, floor line, baseline,
-panel, UI, watermark,
-shadow, glow, gradient,
-duplicate frame, repeated pose,
-pose reset, abrupt motion, jump cut
+THINK: "Is this change small enough to be smooth at 12 FPS?"
 
-    `;
+══════════════════════════════════════════════════════════════
+PERFECT LOOP CONNECTION
+══════════════════════════════════════════════════════════════
+Frame ${totalFrames} → Frame 1 must have the SAME tiny difference
+as Frame 1 → Frame 2 or any other adjacent pair.
+
+The animation is a CIRCLE, not a line.
+Frame ${totalFrames} is NOT an "ending pose" - it flows INTO Frame 1.
+
+══════════════════════════════════════════════════════════════
+CHARACTER ANCHOR POINTS (CRITICAL)
+══════════════════════════════════════════════════════════════
+These must stay FIXED across all ${totalFrames} frames:
+• Character's foot/ground contact point (same Y position)
+• Overall character size (no zooming in/out)
+• Character's center position in each grid cell
+• Art style, colors, line thickness, proportions
+
+══════════════════════════════════════════════════════════════
+COMMON MISTAKES TO AVOID
+══════════════════════════════════════════════════════════════
+❌ WRONG: Frame 1 (standing) → Frame 2 (jumping high) = TOO MUCH CHANGE
+✅ RIGHT: Frame 1 (knees slightly bent) → Frame 2 (knees bent 5° more)
+
+❌ WRONG: Arms in completely different positions between frames
+✅ RIGHT: Arms move only a few degrees between frames
+
+❌ WRONG: Making each frame a "key pose" like concept art
+✅ RIGHT: Making each frame a tiny increment, like video frames
+
+❌ WRONG: Thinking "I need to show the full action range"
+✅ RIGHT: Thinking "I need to show 1/${totalFrames}th of the action per frame"
+
+══════════════════════════════════════════════════════════════
+FINAL OUTPUT REQUIREMENTS
+══════════════════════════════════════════════════════════════
+• Single image containing ${cols}×${rows} grid of poses
+• Pure ${bgColorName} (${bgColorHex}) background - SOLID COLOR ONLY
+• All ${totalFrames} poses nearly identical with microscopic differences
+• Smooth loop: Frame ${totalFrames} connects seamlessly to Frame 1
+• NO text, numbers, labels, borders, or UI elements
+• Character poses should be SEAMLESSLY placed on background
+
+══════════════════════════════════════════════════════════════
+ABSOLUTELY FORBIDDEN - CRITICAL - READ CAREFULLY
+══════════════════════════════════════════════════════════════
+• NO BORDERS OR FRAMES around individual poses or the entire image
+• NO GRID LINES separating the poses - poses must blend into background
+• NO BLACK LINES, WHITE LINES, or any colored lines between frames
+• NO RECTANGLES or BOXES around each character pose
+• NO ground line, floor line, or baseline under the character's feet
+• NO shadow under the character
+• NO platform or surface for the character to stand on  
+• NO horizontal or vertical lines of any color anywhere
+• NO color variations in background - only pure ${bgColorHex}
+• NO outlines around the sprite sheet or individual cells
+• NO gradients - background must be perfectly flat solid ${bgColorName}
+
+⚠️ VERY IMPORTANT: Each character pose should be placed DIRECTLY on the
+${bgColorName} background with NO visible separation between grid cells.
+The grid is CONCEPTUAL only - there should be NO visual indication of it.
+
+The character should appear to FLOAT on the ${bgColorName} background.
+There should be NOTHING under the character's feet except ${bgColorName}.
+NO BORDERS. NO FRAMES. NO LINES. JUST CHARACTERS ON SOLID ${bgColorName}.
+
+Generate the sprite sheet with MINIMAL frame-to-frame variation.
+`;
 
     if (onProgress) onProgress(`正在生成 ${cols}x${rows} 連貫動作精靈圖 (比例 ${targetAspectRatio})...`);
 
