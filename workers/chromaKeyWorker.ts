@@ -157,6 +157,49 @@ function processChromaKey(
     }
   }
 
+  // Second pass: Edge cleanup - remove background color tint from semi-transparent pixels
+  // This handles anti-aliasing artifacts at character edges
+  const targetIsMagenta = targetColor.r > 200 && targetColor.g < 100 && targetColor.b > 200;
+  const targetIsGreen = targetColor.g > 150 && targetColor.r < 150 && targetColor.b < 150;
+  
+  for (let i = 0; i < data.length; i += 4) {
+    const alpha = data[i + 3];
+    
+    // Skip fully transparent or fully opaque pixels
+    if (alpha === 0 || alpha === 255) continue;
+    
+    const red = data[i];
+    const green = data[i + 1];
+    const blue = data[i + 2];
+    
+    // Check if this semi-transparent pixel has background color tint
+    if (targetIsMagenta) {
+      // Check for magenta/pink tint in semi-transparent pixels
+      const hasMagentaTint = red > 150 && blue > 100 && green < 120 && (red + blue) > (green * 2.5);
+      if (hasMagentaTint) {
+        // Make it more transparent or fully transparent based on how strong the tint is
+        const tintStrength = (red + blue) / (green + 1);
+        if (tintStrength > 3.5) {
+          data[i + 3] = 0; // Remove completely if strong tint
+        } else {
+          data[i + 3] = Math.floor(alpha * 0.5); // Reduce alpha by 50%
+        }
+      }
+    } else if (targetIsGreen) {
+      // Check for green tint in semi-transparent pixels
+      const hasGreenTint = green > 120 && red < 100 && blue < 100 && (green - red) > 50 && (green - blue) > 50;
+      if (hasGreenTint) {
+        // Make it more transparent or fully transparent based on how strong the tint is
+        const tintStrength = green / ((red + blue) / 2 + 1);
+        if (tintStrength > 2.5) {
+          data[i + 3] = 0; // Remove completely if strong tint
+        } else {
+          data[i + 3] = Math.floor(alpha * 0.5); // Reduce alpha by 50%
+        }
+      }
+    }
+  }
+
   onProgress(100);
   return data;
 }
