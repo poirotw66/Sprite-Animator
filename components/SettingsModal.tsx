@@ -1,6 +1,7 @@
 import React from 'react';
 import { Settings, X, ShieldCheck, ShieldAlert } from './Icons';
 import { SUPPORTED_MODELS } from '../utils/constants';
+import { GoogleGenAI } from '@google/genai';
 
 interface SettingsModalProps {
   apiKey: string;
@@ -21,10 +22,75 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
   onClose,
   onSave,
 }) => {
-  if (!showSettings) return null;
+  // All hooks must be called before any conditional returns
+  const [isValidating, setIsValidating] = React.useState(false);
+  const [validationError, setValidationError] = React.useState<string | null>(null);
+  const [validationSuccess, setValidationSuccess] = React.useState(false);
+  const modalRef = React.useRef<HTMLDivElement>(null);
 
   const hasCustomKey = !!apiKey.trim();
   const hasEnvKey = !!import.meta.env.VITE_GEMINI_API_KEY;
+
+  // Validate API Key
+  const validateApiKey = async (keyToValidate: string): Promise<boolean> => {
+    if (!keyToValidate.trim()) {
+      setValidationError('請輸入 API Key');
+      return false;
+    }
+
+    setIsValidating(true);
+    setValidationError(null);
+    setValidationSuccess(false);
+
+    try {
+      const ai = new GoogleGenAI({ apiKey: keyToValidate });
+      
+      // Simple test: list models to verify the key works
+      await ai.models.list();
+      
+      setValidationSuccess(true);
+      setValidationError(null);
+      return true;
+    } catch (error: any) {
+      let errorMessage = 'API Key 驗證失敗';
+      
+      if (error?.message?.includes('API_KEY_INVALID') || error?.message?.includes('invalid')) {
+        errorMessage = 'API Key 無效，請檢查是否正確';
+      } else if (error?.message?.includes('quota') || error?.message?.includes('429')) {
+        errorMessage = 'API 配額已用完或超過限制';
+      } else if (error?.message?.includes('network') || error?.message?.includes('fetch')) {
+        errorMessage = '網路連線錯誤，請檢查網路';
+      } else if (error?.message) {
+        errorMessage = `驗證失敗: ${error.message}`;
+      }
+      
+      setValidationError(errorMessage);
+      setValidationSuccess(false);
+      return false;
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  // Handle save with validation
+  const handleSave = async () => {
+    // If using custom key, validate it first
+    if (hasCustomKey) {
+      const isValid = await validateApiKey(apiKey);
+      if (!isValid) {
+        return; // Don't save if validation failed
+      }
+    }
+    
+    // Save and close
+    onSave(apiKey, selectedModel);
+  };
+
+  // Clear validation state when key changes
+  React.useEffect(() => {
+    setValidationError(null);
+    setValidationSuccess(false);
+  }, [apiKey]);
 
   // Handle Escape key to close modal
   React.useEffect(() => {
@@ -41,7 +107,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
   }, [showSettings, onClose]);
 
   // Focus trap for modal
-  const modalRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     if (showSettings && modalRef.current) {
       const firstInput = modalRef.current.querySelector('input') as HTMLInputElement;
@@ -50,6 +115,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
       }
     }
   }, [showSettings]);
+
+  // Conditional render AFTER all hooks
+  if (!showSettings) return null;
 
   return (
     <div
@@ -119,6 +187,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
               )}
             </div>
 
+            {/* Validation Status */}
+            {validationError && (
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-xs text-red-700 font-medium">{validationError}</p>
+              </div>
+            )}
+            
+            {validationSuccess && (
+              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-xs text-green-700 font-medium flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4" />
+                  API Key 驗證成功！
+                </p>
+              </div>
+            )}
+
             <p id="api-key-description" className="text-xs text-slate-500 mt-3">
               您的 Key 僅會儲存在本地瀏覽器中。
               <a
@@ -164,12 +248,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
 
           <div className="pt-2">
             <button
-              onClick={() => onSave(apiKey, selectedModel)}
-              className="w-full bg-gradient-to-r from-slate-900 to-slate-800 text-white py-3 rounded-lg font-semibold hover:from-slate-800 hover:to-slate-700 transition-all duration-200 focus:ring-2 focus:ring-orange-500/50 focus:outline-none shadow-md hover:shadow-lg cursor-pointer"
+              onClick={handleSave}
+              disabled={isValidating}
+              className="w-full bg-gradient-to-r from-slate-900 to-slate-800 text-white py-3 rounded-lg font-semibold hover:from-slate-800 hover:to-slate-700 transition-all duration-200 focus:ring-2 focus:ring-orange-500/50 focus:outline-none shadow-md hover:shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               type="button"
               aria-label="儲存設定並關閉對話框"
             >
-              儲存並應用
+              {isValidating ? '驗證中...' : '儲存並應用'}
             </button>
           </div>
         </div>

@@ -269,14 +269,15 @@ function processInMainThread(
         const isSoftPink = red > 190 && green < 175 && blue > 160 && (red - green) > 40;
         const isFadedMagenta = red > 170 && green < 150 && blue > 130 && red > green && blue > green;
         
-        // Expanded green detection (when target is green) - much wider range:
-        const isPureGreen = green > 200 && red < 80 && blue < 80;
-        const isGreenLike = green > 150 && red < 120 && blue < 120 && green > red && green > blue;
-        const isLightGreen = green > 180 && red < 180 && blue < 180 && (green - red) > 50 && (green - blue) > 50;
-        const isYellowGreen = green > 150 && red < 180 && blue < 100 && green > red && green > blue;
-        const isDarkGreen = green > 100 && red < 80 && blue < 80 && green > red * 1.5;
-        const isMintGreen = green > 180 && red < 200 && blue < 200 && green > red && green > blue && (green - Math.max(red, blue)) > 30;
-        const isNeonGreen = green > 200 && red < 150 && blue < 100;
+        // Expanded green detection (when target is green)
+        // IMPORTANT: Only detect PURE green screen colors, not character greens like eyes
+        // Green screen is typically very saturated green with low R and B
+        const isPureGreen = green > 200 && red < 60 && blue < 60;
+        const isGreenScreen = green > 180 && red < 80 && blue < 80 && (green - red) > 120 && (green - blue) > 120;
+        const isBrightGreenScreen = green > 220 && red < 100 && blue < 100 && green > (red + blue) * 1.5;
+        const isNeonGreen = green > 230 && red < 80 && blue < 80;
+        // For edges/anti-aliasing of green screen - still quite strict
+        const isGreenEdge = green > 150 && red < 100 && blue < 100 && (green - red) > 80 && (green - blue) > 80;
         
         const isWithinDistance = distance <= fuzz;
         const isCloseToTarget = rClose && gClose && bClose;
@@ -293,13 +294,11 @@ function processInMainThread(
             (distance < fuzz * 2));
         
         const greenMatch = targetIsGreen && (isPureGreen ||
-            isGreenLike ||
-            isLightGreen ||
-            isYellowGreen ||
-            isDarkGreen ||
-            isMintGreen ||
+            isGreenScreen ||
+            isBrightGreenScreen ||
             isNeonGreen ||
-            (distance < fuzz * 2));
+            isGreenEdge ||
+            (distance < fuzz * 1.5));
         
         if (isCloseToTarget || isWithinDistance || magentaMatch || greenMatch) {
           data[i + 3] = 0;
