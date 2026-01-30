@@ -1,31 +1,36 @@
 import React, { useCallback, useMemo, useState, useRef } from 'react';
-import { Download, Grid3X3, Loader2, Sliders, RefreshCw, Move } from './Icons';
+import { Download, Grid3X3, Loader2, Sliders, RefreshCw, Move, Eye, EyeOff } from './Icons';
 import { SliceSettings } from '../utils/imageUtils';
 import { GRID_PATTERN_URL } from '../utils/constants';
 
 interface SpriteSheetViewerProps {
   spriteSheetImage: string | null;
+  originalSpriteSheet?: string | null; // Original sprite sheet before chroma key removal
   isGenerating: boolean;
   sheetDimensions: { width: number; height: number };
   sliceSettings: SliceSettings;
   setSliceSettings: React.Dispatch<React.SetStateAction<SliceSettings>>;
   onImageLoad: (e: React.SyntheticEvent<HTMLImageElement>) => void;
   onDownload: () => void;
+  onDownloadOriginal?: () => void; // Download original sprite sheet
   chromaKeyProgress?: number; // Progress of chroma key removal (0-100)
   isProcessingChromaKey?: boolean; // Whether chroma key removal is in progress
 }
 
 export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   spriteSheetImage,
+  originalSpriteSheet,
   isGenerating,
   sheetDimensions,
   sliceSettings,
   setSliceSettings,
   onImageLoad,
   onDownload,
+  onDownloadOriginal,
   chromaKeyProgress = 0,
   isProcessingChromaKey = false,
 }) => {
+  const [showOriginal, setShowOriginal] = useState(false);
   const handleColsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSliceSettings((p) => ({ ...p, cols: Math.max(1, Number(e.target.value)) }));
   }, [setSliceSettings]);
@@ -362,9 +367,29 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
           <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
             S
           </span>
-          精靈圖（已去背預覽）
+          精靈圖（{showOriginal ? '原圖預覽' : '已去背預覽'}）
         </h2>
         <div className="flex gap-2">
+          {spriteSheetImage && originalSpriteSheet && (
+            <button
+              onClick={() => setShowOriginal(!showOriginal)}
+              className="text-xs flex items-center gap-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition-all duration-200 font-semibold cursor-pointer border border-blue-200 hover:border-blue-300 hover:shadow-sm"
+              aria-label={showOriginal ? '顯示去背預覽' : '顯示原圖'}
+            >
+              {showOriginal ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              {showOriginal ? '顯示去背' : '顯示原圖'}
+            </button>
+          )}
+          {spriteSheetImage && originalSpriteSheet && onDownloadOriginal && (
+            <button
+              onClick={onDownloadOriginal}
+              className="text-xs flex items-center gap-1.5 text-green-600 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-200 font-semibold cursor-pointer border border-green-200 hover:border-green-300 hover:shadow-sm"
+              aria-label="下載原圖"
+            >
+              <Download className="w-3.5 h-3.5" />
+              下載原圖
+            </button>
+          )}
           {spriteSheetImage && (
             <button
               onClick={onDownload}
@@ -404,7 +429,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
             >
               {/* The generated image */}
               <img
-                src={spriteSheetImage}
+                src={showOriginal && originalSpriteSheet ? originalSpriteSheet : spriteSheetImage}
                 alt="Sprite Sheet"
                 className="block max-w-full h-auto object-contain pixelated"
                 onLoad={onImageLoad}

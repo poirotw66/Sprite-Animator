@@ -17,3 +17,13 @@ export interface GenerationResult {
   loading: boolean;
   error: string | null;
 }
+
+export interface ExampleData {
+  id: string;
+  name: string;
+  description: string;
+  prompt: string;
+  chromaKeyColor: ChromaKeyColorType;
+  gridCols: number;
+  gridRows: number;
+}

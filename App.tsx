@@ -352,6 +352,13 @@ const App: React.FC = () => {
     }
   }, [processedSpriteSheet, spriteSheetImage, handleDownloadSpriteSheet]);
 
+  const wrappedDownloadOriginalSpriteSheet = useCallback(() => {
+    // Download the original sprite sheet (before chroma key removal)
+    if (spriteSheetImage) {
+      handleDownloadSpriteSheet(spriteSheetImage);
+    }
+  }, [spriteSheetImage, handleDownloadSpriteSheet]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 p-4 md:p-6 lg:p-8 font-sans">
       <SettingsModal
@@ -435,12 +442,14 @@ const App: React.FC = () => {
             >
               <SpriteSheetViewer
                 spriteSheetImage={processedSpriteSheet}
+                originalSpriteSheet={spriteSheetImage}
                 isGenerating={isGenerating}
                 sheetDimensions={sheetDimensions}
                 sliceSettings={sliceSettings}
                 setSliceSettings={setSliceSettings}
                 onImageLoad={handleImageLoad}
                 onDownload={wrappedDownloadSpriteSheet}
+                onDownloadOriginal={wrappedDownloadOriginalSpriteSheet}
                 chromaKeyProgress={chromaKeyProgress}
                 isProcessingChromaKey={isProcessingChromaKey}
               />

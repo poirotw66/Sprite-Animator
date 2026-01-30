@@ -64,44 +64,47 @@ function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: n
 
 /**
  * Check if a color is in the green screen hue range using HSL
- * Green screen typically has hue between 80-160 degrees
+ * Green screen typically has hue between 135-147 degrees
+ * Target color: #00B140 (RGB: 0, 177, 64, Hue: ~141°)
  */
 function isGreenScreenHSL(r: number, g: number, b: number, tolerance: number): boolean {
   const { h, s, l } = rgbToHsl(r, g, b);
   
-  // Green screen characteristics in HSL:
-  // Hue: 80-160 degrees (green to cyan-green range)
-  // Saturation: > 0.3 (reasonably saturated, not gray)
-  // Lightness: 0.2-0.8 (not too dark or too bright)
+  // Green screen characteristics in HSL (very strict):
+  // Hue: 135-147 degrees (narrow range ±6° around #00B140)
+  // Saturation: > 0.65 (very highly saturated)
+  // Lightness: 0.3-0.7 (exclude very dark or bright)
   
-  const hueInRange = h >= 80 - tolerance && h <= 160 + tolerance;
-  const saturationOk = s > 0.25;
-  const lightnessOk = l > 0.15 && l < 0.85;
+  const hueInRange = h >= 135 - tolerance && h <= 147 + tolerance;
+  const saturationOk = s > 0.65;
+  const lightnessOk = l > 0.3 && l < 0.7;
   
-  // Additional RGB check: green channel should dominate
-  const greenDominant = g > r * 1.2 && g > b * 1.1;
+  // Very strict RGB check: green must dominate AND r,b must be low
+  const greenDominant = g > r * 2.0 && g > b * 2.0 && g > 120;
+  const rgbLowEnough = r < 100 && b < 100;
   
-  return hueInRange && saturationOk && lightnessOk && greenDominant;
+  return hueInRange && saturationOk && lightnessOk && greenDominant && rgbLowEnough;
 }
 
 /**
  * Check if a color is magenta screen using HSL
- * Magenta has hue around 300 degrees (280-320)
+ * Magenta has hue around 300 degrees (295-305)
+ * Target color: #FF00FF (RGB: 255, 0, 255, Hue: 300°)
  */
 function isMagentaScreenHSL(r: number, g: number, b: number, tolerance: number): boolean {
   const { h, s, l } = rgbToHsl(r, g, b);
   
-  // Magenta characteristics in HSL:
-  // Hue: 280-320 degrees (magenta range)
-  // Saturation: > 0.4 (well saturated)
-  // Lightness: 0.3-0.8
+  // Magenta characteristics in HSL (stricter):
+  // Hue: 295-305 degrees (centered around #FF00FF)
+  // Saturation: > 0.7 (very highly saturated)
+  // Lightness: 0.35-0.75 (avoid very dark or very bright)
   
-  const hueInRange = h >= 280 - tolerance && h <= 320 + tolerance;
-  const saturationOk = s > 0.35;
-  const lightnessOk = l > 0.25 && l < 0.85;
+  const hueInRange = h >= 295 - tolerance && h <= 305 + tolerance;
+  const saturationOk = s > 0.7;
+  const lightnessOk = l > 0.35 && l < 0.75;
   
-  // Additional RGB check: R and B should be high, G should be low
-  const magentaPattern = r > 150 && b > 150 && g < 150 && (r + b) > g * 2.5;
+  // Additional RGB check: R and B must be high and similar, G must be very low
+  const magentaPattern = r > 180 && b > 180 && g < 100 && Math.abs(r - b) < 80;
   
   return hueInRange && saturationOk && lightnessOk && magentaPattern;
 }

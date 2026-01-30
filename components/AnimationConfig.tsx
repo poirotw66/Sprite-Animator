@@ -1,7 +1,8 @@
 import React, { useCallback } from 'react';
 import { Play, Layers, Zap, Eraser, Wand2, Loader2, Film as FilmIcon, Grid3X3 } from './Icons';
-import { AnimationConfig, ChromaKeyColorType } from '../types';
-import { ANIMATION_FPS_MULTIPLIER, CHROMA_KEY_COLORS } from '../utils/constants';
+import { AnimationConfig, ChromaKeyColorType, ExampleData } from '../types';
+import { ANIMATION_FPS_MULTIPLIER, CHROMA_KEY_COLORS, EXAMPLE_DATA } from '../utils/constants';
+import { ExampleSelector } from './ExampleSelector';
 
 interface AnimationConfigPanelProps {
   config: AnimationConfig;
@@ -60,6 +61,17 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
     setConfig((prev) => ({ ...prev, enableInterpolation: enabled }));
   }, [setConfig]);
 
+  const handleSelectExample = useCallback((example: ExampleData) => {
+    setConfig((prev) => ({
+      ...prev,
+      prompt: example.prompt,
+      chromaKeyColor: example.chromaKeyColor,
+      gridCols: example.gridCols,
+      gridRows: example.gridRows,
+      mode: 'sheet', // Switch to sheet mode for examples
+    }));
+  }, [setConfig]);
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
       <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
@@ -68,6 +80,11 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
         </span>
         幀動畫參數
       </h2>
+
+      {/* Example Selector */}
+      <div className="mb-6">
+        <ExampleSelector examples={EXAMPLE_DATA} onSelectExample={handleSelectExample} />
+      </div>
 
       {/* Mode Switcher */}
       <div className="flex bg-slate-100 p-1 rounded-xl mb-6">

@@ -416,7 +416,7 @@ Background MUST be EXACTLY this color (for chroma key removal):
 
 ${chromaKeyColor === 'magenta' 
   ? `MAGENTA COLOR GUIDE:
-  ✅ CORRECT: Pure magenta ${bgColorHex} - R=255, G=0, B=255
+  ✅ CORRECT: Pure magenta ${bgColorHex} - R=255, G=0, B=255 (#FF00FF )
      (Imagine: Maximum red + Maximum blue + Zero green = Electric magenta)
   ❌ WRONG: Pink (#FF69B4), Purple (#800080), Hot Pink (#FF1493)
   ❌ WRONG: Any color with G > 50 is NOT magenta
@@ -424,7 +424,7 @@ ${chromaKeyColor === 'magenta'
   Visual Check: The background should look like a bright, electric magenta/fuchsia
   that hurts your eyes - NOT a soft pink or purple.`
   : `GREEN COLOR GUIDE:
-  ✅ CORRECT: Standard green screen ${bgColorHex} - R=0, G=177, B=64
+  ✅ CORRECT: Standard green screen ${bgColorHex} - R=0, G=177, B=64 (#00B140)
      (Imagine: Zero red + High green + Low blue = Professional green screen)
   ❌ WRONG: Lime (#00FF00), Forest Green (#228B22), Neon Green (#39FF14)
   ❌ WRONG: Any color with R > 50 or B > 130 is NOT standard green screen

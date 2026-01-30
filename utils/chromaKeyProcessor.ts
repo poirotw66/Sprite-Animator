@@ -50,28 +50,31 @@ function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: n
 
 /**
  * Check if a color is in the green screen hue range using HSL
+ * Target color: #00B140 (RGB: 0, 177, 64, Hue: ~141°)
  */
 function isGreenScreenHSL(r: number, g: number, b: number, tolerance: number): boolean {
   const { h, s, l } = rgbToHsl(r, g, b);
   
-  const hueInRange = h >= 80 - tolerance && h <= 160 + tolerance;
-  const saturationOk = s > 0.25;
-  const lightnessOk = l > 0.15 && l < 0.85;
-  const greenDominant = g > r * 1.2 && g > b * 1.1;
+  const hueInRange = h >= 135 - tolerance && h <= 147 + tolerance;
+  const saturationOk = s > 0.65;
+  const lightnessOk = l > 0.3 && l < 0.7;
+  const greenDominant = g > r * 2.0 && g > b * 2.0 && g > 120;
+  const rgbLowEnough = r < 100 && b < 100;
   
-  return hueInRange && saturationOk && lightnessOk && greenDominant;
+  return hueInRange && saturationOk && lightnessOk && greenDominant && rgbLowEnough;
 }
 
 /**
  * Check if a color is magenta screen using HSL
+ * Target color: #FF00FF (RGB: 255, 0, 255, Hue: 300°)
  */
 function isMagentaScreenHSL(r: number, g: number, b: number, tolerance: number): boolean {
   const { h, s, l } = rgbToHsl(r, g, b);
   
-  const hueInRange = h >= 280 - tolerance && h <= 320 + tolerance;
-  const saturationOk = s > 0.35;
-  const lightnessOk = l > 0.25 && l < 0.85;
-  const magentaPattern = r > 150 && b > 150 && g < 150 && (r + b) > g * 2.5;
+  const hueInRange = h >= 295 - tolerance && h <= 305 + tolerance;
+  const saturationOk = s > 0.7;
+  const lightnessOk = l > 0.35 && l < 0.75;
+  const magentaPattern = r > 180 && b > 180 && g < 100 && Math.abs(r - b) < 80;
   
   return hueInRange && saturationOk && lightnessOk && magentaPattern;
 }
