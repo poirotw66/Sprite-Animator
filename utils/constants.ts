@@ -42,7 +42,7 @@ export const CHROMA_KEY_COLORS = {
 
 // Legacy - kept for compatibility
 export const CHROMA_KEY_COLOR = CHROMA_KEY_COLORS.magenta;
-export const CHROMA_KEY_FUZZ = 25; // 25% tolerance (0-100)
+export const CHROMA_KEY_FUZZ = 35; // 35% tolerance (0-100) - increased for better coverage
 
 export const ANIMATION_FPS_MULTIPLIER = 3; // Increased for smoother playback
 

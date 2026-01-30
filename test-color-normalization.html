@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Normalization Test - 顏色標準化測試</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .color-box {
+            display: inline-block;
+            width: 100px;
+            height: 100px;
+            margin: 10px;
+            border: 2px solid #333;
+            vertical-align: top;
+        }
+        .color-info {
+            display: inline-block;
+            margin-left: 20px;
+            vertical-align: top;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+            border-radius: 4px;
+        }
+        canvas {
+            border: 2px solid #333;
+            margin: 10px;
+        }
+        .stats {
+            font-family: monospace;
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Color Normalization Test (顏色標準化測試)</h1>
+        
+        <div class="test-section">
+            <h2>Test 1: Magenta Variants (洋紅色變體)</h2>
+            <p>測試各種接近洋紅色的顏色是否能被正確標準化為 #FF00FF</p>
+            
+            <div>
+                <div class="color-box" style="background: #FF00FF;"></div>
+                <div class="color-info">
+                    <strong>Target (目標)</strong><br>
+                    #FF00FF<br>
+                    RGB(255, 0, 255)
+                </div>
+            </div>
+            
+            <div>
+                <div class="color-box" style="background: #FE00FE;"></div>
+                <div class="color-info">
+                    <strong>Variant 1</strong><br>
+                    #FE00FE<br>
+                    RGB(254, 0, 254)
+                </div>
+            </div>
+            
+            <div>
+                <div class="color-box" style="background: #FC00FC;"></div>
+                <div class="color-info">
+                    <strong>Variant 2</strong><br>
+                    #FC00FC<br>
+                    RGB(252, 0, 252)
+                </div>
+            </div>
+            
+            <div>
+                <div class="color-box" style="background: #FF10FF;"></div>
+                <div class="color-info">
+                    <strong>Variant 3</strong><br>
+                    #FF10FF<br>
+                    RGB(255, 16, 255)
+                </div>
+            </div>
+            
+            <button onclick="testMagenta()">Run Magenta Test (執行洋紅色測試)</button>
+            <div id="magenta-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Test 2: Green Screen Variants (綠幕變體)</h2>
+            <p>測試各種接近綠幕的顏色是否能被正確標準化為 #00B140</p>
+            
+            <div>
+                <div class="color-box" style="background: #00B140;"></div>
+                <div class="color-info">
+                    <strong>Target (目標)</strong><br>
+                    #00B140<br>
+                    RGB(0, 177, 64)
+                </div>
+            </div>
+            
+            <div>
+                <div class="color-box" style="background: #00FF00;"></div>
+                <div class="color-info">
+                    <strong>Variant 1 (Lime)</strong><br>
+                    #00FF00<br>
+                    RGB(0, 255, 0)
+                </div>
+            </div>
+            
+            <div>
+                <div class="color-box" style="background: #00C850;"></div>
+                <div class="color-info">
+                    <strong>Variant 2</strong><br>
+                    #00C850<br>
+                    RGB(0, 200, 80)
+                </div>
+            </div>
+            
+            <div>
+                <div class="color-box" style="background: #10B145;"></div>
+                <div class="color-info">
+                    <strong>Variant 3</strong><br>
+                    #10B145<br>
+                    RGB(16, 177, 69)
+                </div>
+            </div>
+            
+            <button onclick="testGreen()">Run Green Test (執行綠幕測試)</button>
+            <div id="green-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Test 3: Visual Comparison (視覺比較)</h2>
+            <p>上傳一張帶有綠幕或洋紅色背景的圖片,查看標準化前後的效果</p>
+            
+            <input type="file" id="imageInput" accept="image/*">
+            <select id="colorType">
+                <option value="magenta">Magenta (洋紅色)</option>
+                <option value="green">Green Screen (綠幕)</option>
+            </select>
+            <button onclick="testImage()">Process Image (處理圖片)</button>
+            
+            <div style="margin-top: 20px;">
+                <div style="display: inline-block; margin: 10px;">
+                    <h3>Before (處理前)</h3>
+                    <canvas id="beforeCanvas"></canvas>
+                </div>
+                <div style="display: inline-block; margin: 10px;">
+                    <h3>After (處理後)</h3>
+                    <canvas id="afterCanvas"></canvas>
+                </div>
+            </div>
+            
+            <div id="image-stats" class="stats" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Color normalization function (from geminiService.ts)
+        function normalizeBackgroundColor(imageData, targetColor, colorType) {
+            const data = imageData.data;
+            const tolerance = 80;
+            let changedPixels = 0;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                const a = data[i + 3];
+                
+                if (a === 0) continue;
+                
+                let isBackgroundColor = false;
+                
+                if (colorType === 'magenta') {
+                    const isMagentaLike = (
+                        r > 150 && b > 150 && g < 120 &&
+                        (r + b) > (g * 2.5) &&
+                        Math.abs(r - b) < 100
+                    );
+                    
+                    const distance = Math.sqrt(
+                        Math.pow(r - targetColor.r, 2) +
+                        Math.pow(g - targetColor.g, 2) +
+                        Math.pow(b - targetColor.b, 2)
+                    );
+                    
+                    isBackgroundColor = isMagentaLike || distance < tolerance;
+                    
+                } else if (colorType === 'green') {
+                    const isGreenLike = (
+                        g > 80 &&
+                        r < 120 &&
+                        b < 150 &&
+                        g > r + 40 &&
+                        g > b
+                    );
+                    
+                    const distance = Math.sqrt(
+                        Math.pow(r - targetColor.r, 2) +
+                        Math.pow(g - targetColor.g, 2) +
+                        Math.pow(b - targetColor.b, 2)
+                    );
+                    
+                    isBackgroundColor = isGreenLike || distance < tolerance;
+                }
+                
+                if (isBackgroundColor) {
+                    data[i] = targetColor.r;
+                    data[i + 1] = targetColor.g;
+                    data[i + 2] = targetColor.b;
+                    changedPixels++;
+                }
+            }
+            
+            return { imageData, changedPixels };
+        }
+        
+        function testMagenta() {
+            const variants = [
+                { hex: '#FE00FE', rgb: [254, 0, 254] },
+                { hex: '#FC00FC', rgb: [252, 0, 252] },
+                { hex: '#FF10FF', rgb: [255, 16, 255] },
+                { hex: '#F800F8', rgb: [248, 0, 248] }
+            ];
+            
+            const target = { r: 255, g: 0, b: 255 };
+            let results = '<div class="result"><h3>Results:</h3>';
+            
+            variants.forEach(variant => {
+                const [r, g, b] = variant.rgb;
+                const isMagentaLike = (
+                    r > 150 && b > 150 && g < 120 &&
+                    (r + b) > (g * 2.5) &&
+                    Math.abs(r - b) < 100
+                );
+                
+                const distance = Math.sqrt(
+                    Math.pow(r - target.r, 2) +
+                    Math.pow(g - target.g, 2) +
+                    Math.pow(b - target.b, 2)
+                );
+                
+                const willNormalize = isMagentaLike || distance < 80;
+                
+                results += `<p><strong>${variant.hex}</strong>: ${willNormalize ? '✅ Will normalize' : '❌ Will NOT normalize'} (distance: ${distance.toFixed(2)})</p>`;
+            });
+            
+            results += '</div>';
+            document.getElementById('magenta-result').innerHTML = results;
+        }
+        
+        function testGreen() {
+            const variants = [
+                { hex: '#00FF00', rgb: [0, 255, 0] },
+                { hex: '#00C850', rgb: [0, 200, 80] },
+                { hex: '#10B145', rgb: [16, 177, 69] },
+                { hex: '#00A030', rgb: [0, 160, 48] }
+            ];
+            
+            const target = { r: 0, g: 177, b: 64 };
+            let results = '<div class="result"><h3>Results:</h3>';
+            
+            variants.forEach(variant => {
+                const [r, g, b] = variant.rgb;
+                const isGreenLike = (
+                    g > 80 &&
+                    r < 120 &&
+                    b < 150 &&
+                    g > r + 40 &&
+                    g > b
+                );
+                
+                const distance = Math.sqrt(
+                    Math.pow(r - target.r, 2) +
+                    Math.pow(g - target.g, 2) +
+                    Math.pow(b - target.b, 2)
+                );
+                
+                const willNormalize = isGreenLike || distance < 80;
+                
+                results += `<p><strong>${variant.hex}</strong>: ${willNormalize ? '✅ Will normalize' : '❌ Will NOT normalize'} (distance: ${distance.toFixed(2)})</p>`;
+            });
+            
+            results += '</div>';
+            document.getElementById('green-result').innerHTML = results;
+        }
+        
+        function testImage() {
+            const input = document.getElementById('imageInput');
+            const colorType = document.getElementById('colorType').value;
+            
+            if (!input.files || !input.files[0]) {
+                alert('Please select an image first (請先選擇圖片)');
+                return;
+            }
+            
+            const file = input.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const beforeCanvas = document.getElementById('beforeCanvas');
+                    const afterCanvas = document.getElementById('afterCanvas');
+                    
+                    beforeCanvas.width = afterCanvas.width = img.width;
+                    beforeCanvas.height = afterCanvas.height = img.height;
+                    
+                    const beforeCtx = beforeCanvas.getContext('2d');
+                    const afterCtx = afterCanvas.getContext('2d');
+                    
+                    // Draw original
+                    beforeCtx.drawImage(img, 0, 0);
+                    const beforeData = beforeCtx.getImageData(0, 0, img.width, img.height);
+                    
+                    // Draw and normalize
+                    afterCtx.drawImage(img, 0, 0);
+                    const afterData = afterCtx.getImageData(0, 0, img.width, img.height);
+                    
+                    const targetColor = colorType === 'magenta' 
+                        ? { r: 255, g: 0, b: 255 }
+                        : { r: 0, g: 177, b: 64 };
+                    
+                    const result = normalizeBackgroundColor(afterData, targetColor, colorType);
+                    afterCtx.putImageData(result.imageData, 0, 0);
+                    
+                    // Show stats
+                    const totalPixels = img.width * img.height;
+                    const percentage = ((result.changedPixels / totalPixels) * 100).toFixed(2);
+                    
+                    document.getElementById('image-stats').style.display = 'block';
+                    document.getElementById('image-stats').innerHTML = `
+                        <strong>Statistics (統計):</strong><br>
+                        Total Pixels: ${totalPixels.toLocaleString()}<br>
+                        Changed Pixels: ${result.changedPixels.toLocaleString()} (${percentage}%)<br>
+                        Target Color: ${colorType === 'magenta' ? '#FF00FF' : '#00B140'}
+                    `;
+                };
+                img.src = e.target.result;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>

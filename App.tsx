@@ -434,7 +434,7 @@ const App: React.FC = () => {
               }
             >
               <SpriteSheetViewer
-                spriteSheetImage={processedSpriteSheet || spriteSheetImage}
+                spriteSheetImage={processedSpriteSheet}
                 isGenerating={isGenerating}
                 sheetDimensions={sheetDimensions}
                 sliceSettings={sliceSettings}

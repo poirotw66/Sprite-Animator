@@ -362,34 +362,36 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
           <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
             S
           </span>
-          精靈圖原圖 (Sprite Sheet)
+          精靈圖（已去背預覽）
         </h2>
         <div className="flex gap-2">
           {spriteSheetImage && (
             <button
               onClick={onDownload}
               className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-all duration-200 font-semibold cursor-pointer border border-orange-200 hover:border-orange-300 hover:shadow-sm"
-              aria-label="下載精靈圖"
+              aria-label="下載精靈圖（已去背）"
             >
               <Download className="w-3.5 h-3.5" />
-              下載原圖
+              下載精靈圖（已去背）
             </button>
           )}
         </div>
       </div>
 
       <div className="bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 min-h-[200px] flex items-center justify-center relative overflow-hidden group select-none">
-        {!spriteSheetImage && !isGenerating && (
+        {!spriteSheetImage && !isGenerating && !isProcessingChromaKey && (
           <div className="text-center p-6 opacity-60">
             <Grid3X3 className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-            <p className="text-slate-500 text-sm">生成的網格原圖將顯示於此</p>
+            <p className="text-slate-500 text-sm">生成的網格原圖將顯示於此（去背後）</p>
           </div>
         )}
 
-        {!spriteSheetImage && isGenerating && (
+        {!spriteSheetImage && (isGenerating || isProcessingChromaKey) && (
           <div className="flex flex-col items-center">
             <Loader2 className="w-8 h-8 text-orange-500 animate-spin mb-2" />
-            <p className="text-xs text-slate-600 font-medium">生成中...</p>
+            <p className="text-xs text-slate-600 font-medium">
+              {isProcessingChromaKey ? '正在處理去背...' : '生成中...'}
+            </p>
           </div>
         )}
 

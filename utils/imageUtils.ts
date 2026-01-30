@@ -128,7 +128,8 @@ export const sliceSpriteSheet = async (
         const ctx = canvas.getContext('2d', { 
           willReadFrequently: true,
           alpha: true,
-          desynchronized: false // Ensure consistent rendering
+          desynchronized: false, // Ensure consistent rendering
+          premultipliedAlpha: false // CRITICAL: Prevent color distortion with transparency
         });
 
         if (!ctx) {
@@ -230,12 +231,13 @@ export const sliceSpriteSheet = async (
 
             // Post-processing: Only legacy background removal if explicitly requested
             // Note: Chroma key removal is already done by chromaKeyWorker before slicing
-            // So we skip the additional chroma key processing here to avoid false positives
-            const imageData = ctx.getImageData(0, 0, frameWidth, frameHeight);
-            const data = imageData.data;
-            
-            // Legacy background removal (white backgrounds) - only if explicitly requested
+            // IMPORTANT: Only process pixels if removeBg is true to avoid unnecessary operations
+            // that could affect color fidelity or transparency
             if (removeBg) {
+              const imageData = ctx.getImageData(0, 0, frameWidth, frameHeight);
+              const data = imageData.data;
+              
+              // Legacy background removal (white backgrounds)
               for (let i = 0; i < data.length; i += 4) {
                 const red = data[i];
                 const green = data[i + 1];
@@ -244,10 +246,10 @@ export const sliceSpriteSheet = async (
                   data[i + 3] = 0; // Set alpha to 0
                 }
               }
+              
+              // Put processed image data back
+              ctx.putImageData(imageData, 0, 0);
             }
-            
-            // Put processed image data back
-            ctx.putImageData(imageData, 0, 0);
 
             // Convert to base64
             // Note: All frames maintain uniform dimensions for consistent animation playback
@@ -579,17 +581,29 @@ const CENTROID_OFFSET_CLAMP = 500;
 
 /**
  * Helper: Check if a pixel is likely chroma key background
+ * IMPORTANT: This is ONLY for content analysis (bounding box calculation).
+ * The actual chroma key removal is done by chromaKeyWorker.ts.
+ * This function should be VERY strict to avoid false positives on character colors.
  */
 const isChromaKeyPixel = (r: number, g: number, b: number, a: number): boolean => {
+  // Only consider very transparent pixels as chroma key
   if (a <= 20) return true;
-  // Magenta/pink chroma key
-  const isMagentaLike = (r > 180 && g < 100 && b > 100) ||
-    (r > 150 && g < 80 && b > 150) ||
-    (r > 200 && g < 50 && b > 200);
-  // Green chroma key
-  const isGreenLike = (g > 180 && r < 100 && b < 100) ||
-    (g > 150 && r < 80 && b < 80);
-  return isMagentaLike || isGreenLike;
+  
+  // VERY STRICT detection - only match pure chroma key colors
+  // This prevents false positives on character colors (pink clothes, green accessories, etc.)
+  
+  // Pure magenta chroma key (#FF00FF): R=255, G=0, B=255
+  // Only match if it's VERY close to pure magenta
+  const isPureMagenta = r > 240 && g < 30 && b > 240 && Math.abs(r - b) < 20;
+  
+  // Standard green screen (#00B140): R=0, G=177, B=64
+  // Only match if it's VERY close to standard green screen
+  const isStandardGreen = g > 150 && g < 200 && r < 30 && b < 100 && (g - r) > 120 && (g - b) > 50;
+  
+  // Pure bright green (#00FF00): R=0, G=255, B=0
+  const isPureGreen = g > 240 && r < 30 && b < 30;
+  
+  return isPureMagenta || isStandardGreen || isPureGreen;
 };
 
 /**

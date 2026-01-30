@@ -9,6 +9,139 @@ export type ProgressCallback = (status: string) => void;
 // Helper for delay
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/**
+ * Normalizes background color in AI-generated images to exact chroma key color.
+ * AI models often generate slightly different shades of the target color,
+ * which causes chroma key removal to fail. This function detects and replaces
+ * similar colors with the exact target color.
+ * 
+ * @param base64Image - Base64 encoded image with approximate background color
+ * @param targetColor - Exact chroma key color to normalize to
+ * @param colorType - Type of chroma key color ('magenta' or 'green')
+ * @returns Promise resolving to base64 image with normalized background color
+ */
+async function normalizeBackgroundColor(
+    base64Image: string,
+    targetColor: { r: number; g: number; b: number },
+    colorType: ChromaKeyColorType
+): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            
+            if (!ctx) {
+                reject(new Error('Failed to get canvas context'));
+                return;
+            }
+            
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            // Use more permissive tolerance for detection
+            const tolerance = 100; // Increased from 80 for better coverage
+            let normalizedCount = 0;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                const a = data[i + 3];
+                
+                // Skip fully transparent pixels
+                if (a === 0) continue;
+                
+                let isBackgroundColor = false;
+                
+                if (colorType === 'magenta') {
+                    // Detect magenta-like colors - matching chromaKeyWorker.ts logic
+                    const isPureMagenta = r > 200 && g < 60 && b > 200 && (r + b) > (g * 3);
+                    const isMagentaScreen = r > 180 && g < 80 && b > 180 && (r - g) > 120 && (b - g) > 120;
+                    const isBrightMagentaScreen = r > 220 && g < 100 && b > 220 && (r + b) > g * 4;
+                    const isNeonMagenta = r > 230 && g < 80 && b > 230;
+                    const isMagentaEdge = r > 150 && g < 100 && b > 150 && (r - g) > 80 && (b - g) > 80;
+                    
+                    // More permissive for lighter magenta shades (edges, anti-aliasing)
+                    const isLightMagenta = r > 120 && g < 120 && b > 120 && (r + b) > (g * 2);
+                    
+                    const distance = Math.sqrt(
+                        Math.pow(r - targetColor.r, 2) +
+                        Math.pow(g - targetColor.g, 2) +
+                        Math.pow(b - targetColor.b, 2)
+                    );
+                    
+                    isBackgroundColor = isPureMagenta || 
+                        isMagentaScreen || 
+                        isBrightMagentaScreen || 
+                        isNeonMagenta || 
+                        isMagentaEdge ||
+                        isLightMagenta ||
+                        distance < tolerance;
+                    
+                } else if (colorType === 'green') {
+                    // Detect green-like colors - matching chromaKeyWorker.ts logic
+                    // Be VERY permissive to catch all green variants AI generates
+                    const isPureGreen = g > 180 && r < 80 && b < 80;
+                    const isStandardGreenScreen = g > 100 && r < 100 && b < 130 && (g - r) > 60;
+                    const isBrightGreenScreen = g > 150 && r < 100 && b < 100 && g > r + 50 && g > b + 50;
+                    const isNeonGreen = g > 200 && r < 100 && b < 100;
+                    const isDarkGreenScreen = g > 80 && g < 180 && r < 60 && b < 80 && g > (r + b);
+                    const isLimeGreen = g > 150 && r < 150 && b < 80 && g > r && g > b * 2;
+                    const isGreenEdge = g > 80 && r < 100 && b < 120 && (g - r) > 30 && (g - b) > 20;
+                    
+                    // Additional: Very light greens (for edges)
+                    const isLightGreen = g > 70 && r < 130 && b < 130 && g > r + 20 && g > b;
+                    
+                    // Additional: Yellow-green variations
+                    const isYellowGreen = g > 120 && r < 180 && b < 100 && g > r + 20 && g > b + 20;
+                    
+                    const distance = Math.sqrt(
+                        Math.pow(r - targetColor.r, 2) +
+                        Math.pow(g - targetColor.g, 2) +
+                        Math.pow(b - targetColor.b, 2)
+                    );
+                    
+                    isBackgroundColor = isPureGreen ||
+                        isStandardGreenScreen ||
+                        isBrightGreenScreen ||
+                        isNeonGreen ||
+                        isDarkGreenScreen ||
+                        isLimeGreen ||
+                        isGreenEdge ||
+                        isLightGreen ||
+                        isYellowGreen ||
+                        distance < tolerance;
+                }
+                
+                // Replace with exact target color
+                if (isBackgroundColor) {
+                    data[i] = targetColor.r;
+                    data[i + 1] = targetColor.g;
+                    data[i + 2] = targetColor.b;
+                    // Keep original alpha for anti-aliasing edges
+                    normalizedCount++;
+                }
+            }
+            
+            logger.debug('Color normalization completed', {
+                totalPixels: data.length / 4,
+                normalizedPixels: normalizedCount,
+                percentage: ((normalizedCount / (data.length / 4)) * 100).toFixed(2) + '%'
+            });
+            
+            ctx.putImageData(imageData, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+        };
+        
+        img.onerror = () => reject(new Error('Failed to load image for color normalization'));
+        img.src = base64Image;
+    });
+}
+
 // Helper to check if error is related to quota or overloading
 const isQuotaError = (error: unknown): boolean => {
     return checkQuotaError(error);
@@ -281,8 +414,27 @@ Background MUST be EXACTLY this color (for chroma key removal):
 • ${bgColorRGB}
 • Color name: ${bgColorName}
 
-DO NOT use any other shade of ${chromaKeyColor === 'magenta' ? 'pink, purple, or magenta' : 'green'}.
-The background MUST be this EXACT color value, no variations.
+${chromaKeyColor === 'magenta' 
+  ? `MAGENTA COLOR GUIDE:
+  ✅ CORRECT: Pure magenta ${bgColorHex} - R=255, G=0, B=255
+     (Imagine: Maximum red + Maximum blue + Zero green = Electric magenta)
+  ❌ WRONG: Pink (#FF69B4), Purple (#800080), Hot Pink (#FF1493)
+  ❌ WRONG: Any color with G > 50 is NOT magenta
+  
+  Visual Check: The background should look like a bright, electric magenta/fuchsia
+  that hurts your eyes - NOT a soft pink or purple.`
+  : `GREEN COLOR GUIDE:
+  ✅ CORRECT: Standard green screen ${bgColorHex} - R=0, G=177, B=64
+     (Imagine: Zero red + High green + Low blue = Professional green screen)
+  ❌ WRONG: Lime (#00FF00), Forest Green (#228B22), Neon Green (#39FF14)
+  ❌ WRONG: Any color with R > 50 or B > 130 is NOT standard green screen
+  
+  Visual Check: The background should look like a professional video green screen
+  used in film studios - NOT lime green or grass green.`}
+
+DO NOT use any other shade or variant.
+The background MUST be this EXACT color value ${bgColorHex}.
+Think of it as a color picker set to EXACTLY ${bgColorRGB}.
 
 ══════════════════════════════════════════════════════════════
 FRAME-BY-FRAME MICRO-MOVEMENTS
@@ -389,9 +541,26 @@ ABSOLUTELY FORBIDDEN - CRITICAL - READ CAREFULLY
 ⚠️ BACKGROUND COLOR IS CRITICAL FOR PROCESSING ⚠️
 The background MUST be EXACTLY ${bgColorHex} (${bgColorRGB}).
 Using any other shade will cause the chroma key removal to fail.
+
 ${chromaKeyColor === 'magenta' 
-  ? 'Use PURE MAGENTA #FF00FF - not pink, not purple, not fuchsia variants.'
-  : 'Use STANDARD GREEN SCREEN #00B140 - not lime green, not forest green, not other greens.'}
+  ? `MAGENTA REQUIREMENT - MEMORIZE THIS:
+  • R must be 255 (maximum)
+  • G must be 0 (zero)
+  • B must be 255 (maximum)
+  • Result: ${bgColorHex} - Pure electric magenta
+  • NOT pink (which has G > 100)
+  • NOT purple (which has R < 200 or B < 200)`
+  : `GREEN SCREEN REQUIREMENT - MEMORIZE THIS:
+  • R must be 0 (zero)
+  • G must be 177 (high but not maximum)
+  • B must be 64 (low-medium)
+  • Result: ${bgColorHex} - Professional green screen
+  • NOT lime green (which has G = 255)
+  • NOT neon green (which has R > 50 or B < 20)
+  • NOT forest green (which has G < 150)`}
+
+If you're unsure, imagine filling the background with a paint bucket tool
+set to EXACTLY ${bgColorRGB}. Every background pixel should be this exact value.
 
 ⚠️ VERY IMPORTANT: Each character pose should be placed DIRECTLY on the
 ${bgColorHex} background with NO visible separation between grid cells.
@@ -427,7 +596,17 @@ Generate the sprite sheet with MINIMAL frame-to-frame variation.
     if (parts) {
         for (const part of parts) {
             if (part.inlineData && part.inlineData.data) {
-                return `data:image/png;base64,${part.inlineData.data}`;
+                const generatedImage = `data:image/png;base64,${part.inlineData.data}`;
+                
+                // Post-process: Normalize background color to exact chroma key color
+                if (onProgress) onProgress('正在標準化背景顏色...');
+                const normalizedImage = await normalizeBackgroundColor(
+                    generatedImage, 
+                    bgColor,
+                    chromaKeyColor
+                );
+                
+                return normalizedImage;
             }
         }
     }

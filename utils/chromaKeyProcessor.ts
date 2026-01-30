@@ -280,24 +280,22 @@ function processInMainThread(
         const isMagentaEdge = red > 150 && green < 100 && blue > 150 && (red - green) > 80 && (blue - green) > 80;
         
         // Expanded green detection (when target is green)
-        // IMPORTANT: Detect various green screen colors AI might generate
+        // IMPORTANT: Only detect green SCREEN colors, not character greens (eyes, clothes, etc.)
         // Standard green screen #00B140 = R:0, G:177, B:64
-        // Also handle pure green #00FF00 and many variations
+        // Key: Green screen has VERY LOW red and relatively low blue
         
-        // Pure bright green (like #00FF00)
-        const isPureGreen = green > 180 && red < 80 && blue < 80;
-        // Standard green screen (#00B140 range) - expanded range
-        const isStandardGreenScreen = green > 100 && red < 100 && blue < 130 && (green - red) > 60;
-        // Bright green screen variations (AI often generates these)
-        const isBrightGreenScreen = green > 150 && red < 100 && blue < 100 && green > red + 50 && green > blue + 50;
-        // Neon/saturated green
-        const isNeonGreen = green > 200 && red < 100 && blue < 100;
-        // Darker green screen (AI sometimes generates darker greens)
-        const isDarkGreenScreen = green > 80 && green < 180 && red < 60 && blue < 80 && green > (red + blue);
-        // Lime/yellow-green variations (AI sometimes shifts green toward yellow)
-        const isLimeGreen = green > 150 && red < 150 && blue < 80 && green > red && green > blue * 2;
-        // For edges/anti-aliasing of green screen - more permissive
-        const isGreenEdge = green > 80 && red < 100 && blue < 120 && (green - red) > 30 && (green - blue) > 20;
+        // Pure bright green (like #00FF00) - very low R and B
+        const isPureGreen = green > 180 && red < 50 && blue < 50;
+        // Standard green screen (#00B140 range) - R must be very low
+        const isStandardGreenScreen = green > 120 && red < 50 && blue < 100 && (green - red) > 100 && (green - blue) > 50;
+        // Bright green screen variations - strict conditions
+        const isBrightGreenScreen = green > 150 && red < 60 && blue < 80 && green > red * 3 && green > blue * 2;
+        // Neon/saturated green - almost pure green channel
+        const isNeonGreen = green > 200 && red < 60 && blue < 60;
+        // Darker green screen - still needs very low R
+        const isDarkGreenScreen = green > 100 && green < 200 && red < 40 && blue < 80 && green > (red + blue) * 1.5;
+        // For edges/anti-aliasing of green screen - stricter
+        const isGreenEdge = green > 100 && red < 60 && blue < 90 && (green - red) > 60 && (green - blue) > 30;
         
         const isWithinDistance = distance <= fuzz;
         const isCloseToTarget = rClose && gClose && bClose;
@@ -315,9 +313,8 @@ function processInMainThread(
             isBrightGreenScreen ||
             isNeonGreen ||
             isDarkGreenScreen ||
-            isLimeGreen ||
             isGreenEdge ||
-            (distance < fuzz * 2));
+            (distance < fuzz * 1.8));
         
         if (isCloseToTarget || isWithinDistance || magentaMatch || greenMatch) {
           data[i + 3] = 0;
