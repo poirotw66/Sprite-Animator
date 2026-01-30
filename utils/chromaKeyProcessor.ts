@@ -263,6 +263,11 @@ function processInMainThread(
         const isMagentaLike = red > 180 && green < 100 && blue > 100;
         const isPinkVariant = red > 200 && green < 150 && blue > 150 && (red - green) > 80;
         const isLightPink = red > 220 && green < 180 && blue > 180 && green < red && green < blue;
+        // Additional detection for pink border lines
+        const isPinkBorder = red > 180 && blue > 150 && green < 170 && (red + blue) > (green * 2 + 50);
+        const isRosePink = red > 200 && green < 160 && blue > 140 && red > blue;
+        const isSoftPink = red > 190 && green < 175 && blue > 160 && (red - green) > 40;
+        const isFadedMagenta = red > 170 && green < 150 && blue > 130 && red > green && blue > green;
         
         // Expanded green detection (when target is green) - much wider range:
         const isPureGreen = green > 200 && red < 80 && blue < 80;
@@ -278,9 +283,14 @@ function processInMainThread(
         
         // Apply appropriate detection based on target color
         const magentaMatch = targetIsMagenta && (isPureMagenta || 
-            (isMagentaLike && distance < fuzz * 3) || 
-            (isPinkVariant && distance < fuzz * 4) ||
-            (isLightPink && distance < fuzz * 5));
+            isMagentaLike ||
+            isPinkVariant ||
+            isLightPink ||
+            isPinkBorder ||
+            isRosePink ||
+            isSoftPink ||
+            isFadedMagenta ||
+            (distance < fuzz * 2));
         
         const greenMatch = targetIsGreen && (isPureGreen ||
             isGreenLike ||

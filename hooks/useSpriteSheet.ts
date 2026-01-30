@@ -92,7 +92,7 @@ export const useSpriteSheet = (
       const reSlice = async () => {
         try {
           // Step 2: Slice the processed (chroma-key-removed) sprite sheet
-          // No need for additional background removal since it's already processed
+          // Chroma key removal is already done - just slice the frames
           const frames = await sliceSpriteSheet(
             processedSpriteSheet,
             sliceSettings.cols,
@@ -101,7 +101,7 @@ export const useSpriteSheet = (
             sliceSettings.paddingY,
             sliceSettings.shiftX,
             sliceSettings.shiftY,
-            false, // No additional white background removal needed
+            false, // No additional background removal needed
             BACKGROUND_REMOVAL_THRESHOLD,
             frameOverrides
           );

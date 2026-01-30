@@ -5,6 +5,7 @@
  */
 
 import { logger } from './logger';
+import type { ChromaKeyColorType } from '../types';
 
 /**
  * Configuration for slicing a sprite sheet into individual frames
@@ -104,7 +105,8 @@ export const sliceSpriteSheet = async (
   shiftY: number,
   removeBg: boolean,
   threshold: number = 230,
-  frameOverrides?: FrameOverride[]
+  frameOverrides?: FrameOverride[],
+  chromaKeyColor: ChromaKeyColorType = 'magenta'
 ): Promise<string[]> => {
   return new Promise((resolve, reject) => {
     // Input validation
@@ -226,79 +228,13 @@ export const sliceSpriteSheet = async (
               );
             }
 
-            // Post-processing: Remove floor lines and optimize content
+            // Post-processing: Only legacy background removal if explicitly requested
+            // Note: Chroma key removal is already done by chromaKeyWorker before slicing
+            // So we skip the additional chroma key processing here to avoid false positives
             const imageData = ctx.getImageData(0, 0, frameWidth, frameHeight);
             const data = imageData.data;
             
-            // Step 1: Remove ALL chroma key pixels throughout the frame
-            // Supports both magenta (#FF00FF) and green (#00FF00) backgrounds
-            for (let i = 0; i < data.length; i += 4) {
-              const r = data[i];
-              const g = data[i + 1];
-              const b = data[i + 2];
-              const a = data[i + 3];
-              
-              if (a === 0) continue;
-              
-              // Comprehensive magenta/pink detection
-              const isPureMagenta = r > 200 && g < 50 && b > 200;
-              const isMagentaLike = r > 180 && g < 100 && b > 100;
-              const isPinkVariant = r > 200 && g < 150 && b > 150 && (r - g) > 80;
-              const isLightPink = r > 220 && g < 180 && b > 180 && g < r && g < b;
-              const isDarkMagenta = r > 150 && g < 80 && b > 150;
-              
-              // Comprehensive green screen detection - wider range
-              const isPureGreen = g > 200 && r < 80 && b < 80;
-              const isGreenLike = g > 150 && r < 120 && b < 120 && g > r && g > b;
-              const isLightGreen = g > 180 && r < 180 && b < 180 && (g - r) > 50 && (g - b) > 50;
-              const isYellowGreen = g > 150 && r < 180 && b < 100 && g > r && g > b;
-              const isDarkGreen = g > 100 && r < 80 && b < 80 && g > r * 1.5;
-              const isMintGreen = g > 180 && r < 200 && b < 200 && g > r && g > b && (g - Math.max(r, b)) > 30;
-              const isNeonGreen = g > 200 && r < 150 && b < 100;
-              
-              const isMagentaFamily = isPureMagenta || isMagentaLike || isPinkVariant || isLightPink || isDarkMagenta;
-              const isGreenFamily = isPureGreen || isGreenLike || isLightGreen || isYellowGreen || isDarkGreen || isMintGreen || isNeonGreen;
-              
-              if (isMagentaFamily || isGreenFamily) {
-                data[i + 3] = 0; // Make transparent
-              }
-            }
-            
-            // Step 2: Extra pass for floor/ground area (bottom 30% of frame)
-            // More aggressive removal for the foot region
-            const floorRegionStartY = Math.floor(frameHeight * 0.7);
-            
-            for (let y = floorRegionStartY; y < frameHeight; y++) {
-              for (let x = 0; x < frameWidth; x++) {
-                const idx = (y * frameWidth + x) * 4;
-                const r = data[idx];
-                const g = data[idx + 1];
-                const b = data[idx + 2];
-                const a = data[idx + 3];
-                
-                if (a === 0) continue;
-                
-                // In foot region, be more aggressive with chroma key removal
-                // Magenta variants
-                const hasMoreRedThanGreen = r > g + 30;
-                const hasMoreBlueThanGreen = b > g + 30;
-                const isAnyPink = hasMoreRedThanGreen && hasMoreBlueThanGreen && r > 150 && b > 100;
-                const isSubtleMagenta = r > 170 && g < 120 && b > 120;
-                
-                // Green variants - more aggressive for foot region
-                const hasMoreGreenThanRed = g > r + 20;
-                const hasMoreGreenThanBlue = g > b + 20;
-                const isAnyGreen = hasMoreGreenThanRed && hasMoreGreenThanBlue && g > 120;
-                const isSubtleGreen = g > 140 && r < 150 && b < 150 && g > r && g > b;
-                const isBrightGreen = g > 180 && r < 180 && b < 180;
-                
-                if (isAnyPink || isSubtleMagenta || isAnyGreen || isSubtleGreen || isBrightGreen) {
-                  data[idx + 3] = 0;
-                }
-              }
-            }
-            
-            // Step 3: Legacy background removal (not used after chroma key removal, but kept for compatibility)
+            // Legacy background removal (white backgrounds) - only if explicitly requested
             if (removeBg) {
               for (let i = 0; i < data.length; i += 4) {
                 const red = data[i];

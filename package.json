@@ -1,5 +1,5 @@
 {
-  "name": "角色幀動畫生成器-(sprite-animator)",
+  "name": "sprite-animator",
   "private": true,
   "version": "0.0.0",
   "type": "module",
