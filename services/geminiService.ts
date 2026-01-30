@@ -234,8 +234,10 @@ export const generateSpriteSheet = async (
     
     // Get the selected background color
     const bgColor = CHROMA_KEY_COLORS[chromaKeyColor];
-    const bgColorName = chromaKeyColor === 'magenta' ? 'magenta' : 'green';
+    const bgColorName = chromaKeyColor === 'magenta' ? 'pure magenta/fuchsia' : 'chroma key green';
     const bgColorHex = bgColor.hex;
+    // RGB values for explicit color specification
+    const bgColorRGB = `RGB(${bgColor.r}, ${bgColor.g}, ${bgColor.b})`;
     const cleanBase64 = imageBase64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
 
     // 1. Determine best aspect ratio config to force correct layout
@@ -272,7 +274,15 @@ TASK
 ══════════════════════════════════════════════════════════════
 Action: "${prompt}"
 Layout: ${totalFrames} poses in a ${cols}×${rows} grid (left→right, top→bottom)
-Background: Solid pure ${bgColorName} ${bgColorHex} (no lines, no borders, no separators)
+
+⚠️ CRITICAL BACKGROUND COLOR REQUIREMENT ⚠️
+Background MUST be EXACTLY this color (for chroma key removal):
+• Hex: ${bgColorHex}
+• ${bgColorRGB}
+• Color name: ${bgColorName}
+
+DO NOT use any other shade of ${chromaKeyColor === 'magenta' ? 'pink, purple, or magenta' : 'green'}.
+The background MUST be this EXACT color value, no variations.
 
 ══════════════════════════════════════════════════════════════
 FRAME-BY-FRAME MICRO-MOVEMENTS
@@ -354,7 +364,7 @@ COMMON MISTAKES TO AVOID
 FINAL OUTPUT REQUIREMENTS
 ══════════════════════════════════════════════════════════════
 • Single image containing ${cols}×${rows} grid of poses
-• Pure ${bgColorName} (${bgColorHex}) background - SOLID COLOR ONLY
+• Background MUST be EXACTLY ${bgColorHex} (${bgColorRGB}) - NO OTHER COLOR
 • All ${totalFrames} poses nearly identical with microscopic differences
 • Smooth loop: Frame ${totalFrames} connects seamlessly to Frame 1
 • NO text, numbers, labels, borders, or UI elements
@@ -371,17 +381,25 @@ ABSOLUTELY FORBIDDEN - CRITICAL - READ CAREFULLY
 • NO shadow under the character
 • NO platform or surface for the character to stand on  
 • NO horizontal or vertical lines of any color anywhere
-• NO color variations in background - only pure ${bgColorHex}
+• NO color variations in background - ONLY EXACTLY ${bgColorHex}
 • NO outlines around the sprite sheet or individual cells
-• NO gradients - background must be perfectly flat solid ${bgColorName}
+• NO gradients - background must be perfectly flat solid ${bgColorHex}
+• DO NOT use similar colors - ONLY the EXACT hex value ${bgColorHex}
+
+⚠️ BACKGROUND COLOR IS CRITICAL FOR PROCESSING ⚠️
+The background MUST be EXACTLY ${bgColorHex} (${bgColorRGB}).
+Using any other shade will cause the chroma key removal to fail.
+${chromaKeyColor === 'magenta' 
+  ? 'Use PURE MAGENTA #FF00FF - not pink, not purple, not fuchsia variants.'
+  : 'Use STANDARD GREEN SCREEN #00B140 - not lime green, not forest green, not other greens.'}
 
 ⚠️ VERY IMPORTANT: Each character pose should be placed DIRECTLY on the
-${bgColorName} background with NO visible separation between grid cells.
+${bgColorHex} background with NO visible separation between grid cells.
 The grid is CONCEPTUAL only - there should be NO visual indication of it.
 
-The character should appear to FLOAT on the ${bgColorName} background.
-There should be NOTHING under the character's feet except ${bgColorName}.
-NO BORDERS. NO FRAMES. NO LINES. JUST CHARACTERS ON SOLID ${bgColorName}.
+The character should appear to FLOAT on the ${bgColorHex} background.
+There should be NOTHING under the character's feet except ${bgColorHex}.
+NO BORDERS. NO FRAMES. NO LINES. JUST CHARACTERS ON SOLID ${bgColorHex}.
 
 Generate the sprite sheet with MINIMAL frame-to-frame variation.
 `;

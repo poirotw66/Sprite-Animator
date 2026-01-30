@@ -69,10 +69,21 @@ function processChromaKey(
   
   let mostCommonColor = chromaKey;
   let maxCount = 0;
+  
+  // Detect if we're looking for magenta or green based on chromaKey
+  const lookingForMagenta = chromaKey.r > 200 && chromaKey.g < 100 && chromaKey.b > 200;
+  const lookingForGreen = chromaKey.g > 100 && chromaKey.r < 100;
+  
   for (const [key, count] of colorMap.entries()) {
     if (count > maxCount) {
       const [r, g, b] = key.split(',').map(Number);
-      if (r > 180 && g < 100 && b > 100) {
+      // Match magenta-like colors (high R, low G, high B)
+      const isMagentaLike = r > 180 && g < 100 && b > 100;
+      // Match green screen colors (low R, high G, low-medium B)
+      // Standard green screen #00B140 = R:0, G:177, B:64
+      const isGreenLike = g > 80 && r < 120 && b < 150 && g > r && g > b;
+      
+      if ((lookingForMagenta && isMagentaLike) || (lookingForGreen && isGreenLike)) {
         mostCommonColor = { r, g, b };
         maxCount = count;
       }
@@ -104,7 +115,8 @@ function processChromaKey(
     
     // Detect if target is magenta-like or green-like
     const targetIsMagenta = targetColor.r > 200 && targetColor.g < 100 && targetColor.b > 200;
-    const targetIsGreen = targetColor.g > 150 && targetColor.r < 150 && targetColor.b < 150;
+    // For green screen #00B140: G=177, R=0, B=64 - also match #00FF00
+    const targetIsGreen = targetColor.g > 100 && targetColor.r < 100;
     
     // Conservative magenta detection (when target is magenta):
     // IMPORTANT: Only detect PURE magenta screen colors, not character pinks/purples
@@ -117,14 +129,24 @@ function processChromaKey(
     const isMagentaEdge = red > 150 && green < 100 && blue > 150 && (red - green) > 80 && (blue - green) > 80;
     
     // Expanded green detection (when target is green)
-    // IMPORTANT: Only detect PURE green screen colors, not character greens like eyes
-    // Green screen is typically very saturated green with low R and B
-    const isPureGreen = green > 200 && red < 60 && blue < 60;
-    const isGreenScreen = green > 180 && red < 80 && blue < 80 && (green - red) > 120 && (green - blue) > 120;
-    const isBrightGreenScreen = green > 220 && red < 100 && blue < 100 && green > (red + blue) * 1.5;
-    const isNeonGreen = green > 230 && red < 80 && blue < 80;
-    // For edges/anti-aliasing of green screen - still quite strict
-    const isGreenEdge = green > 150 && red < 100 && blue < 100 && (green - red) > 80 && (green - blue) > 80;
+    // IMPORTANT: Detect various green screen colors AI might generate
+    // Standard green screen #00B140 = R:0, G:177, B:64
+    // Also handle pure green #00FF00 and many variations
+    
+    // Pure bright green (like #00FF00)
+    const isPureGreen = green > 180 && red < 80 && blue < 80;
+    // Standard green screen (#00B140 range) - expanded range
+    const isStandardGreenScreen = green > 100 && red < 100 && blue < 130 && (green - red) > 60;
+    // Bright green screen variations (AI often generates these)
+    const isBrightGreenScreen = green > 150 && red < 100 && blue < 100 && green > red + 50 && green > blue + 50;
+    // Neon/saturated green
+    const isNeonGreen = green > 200 && red < 100 && blue < 100;
+    // Darker green screen (AI sometimes generates darker greens)
+    const isDarkGreenScreen = green > 80 && green < 180 && red < 60 && blue < 80 && green > (red + blue);
+    // Lime/yellow-green variations (AI sometimes shifts green toward yellow)
+    const isLimeGreen = green > 150 && red < 150 && blue < 80 && green > red && green > blue * 2;
+    // For edges/anti-aliasing of green screen - more permissive
+    const isGreenEdge = green > 80 && red < 100 && blue < 120 && (green - red) > 30 && (green - blue) > 20;
     
     const isWithinDistance = distance <= fuzz;
     const isCloseToTarget = rClose && gClose && bClose;
@@ -138,11 +160,13 @@ function processChromaKey(
         (distance < fuzz * 1.5));
     
     const greenMatch = targetIsGreen && (isPureGreen ||
-        isGreenScreen ||
+        isStandardGreenScreen ||
         isBrightGreenScreen ||
         isNeonGreen ||
+        isDarkGreenScreen ||
+        isLimeGreen ||
         isGreenEdge ||
-        (distance < fuzz * 1.5));
+        (distance < fuzz * 2));
     
     // Remove if: close to target color, within fuzz distance, or matches color family
     if (isCloseToTarget || isWithinDistance || magentaMatch || greenMatch) {

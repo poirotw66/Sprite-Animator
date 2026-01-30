@@ -578,6 +578,274 @@ export const getCellRectForFrame = (
 const CENTROID_OFFSET_CLAMP = 500;
 
 /**
+ * Helper: Check if a pixel is likely chroma key background
+ */
+const isChromaKeyPixel = (r: number, g: number, b: number, a: number): boolean => {
+  if (a <= 20) return true;
+  // Magenta/pink chroma key
+  const isMagentaLike = (r > 180 && g < 100 && b > 100) ||
+    (r > 150 && g < 80 && b > 150) ||
+    (r > 200 && g < 50 && b > 200);
+  // Green chroma key
+  const isGreenLike = (g > 180 && r < 100 && b < 100) ||
+    (g > 150 && r < 80 && b < 80);
+  return isMagentaLike || isGreenLike;
+};
+
+/**
+ * Analyze content in a cell and return detailed bounding info.
+ * Returns bounds, center of mass, and core region (central 60% for stability).
+ */
+export interface ContentAnalysis {
+  bounds: { minX: number; maxX: number; minY: number; maxY: number };
+  centerOfMass: { x: number; y: number };
+  coreCenter: { x: number; y: number }; // Center of core region (more stable)
+  pixelCount: number;
+  hasContent: boolean;
+}
+
+export const analyzeFrameContent = async (
+  sheetBase64: string,
+  cellRect: { x: number; y: number; width: number; height: number }
+): Promise<ContentAnalysis> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const x0 = Math.max(0, Math.floor(cellRect.x));
+        const y0 = Math.max(0, Math.floor(cellRect.y));
+        const x1 = Math.min(img.width, Math.ceil(cellRect.x + cellRect.width));
+        const y1 = Math.min(img.height, Math.ceil(cellRect.y + cellRect.height));
+        
+        const emptyResult: ContentAnalysis = {
+          bounds: { minX: 0, maxX: 0, minY: 0, maxY: 0 },
+          centerOfMass: { x: cellRect.width / 2, y: cellRect.height / 2 },
+          coreCenter: { x: cellRect.width / 2, y: cellRect.height / 2 },
+          pixelCount: 0,
+          hasContent: false
+        };
+        
+        if (x1 <= x0 || y1 <= y0) {
+          resolve(emptyResult);
+          return;
+        }
+        
+        const w = x1 - x0;
+        const h = y1 - y0;
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) {
+          resolve(emptyResult);
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(x0, y0, w, h);
+        const data = imageData.data;
+        
+        // First pass: find bounds and center of mass
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        let sumX = 0, sumY = 0, pixelCount = 0;
+        
+        for (let dy = 0; dy < h; dy++) {
+          for (let dx = 0; dx < w; dx++) {
+            const idx = (dy * w + dx) * 4;
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+            const a = data[idx + 3];
+            
+            if (isChromaKeyPixel(r, g, b, a)) continue;
+            
+            const cellX = dx;
+            const cellY = dy;
+            minX = Math.min(minX, cellX);
+            maxX = Math.max(maxX, cellX);
+            minY = Math.min(minY, cellY);
+            maxY = Math.max(maxY, cellY);
+            sumX += cellX;
+            sumY += cellY;
+            pixelCount++;
+          }
+        }
+        
+        if (pixelCount === 0 || minX === Infinity) {
+          resolve(emptyResult);
+          return;
+        }
+        
+        const centerOfMass = { x: sumX / pixelCount, y: sumY / pixelCount };
+        const bounds = { minX, maxX, minY, maxY };
+        
+        // Second pass: analyze core region (central 60% of height)
+        // This focuses on the torso/body which is more stable than limbs
+        const contentHeight = maxY - minY;
+        const coreTop = minY + contentHeight * 0.2;  // Skip top 20% (head movement)
+        const coreBottom = maxY - contentHeight * 0.2; // Skip bottom 20% (feet movement)
+        
+        let coreSumX = 0, coreSumY = 0, coreCount = 0;
+        
+        for (let dy = 0; dy < h; dy++) {
+          if (dy < coreTop || dy > coreBottom) continue;
+          for (let dx = 0; dx < w; dx++) {
+            const idx = (dy * w + dx) * 4;
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+            const a = data[idx + 3];
+            
+            if (isChromaKeyPixel(r, g, b, a)) continue;
+            
+            coreSumX += dx;
+            coreSumY += dy;
+            coreCount++;
+          }
+        }
+        
+        // Use core center if available, otherwise fall back to center of mass
+        const coreCenter = coreCount > 0 
+          ? { x: coreSumX / coreCount, y: coreSumY / coreCount }
+          : centerOfMass;
+        
+        resolve({
+          bounds,
+          centerOfMass,
+          coreCenter,
+          pixelCount,
+          hasContent: true
+        });
+      } catch (e) {
+        reject(e instanceof Error ? e : new Error(String(e)));
+      }
+    };
+    img.onerror = () => reject(new Error('Failed to load sprite sheet for analysis'));
+    img.crossOrigin = 'anonymous';
+    img.src = sheetBase64;
+  });
+};
+
+/**
+ * Smart auto-align all frames by analyzing content and finding optimal offsets.
+ * Uses core region detection to focus on torso (more stable than limbs).
+ * Applies temporal smoothing to reduce jitter between frames.
+ * 
+ * If anchorOffset is provided, it will use that as the user's adjusted position
+ * for frame 0, and chain subsequent frames relative to this reference.
+ */
+export const smartAutoAlignFrames = async (
+  sheetBase64: string,
+  cellRects: Array<{ x: number; y: number; width: number; height: number }>,
+  scale: number = 1,
+  options: {
+    alignMode: 'core' | 'bounds' | 'mass'; // core=torso-focused, bounds=bounding box, mass=center of mass
+    temporalSmoothing: number; // 0-1, higher = more smoothing
+    anchorFrame: number; // Which frame to use as reference (default: 0)
+    anchorOffset?: { offsetX: number; offsetY: number }; // User's adjusted offset for anchor frame
+  } = { alignMode: 'core', temporalSmoothing: 0.5, anchorFrame: 0 }
+): Promise<Array<{ offsetX: number; offsetY: number }>> => {
+  const { alignMode, temporalSmoothing, anchorFrame, anchorOffset } = options;
+  
+  // Analyze all frames
+  const analyses: ContentAnalysis[] = [];
+  for (const cellRect of cellRects) {
+    const analysis = await analyzeFrameContent(sheetBase64, cellRect);
+    analyses.push(analysis);
+  }
+  
+  // Find anchor frame reference point
+  const anchorIdx = Math.min(anchorFrame, analyses.length - 1);
+  const anchorAnalysis = analyses[anchorIdx];
+  
+  if (!anchorAnalysis.hasContent) {
+    return cellRects.map(() => ({ offsetX: 0, offsetY: 0 }));
+  }
+  
+  // Determine reference point based on align mode
+  const getRefPoint = (analysis: ContentAnalysis) => {
+    switch (alignMode) {
+      case 'core':
+        return analysis.coreCenter;
+      case 'mass':
+        return analysis.centerOfMass;
+      case 'bounds':
+        return {
+          x: (analysis.bounds.minX + analysis.bounds.maxX) / 2,
+          y: (analysis.bounds.minY + analysis.bounds.maxY) / 2
+        };
+    }
+  };
+  
+  const anchorRef = getRefPoint(anchorAnalysis);
+  
+  // If user provided an anchor offset, we need to apply it as the base
+  // This allows chaining from user's manually adjusted frame 0 position
+  const userAnchorOffset = anchorOffset ?? { offsetX: 0, offsetY: 0 };
+  
+  // Calculate raw offsets to align each frame's reference point to anchor
+  // Chain from the user's adjusted anchor frame position
+  const rawOffsets = analyses.map((analysis, i) => {
+    if (!analysis.hasContent) {
+      // Even for empty frames, maintain user's anchor offset as baseline
+      return { offsetX: userAnchorOffset.offsetX, offsetY: userAnchorOffset.offsetY };
+    }
+    const ref = getRefPoint(analysis);
+    const cellWidth = cellRects[i].width;
+    const cellHeight = cellRects[i].height;
+    
+    // For anchor frame, use user's adjusted offset directly
+    if (i === anchorIdx) {
+      return { 
+        offsetX: userAnchorOffset.offsetX, 
+        offsetY: userAnchorOffset.offsetY 
+      };
+    }
+    
+    // For other frames: calculate the delta from anchor frame's content position,
+    // then apply that delta to user's adjusted anchor offset
+    // This maintains the user's adjustment while aligning other frames relative to it
+    const anchorCellWidth = cellRects[anchorIdx].width;
+    const anchorCellHeight = cellRects[anchorIdx].height;
+    
+    // Delta = how much this frame's content center differs from anchor's content center
+    const deltaX = (ref.x - cellWidth / 2) - (anchorRef.x - anchorCellWidth / 2);
+    const deltaY = (ref.y - cellHeight / 2) - (anchorRef.y - anchorCellHeight / 2);
+    
+    // Apply delta to user's adjusted offset
+    let offsetX = userAnchorOffset.offsetX + deltaX;
+    let offsetY = userAnchorOffset.offsetY + deltaY;
+    
+    return { offsetX, offsetY };
+  });
+  
+  // Apply temporal smoothing (moving average)
+  if (temporalSmoothing > 0 && rawOffsets.length > 2) {
+    const smoothed = rawOffsets.map((_, i) => {
+      const prev = rawOffsets[Math.max(0, i - 1)];
+      const curr = rawOffsets[i];
+      const next = rawOffsets[Math.min(rawOffsets.length - 1, i + 1)];
+      
+      const smoothX = curr.offsetX * (1 - temporalSmoothing) + 
+                      (prev.offsetX + next.offsetX) / 2 * temporalSmoothing;
+      const smoothY = curr.offsetY * (1 - temporalSmoothing) + 
+                      (prev.offsetY + next.offsetY) / 2 * temporalSmoothing;
+      
+      return {
+        offsetX: Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, smoothX)),
+        offsetY: Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, smoothY))
+      };
+    });
+    return smoothed;
+  }
+  
+  return rawOffsets.map(o => ({
+    offsetX: Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, o.offsetX)),
+    offsetY: Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, o.offsetY))
+  }));
+};
+
+/**
  * Computes the offset (offsetX, offsetY) so that the crop box centers on the
  * content bounding-box center within the given cell. More stable than centroid
  * when limbs extend. Pixels with alpha > 20 are content; magenta-like excluded.
@@ -590,73 +858,19 @@ export const getContentCentroidOffset = async (
   sheetBase64: string,
   cellRect: { x: number; y: number; width: number; height: number }
 ): Promise<{ offsetX: number; offsetY: number }> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const x0 = Math.max(0, Math.floor(cellRect.x));
-        const y0 = Math.max(0, Math.floor(cellRect.y));
-        const x1 = Math.min(img.width, Math.ceil(cellRect.x + cellRect.width));
-        const y1 = Math.min(img.height, Math.ceil(cellRect.y + cellRect.height));
-        if (x1 <= x0 || y1 <= y0) {
-          resolve({ offsetX: 0, offsetY: 0 });
-          return;
-        }
-        const w = x1 - x0;
-        const h = y1 - y0;
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        if (!ctx) {
-          resolve({ offsetX: 0, offsetY: 0 });
-          return;
-        }
-        ctx.drawImage(img, 0, 0);
-        const imageData = ctx.getImageData(x0, y0, w, h);
-        const data = imageData.data;
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-        for (let dy = 0; dy < h; dy++) {
-          for (let dx = 0; dx < w; dx++) {
-            const ix = x0 + dx;
-            const iy = y0 + dy;
-            const idx = (dy * w + dx) * 4;
-            const r = data[idx];
-            const g = data[idx + 1];
-            const b = data[idx + 2];
-            const a = data[idx + 3];
-            if (a <= 20) continue;
-            const isMagentaLike = (r > 180 && g < 100 && b > 100) ||
-              (r > 150 && g < 80 && b > 150) ||
-              (r > 200 && g < 50 && b > 200);
-            if (isMagentaLike) continue;
-            const cellX = ix - cellRect.x;
-            const cellY = iy - cellRect.y;
-            minX = Math.min(minX, cellX);
-            maxX = Math.max(maxX, cellX);
-            minY = Math.min(minY, cellY);
-            maxY = Math.max(maxY, cellY);
-          }
-        }
-        if (minX === Infinity) {
-          resolve({ offsetX: 0, offsetY: 0 });
-          return;
-        }
-        const centerX = (minX + maxX) / 2;
-        const centerY = (minY + maxY) / 2;
-        let offsetX = centerX - cellRect.width / 2;
-        let offsetY = centerY - cellRect.height / 2;
-        offsetX = Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, offsetX));
-        offsetY = Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, offsetY));
-        resolve({ offsetX, offsetY });
-      } catch (e) {
-        reject(e instanceof Error ? e : new Error(String(e)));
-      }
-    };
-    img.onerror = () => reject(new Error('Failed to load sprite sheet for centroid'));
-    img.crossOrigin = 'anonymous';
-    img.src = sheetBase64;
-  });
+  const analysis = await analyzeFrameContent(sheetBase64, cellRect);
+  if (!analysis.hasContent) {
+    return { offsetX: 0, offsetY: 0 };
+  }
+  
+  // Use core center for more stable alignment
+  const centerX = analysis.coreCenter.x;
+  const centerY = analysis.coreCenter.y;
+  let offsetX = centerX - cellRect.width / 2;
+  let offsetY = centerY - cellRect.height / 2;
+  offsetX = Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, offsetX));
+  offsetY = Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, offsetY));
+  return { offsetX, offsetY };
 };
 
 /**

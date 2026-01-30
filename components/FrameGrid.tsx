@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Pencil, RotateCcw, X } from './Icons';
 import { GripVertical } from 'lucide-react';
-import { getCellRectForFrame, getContentCentroidOffset, getBestOffsetByTemplateMatch, cropCellFromImage, type FrameOverride, type SliceSettings } from '../utils/imageUtils';
+import { getCellRectForFrame, getContentCentroidOffset, getBestOffsetByTemplateMatch, cropCellFromImage, smartAutoAlignFrames, type FrameOverride, type SliceSettings } from '../utils/imageUtils';
 
 const OFFSET_MIN = -500;
 const OFFSET_MAX = 500;
@@ -48,6 +48,8 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
   const [prevRefOpacity, setPrevRefOpacity] = useState(45);
   const [isAutoAligning, setIsAutoAligning] = useState(false);
   const [autoAlignRefPrev, setAutoAlignRefPrev] = useState(true);
+  const [smartAlignMode, setSmartAlignMode] = useState<'core' | 'bounds' | 'mass'>('core');
+  const [temporalSmoothing, setTemporalSmoothing] = useState(0.5);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const latestOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const editPanelRef = useRef<HTMLDivElement>(null);
@@ -406,39 +408,93 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
               重置
             </button>
             {frames.length > 1 &&
-             setFrameOverrides &&
-             (frameOverrides[0] && Object.keys(frameOverrides[0]).length > 0) && (
+             setFrameOverrides && (
               <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const first = { ...(frameOverrides[0] ?? {}) };
-                    setFrameOverrides((prev) => {
-                      const n = prev.slice();
-                      for (let i = 1; i < frames.length; i++) n[i] = { ...first };
-                      return n;
-                    });
-                  }}
-                  className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-2.5 py-1.5 rounded-lg border border-orange-200 transition-colors"
-                  title="將第一幀的切割參數（位子、框型大小）套用到其餘所有幀"
-                >
-                  從第一幀套用至其餘
-                </button>
+                {(frameOverrides[0] && Object.keys(frameOverrides[0]).length > 0) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const first = { ...(frameOverrides[0] ?? {}) };
+                      setFrameOverrides((prev) => {
+                        const n = prev.slice();
+                        for (let i = 1; i < frames.length; i++) n[i] = { ...first };
+                        return n;
+                      });
+                    }}
+                    className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-2.5 py-1.5 rounded-lg border border-orange-200 transition-colors"
+                    title="將第一幀的切割參數（位子、框型大小）套用到其餘所有幀"
+                  >
+                    從第一幀套用至其餘
+                  </button>
+                )}
                 {processedSpriteSheet &&
                  sliceSettings &&
                  sheetDimensions &&
                  sheetDimensions.width > 0 &&
                  sheetDimensions.height > 0 && (
                   <>
-                    <label className="flex items-center gap-2 cursor-pointer" title="勾選時：依序以「前一幀裁切」為模板匹配、±10 px 搜尋，完成後做 3 點時序平滑，減少抖動">
-                      <input
-                        type="checkbox"
-                        checked={autoAlignRefPrev}
-                        onChange={(e) => setAutoAlignRefPrev(e.target.checked)}
-                        className="rounded border-slate-300 text-orange-500 focus:ring-orange-500/30"
-                      />
-                      <span className="text-xs text-slate-600">參考前一幀（依序匹配 + 時序平滑 ±{AUTO_ALIGN_MAX_DELTA} px）</span>
-                    </label>
+                    {/* Smart alignment options */}
+                    <div className="w-full mt-2 p-2 bg-white rounded-lg border border-slate-200 space-y-2">
+                      <div className="text-xs font-medium text-slate-600">🎯 智能對齊設定</div>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="alignMode"
+                            checked={smartAlignMode === 'core'}
+                            onChange={() => setSmartAlignMode('core')}
+                            className="text-orange-500 focus:ring-orange-500/30"
+                          />
+                          <span className="text-xs text-slate-600" title="以角色軀幹為基準，忽略四肢移動（最穩定）">軀幹對齊 👤</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="alignMode"
+                            checked={smartAlignMode === 'mass'}
+                            onChange={() => setSmartAlignMode('mass')}
+                            className="text-orange-500 focus:ring-orange-500/30"
+                          />
+                          <span className="text-xs text-slate-600" title="以所有像素的質心為基準">質心對齊</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="alignMode"
+                            checked={smartAlignMode === 'bounds'}
+                            onChange={() => setSmartAlignMode('bounds')}
+                            className="text-orange-500 focus:ring-orange-500/30"
+                          />
+                          <span className="text-xs text-slate-600" title="以邊界框中心為基準">邊界對齊</span>
+                        </label>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-500 whitespace-nowrap">時序平滑:</span>
+                        <input
+                          type="range"
+                          min={0}
+                          max={1}
+                          step={0.1}
+                          value={temporalSmoothing}
+                          onChange={(e) => setTemporalSmoothing(Number(e.target.value))}
+                          className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                        <span className="text-xs text-slate-600 w-8">{(temporalSmoothing * 100).toFixed(0)}%</span>
+                      </div>
+                      
+                      <label className="flex items-center gap-2 cursor-pointer" title="勾選時：依序以「前一幀裁切」為模板匹配、±10 px 搜尋，進一步精細對齊">
+                        <input
+                          type="checkbox"
+                          checked={autoAlignRefPrev}
+                          onChange={(e) => setAutoAlignRefPrev(e.target.checked)}
+                          className="rounded border-slate-300 text-orange-500 focus:ring-orange-500/30"
+                        />
+                        <span className="text-xs text-slate-600">啟用模板匹配精修 ±{AUTO_ALIGN_MAX_DELTA} px</span>
+                      </label>
+                    </div>
+                    
                     <button
                       type="button"
                       disabled={isAutoAligning}
@@ -447,22 +503,59 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                         setIsAutoAligning(true);
                         try {
                           const prev = frameOverrides ?? [];
-                          const next = prev.slice();
                           const scale = prev[0]?.scale ?? 1;
                           const W = sheetDimensions.width;
                           const H = sheetDimensions.height;
-
-                          let sheetImg: HTMLImageElement | null = null;
-                          let refImageData: ImageData | null = null;
-
-                          if (autoAlignRefPrev) {
-                            sheetImg = await new Promise<HTMLImageElement>((res, rej) => {
+                          
+                          // Get all cell rects
+                          const cellRects: Array<{ x: number; y: number; width: number; height: number }> = [];
+                          for (let i = 0; i < frames.length; i++) {
+                            const rect = getCellRectForFrame(
+                              W, H,
+                              sliceSettings.cols,
+                              sliceSettings.rows,
+                              sliceSettings.paddingX,
+                              sliceSettings.paddingY,
+                              sliceSettings.shiftX,
+                              sliceSettings.shiftY,
+                              i
+                            );
+                            if (rect) cellRects.push(rect);
+                          }
+                          
+                          // Get user's current frame 0 adjustment (as anchor reference)
+                          const userFrame0Offset = {
+                            offsetX: prev[0]?.offsetX ?? 0,
+                            offsetY: prev[0]?.offsetY ?? 0
+                          };
+                          
+                          // Use smart auto-align with user's frame 0 as anchor
+                          const offsets = await smartAutoAlignFrames(
+                            processedSpriteSheet,
+                            cellRects,
+                            scale,
+                            {
+                              alignMode: smartAlignMode,
+                              temporalSmoothing,
+                              anchorFrame: 0,
+                              anchorOffset: userFrame0Offset // Pass user's adjusted offset as reference
+                            }
+                          );
+                          
+                          let next = offsets.map(o => ({ offsetX: o.offsetX, offsetY: o.offsetY, scale }));
+                          
+                          // If reference previous frame is enabled, refine with template matching
+                          if (autoAlignRefPrev && frames.length > 1) {
+                            const sheetImg = await new Promise<HTMLImageElement>((res, rej) => {
                               const im = new Image();
                               im.onload = () => res(im);
                               im.onerror = () => rej(new Error('Failed to load sprite sheet'));
                               im.crossOrigin = 'anonymous';
                               im.src = processedSpriteSheet;
                             });
+                            
+                            // Get reference from first frame
+                            let refImageData: ImageData | null = null;
                             if (frames[0]) {
                               refImageData = await new Promise<ImageData>((res, rej) => {
                                 const im = new Image();
@@ -480,58 +573,39 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                                 im.src = frames[0];
                               });
                             }
-                          }
-
-                          for (let i = 1; i < frames.length; i++) {
-                            const cellRect = getCellRectForFrame(
-                              W, H,
-                              sliceSettings.cols,
-                              sliceSettings.rows,
-                              sliceSettings.paddingX,
-                              sliceSettings.paddingY,
-                              sliceSettings.shiftX,
-                              sliceSettings.shiftY,
-                              i
-                            );
-                            if (!cellRect) continue;
-
-                            let offX: number;
-                            let offY: number;
-                            if (autoAlignRefPrev && sheetImg && refImageData) {
+                            
+                            // Refine each frame with template matching
+                            for (let i = 1; i < frames.length && refImageData; i++) {
                               const p = next[i - 1] ?? {};
-                              const prevRect = getCellRectForFrame(W, H, sliceSettings.cols, sliceSettings.rows, sliceSettings.paddingX, sliceSettings.paddingY, sliceSettings.shiftX, sliceSettings.shiftY, i - 1);
+                              const prevRect = cellRects[i - 1];
                               const ref = i === 1 || !prevRect
                                 ? refImageData
                                 : cropCellFromImage(sheetImg, prevRect, p.offsetX ?? 0, p.offsetY ?? 0, scale, W, H);
+                              
                               const res = await getBestOffsetByTemplateMatch(
                                 sheetImg,
-                                cellRect,
+                                cellRects[i],
                                 ref,
                                 scale,
                                 W,
                                 H,
-                                { prevOffsetX: p.offsetX ?? 0, prevOffsetY: p.offsetY ?? 0, maxDelta: AUTO_ALIGN_MAX_DELTA }
+                                { prevOffsetX: next[i].offsetX, prevOffsetY: next[i].offsetY, maxDelta: AUTO_ALIGN_MAX_DELTA }
                               );
-                              offX = res.offsetX;
-                              offY = res.offsetY;
-                            } else {
-                              const res = await getContentCentroidOffset(processedSpriteSheet, cellRect);
-                              offX = res.offsetX;
-                              offY = res.offsetY;
+                              next[i] = { offsetX: res.offsetX, offsetY: res.offsetY, scale };
                             }
-                            next[i] = { offsetX: offX, offsetY: offY, scale };
-                          }
-
-                          if (autoAlignRefPrev && frames.length > 1) {
-                            for (let i = 1; i < frames.length; i++) {
-                              const a = next[i - 1] ?? {};
-                              const b = next[i] ?? {};
-                              const c = next[i + 1] ?? b;
-                              next[i] = {
-                                ...b,
-                                offsetX: ((a.offsetX ?? 0) + (b.offsetX ?? 0) + (c.offsetX ?? b.offsetX ?? 0)) / 3,
-                                offsetY: ((a.offsetY ?? 0) + (b.offsetY ?? 0) + (c.offsetY ?? b.offsetY ?? 0)) / 3,
-                              };
+                            
+                            // Apply temporal smoothing again after template matching
+                            if (temporalSmoothing > 0 && next.length > 2) {
+                              for (let i = 1; i < next.length - 1; i++) {
+                                const a = next[i - 1];
+                                const b = next[i];
+                                const c = next[i + 1];
+                                next[i] = {
+                                  ...b,
+                                  offsetX: b.offsetX * (1 - temporalSmoothing) + (a.offsetX + c.offsetX) / 2 * temporalSmoothing,
+                                  offsetY: b.offsetY * (1 - temporalSmoothing) + (a.offsetY + c.offsetY) / 2 * temporalSmoothing,
+                                };
+                              }
                             }
                           }
 
@@ -540,10 +614,10 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                           setIsAutoAligning(false);
                         }
                       }}
-                      className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-2.5 py-1.5 rounded-lg border border-orange-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="以第一幀的 scale 為準。勾選「參考前一幀」：依序以「前一幀裁切」做模板匹配、±10 px、±2 細搜、時序平滑；未勾選：以內容包絡框中心算 offset"
+                      className="text-xs flex items-center gap-1.5 text-white bg-orange-500 hover:bg-orange-600 px-3 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                      title="智能分析所有幀的內容位置，自動計算最佳對齊參數"
                     >
-                      {isAutoAligning ? '自動對齊中…' : '從第一幀套用並自動對齊其餘'}
+                      {isAutoAligning ? '🔄 智能對齊中…' : '✨ 一鍵智能對齊所有幀'}
                     </button>
                   </>
                 )}
