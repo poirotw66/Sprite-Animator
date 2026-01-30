@@ -8,6 +8,7 @@ export const DEFAULT_CONFIG = {
   gridCols: 3,
   gridRows: 2,
   chromaKeyColor: 'magenta' as const, // Default to magenta, can be 'green' for green screen
+  enableInterpolation: false, // Disabled by default to avoid ghosting artifacts
 };
 
 export const DEFAULT_SLICE_SETTINGS = {

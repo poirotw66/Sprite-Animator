@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { AnimationConfig } from '../types';
 import { loadImagesData, generateSmoothAnimation } from '../utils/imageUtils';
-import { ANIMATION_FPS_MULTIPLIER, GIF_TARGET_FPS, DEFAULT_INTERPOLATION_FRAMES, ENABLE_FRAME_INTERPOLATION } from '../utils/constants';
+import { ANIMATION_FPS_MULTIPLIER, GIF_TARGET_FPS, DEFAULT_INTERPOLATION_FRAMES } from '../utils/constants';
 import { logger } from '../utils/logger';
 import UPNG from 'upng-js';
 import JSZip from 'jszip';
@@ -39,8 +39,8 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
       
       let framesToExport = generatedFrames;
       
-      // Apply frame interpolation for smoother animation
-      if (ENABLE_FRAME_INTERPOLATION && generatedFrames.length >= 2) {
+      // Apply frame interpolation for smoother animation (if enabled)
+      if (config.enableInterpolation && generatedFrames.length >= 2) {
         logger.debug(`APNG: Interpolating frames: ${generatedFrames.length} -> target ${GIF_TARGET_FPS} FPS`);
         framesToExport = await generateSmoothAnimation(generatedFrames, {
           interpolationFrames: DEFAULT_INTERPOLATION_FRAMES,
@@ -58,7 +58,7 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
       const buffers = imagesData.map((d) => d.data.buffer);
       
       // Calculate delay based on interpolated frame count
-      const effectiveFps = ENABLE_FRAME_INTERPOLATION ? GIF_TARGET_FPS : originalFps;
+      const effectiveFps = config.enableInterpolation ? GIF_TARGET_FPS : originalFps;
       const delayMs = Math.round(1000 / effectiveFps);
       const delays = framesToExport.map(() => delayMs);
 
@@ -94,8 +94,8 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
       
       let framesToExport = generatedFrames;
       
-      // Apply frame interpolation for smoother animation
-      if (ENABLE_FRAME_INTERPOLATION && generatedFrames.length >= 2) {
+      // Apply frame interpolation for smoother animation (if enabled)
+      if (config.enableInterpolation && generatedFrames.length >= 2) {
         logger.debug(`Interpolating frames: ${generatedFrames.length} -> target ${GIF_TARGET_FPS} FPS`);
         framesToExport = await generateSmoothAnimation(generatedFrames, {
           interpolationFrames: DEFAULT_INTERPOLATION_FRAMES,
@@ -115,7 +115,7 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
       
       // Calculate delay based on interpolated frame count
       // Target smooth playback at GIF_TARGET_FPS
-      const effectiveFps = ENABLE_FRAME_INTERPOLATION ? GIF_TARGET_FPS : originalFps;
+      const effectiveFps = config.enableInterpolation ? GIF_TARGET_FPS : originalFps;
       const delayMs = Math.round(1000 / effectiveFps);
 
       for (const { data } of imagesData) {

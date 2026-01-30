@@ -9,6 +9,7 @@ export interface AnimationConfig {
   gridCols: number;   // New: Used for 'sheet' mode (default 3)
   gridRows: number;   // New: Used for 'sheet' mode (default 2)
   chromaKeyColor: ChromaKeyColorType; // Background color for chroma key removal
+  enableInterpolation: boolean; // Enable frame interpolation for smoother GIF export
 }
 
 export interface GenerationResult {

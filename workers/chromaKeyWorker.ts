@@ -106,16 +106,15 @@ function processChromaKey(
     const targetIsMagenta = targetColor.r > 200 && targetColor.g < 100 && targetColor.b > 200;
     const targetIsGreen = targetColor.g > 150 && targetColor.r < 150 && targetColor.b < 150;
     
-    // Expanded magenta/pink detection (when target is magenta):
-    const isPureMagenta = red > 200 && green < 50 && blue > 200;
-    const isMagentaLike = red > 180 && green < 100 && blue > 100;
-    const isPinkVariant = red > 200 && green < 150 && blue > 150 && (red - green) > 80;
-    const isLightPink = red > 220 && green < 180 && blue > 180 && green < red && green < blue;
-    // Additional detection for pink border lines
-    const isPinkBorder = red > 180 && blue > 150 && green < 170 && (red + blue) > (green * 2 + 50);
-    const isRosePink = red > 200 && green < 160 && blue > 140 && red > blue;
-    const isSoftPink = red > 190 && green < 175 && blue > 160 && (red - green) > 40;
-    const isFadedMagenta = red > 170 && green < 150 && blue > 130 && red > green && blue > green;
+    // Conservative magenta detection (when target is magenta):
+    // IMPORTANT: Only detect PURE magenta screen colors, not character pinks/purples
+    // Magenta screen is typically very saturated magenta with high R and B, low G
+    const isPureMagenta = red > 200 && green < 60 && blue > 200 && (red + blue) > (green * 3);
+    const isMagentaScreen = red > 180 && green < 80 && blue > 180 && (red - green) > 120 && (blue - green) > 120;
+    const isBrightMagentaScreen = red > 220 && green < 100 && blue > 220 && (red + blue) > green * 4;
+    const isNeonMagenta = red > 230 && green < 80 && blue > 230;
+    // For edges/anti-aliasing of magenta screen - still quite strict
+    const isMagentaEdge = red > 150 && green < 100 && blue > 150 && (red - green) > 80 && (blue - green) > 80;
     
     // Expanded green detection (when target is green)
     // IMPORTANT: Only detect PURE green screen colors, not character greens like eyes
@@ -132,14 +131,11 @@ function processChromaKey(
     
     // Apply appropriate detection based on target color
     const magentaMatch = targetIsMagenta && (isPureMagenta || 
-        isMagentaLike ||
-        isPinkVariant ||
-        isLightPink ||
-        isPinkBorder ||
-        isRosePink ||
-        isSoftPink ||
-        isFadedMagenta ||
-        (distance < fuzz * 2));
+        isMagentaScreen ||
+        isBrightMagentaScreen ||
+        isNeonMagenta ||
+        isMagentaEdge ||
+        (distance < fuzz * 1.5));
     
     const greenMatch = targetIsGreen && (isPureGreen ||
         isGreenScreen ||

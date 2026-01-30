@@ -56,6 +56,10 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
     setConfig((prev) => ({ ...prev, chromaKeyColor: color }));
   }, [setConfig]);
 
+  const handleInterpolationToggle = useCallback((enabled: boolean) => {
+    setConfig((prev) => ({ ...prev, enableInterpolation: enabled }));
+  }, [setConfig]);
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
       <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
@@ -239,6 +243,29 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
                   checked={removeBackground}
                   onChange={(e) => setRemoveBackground(e.target.checked)}
                   aria-label="去除白色背景"
+                />
+                <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-500/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
+              </label>
+            </div>
+
+            {/* Frame Interpolation Toggle */}
+            <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50">
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-700 flex items-center gap-1.5 font-semibold">
+                  <Zap className="w-3.5 h-3.5" />
+                  GIF 補幀平滑
+                </span>
+                <span className="text-[10px] text-slate-500 mt-0.5">
+                  {config.enableInterpolation ? '⚠️ 可能產生殘影' : '💡 關閉以避免殘影'}
+                </span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={config.enableInterpolation}
+                  onChange={(e) => handleInterpolationToggle(e.target.checked)}
+                  aria-label="啟用 GIF 補幀平滑"
                 />
                 <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-500/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
               </label>
