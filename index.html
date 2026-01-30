@@ -73,6 +73,13 @@
       .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #94A3B8;
       }
+      /* Pixelated image rendering for sprite animations */
+      .pixelated {
+        image-rendering: pixelated;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: crisp-edges;
+        -ms-interpolation-mode: nearest-neighbor;
+      }
     </style>
 </head>
   <body class="bg-slate-50 text-slate-900 antialiased">

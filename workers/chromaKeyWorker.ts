@@ -1,6 +1,7 @@
 /**
  * Web Worker for chroma key removal processing.
  * Processes images in the background to avoid blocking the main thread.
+ * Uses HSL color space for more accurate green screen detection.
  * 
  * @module chromaKeyWorker
  */
@@ -26,7 +27,88 @@ export interface ChromaKeyWorkerResponse {
 }
 
 /**
+ * Convert RGB to HSL color space
+ * H: 0-360 (hue), S: 0-1 (saturation), L: 0-1 (lightness)
+ */
+function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: number } {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  
+  if (max === min) {
+    return { h: 0, s: 0, l };
+  }
+  
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  
+  let h: number;
+  switch (max) {
+    case r:
+      h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
+      break;
+    case g:
+      h = ((b - r) / d + 2) * 60;
+      break;
+    default:
+      h = ((r - g) / d + 4) * 60;
+      break;
+  }
+  
+  return { h, s, l };
+}
+
+/**
+ * Check if a color is in the green screen hue range using HSL
+ * Green screen typically has hue between 80-160 degrees
+ */
+function isGreenScreenHSL(r: number, g: number, b: number, tolerance: number): boolean {
+  const { h, s, l } = rgbToHsl(r, g, b);
+  
+  // Green screen characteristics in HSL:
+  // Hue: 80-160 degrees (green to cyan-green range)
+  // Saturation: > 0.3 (reasonably saturated, not gray)
+  // Lightness: 0.2-0.8 (not too dark or too bright)
+  
+  const hueInRange = h >= 80 - tolerance && h <= 160 + tolerance;
+  const saturationOk = s > 0.25;
+  const lightnessOk = l > 0.15 && l < 0.85;
+  
+  // Additional RGB check: green channel should dominate
+  const greenDominant = g > r * 1.2 && g > b * 1.1;
+  
+  return hueInRange && saturationOk && lightnessOk && greenDominant;
+}
+
+/**
+ * Check if a color is magenta screen using HSL
+ * Magenta has hue around 300 degrees (280-320)
+ */
+function isMagentaScreenHSL(r: number, g: number, b: number, tolerance: number): boolean {
+  const { h, s, l } = rgbToHsl(r, g, b);
+  
+  // Magenta characteristics in HSL:
+  // Hue: 280-320 degrees (magenta range)
+  // Saturation: > 0.4 (well saturated)
+  // Lightness: 0.3-0.8
+  
+  const hueInRange = h >= 280 - tolerance && h <= 320 + tolerance;
+  const saturationOk = s > 0.35;
+  const lightnessOk = l > 0.25 && l < 0.85;
+  
+  // Additional RGB check: R and B should be high, G should be low
+  const magentaPattern = r > 150 && b > 150 && g < 150 && (r + b) > g * 2.5;
+  
+  return hueInRange && saturationOk && lightnessOk && magentaPattern;
+}
+
+/**
  * Process chroma key removal with progress reporting
+ * Uses HSL color space for accurate green/magenta detection
  */
 function processChromaKey(
   data: Uint8ClampedArray,
@@ -38,11 +120,12 @@ function processChromaKey(
 ): Uint8ClampedArray {
   const totalPixels = data.length / 4;
   const fuzz = (fuzzPercent / 100) * 255;
+  const hueTolerance = fuzzPercent * 1.5; // Hue tolerance in degrees
   
   let transparentCount = 0;
-  const reportInterval = Math.max(1, Math.floor(totalPixels / 100)); // Report every 1%
+  const reportInterval = Math.max(1, Math.floor(totalPixels / 100));
 
-  // First pass: Detect the actual background color by sampling corners
+  // Detect the actual background color by sampling corners
   const sampleSize = Math.min(100, Math.floor(Math.sqrt(totalPixels) / 10));
   const colorMap = new Map<string, number>();
   
@@ -70,18 +153,18 @@ function processChromaKey(
   let mostCommonColor = chromaKey;
   let maxCount = 0;
   
-  // Detect if we're looking for magenta or green based on chromaKey
-  const lookingForMagenta = chromaKey.r > 200 && chromaKey.g < 100 && chromaKey.b > 200;
-  const lookingForGreen = chromaKey.g > 100 && chromaKey.r < 100;
+  // Detect target type using HSL
+  const targetHsl = rgbToHsl(chromaKey.r, chromaKey.g, chromaKey.b);
+  const lookingForMagenta = targetHsl.h >= 270 && targetHsl.h <= 330;
+  const lookingForGreen = targetHsl.h >= 70 && targetHsl.h <= 170;
   
   for (const [key, count] of colorMap.entries()) {
     if (count > maxCount) {
       const [r, g, b] = key.split(',').map(Number);
-      // Match magenta-like colors (high R, low G, high B)
-      const isMagentaLike = r > 180 && g < 100 && b > 100;
-      // Match green screen colors (low R, high G, low-medium B)
-      // Standard green screen #00B140 = R:0, G:177, B:64
-      const isGreenLike = g > 80 && r < 120 && b < 150 && g > r && g > b;
+      const hsl = rgbToHsl(r, g, b);
+      
+      const isMagentaLike = hsl.h >= 270 && hsl.h <= 330 && hsl.s > 0.3;
+      const isGreenLike = hsl.h >= 70 && hsl.h <= 170 && hsl.s > 0.2 && g > r && g > b;
       
       if ((lookingForMagenta && isMagentaLike) || (lookingForGreen && isGreenLike)) {
         mostCommonColor = { r, g, b };
@@ -91,8 +174,13 @@ function processChromaKey(
   }
   
   const targetColor = maxCount > 10 ? mostCommonColor : chromaKey;
+  const targetColorHsl = rgbToHsl(targetColor.r, targetColor.g, targetColor.b);
+  
+  // Determine if target is magenta or green based on detected color
+  const targetIsMagenta = targetColorHsl.h >= 270 && targetColorHsl.h <= 330;
+  const targetIsGreen = targetColorHsl.h >= 70 && targetColorHsl.h <= 170;
 
-  // Process each pixel with progress reporting
+  // Process each pixel
   for (let i = 0; i < data.length; i += 4) {
     const red = data[i];
     const green = data[i + 1];
@@ -104,84 +192,58 @@ function processChromaKey(
       continue;
     }
 
+    // RGB distance check
     const rDiff = red - targetColor.r;
     const gDiff = green - targetColor.g;
     const bDiff = blue - targetColor.b;
     const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
-
-    const rClose = Math.abs(red - targetColor.r) <= fuzz;
-    const gClose = Math.abs(green - targetColor.g) <= fuzz;
-    const bClose = Math.abs(blue - targetColor.b) <= fuzz;
     
-    // Detect if target is magenta-like or green-like
-    const targetIsMagenta = targetColor.r > 200 && targetColor.g < 100 && targetColor.b > 200;
-    // For green screen #00B140: G=177, R=0, B=64 - also match #00FF00
-    const targetIsGreen = targetColor.g > 100 && targetColor.r < 100;
+    let shouldRemove = false;
     
-    // Conservative magenta detection (when target is magenta):
-    // IMPORTANT: Only detect PURE magenta screen colors, not character pinks/purples
-    // Magenta screen is typically very saturated magenta with high R and B, low G
-    const isPureMagenta = red > 200 && green < 60 && blue > 200 && (red + blue) > (green * 3);
-    const isMagentaScreen = red > 180 && green < 80 && blue > 180 && (red - green) > 120 && (blue - green) > 120;
-    const isBrightMagentaScreen = red > 220 && green < 100 && blue > 220 && (red + blue) > green * 4;
-    const isNeonMagenta = red > 230 && green < 80 && blue > 230;
-    // For edges/anti-aliasing of magenta screen - still quite strict
-    const isMagentaEdge = red > 150 && green < 100 && blue > 150 && (red - green) > 80 && (blue - green) > 80;
+    // Primary check: RGB distance to target
+    if (distance <= fuzz) {
+      shouldRemove = true;
+    }
     
-    // Expanded green detection (when target is green)
-    // IMPORTANT: Only detect green SCREEN colors, not character greens (eyes, clothes, etc.)
-    // Standard green screen #00B140 = R:0, G:177, B:64
-    // Key: Green screen has VERY LOW red and relatively low blue
+    // HSL-based detection for better accuracy
+    if (!shouldRemove) {
+      if (targetIsMagenta) {
+        shouldRemove = isMagentaScreenHSL(red, green, blue, hueTolerance);
+      } else if (targetIsGreen) {
+        shouldRemove = isGreenScreenHSL(red, green, blue, hueTolerance);
+      }
+    }
     
-    // Pure bright green (like #00FF00) - very low R and B
-    const isPureGreen = green > 180 && red < 50 && blue < 50;
-    // Standard green screen (#00B140 range) - R must be very low
-    const isStandardGreenScreen = green > 120 && red < 50 && blue < 100 && (green - red) > 100 && (green - blue) > 50;
-    // Bright green screen variations - strict conditions
-    const isBrightGreenScreen = green > 150 && red < 60 && blue < 80 && green > red * 3 && green > blue * 2;
-    // Neon/saturated green - almost pure green channel
-    const isNeonGreen = green > 200 && red < 60 && blue < 60;
-    // Darker green screen - still needs very low R
-    const isDarkGreenScreen = green > 100 && green < 200 && red < 40 && blue < 80 && green > (red + blue) * 1.5;
-    // For edges/anti-aliasing of green screen - stricter
-    const isGreenEdge = green > 100 && red < 60 && blue < 90 && (green - red) > 60 && (green - blue) > 30;
+    // Fallback RGB pattern matching
+    if (!shouldRemove && targetIsMagenta) {
+      // Pure magenta patterns
+      const isPureMagenta = red > 200 && green < 80 && blue > 200;
+      const isMagentaScreen = red > 180 && green < 100 && blue > 180 && (red - green) > 100 && (blue - green) > 100;
+      shouldRemove = isPureMagenta || isMagentaScreen;
+    }
     
-    const isWithinDistance = distance <= fuzz;
-    const isCloseToTarget = rClose && gClose && bClose;
+    if (!shouldRemove && targetIsGreen) {
+      // Strict green screen patterns - green must strongly dominate
+      // Character greens (eyes, clothes) typically have more balanced RGB
+      const greenRatio = green / (Math.max(1, red) + Math.max(1, blue));
+      const isPureGreenScreen = greenRatio > 1.5 && green > 100 && red < 80 && blue < 100;
+      const isStrongGreen = green > 120 && red < 60 && blue < 80 && green > (red + blue) * 1.3;
+      shouldRemove = isPureGreenScreen || isStrongGreen;
+    }
     
-    // Apply appropriate detection based on target color
-    const magentaMatch = targetIsMagenta && (isPureMagenta || 
-        isMagentaScreen ||
-        isBrightMagentaScreen ||
-        isNeonMagenta ||
-        isMagentaEdge ||
-        (distance < fuzz * 1.5));
-    
-    const greenMatch = targetIsGreen && (isPureGreen ||
-        isStandardGreenScreen ||
-        isBrightGreenScreen ||
-        isNeonGreen ||
-        isDarkGreenScreen ||
-        isGreenEdge ||
-        (distance < fuzz * 1.8));
-    
-    // Remove if: close to target color, within fuzz distance, or matches color family
-    if (isCloseToTarget || isWithinDistance || magentaMatch || greenMatch) {
+    if (shouldRemove) {
       data[i + 3] = 0;
       transparentCount++;
     }
 
-    // Report progress periodically
+    // Report progress
     if (i % (reportInterval * 4) === 0) {
       const progress = Math.min(100, Math.round((i / data.length) * 100));
       onProgress(progress);
     }
   }
 
-  // Second pass: Edge cleanup - remove background color tint from semi-transparent pixels
-  // This handles anti-aliasing artifacts at character edges
-  const targetIsMagenta = targetColor.r > 200 && targetColor.g < 100 && targetColor.b > 200;
-  const targetIsGreen = targetColor.g > 150 && targetColor.r < 150 && targetColor.b < 150;
+  // Second pass: Edge cleanup for semi-transparent pixels
   
   for (let i = 0; i < data.length; i += 4) {
     const alpha = data[i + 3];

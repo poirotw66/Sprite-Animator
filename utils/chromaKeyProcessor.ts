@@ -1,6 +1,7 @@
 /**
  * Chroma key removal processor using Web Worker for background processing.
  * Provides progress callbacks and non-blocking image processing.
+ * Uses HSL color space for more accurate chroma key detection.
  * 
  * @module chromaKeyProcessor
  */
@@ -13,6 +14,69 @@ export interface ChromaKeyProgress {
 }
 
 /**
+ * Convert RGB to HSL color space
+ */
+function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: number } {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  
+  if (max === min) {
+    return { h: 0, s: 0, l };
+  }
+  
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  
+  let h: number;
+  switch (max) {
+    case r:
+      h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
+      break;
+    case g:
+      h = ((b - r) / d + 2) * 60;
+      break;
+    default:
+      h = ((r - g) / d + 4) * 60;
+      break;
+  }
+  
+  return { h, s, l };
+}
+
+/**
+ * Check if a color is in the green screen hue range using HSL
+ */
+function isGreenScreenHSL(r: number, g: number, b: number, tolerance: number): boolean {
+  const { h, s, l } = rgbToHsl(r, g, b);
+  
+  const hueInRange = h >= 80 - tolerance && h <= 160 + tolerance;
+  const saturationOk = s > 0.25;
+  const lightnessOk = l > 0.15 && l < 0.85;
+  const greenDominant = g > r * 1.2 && g > b * 1.1;
+  
+  return hueInRange && saturationOk && lightnessOk && greenDominant;
+}
+
+/**
+ * Check if a color is magenta screen using HSL
+ */
+function isMagentaScreenHSL(r: number, g: number, b: number, tolerance: number): boolean {
+  const { h, s, l } = rgbToHsl(r, g, b);
+  
+  const hueInRange = h >= 280 - tolerance && h <= 320 + tolerance;
+  const saturationOk = s > 0.35;
+  const lightnessOk = l > 0.25 && l < 0.85;
+  const magentaPattern = r > 150 && b > 150 && g < 150 && (r + b) > g * 2.5;
+  
+  return hueInRange && saturationOk && lightnessOk && magentaPattern;
+}
+
+/**
  * Removes chroma key background using Web Worker for non-blocking processing.
  * Falls back to main thread processing if Web Worker is not available.
  * 
@@ -21,16 +85,6 @@ export interface ChromaKeyProgress {
  * @param fuzzPercent - Tolerance percentage (0-100, default: 10)
  * @param onProgress - Optional callback for progress updates (0-100)
  * @returns Promise resolving to base64 encoded image with transparent background
- * 
- * @example
- * ```typescript
- * const processed = await removeChromaKeyWithWorker(
- *   spriteSheetBase64,
- *   {r: 255, g: 0, b: 255},
- *   10,
- *   (progress) => console.log(`Progress: ${progress}%`)
- * );
- * ```
  */
 export const removeChromaKeyWithWorker = async (
   base64Image: string,
@@ -52,31 +106,21 @@ export const removeChromaKeyWithWorker = async (
           return;
         }
 
-        // Draw the image
         ctx.drawImage(img, 0, 0);
-
-        // Get image data
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-        // Check if Web Worker is supported
         if (typeof Worker !== 'undefined') {
           try {
-            // Use Web Worker for processing
             const processed = await processWithWorker(
               imageData,
               chromaKey,
               fuzzPercent,
               onProgress
             );
-
-            // Put processed data back
             ctx.putImageData(processed, 0, 0);
-
-            // Return as base64
             resolve(canvas.toDataURL('image/png'));
           } catch (workerError) {
             logger.warn('Web Worker processing failed, falling back to main thread', workerError);
-            // Fallback to main thread processing
             const processed = await processInMainThread(
               imageData,
               chromaKey,
@@ -87,7 +131,6 @@ export const removeChromaKeyWithWorker = async (
             resolve(canvas.toDataURL('image/png'));
           }
         } else {
-          // Web Worker not supported, use main thread
           logger.warn('Web Worker not supported, using main thread');
           const processed = await processInMainThread(
             imageData,
@@ -114,7 +157,6 @@ export const removeChromaKeyWithWorker = async (
 
 /**
  * Process image using Web Worker
- * Note: ImageData cannot be transferred directly, so we send the raw data
  */
 function processWithWorker(
   imageData: ImageData,
@@ -124,7 +166,6 @@ function processWithWorker(
 ): Promise<ImageData> {
   return new Promise((resolve, reject) => {
     try {
-      // Create worker
       const worker = new Worker(
         new URL('../workers/chromaKeyWorker.ts', import.meta.url),
         { type: 'module' }
@@ -132,7 +173,6 @@ function processWithWorker(
 
       const requestId = `chroma-key-${Date.now()}-${Math.random()}`;
 
-      // Handle worker messages
       worker.onmessage = (e: MessageEvent) => {
         const { type, progress, data: processedData, width, height, error, id } = e.data;
 
@@ -142,7 +182,6 @@ function processWithWorker(
           onProgress?.(progress);
         } else if (type === 'complete' && processedData && width && height) {
           worker.terminate();
-          // Reconstruct ImageData from processed data
           const result = new ImageData(
             new Uint8ClampedArray(processedData),
             width,
@@ -160,10 +199,9 @@ function processWithWorker(
         reject(error);
       };
 
-      // Send processing request with raw data (ImageData cannot be transferred)
       worker.postMessage({
         type: 'process',
-        data: Array.from(imageData.data), // Convert to regular array for transfer
+        data: Array.from(imageData.data),
         width: imageData.width,
         height: imageData.height,
         chromaKey,
@@ -177,8 +215,7 @@ function processWithWorker(
 }
 
 /**
- * Process image in main thread (fallback)
- * Uses chunked processing to avoid blocking the UI
+ * Process image in main thread (fallback) using HSL color space
  */
 function processInMainThread(
   imageData: ImageData,
@@ -190,45 +227,52 @@ function processInMainThread(
     const data = imageData.data;
     const totalPixels = data.length / 4;
     const fuzz = (fuzzPercent / 100) * 255;
-    const chunkSize = 50000; // Process 50000 pixels at a time (larger chunks for better performance)
+    const hueTolerance = fuzzPercent * 1.5;
+    const chunkSize = 50000;
     let startIndex = 0;
     let targetColor = chromaKey;
     let colorDetected = false;
+    let targetIsMagenta = false;
+    let targetIsGreen = false;
 
-    // Background color detection (only once)
+    // Background color detection using HSL
     const detectBackgroundColor = () => {
       const width = imageData.width;
       const height = imageData.height;
       const sampleSize = Math.min(100, Math.floor(Math.sqrt(totalPixels) / 10));
       const colorMap = new Map<string, number>();
       
+      // Sample corners
       for (let y = 0; y < sampleSize; y++) {
         for (let x = 0; x < sampleSize; x++) {
-          const idx = (y * width + x) * 4;
-          if (idx < data.length) {
-            const r = data[idx];
-            const g = data[idx + 1];
-            const b = data[idx + 2];
-            const key = `${r},${g},${b}`;
-            colorMap.set(key, (colorMap.get(key) || 0) + 1);
+          const points = [
+            [x, y],
+            [width - 1 - x, y],
+            [x, height - 1 - y],
+            [width - 1 - x, height - 1 - y]
+          ];
+          for (const [px, py] of points) {
+            const idx = (py * width + px) * 4;
+            if (idx < data.length) {
+              const key = `${data[idx]},${data[idx + 1]},${data[idx + 2]}`;
+              colorMap.set(key, (colorMap.get(key) || 0) + 1);
+            }
           }
         }
       }
       
       let maxCount = 0;
-      
-      // Detect if we're looking for magenta or green based on chromaKey
-      const lookingForMagenta = chromaKey.r > 200 && chromaKey.g < 100 && chromaKey.b > 200;
-      const lookingForGreen = chromaKey.g > 100 && chromaKey.r < 100;
+      const chromaHsl = rgbToHsl(chromaKey.r, chromaKey.g, chromaKey.b);
+      const lookingForMagenta = chromaHsl.h >= 270 && chromaHsl.h <= 330;
+      const lookingForGreen = chromaHsl.h >= 70 && chromaHsl.h <= 170;
       
       for (const [key, count] of colorMap.entries()) {
         if (count > maxCount) {
           const [r, g, b] = key.split(',').map(Number);
-          // Match magenta-like colors (high R, low G, high B)
-          const isMagentaLike = r > 180 && g < 100 && b > 100;
-          // Match green screen colors (low R, high G, low-medium B)
-          // Standard green screen #00B140 = R:0, G:177, B:64
-          const isGreenLike = g > 80 && r < 120 && b < 150 && g > r && g > b;
+          const hsl = rgbToHsl(r, g, b);
+          
+          const isMagentaLike = hsl.h >= 270 && hsl.h <= 330 && hsl.s > 0.3;
+          const isGreenLike = hsl.h >= 70 && hsl.h <= 170 && hsl.s > 0.2 && g > r && g > b;
           
           if ((lookingForMagenta && isMagentaLike) || (lookingForGreen && isGreenLike)) {
             targetColor = { r, g, b };
@@ -236,22 +280,21 @@ function processInMainThread(
           }
         }
       }
+      
+      const targetHsl = rgbToHsl(targetColor.r, targetColor.g, targetColor.b);
+      targetIsMagenta = targetHsl.h >= 270 && targetHsl.h <= 330;
+      targetIsGreen = targetHsl.h >= 70 && targetHsl.h <= 170;
       colorDetected = true;
     };
 
     const processChunk = () => {
       const endIndex = Math.min(startIndex + chunkSize * 4, data.length);
 
-      // Detect background color on first chunk
       if (!colorDetected) {
         detectBackgroundColor();
       }
 
-      // Detect if target is magenta-like or green-like (outside loop for edge cleanup)
-      const targetIsMagenta = targetColor.r > 200 && targetColor.g < 100 && targetColor.b > 200;
-      const targetIsGreen = targetColor.g > 100 && targetColor.r < 100;
-
-      // Process chunk
+      // Process chunk using HSL-based detection
       for (let i = startIndex; i < endIndex; i += 4) {
         const red = data[i];
         const green = data[i + 1];
@@ -260,84 +303,60 @@ function processInMainThread(
 
         if (alpha === 0) continue;
 
+        // RGB distance check
         const rDiff = red - targetColor.r;
         const gDiff = green - targetColor.g;
         const bDiff = blue - targetColor.b;
         const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
-
-        const rClose = Math.abs(red - targetColor.r) <= fuzz;
-        const gClose = Math.abs(green - targetColor.g) <= fuzz;
-        const bClose = Math.abs(blue - targetColor.b) <= fuzz;
         
-        // Conservative magenta detection (when target is magenta):
-        // IMPORTANT: Only detect PURE magenta screen colors, not character pinks/purples
-        // Magenta screen is typically very saturated magenta with high R and B, low G
-        const isPureMagenta = red > 200 && green < 60 && blue > 200 && (red + blue) > (green * 3);
-        const isMagentaScreen = red > 180 && green < 80 && blue > 180 && (red - green) > 120 && (blue - green) > 120;
-        const isBrightMagentaScreen = red > 220 && green < 100 && blue > 220 && (red + blue) > green * 4;
-        const isNeonMagenta = red > 230 && green < 80 && blue > 230;
-        // For edges/anti-aliasing of magenta screen - still quite strict
-        const isMagentaEdge = red > 150 && green < 100 && blue > 150 && (red - green) > 80 && (blue - green) > 80;
+        let shouldRemove = false;
         
-        // Expanded green detection (when target is green)
-        // IMPORTANT: Only detect green SCREEN colors, not character greens (eyes, clothes, etc.)
-        // Standard green screen #00B140 = R:0, G:177, B:64
-        // Key: Green screen has VERY LOW red and relatively low blue
+        // Primary check: RGB distance to target
+        if (distance <= fuzz) {
+          shouldRemove = true;
+        }
         
-        // Pure bright green (like #00FF00) - very low R and B
-        const isPureGreen = green > 180 && red < 50 && blue < 50;
-        // Standard green screen (#00B140 range) - R must be very low
-        const isStandardGreenScreen = green > 120 && red < 50 && blue < 100 && (green - red) > 100 && (green - blue) > 50;
-        // Bright green screen variations - strict conditions
-        const isBrightGreenScreen = green > 150 && red < 60 && blue < 80 && green > red * 3 && green > blue * 2;
-        // Neon/saturated green - almost pure green channel
-        const isNeonGreen = green > 200 && red < 60 && blue < 60;
-        // Darker green screen - still needs very low R
-        const isDarkGreenScreen = green > 100 && green < 200 && red < 40 && blue < 80 && green > (red + blue) * 1.5;
-        // For edges/anti-aliasing of green screen - stricter
-        const isGreenEdge = green > 100 && red < 60 && blue < 90 && (green - red) > 60 && (green - blue) > 30;
+        // HSL-based detection
+        if (!shouldRemove) {
+          if (targetIsMagenta) {
+            shouldRemove = isMagentaScreenHSL(red, green, blue, hueTolerance);
+          } else if (targetIsGreen) {
+            shouldRemove = isGreenScreenHSL(red, green, blue, hueTolerance);
+          }
+        }
         
-        const isWithinDistance = distance <= fuzz;
-        const isCloseToTarget = rClose && gClose && bClose;
+        // Fallback RGB pattern matching for magenta
+        if (!shouldRemove && targetIsMagenta) {
+          const isPureMagenta = red > 200 && green < 80 && blue > 200;
+          const isMagentaScreen = red > 180 && green < 100 && blue > 180 && (red - green) > 100 && (blue - green) > 100;
+          shouldRemove = isPureMagenta || isMagentaScreen;
+        }
         
-        // Apply appropriate detection based on target color
-        const magentaMatch = targetIsMagenta && (isPureMagenta || 
-            isMagentaScreen ||
-            isBrightMagentaScreen ||
-            isNeonMagenta ||
-            isMagentaEdge ||
-            (distance < fuzz * 1.5));
+        // Fallback RGB pattern matching for green
+        if (!shouldRemove && targetIsGreen) {
+          const greenRatio = green / (Math.max(1, red) + Math.max(1, blue));
+          const isPureGreenScreen = greenRatio > 1.5 && green > 100 && red < 80 && blue < 100;
+          const isStrongGreen = green > 120 && red < 60 && blue < 80 && green > (red + blue) * 1.3;
+          shouldRemove = isPureGreenScreen || isStrongGreen;
+        }
         
-        const greenMatch = targetIsGreen && (isPureGreen ||
-            isStandardGreenScreen ||
-            isBrightGreenScreen ||
-            isNeonGreen ||
-            isDarkGreenScreen ||
-            isGreenEdge ||
-            (distance < fuzz * 1.8));
-        
-        if (isCloseToTarget || isWithinDistance || magentaMatch || greenMatch) {
+        if (shouldRemove) {
           data[i + 3] = 0;
         }
       }
       
-      // Edge cleanup pass for this chunk: remove background color tint from semi-transparent pixels
+      // Edge cleanup pass
       for (let i = startIndex; i < endIndex; i += 4) {
         const alpha = data[i + 3];
-        
-        // Skip fully transparent or fully opaque pixels
         if (alpha === 0 || alpha === 255) continue;
         
         const red = data[i];
         const green = data[i + 1];
         const blue = data[i + 2];
         
-        // Check if this semi-transparent pixel has background color tint
         if (targetIsMagenta) {
-          // Check for magenta/pink tint in semi-transparent pixels
           const hasMagentaTint = red > 150 && blue > 100 && green < 120 && (red + blue) > (green * 2.5);
           if (hasMagentaTint) {
-            // Make it more transparent or fully transparent based on how strong the tint is
             const tintStrength = (red + blue) / (green + 1);
             if (tintStrength > 3.5) {
               data[i + 3] = 0; // Remove completely if strong tint
