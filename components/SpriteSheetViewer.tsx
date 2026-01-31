@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState, useRef } from 'react';
 import { Download, Grid3X3, Loader2, Sliders, RefreshCw, Move, Eye, EyeOff } from './Icons';
 import { SliceSettings } from '../utils/imageUtils';
 import { GRID_PATTERN_URL } from '../utils/constants';
+import { useLanguage } from '../hooks/useLanguage';
 
 interface SpriteSheetViewerProps {
   spriteSheetImage: string | null;
@@ -30,6 +31,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   chromaKeyProgress = 0,
   isProcessingChromaKey = false,
 }) => {
+  const { t } = useLanguage();
   const [showOriginal, setShowOriginal] = useState(false);
   const handleColsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSliceSettings((p) => ({ ...p, cols: Math.max(1, Number(e.target.value)) }));
@@ -350,7 +352,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
           <div className="text-center space-y-4">
             <Loader2 className="w-8 h-8 text-orange-500 animate-spin mx-auto" />
             <div className="space-y-2">
-              <p className="text-sm font-semibold text-slate-700">正在處理去背...</p>
+              <p className="text-sm font-semibold text-slate-700">{t.processingChromaKey}</p>
               <div className="w-64 bg-slate-200 rounded-full h-2.5 overflow-hidden shadow-inner">
                 <div
                   className="bg-gradient-to-r from-orange-500 to-orange-600 h-full transition-all duration-300 ease-out rounded-full"
@@ -367,37 +369,37 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
           <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
             S
           </span>
-          精靈圖（{showOriginal ? '原圖預覽' : '已去背預覽'}）
+          {t.spriteSheetTitle}（{showOriginal ? t.spriteSheetOriginal : t.spriteSheetProcessed}）
         </h2>
         <div className="flex gap-2">
           {spriteSheetImage && originalSpriteSheet && (
             <button
               onClick={() => setShowOriginal(!showOriginal)}
               className="text-xs flex items-center gap-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition-all duration-200 font-semibold cursor-pointer border border-blue-200 hover:border-blue-300 hover:shadow-sm"
-              aria-label={showOriginal ? '顯示去背預覽' : '顯示原圖'}
+              aria-label={showOriginal ? t.showProcessed : t.showOriginal}
             >
               {showOriginal ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              {showOriginal ? '顯示去背' : '顯示原圖'}
+              {showOriginal ? t.showProcessed : t.showOriginal}
             </button>
           )}
           {spriteSheetImage && originalSpriteSheet && onDownloadOriginal && (
             <button
               onClick={onDownloadOriginal}
               className="text-xs flex items-center gap-1.5 text-green-600 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-200 font-semibold cursor-pointer border border-green-200 hover:border-green-300 hover:shadow-sm"
-              aria-label="下載原圖"
+              aria-label={t.downloadOriginal}
             >
               <Download className="w-3.5 h-3.5" />
-              下載原圖
+              {t.downloadOriginal}
             </button>
           )}
           {spriteSheetImage && (
             <button
               onClick={onDownload}
               className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-all duration-200 font-semibold cursor-pointer border border-orange-200 hover:border-orange-300 hover:shadow-sm"
-              aria-label="下載精靈圖（已去背）"
+              aria-label={t.downloadProcessed}
             >
               <Download className="w-3.5 h-3.5" />
-              下載精靈圖（已去背）
+              {t.downloadProcessed}
             </button>
           )}
         </div>
@@ -407,7 +409,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
         {!spriteSheetImage && !isGenerating && !isProcessingChromaKey && (
           <div className="text-center p-6 opacity-60">
             <Grid3X3 className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-            <p className="text-slate-500 text-sm">生成的網格原圖將顯示於此（去背後）</p>
+            <p className="text-slate-500 text-sm">{t.spriteSheetPlaceholder}</p>
           </div>
         )}
 
@@ -415,7 +417,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
           <div className="flex flex-col items-center">
             <Loader2 className="w-8 h-8 text-orange-500 animate-spin mb-2" />
             <p className="text-xs text-slate-600 font-medium">
-              {isProcessingChromaKey ? '正在處理去背...' : '生成中...'}
+              {isProcessingChromaKey ? t.processingChromaKey : t.generating}
             </p>
           </div>
         )}
@@ -673,7 +675,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                       className="text-xs fill-blue-600 font-semibold pointer-events-none"
                       style={{ fontSize: '12px' }}
                     >
-                      拖動邊框調整大小 · 拖動網格內移動位置
+                      {t.dragHint}
                     </text>
                   )}
                 </svg>
@@ -690,27 +692,27 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
           <div className="flex items-center justify-between border-b border-blue-300 pb-3">
             <div className="flex items-center gap-2 text-blue-900 font-bold">
               <Sliders className="w-5 h-5" />
-              <span>網格切分設定</span>
+              <span>{t.gridSliceSettings}</span>
               <span className="text-xs font-normal text-blue-600 ml-1">(Manual Slicing)</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleAutoCenter}
                 className="text-xs flex items-center gap-1.5 text-blue-700 bg-blue-100 hover:bg-blue-200 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border border-blue-300 hover:shadow-sm"
-                title="自動居中網格"
-                aria-label="自動居中"
+                title={t.autoCenter}
+                aria-label={t.autoCenter}
               >
                 <Move className="w-3.5 h-3.5" />
-                居中
+                {t.center}
               </button>
               <button
                 onClick={handleReset}
                 className="text-xs flex items-center gap-1.5 text-slate-600 bg-white hover:bg-slate-50 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border border-slate-300 hover:shadow-sm"
-                title="重置縮放和位移"
-                aria-label="重置"
+                title={t.resetScaleAndShift}
+                aria-label={t.resetSettings}
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                重置
+                {t.resetSettings}
               </button>
             </div>
           </div>
@@ -718,16 +720,16 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
           {/* Grid Size Controls */}
           <div className="bg-white/80 rounded-lg p-3 border border-blue-200/50">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-slate-700">網格大小</span>
+              <span className="text-xs font-semibold text-slate-700">{t.gridSize}</span>
               {cellInfo && (
                 <span className="text-xs text-blue-600 font-medium">
-                  {cellInfo.totalFrames} 幀 · {cellInfo.cellWidth}×{cellInfo.cellHeight}px
+                  {cellInfo.totalFrames} {t.frames} · {cellInfo.cellWidth}×{cellInfo.cellHeight}px
                 </span>
               )}
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200 flex-1">
-                <span className="text-xs text-slate-600 font-medium min-w-[40px]">列 (Cols)</span>
+                <span className="text-xs text-slate-600 font-medium min-w-[40px]">{t.cols} (Cols)</span>
                 <input
                   type="number"
                   min="1"
@@ -735,7 +737,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                   value={sliceSettings.cols}
                   onChange={handleColsChange}
                   className="flex-1 text-center text-sm font-bold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200"
-                  aria-label="列數"
+                  aria-label={t.cols}
                 />
                 {cellInfo && (
                   <span className="text-[10px] text-slate-500 min-w-[35px] text-right">
@@ -745,7 +747,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
               </div>
 
               <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200 flex-1">
-                <span className="text-xs text-slate-600 font-medium min-w-[40px]">行 (Rows)</span>
+                <span className="text-xs text-slate-600 font-medium min-w-[40px]">{t.rows} (Rows)</span>
                 <input
                   type="number"
                   min="1"
@@ -753,7 +755,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                   value={sliceSettings.rows}
                   onChange={handleRowsChange}
                   className="flex-1 text-center text-sm font-bold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200"
-                  aria-label="行數"
+                  aria-label={t.rows}
                 />
                 {cellInfo && (
                   <span className="text-[10px] text-slate-500 min-w-[35px] text-right">
@@ -768,18 +770,18 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
           <div className="bg-white/80 rounded-lg p-3 border border-blue-200/50">
             <div className="flex items-center gap-2 mb-2">
               <div className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded w-6 text-center">X</div>
-              <span className="text-xs font-semibold text-slate-700">水平軸調整</span>
+              <span className="text-xs font-semibold text-slate-700">{t.horizontalAxis}</span>
             </div>
             <div className="space-y-3">
               {/* Size/Padding X */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs text-slate-600 font-medium flex items-center gap-1.5">
-                    <span>縮放 (Padding)</span>
-                    <span className="text-[10px] text-slate-400">去除邊緣</span>
+                    <span>{t.scalePadding} (Padding)</span>
+                    <span className="text-[10px] text-slate-400">{t.removeEdge}</span>
                     {sliceSettings.autoOptimized?.paddingX && (
                       <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-semibold border border-green-200">
-                        自動優化
+                        {t.autoOptimized}
                       </span>
                     )}
                   </label>
@@ -800,7 +802,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                     value={sliceSettings.paddingX}
                     onChange={handlePaddingXChange}
                     className="flex-1 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
-                    aria-label="X軸縮放"
+                    aria-label={t.paddingX}
                   />
                   <span className="text-[10px] text-slate-400 w-8">{Math.floor(sheetDimensions.width * 0.4)}</span>
                   <input
@@ -817,7 +819,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                       }));
                     }}
                     className="w-16 text-center text-xs font-semibold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200"
-                    aria-label="X軸縮放數值"
+                    aria-label={t.paddingX}
                   />
                 </div>
               </div>
@@ -826,11 +828,11 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs text-slate-600 font-medium flex items-center gap-1.5">
-                    <span>位移 (Shift)</span>
-                    <span className="text-[10px] text-slate-400">微調位置</span>
+                    <span>{t.shiftPosition} (Shift)</span>
+                    <span className="text-[10px] text-slate-400">{t.fineTunePosition}</span>
                     {sliceSettings.autoOptimized?.shiftX && (
                       <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-semibold border border-green-200">
-                        自動優化
+                        {t.autoOptimized}
                       </span>
                     )}
                   </label>
@@ -851,7 +853,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                     value={sliceSettings.shiftX}
                     onChange={handleShiftXChange}
                     className="flex-1 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
-                    aria-label="X軸位移"
+                    aria-label={t.shiftX}
                   />
                   <span className="text-[10px] text-slate-400 w-8">+100</span>
                   <input
@@ -868,7 +870,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                       }));
                     }}
                     className="w-16 text-center text-xs font-semibold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200"
-                    aria-label="X軸位移數值"
+                    aria-label={t.shiftX}
                   />
                 </div>
               </div>
@@ -879,18 +881,18 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
           <div className="bg-white/80 rounded-lg p-3 border border-blue-200/50">
             <div className="flex items-center gap-2 mb-2">
               <div className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded w-6 text-center">Y</div>
-              <span className="text-xs font-semibold text-slate-700">垂直軸調整</span>
+              <span className="text-xs font-semibold text-slate-700">{t.verticalAxis}</span>
             </div>
             <div className="space-y-3">
               {/* Size/Padding Y */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs text-slate-600 font-medium flex items-center gap-1.5">
-                    <span>縮放 (Padding)</span>
-                    <span className="text-[10px] text-slate-400">去除邊緣</span>
+                    <span>{t.scalePadding} (Padding)</span>
+                    <span className="text-[10px] text-slate-400">{t.removeEdge}</span>
                     {sliceSettings.autoOptimized?.paddingY && (
                       <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-semibold border border-green-200">
-                        自動優化
+                        {t.autoOptimized}
                       </span>
                     )}
                   </label>
@@ -911,7 +913,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                     value={sliceSettings.paddingY}
                     onChange={handlePaddingYChange}
                     className="flex-1 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
-                    aria-label="Y軸縮放"
+                    aria-label={t.paddingY}
                   />
                   <span className="text-[10px] text-slate-400 w-8">{Math.floor(sheetDimensions.height * 0.4)}</span>
                   <input
@@ -928,7 +930,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                       }));
                     }}
                     className="w-16 text-center text-xs font-semibold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200"
-                    aria-label="Y軸縮放數值"
+                    aria-label={t.paddingY}
                   />
                 </div>
               </div>
@@ -937,11 +939,11 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs text-slate-600 font-medium flex items-center gap-1.5">
-                    <span>位移 (Shift)</span>
-                    <span className="text-[10px] text-slate-400">微調位置</span>
+                    <span>{t.shiftPosition} (Shift)</span>
+                    <span className="text-[10px] text-slate-400">{t.fineTunePosition}</span>
                     {sliceSettings.autoOptimized?.shiftY && (
                       <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-semibold border border-green-200">
-                        自動優化
+                        {t.autoOptimized}
                       </span>
                     )}
                   </label>
@@ -962,7 +964,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                     value={sliceSettings.shiftY}
                     onChange={handleShiftYChange}
                     className="flex-1 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
-                    aria-label="Y軸位移"
+                    aria-label={t.shiftY}
                   />
                   <span className="text-[10px] text-slate-400 w-8">+100</span>
                   <input
@@ -979,7 +981,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                       }));
                     }}
                     className="w-16 text-center text-xs font-semibold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200"
-                    aria-label="Y軸位移數值"
+                    aria-label={t.shiftY}
                   />
                 </div>
               </div>
@@ -991,16 +993,16 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
             <div className="bg-blue-100/50 rounded-lg p-2.5 border border-blue-300/50">
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600">單元格大小</span>
+                  <span className="text-slate-600">{t.cellSize}</span>
                   <span className="font-bold text-blue-700">{cellInfo.cellWidth} × {cellInfo.cellHeight}px</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600">有效區域</span>
+                  <span className="text-slate-600">{t.effectiveArea}</span>
                   <span className="font-bold text-blue-700">{cellInfo.effectiveWidth} × {cellInfo.effectiveHeight}px</span>
                 </div>
                 <div className="flex items-center justify-between col-span-2">
-                  <span className="text-slate-600">總幀數</span>
-                  <span className="font-bold text-blue-700">{cellInfo.totalFrames} 幀</span>
+                  <span className="text-slate-600">{t.totalFrames}</span>
+                  <span className="font-bold text-blue-700">{cellInfo.totalFrames} {t.frames}</span>
                 </div>
               </div>
             </div>

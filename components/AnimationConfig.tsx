@@ -3,6 +3,7 @@ import { Play, Layers, Zap, Eraser, Wand2, Loader2, Film as FilmIcon, Grid3X3 } 
 import { AnimationConfig, ChromaKeyColorType, ExampleData } from '../types';
 import { ANIMATION_FPS_MULTIPLIER, CHROMA_KEY_COLORS, EXAMPLE_DATA } from '../utils/constants';
 import { ExampleSelector } from './ExampleSelector';
+import { useLanguage } from '../hooks/useLanguage';
 
 interface AnimationConfigPanelProps {
   config: AnimationConfig;
@@ -25,6 +26,8 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
   error,
   onGenerate,
 }) => {
+  const { t } = useLanguage();
+
   const handleModeChange = useCallback((mode: 'frame' | 'sheet') => {
     setConfig((prev) => ({ ...prev, mode }));
   }, [setConfig]);
@@ -78,7 +81,7 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
         <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
           2
         </span>
-        幀動畫參數
+        {t.configTitle}
       </h2>
 
       {/* Example Selector */}
@@ -92,31 +95,31 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
           onClick={() => handleModeChange('frame')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer
             ${config.mode === 'frame' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
-          aria-label="逐幀模式"
+          aria-label={t.frameByFrameMode}
         >
           <FilmIcon className="w-4 h-4" />
-          逐幀模式
+          {t.frameByFrameMode}
         </button>
         <button
           onClick={() => handleModeChange('sheet')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer
             ${config.mode === 'sheet' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
-          aria-label="精靈圖模式"
+          aria-label={t.spriteSheetMode}
         >
           <Grid3X3 className="w-4 h-4" />
-          精靈圖模式
+          {t.spriteSheetMode}
         </button>
       </div>
 
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-2">動作提示詞</label>
+          <label className="block text-sm font-semibold text-slate-700 mb-2">{t.promptLabel}</label>
           <textarea
             value={config.prompt}
             onChange={handlePromptChange}
-            placeholder="描述連續動作，例如：跑步循環 (Run Cycle)、跳躍 (Jump)、揮劍攻擊 (Sword Attack)..."
+            placeholder={t.promptPlaceholder}
             className="w-full border border-slate-200 rounded-lg p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none resize-none h-20 transition-all bg-white"
-            aria-label="動作提示詞"
+            aria-label={t.promptLabel}
           />
         </div>
 
@@ -125,7 +128,7 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
           {config.mode === 'frame' ? (
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1.5 flex justify-between">
-                幀數 (Frame Count) <span className="text-orange-600 font-bold">{config.frameCount}</span>
+                {t.frameCount} <span className="text-orange-600 font-bold">{config.frameCount}</span>
               </label>
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-slate-400" />
@@ -137,16 +140,16 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
                   value={config.frameCount}
                   onChange={handleFrameCountChange}
                   className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-                  aria-label="幀數"
+                  aria-label={t.frameCount}
                 />
               </div>
-              <div className="text-[10px] text-slate-500 mt-1 text-right">API 請求次數: {config.frameCount}</div>
+              <div className="text-[10px] text-slate-500 mt-1 text-right">{t.apiRequests}: {config.frameCount}</div>
             </div>
           ) : (
             <>
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1.5 flex justify-between">
-                  網格列 (Cols) <span className="text-orange-600 font-bold">{config.gridCols}</span>
+                  {t.gridCols} <span className="text-orange-600 font-bold">{config.gridCols}</span>
                 </label>
                 <input
                   type="range"
@@ -156,12 +159,12 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
                   value={config.gridCols}
                   onChange={handleGridColsChange}
                   className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-                  aria-label="網格列"
+                  aria-label={t.gridCols}
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1.5 flex justify-between">
-                  網格行 (Rows) <span className="text-orange-600 font-bold">{config.gridRows}</span>
+                  {t.gridRows} <span className="text-orange-600 font-bold">{config.gridRows}</span>
                 </label>
                 <input
                   type="range"
@@ -171,7 +174,7 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
                   value={config.gridRows}
                   onChange={handleGridRowsChange}
                   className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-                  aria-label="網格行"
+                  aria-label={t.gridRows}
                 />
               </div>
             </>
@@ -179,7 +182,7 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
 
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-1.5 flex justify-between">
-              播放速度 (FPS){' '}
+              {t.playbackSpeed}{' '}
               <span className="bg-slate-100 px-1.5 rounded text-slate-700 font-semibold">
                 {Math.max(1, config.speed * ANIMATION_FPS_MULTIPLIER)}
               </span>
@@ -193,7 +196,7 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
                 value={config.speed}
                 onChange={handleSpeedChange}
                 className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-                aria-label="播放速度"
+                aria-label={t.playbackSpeed}
               />
             </div>
           </div>
@@ -204,13 +207,13 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
           <div className="space-y-2">
             <div className="text-xs text-green-700 bg-green-50 p-3 rounded-lg border border-green-200 flex items-center gap-2 shadow-sm">
               <Zap className="w-3.5 h-3.5" />
-              <span className="font-medium">精靈圖模式僅需消耗 1 次 API 請求，大幅節省配額！</span>
+              <span className="font-medium">{t.spriteSheetHint}</span>
             </div>
 
             {/* Chroma Key Color Selection */}
             <div className="p-3 rounded-lg border border-slate-200 bg-slate-50">
               <span className="text-xs text-slate-700 font-semibold block mb-2">
-                🎨 背景顏色 (去背用)
+                {t.backgroundColor}
               </span>
               <div className="flex gap-2">
                 <button
@@ -221,10 +224,10 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
                       ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700'
                       : 'border-slate-200 bg-white text-slate-600 hover:border-fuchsia-300'
                   }`}
-                  aria-label="使用洋紅色背景"
+                  aria-label={t.magentaColor}
                 >
                   <div className="w-4 h-4 rounded-full bg-fuchsia-500 border border-fuchsia-600"></div>
-                  洋紅色
+                  {t.magentaColor}
                 </button>
                 <button
                   type="button"
@@ -234,16 +237,16 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
                       ? 'border-green-500 bg-green-50 text-green-700'
                       : 'border-slate-200 bg-white text-slate-600 hover:border-green-300'
                   }`}
-                  aria-label="使用綠幕背景"
+                  aria-label={t.greenScreen}
                 >
                   <div className="w-4 h-4 rounded-full bg-green-500 border border-green-600"></div>
-                  綠幕
+                  {t.greenScreen}
                 </button>
               </div>
               <p className="text-[10px] text-slate-500 mt-2">
                 {config.chromaKeyColor === 'magenta' 
-                  ? '💡 預設選項。若角色有粉色/紅色部分，請改用綠幕。'
-                  : '💡 適合粉色/紅色角色。若角色有綠色部分，請改用洋紅色。'}
+                  ? t.magentaHint
+                  : t.greenHint}
               </p>
             </div>
 
@@ -251,7 +254,7 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
             <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50">
               <span className="text-xs text-slate-700 flex items-center gap-1.5 font-semibold">
                 <Eraser className="w-3.5 h-3.5" />
-                去除白色背景
+                {t.removeBackground}
               </span>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -259,7 +262,7 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
                   className="sr-only peer"
                   checked={removeBackground}
                   onChange={(e) => setRemoveBackground(e.target.checked)}
-                  aria-label="去除白色背景"
+                  aria-label={t.removeBackground}
                 />
                 <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-500/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
               </label>
@@ -270,10 +273,10 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
               <div className="flex flex-col">
                 <span className="text-xs text-slate-700 flex items-center gap-1.5 font-semibold">
                   <Zap className="w-3.5 h-3.5" />
-                  GIF 補幀平滑
+                  {t.gifSmoothing}
                 </span>
                 <span className="text-[10px] text-slate-500 mt-0.5">
-                  {config.enableInterpolation ? '⚠️ 可能產生殘影' : '💡 關閉以避免殘影'}
+                  {config.enableInterpolation ? t.smoothingWarning : t.smoothingHint}
                 </span>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -282,7 +285,7 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
                   className="sr-only peer"
                   checked={config.enableInterpolation}
                   onChange={(e) => handleInterpolationToggle(e.target.checked)}
-                  aria-label="啟用 GIF 補幀平滑"
+                  aria-label={t.gifSmoothing}
                 />
                 <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-500/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
               </label>
@@ -292,7 +295,7 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
 
         <div>
           <label className="block text-xs font-semibold text-slate-600 mb-1.5 flex justify-between">
-            預覽縮放 <span className="text-slate-500 font-semibold">{config.scale}%</span>
+            {t.previewScale} <span className="text-slate-500 font-semibold">{config.scale}%</span>
           </label>
           <input
             type="range"
@@ -302,7 +305,7 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
             value={config.scale}
             onChange={handleScaleChange}
             className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-            aria-label="預覽縮放"
+            aria-label={t.previewScale}
           />
         </div>
 
@@ -321,7 +324,7 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
                 ? 'bg-orange-400 cursor-not-allowed opacity-75'
                 : 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0'
             }`}
-          aria-label={config.mode === 'sheet' ? '生成精靈圖' : '開始逐幀生成'}
+          aria-label={config.mode === 'sheet' ? t.generateSpriteSheet : t.startFrameGeneration}
         >
           {isGenerating ? (
             <>
@@ -331,7 +334,7 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
           ) : (
             <>
               <Wand2 className="w-5 h-5" />
-              {config.mode === 'sheet' ? '生成精靈圖 (1 Request)' : '開始逐幀生成'}
+              {config.mode === 'sheet' ? t.generateSpriteSheet : t.startFrameGeneration}
             </>
           )}
         </button>

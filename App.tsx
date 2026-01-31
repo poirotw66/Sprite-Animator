@@ -3,6 +3,8 @@ import { RefreshCw, Settings, Zap, Loader2 } from './components/Icons';
 import { SettingsModal } from './components/SettingsModal';
 import { ImageUpload } from './components/ImageUpload';
 import { AnimationConfigPanel } from './components/AnimationConfig';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { useLanguage } from './hooks/useLanguage';
 
 // Lazy load heavy components for code splitting
 const SpriteSheetViewer = lazy(() => 
@@ -24,6 +26,9 @@ import { DEFAULT_CONFIG, DEFAULT_SLICE_SETTINGS } from './utils/constants';
 import { optimizeSliceSettings } from './utils/imageUtils';
 
 const App: React.FC = () => {
+  // Language
+  const { t } = useLanguage();
+
   // Settings
   const {
     apiKey,
@@ -161,16 +166,16 @@ const App: React.FC = () => {
 
     if (!effectiveKey) {
       setShowSettings(true);
-      setError('請先設定 API Key');
+      setError(t.errorApiKey);
       return;
     }
 
     if (!sourceImage) {
-      setError('請先上傳圖片');
+      setError(t.errorNoImage);
       return;
     }
     if (!config.prompt.trim()) {
-      setError('請輸入動作提示詞');
+      setError(t.errorNoPrompt);
       return;
     }
 
@@ -196,7 +201,7 @@ const App: React.FC = () => {
 
     try {
       if (config.mode === 'sheet') {
-        setStatusText(`準備生成精靈圖 (使用模型: ${selectedModel})...`);
+        setStatusText(`${t.statusPreparing} (${t.statusUsingModel}: ${selectedModel})...`);
 
         const sheetImage = await generateSpriteSheet(
           sourceImage,
@@ -213,7 +218,7 @@ const App: React.FC = () => {
 
         // Auto-optimize slice settings after generating sprite sheet
         try {
-          setStatusText('正在自動優化切分參數...');
+          setStatusText(t.statusOptimizing);
           const optimized = await optimizeSliceSettings(
             sheetImage,
             config.gridCols,
@@ -229,14 +234,14 @@ const App: React.FC = () => {
               shiftY: true,
             },
           }));
-          setStatusText('切分參數已自動優化');
+          setStatusText(t.statusOptimized);
         } catch (err) {
           // If optimization fails, continue with default settings
           console.warn('Auto-optimization failed, using default settings:', err);
         }
       } else {
         // Frame by Frame mode
-        setStatusText(`準備開始逐幀生成 (使用模型: ${selectedModel})`);
+        setStatusText(`${t.statusGenerating} (${t.statusUsingModel}: ${selectedModel})`);
         const frames = await generateAnimationFrames(
           sourceImage,
           config.prompt,
@@ -250,16 +255,16 @@ const App: React.FC = () => {
       }
     } catch (err: unknown) {
       const rawMsg = err instanceof Error ? err.message : 'Unknown error';
-      let displayMsg = '生成失敗';
+      let displayMsg = t.errorGeneration;
 
       if (
         rawMsg.includes('429') ||
         rawMsg.includes('Quota') ||
         rawMsg.includes('RESOURCE_EXHAUSTED')
       ) {
-        displayMsg = 'API 請求過於頻繁 (429)。系統正在冷卻中，請稍後再試。';
+        displayMsg = t.errorRateLimit;
       } else {
-        displayMsg = `生成發生錯誤: ${rawMsg}`;
+        displayMsg = `${t.errorGeneration}: ${rawMsg}`;
       }
 
       setError(displayMsg);
@@ -267,6 +272,7 @@ const App: React.FC = () => {
       setIsGenerating(false);
     }
   }, [
+    t,
     getEffectiveApiKey,
     sourceImage,
     config,
@@ -324,25 +330,25 @@ const App: React.FC = () => {
     try {
       await handleDownloadApng();
     } catch (err) {
-      handleExportError(err instanceof Error ? err : new Error('APNG 導出失敗'));
+      handleExportError(err instanceof Error ? err : new Error(t.errorExportApng));
     }
-  }, [handleDownloadApng, handleExportError]);
+  }, [handleDownloadApng, handleExportError, t]);
 
   const wrappedDownloadGif = useCallback(async () => {
     try {
       await handleDownloadGif();
     } catch (err) {
-      handleExportError(err instanceof Error ? err : new Error('GIF 導出失敗'));
+      handleExportError(err instanceof Error ? err : new Error(t.errorExportGif));
     }
-  }, [handleDownloadGif, handleExportError]);
+  }, [handleDownloadGif, handleExportError, t]);
 
   const wrappedDownloadZip = useCallback(async () => {
     try {
       await handleDownloadZip();
     } catch (err) {
-      handleExportError(err instanceof Error ? err : new Error('ZIP 打包失敗'));
+      handleExportError(err instanceof Error ? err : new Error(t.errorExportZip));
     }
-  }, [handleDownloadZip, handleExportError]);
+  }, [handleDownloadZip, handleExportError, t]);
 
   const wrappedDownloadSpriteSheet = useCallback(() => {
     // Download the processed (chroma-key-removed) version if available
@@ -378,10 +384,11 @@ const App: React.FC = () => {
               <Zap className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
             <span className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-              角色幀動畫小工具
+              {t.appTitle}
             </span>
           </h1>
           <div className="flex items-center gap-2">
+            <LanguageSwitcher />
             <button
               onClick={() => setShowSettings(true)}
               className={`p-2.5 rounded-xl transition-all duration-200 shadow-sm border flex items-center gap-2 cursor-pointer
@@ -390,17 +397,17 @@ const App: React.FC = () => {
                     ? 'text-green-700 bg-green-50 hover:bg-green-100 border-green-200 hover:shadow-md'
                     : 'text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 hover:shadow-md'
                 }`}
-              title={hasCustomKey ? '使用自訂 Key' : '使用系統 Key (設定)'}
-              aria-label="開啟設定"
+              title={hasCustomKey ? t.useCustomKey : t.useSystemKey}
+              aria-label={t.settings}
             >
               <Settings className="w-5 h-5" />
-              {hasCustomKey && <span className="text-xs font-semibold pr-1">Custom Key</span>}
+              {hasCustomKey && <span className="text-xs font-semibold pr-1">{t.customKey}</span>}
             </button>
             <button
               onClick={handleReset}
               className="p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 bg-white rounded-xl transition-all duration-200 shadow-sm border border-slate-200 hover:border-slate-300 hover:shadow-md cursor-pointer"
-              title="重置畫布"
-              aria-label="重置"
+              title={t.reset}
+              aria-label={t.reset}
             >
               <RefreshCw className="w-5 h-5" />
             </button>

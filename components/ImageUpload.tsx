@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { ImageIcon } from './Icons';
+import { useLanguage } from '../hooks/useLanguage';
 
 interface ImageUploadProps {
   sourceImage: string | null;
@@ -13,6 +14,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = React.memo(({
   onDrop,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useLanguage();
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
@@ -20,7 +22,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = React.memo(({
         <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
           1
         </span>
-        上傳角色圖片
+        {t.uploadTitle}
       </h2>
 
       <div
@@ -31,7 +33,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = React.memo(({
         onClick={() => fileInputRef.current?.click()}
         role="button"
         tabIndex={0}
-        aria-label="上傳圖片區域"
+        aria-label={t.uploadTitle}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -45,7 +47,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = React.memo(({
           onChange={onImageUpload}
           accept="image/*"
           className="hidden"
-          aria-label="選擇圖片文件"
+          aria-label={t.uploadTitle}
         />
 
         {sourceImage ? (
@@ -59,8 +61,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = React.memo(({
             <div className="w-12 h-12 bg-gradient-to-br from-orange-50 to-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200 shadow-sm">
               <ImageIcon className="w-6 h-6" />
             </div>
-            <p className="text-slate-700 font-medium text-sm">點擊或拖拽圖片</p>
-            <p className="text-slate-400 text-xs mt-1">支援 PNG、JPG、WebP</p>
+            <p className="text-slate-700 font-medium text-sm">{t.uploadHint}</p>
+            <p className="text-slate-400 text-xs mt-1">{t.uploadFormats}</p>
           </div>
         )}
       </div>

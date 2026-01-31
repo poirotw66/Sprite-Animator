@@ -2,6 +2,7 @@ import React from 'react';
 import { Settings, X, ShieldCheck, ShieldAlert } from './Icons';
 import { SUPPORTED_MODELS } from '../utils/constants';
 import { GoogleGenAI } from '@google/genai';
+import { useLanguage } from '../hooks/useLanguage';
 
 interface SettingsModalProps {
   apiKey: string;
@@ -22,6 +23,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
   onClose,
   onSave,
 }) => {
+  const { t } = useLanguage();
   // All hooks must be called before any conditional returns
   const [isValidating, setIsValidating] = React.useState(false);
   const [validationError, setValidationError] = React.useState<string | null>(null);
@@ -34,7 +36,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
   // Validate API Key
   const validateApiKey = async (keyToValidate: string): Promise<boolean> => {
     if (!keyToValidate.trim()) {
-      setValidationError('請輸入 API Key');
+      setValidationError(t.pleaseEnterApiKey);
       return false;
     }
 
@@ -52,16 +54,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
       setValidationError(null);
       return true;
     } catch (error: any) {
-      let errorMessage = 'API Key 驗證失敗';
+      let errorMessage = t.validationFailed;
       
       if (error?.message?.includes('API_KEY_INVALID') || error?.message?.includes('invalid')) {
-        errorMessage = 'API Key 無效，請檢查是否正確';
+        errorMessage = t.apiKeyInvalid;
       } else if (error?.message?.includes('quota') || error?.message?.includes('429')) {
-        errorMessage = 'API 配額已用完或超過限制';
+        errorMessage = t.quotaExceeded;
       } else if (error?.message?.includes('network') || error?.message?.includes('fetch')) {
-        errorMessage = '網路連線錯誤，請檢查網路';
+        errorMessage = t.networkError;
       } else if (error?.message) {
-        errorMessage = `驗證失敗: ${error.message}`;
+        errorMessage = `${t.validationFailed}: ${error.message}`;
       }
       
       setValidationError(errorMessage);
@@ -139,12 +141,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
         <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
           <h3 id="settings-modal-title" className="font-bold text-slate-900 flex items-center gap-2 text-lg">
             <Settings className="w-5 h-5 text-slate-600" aria-hidden="true" />
-            設定
+            {t.settingsTitle}
           </h3>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-slate-700 transition-colors duration-200 p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
-            aria-label="關閉設定"
+            aria-label={t.settingsTitle}
             type="button"
           >
             <X className="w-5 h-5" aria-hidden="true" />
@@ -153,7 +155,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
         <div className="p-6 space-y-5">
           <div>
             <label htmlFor="api-key-input" className="block text-sm font-semibold text-slate-700 mb-2">
-              Gemini API Key
+              {t.apiKeyLabel}
             </label>
             <div className="relative">
               <input
@@ -161,14 +163,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                 type="password"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder={hasEnvKey ? '已檢測到系統 Key (可覆蓋)' : 'AIzaSy...'}
+                placeholder={hasEnvKey ? t.envKeyDetected : t.apiKeyPlaceholder}
                 className="w-full border border-slate-300 rounded-lg p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 outline-none pr-10 bg-white transition-all"
-                aria-label="Gemini API Key"
+                aria-label={t.apiKeyLabel}
                 aria-describedby="api-key-description"
                 autoComplete="off"
               />
               {hasCustomKey && (
-                <div className="absolute right-3 top-3 text-green-600" title="使用中">
+                <div className="absolute right-3 top-3 text-green-600" title={t.usingCustomKey}>
                   <ShieldCheck className="w-4 h-4" />
                 </div>
               )}
@@ -178,11 +180,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
             <div className="mt-2 flex items-center gap-2 text-xs">
               {hasCustomKey ? (
                 <span className="text-green-700 flex items-center gap-1.5 bg-green-50 px-2.5 py-1.5 rounded-lg border border-green-200 font-medium">
-                  <ShieldCheck className="w-3.5 h-3.5" /> 使用自訂 Key (優先)
+                  <ShieldCheck className="w-3.5 h-3.5" /> {t.usingCustomKey}
                 </span>
               ) : (
                 <span className="text-slate-600 flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200 font-medium">
-                  <ShieldAlert className="w-3.5 h-3.5" /> 使用預設/系統 Key
+                  <ShieldAlert className="w-3.5 h-3.5" /> {t.usingSystemKey}
                 </span>
               )}
             </div>
@@ -198,40 +200,40 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
               <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-xs text-green-700 font-medium flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4" />
-                  API Key 驗證成功！
+                  {t.validationSuccess}
                 </p>
               </div>
             )}
 
             <p id="api-key-description" className="text-xs text-slate-500 mt-3">
-              您的 Key 僅會儲存在本地瀏覽器中。
+              {t.apiKeyHint}
               <a
                 href="https://aistudio.google.com/app/apikey"
                 target="_blank"
                 rel="noreferrer"
                 className="text-orange-600 hover:text-orange-700 hover:underline ml-1 font-medium transition-colors"
-                aria-label="在新視窗中打開獲取 API Key 頁面"
+                aria-label={t.getApiKey}
               >
-                獲取 Key
+                {t.getApiKey}
               </a>
             </p>
           </div>
 
           <div>
             <label htmlFor="model-select" className="block text-sm font-semibold text-slate-700 mb-2">
-              模型選擇
+              {t.modelLabel}
             </label>
             <select
               id="model-select"
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
               className="w-full border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 outline-none bg-white transition-all cursor-pointer"
-              aria-label="選擇模型"
+              aria-label={t.modelLabel}
             >
               {SUPPORTED_MODELS.map((model) => {
                 let displayName = '';
                 if (model === 'gemini-2.5-flash-image') {
-                  displayName = 'Gemini 2.5 Flash Image (推薦)';
+                  displayName = `Gemini 2.5 Flash Image ${t.modelRecommended}`;
                 } else if (model === 'gemini-3-pro-image-preview') {
                   displayName = 'Gemini 3 Pro Image Preview';
                 } else {
@@ -252,9 +254,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
               disabled={isValidating}
               className="w-full bg-gradient-to-r from-slate-900 to-slate-800 text-white py-3 rounded-lg font-semibold hover:from-slate-800 hover:to-slate-700 transition-all duration-200 focus:ring-2 focus:ring-orange-500/50 focus:outline-none shadow-md hover:shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               type="button"
-              aria-label="儲存設定並關閉對話框"
+              aria-label={t.saveAndApply}
             >
-              {isValidating ? '驗證中...' : '儲存並應用'}
+              {isValidating ? t.validating : t.saveAndApply}
             </button>
           </div>
         </div>

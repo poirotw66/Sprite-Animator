@@ -2,6 +2,7 @@ import React from 'react';
 import { Play, Loader2, FileVideo, Film, Archive } from './Icons';
 import { AnimationConfig } from '../types';
 import { GRID_PATTERN_URL } from '../utils/constants';
+import { useLanguage } from '../hooks/useLanguage';
 
 interface AnimationPreviewProps {
   generatedFrames: string[];
@@ -30,6 +31,8 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
   onDownloadGif,
   onDownloadZip,
 }) => {
+  const { t } = useLanguage();
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex-1 flex flex-col min-h-[500px]">
       <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center justify-between">
@@ -37,11 +40,11 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
           <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
             3
           </span>
-          動畫預覽
+          {t.previewTitle}
         </div>
         {generatedFrames.length > 0 && (
           <span className="text-xs text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full font-semibold border border-orange-200">
-            Frame {currentFrameIndex + 1} / {generatedFrames.length}
+            {t.frame} {currentFrameIndex + 1} / {generatedFrames.length}
           </span>
         )}
       </h2>
@@ -49,10 +52,10 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
       <div
         className="flex-1 bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center relative overflow-hidden group min-h-[300px] cursor-pointer transition-colors hover:border-slate-400 hover:bg-slate-100/50"
         onClick={onTogglePlay}
-        title="點擊暫停/播放"
+        title={t.clickToPlayPause}
         role="button"
         tabIndex={0}
-        aria-label="動畫預覽區域，點擊暫停或播放"
+        aria-label={t.previewArea}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -65,8 +68,8 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
             <div className="w-20 h-20 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
               <Play className="w-8 h-8 text-slate-500 ml-1" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-700">動畫預覽區域</h3>
-            <p className="text-slate-500 mt-2 text-sm">將生成多張靜態圖並串接播放</p>
+            <h3 className="text-lg font-semibold text-slate-700">{t.previewArea}</h3>
+            <p className="text-slate-500 mt-2 text-sm">{t.previewHint}</p>
           </div>
         )}
 
@@ -76,7 +79,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
               <div className="absolute inset-0 border-4 border-orange-100 rounded-full"></div>
               <div className="absolute inset-0 border-4 border-orange-500 rounded-full border-t-transparent animate-spin"></div>
             </div>
-            <h3 className="text-lg font-semibold text-slate-800 animate-pulse">正在繪製...</h3>
+            <h3 className="text-lg font-semibold text-slate-800 animate-pulse">{t.drawing}</h3>
             <p className="text-slate-600 mt-2 text-sm">{statusText}</p>
           </div>
         )}
@@ -114,10 +117,10 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
                 onClick={onDownloadApng}
                 disabled={isExporting || generatedFrames.length === 0}
                 className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 disabled:cursor-wait cursor-pointer hover:shadow-xl"
-                aria-label="下載 APNG"
+                aria-label={t.downloadApng}
               >
                 {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileVideo className="w-4 h-4" />}
-                下載 APNG (高清)
+                {t.downloadApng}
               </button>
 
               <div className="flex gap-2">
@@ -125,19 +128,19 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
                   onClick={onDownloadGif}
                   disabled={isExporting || generatedFrames.length === 0}
                   className="flex-1 bg-white/95 hover:bg-white text-slate-800 px-3 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 cursor-pointer hover:shadow-xl border border-slate-200/50"
-                  aria-label="下載 GIF"
+                  aria-label={t.downloadGif}
                 >
                   <Film className="w-4 h-4 text-purple-600" />
-                  GIF
+                  {t.downloadGif}
                 </button>
                 <button
                   onClick={onDownloadZip}
                   disabled={isExporting || generatedFrames.length === 0}
                   className="flex-1 bg-white/95 hover:bg-white text-slate-800 px-3 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 cursor-pointer hover:shadow-xl border border-slate-200/50"
-                  aria-label="下載 ZIP"
+                  aria-label={t.downloadZip}
                 >
                   <Archive className="w-4 h-4 text-blue-600" />
-                  ZIP
+                  {t.downloadZip}
                 </button>
               </div>
             </div>
@@ -146,8 +149,8 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
       </div>
 
       <div className="mt-4 text-xs text-slate-500 text-center space-y-1">
-        <p>提示：點擊上方預覽區可暫停/播放。APNG 支援全彩半透明。</p>
-        <p className="text-green-600">✨ GIF/APNG 導出自動補幀，生成絲滑動畫 (24 FPS)</p>
+        <p>{t.exportHint}</p>
+        <p className="text-green-600">{t.exportSmoothHint}</p>
       </div>
     </div>
   );
