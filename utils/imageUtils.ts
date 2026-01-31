@@ -129,8 +129,7 @@ export const sliceSpriteSheet = async (
           willReadFrequently: true,
           alpha: true,
           desynchronized: false, // Ensure consistent rendering
-          premultipliedAlpha: false // CRITICAL: Prevent color distortion with transparency
-        });
+        }) as CanvasRenderingContext2D | null;
 
         if (!ctx) {
           reject(new Error('Canvas context creation failed. Browser may not support canvas.'));

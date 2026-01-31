@@ -53,17 +53,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
       setValidationSuccess(true);
       setValidationError(null);
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       let errorMessage = t.validationFailed;
+      const errorObj = error as Error | { message?: string };
+      const message = errorObj?.message ?? '';
       
-      if (error?.message?.includes('API_KEY_INVALID') || error?.message?.includes('invalid')) {
+      if (message.includes('API_KEY_INVALID') || message.includes('invalid')) {
         errorMessage = t.apiKeyInvalid;
-      } else if (error?.message?.includes('quota') || error?.message?.includes('429')) {
+      } else if (message.includes('quota') || message.includes('429')) {
         errorMessage = t.quotaExceeded;
-      } else if (error?.message?.includes('network') || error?.message?.includes('fetch')) {
+      } else if (message.includes('network') || message.includes('fetch')) {
         errorMessage = t.networkError;
-      } else if (error?.message) {
-        errorMessage = `${t.validationFailed}: ${error.message}`;
+      } else if (message) {
+        errorMessage = `${t.validationFailed}: ${message}`;
       }
       
       setValidationError(errorMessage);

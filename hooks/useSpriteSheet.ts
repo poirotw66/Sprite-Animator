@@ -118,6 +118,7 @@ export const useSpriteSheet = (
       setGeneratedFrames([]);
       setProcessedSpriteSheet(null);
     }
+    return undefined;
   }, [
     removeBackground,
     processedSpriteSheet,

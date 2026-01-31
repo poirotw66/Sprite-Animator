@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { Play, Layers, Zap, Eraser, Wand2, Loader2, Film as FilmIcon, Grid3X3 } from './Icons';
 import { AnimationConfig, ChromaKeyColorType, ExampleData } from '../types';
-import { ANIMATION_FPS_MULTIPLIER, CHROMA_KEY_COLORS, EXAMPLE_DATA } from '../utils/constants';
+import { ANIMATION_FPS_MULTIPLIER, EXAMPLE_DATA } from '../utils/constants';
 import { ExampleSelector } from './ExampleSelector';
 import { useLanguage } from '../hooks/useLanguage';
 

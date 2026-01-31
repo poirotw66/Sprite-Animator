@@ -13,18 +13,28 @@ export const ExampleSelector: React.FC<ExampleSelectorProps> = React.memo(({
   onSelectExample 
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
+
+  // Map example IDs to translation keys
+  const exampleKeyMap: Record<string, keyof typeof t.examples> = {
+    'cute-smile': 'cuteSmile',
+    'cutesmile': 'cuteSmile',
+    'character-walk': 'characterWalk',
+    'characterwalk': 'characterWalk',
+    'jump-action': 'jumpAction',
+    'jumpaction': 'jumpAction',
+    'wave-hand': 'waveHand',
+    'wavehand': 'waveHand',
+    'idle-breath': 'idleBreath',
+    'idlebreath': 'idleBreath',
+    'attack': 'attack',
+  };
 
   // Get localized example name and description
   const getLocalizedExample = (example: ExampleData) => {
-    const exampleKey = example.id.replace(/-/g, '') as keyof typeof t.examples;
-    const localizedData = t.examples[exampleKey === 'cutesmile' ? 'cuteSmile' : 
-                                     exampleKey === 'characterwalk' ? 'characterWalk' : 
-                                     exampleKey === 'jumpaction' ? 'jumpAction' : 
-                                     exampleKey === 'wavehand' ? 'waveHand' : 
-                                     exampleKey === 'idlebreath' ? 'idleBreath' : 
-                                     'attack' as keyof typeof t.examples];
-    return localizedData || { name: example.name, description: example.description };
+    const key = exampleKeyMap[example.id] ?? exampleKeyMap[example.id.replace(/-/g, '')];
+    const localizedData = key ? t.examples[key] : undefined;
+    return localizedData ?? { name: example.name, description: example.description };
   };
 
   return (

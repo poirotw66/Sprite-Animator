@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { isQuotaError as checkQuotaError, getErrorMessage, type ApiError } from '../types/errors';
+import { isQuotaError as checkQuotaError } from '../types/errors';
 import { logger } from '../utils/logger';
 import { CHROMA_KEY_COLORS } from '../utils/constants';
 import type { ChromaKeyColorType } from '../types';
@@ -47,10 +47,10 @@ async function normalizeBackgroundColor(
             let normalizedCount = 0;
             
             for (let i = 0; i < data.length; i += 4) {
-                const r = data[i];
-                const g = data[i + 1];
-                const b = data[i + 2];
-                const a = data[i + 3];
+                const r = data[i]!;
+                const g = data[i + 1]!;
+                const b = data[i + 2]!;
+                const a = data[i + 3]!;
                 
                 // Skip fully transparent pixels
                 if (a === 0) continue;

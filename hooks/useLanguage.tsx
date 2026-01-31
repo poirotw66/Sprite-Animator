@@ -12,10 +12,18 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 /**
+ * Extended Navigator interface for legacy browser support
+ */
+interface NavigatorWithUserLanguage extends Navigator {
+  userLanguage?: string;
+}
+
+/**
  * Detects the user's preferred language from browser settings
  */
 const detectBrowserLanguage = (): Language => {
-  const browserLang = navigator.language || (navigator as any).userLanguage;
+  const nav = navigator as NavigatorWithUserLanguage;
+  const browserLang = nav.language || nav.userLanguage || 'en';
   
   // Check for Chinese variants
   if (browserLang.startsWith('zh')) {

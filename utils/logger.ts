@@ -16,7 +16,7 @@ export const logger = {
    * Log debug information (only in development)
    * @param args - Arguments to log
    */
-  log: (...args: any[]): void => {
+  log: (...args: unknown[]): void => {
     if (isDev) {
       console.log(...args);
     }
@@ -26,7 +26,7 @@ export const logger = {
    * Log warnings (only in development)
    * @param args - Arguments to log
    */
-  warn: (...args: any[]): void => {
+  warn: (...args: unknown[]): void => {
     if (isDev) {
       console.warn(...args);
     }
@@ -36,7 +36,7 @@ export const logger = {
    * Log errors (always logged, even in production)
    * @param args - Arguments to log
    */
-  error: (...args: any[]): void => {
+  error: (...args: unknown[]): void => {
     console.error(...args);
   },
 
@@ -44,7 +44,7 @@ export const logger = {
    * Log info messages (only in development)
    * @param args - Arguments to log
    */
-  info: (...args: any[]): void => {
+  info: (...args: unknown[]): void => {
     if (isDev) {
       console.info(...args);
     }
@@ -55,7 +55,7 @@ export const logger = {
    * @param label - Label for the log message
    * @param data - Data to log
    */
-  debug: (label: string, data?: any): void => {
+  debug: (label: string, data?: unknown): void => {
     if (isDev) {
       console.log(`[DEBUG] ${label}`, data ?? '');
     }

@@ -1,6 +1,9 @@
 // Application constants
 
-export const DEFAULT_CONFIG = {
+import type { AnimationConfig } from '../types';
+
+export const DEFAULT_CONFIG: AnimationConfig = {
+  prompt: '',
   frameCount: 4,
   speed: 4, // Default FPS = speed * ANIMATION_FPS_MULTIPLIER (4 * 3 = 12 FPS)
   scale: 100,
@@ -9,7 +12,7 @@ export const DEFAULT_CONFIG = {
   gridRows: 2,
   chromaKeyColor: 'magenta' as const, // Default to magenta, can be 'green' for green screen
   enableInterpolation: false, // Disabled by default to avoid ghosting artifacts
-};
+} satisfies AnimationConfig;
 
 export const DEFAULT_SLICE_SETTINGS = {
   cols: 3,
