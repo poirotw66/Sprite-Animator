@@ -90,20 +90,15 @@ function isGreenScreenHSL(r: number, g: number, b: number, tolerance: number): b
  * Check if a color is magenta screen using HSL
  * Magenta has hue around 300 degrees (295-305)
  * Target color: #FF00FF (RGB: 255, 0, 255, Hue: 300°)
+ * Strict detection - rely on RGB distance matching for variants
  */
 function isMagentaScreenHSL(r: number, g: number, b: number, tolerance: number): boolean {
   const { h, s, l } = rgbToHsl(r, g, b);
   
-  // Magenta characteristics in HSL (stricter):
-  // Hue: 295-305 degrees (centered around #FF00FF)
-  // Saturation: > 0.7 (very highly saturated)
-  // Lightness: 0.35-0.75 (avoid very dark or very bright)
-  
+  // Strict HSL check for pure magenta
   const hueInRange = h >= 295 - tolerance && h <= 305 + tolerance;
   const saturationOk = s > 0.7;
   const lightnessOk = l > 0.35 && l < 0.75;
-  
-  // Additional RGB check: R and B must be high and similar, G must be very low
   const magentaPattern = r > 180 && b > 180 && g < 100 && Math.abs(r - b) < 80;
   
   return hueInRange && saturationOk && lightnessOk && magentaPattern;
@@ -182,6 +177,10 @@ function processChromaKey(
   // Determine if target is magenta or green based on detected color
   const targetIsMagenta = targetColorHsl.h >= 270 && targetColorHsl.h <= 330;
   const targetIsGreen = targetColorHsl.h >= 70 && targetColorHsl.h <= 170;
+  
+  // Calculate adaptive fuzz based on detected background
+  // If we detected an actual background color, use larger tolerance for RGB matching
+  const adaptiveFuzz = maxCount > 10 ? fuzz * 1.5 : fuzz;
 
   // Process each pixel
   for (let i = 0; i < data.length; i += 4) {
@@ -195,7 +194,7 @@ function processChromaKey(
       continue;
     }
 
-    // RGB distance check
+    // RGB distance check to detected background color
     const rDiff = red - targetColor.r;
     const gDiff = green - targetColor.g;
     const bDiff = blue - targetColor.b;
@@ -203,9 +202,23 @@ function processChromaKey(
     
     let shouldRemove = false;
     
-    // Primary check: RGB distance to target (very strict for exact color matches)
-    if (distance <= fuzz) {
-      shouldRemove = true;
+    // Primary check: RGB distance to detected background color
+    // Only remove if the pixel looks like the background (not just close in RGB)
+    if (distance <= adaptiveFuzz) {
+      // Additional safety check: ensure it's actually magenta-ish or green-ish
+      if (targetIsMagenta) {
+        // For magenta: R and B should be notably higher than G
+        // Stricter check to avoid removing character colors
+        const looksLikeMagenta = red > green * 1.3 && blue > green * 1.3 && 
+                                 (red + blue) > (green * 3) && green < 150;
+        shouldRemove = looksLikeMagenta;
+      } else if (targetIsGreen) {
+        // For green: G should be notably higher than R and B
+        const looksLikeGreen = green > red * 1.3 && green > blue * 1.3;
+        shouldRemove = looksLikeGreen;
+      } else {
+        shouldRemove = true;
+      }
     }
     
     // HSL-based detection - the ONLY secondary detection method

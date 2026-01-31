@@ -58,15 +58,12 @@ async function normalizeBackgroundColor(
                 let isBackgroundColor = false;
                 
                 if (colorType === 'magenta') {
-                    // Detect magenta-like colors - matching chromaKeyWorker.ts logic
+                    // Detect magenta-like colors - strict detection
+                    // Only match pure/bright magenta to avoid false positives
                     const isPureMagenta = r > 200 && g < 60 && b > 200 && (r + b) > (g * 3);
                     const isMagentaScreen = r > 180 && g < 80 && b > 180 && (r - g) > 120 && (b - g) > 120;
                     const isBrightMagentaScreen = r > 220 && g < 100 && b > 220 && (r + b) > g * 4;
                     const isNeonMagenta = r > 230 && g < 80 && b > 230;
-                    const isMagentaEdge = r > 150 && g < 100 && b > 150 && (r - g) > 80 && (b - g) > 80;
-                    
-                    // More permissive for lighter magenta shades (edges, anti-aliasing)
-                    const isLightMagenta = r > 120 && g < 120 && b > 120 && (r + b) > (g * 2);
                     
                     const distance = Math.sqrt(
                         Math.pow(r - targetColor.r, 2) +
@@ -78,8 +75,6 @@ async function normalizeBackgroundColor(
                         isMagentaScreen || 
                         isBrightMagentaScreen || 
                         isNeonMagenta || 
-                        isMagentaEdge ||
-                        isLightMagenta ||
                         distance < tolerance;
                     
                 } else if (colorType === 'green') {
