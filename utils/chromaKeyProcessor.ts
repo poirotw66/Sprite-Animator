@@ -331,7 +331,9 @@ function processInMainThread(
             shouldRemove = looksLikeMagenta;
           } else if (targetIsGreen) {
             // For green: G should be notably higher than R and B
-            const looksLikeGreen = green > red * 1.3 && green > blue * 1.3;
+            // Stricter check to avoid removing character colors
+            const looksLikeGreen = green > red * 1.3 && green > blue * 1.3 && 
+                                   green > (red + blue) && red < 150 && blue < 150;
             shouldRemove = looksLikeGreen;
           } else {
             shouldRemove = true;

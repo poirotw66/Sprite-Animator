@@ -78,21 +78,12 @@ async function normalizeBackgroundColor(
                         distance < tolerance;
                     
                 } else if (colorType === 'green') {
-                    // Detect green-like colors - matching chromaKeyWorker.ts logic
-                    // Be VERY permissive to catch all green variants AI generates
+                    // Detect green-like colors - strict detection
+                    // Only match clear green backgrounds to avoid false positives
                     const isPureGreen = g > 180 && r < 80 && b < 80;
-                    const isStandardGreenScreen = g > 100 && r < 100 && b < 130 && (g - r) > 60;
-                    const isBrightGreenScreen = g > 150 && r < 100 && b < 100 && g > r + 50 && g > b + 50;
-                    const isNeonGreen = g > 200 && r < 100 && b < 100;
-                    const isDarkGreenScreen = g > 80 && g < 180 && r < 60 && b < 80 && g > (r + b);
-                    const isLimeGreen = g > 150 && r < 150 && b < 80 && g > r && g > b * 2;
-                    const isGreenEdge = g > 80 && r < 100 && b < 120 && (g - r) > 30 && (g - b) > 20;
-                    
-                    // Additional: Very light greens (for edges)
-                    const isLightGreen = g > 70 && r < 130 && b < 130 && g > r + 20 && g > b;
-                    
-                    // Additional: Yellow-green variations
-                    const isYellowGreen = g > 120 && r < 180 && b < 100 && g > r + 20 && g > b + 20;
+                    const isStandardGreenScreen = g > 120 && r < 100 && b < 100 && (g - r) > 60 && (g - b) > 60;
+                    const isBrightGreenScreen = g > 150 && r < 100 && b < 100 && g > r + 70 && g > b + 70;
+                    const isNeonGreen = g > 200 && r < 80 && b < 80;
                     
                     const distance = Math.sqrt(
                         Math.pow(r - targetColor.r, 2) +
@@ -104,11 +95,6 @@ async function normalizeBackgroundColor(
                         isStandardGreenScreen ||
                         isBrightGreenScreen ||
                         isNeonGreen ||
-                        isDarkGreenScreen ||
-                        isLimeGreen ||
-                        isGreenEdge ||
-                        isLightGreen ||
-                        isYellowGreen ||
                         distance < tolerance;
                 }
                 
