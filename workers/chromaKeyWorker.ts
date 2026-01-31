@@ -203,12 +203,13 @@ function processChromaKey(
     
     let shouldRemove = false;
     
-    // Primary check: RGB distance to target
+    // Primary check: RGB distance to target (very strict for exact color matches)
     if (distance <= fuzz) {
       shouldRemove = true;
     }
     
-    // HSL-based detection for better accuracy
+    // HSL-based detection - the ONLY secondary detection method
+    // This is the single source of truth for chroma key detection
     if (!shouldRemove) {
       if (targetIsMagenta) {
         shouldRemove = isMagentaScreenHSL(red, green, blue, hueTolerance);
@@ -217,22 +218,7 @@ function processChromaKey(
       }
     }
     
-    // Fallback RGB pattern matching
-    if (!shouldRemove && targetIsMagenta) {
-      // Pure magenta patterns
-      const isPureMagenta = red > 200 && green < 80 && blue > 200;
-      const isMagentaScreen = red > 180 && green < 100 && blue > 180 && (red - green) > 100 && (blue - green) > 100;
-      shouldRemove = isPureMagenta || isMagentaScreen;
-    }
-    
-    if (!shouldRemove && targetIsGreen) {
-      // Strict green screen patterns - green must strongly dominate
-      // Character greens (eyes, clothes) typically have more balanced RGB
-      const greenRatio = green / (Math.max(1, red) + Math.max(1, blue));
-      const isPureGreenScreen = greenRatio > 1.5 && green > 100 && red < 80 && blue < 100;
-      const isStrongGreen = green > 120 && red < 60 && blue < 80 && green > (red + blue) * 1.3;
-      shouldRemove = isPureGreenScreen || isStrongGreen;
-    }
+    // NO fallback patterns - HSL detection is authoritative
     
     if (shouldRemove) {
       data[i + 3] = 0;
@@ -246,75 +232,49 @@ function processChromaKey(
     }
   }
 
-  // Second pass: Edge cleanup for semi-transparent pixels
-  
+  // Second pass: Edge cleanup - only for semi-transparent pixels
+  // Use HSL-based detection for consistency
   for (let i = 0; i < data.length; i += 4) {
     const alpha = data[i + 3];
     
-    // Skip fully transparent pixels
-    if (alpha === 0) continue;
-    
-    const red = data[i];
-    const green = data[i + 1];
-    const blue = data[i + 2];
-    
-    // More aggressive edge cleanup for semi-transparent AND opaque edge pixels
-    if (targetIsMagenta) {
-      // Check for magenta/pink tint - more aggressive detection
-      const hasMagentaTint = red > 120 && blue > 80 && green < 120 && (red + blue) > (green * 2);
-      const hasStrongMagentaTint = red > 180 && blue > 150 && green < 100;
-      
-      if (hasStrongMagentaTint) {
-        data[i + 3] = 0; // Remove completely
-      } else if (hasMagentaTint) {
-        const tintStrength = (red + blue) / (green + 1);
-        if (tintStrength > 3.0) {
-          data[i + 3] = 0; // Remove completely if strong tint
-        } else if (tintStrength > 2.0) {
-          data[i + 3] = Math.floor(alpha * 0.4); // Reduce alpha by 60%
-        } else if (alpha < 255) {
-          data[i + 3] = Math.floor(alpha * 0.6); // Reduce alpha by 40%
-        }
-      }
-    } else if (targetIsGreen) {
-      // Check for green tint - more aggressive detection
-      const hasGreenTint = green > 100 && red < 120 && blue < 120 && (green - red) > 40 && (green - blue) > 20;
-      const hasStrongGreenTint = green > 150 && red < 80 && blue < 100 && (green - red) > 70;
-      
-      if (hasStrongGreenTint) {
-        data[i + 3] = 0; // Remove completely
-      } else if (hasGreenTint) {
-        const tintStrength = green / ((red + blue) / 2 + 1);
-        if (tintStrength > 2.0) {
-          data[i + 3] = 0; // Remove completely if strong tint
-        } else if (tintStrength > 1.5) {
-          data[i + 3] = Math.floor(alpha * 0.4); // Reduce alpha by 60%
-        } else if (alpha < 255) {
-          data[i + 3] = Math.floor(alpha * 0.6); // Reduce alpha by 40%
-        }
-      }
-    }
-  }
-  
-  // Third pass: Desaturate remaining edge pixels to remove color tint
-  // This ensures clean edges without colored halos
-  for (let i = 0; i < data.length; i += 4) {
-    const alpha = data[i + 3];
-    
-    // Skip fully transparent pixels and process semi-transparent ones
+    // Only process semi-transparent pixels (edges)
     if (alpha === 0 || alpha === 255) continue;
     
     const red = data[i];
     const green = data[i + 1];
     const blue = data[i + 2];
     
-    // Detect remaining tint
-    let hasTint = false;
-    
+    // Use the same strict HSL detection for edge cleanup
+    let isChromaEdge = false;
     if (targetIsMagenta) {
-      hasTint = (red > 100 || blue > 100) && green < 100 && (red + blue) > (green * 1.8);
+      isChromaEdge = isMagentaScreenHSL(red, green, blue, hueTolerance * 1.5);
     } else if (targetIsGreen) {
-      hasTint = green > 80 && (green - red) > 30 && (green - blue) > 15;
+      isChromaEdge = isGreenScreenHSL(red, green, blue, hueTolerance * 1.5);
+    }
+    
+    if (isChromaEdge) {
+      data[i + 3] = Math.floor(alpha * 0.3); // Reduce alpha significantly
+    }
+  }
+  
+  // Third pass: Desaturate remaining edge pixels to remove color tint
+  // Only apply to semi-transparent pixels that still have chroma tint
+  for (let i = 0; i < data.length; i += 4) {
+    const alpha = data[i + 3];
+    
+    // Skip fully transparent and fully opaque pixels
+    if (alpha === 0 || alpha === 255) continue;
+    
+    const red = data[i];
+    const green = data[i + 1];
+    const blue = data[i + 2];
+    
+    // Use HSL detection with even looser tolerance for desaturation
+    let hasTint = false;
+    if (targetIsMagenta) {
+      hasTint = isMagentaScreenHSL(red, green, blue, hueTolerance * 2);
+    } else if (targetIsGreen) {
+      hasTint = isGreenScreenHSL(red, green, blue, hueTolerance * 2);
     }
     
     if (hasTint) {

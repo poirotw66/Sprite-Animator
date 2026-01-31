@@ -77,7 +77,7 @@ export const EXAMPLE_DATA = [
     id: 'jump-action',
     name: '跳躍動作',
     description: '角色原地跳躍',
-    prompt: '一個可愛的角色原地跳躍。包含蹲下準備、起跳、空中、落地等完整動作，每幀之間變化流暢。請生成 6 幀動畫，背景是純淨的洋紅色 #FF00FF，不要有任何框線或地面線。確保角色水平位置穩定。',
+    prompt: '原地跳躍。包含蹲下準備、起跳、空中、落地等完整動作，每幀之間變化流暢。請生成 6 幀動畫，背景是純淨的洋紅色 #FF00FF，不要有任何框線或地面線。確保角色水平位置穩定。',
     chromaKeyColor: 'magenta' as const,
     gridCols: 3,
     gridRows: 2,

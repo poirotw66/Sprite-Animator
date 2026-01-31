@@ -314,12 +314,13 @@ function processInMainThread(
         
         let shouldRemove = false;
         
-        // Primary check: RGB distance to target
+        // Primary check: RGB distance to target (very strict for exact color matches)
         if (distance <= fuzz) {
           shouldRemove = true;
         }
         
-        // HSL-based detection
+        // HSL-based detection - the ONLY secondary detection method
+        // This is the single source of truth for chroma key detection
         if (!shouldRemove) {
           if (targetIsMagenta) {
             shouldRemove = isMagentaScreenHSL(red, green, blue, hueTolerance);
@@ -328,27 +329,14 @@ function processInMainThread(
           }
         }
         
-        // Fallback RGB pattern matching for magenta
-        if (!shouldRemove && targetIsMagenta) {
-          const isPureMagenta = red > 200 && green < 80 && blue > 200;
-          const isMagentaScreen = red > 180 && green < 100 && blue > 180 && (red - green) > 100 && (blue - green) > 100;
-          shouldRemove = isPureMagenta || isMagentaScreen;
-        }
-        
-        // Fallback RGB pattern matching for green
-        if (!shouldRemove && targetIsGreen) {
-          const greenRatio = green / (Math.max(1, red) + Math.max(1, blue));
-          const isPureGreenScreen = greenRatio > 1.5 && green > 100 && red < 80 && blue < 100;
-          const isStrongGreen = green > 120 && red < 60 && blue < 80 && green > (red + blue) * 1.3;
-          shouldRemove = isPureGreenScreen || isStrongGreen;
-        }
+        // NO fallback patterns - HSL detection is authoritative
         
         if (shouldRemove) {
           data[i + 3] = 0;
         }
       }
       
-      // Edge cleanup pass
+      // Edge cleanup pass - only for semi-transparent pixels, use HSL detection
       for (let i = startIndex; i < endIndex; i += 4) {
         const alpha = data[i + 3];
         if (alpha === 0 || alpha === 255) continue;
@@ -357,28 +345,16 @@ function processInMainThread(
         const green = data[i + 1];
         const blue = data[i + 2];
         
+        // Use the same strict HSL detection for edge cleanup
+        let isChromaEdge = false;
         if (targetIsMagenta) {
-          const hasMagentaTint = red > 150 && blue > 100 && green < 120 && (red + blue) > (green * 2.5);
-          if (hasMagentaTint) {
-            const tintStrength = (red + blue) / (green + 1);
-            if (tintStrength > 3.5) {
-              data[i + 3] = 0; // Remove completely if strong tint
-            } else {
-              data[i + 3] = Math.floor(alpha * 0.5); // Reduce alpha by 50%
-            }
-          }
+          isChromaEdge = isMagentaScreenHSL(red, green, blue, hueTolerance * 1.5);
         } else if (targetIsGreen) {
-          // Check for green tint in semi-transparent pixels
-          const hasGreenTint = green > 120 && red < 100 && blue < 100 && (green - red) > 50 && (green - blue) > 50;
-          if (hasGreenTint) {
-            // Make it more transparent or fully transparent based on how strong the tint is
-            const tintStrength = green / ((red + blue) / 2 + 1);
-            if (tintStrength > 2.5) {
-              data[i + 3] = 0; // Remove completely if strong tint
-            } else {
-              data[i + 3] = Math.floor(alpha * 0.5); // Reduce alpha by 50%
-            }
-          }
+          isChromaEdge = isGreenScreenHSL(red, green, blue, hueTolerance * 1.5);
+        }
+        
+        if (isChromaEdge) {
+          data[i + 3] = Math.floor(alpha * 0.3); // Reduce alpha significantly
         }
       }
 
