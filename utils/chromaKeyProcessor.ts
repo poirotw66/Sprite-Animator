@@ -55,13 +55,19 @@ function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: n
 function isGreenScreenHSL(r: number, g: number, b: number, tolerance: number): boolean {
   const { h, s, l } = rgbToHsl(r, g, b);
   
-  const hueInRange = h >= 135 - tolerance && h <= 147 + tolerance;
-  const saturationOk = s > 0.65;
-  const lightnessOk = l > 0.3 && l < 0.7;
-  const greenDominant = g > r * 2.0 && g > b * 2.0 && g > 120;
-  const rgbLowEnough = r < 100 && b < 100;
+  // Green screen characteristics in HSL:
+  // Hue: 80-160 degrees (wider range for AI variants)
+  // Saturation: > 0.4 (moderately saturated)
+  // Lightness: 0.25-0.75 (wider range)
   
-  return hueInRange && saturationOk && lightnessOk && greenDominant && rgbLowEnough;
+  const hueInRange = h >= 80 - tolerance && h <= 160 + tolerance;
+  const saturationOk = s > 0.4;
+  const lightnessOk = l > 0.25 && l < 0.75;
+  
+  // RGB check: green must dominate
+  const greenDominant = g > r * 1.3 && g > b * 1.3 && g > 80;
+  
+  return hueInRange && saturationOk && lightnessOk && greenDominant;
 }
 
 /**
@@ -331,9 +337,9 @@ function processInMainThread(
             shouldRemove = looksLikeMagenta;
           } else if (targetIsGreen) {
             // For green: G should be notably higher than R and B
-            // Stricter check to avoid removing character colors
-            const looksLikeGreen = green > red * 1.3 && green > blue * 1.3 && 
-                                   green > (red + blue) && red < 150 && blue < 150;
+            // More permissive for green variants while avoiding character colors
+            const looksLikeGreen = green > red * 1.2 && green > blue * 1.2 && 
+                                   green > 80 && red < 180 && blue < 180;
             shouldRemove = looksLikeGreen;
           } else {
             shouldRemove = true;

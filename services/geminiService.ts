@@ -78,12 +78,13 @@ async function normalizeBackgroundColor(
                         distance < tolerance;
                     
                 } else if (colorType === 'green') {
-                    // Detect green-like colors - strict detection
-                    // Only match clear green backgrounds to avoid false positives
-                    const isPureGreen = g > 180 && r < 80 && b < 80;
-                    const isStandardGreenScreen = g > 120 && r < 100 && b < 100 && (g - r) > 60 && (g - b) > 60;
-                    const isBrightGreenScreen = g > 150 && r < 100 && b < 100 && g > r + 70 && g > b + 70;
-                    const isNeonGreen = g > 200 && r < 80 && b < 80;
+                    // Detect green-like colors
+                    // More permissive to catch AI-generated green variants
+                    const isPureGreen = g > 150 && r < 100 && b < 100;
+                    const isStandardGreenScreen = g > 100 && r < 130 && b < 130 && g > r * 1.2 && g > b * 1.2;
+                    const isBrightGreenScreen = g > 140 && r < 120 && b < 120 && g > r + 40 && g > b + 40;
+                    const isNeonGreen = g > 180 && r < 100 && b < 100;
+                    const isGreenVariant = g > 80 && g > r * 1.3 && g > b * 1.3 && r < 150 && b < 150;
                     
                     const distance = Math.sqrt(
                         Math.pow(r - targetColor.r, 2) +
@@ -95,6 +96,7 @@ async function normalizeBackgroundColor(
                         isStandardGreenScreen ||
                         isBrightGreenScreen ||
                         isNeonGreen ||
+                        isGreenVariant ||
                         distance < tolerance;
                 }
                 
