@@ -167,6 +167,7 @@ export interface Translations {
   errorSaveProject: string;
 
   // Status Messages
+  statusIdle: string;
   statusPreparing: string;
   statusGenerating: string;
   statusOptimizing: string;

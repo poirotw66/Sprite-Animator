@@ -59,7 +59,7 @@ const App: React.FC = () => {
 
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
-  const [statusText, setStatusText] = useState('AI 正在思考中...');
+  const [statusText, setStatusText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [spriteSheetImage, setSpriteSheetImage] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -195,6 +195,7 @@ const App: React.FC = () => {
 
     setIsGenerating(true);
     setError(null);
+    setStatusText(t.statusIdle);
     setSpriteSheetFrames([]);
     setFrameModeFrames([]);
     setSpriteSheetImage(null);

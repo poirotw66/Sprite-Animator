@@ -165,6 +165,7 @@ export const en: Translations = {
   errorSaveProject: 'Failed to save project (storage full). Try deleting old projects first.',
 
   // Status Messages
+  statusIdle: 'AI is thinking...',
   statusPreparing: 'Preparing sprite sheet',
   statusGenerating: 'Preparing frame-by-frame generation',
   statusOptimizing: 'Auto-optimizing slice parameters...',

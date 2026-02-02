@@ -165,6 +165,7 @@ export const zhTW: Translations = {
   errorSaveProject: '儲存專案失敗（儲存空間不足）。請刪除舊專案後再試。',
 
   // Status Messages
+  statusIdle: 'AI 正在思考中...',
   statusPreparing: '準備生成精靈圖',
   statusGenerating: '準備開始逐幀生成',
   statusOptimizing: '正在自動優化切分參數...',
