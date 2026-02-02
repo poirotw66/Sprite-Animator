@@ -35,6 +35,16 @@ export default defineConfig(({ mode }) => {
         outDir: 'dist',
         assetsDir: 'assets',
         sourcemap: false,
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              'vendor-react': ['react', 'react-dom'],
+              'vendor-genai': ['@google/genai'],
+              'vendor-ui': ['lucide-react'],
+            },
+          },
+        },
+        chunkSizeWarningLimit: 600,
       }
     };
 });
