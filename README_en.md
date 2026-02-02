@@ -1,12 +1,6 @@
 # Sprite Animator
 [繁體中文](./README.md) | [English](./README_en.md)
 
-A tool for generating 2D character animations using Google Gemini AI, supporting frame-by-frame mode and sprite sheet mode.
-
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
-
 ## ✨ Features
 
 - 🎨 **Two Generation Modes**:
@@ -110,7 +104,7 @@ Upload a character standing or bust image as the generation source:
 
 | Source |
 |--------|
-| ![Source gemini](images/gemini.png) |
+| <img src="images/gemini.png" alt="Source gemini" width="300"> |
 | **gemini.png** — Character source file |
 
 ### Generated Results (Output)

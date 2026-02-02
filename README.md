@@ -104,7 +104,7 @@
 
 | 原圖 |
 |------|
-| ![原圖 gemini](images/gemini.png) |
+| <img src="images/gemini.png" alt="原圖 gemini" width="300"> |
 | **gemini.png** — 角色原檔 |
 
 ### 生成結果（輸出）
