@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { Play, Layers, Zap, Eraser, Wand2, Loader2, Film as FilmIcon, Grid3X3 } from './Icons';
 import { AnimationConfig, ChromaKeyColorType, ExampleData } from '../types';
-import { ANIMATION_FPS_MULTIPLIER, EXAMPLE_DATA } from '../utils/constants';
+import { ANIMATION_FPS_MULTIPLIER, EXAMPLE_DATA, speedFromGrid } from '../utils/constants';
 import { ExampleSelector } from './ExampleSelector';
 import { useLanguage } from '../hooks/useLanguage';
 
@@ -41,11 +41,21 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
   }, [setConfig]);
 
   const handleGridColsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setConfig((prev) => ({ ...prev, gridCols: Number(e.target.value) }));
+    const cols = Number(e.target.value);
+    setConfig((prev) => ({
+      ...prev,
+      gridCols: cols,
+      speed: speedFromGrid(cols, prev.gridRows),
+    }));
   }, [setConfig]);
 
   const handleGridRowsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setConfig((prev) => ({ ...prev, gridRows: Number(e.target.value) }));
+    const rows = Number(e.target.value);
+    setConfig((prev) => ({
+      ...prev,
+      gridRows: rows,
+      speed: speedFromGrid(prev.gridCols, rows),
+    }));
   }, [setConfig]);
 
   const handleSpeedChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,7 +81,8 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
       chromaKeyColor: example.chromaKeyColor,
       gridCols: example.gridCols,
       gridRows: example.gridRows,
-      mode: 'sheet', // Switch to sheet mode for examples
+      speed: speedFromGrid(example.gridCols, example.gridRows),
+      mode: 'sheet',
     }));
   }, [setConfig]);
 

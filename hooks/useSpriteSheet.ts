@@ -197,7 +197,7 @@ export const useSpriteSheet = (
           processedSpriteSheet,
           cellRects,
           1,
-          { alignMode: 'core', temporalSmoothing: 0.5, anchorFrame: 0 }
+          { alignMode: 'core', temporalSmoothing: 0.7, anchorFrame: 0 }
         );
         if (cancelled) return;
         setFrameOverrides(offsets.map((o) => ({ offsetX: o.offsetX, offsetY: o.offsetY, scale: 1 })));

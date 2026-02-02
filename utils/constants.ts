@@ -2,10 +2,16 @@
 
 import type { AnimationConfig } from '../types';
 
+export const ANIMATION_FPS_MULTIPLIER = 3; // Used for playback FPS = speed * this
+
+// Default playback FPS = grid count * 1.5 (e.g. 3x2=6 -> 9 FPS)
+export const speedFromGrid = (cols: number, rows: number): number =>
+  Math.max(1, Math.round((cols * rows * 1.5) / ANIMATION_FPS_MULTIPLIER));
+
 export const DEFAULT_CONFIG: AnimationConfig = {
   prompt: '',
   frameCount: 4,
-  speed: 4, // Default FPS = speed * ANIMATION_FPS_MULTIPLIER (4 * 3 = 12 FPS)
+  speed: speedFromGrid(3, 2), // 3x2 -> 9 FPS
   scale: 100,
   mode: 'sheet' as const,
   gridCols: 3,
@@ -46,8 +52,6 @@ export const CHROMA_KEY_COLORS = {
 // Legacy - kept for compatibility
 export const CHROMA_KEY_COLOR = CHROMA_KEY_COLORS.magenta;
 export const CHROMA_KEY_FUZZ = 35; // 35% tolerance (0-100) - increased for better coverage
-
-export const ANIMATION_FPS_MULTIPLIER = 3; // Increased for smoother playback
 
 // Frame interpolation settings for smooth GIF export
 export const DEFAULT_INTERPOLATION_FRAMES = 2; // Number of frames to insert between keyframes

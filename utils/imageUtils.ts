@@ -819,6 +819,9 @@ export const getCellRectForFrame = (
 /** Clamp for centroid-derived offset to match OFFSET_MIN/MAX used in FrameGrid */
 const CENTROID_OFFSET_CLAMP = 500;
 
+/** Max pixels one frame may differ from the previous (keeps animation continuous, no drift) */
+const MAX_DELTA_PER_FRAME = 10;
+
 /**
  * Helper: Check if a pixel is likely chroma key background
  * IMPORTANT: This is ONLY for content analysis (bounding box calculation).
@@ -933,15 +936,15 @@ export const analyzeFrameContent = async (
         const centerOfMass = { x: sumX / pixelCount, y: sumY / pixelCount };
         const bounds = { minX, maxX, minY, maxY };
 
-        // Trunk band: fixed in CELL space so alignment is stable across rows
-        // Vertical: middle 50% of cell height (torso zone)
-        // Horizontal: central 50% (28%-72%) to minimize earring/brooch/hair bias
+        // Trunk band: narrow central strip to reduce hair/earring/brooch influence on alignment
+        // Vertical: middle 50% (torso zone); horizontal: central 30% (35%-65%) for precise torso center
         const trunkTop = h * 0.25;
         const trunkBottom = h * 0.75;
-        const trunkLeft = w * 0.28;
-        const trunkRight = w * 0.72;
+        const trunkLeft = w * 0.35;
+        const trunkRight = w * 0.65;
 
-        let trunkSumX = 0, trunkSumY = 0, trunkCount = 0;
+        const trunkXs: number[] = [];
+        const trunkYs: number[] = [];
         for (let dy = 0; dy < h; dy++) {
           if (dy < trunkTop || dy > trunkBottom) continue;
           for (let dx = 0; dx < w; dx++) {
@@ -952,16 +955,27 @@ export const analyzeFrameContent = async (
             const b = data[idx + 2];
             const a = data[idx + 3];
             if (isChromaKeyPixel(r, g, b, a)) continue;
-            trunkSumX += dx;
-            trunkSumY += dy;
-            trunkCount++;
+            trunkXs.push(dx);
+            trunkYs.push(dy);
           }
         }
+        const trunkCount = trunkXs.length;
 
-        // Fallback: if trunk band has no/small content (e.g. portrait with head only), use content-relative core
+        // Use median for core center (robust to asymmetric hair/accessories); fallback to mean if small set
         let coreCenter: { x: number; y: number };
-        if (trunkCount >= 10) {
-          coreCenter = { x: trunkSumX / trunkCount, y: trunkSumY / trunkCount };
+        const trunkMinForMedian = 15;
+        if (trunkCount >= trunkMinForMedian) {
+          const mid = (n: number) => (n - 1) / 2;
+          const median = (arr: number[]) => {
+            const s = [...arr].sort((a, b) => a - b);
+            const i = Math.floor(mid(s.length));
+            return s.length % 2 === 1 ? s[i]! : (s[i]! + s[i + 1]!) / 2;
+          };
+          coreCenter = { x: median(trunkXs), y: median(trunkYs) };
+        } else if (trunkCount >= 5) {
+          const sumX = trunkXs.reduce((a, b) => a + b, 0);
+          const sumY = trunkYs.reduce((a, b) => a + b, 0);
+          coreCenter = { x: sumX / trunkCount, y: sumY / trunkCount };
         } else {
           const contentHeight = maxY - minY;
           const coreTop = minY + contentHeight * 0.2;
@@ -1016,13 +1030,14 @@ export const smartAutoAlignFrames = async (
   cellRects: Array<{ x: number; y: number; width: number; height: number }>,
   scale: number = 1,
   options: {
-    alignMode: 'core' | 'bounds' | 'mass'; // core=torso-focused, bounds=bounding box, mass=center of mass
-    temporalSmoothing: number; // 0-1, higher = more smoothing
-    anchorFrame: number; // Which frame to use as reference (default: 0)
-    anchorOffset?: { offsetX: number; offsetY: number }; // User's adjusted offset for anchor frame
-  } = { alignMode: 'core', temporalSmoothing: 0.5, anchorFrame: 0 }
+    alignMode: 'core' | 'bounds' | 'mass';
+    temporalSmoothing: number; // 0-1, higher = more smoothing (default 0.7 for continuous animation)
+    anchorFrame: number;
+    anchorOffset?: { offsetX: number; offsetY: number };
+    maxDeltaPerFrame?: number; // Max px change from previous frame (keeps animation continuous)
+  } = { alignMode: 'core', temporalSmoothing: 0.7, anchorFrame: 0 }
 ): Promise<Array<{ offsetX: number; offsetY: number }>> => {
-  const { alignMode, temporalSmoothing, anchorFrame, anchorOffset } = options;
+  const { alignMode, temporalSmoothing, anchorFrame, anchorOffset, maxDeltaPerFrame = MAX_DELTA_PER_FRAME } = options;
   
   // Analyze all frames
   const analyses: ContentAnalysis[] = [];
@@ -1055,68 +1070,70 @@ export const smartAutoAlignFrames = async (
   };
   
   const anchorRef = getRefPoint(anchorAnalysis);
-  
-  // If user provided an anchor offset, we need to apply it as the base
-  // This allows chaining from user's manually adjusted frame 0 position
-  const userAnchorOffset = anchorOffset ?? { offsetX: 0, offsetY: 0 };
-  
+  const anchorCellWidth = cellRects[anchorIdx].width;
+  const anchorCellHeight = cellRects[anchorIdx].height;
+
+  // If user provided an anchor offset, use it; otherwise center the anchor frame in its cell
+  // (fixes first-frame deviation: anchor frame content is centered instead of staying at 0,0)
+  const userAnchorOffset = anchorOffset ?? {
+    offsetX: anchorCellWidth / 2 - anchorRef.x,
+    offsetY: anchorCellHeight / 2 - anchorRef.y
+  };
+
   // Calculate raw offsets to align each frame's reference point to anchor
-  // Chain from the user's adjusted anchor frame position
   const rawOffsets = analyses.map((analysis, i) => {
     if (!analysis.hasContent) {
-      // Even for empty frames, maintain user's anchor offset as baseline
       return { offsetX: userAnchorOffset.offsetX, offsetY: userAnchorOffset.offsetY };
     }
     const ref = getRefPoint(analysis);
     const cellWidth = cellRects[i].width;
     const cellHeight = cellRects[i].height;
-    
-    // For anchor frame, use user's adjusted offset directly
+
     if (i === anchorIdx) {
-      return { 
-        offsetX: userAnchorOffset.offsetX, 
-        offsetY: userAnchorOffset.offsetY 
+      return {
+        offsetX: userAnchorOffset.offsetX,
+        offsetY: userAnchorOffset.offsetY
       };
     }
-    
-    // For other frames: calculate the delta from anchor frame's content position,
-    // then apply that delta to user's adjusted anchor offset
-    // This maintains the user's adjustment while aligning other frames relative to it
-    const anchorCellWidth = cellRects[anchorIdx].width;
-    const anchorCellHeight = cellRects[anchorIdx].height;
-    
-    // Delta = how much this frame's content center differs from anchor's content center
+
     const deltaX = (ref.x - cellWidth / 2) - (anchorRef.x - anchorCellWidth / 2);
     const deltaY = (ref.y - cellHeight / 2) - (anchorRef.y - anchorCellHeight / 2);
-    
-    // Apply delta to user's adjusted offset
-    let offsetX = userAnchorOffset.offsetX + deltaX;
-    let offsetY = userAnchorOffset.offsetY + deltaY;
-    
+    const offsetX = userAnchorOffset.offsetX + deltaX;
+    const offsetY = userAnchorOffset.offsetY + deltaY;
     return { offsetX, offsetY };
   });
   
   // Apply temporal smoothing (moving average)
+  let offsets = rawOffsets;
   if (temporalSmoothing > 0 && rawOffsets.length > 2) {
-    const smoothed = rawOffsets.map((_, i) => {
+    offsets = rawOffsets.map((_, i) => {
       const prev = rawOffsets[Math.max(0, i - 1)];
       const curr = rawOffsets[i];
       const next = rawOffsets[Math.min(rawOffsets.length - 1, i + 1)];
-      
-      const smoothX = curr.offsetX * (1 - temporalSmoothing) + 
-                      (prev.offsetX + next.offsetX) / 2 * temporalSmoothing;
-      const smoothY = curr.offsetY * (1 - temporalSmoothing) + 
-                      (prev.offsetY + next.offsetY) / 2 * temporalSmoothing;
-      
+      const smoothX = curr.offsetX * (1 - temporalSmoothing) + (prev.offsetX + next.offsetX) / 2 * temporalSmoothing;
+      const smoothY = curr.offsetY * (1 - temporalSmoothing) + (prev.offsetY + next.offsetY) / 2 * temporalSmoothing;
       return {
         offsetX: Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, smoothX)),
         offsetY: Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, smoothY))
       };
     });
-    return smoothed;
   }
-  
-  return rawOffsets.map(o => ({
+
+  // Clamp so each frame differs from previous by at most maxDeltaPerFrame (continuous animation, no drift)
+  if (maxDeltaPerFrame > 0 && offsets.length > 1) {
+    const clampDelta = (v: number, prevV: number, d: number) =>
+      Math.max(prevV - d, Math.min(prevV + d, v));
+    offsets = offsets.map((o, i) => {
+      if (i === 0) return o;
+      const prev = offsets[i - 1]!;
+      return {
+        offsetX: clampDelta(o.offsetX, prev.offsetX, maxDeltaPerFrame),
+        offsetY: clampDelta(o.offsetY, prev.offsetY, maxDeltaPerFrame)
+      };
+    });
+  }
+
+  return offsets.map(o => ({
     offsetX: Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, o.offsetX)),
     offsetY: Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, o.offsetY))
   }));
