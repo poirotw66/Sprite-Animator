@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState, useRef } from 'react';
 import { Download, Grid3X3, Loader2, Sliders, RefreshCw, Move, Eye, EyeOff } from './Icons';
-import { SliceSettings } from '../utils/imageUtils';
+import { SliceSettings, getEffectivePadding, inferGridFromGaps } from '../utils/imageUtils';
 import { GRID_PATTERN_URL } from '../utils/constants';
 import { useLanguage } from '../hooks/useLanguage';
 
@@ -73,13 +73,35 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
     }));
   }, [setSliceSettings]);
 
-  // Calculate real-time information
+  const padding = useMemo(() => getEffectivePadding(sliceSettings), [sliceSettings]);
+  const [isInferringGrid, setIsInferringGrid] = useState(false);
+
+  const handleInferGridFromGaps = useCallback(async () => {
+    if (!spriteSheetImage) return;
+    setIsInferringGrid(true);
+    try {
+      const result = await inferGridFromGaps(spriteSheetImage);
+      if (result) {
+        setSliceSettings((prev) => ({
+          ...prev,
+          sliceMode: 'inferred',
+          inferredCellRects: result.cellRects,
+          cols: result.cols,
+          rows: result.rows,
+        }));
+      }
+    } finally {
+      setIsInferringGrid(false);
+    }
+  }, [spriteSheetImage, setSliceSettings]);
+
+  // Calculate real-time information (four-edge aware)
   const cellInfo = useMemo(() => {
     if (sheetDimensions.width === 0 || sheetDimensions.height === 0) {
       return null;
     }
-    const effectiveWidth = sheetDimensions.width - sliceSettings.paddingX * 2;
-    const effectiveHeight = sheetDimensions.height - sliceSettings.paddingY * 2;
+    const effectiveWidth = sheetDimensions.width - padding.left - padding.right;
+    const effectiveHeight = sheetDimensions.height - padding.top - padding.bottom;
     const cellWidth = Math.round(effectiveWidth / sliceSettings.cols);
     const cellHeight = Math.round(effectiveHeight / sliceSettings.rows);
     const totalFrames = sliceSettings.cols * sliceSettings.rows;
@@ -91,41 +113,25 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
       effectiveWidth,
       effectiveHeight,
     };
-  }, [sheetDimensions, sliceSettings]);
+  }, [sheetDimensions, sliceSettings, padding]);
 
-  // Reset to default settings
+  // Reset to default settings (clear four-edge and inferred mode)
   const handleReset = useCallback(() => {
     setSliceSettings({
       cols: sliceSettings.cols, // Keep grid size
       rows: sliceSettings.rows,
       paddingX: 0,
       paddingY: 0,
+      paddingLeft: 0,
+      paddingRight: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
       shiftX: 0,
       shiftY: 0,
+      sliceMode: 'equal',
+      inferredCellRects: undefined,
     });
   }, [setSliceSettings, sliceSettings.cols, sliceSettings.rows]);
-
-  // Auto-center: Calculate shift to center the grid
-  const handleAutoCenter = useCallback(() => {
-    if (sheetDimensions.width === 0 || sheetDimensions.height === 0) return;
-    
-    const effectiveWidth = sheetDimensions.width - sliceSettings.paddingX * 2;
-    const effectiveHeight = sheetDimensions.height - sliceSettings.paddingY * 2;
-    const cellWidth = effectiveWidth / sliceSettings.cols;
-    const cellHeight = effectiveHeight / sliceSettings.rows;
-    
-    // Calculate center offset
-    const centerX = sheetDimensions.width / 2;
-    const centerY = sheetDimensions.height / 2;
-    const gridCenterX = sliceSettings.paddingX + (effectiveWidth / 2);
-    const gridCenterY = sliceSettings.paddingY + (effectiveHeight / 2);
-    
-    setSliceSettings((p) => ({
-      ...p,
-      shiftX: Math.round(centerX - gridCenterX),
-      shiftY: Math.round(centerY - gridCenterY),
-    }));
-  }, [setSliceSettings, sheetDimensions, sliceSettings.paddingX, sliceSettings.paddingY, sliceSettings.cols, sliceSettings.rows]);
 
   // Interactive grid editing state
   const [isDragging, setIsDragging] = useState(false);
@@ -134,16 +140,16 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   const [dragStartSettings, setDragStartSettings] = useState<SliceSettings | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
-  // Calculate grid positions for interactive editing
+  // Calculate grid positions for interactive editing (four-edge aware)
   const gridPositions = useMemo(() => {
     if (sheetDimensions.width === 0 || sheetDimensions.height === 0) return null;
     
-    const effectiveWidth = sheetDimensions.width - sliceSettings.paddingX * 2;
-    const effectiveHeight = sheetDimensions.height - sliceSettings.paddingY * 2;
+    const effectiveWidth = sheetDimensions.width - padding.left - padding.right;
+    const effectiveHeight = sheetDimensions.height - padding.top - padding.bottom;
     const cellWidth = effectiveWidth / sliceSettings.cols;
     const cellHeight = effectiveHeight / sliceSettings.rows;
-    const startX = sliceSettings.paddingX + sliceSettings.shiftX;
-    const startY = sliceSettings.paddingY + sliceSettings.shiftY;
+    const startX = padding.left + sliceSettings.shiftX;
+    const startY = padding.top + sliceSettings.shiftY;
     
     return {
       startX,
@@ -153,7 +159,26 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
       effectiveWidth,
       effectiveHeight,
     };
-  }, [sheetDimensions, sliceSettings]);
+  }, [sheetDimensions, sliceSettings, padding]);
+
+  // Auto-center: Calculate shift to center the grid (four-edge aware)
+  // Uses padding/sliceSettings so it does not depend on gridPositions (avoids TDZ)
+  const handleAutoCenter = useCallback(() => {
+    if (sheetDimensions.width === 0 || sheetDimensions.height === 0) return;
+    const effectiveWidth = sheetDimensions.width - padding.left - padding.right;
+    const effectiveHeight = sheetDimensions.height - padding.top - padding.bottom;
+    const startX = padding.left + sliceSettings.shiftX;
+    const startY = padding.top + sliceSettings.shiftY;
+    const centerX = sheetDimensions.width / 2;
+    const centerY = sheetDimensions.height / 2;
+    const gridCenterX = startX + effectiveWidth / 2;
+    const gridCenterY = startY + effectiveHeight / 2;
+    setSliceSettings((p) => ({
+      ...p,
+      shiftX: Math.round(centerX - gridCenterX),
+      shiftY: Math.round(centerY - gridCenterY),
+    }));
+  }, [setSliceSettings, sheetDimensions, padding, sliceSettings.shiftX, sliceSettings.shiftY]);
 
   // Convert screen coordinates to SVG coordinates
   const screenToSvg = useCallback((clientX: number, clientY: number) => {
@@ -279,47 +304,39 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
         },
       });
     } else if (dragType === 'padding-left') {
-      // Drag left edge - adjust paddingX
-      const newPaddingX = Math.max(0, Math.min(
-        sheetDimensions.width * 0.4,
-        dragStartSettings.paddingX - svgDeltaX
-      ));
+      const left0 = dragStartSettings.paddingLeft ?? dragStartSettings.paddingX;
+      const newLeft = Math.max(0, Math.min(sheetDimensions.width * 0.4, left0 - svgDeltaX));
       setSliceSettings({
         ...dragStartSettings,
-        paddingX: Math.round(newPaddingX),
+        paddingLeft: Math.round(newLeft),
+        paddingX: Math.round((newLeft + (dragStartSettings.paddingRight ?? dragStartSettings.paddingX)) / 2),
         autoOptimized: { ...dragStartSettings.autoOptimized, paddingX: false },
       });
     } else if (dragType === 'padding-right') {
-      // Drag right edge - adjust paddingX
-      const newPaddingX = Math.max(0, Math.min(
-        sheetDimensions.width * 0.4,
-        dragStartSettings.paddingX + svgDeltaX
-      ));
+      const right0 = dragStartSettings.paddingRight ?? dragStartSettings.paddingX;
+      const newRight = Math.max(0, Math.min(sheetDimensions.width * 0.4, right0 + svgDeltaX));
       setSliceSettings({
         ...dragStartSettings,
-        paddingX: Math.round(newPaddingX),
+        paddingRight: Math.round(newRight),
+        paddingX: Math.round(((dragStartSettings.paddingLeft ?? dragStartSettings.paddingX) + newRight) / 2),
         autoOptimized: { ...dragStartSettings.autoOptimized, paddingX: false },
       });
     } else if (dragType === 'padding-top') {
-      // Drag top edge - adjust paddingY
-      const newPaddingY = Math.max(0, Math.min(
-        sheetDimensions.height * 0.4,
-        dragStartSettings.paddingY - svgDeltaY
-      ));
+      const top0 = dragStartSettings.paddingTop ?? dragStartSettings.paddingY;
+      const newTop = Math.max(0, Math.min(sheetDimensions.height * 0.4, top0 - svgDeltaY));
       setSliceSettings({
         ...dragStartSettings,
-        paddingY: Math.round(newPaddingY),
+        paddingTop: Math.round(newTop),
+        paddingY: Math.round((newTop + (dragStartSettings.paddingBottom ?? dragStartSettings.paddingY)) / 2),
         autoOptimized: { ...dragStartSettings.autoOptimized, paddingY: false },
       });
     } else if (dragType === 'padding-bottom') {
-      // Drag bottom edge - adjust paddingY
-      const newPaddingY = Math.max(0, Math.min(
-        sheetDimensions.height * 0.4,
-        dragStartSettings.paddingY + svgDeltaY
-      ));
+      const bottom0 = dragStartSettings.paddingBottom ?? dragStartSettings.paddingY;
+      const newBottom = Math.max(0, Math.min(sheetDimensions.height * 0.4, bottom0 + svgDeltaY));
       setSliceSettings({
         ...dragStartSettings,
-        paddingY: Math.round(newPaddingY),
+        paddingBottom: Math.round(newBottom),
+        paddingY: Math.round(((dragStartSettings.paddingTop ?? dragStartSettings.paddingY) + newBottom) / 2),
         autoOptimized: { ...dragStartSettings.autoOptimized, paddingY: false },
       });
     } else if (dragType === 'grid') {
@@ -482,10 +499,10 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                 >
                   {/* Draw Outer Rect (Grid Area) - defined by Padding and Shift */}
                   <rect
-                    x={sliceSettings.paddingX + sliceSettings.shiftX}
-                    y={sliceSettings.paddingY + sliceSettings.shiftY}
-                    width={Math.max(0, sheetDimensions.width - sliceSettings.paddingX * 2)}
-                    height={Math.max(0, sheetDimensions.height - sliceSettings.paddingY * 2)}
+                    x={padding.left + sliceSettings.shiftX}
+                    y={padding.top + sliceSettings.shiftY}
+                    width={Math.max(0, sheetDimensions.width - padding.left - padding.right)}
+                    height={Math.max(0, sheetDimensions.height - padding.top - padding.bottom)}
                     fill="rgba(59,130,246,0.05)"
                     stroke="rgba(59,130,246,0.8)"
                     strokeWidth="2"
@@ -544,11 +561,11 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
 
                   {/* Draw Vertical Grid Lines - More visible for alignment */}
                   {Array.from({ length: sliceSettings.cols - 1 }).map((_, i) => {
-                    const effectiveWidth = sheetDimensions.width - sliceSettings.paddingX * 2;
+                    const effectiveWidth = sheetDimensions.width - padding.left - padding.right;
                     const cellWidth = effectiveWidth / sliceSettings.cols;
-                    const startX = sliceSettings.paddingX + sliceSettings.shiftX;
-                    const startY = sliceSettings.paddingY + sliceSettings.shiftY;
-                    const height = sheetDimensions.height - sliceSettings.paddingY * 2;
+                    const startX = padding.left + sliceSettings.shiftX;
+                    const startY = padding.top + sliceSettings.shiftY;
+                    const height = sheetDimensions.height - padding.top - padding.bottom;
                     const x = startX + (i + 1) * cellWidth;
                     return (
                       <g key={`v-${i}`}>
@@ -588,11 +605,11 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
 
                   {/* Draw Horizontal Grid Lines - More visible for alignment */}
                   {Array.from({ length: sliceSettings.rows - 1 }).map((_, i) => {
-                    const effectiveHeight = sheetDimensions.height - sliceSettings.paddingY * 2;
+                    const effectiveHeight = sheetDimensions.height - padding.top - padding.bottom;
                     const cellHeight = effectiveHeight / sliceSettings.rows;
-                    const startX = sliceSettings.paddingX + sliceSettings.shiftX;
-                    const startY = sliceSettings.paddingY + sliceSettings.shiftY;
-                    const width = sheetDimensions.width - sliceSettings.paddingX * 2;
+                    const startX = padding.left + sliceSettings.shiftX;
+                    const startY = padding.top + sliceSettings.shiftY;
+                    const width = sheetDimensions.width - padding.left - padding.right;
                     const y = startY + (i + 1) * cellHeight;
                     return (
                       <g key={`h-${i}`}>
@@ -713,6 +730,26 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 {t.resetSettings}
+              </button>
+              <button
+                type="button"
+                disabled={!spriteSheetImage || isInferringGrid}
+                onClick={handleInferGridFromGaps}
+                className="text-xs flex items-center gap-1.5 text-green-700 bg-green-100 hover:bg-green-200 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border border-green-300 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                title={t.inferGridFromGaps}
+                aria-label={t.inferGridFromGaps}
+              >
+                {isInferringGrid ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    {t.inferGridFromGapsProgress}
+                  </>
+                ) : (
+                  <>
+                    <Grid3X3 className="w-3.5 h-3.5" />
+                    {t.inferGridFromGaps}
+                  </>
+                )}
               </button>
             </div>
           </div>

@@ -226,7 +226,14 @@ const App: React.FC = () => {
           );
           setSliceSettings((prev) => ({
             ...prev,
-            ...optimized,
+            paddingLeft: optimized.paddingLeft,
+            paddingRight: optimized.paddingRight,
+            paddingTop: optimized.paddingTop,
+            paddingBottom: optimized.paddingBottom,
+            paddingX: Math.round((optimized.paddingLeft + optimized.paddingRight) / 2),
+            paddingY: Math.round((optimized.paddingTop + optimized.paddingBottom) / 2),
+            shiftX: optimized.shiftX,
+            shiftY: optimized.shiftY,
             autoOptimized: {
               paddingX: true,
               paddingY: true,

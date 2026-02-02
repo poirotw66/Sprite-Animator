@@ -96,6 +96,8 @@ export interface Translations {
   fineTunePosition: string;
   autoOptimized: string;
   center: string;
+  inferGridFromGaps: string;
+  inferGridFromGapsProgress: string;
   dragHint: string;
   downloadProcessed: string;
   downloadOriginal: string;
@@ -116,6 +118,8 @@ export interface Translations {
   refOpacity: string;
   autoAlign: string;
   smartAlign: string;
+  reAlignToAnchor: string;
+  reAlignToAnchorProgress: string;
   alignMode: string;
   coreMode: string;
   boundsMode: string;

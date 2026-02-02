@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { sliceSpriteSheet, SliceSettings, FrameOverride } from '../utils/imageUtils';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { sliceSpriteSheet, sliceSpriteSheetByCellRects, SliceSettings, FrameOverride, getEffectivePadding, getCellRectForFrame, smartAutoAlignFrames } from '../utils/imageUtils';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { BACKGROUND_REMOVAL_THRESHOLD, DEBOUNCE_DELAY, CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ } from '../utils/constants';
 import { logger } from '../utils/logger';
@@ -44,6 +44,7 @@ export const useSpriteSheet = (
   const [chromaKeyProgress, setChromaKeyProgress] = useState<number>(0);
   const [isProcessingChromaKey, setIsProcessingChromaKey] = useState<boolean>(false);
   const [frameOverrides, setFrameOverrides] = useState<FrameOverride[]>([]);
+  const lastAlignedSheetRef = useRef<string | null>(null);
 
   // Get the actual chroma key color based on selection
   const activeChromaKeyColor = CHROMA_KEY_COLORS[chromaKeyColor];
@@ -91,26 +92,34 @@ export const useSpriteSheet = (
     if (processedSpriteSheet && mode === 'sheet') {
       const reSlice = async () => {
         try {
-          // Step 2: Slice the processed (chroma-key-removed) sprite sheet
-          // Chroma key removal is already done - just slice the frames
-          const frames = await sliceSpriteSheet(
-            processedSpriteSheet,
-            sliceSettings.cols,
-            sliceSettings.rows,
-            sliceSettings.paddingX,
-            sliceSettings.paddingY,
-            sliceSettings.shiftX,
-            sliceSettings.shiftY,
-            false, // No additional background removal needed
-            BACKGROUND_REMOVAL_THRESHOLD,
-            frameOverrides
-          );
-          setGeneratedFrames(frames);
+          if (sliceSettings.sliceMode === 'inferred' && sliceSettings.inferredCellRects?.length) {
+            const frames = await sliceSpriteSheetByCellRects(
+              processedSpriteSheet,
+              sliceSettings.inferredCellRects
+            );
+            setGeneratedFrames(frames);
+          } else {
+            const padding = getEffectivePadding(sliceSettings);
+            const frames = await sliceSpriteSheet(
+              processedSpriteSheet,
+              sliceSettings.cols,
+              sliceSettings.rows,
+              sliceSettings.paddingX,
+              sliceSettings.paddingY,
+              sliceSettings.shiftX,
+              sliceSettings.shiftY,
+              false,
+              BACKGROUND_REMOVAL_THRESHOLD,
+              frameOverrides,
+              chromaKeyColor,
+              padding
+            );
+            setGeneratedFrames(frames);
+          }
         } catch (e) {
           logger.error('Re-slice failed', e);
         }
       };
-      // Small debounce to keep UI responsive while dragging sliders
       const timer = setTimeout(reSlice, DEBOUNCE_DELAY);
       return () => clearTimeout(timer);
     } else if (mode !== 'sheet') {
@@ -126,8 +135,14 @@ export const useSpriteSheet = (
     sliceSettings.rows,
     sliceSettings.paddingX,
     sliceSettings.paddingY,
+    sliceSettings.paddingLeft,
+    sliceSettings.paddingRight,
+    sliceSettings.paddingTop,
+    sliceSettings.paddingBottom,
     sliceSettings.shiftX,
     sliceSettings.shiftY,
+    sliceSettings.sliceMode,
+    sliceSettings.inferredCellRects,
     frameOverrides,
     mode,
   ]);
@@ -135,7 +150,87 @@ export const useSpriteSheet = (
   // Reset per-frame overrides when image or grid dimensions change
   useEffect(() => {
     setFrameOverrides([]);
+    lastAlignedSheetRef.current = null; // Allow smart align to run again for new sheet
   }, [processedSpriteSheet, sliceSettings.cols, sliceSettings.rows]);
+
+  // Run smart align once after generation when slice settings were auto-optimized
+  useEffect(() => {
+    if (
+      mode !== 'sheet' ||
+      !processedSpriteSheet ||
+      generatedFrames.length === 0 ||
+      sheetDimensions.width <= 0 ||
+      sheetDimensions.height <= 0 ||
+      lastAlignedSheetRef.current === processedSpriteSheet
+    ) {
+      return;
+    }
+    if (sliceSettings.sliceMode === 'inferred') return; // Inferred grid uses explicit rects, skip smart align
+    const opt = sliceSettings.autoOptimized;
+    if (!opt?.paddingX || !opt?.paddingY || !opt?.shiftX || !opt?.shiftY) {
+      return;
+    }
+    const padding = getEffectivePadding(sliceSettings);
+    const cellRects: Array<{ x: number; y: number; width: number; height: number }> = [];
+    const n = sliceSettings.cols * sliceSettings.rows;
+    for (let i = 0; i < n; i++) {
+      const rect = getCellRectForFrame(
+        sheetDimensions.width,
+        sheetDimensions.height,
+        sliceSettings.cols,
+        sliceSettings.rows,
+        sliceSettings.paddingX,
+        sliceSettings.paddingY,
+        sliceSettings.shiftX,
+        sliceSettings.shiftY,
+        i,
+        padding
+      );
+      if (rect) cellRects.push(rect);
+    }
+    if (cellRects.length !== n) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const offsets = await smartAutoAlignFrames(
+          processedSpriteSheet,
+          cellRects,
+          1,
+          { alignMode: 'core', temporalSmoothing: 0.5, anchorFrame: 0 }
+        );
+        if (cancelled) return;
+        setFrameOverrides(offsets.map((o) => ({ offsetX: o.offsetX, offsetY: o.offsetY, scale: 1 })));
+        lastAlignedSheetRef.current = processedSpriteSheet;
+      } catch (e) {
+        logger.error('Smart align on load failed', e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    mode,
+    processedSpriteSheet,
+    generatedFrames.length,
+    sheetDimensions.width,
+    sheetDimensions.height,
+    sliceSettings.cols,
+    sliceSettings.rows,
+    sliceSettings.paddingX,
+    sliceSettings.paddingY,
+    sliceSettings.shiftX,
+    sliceSettings.shiftY,
+    sliceSettings.paddingLeft,
+    sliceSettings.paddingRight,
+    sliceSettings.paddingTop,
+    sliceSettings.paddingBottom,
+    sliceSettings.autoOptimized?.paddingX,
+    sliceSettings.autoOptimized?.paddingY,
+    sliceSettings.autoOptimized?.shiftX,
+    sliceSettings.autoOptimized?.shiftY,
+    sliceSettings.sliceMode,
+  ]);
 
   // Update dimensions when processed sprite sheet is ready
   useEffect(() => {

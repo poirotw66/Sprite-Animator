@@ -8,13 +8,23 @@ import { logger } from './logger';
 import type { ChromaKeyColorType } from '../types';
 
 /**
- * Configuration for slicing a sprite sheet into individual frames
+ * Configuration for slicing a sprite sheet into individual frames.
+ * Supports symmetric padding (paddingX, paddingY) or four-edge padding (paddingLeft/Right/Top/Bottom).
+ * When four-edge is set, it takes precedence for slice math.
  */
 export interface SliceSettings {
   cols: number;
   rows: number;
   paddingX: number;
   paddingY: number;
+  /** When set, used as left padding; otherwise paddingX */
+  paddingLeft?: number;
+  /** When set, used as right padding; otherwise paddingX */
+  paddingRight?: number;
+  /** When set, used as top padding; otherwise paddingY */
+  paddingTop?: number;
+  /** When set, used as bottom padding; otherwise paddingY */
+  paddingBottom?: number;
   shiftX: number;
   shiftY: number;
   // Optional: Track which values were auto-optimized
@@ -23,6 +33,28 @@ export interface SliceSettings {
     paddingY?: boolean;
     shiftX?: boolean;
     shiftY?: boolean;
+  };
+  /** 'equal' = divide by cols/rows; 'inferred' = use inferred cell rects from gaps */
+  sliceMode?: 'equal' | 'inferred';
+  /** When sliceMode === 'inferred', cell rects from inferGridFromGaps */
+  inferredCellRects?: Array<{ x: number; y: number; width: number; height: number }>;
+}
+
+/**
+ * Resolve effective four-edge padding from SliceSettings.
+ * Used so that symmetric (paddingX/paddingY) and four-edge (paddingLeft/Right/Top/Bottom) can coexist.
+ */
+export function getEffectivePadding(settings: SliceSettings): {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+} {
+  return {
+    left: settings.paddingLeft ?? settings.paddingX,
+    right: settings.paddingRight ?? settings.paddingX,
+    top: settings.paddingTop ?? settings.paddingY,
+    bottom: settings.paddingBottom ?? settings.paddingY,
   };
 }
 
@@ -95,6 +127,14 @@ export interface FrameOverride {
  * );
  * ```
  */
+/** Optional four-edge padding for sliceSpriteSheet (overrides symmetric paddingX/paddingY when provided). */
+export interface PaddingFour {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
 export const sliceSpriteSheet = async (
   base64Image: string,
   cols: number,
@@ -106,7 +146,8 @@ export const sliceSpriteSheet = async (
   removeBg: boolean,
   threshold: number = 230,
   frameOverrides?: FrameOverride[],
-  chromaKeyColor: ChromaKeyColorType = 'magenta'
+  chromaKeyColor: ChromaKeyColorType = 'magenta',
+  paddingFour?: PaddingFour
 ): Promise<string[]> => {
   return new Promise((resolve, reject) => {
     // Input validation
@@ -115,8 +156,12 @@ export const sliceSpriteSheet = async (
       return;
     }
 
-    if (paddingX < 0 || paddingY < 0) {
-      reject(new Error(`Invalid padding: paddingX=${paddingX}, paddingY=${paddingY}. Must be non-negative.`));
+    const left = paddingFour?.left ?? paddingX;
+    const right = paddingFour?.right ?? paddingX;
+    const top = paddingFour?.top ?? paddingY;
+    const bottom = paddingFour?.bottom ?? paddingY;
+    if (left < 0 || right < 0 || top < 0 || bottom < 0) {
+      reject(new Error(`Invalid padding: left=${left}, right=${right}, top=${top}, bottom=${bottom}. Must be non-negative.`));
       return;
     }
 
@@ -145,23 +190,16 @@ export const sliceSpriteSheet = async (
           return;
         }
 
-        // Calculate start position first (before calculating effective area)
-        let startX = Math.round(paddingX + shiftX);
-        let startY = Math.round(paddingY + shiftY);
-
-        // Auto-adjust start position if out of bounds (clamp to valid range)
+        // Four-edge: start at left/top + shift; effective size = width - left - right
+        let startX = Math.round(left + shiftX);
+        let startY = Math.round(top + shiftY);
         startX = Math.max(0, Math.min(startX, totalWidth - 1));
         startY = Math.max(0, Math.min(startY, totalHeight - 1));
-
-        // Effective Grid Area: Reduced by padding from the start position
-        // Account for remaining padding on the right/bottom after shift
-        const remainingPaddingX = Math.max(0, paddingX - shiftX);
-        const remainingPaddingY = Math.max(0, paddingY - shiftY);
-        const effectiveWidth = totalWidth - startX - remainingPaddingX;
-        const effectiveHeight = totalHeight - startY - remainingPaddingY;
+        const effectiveWidth = totalWidth - left - right;
+        const effectiveHeight = totalHeight - top - bottom;
 
         if (effectiveWidth <= 0 || effectiveHeight <= 0) {
-          reject(new Error(`Invalid effective area: ${effectiveWidth}x${effectiveHeight}. Please adjust padding (${paddingX}, ${paddingY}) or shift (${shiftX}, ${shiftY}) values.`));
+          reject(new Error(`Invalid effective area: ${effectiveWidth}x${effectiveHeight}. Please adjust padding or shift values.`));
           return;
         }
 
@@ -284,14 +322,23 @@ export const sliceSpriteSheet = async (
  * @example
  * ```typescript
  * const optimized = await optimizeSliceSettings(spriteSheetBase64, 4, 4);
- * // Returns: { paddingX: 10, paddingY: 10, shiftX: 5, shiftY: 5 }
+ * // Returns four-edge padding + shift (relaxed limits: padding cap 20%, shift ±100)
  * ```
  */
+export interface OptimizedSliceResult {
+  paddingLeft: number;
+  paddingRight: number;
+  paddingTop: number;
+  paddingBottom: number;
+  shiftX: number;
+  shiftY: number;
+}
+
 export const optimizeSliceSettings = async (
   base64Image: string,
   cols: number,
   rows: number
-): Promise<{ paddingX: number; paddingY: number; shiftX: number; shiftY: number }> => {
+): Promise<OptimizedSliceResult> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
@@ -407,45 +454,50 @@ export const optimizeSliceSettings = async (
           }
         }
 
-        // Calculate optimal padding (use minimum of left/right and top/bottom)
-        // This ensures we don't cut off content
-        const optimalPaddingX = Math.min(leftPadding, rightPadding);
-        const optimalPaddingY = Math.min(topPadding, bottomPadding);
+        // Four-edge padding: use each side independently (relaxed cap 20% of dimension)
+        const paddingCapX = Math.floor(width * 0.2);
+        const paddingCapY = Math.floor(height * 0.2);
+        const paddingLeft = Math.max(0, Math.min(leftPadding, paddingCapX));
+        const paddingRight = Math.max(0, Math.min(rightPadding, paddingCapX));
+        const paddingTop = Math.max(0, Math.min(topPadding, paddingCapY));
+        const paddingBottom = Math.max(0, Math.min(bottomPadding, paddingCapY));
 
-        // Calculate effective area after padding
-        const effectiveWidth = width - optimalPaddingX * 2;
-        const effectiveHeight = height - optimalPaddingY * 2;
-        const cellWidth = effectiveWidth / cols;
-        const cellHeight = effectiveHeight / rows;
-
-        // Calculate optimal shift to center the grid
-        // This centers the content within the available space
+        const effectiveWidth = width - paddingLeft - paddingRight;
+        const effectiveHeight = height - paddingTop - paddingBottom;
+        const gridCenterX = paddingLeft + effectiveWidth / 2;
+        const gridCenterY = paddingTop + effectiveHeight / 2;
         const centerX = width / 2;
         const centerY = height / 2;
-        const gridCenterX = optimalPaddingX + effectiveWidth / 2;
-        const gridCenterY = optimalPaddingY + effectiveHeight / 2;
         const optimalShiftX = Math.round(centerX - gridCenterX);
         const optimalShiftY = Math.round(centerY - gridCenterY);
 
-        // Clamp values to reasonable ranges
-        const paddingX = Math.max(0, Math.min(optimalPaddingX, Math.floor(width * 0.1)));
-        const paddingY = Math.max(0, Math.min(optimalPaddingY, Math.floor(height * 0.1)));
-        const shiftX = Math.max(-50, Math.min(50, optimalShiftX));
-        const shiftY = Math.max(-50, Math.min(50, optimalShiftY));
+        // Relaxed shift: ±100px or ±15% of smaller dimension
+        const shiftCap = Math.max(100, Math.min(width, height) * 0.15);
+        const shiftX = Math.max(-shiftCap, Math.min(shiftCap, optimalShiftX));
+        const shiftY = Math.max(-shiftCap, Math.min(shiftCap, optimalShiftY));
 
-        logger.debug('Auto-optimized slice settings', {
-          paddingX,
-          paddingY,
+        logger.debug('Auto-optimized slice settings (four-edge)', {
+          paddingLeft,
+          paddingRight,
+          paddingTop,
+          paddingBottom,
           shiftX,
           shiftY,
           original: { left: leftPadding, right: rightPadding, top: topPadding, bottom: bottomPadding },
         });
 
-        resolve({ paddingX, paddingY, shiftX, shiftY });
+        resolve({ paddingLeft, paddingRight, paddingTop, paddingBottom, shiftX, shiftY });
       } catch (error) {
         logger.error('Auto-optimization failed', error);
         // Return default values on error
-        resolve({ paddingX: 0, paddingY: 0, shiftX: 0, shiftY: 0 });
+        resolve({
+          paddingLeft: 0,
+          paddingRight: 0,
+          paddingTop: 0,
+          paddingBottom: 0,
+          shiftX: 0,
+          shiftY: 0,
+        });
       }
     };
 
@@ -453,6 +505,191 @@ export const optimizeSliceSettings = async (
       reject(new Error('Failed to load image for optimization'));
     };
 
+    img.crossOrigin = 'anonymous';
+    img.src = base64Image;
+  });
+};
+
+/** Result of inferring grid from content gaps (for irregular spacing). */
+export interface InferredGridResult {
+  cellRects: Array<{ x: number; y: number; width: number; height: number }>;
+  cols: number;
+  rows: number;
+}
+
+/**
+ * Infers grid lines from content gaps (low-alpha or empty strips).
+ * Use for sprite sheets with irregular spacing between cells.
+ *
+ * @param base64Image - Base64 (or data URL) of the sprite sheet
+ * @param gapThreshold - Ratio of dimension to consider as gap (default 0.05 = 5%)
+ * @returns Inferred cell rects and cols/rows, or null if detection fails
+ */
+export const inferGridFromGaps = async (
+  base64Image: string,
+  gapThreshold: number = 0.05
+): Promise<InferredGridResult | null> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const w = img.width;
+        const h = img.height;
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) {
+          resolve(null);
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        const data = ctx.getImageData(0, 0, w, h).data;
+
+        const isContent = (i: number) => data[i + 3] > 20;
+
+        // Column content count per x
+        const colContent: number[] = [];
+        for (let x = 0; x < w; x++) {
+          let count = 0;
+          for (let y = 0; y < h; y++) {
+            if (isContent((y * w + x) * 4)) count++;
+          }
+          colContent.push(count);
+        }
+        const colGapThresh = h * gapThreshold;
+        const colStarts: number[] = [];
+        const colEnds: number[] = [];
+        let inGap = false;
+        for (let x = 0; x < w; x++) {
+          if (colContent[x] < colGapThresh) {
+            if (!inGap) {
+              inGap = true;
+              colEnds.push(x); // end of previous cell
+            }
+          } else {
+            if (inGap) {
+              inGap = false;
+              colStarts.push(x); // start of next cell
+            }
+          }
+        }
+        if (inGap) colStarts.push(w);
+        if (colStarts.length !== colEnds.length) {
+          resolve(null);
+          return;
+        }
+        const leftEdges = [0, ...colStarts];
+        const rightEdges = [...colEnds, w];
+        const colCount = leftEdges.length;
+
+        // Row content count per y
+        const rowContent: number[] = [];
+        for (let y = 0; y < h; y++) {
+          let count = 0;
+          for (let x = 0; x < w; x++) {
+            if (isContent((y * w + x) * 4)) count++;
+          }
+          rowContent.push(count);
+        }
+        const rowGapThresh = w * gapThreshold;
+        const rowStarts: number[] = [];
+        const rowEnds: number[] = [];
+        inGap = false;
+        for (let y = 0; y < h; y++) {
+          if (rowContent[y] < rowGapThresh) {
+            if (!inGap) {
+              inGap = true;
+              rowEnds.push(y);
+            }
+          } else {
+            if (inGap) {
+              inGap = false;
+              rowStarts.push(y);
+            }
+          }
+        }
+        if (inGap) rowStarts.push(h);
+        if (rowStarts.length !== rowEnds.length) {
+          resolve(null);
+          return;
+        }
+        const topEdges = [0, ...rowStarts];
+        const bottomEdges = [...rowEnds, h];
+        const rowCount = topEdges.length;
+
+        const cellRects: Array<{ x: number; y: number; width: number; height: number }> = [];
+        for (let r = 0; r < rowCount; r++) {
+          for (let c = 0; c < colCount; c++) {
+            cellRects.push({
+              x: leftEdges[c],
+              y: topEdges[r],
+              width: rightEdges[c] - leftEdges[c],
+              height: bottomEdges[r] - topEdges[r],
+            });
+          }
+        }
+        resolve({ cellRects, cols: colCount, rows: rowCount });
+      } catch (e) {
+        logger.error('Infer grid from gaps failed', e);
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.crossOrigin = 'anonymous';
+    img.src = base64Image;
+  });
+};
+
+/**
+ * Slices a sprite sheet by explicit cell rects (for inferred or irregular grids).
+ *
+ * @param base64Image - Base64 (or data URL) of the sprite sheet
+ * @param cellRects - Array of { x, y, width, height } in sheet coords
+ * @returns Promise resolving to array of base64 frame images
+ */
+export const sliceSpriteSheetByCellRects = async (
+  base64Image: string,
+  cellRects: Array<{ x: number; y: number; width: number; height: number }>
+): Promise<string[]> => {
+  if (cellRects.length === 0) return [];
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', {
+          willReadFrequently: true,
+          alpha: true,
+          desynchronized: false,
+        }) as CanvasRenderingContext2D | null;
+        if (!ctx) {
+          reject(new Error('Canvas context creation failed'));
+          return;
+        }
+        ctx.imageSmoothingEnabled = false;
+        ctx.imageSmoothingQuality = 'low';
+        const frames: string[] = [];
+        for (const rect of cellRects) {
+          const fw = Math.max(1, Math.round(rect.width));
+          const fh = Math.max(1, Math.round(rect.height));
+          canvas.width = fw;
+          canvas.height = fh;
+          const sx = Math.max(0, Math.min(rect.x, img.width - 1));
+          const sy = Math.max(0, Math.min(rect.y, img.height - 1));
+          const sw = Math.min(rect.width, img.width - sx);
+          const sh = Math.min(rect.height, img.height - sy);
+          if (sw > 0 && sh > 0) {
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, fw, fh);
+          }
+          frames.push(canvas.toDataURL('image/png'));
+        }
+        resolve(frames);
+      } catch (e) {
+        reject(e instanceof Error ? e : new Error(String(e)));
+      }
+    };
+    img.onerror = () => reject(new Error('Failed to load image for slice by rects'));
     img.crossOrigin = 'anonymous';
     img.src = base64Image;
   });
@@ -540,6 +777,7 @@ export const loadImagesData = async (
  * @param shiftX - Horizontal shift
  * @param shiftY - Vertical shift
  * @param frameIndex - Frame index (0-based, row-major)
+ * @param paddingFour - Optional four-edge padding (when provided, overrides paddingX/paddingY)
  * @returns { x, y, width, height } in sheet coords, or null if frameIndex is out of bounds
  */
 export const getCellRectForFrame = (
@@ -551,17 +789,20 @@ export const getCellRectForFrame = (
   paddingY: number,
   shiftX: number,
   shiftY: number,
-  frameIndex: number
+  frameIndex: number,
+  paddingFour?: PaddingFour
 ): { x: number; y: number; width: number; height: number } | null => {
   if (frameIndex < 0 || frameIndex >= cols * rows) return null;
-  let startX = Math.round(paddingX + shiftX);
-  let startY = Math.round(paddingY + shiftY);
+  const left = paddingFour?.left ?? paddingX;
+  const right = paddingFour?.right ?? paddingX;
+  const top = paddingFour?.top ?? paddingY;
+  const bottom = paddingFour?.bottom ?? paddingY;
+  let startX = Math.round(left + shiftX);
+  let startY = Math.round(top + shiftY);
   startX = Math.max(0, Math.min(startX, sheetWidth - 1));
   startY = Math.max(0, Math.min(startY, sheetHeight - 1));
-  const remainingPaddingX = Math.max(0, paddingX - shiftX);
-  const remainingPaddingY = Math.max(0, paddingY - shiftY);
-  const effectiveWidth = sheetWidth - startX - remainingPaddingX;
-  const effectiveHeight = sheetHeight - startY - remainingPaddingY;
+  const effectiveWidth = sheetWidth - left - right;
+  const effectiveHeight = sheetHeight - top - bottom;
   if (effectiveWidth <= 0 || effectiveHeight <= 0) return null;
   const cellWidth = effectiveWidth / cols;
   const cellHeight = effectiveHeight / rows;
@@ -691,36 +932,59 @@ export const analyzeFrameContent = async (
         
         const centerOfMass = { x: sumX / pixelCount, y: sumY / pixelCount };
         const bounds = { minX, maxX, minY, maxY };
-        
-        // Second pass: analyze core region (central 60% of height)
-        // This focuses on the torso/body which is more stable than limbs
-        const contentHeight = maxY - minY;
-        const coreTop = minY + contentHeight * 0.2;  // Skip top 20% (head movement)
-        const coreBottom = maxY - contentHeight * 0.2; // Skip bottom 20% (feet movement)
-        
-        let coreSumX = 0, coreSumY = 0, coreCount = 0;
-        
+
+        // Trunk band: fixed in CELL space so alignment is stable across rows
+        // Vertical: middle 50% of cell height (torso zone)
+        // Horizontal: central 50% (28%-72%) to minimize earring/brooch/hair bias
+        const trunkTop = h * 0.25;
+        const trunkBottom = h * 0.75;
+        const trunkLeft = w * 0.28;
+        const trunkRight = w * 0.72;
+
+        let trunkSumX = 0, trunkSumY = 0, trunkCount = 0;
         for (let dy = 0; dy < h; dy++) {
-          if (dy < coreTop || dy > coreBottom) continue;
+          if (dy < trunkTop || dy > trunkBottom) continue;
           for (let dx = 0; dx < w; dx++) {
+            if (dx < trunkLeft || dx > trunkRight) continue;
             const idx = (dy * w + dx) * 4;
             const r = data[idx];
             const g = data[idx + 1];
             const b = data[idx + 2];
             const a = data[idx + 3];
-            
             if (isChromaKeyPixel(r, g, b, a)) continue;
-            
-            coreSumX += dx;
-            coreSumY += dy;
-            coreCount++;
+            trunkSumX += dx;
+            trunkSumY += dy;
+            trunkCount++;
           }
         }
-        
-        // Use core center if available, otherwise fall back to center of mass
-        const coreCenter = coreCount > 0 
-          ? { x: coreSumX / coreCount, y: coreSumY / coreCount }
-          : centerOfMass;
+
+        // Fallback: if trunk band has no/small content (e.g. portrait with head only), use content-relative core
+        let coreCenter: { x: number; y: number };
+        if (trunkCount >= 10) {
+          coreCenter = { x: trunkSumX / trunkCount, y: trunkSumY / trunkCount };
+        } else {
+          const contentHeight = maxY - minY;
+          const coreTop = minY + contentHeight * 0.2;
+          const coreBottom = maxY - contentHeight * 0.2;
+          let coreSumX = 0, coreSumY = 0, coreCount = 0;
+          for (let dy = 0; dy < h; dy++) {
+            if (dy < coreTop || dy > coreBottom) continue;
+            for (let dx = 0; dx < w; dx++) {
+              const idx = (dy * w + dx) * 4;
+              const r = data[idx];
+              const g = data[idx + 1];
+              const b = data[idx + 2];
+              const a = data[idx + 3];
+              if (isChromaKeyPixel(r, g, b, a)) continue;
+              coreSumX += dx;
+              coreSumY += dy;
+              coreCount++;
+            }
+          }
+          coreCenter = coreCount > 0
+            ? { x: coreSumX / coreCount, y: coreSumY / coreCount }
+            : centerOfMass;
+        }
         
         resolve({
           bounds,

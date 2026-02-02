@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Pencil, RotateCcw, X } from './Icons';
 import { GripVertical } from 'lucide-react';
-import { getCellRectForFrame, getContentCentroidOffset, getBestOffsetByTemplateMatch, cropCellFromImage, smartAutoAlignFrames, type FrameOverride, type SliceSettings } from '../utils/imageUtils';
+import { getCellRectForFrame, getContentCentroidOffset, getBestOffsetByTemplateMatch, cropCellFromImage, smartAutoAlignFrames, getEffectivePadding, type FrameOverride, type SliceSettings } from '../utils/imageUtils';
+import { useLanguage } from '../hooks/useLanguage';
 
 const OFFSET_MIN = -500;
 const OFFSET_MAX = 500;
@@ -41,6 +42,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
   frameIncluded = [],
   setFrameIncluded,
 }) => {
+  const { t } = useLanguage();
   const [editingFrameIndex, setEditingFrameIndex] = useState<number | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
   const [panelPosition, setPanelPosition] = useState<{ x: number; y: number } | null>(null);
@@ -98,6 +100,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
   );
   useEffect(() => {
     if (!hasSheetData || !canvasRef.current) return;
+    const padding = getEffectivePadding(sliceSettings!);
     const cellRect = getCellRectForFrame(
       sheetDimensions.width,
       sheetDimensions.height,
@@ -107,7 +110,8 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
       sliceSettings!.paddingY,
       sliceSettings!.shiftX,
       sliceSettings!.shiftY,
-      editingFrameIndex!
+      editingFrameIndex!,
+      padding
     );
     if (!cellRect) return;
     const ov = frameOverrides[editingFrameIndex!] ?? {};
@@ -186,6 +190,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
   const handleCropCanvasMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!processedSpriteSheet || !sliceSettings || !setFrameOverrides || editingFrameIndex == null ||
         !sheetDimensions || sheetDimensions.width <= 0 || sheetDimensions.height <= 0 || !canvasRef.current) return;
+    const padding = getEffectivePadding(sliceSettings);
     const cellRect = getCellRectForFrame(
       sheetDimensions.width,
       sheetDimensions.height,
@@ -195,7 +200,8 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
       sliceSettings.paddingY,
       sliceSettings.shiftX,
       sliceSettings.shiftY,
-      editingFrameIndex
+      editingFrameIndex,
+      padding
     );
     if (!cellRect) return;
     const ov = frameOverrides[editingFrameIndex] ?? {};
@@ -510,6 +516,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                           // Get all cell rects
                           const cellRects: Array<{ x: number; y: number; width: number; height: number }> = [];
                           for (let i = 0; i < frames.length; i++) {
+                            const padding = getEffectivePadding(sliceSettings);
                             const rect = getCellRectForFrame(
                               W, H,
                               sliceSettings.cols,
@@ -518,7 +525,8 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                               sliceSettings.paddingY,
                               sliceSettings.shiftX,
                               sliceSettings.shiftY,
-                              i
+                              i,
+                              padding
                             );
                             if (rect) cellRects.push(rect);
                           }
@@ -615,9 +623,9 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                         }
                       }}
                       className="text-xs flex items-center gap-1.5 text-white bg-orange-500 hover:bg-orange-600 px-3 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                      title="智能分析所有幀的內容位置，自動計算最佳對齊參數"
+                      title={t.reAlignToAnchor}
                     >
-                      {isAutoAligning ? '🔄 智能對齊中…' : '✨ 一鍵智能對齊所有幀'}
+                      {isAutoAligning ? `🔄 ${t.reAlignToAnchorProgress}` : `✨ ${t.reAlignToAnchor}`}
                     </button>
                   </>
                 )}
