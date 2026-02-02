@@ -2,26 +2,41 @@
 <html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f8fafc" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>角色幀動畫生成器</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      /* Custom slider styling - Enhanced for better UX */
+      /* Safe area for notched devices */
+      .safe-top { padding-top: env(safe-area-inset-top, 0); }
+      .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
+      .safe-left { padding-left: env(safe-area-inset-left, 0); }
+      .safe-right { padding-right: env(safe-area-inset-right, 0); }
+      /* Touch-friendly: reduce tap highlight, allow manipulation (no double-tap zoom on buttons) */
+      .touch-manipulation { touch-action: manipulation; }
+      .tap-highlight { -webkit-tap-highlight-color: rgba(249, 115, 22, 0.15); }
+      /* Custom slider - larger touch target on mobile */
       input[type=range] {
         -webkit-appearance: none;
         appearance: none;
+        touch-action: manipulation;
       }
       input[type=range]::-webkit-slider-thumb {
         -webkit-appearance: none;
         appearance: none;
-        height: 18px;
-        width: 18px;
+        height: 22px;
+        width: 22px;
         border-radius: 50%;
         background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
         cursor: pointer;
-        margin-top: -7px;
+        margin-top: -8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         transition: all 0.2s ease;
+      }
+      @media (min-width: 768px) {
+        input[type=range]::-webkit-slider-thumb { height: 18px; width: 18px; margin-top: -7px; }
       }
       input[type=range]::-webkit-slider-thumb:hover {
         transform: scale(1.1);
@@ -31,8 +46,8 @@
         transform: scale(0.95);
       }
       input[type=range]::-moz-range-thumb {
-        height: 18px;
-        width: 18px;
+        height: 22px;
+        width: 22px;
         border-radius: 50%;
         background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
         cursor: pointer;
@@ -40,23 +55,22 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         transition: all 0.2s ease;
       }
-      input[type=range]::-moz-range-thumb:hover {
-        transform: scale(1.1);
-        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+      @media (min-width: 768px) {
+        input[type=range]::-moz-range-thumb { height: 18px; width: 18px; }
       }
       input[type=range]::-webkit-slider-runnable-track {
         width: 100%;
-        height: 6px;
+        height: 8px;
         cursor: pointer;
         background: #E2E8F0;
-        border-radius: 3px;
+        border-radius: 4px;
       }
       input[type=range]::-moz-range-track {
         width: 100%;
-        height: 6px;
+        height: 8px;
         cursor: pointer;
         background: #E2E8F0;
-        border-radius: 3px;
+        border-radius: 4px;
       }
       .custom-scrollbar::-webkit-scrollbar {
           width: 8px;
@@ -73,7 +87,6 @@
       .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #94A3B8;
       }
-      /* Pixelated image rendering for sprite animations */
       .pixelated {
         image-rendering: pixelated;
         image-rendering: -moz-crisp-edges;
@@ -82,7 +95,7 @@
       }
     </style>
 </head>
-  <body class="bg-slate-50 text-slate-900 antialiased">
+  <body class="bg-slate-50 text-slate-900 antialiased overflow-x-hidden">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

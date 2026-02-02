@@ -87,8 +87,8 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
   }, [setConfig]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-      <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6">
+      <h2 className="text-sm font-semibold text-slate-700 mb-3 sm:mb-4 flex items-center gap-2">
         <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
           2
         </span>
@@ -100,41 +100,42 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
         <ExampleSelector examples={EXAMPLE_DATA} onSelectExample={handleSelectExample} />
       </div>
 
-      {/* Mode Switcher */}
-      <div className="flex bg-slate-100 p-1 rounded-xl mb-6">
+      {/* Mode Switcher - touch-friendly min height */}
+      <div className="flex bg-slate-100 p-1 rounded-xl mb-5 md:mb-6">
         <button
           onClick={() => handleModeChange('frame')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer
+          className={`flex-1 flex items-center justify-center gap-2 min-h-[44px] py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer touch-manipulation
             ${config.mode === 'frame' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
           aria-label={t.frameByFrameMode}
         >
-          <FilmIcon className="w-4 h-4" />
-          {t.frameByFrameMode}
+          <FilmIcon className="w-4 h-4 flex-shrink-0" />
+          <span className="truncate">{t.frameByFrameMode}</span>
         </button>
         <button
           onClick={() => handleModeChange('sheet')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer
+          className={`flex-1 flex items-center justify-center gap-2 min-h-[44px] py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer touch-manipulation
             ${config.mode === 'sheet' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
           aria-label={t.spriteSheetMode}
         >
-          <Grid3X3 className="w-4 h-4" />
-          {t.spriteSheetMode}
+          <Grid3X3 className="w-4 h-4 flex-shrink-0" />
+          <span className="truncate">{t.spriteSheetMode}</span>
         </button>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-5 md:space-y-6">
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-2">{t.promptLabel}</label>
           <textarea
             value={config.prompt}
             onChange={handlePromptChange}
             placeholder={t.promptPlaceholder}
-            className="w-full border border-slate-200 rounded-lg p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none resize-none h-20 transition-all bg-white"
+            className="w-full border border-slate-200 rounded-lg p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none resize-none min-h-[80px] transition-all bg-white touch-manipulation"
             aria-label={t.promptLabel}
+            rows={3}
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Conditionally Render Frame Count OR Grid Controls */}
           {config.mode === 'frame' ? (
             <div>
@@ -230,28 +231,28 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
                 <button
                   type="button"
                   onClick={() => handleChromaKeyColorChange('magenta')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer border-2 ${
+                  className={`flex-1 flex items-center justify-center gap-2 min-h-[44px] py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer border-2 touch-manipulation ${
                     config.chromaKeyColor === 'magenta'
                       ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700'
                       : 'border-slate-200 bg-white text-slate-600 hover:border-fuchsia-300'
                   }`}
                   aria-label={t.magentaColor}
                 >
-                  <div className="w-4 h-4 rounded-full bg-fuchsia-500 border border-fuchsia-600"></div>
-                  {t.magentaColor}
+                  <div className="w-4 h-4 rounded-full bg-fuchsia-500 border border-fuchsia-600 flex-shrink-0"></div>
+                  <span className="truncate">{t.magentaColor}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => handleChromaKeyColorChange('green')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer border-2 ${
+                  className={`flex-1 flex items-center justify-center gap-2 min-h-[44px] py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer border-2 touch-manipulation ${
                     config.chromaKeyColor === 'green'
                       ? 'border-green-500 bg-green-50 text-green-700'
                       : 'border-slate-200 bg-white text-slate-600 hover:border-green-300'
                   }`}
                   aria-label={t.greenScreen}
                 >
-                  <div className="w-4 h-4 rounded-full bg-green-500 border border-green-600"></div>
-                  {t.greenScreen}
+                  <div className="w-4 h-4 rounded-full bg-green-500 border border-green-600 flex-shrink-0"></div>
+                  <span className="truncate">{t.greenScreen}</span>
                 </button>
               </div>
               <p className="text-[10px] text-slate-500 mt-2">
@@ -329,7 +330,7 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
         <button
           onClick={onGenerate}
           disabled={isGenerating}
-          className={`w-full py-3.5 rounded-xl font-bold text-white shadow-md flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer
+          className={`w-full min-h-[48px] py-3.5 rounded-xl font-bold text-white shadow-md flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer touch-manipulation tap-highlight
             ${
               isGenerating
                 ? 'bg-orange-400 cursor-not-allowed opacity-75'

@@ -362,7 +362,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   }, [isDragging, handleMouseUp]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative overflow-x-auto">
       {/* Chroma Key Processing Progress Indicator */}
       {isProcessingChromaKey && (
         <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-10">

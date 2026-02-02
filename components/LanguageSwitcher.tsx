@@ -16,7 +16,7 @@ export const LanguageSwitcher: React.FC = React.memo(() => {
       <select
         value={language}
         onChange={handleChange}
-        className="bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-slate-700 cursor-pointer hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+        className="min-h-[44px] bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 cursor-pointer hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all touch-manipulation"
         aria-label={t.language}
       >
         {supportedLanguages.map((lang) => (

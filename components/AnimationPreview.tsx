@@ -34,7 +34,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
   const { t } = useLanguage();
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex-1 flex flex-col min-h-[500px]">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6 flex-1 flex flex-col min-h-[320px] sm:min-h-[400px] md:min-h-[500px]">
       <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
@@ -50,7 +50,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
       </h2>
 
       <div
-        className="flex-1 bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center relative overflow-hidden group min-h-[300px] cursor-pointer transition-colors hover:border-slate-400 hover:bg-slate-100/50"
+        className="flex-1 bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center relative overflow-hidden group min-h-[220px] sm:min-h-[280px] md:min-h-[300px] cursor-pointer transition-colors hover:border-slate-400 hover:bg-slate-100/50 active:bg-slate-100 touch-manipulation tap-highlight"
         onClick={onTogglePlay}
         title={t.clickToPlayPause}
         role="button"
@@ -97,7 +97,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
               style={{
                 transform: `scale(${config.scale / 100})`,
                 imageRendering: 'pixelated',
-                maxHeight: '400px',
+                maxHeight: 'min(400px, 60vh)',
                 maxWidth: '100%',
               }}
             />
@@ -111,36 +111,36 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
               </div>
             )}
 
-            {/* Controls Overlay */}
-            <div className="absolute bottom-4 right-4 flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+            {/* Controls Overlay - wrap on narrow screens */}
+            <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 flex flex-col sm:flex-row flex-wrap gap-2 max-w-full justify-end" onClick={(e) => e.stopPropagation()}>
               <button
                 onClick={onDownloadApng}
                 disabled={isExporting || generatedFrames.length === 0}
-                className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 disabled:cursor-wait cursor-pointer hover:shadow-xl"
+                className="min-h-[44px] bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 disabled:cursor-wait cursor-pointer hover:shadow-xl touch-manipulation tap-highlight"
                 aria-label={t.downloadApng}
               >
-                {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileVideo className="w-4 h-4" />}
-                {t.downloadApng}
+                {isExporting ? <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" /> : <FileVideo className="w-4 h-4 flex-shrink-0" />}
+                <span className="truncate">{t.downloadApng}</span>
               </button>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={onDownloadGif}
                   disabled={isExporting || generatedFrames.length === 0}
-                  className="flex-1 bg-white/95 hover:bg-white text-slate-800 px-3 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 cursor-pointer hover:shadow-xl border border-slate-200/50"
+                  className="min-h-[44px] flex-1 min-w-[100px] bg-white/95 hover:bg-white text-slate-800 px-3 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 cursor-pointer hover:shadow-xl border border-slate-200/50 touch-manipulation tap-highlight"
                   aria-label={t.downloadGif}
                 >
-                  <Film className="w-4 h-4 text-purple-600" />
-                  {t.downloadGif}
+                  <Film className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                  <span className="truncate">{t.downloadGif}</span>
                 </button>
                 <button
                   onClick={onDownloadZip}
                   disabled={isExporting || generatedFrames.length === 0}
-                  className="flex-1 bg-white/95 hover:bg-white text-slate-800 px-3 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 cursor-pointer hover:shadow-xl border border-slate-200/50"
+                  className="min-h-[44px] flex-1 min-w-[100px] bg-white/95 hover:bg-white text-slate-800 px-3 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 cursor-pointer hover:shadow-xl border border-slate-200/50 touch-manipulation tap-highlight"
                   aria-label={t.downloadZip}
                 >
-                  <Archive className="w-4 h-4 text-blue-600" />
-                  {t.downloadZip}
+                  <Archive className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                  <span className="truncate">{t.downloadZip}</span>
                 </button>
               </div>
             </div>

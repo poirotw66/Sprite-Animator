@@ -373,7 +373,7 @@ const App: React.FC = () => {
   }, [spriteSheetImage, handleDownloadSpriteSheet]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 p-4 md:p-6 lg:p-8 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 font-sans overflow-x-hidden px-4 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] md:px-6 lg:px-8 md:pt-6 lg:pt-8 md:pb-6 lg:pb-8">
       <SettingsModal
         apiKey={apiKey}
         setApiKey={setApiKey}
@@ -384,21 +384,21 @@ const App: React.FC = () => {
         onSave={saveSettings}
       />
 
-      <header className="max-w-7xl mx-auto mb-6 md:mb-8">
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-200/60 p-4 md:p-5 flex items-center justify-between">
-          <h1 className="text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-3">
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-2 rounded-xl shadow-md">
+      <header className="sticky top-0 z-20 max-w-7xl mx-auto mb-4 md:mb-8 -mx-4 px-4 md:mx-0 md:px-0 safe-top">
+        <div className="bg-white/95 backdrop-blur-md rounded-xl md:rounded-2xl shadow-sm border border-slate-200/60 p-3 sm:p-4 md:p-5 flex items-center justify-between gap-2 safe-left safe-right">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2 sm:gap-3 truncate min-w-0">
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-1.5 sm:p-2 rounded-lg md:rounded-xl shadow-md flex-shrink-0">
               <Zap className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
             <span className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
               {t.appTitle}
             </span>
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <LanguageSwitcher />
             <button
               onClick={() => setShowSettings(true)}
-              className={`p-2.5 rounded-xl transition-all duration-200 shadow-sm border flex items-center gap-2 cursor-pointer
+              className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl transition-all duration-200 shadow-sm border flex items-center justify-center gap-2 cursor-pointer touch-manipulation tap-highlight
                 ${
                   hasCustomKey
                     ? 'text-green-700 bg-green-50 hover:bg-green-100 border-green-200 hover:shadow-md'
@@ -412,7 +412,7 @@ const App: React.FC = () => {
             </button>
             <button
               onClick={handleReset}
-              className="p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 bg-white rounded-xl transition-all duration-200 shadow-sm border border-slate-200 hover:border-slate-300 hover:shadow-md cursor-pointer"
+              className="min-h-[44px] min-w-[44px] p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 bg-white rounded-xl transition-all duration-200 shadow-sm border border-slate-200 hover:border-slate-300 hover:shadow-md cursor-pointer flex items-center justify-center touch-manipulation tap-highlight"
               title={t.reset}
               aria-label={t.reset}
             >
@@ -422,9 +422,8 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
-        {/* Left Column: Upload & Settings */}
-        <div className="lg:col-span-5 space-y-4 md:space-y-6">
+      <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 md:gap-6">
+        <div className="lg:col-span-5 space-y-4 sm:space-y-5 md:space-y-6">
           <ImageUpload
             sourceImage={sourceImage}
             onImageUpload={handleImageUpload}
@@ -443,8 +442,7 @@ const App: React.FC = () => {
           />
         </div>
 
-        {/* Right Column: Result Preview */}
-        <div className="lg:col-span-7 flex flex-col gap-4 md:gap-6">
+        <div className="lg:col-span-7 flex flex-col gap-4 sm:gap-5 md:gap-6 min-w-0">
           {/* Sprite Sheet Viewer (Only in Sheet Mode) */}
           {config.mode === 'sheet' && (
             <Suspense
@@ -503,7 +501,7 @@ const App: React.FC = () => {
                   </div>
                 }
               >
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6 overflow-x-hidden">
                   <FrameGrid
                     frames={generatedFrames}
                     currentFrameIndex={currentGridIndex}

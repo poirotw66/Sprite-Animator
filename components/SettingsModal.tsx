@@ -125,7 +125,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+      className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm safe-top safe-bottom safe-left safe-right"
       role="dialog"
       aria-modal="true"
       aria-labelledby="settings-modal-title"
@@ -137,24 +137,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
     >
       <div
         ref={modalRef}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 border border-slate-200"
+        className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto overflow-x-hidden animate-in fade-in zoom-in duration-200 border border-slate-200 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
-          <h3 id="settings-modal-title" className="font-bold text-slate-900 flex items-center gap-2 text-lg">
-            <Settings className="w-5 h-5 text-slate-600" aria-hidden="true" />
-            {t.settingsTitle}
+        <div className="p-4 sm:p-5 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white flex-shrink-0">
+          <h3 id="settings-modal-title" className="font-bold text-slate-900 flex items-center gap-2 text-base sm:text-lg truncate min-w-0">
+            <Settings className="w-5 h-5 text-slate-600 flex-shrink-0" aria-hidden="true" />
+            <span className="truncate">{t.settingsTitle}</span>
           </h3>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 transition-colors duration-200 p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors duration-200 p-2 rounded-lg hover:bg-slate-100 active:bg-slate-200 cursor-pointer touch-manipulation tap-highlight flex-shrink-0"
             aria-label={t.settingsTitle}
             type="button"
           >
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
-        <div className="p-6 space-y-5">
+        <div className="p-4 sm:p-6 space-y-5 overflow-y-auto">
           <div>
             <label htmlFor="api-key-input" className="block text-sm font-semibold text-slate-700 mb-2">
               {t.apiKeyLabel}

@@ -638,17 +638,17 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
       {setFrameIncluded && (
         <p className="text-[10px] text-slate-500 mb-2">勾選納入動圖與匯出；取消勾選則排除</p>
       )}
-      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-2.5">
         {frames.map((frame, idx) => (
           <div
             key={idx}
-            className={`relative aspect-square rounded-lg border-2 overflow-hidden bg-white transition-all duration-200 shadow-sm hover:shadow-md group
+            className={`relative aspect-square rounded-lg border-2 overflow-hidden bg-white transition-all duration-200 shadow-sm hover:shadow-md group touch-manipulation
               ${idx === currentFrameIndex ? 'border-orange-500 ring-2 ring-orange-200 shadow-md' : 'border-slate-200 hover:border-orange-400'}
               ${frameIncluded[idx] === false ? 'opacity-50' : ''}`}
           >
             {setFrameIncluded && (
               <label
-                className="absolute top-1 left-1 z-10 flex items-center justify-center w-6 h-6 rounded bg-white/95 border border-slate-200 cursor-pointer hover:bg-slate-50"
+                className="absolute top-1 left-1 z-10 flex items-center justify-center min-w-[36px] min-h-[36px] w-8 h-8 rounded-lg bg-white/95 border border-slate-200 cursor-pointer hover:bg-slate-50 active:bg-slate-100 touch-manipulation tap-highlight"
                 onClick={(e) => e.stopPropagation()}
                 title={frameIncluded[idx] === false ? '納入動圖' : '排除於動圖'}
               >
@@ -663,12 +663,12 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                       return n;
                     });
                   }}
-                  className="rounded border-slate-300 text-orange-500 focus:ring-orange-500/30 w-3.5 h-3.5"
+                  className="rounded border-slate-300 text-orange-500 focus:ring-orange-500/30 w-4 h-4 touch-manipulation"
                 />
               </label>
             )}
             <div
-              className="w-full h-full cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95"
+              className="w-full h-full cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95 tap-highlight"
               onClick={() => onFrameClick(idx)}
               role="button"
               tabIndex={0}
@@ -691,12 +691,12 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setEditingFrameIndex(idx); }}
-                className={`absolute top-1 right-1 p-1.5 rounded-lg transition-all
-                  ${editingFrameIndex === idx ? 'bg-orange-500 text-white' : 'bg-white/90 text-slate-500 hover:bg-orange-100 hover:text-orange-600'}`}
+                className={`absolute top-1 right-1 min-w-[36px] min-h-[36px] p-2 rounded-lg transition-all flex items-center justify-center touch-manipulation tap-highlight
+                  ${editingFrameIndex === idx ? 'bg-orange-500 text-white' : 'bg-white/90 text-slate-500 hover:bg-orange-100 hover:text-orange-600 active:bg-orange-200'}`}
                 title="逐幀調整切割"
                 aria-label={`編輯第 ${idx + 1} 幀`}
               >
-                <Pencil className="w-3.5 h-3.5" />
+                <Pencil className="w-4 h-4" />
               </button>
             )}
           </div>
