@@ -1073,11 +1073,12 @@ export const smartAutoAlignFrames = async (
   const anchorCellWidth = cellRects[anchorIdx].width;
   const anchorCellHeight = cellRects[anchorIdx].height;
 
-  // If user provided an anchor offset, use it; otherwise center the anchor frame in its cell
-  // (fixes first-frame deviation: anchor frame content is centered instead of staying at 0,0)
+  // If user provided an anchor offset, use it; otherwise center the anchor frame in its cell.
+  // Crop center in cell-local is (cellWidth/2 + offsetX, cellHeight/2 + offsetY). To place the
+  // character ref at frame center we need: cellWidth/2 + offsetX = anchorRef.x => offsetX = anchorRef.x - cellWidth/2.
   const userAnchorOffset = anchorOffset ?? {
-    offsetX: anchorCellWidth / 2 - anchorRef.x,
-    offsetY: anchorCellHeight / 2 - anchorRef.y
+    offsetX: anchorRef.x - anchorCellWidth / 2,
+    offsetY: anchorRef.y - anchorCellHeight / 2
   };
 
   // Calculate raw offsets to align each frame's reference point to anchor
