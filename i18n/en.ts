@@ -164,6 +164,7 @@ export const en: Translations = {
   errorExportApng: 'APNG export failed',
   errorExportGif: 'GIF export failed',
   errorExportZip: 'ZIP export failed',
+  errorSaveProject: 'Failed to save project (storage full). Try deleting old projects first.',
 
   // Status Messages
   statusPreparing: 'Preparing sprite sheet',
@@ -181,6 +182,18 @@ export const en: Translations = {
     idleBreath: { name: 'Idle Breathing', description: 'Character idle breathing animation' },
     attack: { name: 'Attack Action', description: 'Character slashing attack' },
   },
+
+  // Project History
+  projectHistory: 'Project History',
+  saveProject: 'Save Project',
+  saveProjectAs: 'Save As…',
+  projectNamePlaceholder: 'Project name (optional)',
+  loadProject: 'Load',
+  deleteProject: 'Delete',
+  noProjectsYet: 'No projects yet. Save after generating once.',
+  projectSaved: 'Saved to history',
+  projectLoaded: 'Project loaded',
+  projectDeleted: 'Deleted',
 
   // Language
   language: 'Language',

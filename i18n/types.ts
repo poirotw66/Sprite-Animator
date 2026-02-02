@@ -166,6 +166,7 @@ export interface Translations {
   errorExportApng: string;
   errorExportGif: string;
   errorExportZip: string;
+  errorSaveProject: string;
 
   // Status Messages
   statusPreparing: string;
@@ -183,6 +184,18 @@ export interface Translations {
     idleBreath: { name: string; description: string };
     attack: { name: string; description: string };
   };
+
+  // Project History
+  projectHistory: string;
+  saveProject: string;
+  saveProjectAs: string;
+  projectNamePlaceholder: string;
+  loadProject: string;
+  deleteProject: string;
+  noProjectsYet: string;
+  projectSaved: string;
+  projectLoaded: string;
+  projectDeleted: string;
 
   // Language
   language: string;

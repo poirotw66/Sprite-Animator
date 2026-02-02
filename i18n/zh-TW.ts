@@ -164,6 +164,7 @@ export const zhTW: Translations = {
   errorExportApng: 'APNG 導出失敗',
   errorExportGif: 'GIF 導出失敗',
   errorExportZip: 'ZIP 打包失敗',
+  errorSaveProject: '儲存專案失敗（儲存空間不足）。請刪除舊專案後再試。',
 
   // Status Messages
   statusPreparing: '準備生成精靈圖',
@@ -181,6 +182,18 @@ export const zhTW: Translations = {
     idleBreath: { name: '待機呼吸', description: '角色待機時的呼吸動作' },
     attack: { name: '攻擊動作', description: '角色揮砍攻擊' },
   },
+
+  // Project History
+  projectHistory: '歷史項目',
+  saveProject: '儲存專案',
+  saveProjectAs: '另存為…',
+  projectNamePlaceholder: '專案名稱（選填）',
+  loadProject: '載入',
+  deleteProject: '刪除',
+  noProjectsYet: '尚無歷史專案，完成一次生成後可儲存。',
+  projectSaved: '已儲存至歷史',
+  projectLoaded: '已載入專案',
+  projectDeleted: '已刪除',
 
   // Language
   language: '語言',

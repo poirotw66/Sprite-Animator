@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
-import { RefreshCw, Settings, Zap, Loader2 } from './components/Icons';
+import { RefreshCw, Settings, Zap, Loader2, Save } from './components/Icons';
 import { SettingsModal } from './components/SettingsModal';
 import { ImageUpload } from './components/ImageUpload';
 import { AnimationConfigPanel } from './components/AnimationConfig';
@@ -22,8 +22,11 @@ import { useSettings } from './hooks/useSettings';
 import { useAnimation } from './hooks/useAnimation';
 import { useSpriteSheet } from './hooks/useSpriteSheet';
 import { useExport } from './hooks/useExport';
+import { useProjectHistory } from './hooks/useProjectHistory';
+import { ProjectHistory } from './components/ProjectHistory';
 import { DEFAULT_CONFIG, DEFAULT_SLICE_SETTINGS } from './utils/constants';
 import { optimizeSliceSettings } from './utils/imageUtils';
+import type { SavedProject } from './types';
 
 const App: React.FC = () => {
   // Language
@@ -85,13 +88,24 @@ const App: React.FC = () => {
 
   // Per-frame include toggle for custom animation (which frames to use in playback/export)
   const [frameIncluded, setFrameIncluded] = useState<boolean[]>([]);
+  const pendingLoadRef = useRef<{ frameOverrides: SavedProject['frameOverrides']; frameIncluded: boolean[] } | null>(null);
+
   useEffect(() => {
+    if (pendingLoadRef.current) {
+      const { frameOverrides: overrides, frameIncluded: included } = pendingLoadRef.current;
+      if (generatedFrames.length === included.length) {
+        setFrameOverrides(overrides as Parameters<typeof setFrameOverrides>[0]);
+        setFrameIncluded(included);
+        pendingLoadRef.current = null;
+      }
+      return;
+    }
     setFrameIncluded((prev) => {
       const L = generatedFrames.length;
       if (prev.length === L) return prev;
       return Array(L).fill(true);
     });
-  }, [generatedFrames.length]);
+  }, [generatedFrames.length, setFrameOverrides]);
 
   // Animation frames = only included; used for preview, playback, export
   const animationFrames = useMemo(
@@ -324,6 +338,56 @@ const App: React.FC = () => {
     setIsPlaying((prev) => !prev);
   }, []);
 
+  // Project history
+  const { list: projectList, saveCurrent: saveProjectToHistory, loadProjectById, deleteProject, refreshList: refreshProjectList } = useProjectHistory();
+  const [isSavingProject, setIsSavingProject] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [bottomSaveName, setBottomSaveName] = useState('');
+
+  const handleSaveProject = useCallback(
+    (name?: string) => {
+      try {
+        const snapshot: Omit<SavedProject, 'id' | 'name' | 'createdAt'> = {
+          config,
+          sliceSettings: { ...sliceSettings },
+          removeBackground,
+          sourceImage,
+          spriteSheetImage,
+          frameModeFrames,
+          frameOverrides: [...frameOverrides],
+          frameIncluded: [...frameIncluded],
+        };
+        const id = saveProjectToHistory(snapshot, name);
+        if (id) {
+          setError(null);
+          setSaveError(null);
+        } else {
+          setSaveError(t.errorSaveProject);
+        }
+      } finally {
+        setIsSavingProject(false);
+      }
+    },
+    [config, sliceSettings, removeBackground, sourceImage, spriteSheetImage, frameModeFrames, frameOverrides, frameIncluded, saveProjectToHistory, t]
+  );
+
+  const handleLoadProject = useCallback((project: SavedProject) => {
+    setConfig(project.config);
+    setSliceSettings(project.sliceSettings as typeof sliceSettings);
+    setRemoveBackground(project.removeBackground);
+    setSourceImage(project.sourceImage);
+    setSpriteSheetImage(project.spriteSheetImage);
+    setFrameModeFrames(project.frameModeFrames);
+    setError(null);
+    setCurrentFrameIndex(0);
+    pendingLoadRef.current = {
+      frameOverrides: project.frameOverrides,
+      frameIncluded: project.frameIncluded,
+    };
+  }, []);
+
+  const canSaveProject = generatedFrames.length > 0;
+
   // Determine key status for UI
   const hasCustomKey = useMemo(() => !!apiKey.trim(), [apiKey]);
 
@@ -395,6 +459,16 @@ const App: React.FC = () => {
             </span>
           </h1>
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            <ProjectHistory
+              list={projectList}
+              onSaveCurrent={(name) => { setIsSavingProject(true); handleSaveProject(name); }}
+              loadProjectById={loadProjectById}
+              onLoad={handleLoadProject}
+              onDelete={deleteProject}
+              canSave={canSaveProject}
+              isSaving={isSavingProject}
+              variant="header"
+            />
             <LanguageSwitcher />
             <button
               onClick={() => setShowSettings(true)}
@@ -515,6 +589,46 @@ const App: React.FC = () => {
                     frameIncluded={frameIncluded}
                     setFrameIncluded={setFrameIncluded}
                   />
+                  <div className="mt-4 space-y-2">
+                    {saveError && (
+                      <div className="flex items-center justify-between gap-2 text-red-700 text-sm bg-red-50 p-3 rounded-lg border border-red-200" role="alert">
+                        <span>{saveError}</span>
+                        <button
+                          type="button"
+                          onClick={() => setSaveError(null)}
+                          className="flex-shrink-0 px-2 py-1 rounded hover:bg-red-100 text-red-600 font-medium"
+                          aria-label={t.reset}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )}
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="text"
+                        value={bottomSaveName}
+                        onChange={(e) => setBottomSaveName(e.target.value)}
+                        placeholder={t.projectNamePlaceholder}
+                        className="flex-1 min-w-0 px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
+                        aria-label={t.projectNamePlaceholder}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsSavingProject(true);
+                          setSaveError(null);
+                          handleSaveProject(bottomSaveName.trim() || undefined);
+                          setBottomSaveName('');
+                        }}
+                        disabled={!canSaveProject || isSavingProject}
+                        className="min-h-[40px] px-4 flex items-center justify-center gap-2 rounded-lg text-sm font-semibold bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation tap-highlight"
+                        aria-label={t.saveProject}
+                      >
+                        {isSavingProject ? <span className="animate-pulse">…</span> : <Save className="w-4 h-4" />}
+                        {t.saveProject}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </Suspense>
             )}

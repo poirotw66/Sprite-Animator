@@ -27,3 +27,48 @@ export interface ExampleData {
   gridCols: number;
   gridRows: number;
 }
+
+/** Per-frame override for crop (offsetX, offsetY, scale). Used in saved project. */
+export interface SavedFrameOverride {
+  offsetX?: number;
+  offsetY?: number;
+  scale?: number;
+}
+
+/** Slice settings snapshot for saved project (matches SliceSettings from imageUtils). */
+export interface SavedSliceSettings {
+  cols: number;
+  rows: number;
+  paddingX: number;
+  paddingY: number;
+  paddingLeft?: number;
+  paddingRight?: number;
+  paddingTop?: number;
+  paddingBottom?: number;
+  shiftX: number;
+  shiftY: number;
+  sliceMode?: 'equal' | 'inferred';
+  inferredCellRects?: Array<{ x: number; y: number; width: number; height: number }>;
+}
+
+/** Full project snapshot for history (localStorage). */
+export interface SavedProject {
+  id: string;
+  name: string;
+  createdAt: number;
+  config: AnimationConfig;
+  sliceSettings: SavedSliceSettings;
+  removeBackground: boolean;
+  sourceImage: string | null;
+  spriteSheetImage: string | null;
+  frameModeFrames: string[];
+  frameOverrides: SavedFrameOverride[];
+  frameIncluded: boolean[];
+}
+
+/** Lightweight project entry for history list (no base64). */
+export interface SavedProjectMeta {
+  id: string;
+  name: string;
+  createdAt: number;
+}
