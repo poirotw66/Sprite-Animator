@@ -100,6 +100,32 @@ A tool for generating 2D character animations using Google Gemini AI, supporting
   - Real-time progress display (0-100%)
   - Ensures no white edges, no checkerboard pattern, no frame illusion
 
+## 📷 Usage Examples
+
+The following examples use the same character source image with different action prompts to generate multiple animations and export as GIF.
+
+### Source Image (Input)
+
+Upload a character standing or bust image as the generation source:
+
+| Source |
+|--------|
+| ![Source gemini](images/gemini.png) |
+| **gemini.png** — Character source file |
+
+### Generated Results (Output)
+
+Use **Sprite Sheet Mode** or **Frame-by-Frame Mode**, enter an action prompt to generate the animation, then export as GIF:
+
+| Action | Generated GIF |
+|--------|---------------|
+| Happy (開心) | ![Happy](images/開心.gif) |
+| Wave (揮手) | ![Wave](images/揮手.gif) |
+| Head tilt confused (偏頭疑惑) | ![Head tilt confused](images/偏頭疑惑.gif) |
+| Angry (生氣) | ![Angry](images/生氣.gif) |
+
+All GIFs above were generated from **gemini.png** using this tool with the Google Gemini API.
+
 ## 🏗️ Project Structure
 
 ```
@@ -229,6 +255,8 @@ npm run preview
 - **Appropriate frame count**: 4-8 frames are usually sufficient for basic actions
 
 ## 🐛 Troubleshooting
+
+If you run into issues, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
 
 Common issues:
 - **Blank page**: Check if dev server is running, clear browser cache
