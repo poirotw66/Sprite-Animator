@@ -187,7 +187,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
     img.src = processedSpriteSheet!;
   }, [hasSheetData, processedSpriteSheet, sliceSettings, sheetDimensions, editingFrameIndex, frameOverrides, dragOffset, usePrevAsRef, prevRefOpacity, frames]);
 
-  const handleCropCanvasMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+  const startCropDrag = useCallback((clientX: number, clientY: number) => {
     if (!processedSpriteSheet || !sliceSettings || !setFrameOverrides || editingFrameIndex == null ||
         !sheetDimensions || sheetDimensions.width <= 0 || sheetDimensions.height <= 0 || !canvasRef.current) return;
     const padding = getEffectivePadding(sliceSettings);
@@ -214,8 +214,8 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
     const ox = (CANVAS_SIZE - cropW * displayScale) / 2;
     const oy = (CANVAS_SIZE - cropH * displayScale) / 2;
     const rect = canvasRef.current.getBoundingClientRect();
-    const canvasX = ((e.clientX - rect.left) / rect.width) * CANVAS_SIZE;
-    const canvasY = ((e.clientY - rect.top) / rect.height) * CANVAS_SIZE;
+    const canvasX = ((clientX - rect.left) / rect.width) * CANVAS_SIZE;
+    const canvasY = ((clientY - rect.top) / rect.height) * CANVAS_SIZE;
     const cw = cropW * displayScale;
     const ch = cropH * displayScale;
     const hit = canvasX >= ox && canvasX <= ox + cw && canvasY >= oy && canvasY <= oy + ch;
@@ -229,53 +229,96 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
     const dragStart = { canvasX, canvasY };
     const dragStartOffset = { x: offX, y: offY };
     latestOffsetRef.current = { x: offX, y: offY };
-    const onMove = (e2: MouseEvent) => {
+    const applyMove = (nextClientX: number, nextClientY: number) => {
       const r = canvasRef.current?.getBoundingClientRect();
       if (!r) return;
-      const cx = ((e2.clientX - r.left) / r.width) * CANVAS_SIZE;
-      const cy = ((e2.clientY - r.top) / r.height) * CANVAS_SIZE;
+      const cx = ((nextClientX - r.left) / r.width) * CANVAS_SIZE;
+      const cy = ((nextClientY - r.top) / r.height) * CANVAS_SIZE;
       const dSheetX = (cx - dragStart.canvasX) / displayScale;
       const dSheetY = (cy - dragStart.canvasY) / displayScale;
-      let nx = Math.max(offXMin, Math.min(offXMax, dragStartOffset.x + dSheetX));
-      let ny = Math.max(offYMin, Math.min(offYMax, dragStartOffset.y + dSheetY));
+      const nx = Math.max(offXMin, Math.min(offXMax, dragStartOffset.x + dSheetX));
+      const ny = Math.max(offYMin, Math.min(offYMax, dragStartOffset.y + dSheetY));
       setDragOffset({ x: nx, y: ny });
       latestOffsetRef.current = { x: nx, y: ny };
+    };
+    const onMoveMouse = (e2: MouseEvent) => applyMove(e2.clientX, e2.clientY);
+    const onMoveTouch = (e2: TouchEvent) => {
+      e2.preventDefault();
+      if (e2.touches.length) applyMove(e2.touches[0].clientX, e2.touches[0].clientY);
     };
     const onUp = () => {
       updateOverride({ offsetX: latestOffsetRef.current.x, offsetY: latestOffsetRef.current.y });
       setDragOffset(null);
-      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mousemove', onMoveMouse);
       window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchmove', onMoveTouch, { capture: true });
+      window.removeEventListener('touchend', onUp);
+      window.removeEventListener('touchcancel', onUp);
     };
-    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mousemove', onMoveMouse);
     window.addEventListener('mouseup', onUp);
-    e.preventDefault();
+    window.addEventListener('touchmove', onMoveTouch, { passive: false, capture: true });
+    window.addEventListener('touchend', onUp);
+    window.addEventListener('touchcancel', onUp);
   }, [processedSpriteSheet, sliceSettings, sheetDimensions, editingFrameIndex, frameOverrides, dragOffset, updateOverride]);
 
-  const handleEditPanelDragStart = useCallback((e: React.MouseEvent) => {
+  const handleCropCanvasMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (e.button !== 0) return;
+    startCropDrag(e.clientX, e.clientY);
+    e.preventDefault();
+  }, [startCropDrag]);
+
+  const handleCropCanvasTouchStart = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.touches.length === 0) return;
+    e.preventDefault();
+    startCropDrag(e.touches[0].clientX, e.touches[0].clientY);
+  }, [startCropDrag]);
+
+  const startEditPanelDrag = useCallback((clientX: number, clientY: number) => {
     const el = editPanelRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const start = { clientX: e.clientX, clientY: e.clientY, left: rect.left, top: rect.top };
+    const start = { clientX, clientY, left: rect.left, top: rect.top };
     panelDragPosRef.current = { x: rect.left, y: rect.top };
-    const onMove = (e2: MouseEvent) => {
-      let x = start.left + (e2.clientX - start.clientX);
-      let y = start.top + (e2.clientY - start.clientY);
+    const applyMove = (nextX: number, nextY: number) => {
+      let x = start.left + (nextX - start.clientX);
+      let y = start.top + (nextY - start.clientY);
       x = Math.max(8, Math.min(window.innerWidth - 100, x));
       y = Math.max(8, Math.min(window.innerHeight - 100, y));
       panelDragPosRef.current = { x, y };
       setPanelPosition({ x, y });
     };
+    const onMoveMouse = (e2: MouseEvent) => applyMove(e2.clientX, e2.clientY);
+    const onMoveTouch = (e2: TouchEvent) => {
+      e2.preventDefault();
+      if (e2.touches.length) applyMove(e2.touches[0].clientX, e2.touches[0].clientY);
+    };
     const onUp = () => {
       setPanelPosition({ ...panelDragPosRef.current });
-      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mousemove', onMoveMouse);
       window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchmove', onMoveTouch, { capture: true });
+      window.removeEventListener('touchend', onUp);
+      window.removeEventListener('touchcancel', onUp);
     };
-    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mousemove', onMoveMouse);
     window.addEventListener('mouseup', onUp);
-    e.preventDefault();
+    window.addEventListener('touchmove', onMoveTouch, { passive: false, capture: true });
+    window.addEventListener('touchend', onUp);
+    window.addEventListener('touchcancel', onUp);
   }, []);
+
+  const handleEditPanelMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    startEditPanelDrag(e.clientX, e.clientY);
+    e.preventDefault();
+  }, [startEditPanelDrag]);
+
+  const handleEditPanelTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 0) return;
+    e.preventDefault();
+    startEditPanelDrag(e.touches[0].clientX, e.touches[0].clientY);
+  }, [startEditPanelDrag]);
 
   if (frames.length === 0) return null;
 
@@ -296,8 +339,10 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
             : { left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
         >
           <div
-            className="flex items-center justify-between gap-2 py-2 -mx-1 -mt-1 px-2 mb-3 rounded-t cursor-move select-none touch-none border-b border-slate-200/60 bg-slate-100/50"
-            onMouseDown={handleEditPanelDragStart}
+            className="flex items-center justify-between gap-2 py-2 -mx-1 -mt-1 px-2 mb-3 rounded-t cursor-move select-none border-b border-slate-200/60 bg-slate-100/50 touch-manipulation"
+            style={{ touchAction: 'none' }}
+            onMouseDown={handleEditPanelMouseDown}
+            onTouchStart={handleEditPanelTouchStart}
             aria-label="拖曳此列以移動編輯框"
           >
             <div className="flex items-center gap-2 min-w-0">
@@ -308,7 +353,8 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
               type="button"
               onClick={(e) => { e.stopPropagation(); setEditingFrameIndex(null); setDragOffset(null); setPanelPosition(null); }}
               onMouseDown={(e) => e.stopPropagation()}
-              className="p-1 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors shrink-0"
+              onTouchStart={(e) => e.stopPropagation()}
+              className="min-w-[44px] min-h-[44px] p-1 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors shrink-0 flex items-center justify-center"
               aria-label="關閉"
             >
               <X className="w-4 h-4" />
@@ -322,11 +368,12 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                 width={CANVAS_SIZE}
                 height={CANVAS_SIZE}
                 onMouseDown={handleCropCanvasMouseDown}
-                className="block w-full max-w-[400px] aspect-square border border-slate-200 rounded-lg bg-slate-100 cursor-grab active:cursor-grabbing"
-                style={{ imageRendering: 'pixelated' }}
+                onTouchStart={handleCropCanvasTouchStart}
+                className="block w-full max-w-[400px] aspect-square border border-slate-200 rounded-lg bg-slate-100 cursor-grab active:cursor-grabbing touch-none"
+                style={{ imageRendering: 'pixelated', touchAction: 'none' }}
                 aria-label="單張幀剪輯預覽，可拖動橙色虛線框調整切割範圍"
               />
-              <p className="text-[10px] text-slate-400 mt-1">在框內按住拖動可調整切割位子，放開後套用</p>
+              <p className="text-[10px] text-slate-400 mt-1">在框內按住拖動可調整切割位子（手機亦可觸控拖動），放開後套用</p>
               {editingFrameIndex > 0 && (
                 <div className="mt-2 space-y-2">
                   <label className="flex items-center gap-2 cursor-pointer">
