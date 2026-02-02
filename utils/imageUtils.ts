@@ -805,12 +805,12 @@ export const analyzeFrameContent = async (
         const centerOfMass = { x: sumX / pixelCount, y: sumY / pixelCount };
         const bounds = { minX, maxX, minY, maxY };
 
-        // Trunk band: narrow central strip to reduce hair/earring/brooch influence on alignment
-        // Vertical: middle 50% (torso zone); horizontal: central 30% (35%-65%) for precise torso center
-        const trunkTop = h * 0.25;
-        const trunkBottom = h * 0.75;
-        const trunkLeft = w * 0.35;
-        const trunkRight = w * 0.65;
+        // Trunk band: very narrow central strip (spine-centric) so main torso has almost no frame-to-frame offset.
+        // Vertical: middle 40% (30%-70%) to avoid shoulders/hips; horizontal: central 16% (42%-58%) for spine only.
+        const trunkTop = h * 0.30;
+        const trunkBottom = h * 0.70;
+        const trunkLeft = w * 0.42;
+        const trunkRight = w * 0.58;
 
         const trunkXs: number[] = [];
         const trunkYs: number[] = [];
@@ -828,18 +828,44 @@ export const analyzeFrameContent = async (
             trunkYs.push(dy);
           }
         }
-        const trunkCount = trunkXs.length;
+        let trunkCount = trunkXs.length;
+
+        const median = (arr: number[]) => {
+          if (arr.length === 0) return 0;
+          const s = [...arr].sort((a, b) => a - b);
+          const mid = (s.length - 1) / 2;
+          const i = Math.floor(mid);
+          return s.length % 2 === 1 ? s[i]! : (s[i]! + s[i + 1]!) / 2;
+        };
+
+        // Outlier rejection: keep only pixels near initial median so arms/hair crossing the band don't shift the center
+        const trunkMinForMedian = 15;
+        const outlierRadius = Math.min(w, h) * 0.22;
+        if (trunkCount >= trunkMinForMedian && outlierRadius > 0) {
+          let mx = median(trunkXs);
+          let my = median(trunkYs);
+          const inlierXs: number[] = [];
+          const inlierYs: number[] = [];
+          for (let k = 0; k < trunkXs.length; k++) {
+            const dx = trunkXs[k]! - mx;
+            const dy = trunkYs[k]! - my;
+            if (dx * dx + dy * dy <= outlierRadius * outlierRadius) {
+              inlierXs.push(trunkXs[k]!);
+              inlierYs.push(trunkYs[k]!);
+            }
+          }
+          if (inlierXs.length >= 8) {
+            trunkXs.length = 0;
+            trunkYs.length = 0;
+            trunkXs.push(...inlierXs);
+            trunkYs.push(...inlierYs);
+            trunkCount = trunkXs.length;
+          }
+        }
 
         // Use median for core center (robust to asymmetric hair/accessories); fallback to mean if small set
         let coreCenter: { x: number; y: number };
-        const trunkMinForMedian = 15;
         if (trunkCount >= trunkMinForMedian) {
-          const mid = (n: number) => (n - 1) / 2;
-          const median = (arr: number[]) => {
-            const s = [...arr].sort((a, b) => a - b);
-            const i = Math.floor(mid(s.length));
-            return s.length % 2 === 1 ? s[i]! : (s[i]! + s[i + 1]!) / 2;
-          };
           coreCenter = { x: median(trunkXs), y: median(trunkYs) };
         } else if (trunkCount >= 5) {
           const sumX = trunkXs.reduce((a, b) => a + b, 0);
@@ -900,13 +926,23 @@ export const smartAutoAlignFrames = async (
   scale: number = 1,
   options: {
     alignMode: 'core' | 'bounds' | 'mass';
-    temporalSmoothing: number; // 0-1, higher = more smoothing (default 0.7 for continuous animation)
+    temporalSmoothing: number; // 0-1, higher = more smoothing (default 0.85 for stable torso)
     anchorFrame: number;
     anchorOffset?: { offsetX: number; offsetY: number };
     maxDeltaPerFrame?: number; // Max px change from previous frame (keeps animation continuous)
-  } = { alignMode: 'core', temporalSmoothing: 0.7, anchorFrame: 0 }
+    lockHorizontalToAnchor?: boolean; // When true, use anchor offsetX for all frames (zero horizontal drift)
+    lockAllFramesToAnchor?: boolean; // When true, use anchor offset for ALL frames (zero frame-to-frame drift)
+  } = { alignMode: 'core', temporalSmoothing: 0.85, anchorFrame: 0 }
 ): Promise<Array<{ offsetX: number; offsetY: number }>> => {
-  const { alignMode, temporalSmoothing, anchorFrame, anchorOffset, maxDeltaPerFrame = MAX_DELTA_PER_FRAME } = options;
+  const {
+    alignMode,
+    temporalSmoothing,
+    anchorFrame,
+    anchorOffset,
+    maxDeltaPerFrame = MAX_DELTA_PER_FRAME,
+    lockHorizontalToAnchor = alignMode === 'core',
+    lockAllFramesToAnchor = alignMode === 'core'
+  } = options;
   
   // Analyze all frames
   const analyses: ContentAnalysis[] = [];
@@ -951,7 +987,7 @@ export const smartAutoAlignFrames = async (
   };
 
   // Calculate raw offsets to align each frame's reference point to anchor
-  const rawOffsets = analyses.map((analysis, i) => {
+  let rawOffsets = analyses.map((analysis, i) => {
     if (!analysis.hasContent) {
       return { offsetX: userAnchorOffset.offsetX, offsetY: userAnchorOffset.offsetY };
     }
@@ -972,16 +1008,33 @@ export const smartAutoAlignFrames = async (
     const offsetY = userAnchorOffset.offsetY + deltaY;
     return { offsetX, offsetY };
   });
-  
-  // Apply temporal smoothing (moving average)
+
+  // Lock all frames to anchor so main torso has almost no offset frame-to-frame (no per-frame drift)
+  if (lockAllFramesToAnchor) {
+    rawOffsets = rawOffsets.map(() => ({
+      offsetX: userAnchorOffset.offsetX,
+      offsetY: userAnchorOffset.offsetY
+    }));
+  } else if (lockHorizontalToAnchor) {
+    rawOffsets = rawOffsets.map((o) => ({
+      offsetX: userAnchorOffset.offsetX,
+      offsetY: o.offsetY
+    }));
+  }
+
+  // Apply temporal smoothing (moving average); when horizontal locked, only smooth Y
   let offsets = rawOffsets;
   if (temporalSmoothing > 0 && rawOffsets.length > 2) {
     offsets = rawOffsets.map((_, i) => {
       const prev = rawOffsets[Math.max(0, i - 1)];
       const curr = rawOffsets[i];
       const next = rawOffsets[Math.min(rawOffsets.length - 1, i + 1)];
-      const smoothX = curr.offsetX * (1 - temporalSmoothing) + (prev.offsetX + next.offsetX) / 2 * temporalSmoothing;
-      const smoothY = curr.offsetY * (1 - temporalSmoothing) + (prev.offsetY + next.offsetY) / 2 * temporalSmoothing;
+      const smoothX = (lockAllFramesToAnchor || lockHorizontalToAnchor)
+        ? userAnchorOffset.offsetX
+        : curr.offsetX * (1 - temporalSmoothing) + (prev.offsetX + next.offsetX) / 2 * temporalSmoothing;
+      const smoothY = lockAllFramesToAnchor
+        ? userAnchorOffset.offsetY
+        : curr.offsetY * (1 - temporalSmoothing) + (prev.offsetY + next.offsetY) / 2 * temporalSmoothing;
       return {
         offsetX: Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, smoothX)),
         offsetY: Math.max(-CENTROID_OFFSET_CLAMP, Math.min(CENTROID_OFFSET_CLAMP, smoothY))
