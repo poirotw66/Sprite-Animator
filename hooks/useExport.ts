@@ -7,6 +7,19 @@ import UPNG from 'upng-js';
 import JSZip from 'jszip';
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 
+/** Decode PNG from base64/data URL to RGBA using UPNG (same source as ZIP, no canvas). */
+function decodePngToRgba(dataUrl: string): { data: Uint8ClampedArray; width: number; height: number } {
+  const base64 = dataUrl.replace(/^data:image\/(png|jpg|jpeg);base64,/, '');
+  const binary = atob(base64);
+  const len = binary.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+  const img = UPNG.decode(bytes.buffer);
+  const frames = UPNG.toRGBA8(img);
+  const data = new Uint8ClampedArray(frames[0]);
+  return { data, width: img.width, height: img.height };
+}
+
 /**
  * Custom hook for exporting animation frames in various formats.
  * Supports APNG (high quality with transparency), GIF, and ZIP formats.
@@ -107,28 +120,38 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
         logger.debug(`Interpolation complete: ${framesToExport.length} frames`);
       }
 
-      // Step 2: Load image data for all frames
-      const { imagesData, width, height } = await loadImagesData(framesToExport);
+      // Step 2: Decode PNG to RGBA the same way as ZIP (raw PNG bytes via UPNG, no canvas)
+      const imagesData = framesToExport.map((frame) => decodePngToRgba(frame));
+      const width = imagesData[0].width;
+      const height = imagesData[0].height;
 
-      // Step 3: Create GIF with optimized settings
+      // Step 3: Create GIF from same RGBA as in the PNG files
       const gif = new GIFEncoder();
-      
-      // Calculate delay based on interpolated frame count
-      // Target smooth playback at GIF_TARGET_FPS
       const effectiveFps = config.enableInterpolation ? GIF_TARGET_FPS : originalFps;
       const delayMs = Math.round(1000 / effectiveFps);
+      const GIF_FORMAT = 'rgba4444' as const;
 
       for (const { data } of imagesData) {
-        // Use 256 colors for best quality
-        const palette = quantize(data, 256);
-        const index = applyPalette(data, palette);
-        
+        const palette = quantize(data, 256, { format: GIF_FORMAT });
+        const index = applyPalette(data, palette, GIF_FORMAT);
+
+        let transparentIndex = 0;
+        let minAlpha = 256;
+        for (let i = 0; i < palette.length; i++) {
+          const a = palette[i].length === 4 ? palette[i][3] : 255;
+          if (a < minAlpha) {
+            minAlpha = a;
+            transparentIndex = i;
+          }
+        }
+        const hasTransparency = minAlpha <= 127;
+
         gif.writeFrame(index, width, height, {
-          palette,
+          palette: palette.map((c) => c.slice(0, 3)),
           delay: delayMs,
-          transparent: true,
-          transparentIndex: 0, // Specify transparent color index
-          dispose: 2, // Restore to background - prevents ghosting artifacts
+          transparent: hasTransparency,
+          transparentIndex,
+          dispose: 2,
         });
       }
 
