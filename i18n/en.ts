@@ -94,8 +94,6 @@ export const en: Translations = {
   fineTunePosition: 'Fine-tune position',
   autoOptimized: 'Auto Optimized',
   center: 'Center',
-  inferGridFromGaps: 'Infer Grid from Gaps',
-  inferGridFromGapsProgress: 'Inferring…',
   dragHint: 'Drag border to resize · Drag inside to move',
   downloadProcessed: 'Download (Processed)',
   downloadOriginal: 'Download (Original)',

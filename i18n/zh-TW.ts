@@ -94,8 +94,6 @@ export const zhTW: Translations = {
   fineTunePosition: '微調位置',
   autoOptimized: '自動優化',
   center: '居中',
-  inferGridFromGaps: '由空隙推斷格線',
-  inferGridFromGapsProgress: '推斷中…',
   dragHint: '拖動邊框調整大小 · 拖動網格內移動位置',
   downloadProcessed: '下載精靈圖（已去背）',
   downloadOriginal: '下載原圖',

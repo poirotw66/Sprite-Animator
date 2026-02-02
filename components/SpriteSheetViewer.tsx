@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState, useRef } from 'react';
 import { Download, Grid3X3, Loader2, Sliders, RefreshCw, Move, Eye, EyeOff } from './Icons';
-import { SliceSettings, getEffectivePadding, inferGridFromGaps } from '../utils/imageUtils';
+import { SliceSettings, getEffectivePadding } from '../utils/imageUtils';
 import { GRID_PATTERN_URL } from '../utils/constants';
 import { useLanguage } from '../hooks/useLanguage';
 
@@ -74,26 +74,6 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   }, [setSliceSettings]);
 
   const padding = useMemo(() => getEffectivePadding(sliceSettings), [sliceSettings]);
-  const [isInferringGrid, setIsInferringGrid] = useState(false);
-
-  const handleInferGridFromGaps = useCallback(async () => {
-    if (!spriteSheetImage) return;
-    setIsInferringGrid(true);
-    try {
-      const result = await inferGridFromGaps(spriteSheetImage);
-      if (result) {
-        setSliceSettings((prev) => ({
-          ...prev,
-          sliceMode: 'inferred',
-          inferredCellRects: result.cellRects,
-          cols: result.cols,
-          rows: result.rows,
-        }));
-      }
-    } finally {
-      setIsInferringGrid(false);
-    }
-  }, [spriteSheetImage, setSliceSettings]);
 
   // Calculate real-time information (four-edge aware)
   const cellInfo = useMemo(() => {
@@ -730,26 +710,6 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 {t.resetSettings}
-              </button>
-              <button
-                type="button"
-                disabled={!spriteSheetImage || isInferringGrid}
-                onClick={handleInferGridFromGaps}
-                className="text-xs flex items-center gap-1.5 text-green-700 bg-green-100 hover:bg-green-200 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border border-green-300 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                title={t.inferGridFromGaps}
-                aria-label={t.inferGridFromGaps}
-              >
-                {isInferringGrid ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    {t.inferGridFromGapsProgress}
-                  </>
-                ) : (
-                  <>
-                    <Grid3X3 className="w-3.5 h-3.5" />
-                    {t.inferGridFromGaps}
-                  </>
-                )}
               </button>
             </div>
           </div>

@@ -36,7 +36,7 @@ export interface SliceSettings {
   };
   /** 'equal' = divide by cols/rows; 'inferred' = use inferred cell rects from gaps */
   sliceMode?: 'equal' | 'inferred';
-  /** When sliceMode === 'inferred', cell rects from inferGridFromGaps */
+  /** When sliceMode === 'inferred', use these explicit cell rects (e.g. from external source). */
   inferredCellRects?: Array<{ x: number; y: number; width: number; height: number }>;
 }
 
@@ -505,137 +505,6 @@ export const optimizeSliceSettings = async (
       reject(new Error('Failed to load image for optimization'));
     };
 
-    img.crossOrigin = 'anonymous';
-    img.src = base64Image;
-  });
-};
-
-/** Result of inferring grid from content gaps (for irregular spacing). */
-export interface InferredGridResult {
-  cellRects: Array<{ x: number; y: number; width: number; height: number }>;
-  cols: number;
-  rows: number;
-}
-
-/**
- * Infers grid lines from content gaps (low-alpha or empty strips).
- * Use for sprite sheets with irregular spacing between cells.
- *
- * @param base64Image - Base64 (or data URL) of the sprite sheet
- * @param gapThreshold - Ratio of dimension to consider as gap (default 0.05 = 5%)
- * @returns Inferred cell rects and cols/rows, or null if detection fails
- */
-export const inferGridFromGaps = async (
-  base64Image: string,
-  gapThreshold: number = 0.05
-): Promise<InferredGridResult | null> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const w = img.width;
-        const h = img.height;
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        if (!ctx) {
-          resolve(null);
-          return;
-        }
-        ctx.drawImage(img, 0, 0);
-        const data = ctx.getImageData(0, 0, w, h).data;
-
-        const isContent = (i: number) => data[i + 3] > 20;
-
-        // Column content count per x
-        const colContent: number[] = [];
-        for (let x = 0; x < w; x++) {
-          let count = 0;
-          for (let y = 0; y < h; y++) {
-            if (isContent((y * w + x) * 4)) count++;
-          }
-          colContent.push(count);
-        }
-        const colGapThresh = h * gapThreshold;
-        const colStarts: number[] = [];
-        const colEnds: number[] = [];
-        let inGap = false;
-        for (let x = 0; x < w; x++) {
-          if (colContent[x] < colGapThresh) {
-            if (!inGap) {
-              inGap = true;
-              colEnds.push(x); // end of previous cell
-            }
-          } else {
-            if (inGap) {
-              inGap = false;
-              colStarts.push(x); // start of next cell
-            }
-          }
-        }
-        if (inGap) colStarts.push(w);
-        if (colStarts.length !== colEnds.length) {
-          resolve(null);
-          return;
-        }
-        const leftEdges = [0, ...colStarts];
-        const rightEdges = [...colEnds, w];
-        const colCount = leftEdges.length;
-
-        // Row content count per y
-        const rowContent: number[] = [];
-        for (let y = 0; y < h; y++) {
-          let count = 0;
-          for (let x = 0; x < w; x++) {
-            if (isContent((y * w + x) * 4)) count++;
-          }
-          rowContent.push(count);
-        }
-        const rowGapThresh = w * gapThreshold;
-        const rowStarts: number[] = [];
-        const rowEnds: number[] = [];
-        inGap = false;
-        for (let y = 0; y < h; y++) {
-          if (rowContent[y] < rowGapThresh) {
-            if (!inGap) {
-              inGap = true;
-              rowEnds.push(y);
-            }
-          } else {
-            if (inGap) {
-              inGap = false;
-              rowStarts.push(y);
-            }
-          }
-        }
-        if (inGap) rowStarts.push(h);
-        if (rowStarts.length !== rowEnds.length) {
-          resolve(null);
-          return;
-        }
-        const topEdges = [0, ...rowStarts];
-        const bottomEdges = [...rowEnds, h];
-        const rowCount = topEdges.length;
-
-        const cellRects: Array<{ x: number; y: number; width: number; height: number }> = [];
-        for (let r = 0; r < rowCount; r++) {
-          for (let c = 0; c < colCount; c++) {
-            cellRects.push({
-              x: leftEdges[c],
-              y: topEdges[r],
-              width: rightEdges[c] - leftEdges[c],
-              height: bottomEdges[r] - topEdges[r],
-            });
-          }
-        }
-        resolve({ cellRects, cols: colCount, rows: rowCount });
-      } catch (e) {
-        logger.error('Infer grid from gaps failed', e);
-        resolve(null);
-      }
-    };
-    img.onerror = () => resolve(null);
     img.crossOrigin = 'anonymous';
     img.src = base64Image;
   });
