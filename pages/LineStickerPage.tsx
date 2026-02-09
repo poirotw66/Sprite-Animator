@@ -13,29 +13,18 @@ import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { ChromaKeyColorType } from '../types';
 import { CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ, GRID_PATTERN_URL, DEFAULT_SLICE_SETTINGS } from '../utils/constants';
 import JSZip from 'jszip';
+import {
+    buildLineStickerPrompt,
+    DEFAULT_STYLE_SLOT,
+    DEFAULT_CHARACTER_SLOT,
+    DEFAULT_THEME_SLOT,
+    DEFAULT_TEXT_SLOT,
+    THEME_PRESETS,
+    TEXT_PRESETS,
+    type PromptSlots,
+} from '../utils/lineStickerPrompt';
 
 type ImageFormat = 'png' | 'jpg';
-
-// Base prompt template for LINE stickers (without the character description part)
-const BASE_STICKER_PROMPT = `Create Q-style (chibi), LINE sticker-style half-body expression stickers for this character.
-
-Colorful hand-drawn style, using a {COLS}x{ROWS} layout, covering various commonly used chat phrases in TRPG game groups, or some TRPG-related entertainment memes, such as:
-- "Checking the rulebook..."
-- "Roll succeeded!"
-- "Secret dice roll..."
-- "Critical hit!"
-- "Natural 1..."
-- "GM please have mercy"
-- "Initiative check!"
-- "Saving throw!"
-
-Additionally, include two special expressions:
-- Looking expectantly at the viewer, with cute-style text [KKT] or [KKO] in the blank space
-
-Other requirements:
-- Do not copy the original image directly
-- All text labels should be hand-written in Traditional Chinese
-- Background should be pure {BG_COLOR} for easy removal`;
 
 const LineStickerPage: React.FC = () => {
     const { t } = useLanguage();
@@ -80,8 +69,19 @@ const LineStickerPage: React.FC = () => {
         });
     }, [gridCols, gridRows]);
 
-    // Sticker description (user input that will be combined with base template)
+    // Sticker description (user input for character appearance/personality)
     const [stickerDescription, setStickerDescription] = useState('');
+
+    // Prompt slot settings
+    const [selectedTheme, setSelectedTheme] = useState<keyof typeof THEME_PRESETS>('trpg');
+    const [selectedLanguage, setSelectedLanguage] = useState<keyof typeof TEXT_PRESETS>('zh-TW');
+    const [customPhrases, setCustomPhrases] = useState<string>('');
+
+    // Initialize phrases with default theme on mount
+    React.useEffect(() => {
+        const themePhrases = THEME_PRESETS[selectedTheme].examplePhrases.join('\n');
+        setCustomPhrases(themePhrases);
+    }, []); // Only run once on mount
 
     // Generation state
     const [isGenerating, setIsGenerating] = useState(false);
@@ -153,23 +153,45 @@ const LineStickerPage: React.FC = () => {
         setSheetDimensions({ width: naturalWidth, height: naturalHeight });
     }, []);
 
-    // Build full prompt by combining user description with base template
+    // Build full prompt using slot structure
     const buildFullPrompt = useCallback((description: string, cols: number, rows: number, bgColor: ChromaKeyColorType) => {
-        const bgColorText = bgColor === 'magenta' ? 'magenta #FF00FF' : 'green #00FF00';
-        const basePrompt = BASE_STICKER_PROMPT
-            .replace('{COLS}', cols.toString())
-            .replace('{ROWS}', rows.toString())
-            .replace('{BG_COLOR}', bgColorText);
+        // Build character slot from user description
+        const characterSlot = description.trim()
+            ? {
+                  ...DEFAULT_CHARACTER_SLOT,
+                  appearance: description.trim(),
+              }
+            : DEFAULT_CHARACTER_SLOT;
 
-        if (description.trim()) {
-            return `The character in the image: ${description.trim()}
+        // Build theme slot (use preset or custom phrases)
+        const customPhrasesList = customPhrases.trim()
+            ? customPhrases
+                  .split('\n')
+                  .map((line) => line.trim())
+                  .filter((line) => line.length > 0)
+            : [];
+        
+        const themeSlot = customPhrasesList.length > 0
+            ? {
+                  ...THEME_PRESETS[selectedTheme],
+                  examplePhrases: customPhrasesList,
+              }
+            : THEME_PRESETS[selectedTheme];
 
-${basePrompt}`;
-        }
-        return `The character in the image is cute, calm, gentle, with a slightly mischievous personality.
+        // Build text slot from selected language
+        const textSlot = TEXT_PRESETS[selectedLanguage];
 
-${basePrompt}`;
-    }, []);
+        // Combine all slots
+        const slots: PromptSlots = {
+            style: DEFAULT_STYLE_SLOT,
+            character: characterSlot,
+            theme: themeSlot,
+            text: textSlot,
+        };
+
+        // Build the complete prompt
+        return buildLineStickerPrompt(slots, cols, rows, bgColor);
+    }, [selectedTheme, selectedLanguage, customPhrases]);
 
     // Image upload handler
     const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -302,9 +324,11 @@ ${basePrompt}`;
         t,
         getEffectiveApiKey,
         sourceImage,
-        prompt,
+        stickerDescription,
+        buildFullPrompt,
         gridCols,
         gridRows,
+        chromaKeyColor,
         selectedModel,
         setShowSettings,
     ]);
@@ -548,6 +572,64 @@ ${basePrompt}`;
                                 className="w-full h-20 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none resize-none"
                             />
                             <p className="text-xs text-slate-500 mt-1">{t.lineStickerDescHint}</p>
+                        </div>
+
+                        {/* Theme Selection */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                                聊天主題（Theme Slot）
+                            </label>
+                            <select
+                                value={selectedTheme}
+                                onChange={(e) => {
+                                    const newTheme = e.target.value as keyof typeof THEME_PRESETS;
+                                    setSelectedTheme(newTheme);
+                                    // Auto-fill phrases when theme changes
+                                    const themePhrases = THEME_PRESETS[newTheme].examplePhrases.join('\n');
+                                    setCustomPhrases(themePhrases);
+                                }}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
+                            >
+                                <option value="trpg">TRPG 跑團</option>
+                                <option value="daily">日常聊天</option>
+                                <option value="social">社群互動</option>
+                                <option value="workplace">職場對話</option>
+                            </select>
+                            <p className="text-xs text-slate-500 mt-1">選擇貼圖的聊天語境主題，會自動填入對應短語</p>
+                        </div>
+
+                        {/* Custom Phrases */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                                短語列表（每行一句，角色會根據短語做出對應動作）
+                            </label>
+                            <textarea
+                                value={customPhrases}
+                                onChange={(e) => setCustomPhrases(e.target.value)}
+                                placeholder="每行一句短語，例如：&#10;查規則書...&#10;骰子成功！&#10;暗骰中..."
+                                className="w-full h-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none resize-none font-mono text-xs"
+                            />
+                            <p className="text-xs text-slate-500 mt-1">
+                                角色會根據每個短語的語意自動做出對應的表情和動作（如：成功→慶祝、失敗→沮喪、查規則→翻書等）
+                            </p>
+                        </div>
+
+                        {/* Language Selection */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                                文字語言（Text Slot）
+                            </label>
+                            <select
+                                value={selectedLanguage}
+                                onChange={(e) => setSelectedLanguage(e.target.value as keyof typeof TEXT_PRESETS)}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
+                            >
+                                <option value="zh-TW">繁體中文</option>
+                                <option value="zh-CN">簡體中文</option>
+                                <option value="en">English</option>
+                                <option value="ja">日本語</option>
+                            </select>
+                            <p className="text-xs text-slate-500 mt-1">選擇貼圖文字使用的語言</p>
                         </div>
 
                         {/* Grid Settings */}

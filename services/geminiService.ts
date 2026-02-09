@@ -362,15 +362,49 @@ export const generateSpriteSheet = async (
     // Calculate total frames and timing
     const totalFrames = cols * rows;
     
-    // Generate detailed per-frame description with TINY increments
-    const frameDescriptions = Array.from({ length: totalFrames }, (_, i) => {
-      const progress = i / totalFrames; // 0 to ~0.83 for 6 frames
-      const degrees = Math.round(progress * 360 / totalFrames * 10) / 10;
-      return `Frame ${i + 1}: ${degrees}° into the motion cycle (TINY change from ${i === 0 ? 'Frame ' + totalFrames : 'Frame ' + i})`;
-    }).join('\n');
+    // Check if this is a LINE sticker prompt (contains specific markers)
+    const isLineStickerPrompt = prompt.includes('LINE 貼圖') || 
+                                 prompt.includes('LINE sticker') ||
+                                 prompt.includes('表情貼圖') ||
+                                 prompt.includes('每一格的具體分配');
     
-    // 2. Construct a prompt that enforces MINIMAL frame-to-frame changes
-    const fullPrompt = `
+    let fullPrompt: string;
+    
+    if (isLineStickerPrompt) {
+        // Use the provided LINE sticker prompt directly
+        // Add background color requirement to the prompt
+        const bgColorRequirement = `
+---
+
+### 【背景顏色要求（CRITICAL）】
+
+背景必須是純色 **${bgColorHex}**（${bgColorRGB}），用於後續去背處理。
+不得出現場景、漸變、陰影或其他背景元素。
+
+${chromaKeyColor === 'magenta' 
+  ? `⚠️ MAGENTA REQUIREMENT:
+  • R = 255, G = 0, B = 255
+  • 必須是純洋紅色 #FF00FF，不是粉色或紫色`
+  : `⚠️ GREEN SCREEN REQUIREMENT:
+  • R = 0, G = 177, B = 64
+  • 必須是標準綠幕 #00B140，不是青綠色或草綠色`}
+
+背景的每個像素都必須是 EXACTLY ${bgColorHex}。
+`;
+        
+        fullPrompt = prompt + bgColorRequirement;
+        
+        if (onProgress) onProgress(`正在生成 ${cols}x${rows} LINE 貼圖精靈圖 (比例 ${targetAspectRatio})...`);
+    } else {
+        // Generate detailed per-frame description with TINY increments for animation
+        const frameDescriptions = Array.from({ length: totalFrames }, (_, i) => {
+          const progress = i / totalFrames; // 0 to ~0.83 for 6 frames
+          const degrees = Math.round(progress * 360 / totalFrames * 10) / 10;
+          return `Frame ${i + 1}: ${degrees}° into the motion cycle (TINY change from ${i === 0 ? 'Frame ' + totalFrames : 'Frame ' + i})`;
+        }).join('\n');
+        
+        // 2. Construct a prompt that enforces MINIMAL frame-to-frame changes for animation
+        fullPrompt = `
 You are creating a sprite sheet for ULTRA-SMOOTH looping animation.
 
 ══════════════════════════════════════════════════════════════
@@ -555,8 +589,9 @@ NO BORDERS. NO FRAMES. NO LINES. JUST CHARACTERS ON SOLID ${bgColorHex}.
 
 Generate the sprite sheet with MINIMAL frame-to-frame variation.
 `;
-
-    if (onProgress) onProgress(`正在生成 ${cols}x${rows} 連貫動作精靈圖 (比例 ${targetAspectRatio})...`);
+        
+        if (onProgress) onProgress(`正在生成 ${cols}x${rows} 連貫動作精靈圖 (比例 ${targetAspectRatio})...`);
+    }
 
     const response = await retryOperation(async () => {
         return await ai.models.generateContent({
