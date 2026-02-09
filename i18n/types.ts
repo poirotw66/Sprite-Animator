@@ -200,4 +200,34 @@ export interface Translations {
   language: string;
   languageZhTW: string;
   languageEn: string;
+
+  // Home Page
+  homeTitle: string;
+  homeSubtitle: string;
+  spriteAnimatorTool: string;
+  spriteAnimatorDesc: string;
+  lineStickerTool: string;
+  lineStickerDesc: string;
+  enterTool: string;
+  backToHome: string;
+
+  // LINE Sticker Tool
+  lineStickerTitle: string;
+  lineStickerUploadTitle: string;
+  lineStickerUploadHint: string;
+  lineStickerPromptLabel: string;
+  lineStickerPromptPlaceholder: string;
+  lineStickerGridSettings: string;
+  lineStickerGenerate: string;
+  lineStickerGenerating: string;
+  lineStickerResult: string;
+  lineStickerDownloadSingle: string;
+  lineStickerDownloadAll: string;
+  lineStickerDownloadZip: string;
+  lineStickerDownloadJpg: string;
+  lineStickerDownloadPng: string;
+  lineStickerFormatLabel: string;
+  lineStickerSelectAll: string;
+  lineStickerDeselectAll: string;
+  lineStickerSelected: string;
 }
