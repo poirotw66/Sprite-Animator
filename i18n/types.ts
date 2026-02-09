@@ -170,6 +170,7 @@ export interface Translations {
   statusIdle: string;
   statusPreparing: string;
   statusGenerating: string;
+  statusProcessing: string;
   statusOptimizing: string;
   statusOptimized: string;
   statusUsingModel: string;
@@ -230,4 +231,12 @@ export interface Translations {
   lineStickerSelectAll: string;
   lineStickerDeselectAll: string;
   lineStickerSelected: string;
+  lineStickerDescLabel: string;
+  lineStickerDescPlaceholder: string;
+  lineStickerDescHint: string;
+  lineStickerSpriteSheet: string;
+  lineStickerShowOriginal: string;
+  lineStickerShowProcessed: string;
+  lineStickerDownloadOriginal: string;
+  lineStickerDownloadProcessed: string;
 }

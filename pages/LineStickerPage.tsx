@@ -6,10 +6,36 @@ import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { SettingsModal } from '../components/SettingsModal';
 import { useSettings } from '../hooks/useSettings';
 import { generateSpriteSheet } from '../services/geminiService';
-import { sliceSpriteSheet } from '../utils/imageUtils';
+import { FrameGrid } from '../components/FrameGrid';
+import { SpriteSheetViewer } from '../components/SpriteSheetViewer';
+import { sliceSpriteSheet, SliceSettings, getEffectivePadding, FrameOverride } from '../utils/imageUtils';
+import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
+import { ChromaKeyColorType } from '../types';
+import { CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ, GRID_PATTERN_URL, DEFAULT_SLICE_SETTINGS } from '../utils/constants';
 import JSZip from 'jszip';
 
 type ImageFormat = 'png' | 'jpg';
+
+// Base prompt template for LINE stickers (without the character description part)
+const BASE_STICKER_PROMPT = `Create Q-style (chibi), LINE sticker-style half-body expression stickers for this character.
+
+Colorful hand-drawn style, using a {COLS}x{ROWS} layout, covering various commonly used chat phrases in TRPG game groups, or some TRPG-related entertainment memes, such as:
+- "Checking the rulebook..."
+- "Roll succeeded!"
+- "Secret dice roll..."
+- "Critical hit!"
+- "Natural 1..."
+- "GM please have mercy"
+- "Initiative check!"
+- "Saving throw!"
+
+Additionally, include two special expressions:
+- Looking expectantly at the viewer, with cute-style text [KKT] or [KKO] in the blank space
+
+Other requirements:
+- Do not copy the original image directly
+- All text labels should be hand-written in Traditional Chinese
+- Background should be pure {BG_COLOR} for easy removal`;
 
 const LineStickerPage: React.FC = () => {
     const { t } = useLanguage();
@@ -30,22 +56,120 @@ const LineStickerPage: React.FC = () => {
 
     // Grid settings
     const [gridCols, setGridCols] = useState(4);
-    const [gridRows, setGridRows] = useState(2);
+    const [gridRows, setGridRows] = useState(6);
 
-    // Prompt
-    const [prompt, setPrompt] = useState('');
+    // Advanced Slicing State
+    const [sliceSettings, setSliceSettings] = useState<SliceSettings>(DEFAULT_SLICE_SETTINGS);
+    const [sheetDimensions, setSheetDimensions] = useState({ width: 0, height: 0 });
+    const [frameOverrides, setFrameOverrides] = useState<FrameOverride[]>([]);
+
+    // Chroma key progress for SpriteSheetViewer
+    const [chromaKeyProgress, setChromaKeyProgress] = useState(0);
+    const [isProcessingChromaKey, setIsProcessingChromaKey] = useState(false);
+
+    // Wrapper to sync grid inputs when SliceSettings change in viewer
+    const handleSliceSettingsChange: React.Dispatch<React.SetStateAction<SliceSettings>> = useCallback((value) => {
+        setSliceSettings((prev) => {
+            const next = typeof value === 'function' ? value(prev) : value;
+
+            // Sync simple grid inputs if cols/rows changed in advanced settings
+            if (next.cols !== gridCols) setGridCols(next.cols);
+            if (next.rows !== gridRows) setGridRows(next.rows);
+
+            return next;
+        });
+    }, [gridCols, gridRows]);
+
+    // Sticker description (user input that will be combined with base template)
+    const [stickerDescription, setStickerDescription] = useState('');
 
     // Generation state
     const [isGenerating, setIsGenerating] = useState(false);
     const [statusText, setStatusText] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [spriteSheetImage, setSpriteSheetImage] = useState<string | null>(null);
+    const [processedSpriteSheet, setProcessedSpriteSheet] = useState<string | null>(null);
     const [stickerFrames, setStickerFrames] = useState<string[]>([]);
+
+
 
     // Selection state for batch download
     const [selectedFrames, setSelectedFrames] = useState<boolean[]>([]);
     const [downloadFormat, setDownloadFormat] = useState<ImageFormat>('png');
     const [isDownloading, setIsDownloading] = useState(false);
+
+    // Chroma key color for background removal
+    const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('magenta');
+
+    // Re-slice effect
+    React.useEffect(() => {
+        if (!processedSpriteSheet || !sheetDimensions.width || !sheetDimensions.height) return;
+
+        const performSlice = async () => {
+            try {
+                // Ensure slice settings match grid dimensions if they differ
+                // (This syncs the simple grid inputs with the advanced slice settings)
+                const currentSettings = { ...sliceSettings };
+                if (currentSettings.cols !== gridCols || currentSettings.rows !== gridRows) {
+                    currentSettings.cols = gridCols;
+                    currentSettings.rows = gridRows;
+                    // Don't update state here to avoid loops, just use for calculation
+                }
+
+                const frames = await sliceSpriteSheet(
+                    processedSpriteSheet,
+                    currentSettings.cols,
+                    currentSettings.rows,
+                    currentSettings.paddingX,
+                    currentSettings.paddingY,
+                    currentSettings.shiftX,
+                    currentSettings.shiftY,
+                    false, // Already transparent
+                    230,
+                    frameOverrides,
+                    chromaKeyColor,
+                    getEffectivePadding(currentSettings)
+                );
+                setStickerFrames(frames);
+                // Initialize selection state if length changed
+                if (frames.length !== stickerFrames.length) {
+                    setSelectedFrames(new Array(frames.length).fill(false));
+                }
+                setStatusText('');
+            } catch (err) {
+                console.error('Slicing failed:', err);
+                setError(t.errorGeneration); // Generic error
+                setStatusText('');
+            }
+        };
+
+        const timer = setTimeout(performSlice, 100);
+        return () => clearTimeout(timer);
+    }, [processedSpriteSheet, sliceSettings, frameOverrides, gridCols, gridRows, chromaKeyColor, sheetDimensions, stickerFrames.length, t.errorGeneration]);
+
+    // Handle image load to get dimensions
+    const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+        const { naturalWidth, naturalHeight } = e.currentTarget;
+        setSheetDimensions({ width: naturalWidth, height: naturalHeight });
+    }, []);
+
+    // Build full prompt by combining user description with base template
+    const buildFullPrompt = useCallback((description: string, cols: number, rows: number, bgColor: ChromaKeyColorType) => {
+        const bgColorText = bgColor === 'magenta' ? 'magenta #FF00FF' : 'green #00FF00';
+        const basePrompt = BASE_STICKER_PROMPT
+            .replace('{COLS}', cols.toString())
+            .replace('{ROWS}', rows.toString())
+            .replace('{BG_COLOR}', bgColorText);
+
+        if (description.trim()) {
+            return `The character in the image: ${description.trim()}
+
+${basePrompt}`;
+        }
+        return `The character in the image is cute, calm, gentle, with a slightly mischievous personality.
+
+${basePrompt}`;
+    }, []);
 
     // Image upload handler
     const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,11 +222,6 @@ const LineStickerPage: React.FC = () => {
             return;
         }
 
-        if (!prompt.trim()) {
-            setError(t.errorNoPrompt);
-            return;
-        }
-
         setIsGenerating(true);
         setError(null);
         setStatusText(t.statusIdle);
@@ -110,39 +229,57 @@ const LineStickerPage: React.FC = () => {
         setStickerFrames([]);
         setSelectedFrames([]);
 
+        // Build the full prompt
+        const fullPrompt = buildFullPrompt(stickerDescription, gridCols, gridRows, chromaKeyColor);
+
         try {
             setStatusText(`${t.statusPreparing} (${t.statusUsingModel}: ${selectedModel})...`);
 
             // Generate sprite sheet using the same service as Sprite Animator
             const sheetImage = await generateSpriteSheet(
                 sourceImage,
-                prompt,
+                fullPrompt,
                 gridCols,
                 gridRows,
                 effectiveKey,
                 selectedModel,
                 (status) => setStatusText(status),
-                'magenta' // Default chroma key color
+                chromaKeyColor
             );
 
             setSpriteSheetImage(sheetImage);
 
-            // Slice the sprite sheet into individual stickers
-            setStatusText(t.statusOptimizing);
-            const frames = await sliceSpriteSheet(
+            // Reset and update slice settings based on new generation
+            setSliceSettings({
+                ...DEFAULT_SLICE_SETTINGS,
+                cols: gridCols,
+                rows: gridRows,
+            });
+
+            // Step 1: Remove chroma key background using the worker
+            setStatusText(t.statusProcessing);
+            setIsProcessingChromaKey(true);
+            setChromaKeyProgress(0);
+
+            const activeChromaKeyColor = CHROMA_KEY_COLORS[chromaKeyColor];
+            const processedImage = await removeChromaKeyWithWorker(
                 sheetImage,
-                gridCols,
-                gridRows,
-                0, 0, 0, 0, // No padding or shift
-                true, // Remove background
-                230,
-                undefined,
-                'magenta'
+                activeChromaKeyColor,
+                CHROMA_KEY_FUZZ,
+                (progress) => {
+                    setChromaKeyProgress(progress);
+                    setStatusText(`${t.statusProcessing} (${progress}%)`);
+                }
             );
 
-            setStickerFrames(frames);
-            setSelectedFrames(new Array(frames.length).fill(false));
-            setStatusText('');
+            // Save the processed sprite sheet for display
+            // This will trigger the useEffect to slice the sheet once the image loads and dimensions are set
+            setProcessedSpriteSheet(processedImage);
+            setIsProcessingChromaKey(false);
+            setChromaKeyProgress(100);
+            setStatusText(t.statusOptimizing); // Keep showing optimizing until slice is done
+
+            // Note: slicing is now handled by the useEffect hook watching processedSpriteSheet
         } catch (err: unknown) {
             const rawMsg = err instanceof Error ? err.message : 'Unknown error';
             let displayMsg = t.errorGeneration;
@@ -172,14 +309,7 @@ const LineStickerPage: React.FC = () => {
         setShowSettings,
     ]);
 
-    // Toggle frame selection
-    const toggleFrameSelection = useCallback((index: number) => {
-        setSelectedFrames((prev) => {
-            const newSelection = [...prev];
-            newSelection[index] = !newSelection[index];
-            return newSelection;
-        });
-    }, []);
+
 
     // Select/Deselect all
     const selectAll = useCallback(() => {
@@ -240,6 +370,12 @@ const LineStickerPage: React.FC = () => {
             return;
         }
 
+        // Single file optimization
+        if (selectedIndices.length === 1) {
+            await downloadSingle(selectedIndices[0]);
+            return;
+        }
+
         setIsDownloading(true);
         try {
             const zip = new JSZip();
@@ -263,7 +399,7 @@ const LineStickerPage: React.FC = () => {
         } finally {
             setIsDownloading(false);
         }
-    }, [selectedFrames, stickerFrames, downloadFormat, convertToFormat, t]);
+    }, [selectedFrames, stickerFrames, downloadFormat, convertToFormat, t, downloadSingle]);
 
     // Download all as ZIP
     const downloadAllAsZip = useCallback(async () => {
@@ -292,6 +428,24 @@ const LineStickerPage: React.FC = () => {
             setIsDownloading(false);
         }
     }, [stickerFrames, downloadFormat, convertToFormat, t]);
+
+    // Download original sprite sheet (with background)
+    const downloadOriginalSpriteSheet = useCallback(() => {
+        if (!spriteSheetImage) return;
+        const a = document.createElement('a');
+        a.href = spriteSheetImage;
+        a.download = `sprite_sheet_original_${Date.now()}.png`;
+        a.click();
+    }, [spriteSheetImage]);
+
+    // Download processed sprite sheet (background removed)
+    const downloadProcessedSpriteSheet = useCallback(() => {
+        if (!processedSpriteSheet) return;
+        const a = document.createElement('a');
+        a.href = processedSpriteSheet;
+        a.download = `sprite_sheet_transparent_${Date.now()}.png`;
+        a.click();
+    }, [processedSpriteSheet]);
 
     const hasCustomKey = !!apiKey.trim();
     const selectedCount = selectedFrames.filter(Boolean).length;
@@ -382,17 +536,18 @@ const LineStickerPage: React.FC = () => {
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6">
                         <h2 className="text-lg font-semibold text-slate-900 mb-4">{t.lineStickerGridSettings}</h2>
 
-                        {/* Prompt */}
+                        {/* Sticker Description */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-slate-700 mb-2">
-                                {t.lineStickerPromptLabel}
+                                {t.lineStickerDescLabel}
                             </label>
                             <textarea
-                                value={prompt}
-                                onChange={(e) => setPrompt(e.target.value)}
-                                placeholder={t.lineStickerPromptPlaceholder}
-                                className="w-full h-24 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none resize-none"
+                                value={stickerDescription}
+                                onChange={(e) => setStickerDescription(e.target.value)}
+                                placeholder={t.lineStickerDescPlaceholder}
+                                className="w-full h-20 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none resize-none"
                             />
+                            <p className="text-xs text-slate-500 mt-1">{t.lineStickerDescHint}</p>
                         </div>
 
                         {/* Grid Settings */}
@@ -423,6 +578,44 @@ const LineStickerPage: React.FC = () => {
                                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
                                 />
                             </div>
+                        </div>
+
+                        {/* Chroma Key Color Selection */}
+                        <div className="mb-6 p-3 rounded-lg border border-slate-200 bg-slate-50">
+                            <span className="text-sm font-medium text-slate-700 block mb-2">
+                                {t.backgroundColor}
+                            </span>
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setChromaKeyColor('magenta')}
+                                    className={`flex-1 flex items-center justify-center gap-2 min-h-[44px] py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer border-2 touch-manipulation ${chromaKeyColor === 'magenta'
+                                        ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700'
+                                        : 'border-slate-200 bg-white text-slate-600 hover:border-fuchsia-300'
+                                        }`}
+                                    aria-label={t.magentaColor}
+                                >
+                                    <div className="w-4 h-4 rounded-full bg-fuchsia-500 border border-fuchsia-600 flex-shrink-0"></div>
+                                    <span className="truncate">{t.magentaColor}</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setChromaKeyColor('green')}
+                                    className={`flex-1 flex items-center justify-center gap-2 min-h-[44px] py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer border-2 touch-manipulation ${chromaKeyColor === 'green'
+                                        ? 'border-green-500 bg-green-50 text-green-700'
+                                        : 'border-slate-200 bg-white text-slate-600 hover:border-green-300'
+                                        }`}
+                                    aria-label={t.greenScreen}
+                                >
+                                    <div className="w-4 h-4 rounded-full bg-green-500 border border-green-600 flex-shrink-0"></div>
+                                    <span className="truncate">{t.greenScreen}</span>
+                                </button>
+                            </div>
+                            <p className="text-[10px] text-slate-500 mt-2">
+                                {chromaKeyColor === 'magenta'
+                                    ? t.magentaHint
+                                    : t.greenHint}
+                            </p>
                         </div>
 
                         {/* Total stickers info */}
@@ -468,7 +661,32 @@ const LineStickerPage: React.FC = () => {
 
                 {/* Right Panel - Results */}
                 <div className="lg:col-span-7 space-y-4 sm:space-y-5 md:space-y-6">
-                    {/* Sticker Grid */}
+                    {/* Sprite Sheet Viewer */}
+                    {(spriteSheetImage || processedSpriteSheet) && (
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div className="p-4 sm:p-5 md:p-6 border-b border-slate-100">
+                                <h2 className="text-lg font-semibold text-slate-900">{t.lineStickerSpriteSheet}</h2>
+                            </div>
+
+                            <div className="p-4 sm:p-5 md:p-6">
+                                <SpriteSheetViewer
+                                    spriteSheetImage={processedSpriteSheet}
+                                    originalSpriteSheet={spriteSheetImage}
+                                    isGenerating={isGenerating}
+                                    sheetDimensions={sheetDimensions}
+                                    sliceSettings={sliceSettings}
+                                    setSliceSettings={handleSliceSettingsChange}
+                                    onImageLoad={handleImageLoad}
+                                    onDownload={downloadProcessedSpriteSheet}
+                                    onDownloadOriginal={downloadOriginalSpriteSheet}
+                                    chromaKeyProgress={chromaKeyProgress}
+                                    isProcessingChromaKey={isProcessingChromaKey}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Sticker Grid with FrameGrid */}
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-lg font-semibold text-slate-900">{t.lineStickerResult}</h2>
@@ -492,46 +710,28 @@ const LineStickerPage: React.FC = () => {
 
                         {stickerFrames.length > 0 ? (
                             <>
-                                {/* Sticker grid */}
-                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 gap-3 mb-6">
-                                    {stickerFrames.map((frame, index) => (
-                                        <div
-                                            key={index}
-                                            onClick={() => toggleFrameSelection(index)}
-                                            className={`relative aspect-square rounded-xl border-2 overflow-hidden cursor-pointer transition-all duration-200 group
-                        ${selectedFrames[index]
-                                                    ? 'border-green-500 ring-2 ring-green-500/20 bg-green-50'
-                                                    : 'border-slate-200 hover:border-green-300 bg-white'}`}
-                                        >
-                                            <img src={frame} alt={`Sticker ${index + 1}`} className="w-full h-full object-contain p-1" />
-
-                                            {/* Selection indicator */}
-                                            <div className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center transition-all
-                        ${selectedFrames[index]
-                                                    ? 'bg-green-500 text-white'
-                                                    : 'bg-white/80 border border-slate-300 text-transparent group-hover:border-green-400'}`}
-                                            >
-                                                <Check className="w-4 h-4" />
-                                            </div>
-
-                                            {/* Sticker number */}
-                                            <div className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/50 rounded text-white text-xs font-medium">
-                                                {index + 1}
-                                            </div>
-
-                                            {/* Individual download button */}
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    downloadSingle(index);
-                                                }}
-                                                className="absolute bottom-1 right-1 p-1.5 bg-white/90 hover:bg-white rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                                                title={t.lineStickerDownloadSingle}
-                                            >
-                                                <Download className="w-3.5 h-3.5 text-slate-600" />
-                                            </button>
-                                        </div>
-                                    ))}
+                                {/* FrameGrid Component */}
+                                <div className="mb-6">
+                                    <FrameGrid
+                                        frames={stickerFrames}
+                                        currentFrameIndex={-1}
+                                        onFrameClick={(index) => {
+                                            // Toggle selection on click
+                                            setSelectedFrames(prev => {
+                                                const next = [...prev];
+                                                next[index] = !next[index];
+                                                return next;
+                                            });
+                                        }}
+                                        frameOverrides={frameOverrides}
+                                        setFrameOverrides={setFrameOverrides}
+                                        enablePerFrameEdit={true}
+                                        processedSpriteSheet={processedSpriteSheet}
+                                        sliceSettings={{ ...sliceSettings, cols: gridCols, rows: gridRows }}
+                                        sheetDimensions={sheetDimensions}
+                                        frameIncluded={selectedFrames}
+                                        setFrameIncluded={setSelectedFrames}
+                                    />
                                 </div>
 
                                 {/* Download options */}
