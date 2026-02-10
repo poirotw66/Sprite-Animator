@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { isQuotaError as checkQuotaError } from '../types/errors';
 import { logger } from '../utils/logger';
-import { CHROMA_KEY_COLORS } from '../utils/constants';
+import { CHROMA_KEY_COLORS, PHRASE_GENERATION_MODEL } from '../utils/constants';
 import type { ChromaKeyColorType } from '../types';
 
 export type ProgressCallback = (status: string) => void;
@@ -307,6 +307,227 @@ async function getAnimationStoryboard(
 }
 
 /**
+ * Generates short phrases for LINE stickers based on chat theme, language, and total frame count.
+ * Uses a text-generation model (e.g. gemini-3-flash-preview).
+ *
+ * @param apiKey - Gemini API key
+ * @param themeContext - Chat theme/context (e.g. "TRPG 跑團", "日常聊天", or custom description)
+ * @param language - Language for phrases (e.g. "繁體中文", "English")
+ * @param totalFrames - Number of phrases to generate (usually cols × rows of the sticker grid)
+ * @param model - Optional model name; defaults to PHRASE_GENERATION_MODEL
+ * @returns Promise resolving to array of phrase strings (one per line, 2-6 chars Chinese or 1-3 words English)
+ */
+export async function generateStickerPhrases(
+  apiKey: string,
+  themeContext: string,
+  language: string,
+  totalFrames: number,
+  model: string = PHRASE_GENERATION_MODEL
+): Promise<string[]> {
+  if (!apiKey) throw new Error('API Key is missing');
+
+  const ai = new GoogleGenAI({ apiKey });
+
+  const contentCount = Math.max(1, totalFrames); // all frames from model (no KKT/KKO reserved)
+  const n40 = Math.round(contentCount * 0.4);
+  const n30 = Math.round(contentCount * 0.3);
+  const n20 = Math.round(contentCount * 0.2);
+  const n10 = contentCount - n40 - n30 - n20; // remainder so total = contentCount
+
+  const prompt = `你是一位非常熟悉 LINE 貼圖市場的爆款貼圖企劃與文案設計師，
+擅長設計「會被大量拿來用」的貼圖短語，而不是漂亮但沒人用的句子。
+
+【任務目標】
+根據我提供的「主題」，生成一整組可用於 LINE 貼圖的「短語清單」。
+
+【主題】
+${themeContext}
+
+【語言】
+${language}。請依此語言輸出短語（若為繁體中文則每句不超過 6 個字；英文則 1～3 個字為佳）。
+
+【輸出數量（嚴格遵守）】
+請輸出一組「共 ${contentCount} 句」的貼圖短語，並依下列比例分配：
+
+【分類與比例（嚴格遵守）】
+請將短語分成以下四類，並明確標示分類名稱：
+
+1. 萬用日常（${n40} 句，約 40%）
+   - 日常聊天一定會用到
+   - 可單獨作為回覆
+   - 不帶強烈情緒也能使用
+
+2. 情緒爆發（${n30} 句，約 30%）
+   - 情緒明確、可投射
+   - 包含崩潰、厭世、煩躁、撐住等狀態
+   - 但仍需符合「LINE 聊天實用」
+
+3. 關係互動（${n20} 句，約 20%）
+   - 對人說的話
+   - 包含關心、撒嬌、道歉、安慰、想念
+   - 適合朋友、情人、曖昧使用
+
+4. 梗圖型（${n10} 句，約 10%）
+   - 帶有記憶點或反差感
+   - 可冷幽默、反諷、自嘲
+   - 不追逐短期流行語，避免過時
+
+【文字風格規則（非常重要）】
+- 每句簡短、偏口語、聊天感
+- 一眼就懂，不能解釋
+- 避免書面語與完整長句
+- 適合放在貼圖上，不是社群貼文
+
+【市場適配規則】
+- 假設使用者會在「已讀不回、敷衍回覆、情緒表達、快速回應」時使用
+- 每一句都必須能獨立存在
+- 不能依賴上下文才成立
+
+【輸出格式（嚴格遵守）】
+請依照以下格式輸出，每行一個短語，前方用「- 」：
+
+萬用日常：
+- 短語
+- 短語
+
+情緒爆發：
+- 短語
+- 短語
+
+關係互動：
+- 短語
+
+梗圖型：
+- 短語
+
+【禁止事項】
+❌ 不要解釋
+❌ 不要分析
+❌ 不要加表情符號
+❌ 不要加任何多餘文字
+❌ 不要標示「第幾張」
+
+現在，請根據「主題」開始生成。`;
+
+  const response = await ai.models.generateContent({
+    model,
+    contents: { parts: [{ text: prompt }] },
+    config: {
+      temperature: 0.9,
+      maxOutputTokens: 4096,
+    },
+  });
+
+  let text = response.text ?? '';
+  try {
+    const candidates = (response as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    }).candidates;
+    const partText = candidates?.[0]?.content?.parts?.[0]?.text;
+    if (typeof partText === 'string' && partText.length > text.length) {
+      text = partText;
+    }
+  } catch (_) {}
+
+  // Debug: log full Gemini response in F12 console for sticker phrase generation
+  if (typeof console !== 'undefined' && console.group) {
+    console.group('[gemini-3-flash] Sticker phrases raw response');
+    console.log('text length (characters) =', text.length);
+    console.log('--- full text used for parsing ---');
+    console.log(text);
+    try {
+      const res = response as {
+        candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: string }> } }>;
+      };
+      if (res.candidates?.[0]) {
+        console.log('finishReason (MAX_TOKENS = truncated) =', res.candidates[0].finishReason);
+      }
+    } catch (_) {}
+    console.groupEnd();
+  }
+
+  const sectionHeaders = /^(萬用日常|情緒爆發|關係互動|梗圖型)\s*[：:]\s*$/;
+  const bulletMatch = /^\s*[-*]\s*(.+)$/;
+  const lines = text
+    .split(/\r?\n/)
+    .map((raw) => raw.trim())
+    .filter((line) => line.length > 0)
+    .flatMap((line) => {
+      if (sectionHeaders.test(line)) return [];
+      const m = line.match(bulletMatch);
+      if (m) return [m[1].trim()];
+      if (/^[#\-\*]+$/.test(line)) return [];
+      if (/^\d+[\.\)\:\-\s]/.test(line)) return [line.replace(/^\s*\d+[\.\)\:\-\s]+/, '').trim()];
+      return [line];
+    })
+    .filter((line) => line.length > 0);
+
+  if (typeof console !== 'undefined') {
+    console.log('[gemini-3-flash] Parsed phrase count:', lines.length, '| Parsed lines:', lines);
+  }
+
+  if (lines.length === 0) return [];
+
+  if (totalFrames <= 0) return [];
+  if (totalFrames === 1) {
+    return [lines[0] ?? '...'];
+  }
+
+  // All frames from model (no KKT/KKO) — enforce exact count totalFrames
+  const normalCount = totalFrames;
+  const rawMain = lines;
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const line of rawMain) {
+    const key = line.trim();
+    if (key && !seen.has(key)) {
+      seen.add(key);
+      unique.push(line);
+    }
+  }
+  const mainPhrases: string[] = [];
+  if (unique.length >= normalCount) {
+    mainPhrases.push(...unique.slice(0, normalCount));
+  } else {
+    for (let i = 0; i < normalCount; i++) {
+      mainPhrases.push(unique[i % unique.length] ?? '...');
+    }
+  }
+  let result = [...mainPhrases];
+
+  // Guarantee length is exactly totalFrames (pad or slice)
+  if (result.length < totalFrames) {
+    const pad = totalFrames - result.length;
+    const source = mainPhrases.length > 0 ? mainPhrases : ['...'];
+    for (let i = 0; i < pad; i++) result.push(source[i % source.length]);
+    if (typeof console !== 'undefined') {
+      console.warn('[gemini-3-flash] Result was short by', pad, '- padded to', totalFrames);
+    }
+  } else if (result.length > totalFrames) {
+    result = result.slice(0, totalFrames);
+    if (typeof console !== 'undefined') {
+      console.warn('[gemini-3-flash] Result was long - sliced to', totalFrames);
+    }
+  }
+
+  if (typeof console !== 'undefined') {
+    console.log(
+      '[gemini-3-flash] Final: unique from model =',
+      unique.length,
+      '| contentCount =',
+      normalCount,
+      '| result length =',
+      result.length,
+      '(totalFrames =',
+      totalFrames,
+      ')'
+    );
+  }
+
+  return result;
+}
+
+/**
  * Generates a single sprite sheet image containing multiple animation frames in a grid layout.
  * This is much more quota-efficient than frame-by-frame generation (only 1 API request).
  * 
@@ -372,7 +593,7 @@ export const generateSpriteSheet = async (
     
     if (isLineStickerPrompt) {
         // Use the provided LINE sticker prompt directly
-        // Add background color requirement to the prompt
+        // Add background color + strict layout enforcement to reduce randomness
         const bgColorRequirement = `
 ---
 
@@ -384,15 +605,29 @@ export const generateSpriteSheet = async (
 ${chromaKeyColor === 'magenta' 
   ? `⚠️ MAGENTA REQUIREMENT:
   • R = 255, G = 0, B = 255
-  • 必須是純洋紅色 #FF00FF，不是粉色或紫色`
+  • 必須是純洋紅色 #FF00FF，不是粉色或紫色
+
+⚠️ 去背友善（避免文字處殘留）：
+  • 文字與角色輪廓、陰影**禁止使用**洋紅、粉紅、紫色或任何接近 #FF00FF 的顏色
+  • 僅使用黑色、白色或與洋紅對比明顯的深色（如深灰、深藍、深棕），避免去背後在文字邊緣產生洋紅殘留`
   : `⚠️ GREEN SCREEN REQUIREMENT:
   • R = 0, G = 177, B = 64
   • 必須是標準綠幕 #00B140，不是青綠色或草綠色`}
 
 背景的每個像素都必須是 EXACTLY ${bgColorHex}。
 `;
+
+        const layoutEnforcement = `
+---
+
+### 【輸出格式強制（OUTPUT FORMAT - MUST FOLLOW）】
+
+1. **網格**：整張圖必須可被精確均分為 **${cols} 欄 × ${rows} 列**，共 **${totalFrames} 格**。從左到右、從上到下每格等大，無外圍留白、無格與格之間的縫隙或線條。
+2. **填滿**：每一格內角色與文字需佔滿大部分面積（角色約佔格高 70%～85%），單格內僅保留極少內邊距，禁止「角色很小、周圍一大片空白」的構圖。
+3. **一致性**：所有格子的尺寸與對齊方式必須一致，使後續可依固定比例裁成 ${cols}×${rows} 張獨立貼圖。
+`;
         
-        fullPrompt = prompt + bgColorRequirement;
+        fullPrompt = prompt + bgColorRequirement + layoutEnforcement;
         
         if (onProgress) onProgress(`正在生成 ${cols}x${rows} LINE 貼圖精靈圖 (比例 ${targetAspectRatio})...`);
     } else {

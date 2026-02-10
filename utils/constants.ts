@@ -36,6 +36,9 @@ export const SUPPORTED_MODELS = [
 
 export const DEFAULT_MODEL = 'gemini-2.5-flash-image';
 
+/** Model for text-only tasks (e.g. generating sticker phrases) */
+export const PHRASE_GENERATION_MODEL = 'gemini-3-flash-preview';
+
 export const BACKGROUND_REMOVAL_THRESHOLD = 230; // For white background removal
 
 export const DEBOUNCE_DELAY = 50; // ms for re-slicing

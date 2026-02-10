@@ -5,7 +5,7 @@ import { useLanguage } from '../hooks/useLanguage';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { SettingsModal } from '../components/SettingsModal';
 import { useSettings } from '../hooks/useSettings';
-import { generateSpriteSheet } from '../services/geminiService';
+import { generateSpriteSheet, generateStickerPhrases } from '../services/geminiService';
 import { FrameGrid } from '../components/FrameGrid';
 import { SpriteSheetViewer } from '../components/SpriteSheetViewer';
 import { sliceSpriteSheet, SliceSettings, getEffectivePadding, FrameOverride } from '../utils/imageUtils';
@@ -15,16 +15,21 @@ import { CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ, GRID_PATTERN_URL, DEFAULT_SLICE_SET
 import JSZip from 'jszip';
 import {
     buildLineStickerPrompt,
-    DEFAULT_STYLE_SLOT,
     DEFAULT_CHARACTER_SLOT,
     DEFAULT_THEME_SLOT,
     DEFAULT_TEXT_SLOT,
     THEME_PRESETS,
+    STYLE_PRESETS,
     TEXT_PRESETS,
+    TEXT_COLOR_PRESETS,
+    FONT_PRESETS,
     type PromptSlots,
 } from '../utils/lineStickerPrompt';
 
 type ImageFormat = 'png' | 'jpg';
+
+/** Theme selection: preset key or custom */
+type ThemeOption = keyof typeof THEME_PRESETS | 'custom';
 
 const LineStickerPage: React.FC = () => {
     const { t } = useLanguage();
@@ -45,7 +50,7 @@ const LineStickerPage: React.FC = () => {
 
     // Grid settings
     const [gridCols, setGridCols] = useState(4);
-    const [gridRows, setGridRows] = useState(6);
+    const [gridRows, setGridRows] = useState(4);
 
     // Advanced Slicing State
     const [sliceSettings, setSliceSettings] = useState<SliceSettings>(DEFAULT_SLICE_SETTINGS);
@@ -73,9 +78,14 @@ const LineStickerPage: React.FC = () => {
     const [stickerDescription, setStickerDescription] = useState('');
 
     // Prompt slot settings
-    const [selectedTheme, setSelectedTheme] = useState<keyof typeof THEME_PRESETS>('trpg');
+    const [selectedStyle, setSelectedStyle] = useState<keyof typeof STYLE_PRESETS>('chibi');
+    const [selectedTheme, setSelectedTheme] = useState<ThemeOption>('trpg');
+    const [customThemeContext, setCustomThemeContext] = useState<string>('');
     const [selectedLanguage, setSelectedLanguage] = useState<keyof typeof TEXT_PRESETS>('zh-TW');
+    const [selectedTextColor, setSelectedTextColor] = useState<keyof typeof TEXT_COLOR_PRESETS>('black');
+    const [selectedFont, setSelectedFont] = useState<keyof typeof FONT_PRESETS>('handwritten');
     const [customPhrases, setCustomPhrases] = useState<string>('');
+    const [isGeneratingPhrases, setIsGeneratingPhrases] = useState(false);
 
     // Initialize phrases with default theme on mount
     React.useEffect(() => {
@@ -171,19 +181,33 @@ const LineStickerPage: React.FC = () => {
                   .filter((line) => line.length > 0)
             : [];
         
-        const themeSlot = customPhrasesList.length > 0
-            ? {
-                  ...THEME_PRESETS[selectedTheme],
-                  examplePhrases: customPhrasesList,
-              }
-            : THEME_PRESETS[selectedTheme];
+        const themeSlot =
+            selectedTheme === 'custom'
+                ? {
+                      chatContext: customThemeContext.trim() || '自訂聊天主題',
+                      examplePhrases: customPhrasesList,
+                  }
+                : customPhrasesList.length > 0
+                  ? {
+                        ...THEME_PRESETS[selectedTheme],
+                        examplePhrases: customPhrasesList,
+                        specialStickers: undefined,
+                    }
+                  : { ...THEME_PRESETS[selectedTheme], specialStickers: undefined };
 
-        // Build text slot from selected language
-        const textSlot = TEXT_PRESETS[selectedLanguage];
+        // Build text slot from selected language + user text color & font
+        const textSlot: PromptSlots['text'] = {
+            ...TEXT_PRESETS[selectedLanguage],
+            textColor: TEXT_COLOR_PRESETS[selectedTextColor].promptDesc,
+            textStyle: FONT_PRESETS[selectedFont].promptDesc,
+        };
+
+        // Build style slot from preset (omit label for prompt)
+        const { label: _styleLabel, ...styleSlot } = STYLE_PRESETS[selectedStyle];
 
         // Combine all slots
         const slots: PromptSlots = {
-            style: DEFAULT_STYLE_SLOT,
+            style: styleSlot,
             character: characterSlot,
             theme: themeSlot,
             text: textSlot,
@@ -191,7 +215,7 @@ const LineStickerPage: React.FC = () => {
 
         // Build the complete prompt
         return buildLineStickerPrompt(slots, cols, rows, bgColor);
-    }, [selectedTheme, selectedLanguage, customPhrases]);
+    }, [selectedStyle, selectedTheme, customThemeContext, selectedLanguage, selectedTextColor, selectedFont, customPhrases]);
 
     // Image upload handler
     const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -574,6 +598,25 @@ const LineStickerPage: React.FC = () => {
                             <p className="text-xs text-slate-500 mt-1">{t.lineStickerDescHint}</p>
                         </div>
 
+                        {/* Style Selection */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                                貼圖風格（Style Slot）
+                            </label>
+                            <select
+                                value={selectedStyle}
+                                onChange={(e) => setSelectedStyle(e.target.value as keyof typeof STYLE_PRESETS)}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
+                            >
+                                {(Object.keys(STYLE_PRESETS) as Array<keyof typeof STYLE_PRESETS>).map((key) => (
+                                    <option key={key} value={key}>
+                                        {STYLE_PRESETS[key].label}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-slate-500 mt-1">選擇貼圖的繪製風格，會影響角色呈現方式</p>
+                        </div>
+
                         {/* Theme Selection */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -582,11 +625,12 @@ const LineStickerPage: React.FC = () => {
                             <select
                                 value={selectedTheme}
                                 onChange={(e) => {
-                                    const newTheme = e.target.value as keyof typeof THEME_PRESETS;
+                                    const newTheme = e.target.value as ThemeOption;
                                     setSelectedTheme(newTheme);
-                                    // Auto-fill phrases when theme changes
-                                    const themePhrases = THEME_PRESETS[newTheme].examplePhrases.join('\n');
-                                    setCustomPhrases(themePhrases);
+                                    if (newTheme !== 'custom') {
+                                        const themePhrases = THEME_PRESETS[newTheme].examplePhrases.join('\n');
+                                        setCustomPhrases(themePhrases);
+                                    }
                                 }}
                                 className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
                             >
@@ -594,7 +638,20 @@ const LineStickerPage: React.FC = () => {
                                 <option value="daily">日常聊天</option>
                                 <option value="social">社群互動</option>
                                 <option value="workplace">職場對話</option>
+                                <option value="custom">自訂</option>
                             </select>
+                            {selectedTheme === 'custom' && (
+                                <div className="mt-2">
+                                    <input
+                                        type="text"
+                                        value={customThemeContext}
+                                        onChange={(e) => setCustomThemeContext(e.target.value)}
+                                        placeholder="例如：遊戲公會、讀書會、寵物群組..."
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
+                                    />
+                                    <p className="text-xs text-slate-500 mt-1">輸入自訂主題描述，下方可手動填短語或點「產生」由 AI 產生</p>
+                                </div>
+                            )}
                             <p className="text-xs text-slate-500 mt-1">選擇貼圖的聊天語境主題，會自動填入對應短語</p>
                         </div>
 
@@ -609,6 +666,48 @@ const LineStickerPage: React.FC = () => {
                                 placeholder="每行一句短語，例如：&#10;查規則書...&#10;骰子成功！&#10;暗骰中..."
                                 className="w-full h-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none resize-none font-mono text-xs"
                             />
+                            <div className="flex items-center gap-2 mt-2">
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        const key = getEffectiveApiKey();
+                                        if (!key) {
+                                            setShowSettings(true);
+                                            setError(t.errorApiKey);
+                                            return;
+                                        }
+                                        const themeContext =
+                                            selectedTheme === 'custom'
+                                                ? (customThemeContext.trim() || '自訂聊天主題')
+                                                : THEME_PRESETS[selectedTheme].chatContext;
+                                        const language = TEXT_PRESETS[selectedLanguage].language;
+                                        const totalFrames = gridCols * gridRows;
+                                        setIsGeneratingPhrases(true);
+                                        setError(null);
+                                        try {
+                                            const lines = await generateStickerPhrases(key, themeContext, language, totalFrames);
+                                            setCustomPhrases(lines.join('\n'));
+                                        } catch (err) {
+                                            const msg = err instanceof Error ? err.message : String(err);
+                                            setError(`產生短語失敗: ${msg}`);
+                                        } finally {
+                                            setIsGeneratingPhrases(false);
+                                        }
+                                    }}
+                                    disabled={isGeneratingPhrases}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:pointer-events-none"
+                                >
+                                    {isGeneratingPhrases ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            產生中...
+                                        </>
+                                    ) : (
+                                        '產生'
+                                    )}
+                                </button>
+                                <span className="text-xs text-slate-500">依目前主題與語言用 AI 產生短語（gemini-3-flash-preview）</span>
+                            </div>
                             <p className="text-xs text-slate-500 mt-1">
                                 角色會根據每個短語的語意自動做出對應的表情和動作（如：成功→慶祝、失敗→沮喪、查規則→翻書等）
                             </p>
@@ -630,6 +729,50 @@ const LineStickerPage: React.FC = () => {
                                 <option value="ja">日本語</option>
                             </select>
                             <p className="text-xs text-slate-500 mt-1">選擇貼圖文字使用的語言</p>
+                        </div>
+
+                        {/* Text Color */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                                文字顏色
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {(Object.keys(TEXT_COLOR_PRESETS) as Array<keyof typeof TEXT_COLOR_PRESETS>).map((key) => (
+                                    <button
+                                        key={key}
+                                        type="button"
+                                        onClick={() => setSelectedTextColor(key)}
+                                        className={`min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-medium border-2 transition-all touch-manipulation ${
+                                            selectedTextColor === key
+                                                ? 'border-green-500 bg-green-50 text-green-800'
+                                                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                                        }`}
+                                        title={TEXT_COLOR_PRESETS[key].promptDesc}
+                                    >
+                                        {TEXT_COLOR_PRESETS[key].label}
+                                    </button>
+                                ))}
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">預設為黑色</p>
+                        </div>
+
+                        {/* Font / Text Style */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                                字體風格
+                            </label>
+                            <select
+                                value={selectedFont}
+                                onChange={(e) => setSelectedFont(e.target.value as keyof typeof FONT_PRESETS)}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
+                            >
+                                {(Object.keys(FONT_PRESETS) as Array<keyof typeof FONT_PRESETS>).map((key) => (
+                                    <option key={key} value={key}>
+                                        {FONT_PRESETS[key].label}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-slate-500 mt-1">貼圖上短語的字體風格</p>
                         </div>
 
                         {/* Grid Settings */}

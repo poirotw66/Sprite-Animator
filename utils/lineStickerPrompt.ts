@@ -54,14 +54,72 @@ export interface ThemeSlot {
 export interface TextSlot {
     /** Text language (e.g., "繁體中文", "English") */
     language: string;
-    /** Text style requirements */
+    /** Text style / font (e.g., "手寫風格字體") */
     textStyle: string;
+    /** Text color for prompt (e.g., "黑色 #000000") */
+    textColor: string;
     /** Text length constraints */
     lengthConstraints: {
         chinese: string;
         english: string;
     };
 }
+
+/**
+ * Text color options for sticker labels (default: black)
+ */
+export const TEXT_COLOR_PRESETS: Record<string, { label: string; promptDesc: string }> = {
+    black: {
+        label: '黑色',
+        promptDesc: '黑色 #000000',
+    },
+    white: {
+        label: '白色',
+        promptDesc: '白色 #FFFFFF',
+    },
+    darkGray: {
+        label: '深灰',
+        promptDesc: '深灰色 #333333',
+    },
+    navy: {
+        label: '深藍',
+        promptDesc: '深藍色 #1e3a5f',
+    },
+    darkRed: {
+        label: '深紅',
+        promptDesc: '深紅色 #8b0000',
+    },
+    brown: {
+        label: '棕色',
+        promptDesc: '棕色 #5c4033',
+    },
+};
+
+/**
+ * Font / text style options for sticker labels
+ */
+export const FONT_PRESETS: Record<string, { label: string; promptDesc: string }> = {
+    handwritten: {
+        label: '手寫風格',
+        promptDesc: '手寫風格字體',
+    },
+    round: {
+        label: '圓體',
+        promptDesc: '圓潤可愛的圓體字',
+    },
+    bold: {
+        label: '黑體',
+        promptDesc: '清晰粗黑體',
+    },
+    cute: {
+        label: '萌系',
+        promptDesc: '萌系可愛字體',
+    },
+    pop: {
+        label: '流行體',
+        promptDesc: '流行活潑字體',
+    },
+};
 
 /**
  * Base Prompt - Core requirements that never change
@@ -86,16 +144,24 @@ export const BASE_PROMPT = `🎨 LINE 貼圖精靈圖生成
 
 ---
 
-### 【精靈圖布局（Sprite Sheet Layout）】
+### 【精靈圖布局（Sprite Sheet Layout）】CRITICAL
 
 * 布局規格：
-  **{COLS} × {ROWS} 網格（共 {TOTAL_FRAMES} 格）**
+  **整張圖必須是嚴格的 {COLS} × {ROWS} 網格（共 {TOTAL_FRAMES} 格）**
+  * 整張圖從左到右均分為 {COLS} 欄、從上到下均分為 {ROWS} 列
+  * **不得有外圍留白**：圖像四邊即為網格邊界，最左、最右、最上、最下都不許有多餘空白
+  * 格與格之間 **不得有間隙**：相鄰格子共用同一條邊線，不可畫出分隔線或留空
+
+* 每一格的填滿規則（非常重要）：
+  * **角色與文字必須盡量填滿該格**：角色約佔單格高度的 70%～85%，避免角色過小、周圍大片空白
+  * 單格內只保留極少內邊距（約 5%～10%）避免裁切到臉或文字，其餘空間應由角色與文字佔滿
+  * ❌ 禁止：角色小小一個在格子中央、四周大量留白
+  * ✅ 正確：角色放大、半身或頭部填滿格子，文字緊鄰角色，整體視覺飽滿
 
 * 布局規則（嚴格遵守）：
   * 每一格 = 一張可獨立使用的 LINE 貼圖
   * 角色與文字 **不得跨越格線或接觸相鄰格子**
-  * 每格需保留安全邊距，避免後續裁切到臉或文字
-  * 不可顯示任何分隔線或格線
+  * 不可顯示任何分隔線、格線或邊框
 
 ---
 
@@ -148,16 +214,18 @@ export const BASE_PROMPT = `🎨 LINE 貼圖精靈圖生成
 
 ### 【最終目標】
 
-生成一張可直接拆分、適合上架 LINE 貼圖平台的
-**{TOTAL_FRAMES} 張 Q 版半身像貼圖精靈圖**，
-角色可愛、有情緒辨識度，文字實用、好聊天。
+生成一張 **可直接按 {COLS}×{ROWS} 等分裁切**、適合上架 LINE 貼圖平台的
+**{TOTAL_FRAMES} 張 Q 版半身像貼圖精靈圖**。
+* 整張圖為嚴格等分網格，無外圍留白、無格間空隙
+* 每格內角色與文字盡量填滿，減少單格內空白
+* 角色可愛、有情緒辨識度，文字實用、好聊天
 
 ---
 
 `;
 
 /**
- * Default Style Slot - Q版 LINE 貼圖風格
+ * Default Style Slot - Q版 LINE 貼圖風格 (kept for backward compatibility; use STYLE_PRESETS.chibi)
  */
 export const DEFAULT_STYLE_SLOT: StyleSlot = {
     styleType: 'Q 版（Chibi）、LINE 貼圖風格、半身像為主',
@@ -166,6 +234,66 @@ export const DEFAULT_STYLE_SLOT: StyleSlot = {
   適合在小尺寸手機畫面中清楚辨識`,
     background: `透明或單一淺色背景
   不得出現場景、格線、邊框、UI 元素`,
+};
+
+/**
+ * Style presets for sticker art (Style Slot). User can choose in UI.
+ */
+export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
+    chibi: {
+        label: 'Q 版可愛',
+        styleType: 'Q 版（Chibi）、LINE 貼圖風格、半身像為主',
+        drawingMethod: `彩色手繪風格
+  線條柔和、輪廓清楚、表情誇張但可愛
+  適合在小尺寸手機畫面中清楚辨識`,
+        background: `透明或單一淺色背景
+  不得出現場景、格線、邊框、UI 元素`,
+    },
+    minimal: {
+        label: '簡約線條',
+        styleType: '簡約線條風格、極簡輪廓、半身或頭像為主',
+        drawingMethod: `線條簡潔、少許色塊或留白
+  輪廓明確、表情用簡單線條表現
+  適合清爽、現代感的聊天貼圖`,
+        background: `透明或單一淺色背景
+  不得出現複雜場景、格線、邊框`,
+    },
+    watercolor: {
+        label: '水彩手繪',
+        styleType: '水彩手繪風格、半身像為主、筆觸可見',
+        drawingMethod: `水彩暈染、邊緣可略帶暈開
+  色彩柔和、筆觸自然
+  保持在小尺寸下仍可辨識輪廓與表情`,
+        background: `透明或單一淺色背景
+  不得出現複雜場景、格線、邊框`,
+    },
+    pixel: {
+        label: '像素風',
+        styleType: '像素藝術（Pixel Art）、點陣風格、半身或頭像',
+        drawingMethod: `明確的像素格、低解析度美感
+  色塊分明、輪廓以像素呈現
+  適合復古、遊戲感貼圖`,
+        background: `透明或單一純色背景
+  不得出現漸層、格線、邊框`,
+    },
+    flat: {
+        label: '扁平插畫',
+        styleType: '扁平化插畫（Flat design）、幾何色塊、半身像為主',
+        drawingMethod: `無漸層、色塊分明、輪廓清晰
+  造型略幾何化、表情明確
+  適合現代、簡潔的 LINE 貼圖`,
+        background: `透明或單一淺色背景
+  不得出現立體陰影、複雜場景、格線`,
+    },
+    semiRealistic: {
+        label: '半寫實',
+        styleType: '半寫實風格、比例接近真人但略誇張、半身像為主',
+        drawingMethod: `光影與五官較寫實、線條乾淨
+  表情與動作可略誇張以利貼圖辨識
+  適合偏成熟、質感型貼圖`,
+        background: `透明或單一淺色背景
+  不得出現複雜場景、格線、邊框`,
+    },
 };
 
 /**
@@ -200,11 +328,12 @@ export const DEFAULT_THEME_SLOT: ThemeSlot = {
 };
 
 /**
- * Default Text Slot - 繁體中文
+ * Default Text Slot - 繁體中文, black text, handwritten font
  */
 export const DEFAULT_TEXT_SLOT: TextSlot = {
     language: '繁體中文',
-    textStyle: '手寫風格字體',
+    textStyle: FONT_PRESETS.handwritten.promptDesc,
+    textColor: TEXT_COLOR_PRESETS.black.promptDesc,
     lengthConstraints: {
         chinese: '建議 **2～6 個字**',
         english: '建議 **1～3 個單字**',
@@ -239,7 +368,7 @@ export function buildLineStickerPrompt(
 * 原圖規則（重要）：
   ${slots.character.originalImageRules}
   * 請仔細觀察使用者上傳的圖片，理解角色的設計風格、配色、髮型、服裝等特徵
-  * 將角色轉換為 Q 版風格時，要保留原角色的核心特徵和辨識度
+  * 將角色轉換為上述貼圖風格時，要保留原角色的核心特徵和辨識度
 
 ---
 
@@ -278,18 +407,26 @@ export function buildLineStickerPrompt(
         }
     }
     
-    // Generate action suggestions based on phrase
+    // Generate action suggestions based on phrase (for prompt action hints)
     const getActionHint = (phrase: string): string => {
-        if (phrase.includes('成功') || phrase.includes('成功')) {
+        if (phrase.includes('成功') || phrase.includes('升級')) {
             return '舉手慶祝、開心笑、比讚';
-        } else if (phrase.includes('失敗') || phrase.includes('失敗')) {
+        } else if (phrase.includes('失敗') || phrase.includes('歸零')) {
             return '垂頭喪氣、無奈表情、攤手';
-        } else if (phrase.includes('查') || phrase.includes('檢查') || phrase.includes('規則')) {
+        } else if (phrase.includes('查') || phrase.includes('規則')) {
             return '翻書、思考、專注看書';
         } else if (phrase.includes('骰') || phrase.includes('檢定') || phrase.includes('暗骰')) {
             return '丟骰子、緊張等待、看結果';
         } else if (phrase.includes('暴擊') || phrase.includes('攻擊')) {
             return '揮拳、戰鬥姿勢、興奮表情';
+        } else if (phrase.includes('技能')) {
+            return '施法手勢、出招姿勢、專注表情';
+        } else if (phrase.includes('經驗') || phrase.includes('寶物')) {
+            return '驚喜表情、捧著寶物、開心笑';
+        } else if (phrase.includes('復活')) {
+            return '站起來、元氣滿滿、復活姿勢';
+        } else if (phrase.includes('手下留情')) {
+            return '雙手合十、拜託、懇求表情';
         } else if (phrase.includes('早安') || phrase.includes('晚安')) {
             return '揮手、微笑、打招呼';
         } else if (phrase.includes('謝謝') || phrase.includes('不客氣')) {
@@ -298,14 +435,36 @@ export function buildLineStickerPrompt(
             return '比讚、鼓勵手勢、溫暖笑容';
         } else if (phrase.includes('好累') || phrase.includes('累')) {
             return '打哈欠、疲憊表情、擦汗';
-        } else if (phrase.includes('開心') || phrase.includes('快樂')) {
+        } else if (phrase.includes('開心') || phrase.includes('快樂') || phrase.includes('哈哈')) {
             return '大笑、跳躍、比耶';
-        } else if (phrase.includes('收到') || phrase.includes('了解') || phrase.includes('已完成')) {
+        } else if (phrase.includes('嗚嗚')) {
+            return '擦淚、委屈、哭哭表情';
+        } else if (phrase.includes('咦')) {
+            return '歪頭、疑惑、問號表情';
+        } else if (phrase.includes('想你了')) {
+            return '害羞、心形手勢、想念表情';
+        } else if (phrase.includes('不要') || phrase.includes('等等')) {
+            return '擺手、阻止手勢、著急表情';
+        } else if (phrase.includes('收到') || phrase.includes('了解') || phrase.includes('已完成') || phrase.includes('OK') || phrase.includes('寄出') || phrase.includes('查收')) {
             return '點頭、OK手勢、確認表情';
-        } else if (phrase.includes('稍等') || phrase.includes('進行中')) {
+        } else if (phrase.includes('稍等') || phrase.includes('進行中') || phrase.includes('開會') || phrase.includes('稍候')) {
             return '等待手勢、專注工作、思考';
-        } else if (phrase.includes('讚') || phrase.includes('推') || phrase.includes('分享')) {
+        } else if (phrase.includes('明天見')) {
+            return '揮手再見、微笑、道別';
+        } else if (phrase.includes('交給我')) {
+            return '拍胸脯、自信、可靠表情';
+        } else if (phrase.includes('再確認')) {
+            return '推眼鏡、認真、核對表情';
+        } else if (phrase.includes('讚') || phrase.includes('推') || phrase.includes('分享') || phrase.includes('按讚')) {
             return '比讚、分享手勢、開心表情';
+        } else if (phrase.includes('笑死') || phrase.includes('太神') || phrase.includes('跪了') || phrase.includes('神作')) {
+            return '誇張笑、佩服、跪拜手勢';
+        } else if (phrase.includes('愛了') || phrase.includes('必看') || phrase.includes('推爆')) {
+            return '愛心手勢、推薦、興奮表情';
+        } else if (phrase.includes('已讀')) {
+            return '看手機、點頭、已讀表情';
+        } else if (phrase.includes('收藏') || phrase.includes('訂閱')) {
+            return '收藏手勢、開心、支持表情';
         } else if (phrase === 'KKT' || phrase === 'KKO') {
             return '滿懷期待地看向觀眾、可愛表情';
         }
@@ -372,9 +531,15 @@ ${phrasesForFrames.map((phrase, index) => {
 * 文字語言：${slots.text.language}
 * 文字位置：可以放在角色旁邊、上方、下方，但不能遮擋角色的臉部
 * 文字大小：要足夠大，在小尺寸（96×96）下仍能清楚辨識
-* 文字顏色：要與背景和角色形成對比，確保清晰可讀
+* 文字顏色：**${slots.text.textColor}**（所有短語文字統一使用此顏色）
 * 文字長度：${slots.text.lengthConstraints.chinese}，${slots.text.lengthConstraints.english}
 * **禁止**：長句、說明句、段落文字
+${bgColor === 'magenta' ? `
+* **去背友善（洋紅背景時必讀）**：
+  背景為洋紅色 #FF00FF 時，為避免去背後文字或角色邊緣產生洋紅殘留：
+  * 文字與角色輪廓**禁止使用**洋紅、粉紅、紫色或任何接近 #FF00FF 的顏色
+  * 請使用與洋紅對比明顯的顏色（例如黑色、白色、深灰、深藍、深棕），且**不要**在文字或線條上做淡粉、淡紫的漸層或陰影
+  * 這樣去背時才不會在文字處留下殘影` : ''}
 
 ---
 
@@ -384,8 +549,11 @@ ${phrasesForFrames.map((phrase, index) => {
     // Build text section
     const textSection = `### 【文字與語言設定（Text Rules）】
 
-* 所有文字皆需：
+* 字體風格：
   **${slots.text.textStyle}**
+
+* 文字顏色：
+  **${slots.text.textColor}**（所有貼圖上的短語文字皆使用此顏色）
 
 * 文字語言：
   ${slots.text.language}
@@ -394,6 +562,8 @@ ${phrasesForFrames.map((phrase, index) => {
   * ${slots.text.lengthConstraints.chinese}
   * ${slots.text.lengthConstraints.english}
   * 禁止長句、說明句、段落文字
+${bgColor === 'magenta' ? `
+* **去背友善**：背景為洋紅色時，文字與角色線條勿使用洋紅／粉紅／紫色，僅用與背景對比明顯的顏色，避免去背後文字處有殘留。` : ''}
 
 ---
 
@@ -410,7 +580,8 @@ ${phrasesForFrames.map((phrase, index) => {
 }
 
 /**
- * Predefined theme slots for common use cases
+ * Predefined theme slots for common use cases.
+ * examplePhrases: 2-6 chars (Chinese), 1-3 words (English); ordered for variety when cycled in 4x6 grid.
  */
 export const THEME_PRESETS: Record<string, ThemeSlot> = {
     trpg: {
@@ -424,6 +595,14 @@ export const THEME_PRESETS: Record<string, ThemeSlot> = {
             'GM 手下留情',
             '先攻檢定！',
             '豁免檢定！',
+            '我要攻擊！',
+            '使用技能',
+            '檢定失敗',
+            '獲得經驗',
+            '升級了！',
+            '找到寶物',
+            'HP 歸零',
+            '復活！',
         ],
         specialStickers: {
             description: '角色 **滿懷期待地看向觀眾**',
@@ -441,6 +620,14 @@ export const THEME_PRESETS: Record<string, ThemeSlot> = {
             '加油',
             '好累',
             '開心',
+            '哈哈',
+            '嗚嗚',
+            '咦？',
+            '嗯嗯',
+            '好啊',
+            '不要啦',
+            '等等我',
+            '想你了',
         ],
         specialStickers: {
             description: '角色 **滿懷期待地看向觀眾**',
@@ -458,6 +645,14 @@ export const THEME_PRESETS: Record<string, ThemeSlot> = {
             '訂閱',
             '按讚',
             '留言',
+            '已讀',
+            '笑死',
+            '太神',
+            '愛了',
+            '必看',
+            '推爆',
+            '跪了',
+            '神作',
         ],
         specialStickers: {
             description: '角色 **滿懷期待地看向觀眾**',
@@ -475,6 +670,14 @@ export const THEME_PRESETS: Record<string, ThemeSlot> = {
             '沒問題',
             '辛苦了',
             '謝謝',
+            '再確認',
+            '已寄出',
+            '明天見',
+            '開會中',
+            '請稍候',
+            '交給我',
+            'OK',
+            '請查收',
         ],
         specialStickers: {
             description: '角色 **滿懷期待地看向觀眾**',
@@ -484,12 +687,13 @@ export const THEME_PRESETS: Record<string, ThemeSlot> = {
 };
 
 /**
- * Predefined text slots for different languages
+ * Predefined text slots for different languages (default black text, handwritten font)
  */
 export const TEXT_PRESETS: Record<string, TextSlot> = {
     'zh-TW': {
         language: '繁體中文',
-        textStyle: '手寫風格字體',
+        textStyle: FONT_PRESETS.handwritten.promptDesc,
+        textColor: TEXT_COLOR_PRESETS.black.promptDesc,
         lengthConstraints: {
             chinese: '建議 **2～6 個字**',
             english: '建議 **1～3 個單字**',
@@ -497,7 +701,8 @@ export const TEXT_PRESETS: Record<string, TextSlot> = {
     },
     'zh-CN': {
         language: '簡體中文',
-        textStyle: '手寫風格字體',
+        textStyle: FONT_PRESETS.handwritten.promptDesc,
+        textColor: TEXT_COLOR_PRESETS.black.promptDesc,
         lengthConstraints: {
             chinese: '建議 **2～6 個字**',
             english: '建議 **1～3 個單字**',
@@ -506,6 +711,7 @@ export const TEXT_PRESETS: Record<string, TextSlot> = {
     en: {
         language: 'English',
         textStyle: 'Hand-written style font',
+        textColor: TEXT_COLOR_PRESETS.black.promptDesc,
         lengthConstraints: {
             chinese: '建議 **2～6 個字**',
             english: '建議 **1～3 個單字**',
@@ -514,6 +720,7 @@ export const TEXT_PRESETS: Record<string, TextSlot> = {
     ja: {
         language: '日本語',
         textStyle: '手書きスタイルフォント',
+        textColor: TEXT_COLOR_PRESETS.black.promptDesc,
         lengthConstraints: {
             chinese: '建議 **2～6 個字**',
             english: '建議 **1～3 個單字**',
