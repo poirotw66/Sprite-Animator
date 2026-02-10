@@ -31,6 +31,11 @@ type ImageFormat = 'png' | 'jpg';
 /** Theme selection: preset key or custom */
 type ThemeOption = keyof typeof THEME_PRESETS | 'custom';
 
+/** Sticker set: 3 sheets × 16 frames = 48 phrases, no repeat */
+const SET_PHRASES_COUNT = 48;
+const SHEETS_COUNT = 3;
+const FRAMES_PER_SHEET = 16;
+
 const LineStickerPage: React.FC = () => {
     const { t } = useLanguage();
     const {
@@ -86,6 +91,15 @@ const LineStickerPage: React.FC = () => {
     const [selectedFont, setSelectedFont] = useState<keyof typeof FONT_PRESETS>('handwritten');
     const [customPhrases, setCustomPhrases] = useState<string>('');
     const [isGeneratingPhrases, setIsGeneratingPhrases] = useState(false);
+
+    // Sticker set mode (3 sheets × 16 = 48 phrases, no repeat)
+    const [stickerSetMode, setStickerSetMode] = useState(false);
+    const [setPhrasesList, setSetPhrasesList] = useState<string[]>([]);
+    const [sheetImages, setSheetImages] = useState<(string | null)[]>(() => [null, null, null]);
+    const [processedSheetImages, setProcessedSheetImages] = useState<(string | null)[]>(() => [null, null, null]);
+    const [sheetFrames, setSheetFrames] = useState<string[][]>(() => [[], [], []]);
+    const [selectedFramesBySheet, setSelectedFramesBySheet] = useState<boolean[][]>(() => [[], [], []]);
+    const [currentSheetIndex, setCurrentSheetIndex] = useState<0 | 1 | 2>(0);
 
     // Initialize phrases with default theme on mount
     React.useEffect(() => {
@@ -163,8 +177,14 @@ const LineStickerPage: React.FC = () => {
         setSheetDimensions({ width: naturalWidth, height: naturalHeight });
     }, []);
 
-    // Build full prompt using slot structure
-    const buildFullPrompt = useCallback((description: string, cols: number, rows: number, bgColor: ChromaKeyColorType) => {
+    // Build full prompt using slot structure. phraseListOverride: when in sticker set mode, pass the 16 phrases for that sheet.
+    const buildFullPrompt = useCallback((
+        description: string,
+        cols: number,
+        rows: number,
+        bgColor: ChromaKeyColorType,
+        phraseListOverride?: string[]
+    ) => {
         // Build character slot from user description
         const characterSlot = description.trim()
             ? {
@@ -173,13 +193,15 @@ const LineStickerPage: React.FC = () => {
               }
             : DEFAULT_CHARACTER_SLOT;
 
-        // Build theme slot (use preset or custom phrases)
-        const customPhrasesList = customPhrases.trim()
-            ? customPhrases
-                  .split('\n')
-                  .map((line) => line.trim())
-                  .filter((line) => line.length > 0)
-            : [];
+        // Build theme slot (use preset or custom phrases, or override for set mode)
+        const customPhrasesList = phraseListOverride !== undefined
+            ? phraseListOverride
+            : customPhrases.trim()
+                ? customPhrases
+                      .split('\n')
+                      .map((line) => line.trim())
+                      .filter((line) => line.length > 0)
+                : [];
         
         const themeSlot =
             selectedTheme === 'custom'
@@ -253,7 +275,26 @@ const LineStickerPage: React.FC = () => {
         e.preventDefault();
     }, []);
 
-    // Generate sprite sheet
+    // Slice a processed sheet image into frames (4×4). Used for sticker set mode.
+    const sliceProcessedSheetToFrames = useCallback(async (processedImage: string): Promise<string[]> => {
+        const settings = { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 };
+        return sliceSpriteSheet(
+            processedImage,
+            settings.cols,
+            settings.rows,
+            settings.paddingX,
+            settings.paddingY,
+            settings.shiftX,
+            settings.shiftY,
+            false,
+            230,
+            [],
+            chromaKeyColor,
+            getEffectivePadding(settings)
+        );
+    }, [chromaKeyColor]);
+
+    // Generate sprite sheet (single mode) or current sheet only (sticker set mode)
     const handleGenerate = useCallback(async () => {
         const effectiveKey = getEffectiveApiKey();
 
@@ -265,6 +306,75 @@ const LineStickerPage: React.FC = () => {
 
         if (!sourceImage) {
             setError(t.errorNoImage);
+            return;
+        }
+
+        if (stickerSetMode) {
+            if (setPhrasesList.length < FRAMES_PER_SHEET) {
+                setError(`請先產生 48 句短語（目前 ${setPhrasesList.length} 句）`);
+                return;
+            }
+            const sheetIndex = currentSheetIndex;
+            const phraseSlice = setPhrasesList.slice(sheetIndex * FRAMES_PER_SHEET, (sheetIndex + 1) * FRAMES_PER_SHEET);
+            const fullPrompt = buildFullPrompt(stickerDescription, 4, 4, chromaKeyColor, phraseSlice);
+
+            setIsGenerating(true);
+            setError(null);
+            setStatusText(`正在產生第 ${sheetIndex + 1} 張...`);
+
+            try {
+                const sheetImage = await generateSpriteSheet(
+                    sourceImage,
+                    fullPrompt,
+                    4,
+                    4,
+                    effectiveKey,
+                    selectedModel,
+                    (status) => setStatusText(status),
+                    chromaKeyColor
+                );
+
+                setSheetImages((prev) => {
+                    const next = [...prev];
+                    next[sheetIndex] = sheetImage;
+                    return next;
+                });
+
+                setStatusText(t.statusProcessing);
+                setIsProcessingChromaKey(true);
+                const activeChromaKeyColor = CHROMA_KEY_COLORS[chromaKeyColor];
+                const processedImage = await removeChromaKeyWithWorker(
+                    sheetImage,
+                    activeChromaKeyColor,
+                    CHROMA_KEY_FUZZ,
+                    (p) => setStatusText(`${t.statusProcessing} (${p}%)`)
+                );
+                setIsProcessingChromaKey(false);
+
+                setProcessedSheetImages((prev) => {
+                    const next = [...prev];
+                    next[sheetIndex] = processedImage;
+                    return next;
+                });
+
+                const frames = await sliceProcessedSheetToFrames(processedImage);
+                setSheetFrames((prev) => {
+                    const next = [...prev];
+                    next[sheetIndex] = frames;
+                    return next;
+                });
+                setSelectedFramesBySheet((prev) => {
+                    const next = prev.map((arr) => [...arr]);
+                    next[sheetIndex] = new Array(frames.length).fill(false);
+                    return next;
+                });
+                setStatusText('');
+            } catch (err: unknown) {
+                const rawMsg = err instanceof Error ? err.message : 'Unknown error';
+                setError(rawMsg.includes('429') || rawMsg.includes('Quota') || rawMsg.includes('RESOURCE_EXHAUSTED') ? t.errorRateLimit : `${t.errorGeneration}: ${rawMsg}`);
+            } finally {
+                setIsGenerating(false);
+            }
             return;
         }
 
@@ -355,9 +465,104 @@ const LineStickerPage: React.FC = () => {
         chromaKeyColor,
         selectedModel,
         setShowSettings,
+        stickerSetMode,
+        setPhrasesList.length,
+        currentSheetIndex,
+        sliceProcessedSheetToFrames,
     ]);
 
+    // Generate all 3 sheets in parallel (sticker set mode only)
+    const handleGenerateAllSheets = useCallback(async () => {
+        const effectiveKey = getEffectiveApiKey();
+        if (!effectiveKey) {
+            setShowSettings(true);
+            setError(t.errorApiKey);
+            return;
+        }
+        if (!sourceImage) {
+            setError(t.errorNoImage);
+            return;
+        }
+        if (setPhrasesList.length < SET_PHRASES_COUNT) {
+            setError(`請先產生 48 句短語（目前 ${setPhrasesList.length} 句）`);
+            return;
+        }
 
+        setIsGenerating(true);
+        setError(null);
+        setStatusText('3 張並行產生中...');
+
+        const activeChromaKeyColor = CHROMA_KEY_COLORS[chromaKeyColor];
+
+        try {
+            const sheetPromises = ([0, 1, 2] as const).map(async (sheetIndex) => {
+                const phraseSlice = setPhrasesList.slice(sheetIndex * FRAMES_PER_SHEET, (sheetIndex + 1) * FRAMES_PER_SHEET);
+                const fullPrompt = buildFullPrompt(stickerDescription, 4, 4, chromaKeyColor, phraseSlice);
+                return generateSpriteSheet(
+                    sourceImage,
+                    fullPrompt,
+                    4,
+                    4,
+                    effectiveKey,
+                    selectedModel,
+                    () => {},
+                    chromaKeyColor
+                ).then((sheetImage) => ({ sheetIndex, sheetImage }));
+            });
+
+            const results = await Promise.all(sheetPromises);
+
+            setSheetImages((prev) => {
+                const next = [...prev];
+                results.forEach(({ sheetIndex, sheetImage }) => { next[sheetIndex] = sheetImage; });
+                return next;
+            });
+
+            setStatusText(t.statusProcessing);
+            setIsProcessingChromaKey(true);
+
+            for (let i = 0; i < SHEETS_COUNT; i++) {
+                setStatusText(`${t.statusProcessing} 第 ${i + 1} 張去背...`);
+                const raw = results[i].sheetImage;
+                const processed = await removeChromaKeyWithWorker(raw, activeChromaKeyColor, CHROMA_KEY_FUZZ, () => {});
+                setProcessedSheetImages((prev) => {
+                    const next = [...prev];
+                    next[i] = processed;
+                    return next;
+                });
+                const frames = await sliceProcessedSheetToFrames(processed);
+                setSheetFrames((prev) => {
+                    const next = [...prev];
+                    next[i] = frames;
+                    return next;
+                });
+                setSelectedFramesBySheet((prev) => {
+                    const next = prev.map((arr) => [...arr]);
+                    next[i] = new Array(frames.length).fill(false);
+                    return next;
+                });
+            }
+
+            setIsProcessingChromaKey(false);
+            setStatusText('');
+        } catch (err: unknown) {
+            const rawMsg = err instanceof Error ? err.message : 'Unknown error';
+            setError(rawMsg.includes('429') || rawMsg.includes('Quota') || rawMsg.includes('RESOURCE_EXHAUSTED') ? t.errorRateLimit : `${t.errorGeneration}: ${rawMsg}`);
+        } finally {
+            setIsGenerating(false);
+        }
+    }, [
+        getEffectiveApiKey,
+        sourceImage,
+        stickerDescription,
+        buildFullPrompt,
+        chromaKeyColor,
+        selectedModel,
+        setShowSettings,
+        setPhrasesList.length,
+        sliceProcessedSheetToFrames,
+        t,
+    ]);
 
     // Select/Deselect all
     const selectAll = useCallback(() => {
@@ -584,6 +789,34 @@ const LineStickerPage: React.FC = () => {
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6">
                         <h2 className="text-lg font-semibold text-slate-900 mb-4">{t.lineStickerGridSettings}</h2>
 
+                        {/* Mode: Single sheet vs Sticker set (3 sheets, 48 phrases) */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">模式</label>
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setStickerSetMode(false)}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border-2 transition-colors ${
+                                        !stickerSetMode ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                                    }`}
+                                >
+                                    單張
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setStickerSetMode(true)}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border-2 transition-colors ${
+                                        stickerSetMode ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                                    }`}
+                                >
+                                    貼圖組（3 張，48 格）
+                                </button>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">
+                                {stickerSetMode ? '一次產生 48 句不重複短語，對應 3 張 4×4 精靈圖，可單張或並行產生' : '單張精靈圖，網格自訂'}
+                            </p>
+                        </div>
+
                         {/* Sticker Description */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -655,62 +888,116 @@ const LineStickerPage: React.FC = () => {
                             <p className="text-xs text-slate-500 mt-1">選擇貼圖的聊天語境主題，會自動填入對應短語</p>
                         </div>
 
-                        {/* Custom Phrases */}
+                        {/* Custom Phrases (single mode) or Set phrases (sticker set mode) */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-slate-700 mb-2">
-                                短語列表（每行一句，角色會根據短語做出對應動作）
+                                {stickerSetMode ? '貼圖組短語（48 句，不重複）' : '短語列表（每行一句，角色會根據短語做出對應動作）'}
                             </label>
-                            <textarea
-                                value={customPhrases}
-                                onChange={(e) => setCustomPhrases(e.target.value)}
-                                placeholder="每行一句短語，例如：&#10;查規則書...&#10;骰子成功！&#10;暗骰中..."
-                                className="w-full h-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none resize-none font-mono text-xs"
-                            />
-                            <div className="flex items-center gap-2 mt-2">
-                                <button
-                                    type="button"
-                                    onClick={async () => {
-                                        const key = getEffectiveApiKey();
-                                        if (!key) {
-                                            setShowSettings(true);
-                                            setError(t.errorApiKey);
-                                            return;
-                                        }
-                                        const themeContext =
-                                            selectedTheme === 'custom'
-                                                ? (customThemeContext.trim() || '自訂聊天主題')
-                                                : THEME_PRESETS[selectedTheme].chatContext;
-                                        const language = TEXT_PRESETS[selectedLanguage].language;
-                                        const totalFrames = gridCols * gridRows;
-                                        setIsGeneratingPhrases(true);
-                                        setError(null);
-                                        try {
-                                            const lines = await generateStickerPhrases(key, themeContext, language, totalFrames);
-                                            setCustomPhrases(lines.join('\n'));
-                                        } catch (err) {
-                                            const msg = err instanceof Error ? err.message : String(err);
-                                            setError(`產生短語失敗: ${msg}`);
-                                        } finally {
-                                            setIsGeneratingPhrases(false);
-                                        }
-                                    }}
-                                    disabled={isGeneratingPhrases}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:pointer-events-none"
-                                >
-                                    {isGeneratingPhrases ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            產生中...
-                                        </>
-                                    ) : (
-                                        '產生'
-                                    )}
-                                </button>
-                                <span className="text-xs text-slate-500">依目前主題與語言用 AI 產生短語（gemini-3-flash-preview）</span>
-                            </div>
-                            <p className="text-xs text-slate-500 mt-1">
-                                角色會根據每個短語的語意自動做出對應的表情和動作（如：成功→慶祝、失敗→沮喪、查規則→翻書等）
-                            </p>
+                            {stickerSetMode ? (
+                                <>
+                                    <textarea
+                                        value={setPhrasesList.join('\n')}
+                                        readOnly
+                                        className="w-full h-32 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 resize-none font-mono text-xs"
+                                        placeholder="先點「產生 48 句短語」"
+                                    />
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                const key = getEffectiveApiKey();
+                                                if (!key) {
+                                                    setShowSettings(true);
+                                                    setError(t.errorApiKey);
+                                                    return;
+                                                }
+                                                const themeContext =
+                                                    selectedTheme === 'custom'
+                                                        ? (customThemeContext.trim() || '自訂聊天主題')
+                                                        : THEME_PRESETS[selectedTheme].chatContext;
+                                                const language = TEXT_PRESETS[selectedLanguage].language;
+                                                setIsGeneratingPhrases(true);
+                                                setError(null);
+                                                try {
+                                                    const lines = await generateStickerPhrases(key, themeContext, language, SET_PHRASES_COUNT);
+                                                    setSetPhrasesList(lines);
+                                                } catch (err) {
+                                                    const msg = err instanceof Error ? err.message : String(err);
+                                                    setError(`產生短語失敗: ${msg}`);
+                                                } finally {
+                                                    setIsGeneratingPhrases(false);
+                                                }
+                                            }}
+                                            disabled={isGeneratingPhrases}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:pointer-events-none"
+                                        >
+                                            {isGeneratingPhrases ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    產生中...
+                                                </>
+                                            ) : (
+                                                '產生 48 句短語'
+                                            )}
+                                        </button>
+                                        <span className="text-xs text-slate-500">依主題與語言一次產生 48 句，對應 3 張精靈圖</span>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <textarea
+                                        value={customPhrases}
+                                        onChange={(e) => setCustomPhrases(e.target.value)}
+                                        placeholder="每行一句短語，例如：&#10;查規則書...&#10;骰子成功！&#10;暗骰中..."
+                                        className="w-full h-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none resize-none font-mono text-xs"
+                                    />
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                const key = getEffectiveApiKey();
+                                                if (!key) {
+                                                    setShowSettings(true);
+                                                    setError(t.errorApiKey);
+                                                    return;
+                                                }
+                                                const themeContext =
+                                                    selectedTheme === 'custom'
+                                                        ? (customThemeContext.trim() || '自訂聊天主題')
+                                                        : THEME_PRESETS[selectedTheme].chatContext;
+                                                const language = TEXT_PRESETS[selectedLanguage].language;
+                                                const totalFrames = gridCols * gridRows;
+                                                setIsGeneratingPhrases(true);
+                                                setError(null);
+                                                try {
+                                                    const lines = await generateStickerPhrases(key, themeContext, language, totalFrames);
+                                                    setCustomPhrases(lines.join('\n'));
+                                                } catch (err) {
+                                                    const msg = err instanceof Error ? err.message : String(err);
+                                                    setError(`產生短語失敗: ${msg}`);
+                                                } finally {
+                                                    setIsGeneratingPhrases(false);
+                                                }
+                                            }}
+                                            disabled={isGeneratingPhrases}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:pointer-events-none"
+                                        >
+                                            {isGeneratingPhrases ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    產生中...
+                                                </>
+                                            ) : (
+                                                '產生'
+                                            )}
+                                        </button>
+                                        <span className="text-xs text-slate-500">依目前主題與語言用 AI 產生短語（gemini-3-flash-preview）</span>
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-1">
+                                        角色會根據每個短語的語意自動做出對應的表情和動作（如：成功→慶祝、失敗→沮喪、查規則→翻書等）
+                                    </p>
+                                </>
+                            )}
                         </div>
 
                         {/* Language Selection */}
@@ -775,7 +1062,31 @@ const LineStickerPage: React.FC = () => {
                             <p className="text-xs text-slate-500 mt-1">貼圖上短語的字體風格</p>
                         </div>
 
-                        {/* Grid Settings */}
+                        {/* Sheet selector (sticker set mode only) */}
+                        {stickerSetMode && (
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-slate-700 mb-2">選擇要產生／預覽的張次</label>
+                                <div className="flex gap-2">
+                                    {([0, 1, 2] as const).map((i) => (
+                                        <button
+                                            key={i}
+                                            type="button"
+                                            onClick={() => setCurrentSheetIndex(i)}
+                                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border-2 transition-colors ${
+                                                currentSheetIndex === i ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                                            }`}
+                                        >
+                                            第 {i + 1} 張
+                                            {processedSheetImages[i] && <span className="ml-1 text-green-600">✓</span>}
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">每張 4×4（16 格），共 3 張 48 格</p>
+                            </div>
+                        )}
+
+                        {/* Grid Settings (single mode only; set mode uses fixed 4×4) */}
+                        {!stickerSetMode && (
                         <div className="grid grid-cols-2 gap-4 mb-6">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -804,6 +1115,7 @@ const LineStickerPage: React.FC = () => {
                                 />
                             </div>
                         </div>
+                        )}
 
                         {/* Chroma Key Color Selection */}
                         <div className="mb-6 p-3 rounded-lg border border-slate-200 bg-slate-50">
@@ -845,7 +1157,7 @@ const LineStickerPage: React.FC = () => {
 
                         {/* Total stickers info */}
                         <p className="text-sm text-slate-500 mb-4">
-                            {t.totalFrames}: <span className="font-semibold text-slate-700">{gridCols * gridRows}</span>
+                            {t.totalFrames}: <span className="font-semibold text-slate-700">{stickerSetMode ? `${SET_PHRASES_COUNT}（3 張 × 16）` : gridCols * gridRows}</span>
                         </p>
 
                         {/* Error display */}
@@ -863,47 +1175,122 @@ const LineStickerPage: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Generate Button */}
-                        <button
-                            onClick={handleGenerate}
-                            disabled={isGenerating || !sourceImage}
-                            className="w-full py-3 px-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-xl shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-                        >
-                            {isGenerating ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                    {t.lineStickerGenerating}
-                                </>
-                            ) : (
-                                <>
-                                    <Image className="w-5 h-5" />
-                                    {t.lineStickerGenerate}
-                                </>
-                            )}
-                        </button>
+                        {/* Generate Button(s) */}
+                        {stickerSetMode ? (
+                            <div className="flex flex-col gap-2">
+                                <button
+                                    onClick={handleGenerate}
+                                    disabled={isGenerating || !sourceImage || setPhrasesList.length < SET_PHRASES_COUNT}
+                                    className="w-full py-3 px-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-xl shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                                >
+                                    {isGenerating ? (
+                                        <>
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            {t.lineStickerGenerating}
+                                        </>
+                                    ) : (
+                                        <>產生第 {currentSheetIndex + 1} 張</>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={handleGenerateAllSheets}
+                                    disabled={isGenerating || !sourceImage || setPhrasesList.length < SET_PHRASES_COUNT}
+                                    className="w-full py-3 px-4 bg-slate-700 hover:bg-slate-800 text-white font-semibold rounded-xl shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                                >
+                                    {isGenerating ? (
+                                        <>
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            並行產生中...
+                                        </>
+                                    ) : (
+                                        <>一鍵產生 3 張（並行）</>
+                                    )}
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={handleGenerate}
+                                disabled={isGenerating || !sourceImage}
+                                className="w-full py-3 px-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-xl shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                            >
+                                {isGenerating ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        {t.lineStickerGenerating}
+                                    </>
+                                ) : (
+                                    <>
+                                        <Image className="w-5 h-5" />
+                                        {t.lineStickerGenerate}
+                                    </>
+                                )}
+                            </button>
+                        )}
                     </div>
                 </div>
 
                 {/* Right Panel - Results */}
                 <div className="lg:col-span-7 space-y-4 sm:space-y-5 md:space-y-6">
-                    {/* Sprite Sheet Viewer */}
-                    {(spriteSheetImage || processedSpriteSheet) && (
+                    {/* Sprite Sheet Viewer (single mode or current sheet in set mode) */}
+                    {(stickerSetMode
+                        ? (sheetImages[currentSheetIndex] || processedSheetImages[currentSheetIndex])
+                        : (spriteSheetImage || processedSpriteSheet)
+                    ) && (
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div className="p-4 sm:p-5 md:p-6 border-b border-slate-100">
-                                <h2 className="text-lg font-semibold text-slate-900">{t.lineStickerSpriteSheet}</h2>
+                            <div className="p-4 sm:p-5 md:p-6 border-b border-slate-100 flex items-center justify-between">
+                                <h2 className="text-lg font-semibold text-slate-900">
+                                    {t.lineStickerSpriteSheet}
+                                    {stickerSetMode && <span className="text-slate-500 font-normal ml-2">第 {currentSheetIndex + 1} 張</span>}
+                                </h2>
+                                {stickerSetMode && processedSheetImages[currentSheetIndex] && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const img = processedSheetImages[currentSheetIndex];
+                                            if (!img) return;
+                                            const a = document.createElement('a');
+                                            a.href = img;
+                                            a.download = `sprite_sheet_${currentSheetIndex + 1}_transparent_${Date.now()}.png`;
+                                            a.click();
+                                        }}
+                                        className="text-sm font-medium text-green-600 hover:text-green-700"
+                                    >
+                                        下載這張
+                                    </button>
+                                )}
                             </div>
 
                             <div className="p-4 sm:p-5 md:p-6">
                                 <SpriteSheetViewer
-                                    spriteSheetImage={processedSpriteSheet}
-                                    originalSpriteSheet={spriteSheetImage}
+                                    spriteSheetImage={stickerSetMode ? (processedSheetImages[currentSheetIndex] ?? sheetImages[currentSheetIndex]) : processedSpriteSheet}
+                                    originalSpriteSheet={stickerSetMode ? (sheetImages[currentSheetIndex] ?? processedSheetImages[currentSheetIndex]) : spriteSheetImage}
                                     isGenerating={isGenerating}
                                     sheetDimensions={sheetDimensions}
-                                    sliceSettings={sliceSettings}
-                                    setSliceSettings={handleSliceSettingsChange}
+                                    sliceSettings={stickerSetMode ? { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 } : sliceSettings}
+                                    setSliceSettings={stickerSetMode ? () => {} : handleSliceSettingsChange}
                                     onImageLoad={handleImageLoad}
-                                    onDownload={downloadProcessedSpriteSheet}
-                                    onDownloadOriginal={downloadOriginalSpriteSheet}
+                                    onDownload={stickerSetMode
+                                        ? () => {
+                                            const img = processedSheetImages[currentSheetIndex];
+                                            if (!img) return;
+                                            const a = document.createElement('a');
+                                            a.href = img;
+                                            a.download = `sprite_sheet_${currentSheetIndex + 1}_transparent_${Date.now()}.png`;
+                                            a.click();
+                                          }
+                                        : downloadProcessedSpriteSheet
+                                    }
+                                    onDownloadOriginal={stickerSetMode
+                                        ? () => {
+                                            const img = sheetImages[currentSheetIndex];
+                                            if (!img) return;
+                                            const a = document.createElement('a');
+                                            a.href = img;
+                                            a.download = `sprite_sheet_${currentSheetIndex + 1}_original_${Date.now()}.png`;
+                                            a.click();
+                                          }
+                                        : downloadOriginalSpriteSheet
+                                    }
                                     chromaKeyProgress={chromaKeyProgress}
                                     isProcessingChromaKey={isProcessingChromaKey}
                                 />
@@ -914,17 +1301,34 @@ const LineStickerPage: React.FC = () => {
                     {/* Sticker Grid with FrameGrid */}
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6">
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-semibold text-slate-900">{t.lineStickerResult}</h2>
-                            {stickerFrames.length > 0 && (
+                            <h2 className="text-lg font-semibold text-slate-900">
+                                {t.lineStickerResult}
+                                {stickerSetMode && <span className="text-slate-500 font-normal ml-2">第 {currentSheetIndex + 1} 張</span>}
+                            </h2>
+                            {(stickerSetMode ? sheetFrames[currentSheetIndex].length : stickerFrames.length) > 0 && (
                                 <div className="flex items-center gap-2">
                                     <button
-                                        onClick={selectAll}
+                                        onClick={stickerSetMode
+                                            ? () => setSelectedFramesBySheet((prev) => {
+                                                const next = prev.map((arr) => [...arr]);
+                                                next[currentSheetIndex] = new Array(sheetFrames[currentSheetIndex].length).fill(true);
+                                                return next;
+                                            })
+                                            : selectAll
+                                        }
                                         className="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
                                     >
                                         {t.lineStickerSelectAll}
                                     </button>
                                     <button
-                                        onClick={deselectAll}
+                                        onClick={stickerSetMode
+                                            ? () => setSelectedFramesBySheet((prev) => {
+                                                const next = prev.map((arr) => [...arr]);
+                                                next[currentSheetIndex] = new Array(sheetFrames[currentSheetIndex].length).fill(false);
+                                                return next;
+                                            })
+                                            : deselectAll
+                                        }
                                         className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
                                     >
                                         {t.lineStickerDeselectAll}
@@ -933,94 +1337,168 @@ const LineStickerPage: React.FC = () => {
                             )}
                         </div>
 
-                        {stickerFrames.length > 0 ? (
+                        {(stickerSetMode ? sheetFrames[currentSheetIndex].length : stickerFrames.length) > 0 ? (
                             <>
                                 {/* FrameGrid Component */}
                                 <div className="mb-6">
                                     <FrameGrid
-                                        frames={stickerFrames}
+                                        frames={stickerSetMode ? sheetFrames[currentSheetIndex] : stickerFrames}
                                         currentFrameIndex={-1}
                                         onFrameClick={(index) => {
-                                            // Toggle selection on click
-                                            setSelectedFrames(prev => {
-                                                const next = [...prev];
-                                                next[index] = !next[index];
-                                                return next;
-                                            });
+                                            if (stickerSetMode) {
+                                                setSelectedFramesBySheet((prev) => {
+                                                    const next = prev.map((arr) => [...arr]);
+                                                    const sel = next[currentSheetIndex];
+                                                    if (!sel.length) return prev;
+                                                    const s = [...sel];
+                                                    s[index] = !s[index];
+                                                    next[currentSheetIndex] = s;
+                                                    return next;
+                                                });
+                                            } else {
+                                                setSelectedFrames(prev => {
+                                                    const next = [...prev];
+                                                    next[index] = !next[index];
+                                                    return next;
+                                                });
+                                            }
                                         }}
                                         frameOverrides={frameOverrides}
                                         setFrameOverrides={setFrameOverrides}
-                                        enablePerFrameEdit={true}
-                                        processedSpriteSheet={processedSpriteSheet}
-                                        sliceSettings={{ ...sliceSettings, cols: gridCols, rows: gridRows }}
+                                        enablePerFrameEdit={!stickerSetMode}
+                                        processedSpriteSheet={stickerSetMode ? (processedSheetImages[currentSheetIndex] ?? undefined) : processedSpriteSheet}
+                                        sliceSettings={stickerSetMode ? { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 } : { ...sliceSettings, cols: gridCols, rows: gridRows }}
                                         sheetDimensions={sheetDimensions}
-                                        frameIncluded={selectedFrames}
-                                        setFrameIncluded={setSelectedFrames}
+                                        frameIncluded={stickerSetMode ? selectedFramesBySheet[currentSheetIndex] : selectedFrames}
+                                        setFrameIncluded={stickerSetMode
+                                            ? (val) => setSelectedFramesBySheet((prev) => {
+                                                const next = prev.map((arr) => [...arr]);
+                                                next[currentSheetIndex] = typeof val === 'function' ? val(prev[currentSheetIndex]) : val;
+                                                return next;
+                                            })
+                                            : setSelectedFrames
+                                        }
                                     />
                                 </div>
 
                                 {/* Download options */}
                                 <div className="border-t border-slate-200 pt-4">
-                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                                        {/* Format selector */}
-                                        <div className="flex items-center gap-2">
-                                            <label className="text-sm font-medium text-slate-700">{t.lineStickerFormatLabel}:</label>
-                                            <div className="flex gap-1">
-                                                <button
-                                                    onClick={() => setDownloadFormat('png')}
-                                                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors
-                            ${downloadFormat === 'png'
-                                                            ? 'bg-green-500 text-white'
-                                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                                                >
-                                                    PNG
-                                                </button>
-                                                <button
-                                                    onClick={() => setDownloadFormat('jpg')}
-                                                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors
-                            ${downloadFormat === 'jpg'
-                                                            ? 'bg-green-500 text-white'
-                                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                                                >
-                                                    JPG
-                                                </button>
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-wrap">
+                                        {!stickerSetMode && (
+                                            <div className="flex items-center gap-2">
+                                                <label className="text-sm font-medium text-slate-700">{t.lineStickerFormatLabel}:</label>
+                                                <div className="flex gap-1">
+                                                    <button
+                                                        onClick={() => setDownloadFormat('png')}
+                                                        className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${downloadFormat === 'png' ? 'bg-green-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                                    >
+                                                        PNG
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setDownloadFormat('jpg')}
+                                                        className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${downloadFormat === 'jpg' ? 'bg-green-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                                    >
+                                                        JPG
+                                                    </button>
+                                                </div>
                                             </div>
-                                        </div>
-
-                                        {/* Selected count */}
-                                        {selectedCount > 0 && (
-                                            <span className="text-sm text-green-600 font-medium">
-                                                {t.lineStickerSelected}: {selectedCount}
-                                            </span>
                                         )}
 
-                                        {/* Download buttons */}
-                                        <div className="flex gap-2 ml-auto">
+                                        {stickerSetMode && (
                                             <button
-                                                onClick={downloadSelectedAsZip}
-                                                disabled={selectedCount === 0 || isDownloading}
-                                                className="px-4 py-2 text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center gap-2"
+                                                onClick={async () => {
+                                                    if (processedSheetImages.every((img) => img == null)) return;
+                                                    setIsDownloading(true);
+                                                    try {
+                                                        const zip = new JSZip();
+                                                        for (let i = 0; i < SHEETS_COUNT; i++) {
+                                                            const img = processedSheetImages[i];
+                                                            if (img) {
+                                                                const base64 = img.replace(/^data:image\/\w+;base64,/, '');
+                                                                zip.file(`sprite_sheet_${i + 1}_transparent.png`, base64, { base64: true });
+                                                            }
+                                                        }
+                                                        const zipBlob = await zip.generateAsync({ type: 'blob' });
+                                                        const url = URL.createObjectURL(zipBlob);
+                                                        const a = document.createElement('a');
+                                                        a.href = url;
+                                                        a.download = `line_stickers_3_sheets_${Date.now()}.zip`;
+                                                        a.click();
+                                                        URL.revokeObjectURL(url);
+                                                    } catch (e) {
+                                                        setError(t.errorExportZip);
+                                                    } finally {
+                                                        setIsDownloading(false);
+                                                    }
+                                                }}
+                                                disabled={isDownloading || processedSheetImages.some((img) => img == null)}
+                                                className="px-4 py-2 text-sm font-medium text-white bg-slate-700 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center gap-2"
                                             >
-                                                {isDownloading ? (
-                                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                                ) : (
-                                                    <FileArchive className="w-4 h-4" />
-                                                )}
-                                                {t.lineStickerDownloadZip}
+                                                {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileArchive className="w-4 h-4" />}
+                                                下載 3 張為 ZIP
                                             </button>
-                                            <button
-                                                onClick={downloadAllAsZip}
-                                                disabled={isDownloading}
-                                                className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-all flex items-center gap-2"
-                                            >
-                                                {isDownloading ? (
-                                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                                ) : (
-                                                    <Download className="w-4 h-4" />
-                                                )}
-                                                {t.lineStickerDownloadAll}
-                                            </button>
-                                        </div>
+                                        )}
+
+                                        {/* Selected count (single mode) */}
+                                        {!stickerSetMode && selectedCount > 0 && (
+                                            <span className="text-sm text-green-600 font-medium">{t.lineStickerSelected}: {selectedCount}</span>
+                                        )}
+
+                                        {/* Download buttons (single mode) */}
+                                        {!stickerSetMode && (
+                                            <>
+                                                <button
+                                                    onClick={downloadSelectedAsZip}
+                                                    disabled={selectedCount === 0 || isDownloading}
+                                                    className="px-4 py-2 text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center gap-2"
+                                                >
+                                                    {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileArchive className="w-4 h-4" />}
+                                                    {t.lineStickerDownloadZip}
+                                                </button>
+                                                <button
+                                                    onClick={downloadAllAsZip}
+                                                    disabled={isDownloading}
+                                                    className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-all flex items-center gap-2"
+                                                >
+                                                    {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                                    {t.lineStickerDownloadAll}
+                                                </button>
+                                            </>
+                                        )}
+
+                                        {/* Download current sheet frames (set mode) */}
+                                        {stickerSetMode && sheetFrames[currentSheetIndex].length > 0 && (
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={async () => {
+                                                        const frames = sheetFrames[currentSheetIndex];
+                                                        if (!frames.length) return;
+                                                        setIsDownloading(true);
+                                                        try {
+                                                            const zip = new JSZip();
+                                                            for (let i = 0; i < frames.length; i++) {
+                                                                const blob = await convertToFormat(frames[i], downloadFormat);
+                                                                zip.file(`sheet${currentSheetIndex + 1}_${String(i + 1).padStart(2, '0')}.${downloadFormat}`, blob);
+                                                            }
+                                                            const zipBlob = await zip.generateAsync({ type: 'blob' });
+                                                            const url = URL.createObjectURL(zipBlob);
+                                                            const a = document.createElement('a');
+                                                            a.href = url;
+                                                            a.download = `line_stickers_sheet_${currentSheetIndex + 1}_${Date.now()}.zip`;
+                                                            a.click();
+                                                            URL.revokeObjectURL(url);
+                                                        } finally {
+                                                            setIsDownloading(false);
+                                                        }
+                                                    }}
+                                                    disabled={isDownloading}
+                                                    className="px-4 py-2 text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 disabled:opacity-50 rounded-lg flex items-center gap-2"
+                                                >
+                                                    {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                                    下載第 {currentSheetIndex + 1} 張 16 格
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </>
