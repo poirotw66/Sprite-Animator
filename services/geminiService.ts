@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { isQuotaError as checkQuotaError } from '../types/errors';
 import { logger } from '../utils/logger';
-import { CHROMA_KEY_COLORS, PHRASE_GENERATION_MODEL, type ImageResolution } from '../utils/constants';
+import { CHROMA_KEY_COLORS, PHRASE_GENERATION_MODEL, type ImageResolution, type StickerPhraseMode } from '../utils/constants';
 import type { ChromaKeyColorType } from '../types';
 
 export type ProgressCallback = (status: string) => void;
@@ -314,6 +314,7 @@ async function getAnimationStoryboard(
  * @param themeContext - Chat theme/context (e.g. "TRPG 跑團", "日常聊天", or custom description)
  * @param language - Language for phrases (e.g. "繁體中文", "English")
  * @param totalFrames - Number of phrases to generate (usually cols × rows of the sticker grid)
+ * @param mode - Phrase generation mode (balanced/emotional/meme/interaction/theme-deep)
  * @param model - Optional model name; defaults to PHRASE_GENERATION_MODEL
  * @returns Promise resolving to array of phrase strings (one per line, 2-6 chars Chinese or 1-3 words English)
  */
@@ -322,6 +323,7 @@ export async function generateStickerPhrases(
   themeContext: string,
   language: string,
   totalFrames: number,
+  mode: StickerPhraseMode = 'balanced',
   model: string = PHRASE_GENERATION_MODEL
 ): Promise<string[]> {
   if (!apiKey) throw new Error('API Key is missing');
@@ -329,10 +331,63 @@ export async function generateStickerPhrases(
   const ai = new GoogleGenAI({ apiKey });
 
   const contentCount = Math.max(1, totalFrames); // all frames from model (no KKT/KKO reserved)
-  const n40 = Math.round(contentCount * 0.4);
-  const n30 = Math.round(contentCount * 0.3);
-  const n20 = Math.round(contentCount * 0.2);
-  const n10 = contentCount - n40 - n30 - n20; // remainder so total = contentCount
+  let n40 = Math.round(contentCount * 0.4);
+  let n30 = Math.round(contentCount * 0.3);
+  let n20 = Math.round(contentCount * 0.2);
+  let n10 = contentCount - n40 - n30 - n20; // remainder so total = contentCount
+
+  // Adjust category distribution based on mode
+  switch (mode) {
+    case 'emotional':
+      n40 = 0;
+      n20 = 0;
+      n10 = 0;
+      n30 = contentCount;
+      break;
+    case 'meme':
+      n40 = 0;
+      n30 = 0;
+      n20 = 0;
+      n10 = contentCount;
+      break;
+    case 'interaction':
+      n40 = 0;
+      n30 = 0;
+      n10 = 0;
+      n20 = contentCount;
+      break;
+    case 'theme-deep':
+    case 'balanced':
+    default:
+      // Keep golden ratio counts
+      break;
+  }
+
+  let modeLabel: string;
+  let modeHint: string;
+  switch (mode) {
+    case 'emotional':
+      modeLabel = '情緒失控版（全部情緒爆發）';
+      modeHint = '幾乎所有短語都應是情緒爆發、暴躁、崩潰、厭世、自嘲，看起來像網路鄉民在抱怨或發牢騷。';
+      break;
+    case 'meme':
+      modeLabel = '梗圖版（全部梗圖）';
+      modeHint = '所有短語都要像梗圖文案，要有 punchline 與反差感，適合貼在迷因圖上嘴人或自嘲。';
+      break;
+    case 'interaction':
+      modeLabel = '關係互動版（全部關係互動）';
+      modeHint = '全部短語都是對人說的話，偏關心、安慰、嘴砲但帶關係感，適合朋友、情人、曖昧、好同事。';
+      break;
+    case 'theme-deep':
+      modeLabel = '符合主題版（內梗向）';
+      modeHint = '每一句都要明顯呼應主題的內梗與語境，讓熟悉這個主題的人一看就懂在講什麼。';
+      break;
+    case 'balanced':
+    default:
+      modeLabel = '黃金比例版（平衡）';
+      modeHint = '依預設黃金比例分配四類短語，兼顧日常、情緒、關係互動與梗圖。';
+      break;
+  }
 
   const prompt = `你是一位非常熟悉 LINE 貼圖市場的爆款貼圖企劃與文案設計師，
 擅長設計「會被大量拿來用」的貼圖短語，而不是漂亮但沒人用的句子。
@@ -345,6 +400,10 @@ ${themeContext}
 
 【語言】
 ${language}。請依此語言輸出短語（若為繁體中文則每句不超過 6 個字；英文則 1～3 個字為佳）。
+
+【短語模式】
+- 模式：${modeLabel}
+- 提示：${modeHint}
 
 【輸出數量（嚴格遵守）】
 請輸出一組「共 ${contentCount} 句」的貼圖短語，並依下列比例分配：
@@ -377,6 +436,12 @@ ${language}。請依此語言輸出短語（若為繁體中文則每句不超過
 - 一眼就懂，不能解釋
 - 避免書面語與完整長句
 - 適合放在貼圖上，不是社群貼文
+
+【語氣與共鳴（必達）】
+- 要有「感同身受」感：讓人看了覺得「對對對就是這樣」「這我」
+- 帶一點網路鄉民的戲謔感：可自嘲、可嘴人、可吐槽、會心一笑
+- 不要正經八百，要像真實網友在群組裡會打的那種話
+- 可以有一點點賤、一點點厭世、一點點廢，但不要人身攻擊或過激
 
 【市場適配規則】
 - 假設使用者會在「已讀不回、敷衍回覆、情緒表達、快速回應」時使用
@@ -414,7 +479,7 @@ ${language}。請依此語言輸出短語（若為繁體中文則每句不超過
     contents: { parts: [{ text: prompt }] },
     config: {
       temperature: 0.9,
-      maxOutputTokens: 4096,
+      maxOutputTokens: 8192,
     },
   });
 

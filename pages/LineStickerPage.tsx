@@ -11,7 +11,7 @@ import { SpriteSheetViewer } from '../components/SpriteSheetViewer';
 import { sliceSpriteSheet, SliceSettings, getEffectivePadding, FrameOverride } from '../utils/imageUtils';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { ChromaKeyColorType } from '../types';
-import { CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ, GRID_PATTERN_URL, DEFAULT_SLICE_SETTINGS, MODEL_RESOLUTIONS, type ImageResolution } from '../utils/constants';
+import { CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ, GRID_PATTERN_URL, DEFAULT_SLICE_SETTINGS, MODEL_RESOLUTIONS, type ImageResolution, type StickerPhraseMode } from '../utils/constants';
 import JSZip from 'jszip';
 import {
     buildLineStickerPrompt,
@@ -98,6 +98,7 @@ const LineStickerPage: React.FC = () => {
     const [sheetImages, setSheetImages] = useState<(string | null)[]>(() => [null, null, null]);
     const [processedSheetImages, setProcessedSheetImages] = useState<(string | null)[]>(() => [null, null, null]);
     const [sheetFrames, setSheetFrames] = useState<string[][]>(() => [[], [], []]);
+    const [sheetFrameOverrides, setSheetFrameOverrides] = useState<FrameOverride[][]>(() => [[], [], []]);
     const [selectedFramesBySheet, setSelectedFramesBySheet] = useState<boolean[][]>(() => [[], [], []]);
     const [currentSheetIndex, setCurrentSheetIndex] = useState<0 | 1 | 2>(0);
 
@@ -127,6 +128,8 @@ const LineStickerPage: React.FC = () => {
 
     // Output resolution (1K / 2K / 4K; depends on model)
     const [selectedResolution, setSelectedResolution] = useState<ImageResolution>('1K');
+    // Phrase generation mode for LINE sticker text
+    const [selectedPhraseMode, setSelectedPhraseMode] = useState<StickerPhraseMode>('balanced');
     const resolutionOptions: ImageResolution[] = MODEL_RESOLUTIONS[selectedModel] ?? ['1K'];
     React.useEffect(() => {
         const allowed = MODEL_RESOLUTIONS[selectedModel] ?? ['1K'];
@@ -178,6 +181,50 @@ const LineStickerPage: React.FC = () => {
         const timer = setTimeout(performSlice, 100);
         return () => clearTimeout(timer);
     }, [processedSpriteSheet, sliceSettings, frameOverrides, gridCols, gridRows, chromaKeyColor, sheetDimensions, stickerFrames.length, t.errorGeneration]);
+
+    // Re-slice current sheet when frame overrides change (sticker set mode only)
+    React.useEffect(() => {
+        if (!stickerSetMode) return;
+        const processed = processedSheetImages[currentSheetIndex];
+        if (!processed || !sheetDimensions.width || !sheetDimensions.height) return;
+
+        const settings = { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 };
+        const overrides = sheetFrameOverrides[currentSheetIndex] ?? [];
+
+        let cancelled = false;
+        const run = async () => {
+            try {
+                const frames = await sliceSpriteSheet(
+                    processed,
+                    settings.cols,
+                    settings.rows,
+                    settings.paddingX,
+                    settings.paddingY,
+                    settings.shiftX,
+                    settings.shiftY,
+                    false,
+                    230,
+                    overrides,
+                    chromaKeyColor,
+                    getEffectivePadding(settings)
+                );
+                if (!cancelled) {
+                    setSheetFrames((prev) => {
+                        const next = prev.map((arr) => [...arr]);
+                        next[currentSheetIndex] = frames;
+                        return next;
+                    });
+                }
+            } catch (err) {
+                if (!cancelled) console.error('Set mode re-slice failed:', err);
+            }
+        };
+        const timer = setTimeout(run, 100);
+        return () => {
+            cancelled = true;
+            clearTimeout(timer);
+        };
+    }, [stickerSetMode, currentSheetIndex, processedSheetImages, sheetFrameOverrides, sheetDimensions, chromaKeyColor]);
 
     // Handle image load to get dimensions
     const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -906,6 +953,30 @@ const LineStickerPage: React.FC = () => {
                             <label className="block text-sm font-medium text-slate-700 mb-2">
                                 {stickerSetMode ? '貼圖組短語（48 句，不重複）' : '短語列表（每行一句，角色會根據短語做出對應動作）'}
                             </label>
+                            {/* Phrase mode selector */}
+                            <div className="mb-2 flex flex-wrap gap-2">
+                                <span className="text-xs font-medium text-slate-600 mt-0.5">短語風格：</span>
+                                {([
+                                    { id: 'balanced', label: '黃金比例' },
+                                    { id: 'emotional', label: '情緒失控' },
+                                    { id: 'meme', label: '梗圖專用' },
+                                    { id: 'interaction', label: '關心互動' },
+                                    { id: 'theme-deep', label: '符合主題' },
+                                ] as const).map((m) => (
+                                    <button
+                                        key={m.id}
+                                        type="button"
+                                        onClick={() => setSelectedPhraseMode(m.id)}
+                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border-2 transition-colors ${
+                                            selectedPhraseMode === m.id
+                                                ? 'border-green-500 bg-green-50 text-green-700'
+                                                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                                        }`}
+                                    >
+                                        {m.label}
+                                    </button>
+                                ))}
+                            </div>
                             {stickerSetMode ? (
                                 <>
                                     <textarea
@@ -932,7 +1003,7 @@ const LineStickerPage: React.FC = () => {
                                                 setIsGeneratingPhrases(true);
                                                 setError(null);
                                                 try {
-                                                    const lines = await generateStickerPhrases(key, themeContext, language, SET_PHRASES_COUNT);
+                                                    const lines = await generateStickerPhrases(key, themeContext, language, SET_PHRASES_COUNT, selectedPhraseMode);
                                                     setSetPhrasesList(lines);
                                                 } catch (err) {
                                                     const msg = err instanceof Error ? err.message : String(err);
@@ -983,7 +1054,7 @@ const LineStickerPage: React.FC = () => {
                                                 setIsGeneratingPhrases(true);
                                                 setError(null);
                                                 try {
-                                                    const lines = await generateStickerPhrases(key, themeContext, language, totalFrames);
+                                                    const lines = await generateStickerPhrases(key, themeContext, language, totalFrames, selectedPhraseMode);
                                                     setCustomPhrases(lines.join('\n'));
                                                 } catch (err) {
                                                     const msg = err instanceof Error ? err.message : String(err);
@@ -1400,9 +1471,17 @@ const LineStickerPage: React.FC = () => {
                                                 });
                                             }
                                         }}
-                                        frameOverrides={frameOverrides}
-                                        setFrameOverrides={setFrameOverrides}
-                                        enablePerFrameEdit={!stickerSetMode}
+                                        frameOverrides={stickerSetMode ? (sheetFrameOverrides[currentSheetIndex] ?? []) : frameOverrides}
+                                        setFrameOverrides={stickerSetMode
+                                            ? (val) => setSheetFrameOverrides((prev) => {
+                                                const next = prev.map((arr) => [...arr]);
+                                                const current = next[currentSheetIndex] ?? [];
+                                                next[currentSheetIndex] = typeof val === 'function' ? val(current) : val;
+                                                return next;
+                                            })
+                                            : setFrameOverrides
+                                        }
+                                        enablePerFrameEdit={true}
                                         processedSpriteSheet={stickerSetMode ? (processedSheetImages[currentSheetIndex] ?? undefined) : processedSpriteSheet}
                                         sliceSettings={stickerSetMode ? { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 } : { ...sliceSettings, cols: gridCols, rows: gridRows }}
                                         sheetDimensions={sheetDimensions}

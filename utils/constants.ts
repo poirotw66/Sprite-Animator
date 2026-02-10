@@ -47,6 +47,14 @@ export const MODEL_RESOLUTIONS: Record<string, ImageResolution[]> = {
   'gemini-3-pro-image-preview': ['1K', '2K', '4K'],
 };
 
+/** Phrase generation modes for LINE sticker text */
+export type StickerPhraseMode =
+  | 'balanced'      // Golden ratio: 40% daily, 30% emotional, 20% interaction, 10% meme
+  | 'emotional'     // All phrases are emotional outbursts
+  | 'meme'          // All phrases are meme-style punchlines
+  | 'interaction'   // All phrases are relationship / interaction lines
+  | 'theme-deep';   // Still uses golden ratio, but every line is strongly tied to the theme
+
 /** Model for text-only tasks (e.g. generating sticker phrases) */
 export const PHRASE_GENERATION_MODEL = 'gemini-3-flash-preview';
 
