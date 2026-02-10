@@ -27,6 +27,7 @@ import { useProjectHistory } from '../hooks/useProjectHistory';
 import { ProjectHistory } from '../components/ProjectHistory';
 import { DEFAULT_CONFIG, DEFAULT_SLICE_SETTINGS, MODEL_RESOLUTIONS, type ImageResolution } from '../utils/constants';
 import { optimizeSliceSettings } from '../utils/imageUtils';
+import { logger } from '../utils/logger';
 import type { SavedProject } from '../types';
 
 const SpriteAnimatorPage: React.FC = () => {
@@ -268,7 +269,7 @@ const SpriteAnimatorPage: React.FC = () => {
           setStatusText(t.statusOptimized);
         } catch (err) {
           // If optimization fails, continue with default settings
-          console.warn('Auto-optimization failed, using default settings:', err);
+          logger.warn('Auto-optimization failed, using default settings:', err);
         }
       } else {
         // Frame by Frame mode

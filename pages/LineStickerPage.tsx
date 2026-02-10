@@ -1,18 +1,25 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Settings, Upload, Loader2, Download, Check, Image, FileArchive } from 'lucide-react';
+import { ArrowLeft, Settings, Upload, Loader2, Download, Check, Image, FileArchive } from '../components/Icons';
 import { useLanguage } from '../hooks/useLanguage';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { SettingsModal } from '../components/SettingsModal';
 import { useSettings } from '../hooks/useSettings';
 import { generateSpriteSheet, generateStickerPhrases } from '../services/geminiService';
-import { FrameGrid } from '../components/FrameGrid';
-import { SpriteSheetViewer } from '../components/SpriteSheetViewer';
 import { sliceSpriteSheet, SliceSettings, getEffectivePadding, FrameOverride } from '../utils/imageUtils';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { ChromaKeyColorType } from '../types';
 import { CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ, GRID_PATTERN_URL, DEFAULT_SLICE_SETTINGS, MODEL_RESOLUTIONS, type ImageResolution, type StickerPhraseMode } from '../utils/constants';
+import { logger } from '../utils/logger';
 import JSZip from 'jszip';
+
+// Lazy load heavy components for code splitting
+const FrameGrid = lazy(() =>
+    import('../components/FrameGrid').then(module => ({ default: module.FrameGrid }))
+);
+const SpriteSheetViewer = lazy(() =>
+    import('../components/SpriteSheetViewer').then(module => ({ default: module.SpriteSheetViewer }))
+);
 import {
     buildLineStickerPrompt,
     DEFAULT_CHARACTER_SLOT,
@@ -172,7 +179,7 @@ const LineStickerPage: React.FC = () => {
                 }
                 setStatusText('');
             } catch (err) {
-                console.error('Slicing failed:', err);
+                logger.error('Slicing failed:', err);
                 setError(t.errorGeneration); // Generic error
                 setStatusText('');
             }
@@ -216,7 +223,7 @@ const LineStickerPage: React.FC = () => {
                     });
                 }
             } catch (err) {
-                if (!cancelled) console.error('Set mode re-slice failed:', err);
+                if (!cancelled) logger.error('Set mode re-slice failed:', err);
             }
         };
         const timer = setTimeout(run, 100);
@@ -243,9 +250,9 @@ const LineStickerPage: React.FC = () => {
         // Build character slot from user description
         const characterSlot = description.trim()
             ? {
-                  ...DEFAULT_CHARACTER_SLOT,
-                  appearance: description.trim(),
-              }
+                ...DEFAULT_CHARACTER_SLOT,
+                appearance: description.trim(),
+            }
             : DEFAULT_CHARACTER_SLOT;
 
         // Build theme slot (use preset or custom phrases, or override for set mode)
@@ -253,24 +260,24 @@ const LineStickerPage: React.FC = () => {
             ? phraseListOverride
             : customPhrases.trim()
                 ? customPhrases
-                      .split('\n')
-                      .map((line) => line.trim())
-                      .filter((line) => line.length > 0)
+                    .split('\n')
+                    .map((line) => line.trim())
+                    .filter((line) => line.length > 0)
                 : [];
-        
+
         const themeSlot =
             selectedTheme === 'custom'
                 ? {
-                      chatContext: customThemeContext.trim() || '自訂聊天主題',
-                      examplePhrases: customPhrasesList,
-                  }
+                    chatContext: customThemeContext.trim() || '自訂聊天主題',
+                    examplePhrases: customPhrasesList,
+                }
                 : customPhrasesList.length > 0
-                  ? {
+                    ? {
                         ...THEME_PRESETS[selectedTheme],
                         examplePhrases: customPhrasesList,
                         specialStickers: undefined,
                     }
-                  : { ...THEME_PRESETS[selectedTheme], specialStickers: undefined };
+                    : { ...THEME_PRESETS[selectedTheme], specialStickers: undefined };
 
         // Build text slot from selected language + user text color & font
         const textSlot: PromptSlots['text'] = {
@@ -366,7 +373,7 @@ const LineStickerPage: React.FC = () => {
 
         if (stickerSetMode) {
             if (setPhrasesList.length < FRAMES_PER_SHEET) {
-                setError(`請先產生 48 句短語（目前 ${setPhrasesList.length} 句）`);
+                setError(t.lineStickerErrorNeedPhrases.replace('{n}', String(setPhrasesList.length)));
                 return;
             }
             const sheetIndex = currentSheetIndex;
@@ -375,7 +382,7 @@ const LineStickerPage: React.FC = () => {
 
             setIsGenerating(true);
             setError(null);
-            setStatusText(`正在產生第 ${sheetIndex + 1} 張...`);
+            setStatusText(t.lineStickerGeneratingSheetN.replace('{n}', String(sheetIndex + 1)));
 
             try {
                 const sheetImage = await generateSpriteSheet(
@@ -542,13 +549,13 @@ const LineStickerPage: React.FC = () => {
             return;
         }
         if (setPhrasesList.length < SET_PHRASES_COUNT) {
-            setError(`請先產生 48 句短語（目前 ${setPhrasesList.length} 句）`);
+            setError(t.lineStickerErrorNeedPhrases.replace('{n}', String(setPhrasesList.length)));
             return;
         }
 
         setIsGenerating(true);
         setError(null);
-        setStatusText('3 張並行產生中...');
+        setStatusText(t.lineStickerParallelGenerating);
 
         const activeChromaKeyColor = CHROMA_KEY_COLORS[chromaKeyColor];
 
@@ -563,7 +570,7 @@ const LineStickerPage: React.FC = () => {
                     4,
                     effectiveKey,
                     selectedModel,
-                    () => {},
+                    () => { },
                     chromaKeyColor,
                     selectedResolution
                 ).then((sheetImage) => ({ sheetIndex, sheetImage }));
@@ -581,9 +588,9 @@ const LineStickerPage: React.FC = () => {
             setIsProcessingChromaKey(true);
 
             for (let i = 0; i < SHEETS_COUNT; i++) {
-                setStatusText(`${t.statusProcessing} 第 ${i + 1} 張去背...`);
+                setStatusText(`${t.statusProcessing} ${t.lineStickerProcessingSheetN.replace('{n}', String(i + 1))}`);
                 const raw = results[i].sheetImage;
-                const processed = await removeChromaKeyWithWorker(raw, activeChromaKeyColor, CHROMA_KEY_FUZZ, () => {});
+                const processed = await removeChromaKeyWithWorker(raw, activeChromaKeyColor, CHROMA_KEY_FUZZ, () => { });
                 setProcessedSheetImages((prev) => {
                     const next = [...prev];
                     next[i] = processed;
@@ -635,7 +642,7 @@ const LineStickerPage: React.FC = () => {
 
     // Convert base64 to specified format
     const convertToFormat = useCallback(async (base64: string, format: ImageFormat): Promise<Blob> => {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             const img = document.createElement('img');
             img.onload = () => {
                 const canvas = document.createElement('canvas');
@@ -651,9 +658,14 @@ const LineStickerPage: React.FC = () => {
 
                 ctx.drawImage(img, 0, 0);
                 canvas.toBlob((blob) => {
-                    resolve(blob!);
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(new Error('Failed to create blob from canvas'));
+                    }
                 }, format === 'jpg' ? 'image/jpeg' : 'image/png', 0.95);
             };
+            img.onerror = () => reject(new Error('Failed to load image for format conversion'));
             img.src = base64;
         });
     }, []);
@@ -669,7 +681,7 @@ const LineStickerPage: React.FC = () => {
         a.href = url;
         a.download = `sticker_${String(index + 1).padStart(2, '0')}.${downloadFormat}`;
         a.click();
-        URL.revokeObjectURL(url);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
     }, [stickerFrames, downloadFormat, convertToFormat]);
 
     // Download selected as ZIP
@@ -679,7 +691,7 @@ const LineStickerPage: React.FC = () => {
             .filter((index) => index !== -1);
 
         if (selectedIndices.length === 0) {
-            setError('Please select at least one sticker to download');
+            setError(t.lineStickerErrorSelectOne);
             return;
         }
 
@@ -706,7 +718,7 @@ const LineStickerPage: React.FC = () => {
             a.href = url;
             a.download = `line_stickers_${Date.now()}.zip`;
             a.click();
-            URL.revokeObjectURL(url);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         } catch (err) {
             setError(t.errorExportZip);
         } finally {
@@ -734,7 +746,7 @@ const LineStickerPage: React.FC = () => {
             a.href = url;
             a.download = `line_stickers_all_${Date.now()}.zip`;
             a.click();
-            URL.revokeObjectURL(url);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         } catch (err) {
             setError(t.errorExportZip);
         } finally {
@@ -851,29 +863,27 @@ const LineStickerPage: React.FC = () => {
 
                         {/* Mode: Single sheet vs Sticker set (3 sheets, 48 phrases) */}
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-slate-700 mb-2">模式</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerMode}</label>
                             <div className="flex gap-2">
                                 <button
                                     type="button"
                                     onClick={() => setStickerSetMode(false)}
-                                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border-2 transition-colors ${
-                                        !stickerSetMode ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                                    }`}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border-2 transition-colors ${!stickerSetMode ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                                        }`}
                                 >
-                                    單張
+                                    {t.lineStickerModeSingle}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setStickerSetMode(true)}
-                                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border-2 transition-colors ${
-                                        stickerSetMode ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                                    }`}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border-2 transition-colors ${stickerSetMode ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                                        }`}
                                 >
-                                    貼圖組（3 張，48 格）
+                                    {t.lineStickerModeSet}
                                 </button>
                             </div>
                             <p className="text-xs text-slate-500 mt-1">
-                                {stickerSetMode ? '一次產生 48 句不重複短語，對應 3 張 4×4 精靈圖，可單張或並行產生' : '單張精靈圖，網格自訂'}
+                                {stickerSetMode ? t.lineStickerModeSetHint : t.lineStickerModeSingleHint}
                             </p>
                         </div>
 
@@ -894,7 +904,7 @@ const LineStickerPage: React.FC = () => {
                         {/* Style Selection */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-slate-700 mb-2">
-                                貼圖風格（Style Slot）
+                                {t.lineStickerStyleLabel}
                             </label>
                             <select
                                 value={selectedStyle}
@@ -907,13 +917,13 @@ const LineStickerPage: React.FC = () => {
                                     </option>
                                 ))}
                             </select>
-                            <p className="text-xs text-slate-500 mt-1">選擇貼圖的繪製風格，會影響角色呈現方式</p>
+                            <p className="text-xs text-slate-500 mt-1">{t.lineStickerStyleHint}</p>
                         </div>
 
                         {/* Theme Selection */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-slate-700 mb-2">
-                                聊天主題（Theme Slot）
+                                {t.lineStickerThemeLabel}
                             </label>
                             <select
                                 value={selectedTheme}
@@ -927,11 +937,11 @@ const LineStickerPage: React.FC = () => {
                                 }}
                                 className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
                             >
-                                <option value="trpg">TRPG 跑團</option>
-                                <option value="daily">日常聊天</option>
-                                <option value="social">社群互動</option>
-                                <option value="workplace">職場對話</option>
-                                <option value="custom">自訂</option>
+                                <option value="trpg">{t.lineStickerThemeTrpg}</option>
+                                <option value="daily">{t.lineStickerThemeDaily}</option>
+                                <option value="social">{t.lineStickerThemeSocial}</option>
+                                <option value="workplace">{t.lineStickerThemeWorkplace}</option>
+                                <option value="custom">{t.lineStickerThemeCustom}</option>
                             </select>
                             {selectedTheme === 'custom' && (
                                 <div className="mt-2">
@@ -939,39 +949,38 @@ const LineStickerPage: React.FC = () => {
                                         type="text"
                                         value={customThemeContext}
                                         onChange={(e) => setCustomThemeContext(e.target.value)}
-                                        placeholder="例如：遊戲公會、讀書會、寵物群組..."
+                                        placeholder={t.lineStickerCustomThemePlaceholder}
                                         className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
                                     />
-                                    <p className="text-xs text-slate-500 mt-1">輸入自訂主題描述，下方可手動填短語或點「產生」由 AI 產生</p>
+                                    <p className="text-xs text-slate-500 mt-1">{t.lineStickerCustomThemeHint}</p>
                                 </div>
                             )}
-                            <p className="text-xs text-slate-500 mt-1">選擇貼圖的聊天語境主題，會自動填入對應短語</p>
+                            <p className="text-xs text-slate-500 mt-1">{t.lineStickerThemeHint}</p>
                         </div>
 
                         {/* Custom Phrases (single mode) or Set phrases (sticker set mode) */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-slate-700 mb-2">
-                                {stickerSetMode ? '貼圖組短語（48 句，不重複）' : '短語列表（每行一句，角色會根據短語做出對應動作）'}
+                                {stickerSetMode ? t.lineStickerPhraseListSet : t.lineStickerPhraseListSingle}
                             </label>
                             {/* Phrase mode selector */}
                             <div className="mb-2 flex flex-wrap gap-2">
-                                <span className="text-xs font-medium text-slate-600 mt-0.5">短語風格：</span>
+                                <span className="text-xs font-medium text-slate-600 mt-0.5">{t.lineStickerPhraseStyle}</span>
                                 {([
-                                    { id: 'balanced', label: '黃金比例' },
-                                    { id: 'emotional', label: '情緒失控' },
-                                    { id: 'meme', label: '梗圖專用' },
-                                    { id: 'interaction', label: '關心互動' },
-                                    { id: 'theme-deep', label: '符合主題' },
+                                    { id: 'balanced', label: t.lineStickerPhraseBalanced },
+                                    { id: 'emotional', label: t.lineStickerPhraseEmotional },
+                                    { id: 'meme', label: t.lineStickerPhraseMeme },
+                                    { id: 'interaction', label: t.lineStickerPhraseInteraction },
+                                    { id: 'theme-deep', label: t.lineStickerPhraseThemeDeep },
                                 ] as const).map((m) => (
                                     <button
                                         key={m.id}
                                         type="button"
                                         onClick={() => setSelectedPhraseMode(m.id)}
-                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border-2 transition-colors ${
-                                            selectedPhraseMode === m.id
-                                                ? 'border-green-500 bg-green-50 text-green-700'
-                                                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                                        }`}
+                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border-2 transition-colors ${selectedPhraseMode === m.id
+                                            ? 'border-green-500 bg-green-50 text-green-700'
+                                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                                            }`}
                                     >
                                         {m.label}
                                     </button>
@@ -983,7 +992,7 @@ const LineStickerPage: React.FC = () => {
                                         value={setPhrasesList.join('\n')}
                                         readOnly
                                         className="w-full h-32 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 resize-none font-mono text-xs"
-                                        placeholder="先點「產生 48 句短語」"
+                                        placeholder={t.lineStickerPhraseSetPlaceholder}
                                     />
                                     <div className="flex items-center gap-2 mt-2">
                                         <button
@@ -1007,7 +1016,7 @@ const LineStickerPage: React.FC = () => {
                                                     setSetPhrasesList(lines);
                                                 } catch (err) {
                                                     const msg = err instanceof Error ? err.message : String(err);
-                                                    setError(`產生短語失敗: ${msg}`);
+                                                    setError(`${t.lineStickerErrorPhraseGen}: ${msg}`);
                                                 } finally {
                                                     setIsGeneratingPhrases(false);
                                                 }
@@ -1018,13 +1027,13 @@ const LineStickerPage: React.FC = () => {
                                             {isGeneratingPhrases ? (
                                                 <>
                                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                                    產生中...
+                                                    {t.lineStickerGeneratingPhrases}
                                                 </>
                                             ) : (
-                                                '產生 48 句短語'
+                                                t.lineStickerGeneratePhrases48
                                             )}
                                         </button>
-                                        <span className="text-xs text-slate-500">依主題與語言一次產生 48 句，對應 3 張精靈圖</span>
+                                        <span className="text-xs text-slate-500">{t.lineStickerPhraseGenHint48}</span>
                                     </div>
                                 </>
                             ) : (
@@ -1032,7 +1041,7 @@ const LineStickerPage: React.FC = () => {
                                     <textarea
                                         value={customPhrases}
                                         onChange={(e) => setCustomPhrases(e.target.value)}
-                                        placeholder="每行一句短語，例如：&#10;查規則書...&#10;骰子成功！&#10;暗骰中..."
+                                        placeholder={t.lineStickerPhrasePlaceholder}
                                         className="w-full h-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none resize-none font-mono text-xs"
                                     />
                                     <div className="flex items-center gap-2 mt-2">
@@ -1058,7 +1067,7 @@ const LineStickerPage: React.FC = () => {
                                                     setCustomPhrases(lines.join('\n'));
                                                 } catch (err) {
                                                     const msg = err instanceof Error ? err.message : String(err);
-                                                    setError(`產生短語失敗: ${msg}`);
+                                                    setError(`${t.lineStickerErrorPhraseGen}: ${msg}`);
                                                 } finally {
                                                     setIsGeneratingPhrases(false);
                                                 }
@@ -1069,16 +1078,16 @@ const LineStickerPage: React.FC = () => {
                                             {isGeneratingPhrases ? (
                                                 <>
                                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                                    產生中...
+                                                    {t.lineStickerGeneratingPhrases}
                                                 </>
                                             ) : (
-                                                '產生'
+                                                t.lineStickerGeneratePhrases
                                             )}
                                         </button>
-                                        <span className="text-xs text-slate-500">依目前主題與語言用 AI 產生短語（gemini-3-flash-preview）</span>
+                                        <span className="text-xs text-slate-500">{t.lineStickerPhraseGenHint}</span>
                                     </div>
                                     <p className="text-xs text-slate-500 mt-1">
-                                        角色會根據每個短語的語意自動做出對應的表情和動作（如：成功→慶祝、失敗→沮喪、查規則→翻書等）
+                                        {t.lineStickerPhraseActionHint}
                                     </p>
                                 </>
                             )}
@@ -1087,25 +1096,25 @@ const LineStickerPage: React.FC = () => {
                         {/* Language Selection */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-slate-700 mb-2">
-                                文字語言（Text Slot）
+                                {t.lineStickerTextLangLabel}
                             </label>
                             <select
                                 value={selectedLanguage}
                                 onChange={(e) => setSelectedLanguage(e.target.value as keyof typeof TEXT_PRESETS)}
                                 className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
                             >
-                                <option value="zh-TW">繁體中文</option>
-                                <option value="zh-CN">簡體中文</option>
-                                <option value="en">English</option>
-                                <option value="ja">日本語</option>
+                                <option value="zh-TW">{t.lineStickerLangZhTW}</option>
+                                <option value="zh-CN">{t.lineStickerLangZhCN}</option>
+                                <option value="en">{t.lineStickerLangEn}</option>
+                                <option value="ja">{t.lineStickerLangJa}</option>
                             </select>
-                            <p className="text-xs text-slate-500 mt-1">選擇貼圖文字使用的語言</p>
+                            <p className="text-xs text-slate-500 mt-1">{t.lineStickerTextLangHint}</p>
                         </div>
 
                         {/* Text Color */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-slate-700 mb-2">
-                                文字顏色
+                                {t.lineStickerTextColorLabel}
                             </label>
                             <div className="flex flex-wrap gap-2">
                                 {(Object.keys(TEXT_COLOR_PRESETS) as Array<keyof typeof TEXT_COLOR_PRESETS>).map((key) => (
@@ -1113,24 +1122,23 @@ const LineStickerPage: React.FC = () => {
                                         key={key}
                                         type="button"
                                         onClick={() => setSelectedTextColor(key)}
-                                        className={`min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-medium border-2 transition-all touch-manipulation ${
-                                            selectedTextColor === key
-                                                ? 'border-green-500 bg-green-50 text-green-800'
-                                                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                                        }`}
+                                        className={`min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-medium border-2 transition-all touch-manipulation ${selectedTextColor === key
+                                            ? 'border-green-500 bg-green-50 text-green-800'
+                                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                                            }`}
                                         title={TEXT_COLOR_PRESETS[key].promptDesc}
                                     >
                                         {TEXT_COLOR_PRESETS[key].label}
                                     </button>
                                 ))}
                             </div>
-                            <p className="text-xs text-slate-500 mt-1">預設為黑色</p>
+                            <p className="text-xs text-slate-500 mt-1">{t.lineStickerTextColorHint}</p>
                         </div>
 
                         {/* Font / Text Style */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-slate-700 mb-2">
-                                字體風格
+                                {t.lineStickerFontStyleLabel}
                             </label>
                             <select
                                 value={selectedFont}
@@ -1143,62 +1151,61 @@ const LineStickerPage: React.FC = () => {
                                     </option>
                                 ))}
                             </select>
-                            <p className="text-xs text-slate-500 mt-1">貼圖上短語的字體風格</p>
+                            <p className="text-xs text-slate-500 mt-1">{t.lineStickerFontStyleHint}</p>
                         </div>
 
                         {/* Sheet selector (sticker set mode only) */}
                         {stickerSetMode && (
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-slate-700 mb-2">選擇要產生／預覽的張次</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerSheetSelector}</label>
                                 <div className="flex gap-2">
                                     {([0, 1, 2] as const).map((i) => (
                                         <button
                                             key={i}
                                             type="button"
                                             onClick={() => setCurrentSheetIndex(i)}
-                                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border-2 transition-colors ${
-                                                currentSheetIndex === i ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                                            }`}
+                                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border-2 transition-colors ${currentSheetIndex === i ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                                                }`}
                                         >
-                                            第 {i + 1} 張
+                                            {t.lineStickerSheetN.replace('{n}', String(i + 1))}
                                             {processedSheetImages[i] && <span className="ml-1 text-green-600">✓</span>}
                                         </button>
                                     ))}
                                 </div>
-                                <p className="text-xs text-slate-500 mt-1">每張 4×4（16 格），共 3 張 48 格</p>
+                                <p className="text-xs text-slate-500 mt-1">{t.lineStickerSheetInfo}</p>
                             </div>
                         )}
 
                         {/* Grid Settings (single mode only; set mode uses fixed 4×4) */}
                         {!stickerSetMode && (
-                        <div className="grid grid-cols-2 gap-4 mb-6">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    {t.gridCols}
-                                </label>
-                                <input
-                                    type="number"
-                                    min={1}
-                                    max={8}
-                                    value={gridCols}
-                                    onChange={(e) => setGridCols(Math.max(1, Math.min(8, parseInt(e.target.value) || 1)))}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
-                                />
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        {t.gridCols}
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={8}
+                                        value={gridCols}
+                                        onChange={(e) => setGridCols(Math.max(1, Math.min(8, parseInt(e.target.value) || 1)))}
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        {t.gridRows}
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={8}
+                                        value={gridRows}
+                                        onChange={(e) => setGridRows(Math.max(1, Math.min(8, parseInt(e.target.value) || 1)))}
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    {t.gridRows}
-                                </label>
-                                <input
-                                    type="number"
-                                    min={1}
-                                    max={8}
-                                    value={gridRows}
-                                    onChange={(e) => setGridRows(Math.max(1, Math.min(8, parseInt(e.target.value) || 1)))}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
-                                />
-                            </div>
-                        </div>
                         )}
 
                         {/* Chroma Key Color Selection */}
@@ -1241,31 +1248,30 @@ const LineStickerPage: React.FC = () => {
 
                         {/* Output resolution (1K / 2K / 4K by model) */}
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-slate-700 mb-2">輸出解析度</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerResolutionLabel}</label>
                             <div className="flex flex-wrap gap-2">
                                 {resolutionOptions.map((res) => (
                                     <button
                                         key={res}
                                         type="button"
                                         onClick={() => setSelectedResolution(res)}
-                                        className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-colors ${
-                                            selectedResolution === res
-                                                ? 'border-green-500 bg-green-50 text-green-700'
-                                                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                                        }`}
+                                        className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-colors ${selectedResolution === res
+                                            ? 'border-green-500 bg-green-50 text-green-700'
+                                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                                            }`}
                                     >
                                         {res}
                                     </button>
                                 ))}
                             </div>
                             <p className="text-xs text-slate-500 mt-1">
-                                gemini-2.5-flash-image 僅支援 1K；gemini-3-pro-image-preview 支援 1K / 2K / 4K
+                                {t.lineStickerResolutionHint}
                             </p>
                         </div>
 
                         {/* Total stickers info */}
                         <p className="text-sm text-slate-500 mb-4">
-                            {t.totalFrames}: <span className="font-semibold text-slate-700">{stickerSetMode ? `${SET_PHRASES_COUNT}（3 張 × 16）` : gridCols * gridRows}</span>
+                            {t.totalFrames}: <span className="font-semibold text-slate-700">{stickerSetMode ? t.lineStickerTotalFramesSet.replace('{n}', String(SET_PHRASES_COUNT)) : gridCols * gridRows}</span>
                         </p>
 
                         {/* Error display */}
@@ -1297,7 +1303,7 @@ const LineStickerPage: React.FC = () => {
                                             {t.lineStickerGenerating}
                                         </>
                                     ) : (
-                                        <>產生第 {currentSheetIndex + 1} 張</>
+                                        <>{t.lineStickerGenerateSheetN.replace('{n}', String(currentSheetIndex + 1))}</>
                                     )}
                                 </button>
                                 <button
@@ -1308,10 +1314,10 @@ const LineStickerPage: React.FC = () => {
                                     {isGenerating ? (
                                         <>
                                             <Loader2 className="w-5 h-5 animate-spin" />
-                                            並行產生中...
+                                            {t.lineStickerGeneratingAll}
                                         </>
                                     ) : (
-                                        <>一鍵產生 3 張（並行）</>
+                                        <>{t.lineStickerGenerateAll}</>
                                     )}
                                 </button>
                             </div>
@@ -1344,74 +1350,76 @@ const LineStickerPage: React.FC = () => {
                         ? (sheetImages[currentSheetIndex] || processedSheetImages[currentSheetIndex])
                         : (spriteSheetImage || processedSpriteSheet)
                     ) && (
-                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div className="p-4 sm:p-5 md:p-6 border-b border-slate-100 flex items-center justify-between">
-                                <h2 className="text-lg font-semibold text-slate-900">
-                                    {t.lineStickerSpriteSheet}
-                                    {stickerSetMode && <span className="text-slate-500 font-normal ml-2">第 {currentSheetIndex + 1} 張</span>}
-                                </h2>
-                                {stickerSetMode && processedSheetImages[currentSheetIndex] && (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const img = processedSheetImages[currentSheetIndex];
-                                            if (!img) return;
-                                            const a = document.createElement('a');
-                                            a.href = img;
-                                            a.download = `sprite_sheet_${currentSheetIndex + 1}_transparent_${Date.now()}.png`;
-                                            a.click();
-                                        }}
-                                        className="text-sm font-medium text-green-600 hover:text-green-700"
-                                    >
-                                        下載這張
-                                    </button>
-                                )}
-                            </div>
+                            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                                <div className="p-4 sm:p-5 md:p-6 border-b border-slate-100 flex items-center justify-between">
+                                    <h2 className="text-lg font-semibold text-slate-900">
+                                        {t.lineStickerSpriteSheet}
+                                        {stickerSetMode && <span className="text-slate-500 font-normal ml-2">{t.lineStickerSheetN.replace('{n}', String(currentSheetIndex + 1))}</span>}
+                                    </h2>
+                                    {stickerSetMode && processedSheetImages[currentSheetIndex] && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const img = processedSheetImages[currentSheetIndex];
+                                                if (!img) return;
+                                                const a = document.createElement('a');
+                                                a.href = img;
+                                                a.download = `sprite_sheet_${currentSheetIndex + 1}_transparent_${Date.now()}.png`;
+                                                a.click();
+                                            }}
+                                            className="text-sm font-medium text-green-600 hover:text-green-700"
+                                        >
+                                            {t.lineStickerDownloadThis}
+                                        </button>
+                                    )}
+                                </div>
 
-                            <div className="p-4 sm:p-5 md:p-6">
-                                <SpriteSheetViewer
-                                    spriteSheetImage={stickerSetMode ? (processedSheetImages[currentSheetIndex] ?? sheetImages[currentSheetIndex]) : processedSpriteSheet}
-                                    originalSpriteSheet={stickerSetMode ? (sheetImages[currentSheetIndex] ?? processedSheetImages[currentSheetIndex]) : spriteSheetImage}
-                                    isGenerating={isGenerating}
-                                    sheetDimensions={sheetDimensions}
-                                    sliceSettings={stickerSetMode ? { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 } : sliceSettings}
-                                    setSliceSettings={stickerSetMode ? () => {} : handleSliceSettingsChange}
-                                    onImageLoad={handleImageLoad}
-                                    onDownload={stickerSetMode
-                                        ? () => {
-                                            const img = processedSheetImages[currentSheetIndex];
-                                            if (!img) return;
-                                            const a = document.createElement('a');
-                                            a.href = img;
-                                            a.download = `sprite_sheet_${currentSheetIndex + 1}_transparent_${Date.now()}.png`;
-                                            a.click();
-                                          }
-                                        : downloadProcessedSpriteSheet
-                                    }
-                                    onDownloadOriginal={stickerSetMode
-                                        ? () => {
-                                            const img = sheetImages[currentSheetIndex];
-                                            if (!img) return;
-                                            const a = document.createElement('a');
-                                            a.href = img;
-                                            a.download = `sprite_sheet_${currentSheetIndex + 1}_original_${Date.now()}.png`;
-                                            a.click();
-                                          }
-                                        : downloadOriginalSpriteSheet
-                                    }
-                                    chromaKeyProgress={chromaKeyProgress}
-                                    isProcessingChromaKey={isProcessingChromaKey}
-                                />
+                                <div className="p-4 sm:p-5 md:p-6">
+                                    <Suspense fallback={<div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>}>
+                                        <SpriteSheetViewer
+                                            spriteSheetImage={stickerSetMode ? (processedSheetImages[currentSheetIndex] ?? sheetImages[currentSheetIndex]) : processedSpriteSheet}
+                                            originalSpriteSheet={stickerSetMode ? (sheetImages[currentSheetIndex] ?? processedSheetImages[currentSheetIndex]) : spriteSheetImage}
+                                            isGenerating={isGenerating}
+                                            sheetDimensions={sheetDimensions}
+                                            sliceSettings={stickerSetMode ? { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 } : sliceSettings}
+                                            setSliceSettings={stickerSetMode ? () => { } : handleSliceSettingsChange}
+                                            onImageLoad={handleImageLoad}
+                                            onDownload={stickerSetMode
+                                                ? () => {
+                                                    const img = processedSheetImages[currentSheetIndex];
+                                                    if (!img) return;
+                                                    const a = document.createElement('a');
+                                                    a.href = img;
+                                                    a.download = `sprite_sheet_${currentSheetIndex + 1}_transparent_${Date.now()}.png`;
+                                                    a.click();
+                                                }
+                                                : downloadProcessedSpriteSheet
+                                            }
+                                            onDownloadOriginal={stickerSetMode
+                                                ? () => {
+                                                    const img = sheetImages[currentSheetIndex];
+                                                    if (!img) return;
+                                                    const a = document.createElement('a');
+                                                    a.href = img;
+                                                    a.download = `sprite_sheet_${currentSheetIndex + 1}_original_${Date.now()}.png`;
+                                                    a.click();
+                                                }
+                                                : downloadOriginalSpriteSheet
+                                            }
+                                            chromaKeyProgress={chromaKeyProgress}
+                                            isProcessingChromaKey={isProcessingChromaKey}
+                                        />
+                                    </Suspense>
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
 
                     {/* Sticker Grid with FrameGrid */}
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-lg font-semibold text-slate-900">
                                 {t.lineStickerResult}
-                                {stickerSetMode && <span className="text-slate-500 font-normal ml-2">第 {currentSheetIndex + 1} 張</span>}
+                                {stickerSetMode && <span className="text-slate-500 font-normal ml-2">{t.lineStickerSheetN.replace('{n}', String(currentSheetIndex + 1))}</span>}
                             </h2>
                             {(stickerSetMode ? sheetFrames[currentSheetIndex].length : stickerFrames.length) > 0 && (
                                 <div className="flex items-center gap-2">
@@ -1449,52 +1457,54 @@ const LineStickerPage: React.FC = () => {
                             <>
                                 {/* FrameGrid Component */}
                                 <div className="mb-6">
-                                    <FrameGrid
-                                        frames={stickerSetMode ? sheetFrames[currentSheetIndex] : stickerFrames}
-                                        currentFrameIndex={-1}
-                                        onFrameClick={(index) => {
-                                            if (stickerSetMode) {
-                                                setSelectedFramesBySheet((prev) => {
+                                    <Suspense fallback={<div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>}>
+                                        <FrameGrid
+                                            frames={stickerSetMode ? sheetFrames[currentSheetIndex] : stickerFrames}
+                                            currentFrameIndex={-1}
+                                            onFrameClick={(index) => {
+                                                if (stickerSetMode) {
+                                                    setSelectedFramesBySheet((prev) => {
+                                                        const next = prev.map((arr) => [...arr]);
+                                                        const sel = next[currentSheetIndex];
+                                                        if (!sel.length) return prev;
+                                                        const s = [...sel];
+                                                        s[index] = !s[index];
+                                                        next[currentSheetIndex] = s;
+                                                        return next;
+                                                    });
+                                                } else {
+                                                    setSelectedFrames(prev => {
+                                                        const next = [...prev];
+                                                        next[index] = !next[index];
+                                                        return next;
+                                                    });
+                                                }
+                                            }}
+                                            frameOverrides={stickerSetMode ? (sheetFrameOverrides[currentSheetIndex] ?? []) : frameOverrides}
+                                            setFrameOverrides={stickerSetMode
+                                                ? (val) => setSheetFrameOverrides((prev) => {
                                                     const next = prev.map((arr) => [...arr]);
-                                                    const sel = next[currentSheetIndex];
-                                                    if (!sel.length) return prev;
-                                                    const s = [...sel];
-                                                    s[index] = !s[index];
-                                                    next[currentSheetIndex] = s;
+                                                    const current = next[currentSheetIndex] ?? [];
+                                                    next[currentSheetIndex] = typeof val === 'function' ? val(current) : val;
                                                     return next;
-                                                });
-                                            } else {
-                                                setSelectedFrames(prev => {
-                                                    const next = [...prev];
-                                                    next[index] = !next[index];
-                                                    return next;
-                                                });
+                                                })
+                                                : setFrameOverrides
                                             }
-                                        }}
-                                        frameOverrides={stickerSetMode ? (sheetFrameOverrides[currentSheetIndex] ?? []) : frameOverrides}
-                                        setFrameOverrides={stickerSetMode
-                                            ? (val) => setSheetFrameOverrides((prev) => {
-                                                const next = prev.map((arr) => [...arr]);
-                                                const current = next[currentSheetIndex] ?? [];
-                                                next[currentSheetIndex] = typeof val === 'function' ? val(current) : val;
-                                                return next;
-                                            })
-                                            : setFrameOverrides
-                                        }
-                                        enablePerFrameEdit={true}
-                                        processedSpriteSheet={stickerSetMode ? (processedSheetImages[currentSheetIndex] ?? undefined) : processedSpriteSheet}
-                                        sliceSettings={stickerSetMode ? { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 } : { ...sliceSettings, cols: gridCols, rows: gridRows }}
-                                        sheetDimensions={sheetDimensions}
-                                        frameIncluded={stickerSetMode ? selectedFramesBySheet[currentSheetIndex] : selectedFrames}
-                                        setFrameIncluded={stickerSetMode
-                                            ? (val) => setSelectedFramesBySheet((prev) => {
-                                                const next = prev.map((arr) => [...arr]);
-                                                next[currentSheetIndex] = typeof val === 'function' ? val(prev[currentSheetIndex]) : val;
-                                                return next;
-                                            })
-                                            : setSelectedFrames
-                                        }
-                                    />
+                                            enablePerFrameEdit={true}
+                                            processedSpriteSheet={stickerSetMode ? (processedSheetImages[currentSheetIndex] ?? undefined) : processedSpriteSheet}
+                                            sliceSettings={stickerSetMode ? { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 } : { ...sliceSettings, cols: gridCols, rows: gridRows }}
+                                            sheetDimensions={sheetDimensions}
+                                            frameIncluded={stickerSetMode ? selectedFramesBySheet[currentSheetIndex] : selectedFrames}
+                                            setFrameIncluded={stickerSetMode
+                                                ? (val) => setSelectedFramesBySheet((prev) => {
+                                                    const next = prev.map((arr) => [...arr]);
+                                                    next[currentSheetIndex] = typeof val === 'function' ? val(prev[currentSheetIndex]) : val;
+                                                    return next;
+                                                })
+                                                : setSelectedFrames
+                                            }
+                                        />
+                                    </Suspense>
                                 </div>
 
                                 {/* Download options */}
@@ -1540,7 +1550,7 @@ const LineStickerPage: React.FC = () => {
                                                         a.href = url;
                                                         a.download = `line_stickers_3_sheets_${Date.now()}.zip`;
                                                         a.click();
-                                                        URL.revokeObjectURL(url);
+                                                        setTimeout(() => URL.revokeObjectURL(url), 1000);
                                                     } catch (e) {
                                                         setError(t.errorExportZip);
                                                     } finally {
@@ -1551,7 +1561,7 @@ const LineStickerPage: React.FC = () => {
                                                 className="px-4 py-2 text-sm font-medium text-white bg-slate-700 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center gap-2"
                                             >
                                                 {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileArchive className="w-4 h-4" />}
-                                                下載 3 張為 ZIP
+                                                {t.lineStickerDownload3Zip}
                                             </button>
                                         )}
 
@@ -1602,7 +1612,7 @@ const LineStickerPage: React.FC = () => {
                                                             a.href = url;
                                                             a.download = `line_stickers_sheet_${currentSheetIndex + 1}_${Date.now()}.zip`;
                                                             a.click();
-                                                            URL.revokeObjectURL(url);
+                                                            setTimeout(() => URL.revokeObjectURL(url), 1000);
                                                         } finally {
                                                             setIsDownloading(false);
                                                         }
@@ -1611,7 +1621,7 @@ const LineStickerPage: React.FC = () => {
                                                     className="px-4 py-2 text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 disabled:opacity-50 rounded-lg flex items-center gap-2"
                                                 >
                                                     {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                                                    下載第 {currentSheetIndex + 1} 張 16 格
+                                                    {t.lineStickerDownloadSheetN.replace('{n}', String(currentSheetIndex + 1))}
                                                 </button>
                                             </div>
                                         )}

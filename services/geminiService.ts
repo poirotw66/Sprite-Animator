@@ -21,120 +21,120 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  * @returns Promise resolving to base64 image with normalized background color
  */
 async function normalizeBackgroundColor(
-    base64Image: string,
-    targetColor: { r: number; g: number; b: number },
-    colorType: ChromaKeyColorType
+  base64Image: string,
+  targetColor: { r: number; g: number; b: number },
+  colorType: ChromaKeyColorType
 ): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            
-            if (!ctx) {
-                reject(new Error('Failed to get canvas context'));
-                return;
-            }
-            
-            ctx.drawImage(img, 0, 0);
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            
-            // Use more permissive tolerance for detection
-            const tolerance = 100; // Increased from 80 for better coverage
-            let normalizedCount = 0;
-            
-            for (let i = 0; i < data.length; i += 4) {
-                const r = data[i]!;
-                const g = data[i + 1]!;
-                const b = data[i + 2]!;
-                const a = data[i + 3]!;
-                
-                // Skip fully transparent pixels
-                if (a === 0) continue;
-                
-                let isBackgroundColor = false;
-                
-                if (colorType === 'magenta') {
-                    // Detect magenta-like colors - strict detection
-                    // Only match pure/bright magenta to avoid false positives
-                    const isPureMagenta = r > 200 && g < 60 && b > 200 && (r + b) > (g * 3);
-                    const isMagentaScreen = r > 180 && g < 80 && b > 180 && (r - g) > 120 && (b - g) > 120;
-                    const isBrightMagentaScreen = r > 220 && g < 100 && b > 220 && (r + b) > g * 4;
-                    const isNeonMagenta = r > 230 && g < 80 && b > 230;
-                    
-                    const distance = Math.sqrt(
-                        Math.pow(r - targetColor.r, 2) +
-                        Math.pow(g - targetColor.g, 2) +
-                        Math.pow(b - targetColor.b, 2)
-                    );
-                    
-                    isBackgroundColor = isPureMagenta || 
-                        isMagentaScreen || 
-                        isBrightMagentaScreen || 
-                        isNeonMagenta || 
-                        distance < tolerance;
-                    
-                } else if (colorType === 'green') {
-                    // Detect green-like colors
-                    // More permissive to catch AI-generated green variants
-                    const isPureGreen = g > 150 && r < 100 && b < 100;
-                    const isStandardGreenScreen = g > 100 && r < 130 && b < 130 && g > r * 1.2 && g > b * 1.2;
-                    const isBrightGreenScreen = g > 140 && r < 120 && b < 120 && g > r + 40 && g > b + 40;
-                    const isNeonGreen = g > 180 && r < 100 && b < 100;
-                    const isGreenVariant = g > 80 && g > r * 1.3 && g > b * 1.3 && r < 150 && b < 150;
-                    
-                    const distance = Math.sqrt(
-                        Math.pow(r - targetColor.r, 2) +
-                        Math.pow(g - targetColor.g, 2) +
-                        Math.pow(b - targetColor.b, 2)
-                    );
-                    
-                    isBackgroundColor = isPureGreen ||
-                        isStandardGreenScreen ||
-                        isBrightGreenScreen ||
-                        isNeonGreen ||
-                        isGreenVariant ||
-                        distance < tolerance;
-                }
-                
-                // Replace with exact target color
-                if (isBackgroundColor) {
-                    data[i] = targetColor.r;
-                    data[i + 1] = targetColor.g;
-                    data[i + 2] = targetColor.b;
-                    // Keep original alpha for anti-aliasing edges
-                    normalizedCount++;
-                }
-            }
-            
-            logger.debug('Color normalization completed', {
-                totalPixels: data.length / 4,
-                normalizedPixels: normalizedCount,
-                percentage: ((normalizedCount / (data.length / 4)) * 100).toFixed(2) + '%'
-            });
-            
-            ctx.putImageData(imageData, 0, 0);
-            resolve(canvas.toDataURL('image/png'));
-        };
-        
-        img.onerror = () => reject(new Error('Failed to load image for color normalization'));
-        img.src = base64Image;
-    });
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'));
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      // Use more permissive tolerance for detection
+      const tolerance = 100; // Increased from 80 for better coverage
+      let normalizedCount = 0;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i]!;
+        const g = data[i + 1]!;
+        const b = data[i + 2]!;
+        const a = data[i + 3]!;
+
+        // Skip fully transparent pixels
+        if (a === 0) continue;
+
+        let isBackgroundColor = false;
+
+        if (colorType === 'magenta') {
+          // Detect magenta-like colors - strict detection
+          // Only match pure/bright magenta to avoid false positives
+          const isPureMagenta = r > 200 && g < 60 && b > 200 && (r + b) > (g * 3);
+          const isMagentaScreen = r > 180 && g < 80 && b > 180 && (r - g) > 120 && (b - g) > 120;
+          const isBrightMagentaScreen = r > 220 && g < 100 && b > 220 && (r + b) > g * 4;
+          const isNeonMagenta = r > 230 && g < 80 && b > 230;
+
+          const distance = Math.sqrt(
+            Math.pow(r - targetColor.r, 2) +
+            Math.pow(g - targetColor.g, 2) +
+            Math.pow(b - targetColor.b, 2)
+          );
+
+          isBackgroundColor = isPureMagenta ||
+            isMagentaScreen ||
+            isBrightMagentaScreen ||
+            isNeonMagenta ||
+            distance < tolerance;
+
+        } else if (colorType === 'green') {
+          // Detect green-like colors
+          // More permissive to catch AI-generated green variants
+          const isPureGreen = g > 150 && r < 100 && b < 100;
+          const isStandardGreenScreen = g > 100 && r < 130 && b < 130 && g > r * 1.2 && g > b * 1.2;
+          const isBrightGreenScreen = g > 140 && r < 120 && b < 120 && g > r + 40 && g > b + 40;
+          const isNeonGreen = g > 180 && r < 100 && b < 100;
+          const isGreenVariant = g > 80 && g > r * 1.3 && g > b * 1.3 && r < 150 && b < 150;
+
+          const distance = Math.sqrt(
+            Math.pow(r - targetColor.r, 2) +
+            Math.pow(g - targetColor.g, 2) +
+            Math.pow(b - targetColor.b, 2)
+          );
+
+          isBackgroundColor = isPureGreen ||
+            isStandardGreenScreen ||
+            isBrightGreenScreen ||
+            isNeonGreen ||
+            isGreenVariant ||
+            distance < tolerance;
+        }
+
+        // Replace with exact target color
+        if (isBackgroundColor) {
+          data[i] = targetColor.r;
+          data[i + 1] = targetColor.g;
+          data[i + 2] = targetColor.b;
+          // Keep original alpha for anti-aliasing edges
+          normalizedCount++;
+        }
+      }
+
+      logger.debug('Color normalization completed', {
+        totalPixels: data.length / 4,
+        normalizedPixels: normalizedCount,
+        percentage: ((normalizedCount / (data.length / 4)) * 100).toFixed(2) + '%'
+      });
+
+      ctx.putImageData(imageData, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+
+    img.onerror = () => reject(new Error('Failed to load image for color normalization'));
+    img.src = base64Image;
+  });
 }
 
 // Helper to check if error is related to quota or overloading
 const isQuotaError = (error: unknown): boolean => {
-    return checkQuotaError(error);
+  return checkQuotaError(error);
 };
 
 // Helper for retrying operations with exponential backoff
 async function retryOperation<T>(
-  operation: () => Promise<T>, 
+  operation: () => Promise<T>,
   onStatusUpdate?: (msg: string) => void,
-  retries = 5, 
+  retries = 5,
   baseDelay = 4000
 ): Promise<T> {
   let lastError: unknown;
@@ -143,21 +143,21 @@ async function retryOperation<T>(
       return await operation();
     } catch (error: unknown) {
       lastError = error;
-      
+
       if (isQuotaError(error) && i < retries - 1) {
         // Backoff: 4s, 8s, 16s... covering the 3.6s window from the start
-        const delay = baseDelay * Math.pow(2, i) + (Math.random() * 1000); 
+        const delay = baseDelay * Math.pow(2, i) + (Math.random() * 1000);
         const waitSeconds = Math.round(delay / 1000);
-        
+
         logger.warn(`Rate limit/Overload hit (Attempt ${i + 1}/${retries}). Retrying in ${waitSeconds}s...`);
         if (onStatusUpdate) {
           onStatusUpdate(`API 繁忙 (429/503)，等待 ${waitSeconds} 秒後重試... (嘗試 ${i + 1}/${retries})`);
         }
-        
+
         await wait(delay);
         continue;
       }
-      
+
       // If it's not a recoverable error, throw immediately
       throw error;
     }
@@ -180,21 +180,21 @@ async function retryOperation<T>(
  * ```
  */
 function getBestAspectRatio(cols: number, rows: number): string {
-    const targetRatio = cols / rows;
-    
-    // Supported ratios by Gemini 2.5 Flash Image / Imagen
-    const supported = [
-        { str: "1:1", val: 1.0 },
-        { str: "3:4", val: 0.75 }, 
-        { str: "4:3", val: 1.333 }, 
-        { str: "9:16", val: 0.5625 }, 
-        { str: "16:9", val: 1.778 }, 
-    ];
+  const targetRatio = cols / rows;
 
-    // Find closest ratio to prevent squashing/stretching sprites
-    return supported.reduce((prev, curr) => 
-        Math.abs(curr.val - targetRatio) < Math.abs(prev.val - targetRatio) ? curr : prev
-    ).str;
+  // Supported ratios by Gemini 2.5 Flash Image / Imagen
+  const supported = [
+    { str: "1:1", val: 1.0 },
+    { str: "3:4", val: 0.75 },
+    { str: "4:3", val: 1.333 },
+    { str: "9:16", val: 0.5625 },
+    { str: "16:9", val: 1.778 },
+  ];
+
+  // Find closest ratio to prevent squashing/stretching sprites
+  return supported.reduce((prev, curr) =>
+    Math.abs(curr.val - targetRatio) < Math.abs(prev.val - targetRatio) ? curr : prev
+  ).str;
 }
 
 /**
@@ -222,9 +222,9 @@ function getBestAspectRatio(cols: number, rows: number): string {
  * ```
  */
 async function getAnimationStoryboard(
-  ai: GoogleGenAI, 
-  imageBase64: string, 
-  userPrompt: string, 
+  ai: GoogleGenAI,
+  imageBase64: string,
+  userPrompt: string,
   frameCount: number,
   onProgress?: ProgressCallback
 ): Promise<string[]> {
@@ -249,59 +249,59 @@ async function getAnimationStoryboard(
 
   try {
     const response = await retryOperation(async () => {
-        return await ai.models.generateContent({
-            model: planningModel,
-            contents: {
-                parts: [
-                { inlineData: { mimeType: 'image/png', data: cleanBase64 } },
-                { text: systemPrompt }
-                ]
-            },
-            config: {
-                temperature: 1,
-                maxOutputTokens: 1000, 
-            }
-        });
+      return await ai.models.generateContent({
+        model: planningModel,
+        contents: {
+          parts: [
+            { inlineData: { mimeType: 'image/png', data: cleanBase64 } },
+            { text: systemPrompt }
+          ]
+        },
+        config: {
+          temperature: 1,
+          maxOutputTokens: 1000,
+        }
+      });
     }, onProgress);
 
     const text = response.text || "";
-    
+
     // Parse the text output
     const lines = text.split('\n').filter(line => /^\d+[\.:]/.test(line.trim()));
-    
+
     let storyboard = lines.map(line => line.replace(/^\d+[\.:]\s*/, '').trim());
 
     // Fallback parsing
     if (storyboard.length === 0) {
-         storyboard = text.split('\n').filter(l => l.trim().length > 5);
+      storyboard = text.split('\n').filter(l => l.trim().length > 5);
     }
-    
+
     // Strict slicing to ensure we don't exceed requested frame count
     if (storyboard.length > frameCount) {
-        storyboard = storyboard.slice(0, frameCount);
+      storyboard = storyboard.slice(0, frameCount);
     }
-    
+
     // Padding if too few frames
     if (storyboard.length < frameCount) {
-        while(storyboard.length < frameCount) {
-            storyboard.push(storyboard.length > 0 ? storyboard[storyboard.length - 1] : userPrompt);
-        }
+      while (storyboard.length < frameCount) {
+        storyboard.push(storyboard.length > 0 ? storyboard[storyboard.length - 1] : userPrompt);
+      }
     }
     return storyboard;
 
   } catch (e: unknown) {
     if (isQuotaError(e)) {
-        logger.error("Quota exceeded during storyboard generation. Aborting.");
-        throw e;
+      logger.error("Quota exceeded during storyboard generation. Aborting.");
+      throw e;
     }
 
     logger.warn("Storyboard generation failed (non-quota error), falling back to algorithmic descriptions.", e);
     // Fallback descriptions for non-critical errors (e.g. parsing issues)
     return Array.from({ length: frameCount }, (_, i) => {
-        const progress = i / (frameCount - 1 || 1);
-        if (progress < 0.2) return `Preparation: ${userPrompt}`;
-        if (progress < 0.8) return `Action: ${userPrompt}`;
-        return `Recovery: ${userPrompt}`;
+      const progress = i / (frameCount - 1 || 1);
+      if (progress < 0.2) return `Preparation: ${userPrompt}`;
+      if (progress < 0.8) return `Action: ${userPrompt}`;
+      return `Recovery: ${userPrompt}`;
     });
   }
 }
@@ -492,24 +492,19 @@ ${language}。請依此語言輸出短語（若為繁體中文則每句不超過
     if (typeof partText === 'string' && partText.length > text.length) {
       text = partText;
     }
-  } catch (_) {}
+  } catch (_) { }
 
-  // Debug: log full Gemini response in F12 console for sticker phrase generation
-  if (typeof console !== 'undefined' && console.group) {
-    console.group('[gemini-3-flash] Sticker phrases raw response');
-    console.log('text length (characters) =', text.length);
-    console.log('--- full text used for parsing ---');
-    console.log(text);
-    try {
-      const res = response as {
-        candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: string }> } }>;
-      };
-      if (res.candidates?.[0]) {
-        console.log('finishReason (MAX_TOKENS = truncated) =', res.candidates[0].finishReason);
-      }
-    } catch (_) {}
-    console.groupEnd();
-  }
+  // Debug: log full Gemini response for sticker phrase generation (suppressed in production)
+  logger.log('[gemini-3-flash] Sticker phrases raw response | text length =', text.length);
+  logger.log('[gemini-3-flash] Full text used for parsing:', text);
+  try {
+    const res = response as {
+      candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: string }> } }>;
+    };
+    if (res.candidates?.[0]) {
+      logger.log('[gemini-3-flash] finishReason (MAX_TOKENS = truncated) =', res.candidates[0].finishReason);
+    }
+  } catch (_) { }
 
   const sectionHeaders = /^(萬用日常|情緒爆發|關係互動|梗圖型)\s*[：:]\s*$/;
   const bulletMatch = /^\s*[-*]\s*(.+)$/;
@@ -527,9 +522,7 @@ ${language}。請依此語言輸出短語（若為繁體中文則每句不超過
     })
     .filter((line) => line.length > 0);
 
-  if (typeof console !== 'undefined') {
-    console.log('[gemini-3-flash] Parsed phrase count:', lines.length, '| Parsed lines:', lines);
-  }
+  logger.log('[gemini-3-flash] Parsed phrase count:', lines.length, '| Parsed lines:', lines);
 
   if (lines.length === 0) return [];
 
@@ -565,29 +558,23 @@ ${language}。請依此語言輸出短語（若為繁體中文則每句不超過
     const pad = totalFrames - result.length;
     const source = mainPhrases.length > 0 ? mainPhrases : ['...'];
     for (let i = 0; i < pad; i++) result.push(source[i % source.length]);
-    if (typeof console !== 'undefined') {
-      console.warn('[gemini-3-flash] Result was short by', pad, '- padded to', totalFrames);
-    }
+    logger.warn('[gemini-3-flash] Result was short by', pad, '- padded to', totalFrames);
   } else if (result.length > totalFrames) {
     result = result.slice(0, totalFrames);
-    if (typeof console !== 'undefined') {
-      console.warn('[gemini-3-flash] Result was long - sliced to', totalFrames);
-    }
+    logger.warn('[gemini-3-flash] Result was long - sliced to', totalFrames);
   }
 
-  if (typeof console !== 'undefined') {
-    console.log(
-      '[gemini-3-flash] Final: unique from model =',
-      unique.length,
-      '| contentCount =',
-      normalCount,
-      '| result length =',
-      result.length,
-      '(totalFrames =',
-      totalFrames,
-      ')'
-    );
-  }
+  logger.log(
+    '[gemini-3-flash] Final: unique from model =',
+    unique.length,
+    '| contentCount =',
+    normalCount,
+    '| result length =',
+    result.length,
+    '(totalFrames =',
+    totalFrames,
+    ')'
+  );
 
   return result;
 }
@@ -621,46 +608,46 @@ ${language}。請依此語言輸出短語（若為繁體中文則每句不超過
  * ```
  */
 export const generateSpriteSheet = async (
-    imageBase64: string,
-    prompt: string,
-    cols: number,
-    rows: number,
-    apiKey: string,
-    model: string,
-    onProgress?: ProgressCallback,
-    chromaKeyColor: ChromaKeyColorType = 'magenta',
-    outputResolution?: ImageResolution
+  imageBase64: string,
+  prompt: string,
+  cols: number,
+  rows: number,
+  apiKey: string,
+  model: string,
+  onProgress?: ProgressCallback,
+  chromaKeyColor: ChromaKeyColorType = 'magenta',
+  outputResolution?: ImageResolution
 ): Promise<string> => {
-    if (!apiKey) throw new Error("API Key is missing");
+  if (!apiKey) throw new Error("API Key is missing");
 
-    const ai = new GoogleGenAI({ apiKey: apiKey });
-    
-    // Get the selected background color
-    const bgColor = CHROMA_KEY_COLORS[chromaKeyColor];
-    const bgColorName = chromaKeyColor === 'magenta' ? 'pure magenta/fuchsia' : 'chroma key green';
-    const bgColorHex = bgColor.hex;
-    // RGB values for explicit color specification
-    const bgColorRGB = `RGB(${bgColor.r}, ${bgColor.g}, ${bgColor.b})`;
-    const cleanBase64 = imageBase64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
+  const ai = new GoogleGenAI({ apiKey: apiKey });
 
-    // 1. Determine best aspect ratio config to force correct layout
-    const targetAspectRatio = getBestAspectRatio(cols, rows);
-    
-    // Calculate total frames and timing
-    const totalFrames = cols * rows;
-    
-    // Check if this is a LINE sticker prompt (contains specific markers)
-    const isLineStickerPrompt = prompt.includes('LINE 貼圖') || 
-                                 prompt.includes('LINE sticker') ||
-                                 prompt.includes('表情貼圖') ||
-                                 prompt.includes('每一格的具體分配');
-    
-    let fullPrompt: string;
-    
-    if (isLineStickerPrompt) {
-        // Use the provided LINE sticker prompt directly
-        // Add background color + strict layout enforcement to reduce randomness
-        const bgColorRequirement = `
+  // Get the selected background color
+  const bgColor = CHROMA_KEY_COLORS[chromaKeyColor];
+  const bgColorName = chromaKeyColor === 'magenta' ? 'pure magenta/fuchsia' : 'chroma key green';
+  const bgColorHex = bgColor.hex;
+  // RGB values for explicit color specification
+  const bgColorRGB = `RGB(${bgColor.r}, ${bgColor.g}, ${bgColor.b})`;
+  const cleanBase64 = imageBase64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
+
+  // 1. Determine best aspect ratio config to force correct layout
+  const targetAspectRatio = getBestAspectRatio(cols, rows);
+
+  // Calculate total frames and timing
+  const totalFrames = cols * rows;
+
+  // Check if this is a LINE sticker prompt (contains specific markers)
+  const isLineStickerPrompt = prompt.includes('LINE 貼圖') ||
+    prompt.includes('LINE sticker') ||
+    prompt.includes('表情貼圖') ||
+    prompt.includes('每一格的具體分配');
+
+  let fullPrompt: string;
+
+  if (isLineStickerPrompt) {
+    // Use the provided LINE sticker prompt directly
+    // Add background color + strict layout enforcement to reduce randomness
+    const bgColorRequirement = `
 ---
 
 ### 【背景顏色要求（CRITICAL）】
@@ -668,22 +655,22 @@ export const generateSpriteSheet = async (
 背景必須是純色 **${bgColorHex}**（${bgColorRGB}），用於後續去背處理。
 不得出現場景、漸變、陰影或其他背景元素。
 
-${chromaKeyColor === 'magenta' 
-  ? `⚠️ MAGENTA REQUIREMENT:
+${chromaKeyColor === 'magenta'
+        ? `⚠️ MAGENTA REQUIREMENT:
   • R = 255, G = 0, B = 255
   • 必須是純洋紅色 #FF00FF，不是粉色或紫色
 
 ⚠️ 去背友善（避免文字處殘留）：
   • 文字與角色輪廓、陰影**禁止使用**洋紅、粉紅、紫色或任何接近 #FF00FF 的顏色
   • 僅使用黑色、白色或與洋紅對比明顯的深色（如深灰、深藍、深棕），避免去背後在文字邊緣產生洋紅殘留`
-  : `⚠️ GREEN SCREEN REQUIREMENT:
+        : `⚠️ GREEN SCREEN REQUIREMENT:
   • R = 0, G = 177, B = 64
   • 必須是標準綠幕 #00B140，不是青綠色或草綠色`}
 
 背景的每個像素都必須是 EXACTLY ${bgColorHex}。
 `;
 
-        const layoutEnforcement = `
+    const layoutEnforcement = `
 ---
 
 ### 【輸出格式強制（OUTPUT FORMAT - MUST FOLLOW）】
@@ -692,20 +679,20 @@ ${chromaKeyColor === 'magenta'
 2. **填滿**：每一格內角色與文字需佔滿大部分面積（角色約佔格高 70%～85%），單格內僅保留極少內邊距，禁止「角色很小、周圍一大片空白」的構圖。
 3. **一致性**：所有格子的尺寸與對齊方式必須一致，使後續可依固定比例裁成 ${cols}×${rows} 張獨立貼圖。
 `;
-        
-        fullPrompt = prompt + bgColorRequirement + layoutEnforcement;
-        
-        if (onProgress) onProgress(`正在生成 ${cols}x${rows} LINE 貼圖精靈圖 (比例 ${targetAspectRatio})...`);
-    } else {
-        // Generate detailed per-frame description with TINY increments for animation
-        const frameDescriptions = Array.from({ length: totalFrames }, (_, i) => {
-          const progress = i / totalFrames; // 0 to ~0.83 for 6 frames
-          const degrees = Math.round(progress * 360 / totalFrames * 10) / 10;
-          return `Frame ${i + 1}: ${degrees}° into the motion cycle (TINY change from ${i === 0 ? 'Frame ' + totalFrames : 'Frame ' + i})`;
-        }).join('\n');
-        
-        // 2. Construct a prompt that enforces MINIMAL frame-to-frame changes for animation
-        fullPrompt = `
+
+    fullPrompt = prompt + bgColorRequirement + layoutEnforcement;
+
+    if (onProgress) onProgress(`正在生成 ${cols}x${rows} LINE 貼圖精靈圖 (比例 ${targetAspectRatio})...`);
+  } else {
+    // Generate detailed per-frame description with TINY increments for animation
+    const frameDescriptions = Array.from({ length: totalFrames }, (_, i) => {
+      const progress = i / totalFrames; // 0 to ~0.83 for 6 frames
+      const degrees = Math.round(progress * 360 / totalFrames * 10) / 10;
+      return `Frame ${i + 1}: ${degrees}° into the motion cycle (TINY change from ${i === 0 ? 'Frame ' + totalFrames : 'Frame ' + i})`;
+    }).join('\n');
+
+    // 2. Construct a prompt that enforces MINIMAL frame-to-frame changes for animation
+    fullPrompt = `
 You are creating a sprite sheet for ULTRA-SMOOTH looping animation.
 
 ══════════════════════════════════════════════════════════════
@@ -732,8 +719,8 @@ Background MUST be EXACTLY this color (for chroma key removal):
 • ${bgColorRGB}
 • Color name: ${bgColorName}
 
-${chromaKeyColor === 'magenta' 
-  ? `MAGENTA COLOR GUIDE:
+${chromaKeyColor === 'magenta'
+        ? `MAGENTA COLOR GUIDE:
   ✅ CORRECT: Pure magenta ${bgColorHex} - R=255, G=0, B=255 (#FF00FF )
      (Imagine: Maximum red + Maximum blue + Zero green = Electric magenta)
   ❌ WRONG: Pink (#FF69B4), Purple (#800080), Hot Pink (#FF1493)
@@ -741,7 +728,7 @@ ${chromaKeyColor === 'magenta'
   
   Visual Check: The background should look like a bright, electric magenta/fuchsia
   that hurts your eyes - NOT a soft pink or purple.`
-  : `GREEN COLOR GUIDE:
+        : `GREEN COLOR GUIDE:
   ✅ CORRECT: Standard green screen ${bgColorHex} - R=0, G=177, B=64 (#00B140)
      (Imagine: Zero red + High green + Low blue = Professional green screen)
   ❌ WRONG: Lime (#00FF00), Forest Green (#228B22), Neon Green (#39FF14)
@@ -860,15 +847,15 @@ ABSOLUTELY FORBIDDEN - CRITICAL - READ CAREFULLY
 The background MUST be EXACTLY ${bgColorHex} (${bgColorRGB}).
 Using any other shade will cause the chroma key removal to fail.
 
-${chromaKeyColor === 'magenta' 
-  ? `MAGENTA REQUIREMENT - MEMORIZE THIS:
+${chromaKeyColor === 'magenta'
+        ? `MAGENTA REQUIREMENT - MEMORIZE THIS:
   • R must be 255 (maximum)
   • G must be 0 (zero)
   • B must be 255 (maximum)
   • Result: ${bgColorHex} - Pure electric magenta
   • NOT pink (which has G > 100)
   • NOT purple (which has R < 200 or B < 200)`
-  : `GREEN SCREEN REQUIREMENT - MEMORIZE THIS:
+        : `GREEN SCREEN REQUIREMENT - MEMORIZE THIS:
   • R must be 0 (zero)
   • G must be 177 (high but not maximum)
   • B must be 64 (low-medium)
@@ -890,47 +877,47 @@ NO BORDERS. NO FRAMES. NO LINES. JUST CHARACTERS ON SOLID ${bgColorHex}.
 
 Generate the sprite sheet with MINIMAL frame-to-frame variation.
 `;
-        
-        if (onProgress) onProgress(`正在生成 ${cols}x${rows} 連貫動作精靈圖 (比例 ${targetAspectRatio})...`);
-    }
 
-    const response = await retryOperation(async () => {
-        return await ai.models.generateContent({
-            model: model,
-            contents: {
-                parts: [
-                    { inlineData: { mimeType: 'image/png', data: cleanBase64 } },
-                    { text: fullPrompt }
-                ]
-            },
-            config: {
-                imageConfig: {
-                    aspectRatio: targetAspectRatio,
-                    ...(outputResolution && { imageSize: outputResolution })
-                }
-            }
-        });
-    }, onProgress);
+    if (onProgress) onProgress(`正在生成 ${cols}x${rows} 連貫動作精靈圖 (比例 ${targetAspectRatio})...`);
+  }
 
-    const parts = response.candidates?.[0]?.content?.parts;
-    if (parts) {
-        for (const part of parts) {
-            if (part.inlineData && part.inlineData.data) {
-                const generatedImage = `data:image/png;base64,${part.inlineData.data}`;
-                
-                // Post-process: Normalize background color to exact chroma key color
-                if (onProgress) onProgress('正在標準化背景顏色...');
-                const normalizedImage = await normalizeBackgroundColor(
-                    generatedImage, 
-                    bgColor,
-                    chromaKeyColor
-                );
-                
-                return normalizedImage;
-            }
+  const response = await retryOperation(async () => {
+    return await ai.models.generateContent({
+      model: model,
+      contents: {
+        parts: [
+          { inlineData: { mimeType: 'image/png', data: cleanBase64 } },
+          { text: fullPrompt }
+        ]
+      },
+      config: {
+        imageConfig: {
+          aspectRatio: targetAspectRatio,
+          ...(outputResolution && { imageSize: outputResolution })
         }
+      }
+    });
+  }, onProgress);
+
+  const parts = response.candidates?.[0]?.content?.parts;
+  if (parts) {
+    for (const part of parts) {
+      if (part.inlineData && part.inlineData.data) {
+        const generatedImage = `data:image/png;base64,${part.inlineData.data}`;
+
+        // Post-process: Normalize background color to exact chroma key color
+        if (onProgress) onProgress('正在標準化背景顏色...');
+        const normalizedImage = await normalizeBackgroundColor(
+          generatedImage,
+          bgColor,
+          chromaKeyColor
+        );
+
+        return normalizedImage;
+      }
     }
-    throw new Error("No image data received for sprite sheet");
+  }
+  throw new Error("No image data received for sprite sheet");
 };
 
 /**
@@ -970,7 +957,7 @@ export const generateAnimationFrames = async (
   onProgress?: ProgressCallback,
   interFrameDelayMs: number = 4000
 ): Promise<string[]> => {
-  
+
   if (!apiKey) {
     throw new Error("API Key is missing. Please check settings.");
   }
@@ -983,19 +970,19 @@ export const generateAnimationFrames = async (
 
   // Define single frame generator function with Previous Frame Context
   const generateFrame = async (frameDesc: string, i: number, prevFrameBase64: string | null) => {
-    
+
     // Construct parts array for multimodal input
     const parts: Array<{ inlineData?: { mimeType: string; data: string }; text?: string }> = [];
-    
+
     // 1. Original Reference
     parts.push({ inlineData: { mimeType: 'image/png', data: cleanBase64 } });
     parts.push({ text: "Reference Character (Style/Design Source)" });
 
     // 2. Previous Frame (if exists) for Continuity
     if (prevFrameBase64) {
-        const prevClean = prevFrameBase64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
-        parts.push({ inlineData: { mimeType: 'image/png', data: prevClean } });
-        parts.push({ text: `Previous Frame ${i} (Motion Context)` });
+      const prevClean = prevFrameBase64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
+      parts.push({ inlineData: { mimeType: 'image/png', data: prevClean } });
+      parts.push({ text: `Previous Frame ${i} (Motion Context)` });
     }
 
     const fullPrompt = `
@@ -1010,25 +997,25 @@ export const generateAnimationFrames = async (
     4. ANCHOR: Keep the character size and ground position consistent.
     5. FORMAT: Single character, centered.
     `;
-    
+
     parts.push({ text: fullPrompt });
 
     const response = await retryOperation(async () => {
-        return await ai.models.generateContent({
-            model: model, 
-            contents: {
-                parts: parts
-            }
-        });
+      return await ai.models.generateContent({
+        model: model,
+        contents: {
+          parts: parts
+        }
+      });
     }, onProgress);
 
     const resultParts = response.candidates?.[0]?.content?.parts;
     if (resultParts) {
-        for (const part of resultParts) {
-            if (part.inlineData && part.inlineData.data) {
-                return `data:image/png;base64,${part.inlineData.data}`;
-            }
+      for (const part of resultParts) {
+        if (part.inlineData && part.inlineData.data) {
+          return `data:image/png;base64,${part.inlineData.data}`;
         }
+      }
     }
     throw new Error(`No image data received for frame ${i + 1}`);
   };
@@ -1036,36 +1023,36 @@ export const generateAnimationFrames = async (
   // Step 2: Generate Frames Serially
   const results: string[] = [];
   let previousFrame: string | null = null;
-  
+
   if (onProgress) onProgress("分鏡規劃完成，準備繪製...");
   await wait(2000);
 
   for (let i = 0; i < frameDescriptions.length; i++) {
-      const desc = frameDescriptions[i];
-      try {
-        if (onProgress) onProgress(`正在繪製第 ${i + 1} / ${frameDescriptions.length} 幀...`);
+    const desc = frameDescriptions[i];
+    try {
+      if (onProgress) onProgress(`正在繪製第 ${i + 1} / ${frameDescriptions.length} 幀...`);
 
-        if (i > 0) {
-            if (onProgress && interFrameDelayMs > 1000) {
-               onProgress(`等待 API 冷卻 (${Math.round(interFrameDelayMs/1000)}秒)... 準備繪製第 ${i + 1} 幀`);
-            }
-            await wait(interFrameDelayMs); 
-            
-            // Re-update status after wait
-            if (onProgress) onProgress(`正在繪製第 ${i + 1} / ${frameDescriptions.length} 幀...`);
+      if (i > 0) {
+        if (onProgress && interFrameDelayMs > 1000) {
+          onProgress(`等待 API 冷卻 (${Math.round(interFrameDelayMs / 1000)}秒)... 準備繪製第 ${i + 1} 幀`);
         }
-        
-        // Pass previousFrame to context
-        const frameResult: string = await generateFrame(desc, i, previousFrame);
-        results.push(frameResult);
-        
-        // Update previous frame for next iteration
-        previousFrame = frameResult;
+        await wait(interFrameDelayMs);
 
-      } catch (error: unknown) {
-        logger.error(`Generation failed at frame ${i + 1}`, error);
-        throw error;
+        // Re-update status after wait
+        if (onProgress) onProgress(`正在繪製第 ${i + 1} / ${frameDescriptions.length} 幀...`);
       }
+
+      // Pass previousFrame to context
+      const frameResult: string = await generateFrame(desc, i, previousFrame);
+      results.push(frameResult);
+
+      // Update previous frame for next iteration
+      previousFrame = frameResult;
+
+    } catch (error: unknown) {
+      logger.error(`Generation failed at frame ${i + 1}`, error);
+      throw error;
+    }
   }
 
   return results;

@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { SavedProject, SavedProjectMeta } from '../types';
+import { logger } from '../utils/logger';
 
 const STORAGE_LIST_KEY = 'sprite_animator_project_list';
 const STORAGE_ITEM_PREFIX = 'sprite_animator_project_';
@@ -20,7 +21,7 @@ function saveList(list: SavedProjectMeta[]): void {
   try {
     localStorage.setItem(STORAGE_LIST_KEY, JSON.stringify(list));
   } catch (e) {
-    console.warn('Failed to save project list', e);
+    logger.warn('Failed to save project list', e);
   }
 }
 
@@ -40,7 +41,7 @@ function saveProjectItem(project: SavedProject): boolean {
     localStorage.setItem(STORAGE_ITEM_PREFIX + project.id, JSON.stringify(project));
     return true;
   } catch (e) {
-    console.warn('Failed to save project', e);
+    logger.warn('Failed to save project', e);
     return false;
   }
 }

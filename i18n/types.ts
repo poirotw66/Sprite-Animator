@@ -239,4 +239,76 @@ export interface Translations {
   lineStickerShowProcessed: string;
   lineStickerDownloadOriginal: string;
   lineStickerDownloadProcessed: string;
+
+  // LINE Sticker Tool - Mode
+  lineStickerMode: string;
+  lineStickerModeSingle: string;
+  lineStickerModeSet: string;
+  lineStickerModeSetHint: string;
+  lineStickerModeSingleHint: string;
+
+  // LINE Sticker Tool - Style / Theme / Phrases
+  lineStickerStyleLabel: string;
+  lineStickerStyleHint: string;
+  lineStickerThemeLabel: string;
+  lineStickerThemeTrpg: string;
+  lineStickerThemeDaily: string;
+  lineStickerThemeSocial: string;
+  lineStickerThemeWorkplace: string;
+  lineStickerThemeCustom: string;
+  lineStickerCustomThemePlaceholder: string;
+  lineStickerCustomThemeHint: string;
+  lineStickerThemeHint: string;
+  lineStickerPhraseListSet: string;
+  lineStickerPhraseListSingle: string;
+  lineStickerPhraseStyle: string;
+  lineStickerPhraseBalanced: string;
+  lineStickerPhraseEmotional: string;
+  lineStickerPhraseMeme: string;
+  lineStickerPhraseInteraction: string;
+  lineStickerPhraseThemeDeep: string;
+  lineStickerGeneratePhrases: string;
+  lineStickerGeneratePhrases48: string;
+  lineStickerGeneratingPhrases: string;
+  lineStickerPhraseGenHint: string;
+  lineStickerPhraseGenHint48: string;
+  lineStickerPhraseActionHint: string;
+  lineStickerPhraseSetPlaceholder: string;
+
+  // LINE Sticker Tool - Language / Color / Font
+  lineStickerTextLangLabel: string;
+  lineStickerTextLangHint: string;
+  lineStickerLangZhTW: string;
+  lineStickerLangZhCN: string;
+  lineStickerLangEn: string;
+  lineStickerLangJa: string;
+  lineStickerTextColorLabel: string;
+  lineStickerTextColorHint: string;
+  lineStickerFontStyleLabel: string;
+  lineStickerFontStyleHint: string;
+
+  // LINE Sticker Tool - Sheet selector / Resolution
+  lineStickerSheetSelector: string;
+  lineStickerSheetN: string;
+  lineStickerSheetInfo: string;
+  lineStickerResolutionLabel: string;
+  lineStickerResolutionHint: string;
+
+  // LINE Sticker Tool - Generate / Download buttons
+  lineStickerGenerateSheetN: string;
+  lineStickerGenerateAll: string;
+  lineStickerGeneratingAll: string;
+  lineStickerDownloadThis: string;
+  lineStickerDownload3Zip: string;
+  lineStickerDownloadSheetN: string;
+
+  // LINE Sticker Tool - Error / Status
+  lineStickerErrorNeedPhrases: string;
+  lineStickerErrorPhraseGen: string;
+  lineStickerErrorSelectOne: string;
+  lineStickerGeneratingSheetN: string;
+  lineStickerProcessingSheetN: string;
+  lineStickerParallelGenerating: string;
+  lineStickerPhrasePlaceholder: string;
+  lineStickerTotalFramesSet: string;
 }

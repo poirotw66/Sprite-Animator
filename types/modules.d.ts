@@ -69,6 +69,7 @@ declare module 'gifenc' {
 // Vite env types
 interface ImportMetaEnv {
   readonly VITE_GEMINI_API_KEY?: string;
+  readonly BASE_URL: string;
   readonly DEV: boolean;
   readonly PROD: boolean;
   readonly MODE: string;

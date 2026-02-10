@@ -49,9 +49,9 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
     try {
       // Step 1: Generate smooth animation with frame interpolation
       const originalFps = Math.max(1, config.speed * ANIMATION_FPS_MULTIPLIER);
-      
+
       let framesToExport = generatedFrames;
-      
+
       // Apply frame interpolation for smoother animation (if enabled)
       if (config.enableInterpolation && generatedFrames.length >= 2) {
         logger.debug(`APNG: Interpolating frames: ${generatedFrames.length} -> target ${GIF_TARGET_FPS} FPS`);
@@ -69,7 +69,7 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
       const { imagesData, width, height } = await loadImagesData(framesToExport);
 
       const buffers = imagesData.map((d) => d.data.buffer);
-      
+
       // Calculate delay based on interpolated frame count
       const effectiveFps = config.enableInterpolation ? GIF_TARGET_FPS : originalFps;
       const delayMs = Math.round(1000 / effectiveFps);
@@ -95,7 +95,7 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
     } finally {
       setIsExporting(false);
     }
-  }, [generatedFrames, config.speed]);
+  }, [generatedFrames, config.speed, config.enableInterpolation]);
 
   const handleDownloadGif = useCallback(async () => {
     if (generatedFrames.length === 0) return;
@@ -104,9 +104,9 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
     try {
       // Step 1: Generate smooth animation with frame interpolation
       const originalFps = Math.max(1, config.speed * ANIMATION_FPS_MULTIPLIER);
-      
+
       let framesToExport = generatedFrames;
-      
+
       // Apply frame interpolation for smoother animation (if enabled)
       if (config.enableInterpolation && generatedFrames.length >= 2) {
         logger.debug(`Interpolating frames: ${generatedFrames.length} -> target ${GIF_TARGET_FPS} FPS`);
@@ -176,7 +176,7 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
     } finally {
       setIsExporting(false);
     }
-  }, [generatedFrames, config.speed]);
+  }, [generatedFrames, config.speed, config.enableInterpolation]);
 
   const handleDownloadZip = useCallback(async () => {
     if (generatedFrames.length === 0) return;
