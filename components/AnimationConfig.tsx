@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { Play, Layers, Zap, Eraser, Wand2, Loader2, Film as FilmIcon, Grid3X3 } from './Icons';
 import { AnimationConfig, ChromaKeyColorType, ExampleData } from '../types';
-import { ANIMATION_FPS_MULTIPLIER, EXAMPLE_DATA, speedFromGrid } from '../utils/constants';
+import { ANIMATION_FPS_MULTIPLIER, EXAMPLE_DATA, speedFromGrid, MODEL_RESOLUTIONS, type ImageResolution } from '../utils/constants';
 import { ExampleSelector } from './ExampleSelector';
 import { useLanguage } from '../hooks/useLanguage';
 
@@ -14,6 +14,9 @@ interface AnimationConfigPanelProps {
   statusText: string;
   error: string | null;
   onGenerate: () => void;
+  selectedModel?: string;
+  selectedResolution?: ImageResolution;
+  setSelectedResolution?: (value: ImageResolution) => void;
 }
 
 export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.memo(({
@@ -25,6 +28,9 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
   statusText,
   error,
   onGenerate,
+  selectedModel,
+  selectedResolution,
+  setSelectedResolution,
 }) => {
   const { t } = useLanguage();
 
@@ -320,6 +326,27 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
             aria-label={t.previewScale}
           />
         </div>
+
+        {config.mode === 'sheet' && selectedModel != null && selectedResolution != null && setSelectedResolution != null && (
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5">Output resolution</label>
+            <div className="flex flex-wrap gap-2">
+              {(MODEL_RESOLUTIONS[selectedModel] ?? ['1K']).map((res) => (
+                <button
+                  key={res}
+                  type="button"
+                  onClick={() => setSelectedResolution(res)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border-2 transition-colors ${
+                    selectedResolution === res ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                  }`}
+                >
+                  {res}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-slate-500 mt-1">2.5-flash: 1K only; 3-pro: 1K / 2K / 4K</p>
+          </div>
+        )}
 
         {error && (
           <div className="text-red-700 text-sm bg-red-50 p-3 rounded-lg border border-red-200 shadow-sm" role="alert">

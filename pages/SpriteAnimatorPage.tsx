@@ -25,7 +25,7 @@ import { useSpriteSheet } from '../hooks/useSpriteSheet';
 import { useExport } from '../hooks/useExport';
 import { useProjectHistory } from '../hooks/useProjectHistory';
 import { ProjectHistory } from '../components/ProjectHistory';
-import { DEFAULT_CONFIG, DEFAULT_SLICE_SETTINGS } from '../utils/constants';
+import { DEFAULT_CONFIG, DEFAULT_SLICE_SETTINGS, MODEL_RESOLUTIONS, type ImageResolution } from '../utils/constants';
 import { optimizeSliceSettings } from '../utils/imageUtils';
 import type { SavedProject } from '../types';
 
@@ -57,6 +57,13 @@ const SpriteAnimatorPage: React.FC = () => {
 
   // Background removal
   const [removeBackground, setRemoveBackground] = useState(true);
+
+  // Output resolution for sheet mode (1K / 2K / 4K by model)
+  const [selectedResolution, setSelectedResolution] = useState<ImageResolution>('1K');
+  React.useEffect(() => {
+    const allowed = MODEL_RESOLUTIONS[selectedModel] ?? ['1K'];
+    if (!allowed.includes(selectedResolution)) setSelectedResolution(allowed[0]);
+  }, [selectedModel]);
 
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
@@ -227,7 +234,8 @@ const SpriteAnimatorPage: React.FC = () => {
           effectiveKey,
           selectedModel,
           (status) => setStatusText(status),
-          config.chromaKeyColor
+          config.chromaKeyColor,
+          selectedResolution
         );
 
         setSpriteSheetImage(sheetImage);
@@ -523,6 +531,9 @@ const SpriteAnimatorPage: React.FC = () => {
             statusText={statusText}
             error={error}
             onGenerate={handleGenerate}
+            selectedModel={selectedModel}
+            selectedResolution={selectedResolution}
+            setSelectedResolution={setSelectedResolution}
           />
         </div>
 

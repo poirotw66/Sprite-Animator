@@ -11,7 +11,7 @@ import { SpriteSheetViewer } from '../components/SpriteSheetViewer';
 import { sliceSpriteSheet, SliceSettings, getEffectivePadding, FrameOverride } from '../utils/imageUtils';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { ChromaKeyColorType } from '../types';
-import { CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ, GRID_PATTERN_URL, DEFAULT_SLICE_SETTINGS } from '../utils/constants';
+import { CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ, GRID_PATTERN_URL, DEFAULT_SLICE_SETTINGS, MODEL_RESOLUTIONS, type ImageResolution } from '../utils/constants';
 import JSZip from 'jszip';
 import {
     buildLineStickerPrompt,
@@ -124,6 +124,14 @@ const LineStickerPage: React.FC = () => {
 
     // Chroma key color for background removal
     const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('magenta');
+
+    // Output resolution (1K / 2K / 4K; depends on model)
+    const [selectedResolution, setSelectedResolution] = useState<ImageResolution>('1K');
+    const resolutionOptions: ImageResolution[] = MODEL_RESOLUTIONS[selectedModel] ?? ['1K'];
+    React.useEffect(() => {
+        const allowed = MODEL_RESOLUTIONS[selectedModel] ?? ['1K'];
+        if (!allowed.includes(selectedResolution)) setSelectedResolution(allowed[0]);
+    }, [selectedModel]);
 
     // Re-slice effect
     React.useEffect(() => {
@@ -331,7 +339,8 @@ const LineStickerPage: React.FC = () => {
                     effectiveKey,
                     selectedModel,
                     (status) => setStatusText(status),
-                    chromaKeyColor
+                    chromaKeyColor,
+                    selectedResolution
                 );
 
                 setSheetImages((prev) => {
@@ -400,7 +409,8 @@ const LineStickerPage: React.FC = () => {
                 effectiveKey,
                 selectedModel,
                 (status) => setStatusText(status),
-                chromaKeyColor
+                chromaKeyColor,
+                selectedResolution
             );
 
             setSpriteSheetImage(sheetImage);
@@ -469,6 +479,7 @@ const LineStickerPage: React.FC = () => {
         setPhrasesList.length,
         currentSheetIndex,
         sliceProcessedSheetToFrames,
+        selectedResolution,
     ]);
 
     // Generate all 3 sheets in parallel (sticker set mode only)
@@ -506,7 +517,8 @@ const LineStickerPage: React.FC = () => {
                     effectiveKey,
                     selectedModel,
                     () => {},
-                    chromaKeyColor
+                    chromaKeyColor,
+                    selectedResolution
                 ).then((sheetImage) => ({ sheetIndex, sheetImage }));
             });
 
@@ -562,6 +574,7 @@ const LineStickerPage: React.FC = () => {
         setPhrasesList.length,
         sliceProcessedSheetToFrames,
         t,
+        selectedResolution,
     ]);
 
     // Select/Deselect all
@@ -1152,6 +1165,30 @@ const LineStickerPage: React.FC = () => {
                                 {chromaKeyColor === 'magenta'
                                     ? t.magentaHint
                                     : t.greenHint}
+                            </p>
+                        </div>
+
+                        {/* Output resolution (1K / 2K / 4K by model) */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">輸出解析度</label>
+                            <div className="flex flex-wrap gap-2">
+                                {resolutionOptions.map((res) => (
+                                    <button
+                                        key={res}
+                                        type="button"
+                                        onClick={() => setSelectedResolution(res)}
+                                        className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-colors ${
+                                            selectedResolution === res
+                                                ? 'border-green-500 bg-green-50 text-green-700'
+                                                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                                        }`}
+                                    >
+                                        {res}
+                                    </button>
+                                ))}
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">
+                                gemini-2.5-flash-image 僅支援 1K；gemini-3-pro-image-preview 支援 1K / 2K / 4K
                             </p>
                         </div>
 

@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { isQuotaError as checkQuotaError } from '../types/errors';
 import { logger } from '../utils/logger';
-import { CHROMA_KEY_COLORS, PHRASE_GENERATION_MODEL } from '../utils/constants';
+import { CHROMA_KEY_COLORS, PHRASE_GENERATION_MODEL, type ImageResolution } from '../utils/constants';
 import type { ChromaKeyColorType } from '../types';
 
 export type ProgressCallback = (status: string) => void;
@@ -563,7 +563,8 @@ export const generateSpriteSheet = async (
     apiKey: string,
     model: string,
     onProgress?: ProgressCallback,
-    chromaKeyColor: ChromaKeyColorType = 'magenta'
+    chromaKeyColor: ChromaKeyColorType = 'magenta',
+    outputResolution?: ImageResolution
 ): Promise<string> => {
     if (!apiKey) throw new Error("API Key is missing");
 
@@ -839,7 +840,8 @@ Generate the sprite sheet with MINIMAL frame-to-frame variation.
             },
             config: {
                 imageConfig: {
-                    aspectRatio: targetAspectRatio
+                    aspectRatio: targetAspectRatio,
+                    ...(outputResolution && { imageSize: outputResolution })
                 }
             }
         });

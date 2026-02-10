@@ -36,6 +36,17 @@ export const SUPPORTED_MODELS = [
 
 export const DEFAULT_MODEL = 'gemini-2.5-flash-image';
 
+/** Output resolution for image generation. Model support: 2.5-flash = 1K only; 3-pro = 1K, 2K, 4K */
+export type ImageResolution = '1K' | '2K' | '4K';
+
+export const IMAGE_RESOLUTION_OPTIONS: ImageResolution[] = ['1K', '2K', '4K'];
+
+/** Resolutions supported per model */
+export const MODEL_RESOLUTIONS: Record<string, ImageResolution[]> = {
+  'gemini-2.5-flash-image': ['1K'],
+  'gemini-3-pro-image-preview': ['1K', '2K', '4K'],
+};
+
 /** Model for text-only tasks (e.g. generating sticker phrases) */
 export const PHRASE_GENERATION_MODEL = 'gemini-3-flash-preview';
 
