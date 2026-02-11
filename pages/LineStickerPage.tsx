@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, lazy, Suspense, useEffect } from 'react';
+import React, { useState, useCallback, useRef, lazy, Suspense, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
     ArrowLeft, Settings, Upload, Loader2, Download, Check, Image, FileArchive,
@@ -107,6 +107,52 @@ const LineStickerPage: React.FC = () => {
     const [selectedPhraseMode, setSelectedPhraseMode] = useState<StickerPhraseMode>('balanced');
     const [includeText, setIncludeText] = useState(true);
     const [bgRemovalMethod, setBgRemovalMethod] = useState<BgRemovalMethod>('chroma');
+    const [previewPrompt, setPreviewPrompt] = useState<string | null>(null);
+
+    // Phrase list for hook: exact length (single = gridCols*gridRows, set = 48)
+    const phrasesForHook = useMemo(() => {
+        if (stickerSetMode) {
+            const list = setPhrasesList.length >= 48 ? setPhrasesList : [...setPhrasesList, ...Array(48 - setPhrasesList.length).fill('')];
+            return list.slice(0, 48);
+        }
+        const total = gridCols * gridRows;
+        const fromText = customPhrases.split('\n').map((l: string) => l.trim());
+        const padded = fromText.length >= total ? fromText.slice(0, total) : [...fromText, ...Array(total - fromText.length).fill('')];
+        return padded;
+    }, [stickerSetMode, setPhrasesList, customPhrases, gridCols, gridRows]);
+
+    // Display phrase grid: single = gridCols*gridRows, set = current sheet 16
+    const phraseGridList = useMemo(() => {
+        if (stickerSetMode) {
+            const start = currentSheetIndex * 16;
+            const sheet = setPhrasesList.slice(start, start + 16);
+            return sheet.length >= 16 ? sheet : [...sheet, ...Array(16 - sheet.length).fill('')];
+        }
+        return phrasesForHook;
+    }, [stickerSetMode, currentSheetIndex, setPhrasesList, phrasesForHook]);
+
+    const phraseGridCols = stickerSetMode ? 4 : gridCols;
+    const phraseGridRows = stickerSetMode ? 4 : gridRows;
+
+    const updatePhraseAt = useCallback((index: number, value: string) => {
+        if (stickerSetMode) {
+            const globalIndex = currentSheetIndex * 16 + index;
+            setSetPhrasesList(prev => {
+                const next = prev.length >= 48 ? [...prev] : [...prev, ...Array(48 - prev.length).fill('')];
+                const n = next.slice(0, 48);
+                n[globalIndex] = value;
+                return n;
+            });
+        } else {
+            const total = gridCols * gridRows;
+            const arr = customPhrases.split('\n').map((l: string) => l.trim());
+            const padded = arr.length >= total ? arr.slice(0, total) : [...arr, ...Array(total - arr.length).fill('')];
+            const next = [...padded];
+            next[index] = value;
+            setCustomPhrases(next.join('\n'));
+            setSetPhrasesList(next);
+        }
+    }, [stickerSetMode, currentSheetIndex, gridCols, gridRows, customPhrases]);
 
     useEffect(() => {
         if (selectedTheme === 'custom') return;
@@ -131,6 +177,7 @@ const LineStickerPage: React.FC = () => {
         error,
         setError,
         generateSingleSheet,
+        buildPrompt,
     } = useLineStickerGeneration({
         apiKey: getEffectiveApiKey(),
         selectedModel,
@@ -140,7 +187,7 @@ const LineStickerPage: React.FC = () => {
         selectedStyle,
         selectedTheme,
         customThemeContext,
-        customPhrasesList: customPhrases.trim() ? customPhrases.split('\n').map(l => l.trim()).filter(l => l.length > 0) : [],
+        customPhrasesList: phrasesForHook,
         selectedLanguage,
         selectedTextColor,
         selectedFont,
@@ -614,16 +661,75 @@ const LineStickerPage: React.FC = () => {
 
                                         const phrases = await generateStickerPhrases(apiKey, fullContext, langLabel, count, selectedPhraseMode);
                                         setCustomPhrases(phrases.join('\n'));
-                                        if (stickerSetMode) setSetPhrasesList(phrases);
+                                        setSetPhrasesList(phrases);
                                     } catch (err: any) { setError(err.message); } finally { setIsGeneratingPhrases(false); }
                                 }} disabled={isGeneratingPhrases} className="text-xs text-green-600 flex items-center gap-1 font-semibold hover:text-green-700">
                                     {isGeneratingPhrases ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
                                     {t.lineStickerGeneratePhrases}
                                 </button>
                             </div>
-                            <textarea value={customPhrases} onChange={e => { setCustomPhrases(e.target.value); setSetPhrasesList(e.target.value.split('\n').filter(Boolean)); }} className="w-full h-32 p-3 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-green-500 outline-none resize-none" />
+                            {stickerSetMode && (
+                                <div className="flex gap-1 mb-2">
+                                    {[0, 1, 2].map(i => (
+                                        <button key={i} type="button" onClick={() => setCurrentSheetIndex(i as 0 | 1 | 2)} className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${currentSheetIndex === i ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-slate-100 text-slate-600 border border-transparent hover:bg-slate-200'}`}>
+                                            {t.lineStickerSheetN.replace('{n}', String(i + 1))}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                            <div
+                                className="gap-1.5 w-full"
+                                style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: `repeat(${phraseGridCols}, minmax(0, 1fr))`,
+                                    gridAutoRows: 'minmax(2rem, auto)',
+                                }}
+                            >
+                                {phraseGridList.map((phrase, index) => (
+                                    <input
+                                        key={stickerSetMode ? `s${currentSheetIndex}-${index}` : index}
+                                        type="text"
+                                        value={phrase}
+                                        onChange={e => updatePhraseAt(index, e.target.value)}
+                                        placeholder={`${index + 1}`}
+                                        className="w-full min-w-0 p-2 border border-slate-200 rounded-lg text-xs font-mono focus:ring-2 focus:ring-green-500 focus:border-green-400 outline-none bg-white"
+                                        aria-label={stickerSetMode ? `Sheet ${currentSheetIndex + 1} cell ${index + 1}` : `Cell ${index + 1}`}
+                                    />
+                                ))}
+                            </div>
                         </div>
-                        <button onClick={stickerSetMode ? handleGenerateAllSheets : handleGenerate} disabled={isGenerating || !sourceImage} className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+
+                        {/* Prompt preview: generate prompt first, then confirm before generating image */}
+                        <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <h3 className="text-sm font-semibold text-slate-800">{t.lineStickerPromptPreviewTitle}</h3>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const phraseList = stickerSetMode
+                                            ? setPhrasesList.slice(currentSheetIndex * 16, (currentSheetIndex + 1) * 16)
+                                            : undefined;
+                                        const prompt = buildPrompt(phraseList);
+                                        setPreviewPrompt(prompt);
+                                        setError(null);
+                                    }}
+                                    className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 font-medium"
+                                >
+                                    {t.lineStickerGeneratePrompt}
+                                </button>
+                            </div>
+                            {previewPrompt ? (
+                                <>
+                                    <pre className="text-xs text-slate-700 whitespace-pre-wrap font-mono bg-white border border-slate-200 rounded-lg p-3 max-h-48 overflow-y-auto" role="region" aria-label={t.lineStickerPromptPreviewTitle}>
+                                        {previewPrompt}
+                                    </pre>
+                                    <p className="text-xs text-slate-500">{t.lineStickerPromptConfirmHint}</p>
+                                </>
+                            ) : (
+                                <p className="text-xs text-slate-500">{t.lineStickerPromptEmptyHint}</p>
+                            )}
+                        </div>
+                        <button onClick={stickerSetMode ? handleGenerateAllSheets : handleGenerate} disabled={isGenerating || !sourceImage || !previewPrompt} className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2">
                             {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />}
                             {stickerSetMode ? t.lineStickerGenerateAll : t.lineStickerGenerate}
                         </button>

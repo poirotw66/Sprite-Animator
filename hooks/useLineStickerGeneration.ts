@@ -70,14 +70,19 @@ export const useLineStickerGeneration = ({
             if (characterPersonality.trim()) characterSlot.personality = characterPersonality.trim();
         }
 
+        // Always prefer user phrases (override or textarea) over preset; only fall back to preset when user has none
+        const examplePhrases =
+            phraseListOverride ??
+            (customPhrasesList.length > 0 ? customPhrasesList : (selectedTheme === 'custom' ? [] : THEME_PRESETS[selectedTheme].examplePhrases));
+
         const themeSlot = selectedTheme === 'custom'
             ? {
                 chatContext: customThemeContext.trim() || '自訂聊天主題',
-                examplePhrases: phraseListOverride || customPhrasesList,
+                examplePhrases,
             }
             : {
                 ...THEME_PRESETS[selectedTheme],
-                ...(phraseListOverride ? { examplePhrases: phraseListOverride } : {}),
+                examplePhrases,
             };
 
         const slots = {

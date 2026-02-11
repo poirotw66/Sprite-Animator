@@ -323,6 +323,10 @@ export const en: Translations = {
   lineStickerPreviewCropped: 'Cropped Preview',
   lineStickerPreviewCropHint: '(Click to select stickers)',
   lineStickerIncludeText: 'Include Text',
+  lineStickerGeneratePrompt: 'Generate Prompt',
+  lineStickerPromptPreviewTitle: 'Image generation prompt preview',
+  lineStickerPromptConfirmHint: 'Please confirm the prompt above before clicking Generate.',
+  lineStickerPromptEmptyHint: 'Click "Generate Prompt" to preview the full prompt sent to the image model.',
 
   // RM BG Tool
   rmbgTitle: 'Sprite Background Remover',

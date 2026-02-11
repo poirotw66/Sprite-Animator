@@ -323,6 +323,10 @@ export const zhTW: Translations = {
   lineStickerPreviewCropped: '切割預覽',
   lineStickerPreviewCropHint: '（可點擊選擇個別貼圖）',
   lineStickerIncludeText: '包含文字',
+  lineStickerGeneratePrompt: '產生提示詞',
+  lineStickerPromptPreviewTitle: '產圖提示詞預覽',
+  lineStickerPromptConfirmHint: '請確認上方提示詞後再點擊「生成精靈圖」。',
+  lineStickerPromptEmptyHint: '點「產生提示詞」可預覽將送給產圖模型的完整提示詞。',
 
   // RM BG Tool
   rmbgTitle: '精靈圖背景移除',
