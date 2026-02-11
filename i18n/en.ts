@@ -309,4 +309,8 @@ export const en: Translations = {
   lineStickerParallelGenerating: 'Generating 3 sheets in parallel...',
   lineStickerPhrasePlaceholder: 'One phrase per line, e.g.:\nCheck rulebook...\nDice success!\nRolling secretly...',
   lineStickerTotalFramesSet: '{n} (3 sheets × 16)',
+  lineStickerDownloadCurrentSheet: 'Download Current Sheet (Zip)',
+  lineStickerDownloadSelected: 'Download Selected ({n})',
+  lineStickerPreviewCropped: 'Cropped Preview',
+  lineStickerPreviewCropHint: '(Click to select stickers)',
 };

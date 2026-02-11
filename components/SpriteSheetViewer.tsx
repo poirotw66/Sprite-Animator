@@ -12,7 +12,7 @@ interface SpriteSheetViewerProps {
   sliceSettings: SliceSettings;
   setSliceSettings: React.Dispatch<React.SetStateAction<SliceSettings>>;
   onImageLoad: (e: React.SyntheticEvent<HTMLImageElement>) => void;
-  onDownload: () => void;
+  onDownload: (isProcessed: boolean) => void;
   onDownloadOriginal?: () => void; // Download original sprite sheet
   chromaKeyProgress?: number; // Progress of chroma key removal (0-100)
   isProcessingChromaKey?: boolean; // Whether chroma key removal is in progress
@@ -42,32 +42,32 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   }, [setSliceSettings]);
 
   const handlePaddingXChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSliceSettings((p) => ({ 
-      ...p, 
+    setSliceSettings((p) => ({
+      ...p,
       paddingX: Number(e.target.value),
       autoOptimized: { ...p.autoOptimized, paddingX: false }
     }));
   }, [setSliceSettings]);
 
   const handlePaddingYChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSliceSettings((p) => ({ 
-      ...p, 
+    setSliceSettings((p) => ({
+      ...p,
       paddingY: Number(e.target.value),
       autoOptimized: { ...p.autoOptimized, paddingY: false }
     }));
   }, [setSliceSettings]);
 
   const handleShiftXChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSliceSettings((p) => ({ 
-      ...p, 
+    setSliceSettings((p) => ({
+      ...p,
       shiftX: Number(e.target.value),
       autoOptimized: { ...p.autoOptimized, shiftX: false }
     }));
   }, [setSliceSettings]);
 
   const handleShiftYChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSliceSettings((p) => ({ 
-      ...p, 
+    setSliceSettings((p) => ({
+      ...p,
       shiftY: Number(e.target.value),
       autoOptimized: { ...p.autoOptimized, shiftY: false }
     }));
@@ -85,7 +85,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
     const cellWidth = Math.round(effectiveWidth / sliceSettings.cols);
     const cellHeight = Math.round(effectiveHeight / sliceSettings.rows);
     const totalFrames = sliceSettings.cols * sliceSettings.rows;
-    
+
     return {
       cellWidth,
       cellHeight,
@@ -123,14 +123,14 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   // Calculate grid positions for interactive editing (four-edge aware)
   const gridPositions = useMemo(() => {
     if (sheetDimensions.width === 0 || sheetDimensions.height === 0) return null;
-    
+
     const effectiveWidth = sheetDimensions.width - padding.left - padding.right;
     const effectiveHeight = sheetDimensions.height - padding.top - padding.bottom;
     const cellWidth = effectiveWidth / sliceSettings.cols;
     const cellHeight = effectiveHeight / sliceSettings.rows;
     const startX = padding.left + sliceSettings.shiftX;
     const startY = padding.top + sliceSettings.shiftY;
-    
+
     return {
       startX,
       startY,
@@ -163,41 +163,41 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   // Convert screen coordinates to SVG coordinates
   const screenToSvg = useCallback((clientX: number, clientY: number) => {
     if (!svgRef.current || !gridPositions) return { x: 0, y: 0 };
-    
+
     const rect = svgRef.current.getBoundingClientRect();
     const svg = svgRef.current;
     const viewBox = svg.viewBox.baseVal;
-    
+
     const x = ((clientX - rect.left) / rect.width) * viewBox.width;
     const y = ((clientY - rect.top) / rect.height) * viewBox.height;
-    
+
     return { x, y };
   }, [gridPositions]);
 
   // Handle mouse down for dragging
   const handleMouseDown = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     if (!gridPositions) return;
-    
+
     const svgCoords = screenToSvg(e.clientX, e.clientY);
     const { x, y } = svgCoords;
     const { startX, startY, cellWidth, cellHeight, effectiveWidth, effectiveHeight } = gridPositions;
-    
+
     const endX = startX + effectiveWidth;
     const endY = startY + effectiveHeight;
-    
+
     // Check if clicking on padding edges (within 10px)
     const paddingThreshold = 10;
     const isLeftEdge = Math.abs(x - startX) < paddingThreshold && y >= startY && y <= endY;
     const isRightEdge = Math.abs(x - endX) < paddingThreshold && y >= startY && y <= endY;
     const isTopEdge = Math.abs(y - startY) < paddingThreshold && x >= startX && x <= endX;
     const isBottomEdge = Math.abs(y - endY) < paddingThreshold && x >= startX && x <= endX;
-    
+
     // Check if clicking on grid lines (within 5px)
     const gridThreshold = 5;
     let isVerticalGrid = false;
     let isHorizontalGrid = false;
     let gridIndex = -1;
-    
+
     // Check vertical grid lines
     for (let i = 1; i < sliceSettings.cols; i++) {
       const lineX = startX + i * cellWidth;
@@ -207,7 +207,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
         break;
       }
     }
-    
+
     // Check horizontal grid lines
     for (let i = 1; i < sliceSettings.rows; i++) {
       const lineY = startY + i * cellHeight;
@@ -217,7 +217,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
         break;
       }
     }
-    
+
     // Determine drag type
     if (isLeftEdge) {
       setIsDragging(true);
@@ -256,10 +256,10 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   // Handle mouse move for dragging
   const handleMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     if (!isDragging || !dragStartSettings || !gridPositions) return;
-    
+
     const deltaX = e.clientX - dragStart.x;
     const deltaY = e.clientY - dragStart.y;
-    
+
     // Convert screen delta to SVG delta
     if (!svgRef.current) return;
     const rect = svgRef.current.getBoundingClientRect();
@@ -267,10 +267,10 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
     const viewBox = svg.viewBox.baseVal;
     const scaleX = viewBox.width / rect.width;
     const scaleY = viewBox.height / rect.height;
-    
+
     const svgDeltaX = deltaX * scaleX;
     const svgDeltaY = deltaY * scaleY;
-    
+
     if (dragType === 'shift') {
       // Drag entire grid
       setSliceSettings({
@@ -391,7 +391,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
           )}
           {spriteSheetImage && (
             <button
-              onClick={onDownload}
+              onClick={() => onDownload(true)}
               className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-all duration-200 font-semibold cursor-pointer border border-orange-200 hover:border-orange-300 hover:shadow-sm"
               aria-label={t.downloadProcessed}
             >
@@ -433,7 +433,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                 className="block max-w-full h-auto object-contain pixelated"
                 onLoad={onImageLoad}
               />
-              
+
               {/* Grid overlay for alignment - drawn behind SVG but visible */}
               {sheetDimensions.width > 0 && gridPositions && (
                 <svg
@@ -488,7 +488,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                     strokeWidth="2"
                     className="hover:stroke-blue-500 transition-colors"
                   />
-                  
+
                   {/* Draw draggable padding edges */}
                   {gridPositions && (
                     <>
@@ -626,7 +626,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                       </g>
                     );
                   })}
-                  
+
                   {/* Cell numbers for easy identification */}
                   {gridPositions && Array.from({ length: sliceSettings.rows }).map((_, r) => {
                     return Array.from({ length: sliceSettings.cols }).map((_, c) => {
@@ -635,7 +635,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                       const cellNumber = r * sliceSettings.cols + c + 1;
                       const centerX = cellX + gridPositions.cellWidth / 2;
                       const centerY = cellY + gridPositions.cellHeight / 2;
-                      
+
                       return (
                         <g key={`cell-label-${r}-${c}`}>
                           {/* Background circle for number */}
@@ -662,7 +662,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                       );
                     });
                   })}
-                  
+
                   {/* Help text overlay */}
                   {!isDragging && (
                     <text
@@ -782,11 +782,10 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                       </span>
                     )}
                   </label>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                    sliceSettings.autoOptimized?.paddingX 
-                      ? 'text-green-700 bg-green-50 border border-green-200' 
-                      : 'text-blue-700 bg-blue-50'
-                  }`}>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${sliceSettings.autoOptimized?.paddingX
+                    ? 'text-green-700 bg-green-50 border border-green-200'
+                    : 'text-blue-700 bg-blue-50'
+                    }`}>
                     {sliceSettings.paddingX}px
                   </span>
                 </div>
@@ -809,8 +808,8 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                     value={sliceSettings.paddingX}
                     onChange={(e) => {
                       const value = Math.max(0, Math.min(Math.floor(sheetDimensions.width * 0.4), Number(e.target.value)));
-                      setSliceSettings((p) => ({ 
-                        ...p, 
+                      setSliceSettings((p) => ({
+                        ...p,
                         paddingX: value,
                         autoOptimized: { ...p.autoOptimized, paddingX: false }
                       }));
@@ -833,11 +832,10 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                       </span>
                     )}
                   </label>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                    sliceSettings.autoOptimized?.shiftX 
-                      ? 'text-green-700 bg-green-50 border border-green-200' 
-                      : 'text-blue-700 bg-blue-50'
-                  }`}>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${sliceSettings.autoOptimized?.shiftX
+                    ? 'text-green-700 bg-green-50 border border-green-200'
+                    : 'text-blue-700 bg-blue-50'
+                    }`}>
                     {sliceSettings.shiftX > 0 ? '+' : ''}{sliceSettings.shiftX}px
                   </span>
                 </div>
@@ -860,8 +858,8 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                     value={sliceSettings.shiftX}
                     onChange={(e) => {
                       const value = Math.max(-100, Math.min(100, Number(e.target.value)));
-                      setSliceSettings((p) => ({ 
-                        ...p, 
+                      setSliceSettings((p) => ({
+                        ...p,
                         shiftX: value,
                         autoOptimized: { ...p.autoOptimized, shiftX: false }
                       }));
@@ -893,11 +891,10 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                       </span>
                     )}
                   </label>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                    sliceSettings.autoOptimized?.paddingY 
-                      ? 'text-green-700 bg-green-50 border border-green-200' 
-                      : 'text-blue-700 bg-blue-50'
-                  }`}>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${sliceSettings.autoOptimized?.paddingY
+                    ? 'text-green-700 bg-green-50 border border-green-200'
+                    : 'text-blue-700 bg-blue-50'
+                    }`}>
                     {sliceSettings.paddingY}px
                   </span>
                 </div>
@@ -920,8 +917,8 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                     value={sliceSettings.paddingY}
                     onChange={(e) => {
                       const value = Math.max(0, Math.min(Math.floor(sheetDimensions.height * 0.4), Number(e.target.value)));
-                      setSliceSettings((p) => ({ 
-                        ...p, 
+                      setSliceSettings((p) => ({
+                        ...p,
                         paddingY: value,
                         autoOptimized: { ...p.autoOptimized, paddingY: false }
                       }));
@@ -944,11 +941,10 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                       </span>
                     )}
                   </label>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                    sliceSettings.autoOptimized?.shiftY 
-                      ? 'text-green-700 bg-green-50 border border-green-200' 
-                      : 'text-blue-700 bg-blue-50'
-                  }`}>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${sliceSettings.autoOptimized?.shiftY
+                    ? 'text-green-700 bg-green-50 border border-green-200'
+                    : 'text-blue-700 bg-blue-50'
+                    }`}>
                     {sliceSettings.shiftY > 0 ? '+' : ''}{sliceSettings.shiftY}px
                   </span>
                 </div>
@@ -971,8 +967,8 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                     value={sliceSettings.shiftY}
                     onChange={(e) => {
                       const value = Math.max(-100, Math.min(100, Number(e.target.value)));
-                      setSliceSettings((p) => ({ 
-                        ...p, 
+                      setSliceSettings((p) => ({
+                        ...p,
                         shiftY: value,
                         autoOptimized: { ...p.autoOptimized, shiftY: false }
                       }));

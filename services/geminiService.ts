@@ -385,7 +385,7 @@ export async function generateStickerPhrases(
     case 'balanced':
     default:
       modeLabel = '黃金比例版（平衡）';
-      modeHint = '依預設黃金比例分配四類短語，兼顧日常、情緒、關係互動與梗圖。';
+      modeHint = '依預設黃金比例分配四類短語。關鍵在於：每一類型的短語都必須「深度融合」目前的主題背景。例如主題是職場，萬用日常應帶有專業或辦公感；主題是 TRPG，萬用日常則應帶有遊戲檢定或冒險感。';
       break;
   }
 

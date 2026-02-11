@@ -311,4 +311,8 @@ export interface Translations {
   lineStickerParallelGenerating: string;
   lineStickerPhrasePlaceholder: string;
   lineStickerTotalFramesSet: string;
+  lineStickerDownloadCurrentSheet: string;
+  lineStickerDownloadSelected: string;
+  lineStickerPreviewCropped: string;
+  lineStickerPreviewCropHint: string;
 }

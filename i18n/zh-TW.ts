@@ -309,4 +309,8 @@ export const zhTW: Translations = {
   lineStickerParallelGenerating: '3 張並行產生中...',
   lineStickerPhrasePlaceholder: '每行一句短語，例如：\n查規則書...\n骰子成功！\n暗骰中...',
   lineStickerTotalFramesSet: '{n}（3 張 × 16）',
+  lineStickerDownloadCurrentSheet: '下載當前組 (Zip)',
+  lineStickerDownloadSelected: '下載已選 ({n})',
+  lineStickerPreviewCropped: '切割預覽',
+  lineStickerPreviewCropHint: '（可點擊選擇個別貼圖）',
 };
