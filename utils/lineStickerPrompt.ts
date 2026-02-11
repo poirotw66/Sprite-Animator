@@ -122,10 +122,13 @@ arranged in a **{COLS} × {ROWS} grid layout**. Each cell must be clear and divi
 
 ---
 
-### [Background Requirement]
+### [Background Requirement] CRITICAL
 
-The background must be a solid, flat color: **{BG_COLOR}**.
-No scenes, gradients, shadows, or other background elements allowed.
+The background must be a single, solid, flat color: **{BG_COLOR}**.
+* **Absolutely NO shadows, no gradients, and no ambient lighting effects.**
+* The character's edge must be sharp and clean against the background.
+* DO NOT draw any ground, clouds, or decorative elements in the background.
+* The color must be uniform throughout the entire sprite sheet.
 
 ---
 

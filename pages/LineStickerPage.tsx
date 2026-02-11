@@ -13,7 +13,8 @@ import { useLineStickerGeneration } from '../hooks/useLineStickerGeneration';
 import { generateStickerPhrases } from '../services/geminiService';
 import { sliceSpriteSheet, SliceSettings, getEffectivePadding, FrameOverride, PaddingFour } from '../utils/imageUtils';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
-import { ChromaKeyColorType } from '../types';
+import { removeBackgroundAI } from '../utils/aiBackgroundRemoval';
+import { ChromaKeyColorType, BgRemovalMethod } from '../types';
 import {
     CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ, DEFAULT_SLICE_SETTINGS,
     MODEL_RESOLUTIONS, type ImageResolution, type StickerPhraseMode
@@ -49,6 +50,8 @@ const LineStickerPage: React.FC = () => {
         setApiKey,
         selectedModel,
         setSelectedModel,
+        hfToken,
+        setHfToken,
         showSettings,
         setShowSettings,
         saveSettings,
@@ -102,6 +105,7 @@ const LineStickerPage: React.FC = () => {
     const [selectedResolution, setSelectedResolution] = useState<ImageResolution>('1K');
     const [selectedPhraseMode, setSelectedPhraseMode] = useState<StickerPhraseMode>('balanced');
     const [includeText, setIncludeText] = useState(true);
+    const [bgRemovalMethod, setBgRemovalMethod] = useState<BgRemovalMethod>('chroma');
 
     useEffect(() => {
         if (selectedTheme === 'custom') return;
@@ -249,7 +253,9 @@ const LineStickerPage: React.FC = () => {
                 setSheetImages(p => { const n = [...p]; n[currentSheetIndex] = res; return n; });
                 setStatusText(t.statusProcessing);
                 setIsProcessingChromaKey(true);
-                const processed = await removeChromaKeyWithWorker(res, CHROMA_KEY_COLORS[chromaKeyColor], CHROMA_KEY_FUZZ, p => setChromaKeyProgress(p));
+                const processed = bgRemovalMethod === 'ai'
+                    ? await removeBackgroundAI(res, chromaKeyColor)
+                    : await removeChromaKeyWithWorker(res, CHROMA_KEY_COLORS[chromaKeyColor], CHROMA_KEY_FUZZ, p => setChromaKeyProgress(p));
                 setIsProcessingChromaKey(false);
                 setProcessedSheetImages(p => { const n = [...p]; n[currentSheetIndex] = processed; return n; });
                 const frames = await sliceProcessedSheetToFrames(processed);
@@ -262,13 +268,15 @@ const LineStickerPage: React.FC = () => {
                 setSpriteSheetImage(res);
                 setStatusText(t.statusProcessing);
                 setIsProcessingChromaKey(true);
-                const processed = await removeChromaKeyWithWorker(res, CHROMA_KEY_COLORS[chromaKeyColor], CHROMA_KEY_FUZZ, p => setChromaKeyProgress(p));
+                const processed = bgRemovalMethod === 'ai'
+                    ? await removeBackgroundAI(res, chromaKeyColor)
+                    : await removeChromaKeyWithWorker(res, CHROMA_KEY_COLORS[chromaKeyColor], CHROMA_KEY_FUZZ, p => setChromaKeyProgress(p));
                 setIsProcessingChromaKey(false);
                 setProcessedSpriteSheet(processed);
                 setStatusText('');
             }
         } catch (err: any) { setError(`${t.errorGeneration}: ${err.message}`); } finally { setIsGenerating(false); }
-    }, [sourceImage, stickerSetMode, setPhrasesList, currentSheetIndex, generateSingleSheet, t, chromaKeyColor, setStatusText, setError, sliceProcessedSheetToFrames, setIsGenerating]);
+    }, [sourceImage, stickerSetMode, setPhrasesList, currentSheetIndex, generateSingleSheet, t, chromaKeyColor, bgRemovalMethod, setStatusText, setError, sliceProcessedSheetToFrames, setIsGenerating]);
 
     const handleGenerateAllSheets = useCallback(async () => {
         if (!sourceImage) { setError(t.errorNoImage); return; }
@@ -292,14 +300,16 @@ const LineStickerPage: React.FC = () => {
             }
             setSheetImages(valid);
             setStatusText(t.statusProcessing);
-            const processed = await Promise.all(valid.map(img => removeChromaKeyWithWorker(img, CHROMA_KEY_COLORS[chromaKeyColor], CHROMA_KEY_FUZZ)));
+            const processed = bgRemovalMethod === 'ai'
+                ? await Promise.all(valid.map(img => removeBackgroundAI(img, chromaKeyColor)))
+                : await Promise.all(valid.map(img => removeChromaKeyWithWorker(img, CHROMA_KEY_COLORS[chromaKeyColor], CHROMA_KEY_FUZZ)));
             setProcessedSheetImages(processed);
             const allFrames = await Promise.all(processed.map(img => sliceProcessedSheetToFrames(img)));
             setSheetFrames(allFrames);
             setSelectedFramesBySheet(allFrames.map(f => new Array(f.length).fill(false)));
             setStatusText('');
         } catch (err: any) { setError(`${t.errorGeneration}: ${err.message}`); } finally { setIsGenerating(false); }
-    }, [sourceImage, setPhrasesList, generateSingleSheet, t, chromaKeyColor, setStatusText, setError, sliceProcessedSheetToFrames, setIsGenerating]);
+    }, [sourceImage, setPhrasesList, generateSingleSheet, t, chromaKeyColor, bgRemovalMethod, setStatusText, setError, sliceProcessedSheetToFrames, setIsGenerating]);
 
     const buildFullContext = useCallback(() => {
         const themeInfo = selectedTheme === 'custom'
@@ -373,6 +383,8 @@ const LineStickerPage: React.FC = () => {
                 showSettings={showSettings}
                 onClose={() => setShowSettings(false)}
                 onSave={saveSettings}
+                hfToken={hfToken}
+                setHfToken={setHfToken}
             />
 
             {/* Header */}
@@ -479,34 +491,60 @@ const LineStickerPage: React.FC = () => {
                         )}
 
                         {/* Chroma Key Selector */}
-                        <div className="space-y-3">
-                            <label className="text-sm font-semibold text-slate-700 block">
-                                {t.rmbgChromaKeyLabel}
-                            </label>
-                            <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    onClick={() => setChromaKeyColor('magenta')}
-                                    className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-200 ${chromaKeyColor === 'magenta'
-                                        ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700 shadow-sm'
-                                        : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
-                                        }`}
-                                >
-                                    <div className="w-3 h-3 rounded-full bg-fuchsia-500" />
-                                    <span className="text-sm font-bold">{t.magentaColor}</span>
-                                    {chromaKeyColor === 'magenta' && <Check className="w-3.5 h-3.5 ml-auto" />}
-                                </button>
-                                <button
-                                    onClick={() => setChromaKeyColor('green')}
-                                    className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-200 ${chromaKeyColor === 'green'
-                                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
-                                        : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
-                                        }`}
-                                >
-                                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                                    <span className="text-sm font-bold">{t.greenScreen}</span>
-                                    {chromaKeyColor === 'green' && <Check className="w-3.5 h-3.5 ml-auto" />}
-                                </button>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">{t.bgRemovalMethodLabel}</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        onClick={() => setBgRemovalMethod('chroma')}
+                                        className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-200 ${bgRemovalMethod === 'chroma'
+                                            ? 'border-green-500 bg-green-50 text-green-700 shadow-sm'
+                                            : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
+                                            }`}
+                                    >
+                                        <span className="text-sm font-bold">{t.bgRemovalChroma}</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setBgRemovalMethod('ai')}
+                                        className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-200 ${bgRemovalMethod === 'ai'
+                                            ? 'border-green-500 bg-green-50 text-green-700 shadow-sm'
+                                            : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
+                                            }`}
+                                    >
+                                        <span className="text-sm font-bold">{t.bgRemovalAI}</span>
+                                    </button>
+                                </div>
                             </div>
+
+                            {bgRemovalMethod === 'chroma' && (
+                                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">{t.rmbgChromaKeyLabel}</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button
+                                            onClick={() => setChromaKeyColor('magenta')}
+                                            className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-200 ${chromaKeyColor === 'magenta'
+                                                ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700 shadow-sm'
+                                                : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
+                                                }`}
+                                        >
+                                            <div className="w-3 h-3 rounded-full bg-fuchsia-500" />
+                                            <span className="text-sm font-bold">{t.magentaColor}</span>
+                                            {chromaKeyColor === 'magenta' && <Check className="w-3.5 h-3.5 ml-auto" />}
+                                        </button>
+                                        <button
+                                            onClick={() => setChromaKeyColor('green')}
+                                            className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-200 ${chromaKeyColor === 'green'
+                                                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                                                : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
+                                                }`}
+                                        >
+                                            <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                                            <span className="text-sm font-bold">{t.greenScreen}</span>
+                                            {chromaKeyColor === 'green' && <Check className="w-3.5 h-3.5 ml-auto" />}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">

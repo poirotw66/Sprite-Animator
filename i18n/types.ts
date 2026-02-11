@@ -146,6 +146,13 @@ export interface Translations {
   quotaExceeded: string;
   networkError: string;
   pleaseEnterApiKey: string;
+  hfTokenLabel: string;
+  hfTokenPlaceholder: string;
+  hfTokenHint: string;
+  hfTokenHint2: string;
+  getHfToken: string;
+  acceptTermsLabel: string;
+  modelPageLink: string;
 
   // Example Selector
   exampleTitle: string;
@@ -330,4 +337,7 @@ export interface Translations {
   rmbgDownloadProcessed: string;
   rmbgChromaKeyLabel: string;
   rmbgToleranceLabel: string;
+  bgRemovalMethodLabel: string;
+  bgRemovalChroma: string;
+  bgRemovalAI: string;
 }

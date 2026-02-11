@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@google/genai": "^1.38.0",
+    "@huggingface/transformers": "^3.8.1",
     "gifenc": "1.0.3",
     "jszip": "3.10.1",
     "lucide-react": "^0.562.0",

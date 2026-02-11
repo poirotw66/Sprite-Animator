@@ -144,6 +144,13 @@ export const en: Translations = {
   quotaExceeded: 'API quota exceeded or rate limited',
   networkError: 'Network error, please check connection',
   pleaseEnterApiKey: 'Please enter API Key',
+  hfTokenLabel: 'Hugging Face Hub Token',
+  hfTokenPlaceholder: 'Enter hf_... string',
+  hfTokenHint: 'You need to provide a Hugging Face Hub Token to use RMBG-2.0 (Gated model).',
+  hfTokenHint2: 'Make sure to use a "Classic" token with "Read" permissions.',
+  getHfToken: 'Get your token here',
+  acceptTermsLabel: 'You must also manually accept the terms on the model page:',
+  modelPageLink: 'Go to RMBG-2.0 page to accept terms',
 
   // Example Selector
   exampleTitle: 'Example Prompts',
@@ -328,4 +335,7 @@ export const en: Translations = {
   rmbgDownloadProcessed: 'Download Processed',
   rmbgChromaKeyLabel: 'Background Color (Chroma Key)',
   rmbgToleranceLabel: 'Tolerance (Fuzz)',
+  bgRemovalMethodLabel: 'Removal Method',
+  bgRemovalChroma: 'Chroma Key',
+  bgRemovalAI: 'AI Smart Remover (RMBG)',
 };

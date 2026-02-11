@@ -144,6 +144,13 @@ export const zhTW: Translations = {
   quotaExceeded: 'API 配額已用完或超過限制',
   networkError: '網路連線錯誤，請檢查網路',
   pleaseEnterApiKey: '請輸入 API Key',
+  hfTokenLabel: 'Hugging Face Hub Token',
+  hfTokenPlaceholder: '輸入 hf_... 字串',
+  hfTokenHint: '您需要提供 Hugging Face Hub Token 才能使用 RMBG-2.0 (Gated 模型)。',
+  hfTokenHint2: '請確保您使用的是「Classic」類型的 Token 並具備「Read」權限。',
+  getHfToken: '在此取得 Token',
+  acceptTermsLabel: '您也必須在模型頁面手動接受協議：',
+  modelPageLink: '去 RMBG-2.0 頁面接受協議',
 
   // Example Selector
   exampleTitle: '範例提示詞',
@@ -328,4 +335,7 @@ export const zhTW: Translations = {
   rmbgDownloadProcessed: '下載去背圖',
   rmbgChromaKeyLabel: '背景顏色 (Chroma Key)',
   rmbgToleranceLabel: '容差值 (Fuzz)',
+  bgRemovalMethodLabel: '去背方式',
+  bgRemovalChroma: '色差去背 (Chroma Key)',
+  bgRemovalAI: 'AI 智慧去背 (RMBG)',
 };

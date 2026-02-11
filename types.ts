@@ -1,4 +1,5 @@
 export type ChromaKeyColorType = 'magenta' | 'green';
+export type BgRemovalMethod = 'chroma' | 'ai';
 
 export interface AnimationConfig {
   prompt: string;
@@ -9,6 +10,7 @@ export interface AnimationConfig {
   gridCols: number;   // New: Used for 'sheet' mode (default 3)
   gridRows: number;   // New: Used for 'sheet' mode (default 2)
   chromaKeyColor: ChromaKeyColorType; // Background color for chroma key removal
+  bgRemovalMethod?: BgRemovalMethod; // Selection for background removal method
   enableInterpolation: boolean; // Enable frame interpolation for smoother GIF export
 }
 

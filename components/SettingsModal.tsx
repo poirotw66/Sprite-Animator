@@ -11,7 +11,9 @@ interface SettingsModalProps {
   setSelectedModel: (model: string) => void;
   showSettings: boolean;
   onClose: () => void;
-  onSave: (key: string, model: string) => void;
+  onSave: (key: string, model: string, hfToken: string) => void;
+  hfToken: string;
+  setHfToken: (token: string) => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
@@ -22,6 +24,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
   showSettings,
   onClose,
   onSave,
+  hfToken,
+  setHfToken,
 }) => {
   const { t } = useLanguage();
   // All hooks must be called before any conditional returns
@@ -46,10 +50,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
 
     try {
       const ai = new GoogleGenAI({ apiKey: keyToValidate });
-      
+
       // Simple test: list models to verify the key works
       await ai.models.list();
-      
+
       setValidationSuccess(true);
       setValidationError(null);
       return true;
@@ -57,7 +61,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
       let errorMessage = t.validationFailed;
       const errorObj = error as Error | { message?: string };
       const message = errorObj?.message ?? '';
-      
+
       if (message.includes('API_KEY_INVALID') || message.includes('invalid')) {
         errorMessage = t.apiKeyInvalid;
       } else if (message.includes('quota') || message.includes('429')) {
@@ -67,7 +71,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
       } else if (message) {
         errorMessage = `${t.validationFailed}: ${message}`;
       }
-      
+
       setValidationError(errorMessage);
       setValidationSuccess(false);
       return false;
@@ -85,9 +89,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
         return; // Don't save if validation failed
       }
     }
-    
+
     // Save and close
-    onSave(apiKey, selectedModel);
+    onSave(apiKey, selectedModel, hfToken);
   };
 
   // Clear validation state when key changes
@@ -197,7 +201,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                 <p className="text-xs text-red-700 font-medium">{validationError}</p>
               </div>
             )}
-            
+
             {validationSuccess && (
               <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-xs text-green-700 font-medium flex items-center gap-1.5">
@@ -248,6 +252,44 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                 );
               })}
             </select>
+          </div>
+
+          <div className="pt-2 border-t border-slate-100">
+            <label htmlFor="hf-token-input" className="block text-sm font-semibold text-slate-700 mb-2">
+              {t.hfTokenLabel}
+            </label>
+            <input
+              id="hf-token-input"
+              type="password"
+              value={hfToken}
+              onChange={(e) => setHfToken(e.target.value)}
+              placeholder={t.hfTokenPlaceholder}
+              className="w-full border border-slate-300 rounded-lg p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 outline-none pr-10 bg-white transition-all"
+              aria-label={t.hfTokenLabel}
+              autoComplete="off"
+            />
+            <p className="text-xs text-slate-500 mt-2">
+              {t.hfTokenHint} {t.hfTokenHint2}
+              <a
+                href="https://huggingface.co/settings/tokens"
+                target="_blank"
+                rel="noreferrer"
+                className="text-orange-600 hover:text-orange-700 hover:underline ml-1 font-medium transition-colors"
+              >
+                {t.getHfToken}
+              </a>
+            </p>
+            <p className="text-xs text-slate-500 mt-2">
+              {t.acceptTermsLabel}
+              <a
+                href="https://huggingface.co/briaai/RMBG-2.0"
+                target="_blank"
+                rel="noreferrer"
+                className="text-orange-600 hover:text-orange-700 hover:underline ml-1 font-medium transition-colors"
+              >
+                {t.modelPageLink}
+              </a>
+            </p>
           </div>
 
           <div className="pt-2">

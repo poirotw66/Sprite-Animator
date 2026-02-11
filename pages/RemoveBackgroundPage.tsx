@@ -1,11 +1,15 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Upload, Download, Loader2, Eraser, Sliders, ArrowLeft, Image as ImageIcon, Check, RefreshCw } from '../components/Icons';
+import { Upload, Download, Loader2, Eraser, Sliders, ArrowLeft, Image as ImageIcon, Check, RefreshCw, Settings } from '../components/Icons';
 import { useLanguage } from '../hooks/useLanguage';
+import { SettingsModal } from '../components/SettingsModal';
+import { useSettings } from '../hooks/useSettings';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
+import { removeBackgroundAI } from '../utils/aiBackgroundRemoval';
 import { CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ, GRID_PATTERN_URL } from '../utils/constants';
 import { logger } from '../utils/logger';
 import { Link } from 'react-router-dom';
-import type { ChromaKeyColorType } from '../types';
+import type { ChromaKeyColorType, BgRemovalMethod } from '../types';
 
 const RemoveBackgroundPage: React.FC = () => {
     const { t } = useLanguage();
@@ -19,6 +23,19 @@ const RemoveBackgroundPage: React.FC = () => {
     const [progress, setProgress] = useState(0);
     const [error, setError] = useState<string | null>(null);
     const [showOriginal, setShowOriginal] = useState(false);
+    const [bgRemovalMethod, setBgRemovalMethod] = useState<BgRemovalMethod>('chroma');
+
+    const {
+        apiKey,
+        setApiKey,
+        selectedModel,
+        setSelectedModel,
+        hfToken,
+        setHfToken,
+        showSettings,
+        setShowSettings,
+        saveSettings,
+    } = useSettings();
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -47,13 +64,18 @@ const RemoveBackgroundPage: React.FC = () => {
         setError(null);
 
         try {
-            const targetColor = CHROMA_KEY_COLORS[chromaKeyColor];
-            const result = await removeChromaKeyWithWorker(
-                originalImage,
-                targetColor,
-                tolerance,
-                (p) => setProgress(p)
-            );
+            let result: string;
+            if (bgRemovalMethod === 'ai') {
+                result = await removeBackgroundAI(originalImage, chromaKeyColor);
+            } else {
+                const targetColor = CHROMA_KEY_COLORS[chromaKeyColor];
+                result = await removeChromaKeyWithWorker(
+                    originalImage,
+                    targetColor,
+                    tolerance,
+                    (p) => setProgress(p)
+                );
+            }
             setProcessedImage(result);
             setShowOriginal(false);
         } catch (err: any) {
@@ -62,7 +84,7 @@ const RemoveBackgroundPage: React.FC = () => {
         } finally {
             setIsProcessing(false);
         }
-    }, [originalImage, chromaKeyColor, tolerance]);
+    }, [originalImage, chromaKeyColor, tolerance, bgRemovalMethod]);
 
     // Handle download
     const handleDownload = useCallback(() => {
@@ -91,9 +113,30 @@ const RemoveBackgroundPage: React.FC = () => {
                         <Eraser className="w-5 h-5 text-orange-500" />
                         {t.rmbgTitle}
                     </h1>
-                    <div className="w-20" /> {/* Spacer */}
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setShowSettings(true)}
+                            className="p-2 text-slate-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
+                            aria-label={t.settings}
+                        >
+                            <Settings className="w-5 h-5" />
+                        </button>
+                        <LanguageSwitcher />
+                    </div>
                 </div>
             </nav>
+
+            <SettingsModal
+                apiKey={apiKey}
+                setApiKey={setApiKey}
+                selectedModel={selectedModel}
+                setSelectedModel={setSelectedModel}
+                showSettings={showSettings}
+                onClose={() => setShowSettings(false)}
+                onSave={saveSettings}
+                hfToken={hfToken}
+                setHfToken={setHfToken}
+            />
 
             {/* Main Content */}
             <main className="flex-1 max-w-5xl mx-auto w-full p-4 sm:p-6 lg:p-8">
@@ -112,61 +155,90 @@ const RemoveBackgroundPage: React.FC = () => {
                                 </p>
                             </div>
 
-                            {/* Chroma Key Selector */}
-                            <div className="space-y-3">
-                                <label className="text-sm font-semibold text-slate-700 block">
-                                    {t.rmbgChromaKeyLabel}
-                                </label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        onClick={() => setChromaKeyColor('magenta')}
-                                        className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 ${chromaKeyColor === 'magenta'
-                                            ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700 shadow-sm'
-                                            : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
-                                            }`}
-                                    >
-                                        <div className="w-4 h-4 rounded-full bg-fuchsia-500" />
-                                        <span className="text-sm font-bold">{t.magentaColor}</span>
-                                        {chromaKeyColor === 'magenta' && <Check className="w-3.5 h-3.5 ml-auto" />}
-                                    </button>
-                                    <button
-                                        onClick={() => setChromaKeyColor('green')}
-                                        className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 ${chromaKeyColor === 'green'
-                                            ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
-                                            : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
-                                            }`}
-                                    >
-                                        <div className="w-4 h-4 rounded-full bg-emerald-500" />
-                                        <span className="text-sm font-bold">{t.greenScreen}</span>
-                                        {chromaKeyColor === 'green' && <Check className="w-3.5 h-3.5 ml-auto" />}
-                                    </button>
+                            <div className="space-y-4 pt-2">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">{t.bgRemovalMethodLabel}</label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            onClick={() => setBgRemovalMethod('chroma')}
+                                            className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-200 ${bgRemovalMethod === 'chroma'
+                                                ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
+                                                : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
+                                                }`}
+                                        >
+                                            <span className="text-sm font-bold">{t.bgRemovalChroma}</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setBgRemovalMethod('ai')}
+                                            className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-200 ${bgRemovalMethod === 'ai'
+                                                ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
+                                                : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
+                                                }`}
+                                        >
+                                            <span className="text-sm font-bold">{t.bgRemovalAI}</span>
+                                        </button>
+                                    </div>
                                 </div>
+
+                                {bgRemovalMethod === 'chroma' && (
+                                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <label className="text-sm font-semibold text-slate-700 block">
+                                            {t.rmbgChromaKeyLabel}
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <button
+                                                onClick={() => setChromaKeyColor('magenta')}
+                                                className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 ${chromaKeyColor === 'magenta'
+                                                    ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700 shadow-sm'
+                                                    : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
+                                                    }`}
+                                            >
+                                                <div className="w-4 h-4 rounded-full bg-fuchsia-500" />
+                                                <span className="text-sm font-bold">{t.magentaColor}</span>
+                                                {chromaKeyColor === 'magenta' && <Check className="w-3.5 h-3.5 ml-auto" />}
+                                            </button>
+                                            <button
+                                                onClick={() => setChromaKeyColor('green')}
+                                                className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 ${chromaKeyColor === 'green'
+                                                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                                                    : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
+                                                    }`}
+                                            >
+                                                <div className="w-4 h-4 rounded-full bg-emerald-500" />
+                                                <span className="text-sm font-bold">{t.greenScreen}</span>
+                                                {chromaKeyColor === 'green' && <Check className="w-3.5 h-3.5 ml-auto" />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Tolerance Selector */}
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-sm font-semibold text-slate-700">
-                                        {t.rmbgToleranceLabel}
-                                    </label>
-                                    <span className="text-xs font-mono font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-md border border-orange-100">
-                                        {tolerance}
-                                    </span>
+                            {bgRemovalMethod === 'chroma' && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-sm font-semibold text-slate-700">
+                                            {t.rmbgToleranceLabel}
+                                        </label>
+                                        <span className="text-xs font-mono font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-md border border-orange-100">
+                                            {tolerance}
+                                        </span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="10"
+                                        max="100"
+                                        step="5"
+                                        value={tolerance}
+                                        onChange={(e) => setTolerance(Number(e.target.value))}
+                                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                                    />
+                                    <div className="flex justify-between text-[10px] text-slate-400 font-medium">
+                                        <span>Strict</span>
+                                        <span>Loose</span>
+                                    </div>
                                 </div>
-                                <input
-                                    type="range"
-                                    min="10"
-                                    max="100"
-                                    step="5"
-                                    value={tolerance}
-                                    onChange={(e) => setTolerance(Number(e.target.value))}
-                                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
-                                />
-                                <div className="flex justify-between text-[10px] text-slate-400 font-medium">
-                                    <span>Strict</span>
-                                    <span>Loose</span>
-                                </div>
-                            </div>
+                            )}
 
                             {/* Process Button */}
                             <button
