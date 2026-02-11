@@ -507,7 +507,7 @@ Now, please start generating based on the "Theme".`;
     }
   } catch (_) { }
 
-  const sectionHeaders = /^(萬用日常|情緒爆發|關係互動|梗圖型)\s*[：:]\s*$/;
+  const sectionHeaders = /^(萬用日常|情緒爆發|關係互動|梗圖型|Universal Daily|Emotional Outburst|Social Interaction|Meme\/Iconic)\s*[：:]\s*$/i;
   const bulletMatch = /^\s*[-*]\s*(.+)$/;
   const lines = text
     .split(/\r?\n/)

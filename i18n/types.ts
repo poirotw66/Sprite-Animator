@@ -315,4 +315,5 @@ export interface Translations {
   lineStickerDownloadSelected: string;
   lineStickerPreviewCropped: string;
   lineStickerPreviewCropHint: string;
+  lineStickerIncludeText: string;
 }

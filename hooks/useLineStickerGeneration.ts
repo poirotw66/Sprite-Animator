@@ -28,6 +28,7 @@ interface UseLineStickerGenerationProps {
     gridRows: number;
     chromaKeyColor: 'magenta' | 'green';
     sourceImage: string | null;
+    includeText: boolean;
 }
 
 export const useLineStickerGeneration = ({
@@ -45,6 +46,7 @@ export const useLineStickerGeneration = ({
     gridRows,
     chromaKeyColor,
     sourceImage,
+    includeText,
 }: UseLineStickerGenerationProps) => {
     const { t } = useLanguage();
     const [isGenerating, setIsGenerating] = useState(false);
@@ -77,7 +79,7 @@ export const useLineStickerGeneration = ({
             },
         };
 
-        return buildLineStickerPrompt(slots, gridCols, gridRows, chromaKeyColor);
+        return buildLineStickerPrompt(slots, gridCols, gridRows, chromaKeyColor, includeText);
     }, [
         stickerDescription,
         selectedTheme,
@@ -90,6 +92,7 @@ export const useLineStickerGeneration = ({
         gridCols,
         gridRows,
         chromaKeyColor,
+        includeText,
     ]);
 
     const generateSingleSheet = useCallback(async (phraseListOverride?: string[]) => {

@@ -80,8 +80,8 @@ arranged in a **{COLS} × {ROWS} grid layout**. Each cell must be clear and divi
 * Convert the character into a Chibi style while maintaining recognizability.
 
 **Critical Reminders**:
-* Every sticker MUST clearly display its corresponding short phrase text.
-* Actions, facial expressions, and text MUST be unique for every single cell.
+{TEXT_RULE_1}
+* Actions, facial expressions, and text/visual themes MUST be unique for every single cell.
 
 ---
 
@@ -94,14 +94,14 @@ arranged in a **{COLS} × {ROWS} grid layout**. Each cell must be clear and divi
   * **No Gaps Between Cells**: Adjacent cells share the same boundary lines. Do not draw separating lines or leave gaps.
 
 * Filling Rules per Cell (Very Important):
-  * **Character and text MUST fill the cell as much as possible**: The character should occupy ~70%–85% of the cell height. Avoid small characters with large empty spaces.
+  * **Character {AND_TEXT} MUST fill the cell as much as possible**: The character should occupy ~70%–85% of the cell height. Avoid small characters with large empty spaces.
   * Maintain minimum internal padding (~5%–10%) to avoid cutting off parts of the face or text.
   * ❌ FORBIDDEN: Small character in the center with large wasted space around.
-  * ✅ CORRECT: Large character (bust or head) filling the cell, with text placed closely, creating a full visual impact.
+  * ✅ CORRECT: Large character (bust or head) filling the cell, {AND_CLOSE_TEXT} creating a full visual impact.
 
 * Strict Layout Rules:
   * Each cell = One independent LINE sticker.
-  * Character and text **MUST NOT cross grid lines or touch adjacent cells**.
+  * Character {AND_TEXT} **MUST NOT cross grid lines or touch adjacent cells**.
   * DO NOT show any dividers, lines, or borders between cells.
 
 ---
@@ -111,7 +111,7 @@ arranged in a **{COLS} × {ROWS} grid layout**. Each cell must be clear and divi
 * Each sticker must correspond to a **single, clear emotion**.
 * **Actions, expressions, and text MUST be different for every cell**—no repetitions allowed.
 * Expressions should include: Facial features + Body language/postures (gestures, posture, props).
-* **Every cell MUST clearly display its corresponding short phrase.**
+{TEXT_RULE_2}
 
 ---
 
@@ -158,7 +158,8 @@ export function buildLineStickerPrompt(
     slots: PromptSlots,
     cols: number,
     rows: number,
-    bgColor: 'magenta' | 'green'
+    bgColor: 'magenta' | 'green',
+    includeText: boolean = true
 ): string {
     const totalFrames = cols * rows;
     const bgColorText = bgColor === 'magenta' ? 'magenta #FF00FF' : 'green #00FF00';
@@ -177,15 +178,25 @@ export function buildLineStickerPrompt(
     const themeSection = `### [Requirements Per Cell]\n${phrasesForFrames.map((phrase, index) => {
         const row = Math.floor(index / cols) + 1;
         const col = (index % cols) + 1;
-        return `**Cell ${index + 1} (${row}, ${col})**: "${phrase}" - ${getActionHint(phrase)}`;
+        const textInstruction = includeText ? `Display text: "${phrase}"` : `Theme: "${phrase}" (NO text allowed)`;
+        return `**Cell ${index + 1} (${row}, ${col})**: ${textInstruction} - ${getActionHint(phrase)}`;
     }).join('\n')}\n\n`;
 
-    const textSection = `### [Text Setting]\n* Language: ${slots.text.language}\n* Style: ${slots.text.textStyle}\n* Color: ${slots.text.textColor}\n`;
+    let textSection = '';
+    if (includeText) {
+        textSection = `### [Text Setting]\n* Language: ${slots.text.language}\n* Style: ${slots.text.textStyle}\n* Color: ${slots.text.textColor}\n`;
+    } else {
+        textSection = `### [NO Text Requirement]\n* **CRITICAL**: DO NOT include any text, letters, or words in the images. Only the character poses and expressions are allowed.\n`;
+    }
 
     const basePrompt = BASE_PROMPT.replace(/{TOTAL_FRAMES}/g, totalFrames.toString())
         .replace(/{COLS}/g, cols.toString())
         .replace(/{ROWS}/g, rows.toString())
-        .replace(/{BG_COLOR}/g, bgColorText);
+        .replace(/{BG_COLOR}/g, bgColorText)
+        .replace(/{TEXT_RULE_1}/g, includeText ? '* Every sticker MUST clearly display its corresponding short phrase text.' : '* NO text allowed in any stickers.')
+        .replace(/{AND_TEXT}/g, includeText ? 'and text' : '')
+        .replace(/{AND_CLOSE_TEXT}/g, includeText ? 'with text placed closely,' : '')
+        .replace(/{TEXT_RULE_2}/g, includeText ? '* **Every cell MUST clearly display its corresponding short phrase.**' : '* **DO NOT include any text in the images.**');
 
     return `${basePrompt}${characterSection}${styleSection}${themeSection}${textSection}`;
 }
@@ -246,9 +257,9 @@ export const THEME_PRESETS: Record<string, ThemeSlot & { label: string }> = {
 export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
     chibi: {
         label: 'Q 版可愛',
-        styleType: 'Q 版（Chibi）、LINE 貼圖風格',
-        drawingMethod: '彩色手繪風格，線條柔和',
-        background: '純色背景，適用於 LINE 貼圖'
+        styleType: "Q 版 (Chibi), 2-head body ratio, LINE sticker art style",
+        drawingMethod: "彩色手繪風格 (Soft hand-drawn), 粗線條 (Thick clean outlines), 柔和賽璐璐陰影 (Soft cell shading)",
+        background: '純色粉嫩背景 (Solid pastel background), 獨立構圖 (Isolated for easy clipping)'
     },
     pixel: {
         label: '像素藝術',

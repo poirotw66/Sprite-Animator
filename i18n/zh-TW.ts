@@ -313,4 +313,5 @@ export const zhTW: Translations = {
   lineStickerDownloadSelected: '下載已選 ({n})',
   lineStickerPreviewCropped: '切割預覽',
   lineStickerPreviewCropHint: '（可點擊選擇個別貼圖）',
+  lineStickerIncludeText: '在貼圖上加入文字',
 };

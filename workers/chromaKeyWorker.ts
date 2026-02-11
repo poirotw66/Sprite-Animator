@@ -34,18 +34,18 @@ function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: n
   r /= 255;
   g /= 255;
   b /= 255;
-  
+
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
   const l = (max + min) / 2;
-  
+
   if (max === min) {
     return { h: 0, s: 0, l };
   }
-  
+
   const d = max - min;
   const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-  
+
   let h: number;
   switch (max) {
     case r:
@@ -58,7 +58,7 @@ function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: n
       h = ((r - g) / d + 4) * 60;
       break;
   }
-  
+
   return { h, s, l };
 }
 
@@ -69,19 +69,19 @@ function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: n
  */
 function isGreenScreenHSL(r: number, g: number, b: number, tolerance: number): boolean {
   const { h, s, l } = rgbToHsl(r, g, b);
-  
+
   // Green screen characteristics in HSL:
   // Hue: 80-160 degrees (wider range for AI variants)
   // Saturation: > 0.4 (moderately saturated)
   // Lightness: 0.25-0.75 (wider range)
-  
+
   const hueInRange = h >= 80 - tolerance && h <= 160 + tolerance;
   const saturationOk = s > 0.4;
   const lightnessOk = l > 0.25 && l < 0.75;
-  
+
   // RGB check: green must dominate
   const greenDominant = g > r * 1.3 && g > b * 1.3 && g > 80;
-  
+
   return hueInRange && saturationOk && lightnessOk && greenDominant;
 }
 
@@ -93,13 +93,13 @@ function isGreenScreenHSL(r: number, g: number, b: number, tolerance: number): b
  */
 function isMagentaScreenHSL(r: number, g: number, b: number, tolerance: number): boolean {
   const { h, s, l } = rgbToHsl(r, g, b);
-  
+
   // Strict HSL check for pure magenta
   const hueInRange = h >= 295 - tolerance && h <= 305 + tolerance;
   const saturationOk = s > 0.7;
   const lightnessOk = l > 0.35 && l < 0.75;
   const magentaPattern = r > 180 && b > 180 && g < 100 && Math.abs(r - b) < 80;
-  
+
   return hueInRange && saturationOk && lightnessOk && magentaPattern;
 }
 
@@ -118,14 +118,14 @@ function processChromaKey(
   const totalPixels = data.length / 4;
   const fuzz = (fuzzPercent / 100) * 255;
   const hueTolerance = fuzzPercent * 1.5; // Hue tolerance in degrees
-  
+
   let transparentCount = 0;
   const reportInterval = Math.max(1, Math.floor(totalPixels / 100));
 
   // Detect the actual background color by sampling corners
   const sampleSize = Math.min(100, Math.floor(Math.sqrt(totalPixels) / 10));
   const colorMap = new Map<string, number>();
-  
+
   const samplePoints: Array<[number, number]> = [];
   for (let y = 0; y < sampleSize; y++) {
     for (let x = 0; x < sampleSize; x++) {
@@ -135,7 +135,7 @@ function processChromaKey(
       samplePoints.push([width - 1 - x, height - 1 - y]);
     }
   }
-  
+
   for (const [x, y] of samplePoints) {
     const idx = (y * width + x) * 4;
     if (idx < data.length) {
@@ -146,42 +146,45 @@ function processChromaKey(
       colorMap.set(key, (colorMap.get(key) || 0) + 1);
     }
   }
-  
+
   let mostCommonColor = chromaKey;
   let maxCount = 0;
-  
+
   // Detect target type using HSL
   const targetHsl = rgbToHsl(chromaKey.r, chromaKey.g, chromaKey.b);
   const lookingForMagenta = targetHsl.h >= 270 && targetHsl.h <= 330;
   const lookingForGreen = targetHsl.h >= 70 && targetHsl.h <= 170;
-  
+
   for (const [key, count] of colorMap.entries()) {
     if (count > maxCount) {
       const [r, g, b] = key.split(',').map(Number);
       const hsl = rgbToHsl(r, g, b);
-      
+
       const isMagentaLike = hsl.h >= 270 && hsl.h <= 330 && hsl.s > 0.3;
       const isGreenLike = hsl.h >= 70 && hsl.h <= 170 && hsl.s > 0.2 && g > r && g > b;
-      
+
       if ((lookingForMagenta && isMagentaLike) || (lookingForGreen && isGreenLike)) {
         mostCommonColor = { r, g, b };
         maxCount = count;
       }
     }
   }
-  
+
   const targetColor = maxCount > 10 ? mostCommonColor : chromaKey;
   const targetColorHsl = rgbToHsl(targetColor.r, targetColor.g, targetColor.b);
-  
+
   // Determine if target is magenta or green based on detected color
   const targetIsMagenta = targetColorHsl.h >= 270 && targetColorHsl.h <= 330;
   const targetIsGreen = targetColorHsl.h >= 70 && targetColorHsl.h <= 170;
-  
+
   // Calculate adaptive fuzz based on detected background
   // If we detected an actual background color, use larger tolerance for RGB matching
   const adaptiveFuzz = maxCount > 10 ? fuzz * 1.5 : fuzz;
 
-  // Process each pixel
+  // Process each pixel - Pass 1: Alpha calculation with soft edges and erosion
+  const alphaChannel = new Uint8Array(totalPixels);
+  const softness = 12; // Range for alpha transition (fringe)
+
   for (let i = 0; i < data.length; i += 4) {
     const red = data[i];
     const green = data[i + 1];
@@ -189,7 +192,7 @@ function processChromaKey(
     const alpha = data[i + 3];
 
     if (alpha === 0) {
-      transparentCount++;
+      alphaChannel[i / 4] = 0;
       continue;
     }
 
@@ -198,105 +201,144 @@ function processChromaKey(
     const gDiff = green - targetColor.g;
     const bDiff = blue - targetColor.b;
     const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
-    
+
     let shouldRemove = false;
-    
-    // Primary check: RGB distance to detected background color
-    // Only remove if the pixel looks like the background (not just close in RGB)
-    if (distance <= adaptiveFuzz) {
-      // Additional safety check: ensure it's actually magenta-ish or green-ish
+    let computedAlpha = 255;
+
+    // Primary check: RGB distance
+    if (distance <= adaptiveFuzz + softness) {
       if (targetIsMagenta) {
-        // For magenta: R and B should be notably higher than G
-        // Stricter check to avoid removing character colors
-        const looksLikeMagenta = red > green * 1.3 && blue > green * 1.3 && 
-                                 (red + blue) > (green * 3) && green < 150;
-        shouldRemove = looksLikeMagenta;
+        const looksLikeMagenta = red > green * 1.2 && blue > green * 1.2;
+        if (looksLikeMagenta) {
+          if (distance <= adaptiveFuzz) {
+            computedAlpha = 0;
+            shouldRemove = true;
+          } else {
+            // Soft edge transition
+            const ratio = (distance - adaptiveFuzz) / softness;
+            computedAlpha = Math.floor(255 * ratio);
+          }
+        }
       } else if (targetIsGreen) {
-        // For green: G should be notably higher than R and B
-        // More permissive for green variants while avoiding character colors
-        const looksLikeGreen = green > red * 1.2 && green > blue * 1.2 && 
-                               green > 80 && red < 180 && blue < 180;
-        shouldRemove = looksLikeGreen;
-      } else {
+        const looksLikeGreen = green > red * 1.1 && green > blue * 1.1;
+        if (looksLikeGreen) {
+          if (distance <= adaptiveFuzz) {
+            computedAlpha = 0;
+            shouldRemove = true;
+          } else {
+            const ratio = (distance - adaptiveFuzz) / softness;
+            computedAlpha = Math.floor(255 * ratio);
+          }
+        }
+      } else if (distance <= adaptiveFuzz) {
+        computedAlpha = 0;
         shouldRemove = true;
       }
     }
-    
-    // HSL-based detection - the ONLY secondary detection method
-    // This is the single source of truth for chroma key detection
-    if (!shouldRemove) {
+
+    // HSL-based detection for more accuracy
+    if (computedAlpha > 0) {
+      const { h, s, l } = rgbToHsl(red, green, blue);
       if (targetIsMagenta) {
-        shouldRemove = isMagentaScreenHSL(red, green, blue, hueTolerance);
+        const hDiff = Math.abs(h - targetColorHsl.h);
+        const normalizedHDiff = hDiff > 180 ? 360 - hDiff : hDiff;
+
+        if (normalizedHDiff < hueTolerance + 5 && s > 0.3) {
+          if (normalizedHDiff < hueTolerance) {
+            computedAlpha = 0;
+          } else {
+            const ratio = (normalizedHDiff - hueTolerance) / 5;
+            computedAlpha = Math.min(computedAlpha, Math.floor(255 * ratio));
+          }
+        }
       } else if (targetIsGreen) {
-        shouldRemove = isGreenScreenHSL(red, green, blue, hueTolerance);
+        const hDiff = Math.abs(h - targetColorHsl.h);
+        const normalizedHDiff = hDiff > 180 ? 360 - hDiff : hDiff;
+
+        if (normalizedHDiff < hueTolerance + 10 && s > 0.2) {
+          if (normalizedHDiff < hueTolerance) {
+            computedAlpha = 0;
+          } else {
+            const ratio = (normalizedHDiff - hueTolerance) / 10;
+            computedAlpha = Math.min(computedAlpha, Math.floor(255 * ratio));
+          }
+        }
       }
     }
-    
-    // NO fallback patterns - HSL detection is authoritative
-    
-    if (shouldRemove) {
-      data[i + 3] = 0;
-      transparentCount++;
-    }
+
+    alphaChannel[i / 4] = computedAlpha;
 
     // Report progress
-    if (i % (reportInterval * 4) === 0) {
-      const progress = Math.min(100, Math.round((i / data.length) * 100));
+    if (i % (reportInterval * 16) === 0) {
+      const progress = Math.min(30, Math.round((i / data.length) * 30));
       onProgress(progress);
     }
   }
 
-  // Second pass: Edge cleanup - only for semi-transparent pixels
-  // Use HSL-based detection for consistency
-  for (let i = 0; i < data.length; i += 4) {
-    const alpha = data[i + 3];
-    
-    // Only process semi-transparent pixels (edges)
-    if (alpha === 0 || alpha === 255) continue;
-    
-    const red = data[i];
-    const green = data[i + 1];
-    const blue = data[i + 2];
-    
-    // Use the same strict HSL detection for edge cleanup
-    let isChromaEdge = false;
-    if (targetIsMagenta) {
-      isChromaEdge = isMagentaScreenHSL(red, green, blue, hueTolerance * 1.5);
-    } else if (targetIsGreen) {
-      isChromaEdge = isGreenScreenHSL(red, green, blue, hueTolerance * 1.5);
+  // Pass 2: Edge Erosion (Shrink the mask by 1 pixel to remove the halo)
+  const erodedAlpha = new Uint8Array(alphaChannel);
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const i = y * width + x;
+      if (alphaChannel[i] > 0) {
+        // Check 4-connectivity neighbors
+        if (alphaChannel[i - 1] === 0 || alphaChannel[i + 1] === 0 ||
+          alphaChannel[i - width] === 0 || alphaChannel[i + width] === 0) {
+          // If a pixel is on the edge, reduce its alpha or make it transparent
+          // This removes the "bleeding" edge
+          erodedAlpha[i] = Math.floor(alphaChannel[i] * 0.5);
+        }
+      }
     }
-    
-    if (isChromaEdge) {
-      data[i + 3] = Math.floor(alpha * 0.3); // Reduce alpha significantly
-    }
+    if (y % 100 === 0) onProgress(30 + Math.round((y / height) * 20));
   }
-  
-  // Third pass: Desaturate remaining edge pixels to remove color tint
-  // Only apply to semi-transparent pixels that still have chroma tint
+
+  // Pass 3: Apply alpha and Spill Suppression (Color Decontamination)
   for (let i = 0; i < data.length; i += 4) {
-    const alpha = data[i + 3];
-    
-    // Skip fully transparent and fully opaque pixels
-    if (alpha === 0 || alpha === 255) continue;
-    
+    const alpha = erodedAlpha[i / 4];
+    data[i + 3] = alpha;
+
+    if (alpha === 0) continue;
+
+    // Spill suppression: Remove the background color tint from edge pixels
+    // Most intensive on the semi-transparent edges
     const red = data[i];
     const green = data[i + 1];
     const blue = data[i + 2];
-    
-    // Use HSL detection with even looser tolerance for desaturation
-    let hasTint = false;
+
+    const spillIntensity = (255 - alpha) / 255; // Higher on edges
+
     if (targetIsMagenta) {
-      hasTint = isMagentaScreenHSL(red, green, blue, hueTolerance * 2);
+      // Magenta is high R and B. To suppress, we want to normalize R/B towards G
+      // A common formula: R = min(R, G), B = min(B, G)
+      // We'll use a weighted blend based on edge proximity
+      if (red > green || blue > green) {
+        const targetR = Math.min(red, green + (red - green) * (1 - spillIntensity));
+        const targetB = Math.min(blue, green + (blue - green) * (1 - spillIntensity));
+
+        data[i] = Math.round(targetR);
+        data[i + 2] = Math.round(targetB);
+
+        // Further desaturate if it's very pinkish
+        if (spillIntensity > 0.3 && red > green * 1.5 && blue > green * 1.5) {
+          const gray = (red + green * 2 + blue) / 4;
+          data[i] = Math.round(data[i] * (1 - spillIntensity * 0.5) + gray * spillIntensity * 0.5);
+          data[i + 1] = Math.round(data[i + 1] * (1 - spillIntensity * 0.5) + gray * spillIntensity * 0.5);
+          data[i + 2] = Math.round(data[i + 2] * (1 - spillIntensity * 0.5) + gray * spillIntensity * 0.5);
+        }
+      }
     } else if (targetIsGreen) {
-      hasTint = isGreenScreenHSL(red, green, blue, hueTolerance * 2);
+      // Green suppression: normalize G towards the average of R and B
+      if (green > red || green > blue) {
+        const rbAvg = (red + blue) / 2;
+        const targetG = Math.min(green, rbAvg + (green - rbAvg) * (1 - spillIntensity));
+        data[i + 1] = Math.round(targetG);
+      }
     }
-    
-    if (hasTint) {
-      // Desaturate by averaging with grayscale equivalent
-      const gray = Math.round(0.299 * red + 0.587 * green + 0.114 * blue);
-      data[i] = Math.round((red + gray) / 2);
-      data[i + 1] = Math.round((green + gray) / 2);
-      data[i + 2] = Math.round((blue + gray) / 2);
+
+    if (i % (reportInterval * 16) === 0) {
+      const progress = 50 + Math.min(50, Math.round((i / data.length) * 50));
+      onProgress(progress);
     }
   }
 
@@ -305,7 +347,7 @@ function processChromaKey(
 }
 
 // Worker message handler
-self.onmessage = function(e: MessageEvent<ChromaKeyWorkerMessage>) {
+self.onmessage = function (e: MessageEvent<ChromaKeyWorkerMessage>) {
   const { type, data, width, height, chromaKey, fuzzPercent, id } = e.data;
 
   if (type === 'cancel') {
@@ -317,7 +359,7 @@ self.onmessage = function(e: MessageEvent<ChromaKeyWorkerMessage>) {
     try {
       // Convert array to Uint8ClampedArray
       const imageData = new Uint8ClampedArray(data);
-      
+
       const processed = processChromaKey(
         imageData,
         width,

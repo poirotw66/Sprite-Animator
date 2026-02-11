@@ -313,4 +313,5 @@ export const en: Translations = {
   lineStickerDownloadSelected: 'Download Selected ({n})',
   lineStickerPreviewCropped: 'Cropped Preview',
   lineStickerPreviewCropHint: '(Click to select stickers)',
+  lineStickerIncludeText: 'Include Text on Stickers',
 };

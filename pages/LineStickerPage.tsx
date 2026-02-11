@@ -98,6 +98,7 @@ const LineStickerPage: React.FC = () => {
     const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('magenta');
     const [selectedResolution, setSelectedResolution] = useState<ImageResolution>('1K');
     const [selectedPhraseMode, setSelectedPhraseMode] = useState<StickerPhraseMode>('balanced');
+    const [includeText, setIncludeText] = useState(true);
 
     useEffect(() => {
         if (selectedTheme === 'custom') return;
@@ -137,6 +138,7 @@ const LineStickerPage: React.FC = () => {
         gridRows,
         chromaKeyColor,
         sourceImage,
+        includeText,
     });
 
     const {
@@ -440,20 +442,35 @@ const LineStickerPage: React.FC = () => {
                         {selectedTheme === 'custom' && (
                             <textarea value={customThemeContext} onChange={e => setCustomThemeContext(e.target.value)} placeholder={t.lineStickerCustomThemePlaceholder} className="w-full h-20 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none resize-none" />
                         )}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerTextLangLabel}</label>
-                                <select value={selectedLanguage} onChange={e => setSelectedLanguage(e.target.value as any)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
-                                    {Object.keys(TEXT_PRESETS).map(k => <option key={k} value={k}>{(TEXT_PRESETS as any)[k].label}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerFontStyleLabel}</label>
-                                <select value={selectedFont} onChange={e => setSelectedFont(e.target.value as any)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
-                                    {Object.keys(FONT_PRESETS).map(k => <option key={k} value={k}>{(FONT_PRESETS as any)[k].label}</option>)}
-                                </select>
-                            </div>
+                        <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <input
+                                type="checkbox"
+                                id="includeText"
+                                checked={includeText}
+                                onChange={e => setIncludeText(e.target.checked)}
+                                className="w-5 h-5 text-green-600 border-slate-300 rounded focus:ring-green-500 cursor-pointer"
+                            />
+                            <label htmlFor="includeText" className="text-sm font-medium text-slate-700 cursor-pointer">
+                                {t.lineStickerIncludeText}
+                            </label>
                         </div>
+
+                        {includeText && (
+                            <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerTextLangLabel}</label>
+                                    <select value={selectedLanguage} onChange={e => setSelectedLanguage(e.target.value as any)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
+                                        {Object.keys(TEXT_PRESETS).map(k => <option key={k} value={k}>{(TEXT_PRESETS as any)[k].label}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerFontStyleLabel}</label>
+                                    <select value={selectedFont} onChange={e => setSelectedFont(e.target.value as any)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
+                                        {Object.keys(FONT_PRESETS).map(k => <option key={k} value={k}>{(FONT_PRESETS as any)[k].label}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                        )}
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerPhraseStyle}</label>
                             <div className="flex flex-wrap gap-2">
