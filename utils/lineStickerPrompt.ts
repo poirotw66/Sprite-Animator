@@ -19,7 +19,8 @@ export interface PromptSlots {
 export interface StyleSlot {
     styleType: string;
     drawingMethod: string;
-    background: string;
+    /** Omitted in prompt: background is always the chroma key (e.g. Pure Magenta) for sprite-sheet cutting. */
+    background?: string;
 }
 
 export interface CharacterSlot {
@@ -87,11 +88,14 @@ arranged in a **{COLS} × {ROWS} grid layout**. Each cell must be clear and divi
 
 ### [Sprite Sheet Layout] CRITICAL
 
-* Layout Specifications:
-  **The entire image MUST be a strict {COLS} × {ROWS} grid (total {TOTAL_FRAMES} cells).**
-  * Divide the image equally into {COLS} columns from left to right and {ROWS} rows from top to bottom.
+* Canvas: **The canvas MUST be a perfect square (1:1 aspect ratio).** Output at high resolution.
+* Layout Specifications (mathematical, follow exactly):
+  **The canvas MUST be divided into {COLS} equal-width columns and {ROWS} equal-height rows.**
+  * Each cell MUST occupy exactly **{CELL_WIDTH_PCT}% of the image width** and **{CELL_HEIGHT_PCT}% of the image height**.
+  * **Total cells: {TOTAL_FRAMES}.**
   * **No Outer Margins**: The image edges are the grid boundaries. No empty space at the very left, right, top, or bottom.
   * **No Gaps Between Cells**: Adjacent cells share the same boundary lines. Do not draw separating lines or leave gaps.
+  * **The final image MUST be perfectly splittable into {TOTAL_FRAMES} equal rectangles.**
 
 * Filling Rules per Cell (Very Important):
   * **Character {AND_TEXT} MUST fill the cell as much as possible**: The character should occupy ~70%–85% of the cell height. Avoid small characters with large empty spaces.
@@ -132,7 +136,7 @@ The background must be a single, solid, flat color: **{BG_COLOR}**.
 
 ---
 
-### [Final Goal] Generate a sprite sheet that can be perfectly divided into {COLS}×{ROWS} equal parts.
+### [Final Goal] Generate a sprite sheet that can be perfectly divided into {TOTAL_FRAMES} equal rectangles ({COLS} columns × {ROWS} rows). Each part must be exactly {CELL_WIDTH_PCT}% width × {CELL_HEIGHT_PCT}% height.
 `;
 
 /**
@@ -168,7 +172,7 @@ export function buildLineStickerPrompt(
     const bgColorText = bgColor === 'magenta' ? 'Pure Magenta #FF00FF' : 'Neon Green #00FF00';
 
     const characterSection = `### [Character Setting]\n* Description: ${slots.character.appearance}\n* Personality: ${slots.character.personality}\n* Rules: ${slots.character.originalImageRules}\n\n`;
-    const styleSection = `### [Style Setting]\n* Style: ${slots.style.styleType}\n* Technique: ${slots.style.drawingMethod}\n* Background: ${slots.style.background}\n\n`;
+    const styleSection = `### [Style Setting]\n* Style: ${slots.style.styleType}\n* Technique: ${slots.style.drawingMethod}\n\n`;
 
     const allPhrases = [...slots.theme.examplePhrases];
     if (slots.theme.specialStickers) allPhrases.push(...slots.theme.specialStickers.texts);
@@ -192,9 +196,14 @@ export function buildLineStickerPrompt(
         textSection = `### [NO Text Requirement]\n* **CRITICAL**: DO NOT include any text, letters, or words in the images. Only the character poses and expressions are allowed.\n`;
     }
 
+    const cellWidthPct = Math.round(100 / cols);
+    const cellHeightPct = Math.round(100 / rows);
+
     const basePrompt = BASE_PROMPT.replace(/{TOTAL_FRAMES}/g, totalFrames.toString())
         .replace(/{COLS}/g, cols.toString())
         .replace(/{ROWS}/g, rows.toString())
+        .replace(/{CELL_WIDTH_PCT}/g, cellWidthPct.toString())
+        .replace(/{CELL_HEIGHT_PCT}/g, cellHeightPct.toString())
         .replace(/{BG_COLOR}/g, bgColorText)
         .replace(/{TEXT_RULE_1}/g, includeText ? '* Every sticker MUST clearly display its corresponding short phrase text.' : '* NO text allowed in any stickers.')
         .replace(/{AND_TEXT}/g, includeText ? 'and text' : '')
@@ -262,38 +271,32 @@ export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
         label: 'Q 版可愛',
         styleType: "Q 版 (Chibi), 2-head body ratio, LINE sticker art style",
         drawingMethod: "彩色手繪風格 (Soft hand-drawn), 粗線條 (Thick clean outlines), 柔和賽璐璐陰影 (Soft cell shading)",
-        background: '純色粉嫩背景 (Solid pastel background), 獨立構圖 (Isolated for easy clipping)'
     },
     pixel: {
         label: '像素藝術',
         styleType: "16-bit 復古像素風格 (Pixel Art), 高對比調色盤, 具備 SNES/GBA 遊戲質感",
         drawingMethod: "精確像素點繪, 保持邊緣銳利無平滑模糊 (No anti-aliasing), 強化格狀紋理與乾淨線條",
-        background: "純色背景，確保像素邊緣清晰不渲染"
     },
     minimalist: {
         label: '極簡線條',
         styleType: "極簡扁平插畫 (Minimalist Flat), 卡娜赫拉風格 (Kanahei style), 療癒系可愛貼圖",
         drawingMethod: "柔和的深棕色粗輪廓線 (Soft thick outlines), 簡單純色填充, 點點眼與粉嫩腮紅細節, 圓潤簡化的形狀",
-        background: "純色粉嫩背景 (Solid pastel background), 獨立構圖 (Isolated for easy clipping)"
     },
     anime: {
         label: "日系動漫",
         styleType: "現代精緻日系動漫風格 (Modern Anime), 賽璐珞風格 (Cell-shaded), 高畫質 2D 渲染",
         drawingMethod: "細膩俐落的線條, 二級陰影層次 (Two-tone shadows), 精緻的眼部細節與髮絲反光",
-        background: "純淨淺色背景, 確保主體輪廓邊緣清晰"
     },
     cartoon: {
         label: "美式卡通",
         styleType: "現代美式卡通風格 (Vibrant Cartoon), 動態張力強, 角色表情誇張",
         drawingMethod: "粗黑且穩定的外框線, 飽和對比色塊填充, 簡單的幾何化結構, 具備商業插畫感",
-        background: "高飽和度純色背景, 無陰影渲染, 呈現完全扁平化 (Flat design)"
     },
     watercolor: {
         label: "手繪水彩",
         styleType: "柔和日系手繪水彩風格 (Soft Watercolor), 療癒系插畫, 邊緣帶有自然擴散感",
         drawingMethod: "層次透明水漬暈染 (Wet-on-wet technique), 手繪筆觸邊緣, 柔和邊緣線條, 具備物理墨水流動感",
-        background: "米白色紙張紋理背景 (Canvas texture), 模擬真實水彩紙效果"
-    }
+    },
 };
 
 export const CHARACTER_PRESETS: Record<string, { label: string; appearance: string; personality: string }> = {
