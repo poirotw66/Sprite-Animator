@@ -304,18 +304,19 @@ function processChromaKey(
       }
     }
     // Case B: Hole Scavenging (disconnected islands like holes in letters)
-    else if (distance < adaptiveFuzz * 0.9) {
-      // Balanced check for disconnected holes: must be suspicious but doesn't need to be pure magenta
+    else if (distance < adaptiveFuzz * 0.95) {
+      // Enhanced check for disconnected holes: sensitive to dark residue in text
       let isCertainHole = false;
       if (targetIsMagenta) {
         // Look for magenta signature: R & B notably higher than G
-        isCertainHole = r > g * 1.5 && b > g * 1.5 && (r + b) > 200;
+        // Lowered brightness requirement (100) to catch dark residue inside small text
+        isCertainHole = (r > g * 1.4 && b > g * 1.4 && (r + b) > 100) || (r > g * 3 || b > g * 3);
       } else if (targetIsGreen) {
-        isCertainHole = g > r * 1.4 && g > b * 1.4 && g > 120;
+        isCertainHole = (g > r * 1.4 && g > b * 1.4 && g > 80) || (g > r * 2.5);
       }
 
       if (isCertainHole) {
-        alphaChannel[i] = 0;
+        alphaChannel[i] = 15; // Near transparent instead of 0 to keep text anti-aliasing smooth
       } else {
         alphaChannel[i] = 255;
       }
@@ -333,25 +334,23 @@ function processChromaKey(
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
       const i = y * width + x;
-      // If foreground but adjacent to confirmed background, erode it
       if (alphaChannel[i] > 200 && bgMask[i] === 0) {
         const hasBgNeighbor =
           bgMask[i - 1] === 2 || bgMask[i + 1] === 2 ||
           bgMask[i - width] === 2 || bgMask[i + width] === 2;
 
         if (hasBgNeighbor) {
-          // Check if the color is indeed suspicious (spill)
           const idx = i * 4;
           const r = data[idx];
           const g = data[idx + 1];
           const b = data[idx + 2];
 
           let isSpill = false;
-          if (targetIsMagenta) isSpill = r > g * 1.2 && b > g * 1.2;
-          else if (targetIsGreen) isSpill = g > r * 1.2;
+          if (targetIsMagenta) isSpill = r > g * 1.1 && b > g * 1.1;
+          else if (targetIsGreen) isSpill = g > r * 1.1;
 
           if (isSpill) {
-            erodedAlpha[i] = 150; // Moderate erosion
+            erodedAlpha[i] = 160;
           }
         }
       }
@@ -360,7 +359,7 @@ function processChromaKey(
 
   onProgress(60);
 
-  // Pass 3: Protective Spill Suppression
+  // Pass 3: Final Decontamination (Targeting text residue)
   for (let i = 0; i < data.length; i += 4) {
     const pixelIdx = i / 4;
     const alpha = erodedAlpha[pixelIdx];
@@ -368,43 +367,54 @@ function processChromaKey(
 
     if (alpha === 0) continue;
 
-    const red = data[i];
-    const green = data[i + 1];
-    const blue = data[i + 2];
-
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const avg = (r + g + b) / 3;
     const isEdge = alpha < 255;
 
     if (targetIsMagenta) {
-      const magContrast = (red + blue) / 2 - green;
+      const magContrast = (r + b) / 2 - g;
 
-      // Separate logic for edge vs internal to protect character colors
-      if (isEdge && magContrast > 5) {
-        // High intensity suppression for edges (halos)
-        const spillIntensity = 0.9;
-        data[i] = Math.round(red - (red - green) * spillIntensity);
-        data[i + 2] = Math.round(blue - (blue - green) * spillIntensity);
-
-        // Moderate desaturation only for edges to merge with background
-        const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
-        data[i] = Math.round(data[i] * 0.7 + gray * 0.3);
-        data[i + 1] = Math.round(data[i + 1] * 0.7 + gray * 0.3);
-        data[i + 2] = Math.round(data[i + 2] * 0.7 + gray * 0.3);
+      // NEW: Dark Detail Decontamination (Specially for Text)
+      // If the pixel is dark (text-like) and has magenta tint, force it to neutral
+      if (avg < 100 && magContrast > 4) {
+        const decontamIntensity = isEdge ? 1.0 : 0.85;
+        const gray = avg;
+        data[i] = Math.round(r * (1 - decontamIntensity) + gray * decontamIntensity);
+        data[i + 1] = Math.round(g * (1 - decontamIntensity) + gray * decontamIntensity);
+        data[i + 2] = Math.round(b * (1 - decontamIntensity) + gray * decontamIntensity);
       }
-      else if (!isEdge && magContrast > 15) {
-        // Very conservative suppression for internal pixels to avoid "blackning"
-        // Only trigger if contrast is high (indicating clear residue)
-        const spillIntensity = Math.min(0.4, (magContrast - 15) / 50);
-        data[i] = Math.round(red - (red - green) * spillIntensity);
-        data[i + 2] = Math.round(blue - (blue - green) * spillIntensity);
+      // Normal edge suppression
+      else if (isEdge && magContrast > 5) {
+        const spillIntensity = 0.95;
+        data[i] = Math.round(r - (r - g) * spillIntensity);
+        data[i + 2] = Math.round(b - (b - g) * spillIntensity);
+
+        // Edge Gray-blend
+        const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        data[i] = Math.round(data[i] * 0.6 + gray * 0.4);
+        data[i + 1] = Math.round(data[i + 1] * 0.6 + gray * 0.4);
+        data[i + 2] = Math.round(data[i + 2] * 0.6 + gray * 0.4);
+      }
+      // Internal high-contrast correction (safe mode for character colors)
+      else if (!isEdge && magContrast > 20) {
+        const spillIntensity = Math.min(0.5, (magContrast - 15) / 40);
+        data[i] = Math.round(r - (r - g) * spillIntensity);
+        data[i + 2] = Math.round(b - (b - g) * spillIntensity);
       }
     } else if (targetIsGreen) {
-      const greenContrast = green - (red + blue) / 2;
-      if (isEdge && greenContrast > 5) {
-        const rbAvg = (red + blue) / 2;
-        data[i + 1] = Math.round(green - (green - rbAvg) * 0.9);
-      } else if (!isEdge && greenContrast > 20) {
-        const rbAvg = (red + blue) / 2;
-        data[i + 1] = Math.round(green - (green - rbAvg) * 0.3);
+      const greenContrast = g - (r + b) / 2;
+      // Dark decontamination for green
+      if (avg < 100 && greenContrast > 4) {
+        const gray = avg;
+        data[i] = Math.round(r * 0.15 + gray * 0.85);
+        data[i + 1] = Math.round(g * 0.15 + gray * 0.85);
+        data[i + 2] = Math.round(b * 0.15 + gray * 0.85);
+      }
+      else if (isEdge && greenContrast > 5) {
+        const rbAvg = (r + b) / 2;
+        data[i + 1] = Math.round(g - (g - rbAvg) * 0.95);
       }
     }
 

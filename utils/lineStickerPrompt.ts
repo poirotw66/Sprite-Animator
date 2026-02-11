@@ -293,9 +293,42 @@ export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
     }
 };
 
+export const CHARACTER_PRESETS: Record<string, { label: string; appearance: string; personality: string }> = {
+    cute: {
+        label: '可愛萌系 (Default)',
+        appearance: '圓潤可愛的人物形象，具有親和力，大眼睛與粉嫩腮紅',
+        personality: '溫柔、害羞、療癒'
+    },
+    funny: {
+        label: '搞怪幽默 (Meme Style)',
+        appearance: '誇張的肢體動作，趣味表情，充滿迷因感與活力',
+        personality: '幽默、搞怪、不按牌理出牌'
+    },
+    cool: {
+        label: '酷帥型格 (Cool)',
+        appearance: '俐落的線條，眼神銳利有神，帥氣十足的人形象',
+        personality: '自信、冷靜、深沉'
+    },
+    energetic: {
+        label: '陽光活力 (Energetic)',
+        appearance: '充滿動態感，色彩亮麗，元氣滿滿的形象',
+        personality: '熱情、積極、陽光'
+    },
+    healing: {
+        label: '軟萌療癒 (Healing)',
+        appearance: '線條簡約柔和，像棉花糖般的質感，造型溫潤',
+        personality: '安靜、溫順、治癒'
+    },
+    elegant: {
+        label: '優雅氣質 (Elegant)',
+        appearance: '清秀優雅的形象，線條纖細流暢，動作從容',
+        personality: '知性、典雅、溫柔'
+    }
+};
+
 export const DEFAULT_CHARACTER_SLOT: CharacterSlot = {
-    appearance: '可愛、的人物形象',
-    personality: '溫柔、害羞',
+    appearance: CHARACTER_PRESETS.cute.appearance,
+    personality: CHARACTER_PRESETS.cute.personality,
     originalImageRules: '不可直接複製原圖，需重新設計',
 };
 

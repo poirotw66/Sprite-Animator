@@ -34,6 +34,7 @@ import {
     TEXT_PRESETS,
     TEXT_COLOR_PRESETS,
     FONT_PRESETS,
+    CHARACTER_PRESETS,
     type ThemeOption,
 } from '../utils/lineStickerPrompt';
 
@@ -71,7 +72,9 @@ const LineStickerPage: React.FC = () => {
     const [chromaKeyProgress, setChromaKeyProgress] = useState(0);
     const [isProcessingChromaKey, setIsProcessingChromaKey] = useState(false);
 
-    const [stickerDescription, setStickerDescription] = useState('');
+    const [characterPreset, setCharacterPreset] = useState<keyof typeof CHARACTER_PRESETS | 'custom'>('cute');
+    const [characterAppearance, setCharacterAppearance] = useState('');
+    const [characterPersonality, setCharacterPersonality] = useState('');
     const [selectedStyle, setSelectedStyle] = useState<keyof typeof STYLE_PRESETS>('chibi');
     const [selectedTheme, setSelectedTheme] = useState<ThemeOption>('custom');
     const [customThemeContext, setCustomThemeContext] = useState<string>('');
@@ -126,7 +129,9 @@ const LineStickerPage: React.FC = () => {
     } = useLineStickerGeneration({
         apiKey: getEffectiveApiKey(),
         selectedModel,
-        stickerDescription,
+        characterPreset,
+        characterAppearance,
+        characterPersonality,
         selectedStyle,
         selectedTheme,
         customThemeContext,
@@ -275,13 +280,9 @@ const LineStickerPage: React.FC = () => {
         setIsGenerating(true);
         setError(null);
         try {
-            // Using a specific flag here or just letting the finally block handle it
             const results = await Promise.all([0, 1, 2].map(async (i) => {
-                // We wrap it to avoid each single call setting setIsGenerating(false)
-                // However, generateSingleSheet ALWAYS sets it. We need to override after the Promise.all starts
                 return generateSingleSheet(setPhrasesList.slice(i * 16, (i + 1) * 16));
             }));
-            // After parallel calls, ensure we are still 'generating' until processing is done
             setIsGenerating(true);
             const valid = results.filter((r): r is string => r !== null);
             if (valid.length < 3) {
@@ -299,6 +300,21 @@ const LineStickerPage: React.FC = () => {
             setStatusText('');
         } catch (err: any) { setError(`${t.errorGeneration}: ${err.message}`); } finally { setIsGenerating(false); }
     }, [sourceImage, setPhrasesList, generateSingleSheet, t, chromaKeyColor, setStatusText, setError, sliceProcessedSheetToFrames, setIsGenerating]);
+
+    const buildFullContext = useCallback(() => {
+        const themeInfo = selectedTheme === 'custom'
+            ? (customThemeContext || '自訂主題')
+            : `${THEME_PRESETS[selectedTheme].label} (${THEME_PRESETS[selectedTheme].chatContext})`;
+
+        let characterValue = '';
+        if (characterPreset !== 'custom') {
+            characterValue = CHARACTER_PRESETS[characterPreset].label;
+        } else {
+            characterValue = `${characterAppearance} (${characterPersonality})`;
+        }
+
+        return `角色：${characterValue}\n主題：${themeInfo}`;
+    }, [characterPreset, characterAppearance, characterPersonality, selectedTheme, customThemeContext]);
 
     const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => setSheetDimensions({ width: e.currentTarget.naturalWidth, height: e.currentTarget.naturalHeight });
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -420,10 +436,7 @@ const LineStickerPage: React.FC = () => {
                                 </div>
                             </div>
                         )}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerDescLabel}</label>
-                            <textarea value={stickerDescription} onChange={e => setStickerDescription(e.target.value)} placeholder={t.lineStickerDescPlaceholder} className="w-full h-24 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none resize-none" />
-                        </div>
+
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerStyleLabel}</label>
@@ -432,16 +445,70 @@ const LineStickerPage: React.FC = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerThemeLabel}</label>
-                                <select value={selectedTheme} onChange={e => setSelectedTheme(e.target.value as any)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
-                                    {Object.keys(THEME_PRESETS).map(k => <option key={k} value={k}>{(THEME_PRESETS as any)[k].label}</option>)}
+                                <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerCharacterVibe || '角色形象'}</label>
+                                <select value={characterPreset} onChange={e => setCharacterPreset(e.target.value as any)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
+                                    {Object.keys(CHARACTER_PRESETS).map(k => <option key={k} value={k}>{CHARACTER_PRESETS[k].label}</option>)}
                                     <option value="custom">{t.lineStickerThemeCustom}</option>
                                 </select>
                             </div>
                         </div>
+
+                        {characterPreset === 'custom' && (
+                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerDescLabel}</label>
+                                    <textarea value={characterAppearance} onChange={e => setCharacterAppearance(e.target.value)} placeholder={t.lineStickerDescPlaceholder} className="w-full h-20 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none resize-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerPersonalityLabel || '個性描述'}</label>
+                                    <input type="text" value={characterPersonality} onChange={e => setCharacterPersonality(e.target.value)} placeholder="例如：溫柔、害羞、愛吐槽" className="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none" />
+                                </div>
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerThemeLabel}</label>
+                            <select value={selectedTheme} onChange={e => setSelectedTheme(e.target.value as any)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
+                                {Object.keys(THEME_PRESETS).map(k => <option key={k} value={k}>{(THEME_PRESETS as any)[k].label}</option>)}
+                                <option value="custom">{t.lineStickerThemeCustom}</option>
+                            </select>
+                        </div>
+
                         {selectedTheme === 'custom' && (
                             <textarea value={customThemeContext} onChange={e => setCustomThemeContext(e.target.value)} placeholder={t.lineStickerCustomThemePlaceholder} className="w-full h-20 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none resize-none" />
                         )}
+
+                        {/* Chroma Key Selector */}
+                        <div className="space-y-3">
+                            <label className="text-sm font-semibold text-slate-700 block">
+                                {t.rmbgChromaKeyLabel}
+                            </label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    onClick={() => setChromaKeyColor('magenta')}
+                                    className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-200 ${chromaKeyColor === 'magenta'
+                                        ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700 shadow-sm'
+                                        : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
+                                        }`}
+                                >
+                                    <div className="w-3 h-3 rounded-full bg-fuchsia-500" />
+                                    <span className="text-sm font-bold">{t.magentaColor}</span>
+                                    {chromaKeyColor === 'magenta' && <Check className="w-3.5 h-3.5 ml-auto" />}
+                                </button>
+                                <button
+                                    onClick={() => setChromaKeyColor('green')}
+                                    className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-200 ${chromaKeyColor === 'green'
+                                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                                        : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
+                                        }`}
+                                >
+                                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                                    <span className="text-sm font-bold">{t.greenScreen}</span>
+                                    {chromaKeyColor === 'green' && <Check className="w-3.5 h-3.5 ml-auto" />}
+                                </button>
+                            </div>
+                        </div>
+
                         <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
                             <input
                                 type="checkbox"
@@ -503,10 +570,7 @@ const LineStickerPage: React.FC = () => {
                                     setIsGeneratingPhrases(true);
                                     try {
                                         const count = stickerSetMode ? 48 : (gridCols * gridRows);
-                                        const themeInfo = selectedTheme === 'custom'
-                                            ? (customThemeContext || '自訂主題')
-                                            : `${THEME_PRESETS[selectedTheme].label} (${THEME_PRESETS[selectedTheme].chatContext})`;
-                                        const fullContext = `角色：${stickerDescription || '無描述'}\n主題：${themeInfo}`;
+                                        const fullContext = buildFullContext();
                                         const langLabel = TEXT_PRESETS[selectedLanguage]?.label || selectedLanguage;
 
                                         const phrases = await generateStickerPhrases(apiKey, fullContext, langLabel, count, selectedPhraseMode);

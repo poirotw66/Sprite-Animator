@@ -6,6 +6,7 @@ import {
     FONT_PRESETS,
     THEME_PRESETS,
     DEFAULT_CHARACTER_SLOT,
+    CHARACTER_PRESETS,
     buildLineStickerPrompt,
     type ThemeOption,
 } from '../utils/lineStickerPrompt';
@@ -16,7 +17,9 @@ import { useLanguage } from './useLanguage';
 interface UseLineStickerGenerationProps {
     apiKey: string | null;
     selectedModel: string;
-    stickerDescription: string;
+    characterPreset: keyof typeof CHARACTER_PRESETS | 'custom';
+    characterAppearance: string;
+    characterPersonality: string;
     selectedStyle: keyof typeof STYLE_PRESETS;
     selectedTheme: ThemeOption;
     customThemeContext: string;
@@ -34,7 +37,9 @@ interface UseLineStickerGenerationProps {
 export const useLineStickerGeneration = ({
     apiKey,
     selectedModel,
-    stickerDescription,
+    characterPreset,
+    characterAppearance,
+    characterPersonality,
     selectedStyle,
     selectedTheme,
     customThemeContext,
@@ -54,9 +59,16 @@ export const useLineStickerGeneration = ({
     const [error, setError] = useState<string | null>(null);
 
     const buildPrompt = useCallback((phraseListOverride?: string[]) => {
-        const characterSlot = stickerDescription.trim()
-            ? { ...DEFAULT_CHARACTER_SLOT, appearance: stickerDescription.trim() }
-            : DEFAULT_CHARACTER_SLOT;
+        let characterSlot = { ...DEFAULT_CHARACTER_SLOT };
+
+        if (characterPreset !== 'custom') {
+            const preset = CHARACTER_PRESETS[characterPreset];
+            characterSlot.appearance = preset.appearance;
+            characterSlot.personality = preset.personality;
+        } else {
+            if (characterAppearance.trim()) characterSlot.appearance = characterAppearance.trim();
+            if (characterPersonality.trim()) characterSlot.personality = characterPersonality.trim();
+        }
 
         const themeSlot = selectedTheme === 'custom'
             ? {
@@ -81,7 +93,9 @@ export const useLineStickerGeneration = ({
 
         return buildLineStickerPrompt(slots, gridCols, gridRows, chromaKeyColor, includeText);
     }, [
-        stickerDescription,
+        characterPreset,
+        characterAppearance,
+        characterPersonality,
         selectedTheme,
         customThemeContext,
         customPhrasesList,

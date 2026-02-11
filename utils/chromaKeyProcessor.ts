@@ -334,52 +334,69 @@ function processInMainThread(
           if (distance <= adaptiveFuzz) computedAlpha = 0;
           else computedAlpha = Math.floor(255 * ((distance - adaptiveFuzz) / softness));
         }
-        // Hole Scavenging: remove disconnected pure background pixels (strict)
-        else if (distance < adaptiveFuzz * 0.85) {
+        // Hole Scavenging: remove disconnected background islands (text holes)
+        else if (distance < adaptiveFuzz * 0.95) {
           let isCertainHole = false;
-          if (targetIsMagenta) isCertainHole = red > green * 2.5 && blue > green * 2.5 && (red + blue) > 300;
-          else if (targetIsGreen) isCertainHole = green > red * 1.8 && green > blue * 1.8 && green > 150;
+          if (targetIsMagenta) {
+            isCertainHole = (red > green * 1.4 && blue > green * 1.4 && (red + blue) > 100) || (red > green * 3 || blue > green * 3);
+          } else if (targetIsGreen) {
+            isCertainHole = (green > red * 1.4 && green > blue * 1.4 && green > 100) || (green > red * 2.5);
+          }
 
-          if (isCertainHole) computedAlpha = 0;
+          if (isCertainHole) computedAlpha = 15;
         }
 
         data[i + 3] = computedAlpha;
       }
 
-      // Pass 2: Enhanced Spill Suppression (Decontamination)
+      // Pass 2: Final Decontamination (Targeting text residue)
       for (let i = startIndex; i < endIndex; i += 4) {
         const alpha = data[i + 3];
         if (alpha === 0) continue;
 
-        const red = data[i];
-        const green = data[i + 1];
-        const blue = data[i + 2];
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const avg = (r + g + b) / 3;
         const isEdge = alpha < 255;
 
         if (targetIsMagenta) {
-          const magContrast = (red + blue) / 2 - green;
-          if (magContrast > 3) {
-            const spillIntensity = isEdge ? 0.98 : Math.min(0.85, magContrast / 25);
-            const targetR = red - (red - green) * spillIntensity;
-            const targetB = blue - (blue - green) * spillIntensity;
-            data[i] = Math.round(targetR);
-            data[i + 2] = Math.round(targetB);
+          const magContrast = (r + b) / 2 - g;
 
-            // Text edge desaturation (High-accuracy for neutral colors)
-            if (magContrast > 15 || (isEdge && magContrast > 5)) {
-              const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
-              const blend = isEdge ? 0.6 : 0.4;
-              data[i] = Math.round(data[i] * (1 - blend) + gray * blend);
-              data[i + 1] = Math.round(data[i + 1] * (1 - blend) + gray * blend);
-              data[i + 2] = Math.round(data[i + 2] * (1 - blend) + gray * blend);
-            }
+          // Dark Detail Decontamination for Text
+          if (avg < 100 && magContrast > 4) {
+            const gray = avg;
+            const decontam = isEdge ? 1.0 : 0.85;
+            data[i] = Math.round(r * (1 - decontam) + gray * decontam);
+            data[i + 1] = Math.round(g * (1 - decontam) + gray * decontam);
+            data[i + 2] = Math.round(b * (1 - decontam) + gray * decontam);
+          }
+          else if (isEdge && magContrast > 5) {
+            const spillIntensity = 0.95;
+            data[i] = Math.round(r - (r - g) * spillIntensity);
+            data[i + 2] = Math.round(b - (b - g) * spillIntensity);
+
+            const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
+            data[i] = Math.round(data[i] * 0.6 + gray * 0.4);
+            data[i + 1] = Math.round(data[i + 1] * 0.6 + gray * 0.4);
+            data[i + 2] = Math.round(data[i + 2] * 0.6 + gray * 0.4);
+          }
+          else if (!isEdge && magContrast > 20) {
+            const spillIntensity = Math.min(0.5, (magContrast - 15) / 40);
+            data[i] = Math.round(r - (r - g) * spillIntensity);
+            data[i + 2] = Math.round(b - (b - g) * spillIntensity);
           }
         } else if (targetIsGreen) {
-          const greenContrast = green - (red + blue) / 2;
-          if (greenContrast > 3) {
-            const spillIntensity = isEdge ? 0.95 : Math.min(0.7, greenContrast / 30);
-            const rbAvg = (red + blue) / 2;
-            data[i + 1] = Math.round(green - (green - rbAvg) * spillIntensity);
+          const greenContrast = g - (r + b) / 2;
+          if (avg < 100 && greenContrast > 4) {
+            const gray = avg;
+            data[i] = Math.round(r * 0.15 + gray * 0.85);
+            data[i + 1] = Math.round(g * 0.15 + gray * 0.85);
+            data[i + 2] = Math.round(b * 0.15 + gray * 0.85);
+          }
+          else if (isEdge && greenContrast > 5) {
+            const rbAvg = (r + b) / 2;
+            data[i + 1] = Math.round(g - (g - rbAvg) * 0.95);
           }
         }
       }

@@ -233,6 +233,8 @@ export interface Translations {
   lineStickerSelected: string;
   lineStickerDescLabel: string;
   lineStickerDescPlaceholder: string;
+  lineStickerCharacterVibe: string;
+  lineStickerPersonalityLabel: string;
   lineStickerDescHint: string;
   lineStickerSpriteSheet: string;
   lineStickerShowOriginal: string;
