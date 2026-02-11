@@ -162,7 +162,7 @@ export function buildLineStickerPrompt(
     includeText: boolean = true
 ): string {
     const totalFrames = cols * rows;
-    const bgColorText = bgColor === 'magenta' ? 'magenta #FF00FF' : 'green #00FF00';
+    const bgColorText = bgColor === 'magenta' ? 'Pure Magenta #FF00FF' : 'Neon Green #00FF00';
 
     const characterSection = `### [Character Setting]\n* Description: ${slots.character.appearance}\n* Personality: ${slots.character.personality}\n* Rules: ${slots.character.originalImageRules}\n\n`;
     const styleSection = `### [Style Setting]\n* Style: ${slots.style.styleType}\n* Technique: ${slots.style.drawingMethod}\n* Background: ${slots.style.background}\n\n`;

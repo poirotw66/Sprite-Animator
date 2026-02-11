@@ -56,16 +56,16 @@ function isGreenScreenHSL(r: number, g: number, b: number, tolerance: number): b
   const { h, s, l } = rgbToHsl(r, g, b);
 
   // Green screen characteristics in HSL:
-  // Hue: 80-160 degrees (wider range for AI variants)
-  // Saturation: > 0.4 (moderately saturated)
-  // Lightness: 0.25-0.75 (wider range)
+  // Hue: 70-170 degrees (wider range for AI variants)
+  // Saturation: > 0.2 (more tolerant of muddy AI backgrounds)
+  // Lightness: 0.15-0.85 (wider range for dark/light grain)
 
-  const hueInRange = h >= 80 - tolerance && h <= 160 + tolerance;
-  const saturationOk = s > 0.4;
-  const lightnessOk = l > 0.25 && l < 0.75;
+  const hueInRange = h >= 70 - tolerance && h <= 170 + tolerance;
+  const saturationOk = s > 0.2;
+  const lightnessOk = l > 0.15 && l < 0.85;
 
-  // RGB check: green must dominate
-  const greenDominant = g > r * 1.3 && g > b * 1.3 && g > 80;
+  // RGB check: green must be notably higher than red and blue
+  const greenDominant = g > r * 1.1 && g > b * 1.1 && g > 40;
 
   return hueInRange && saturationOk && lightnessOk && greenDominant;
 }
@@ -327,7 +327,7 @@ function processInMainThread(
         // We look for pixels that look like background
         let looksLikeBackground = false;
         if (targetIsMagenta) looksLikeBackground = red > green * 1.1 && blue > green * 1.1;
-        else if (targetIsGreen) looksLikeBackground = green > red * 1.1;
+        else if (targetIsGreen) looksLikeBackground = green > red * 1.01 && green > blue * 1.01;
 
         let computedAlpha = 255;
         if (distance <= adaptiveFuzz + softness && looksLikeBackground) {

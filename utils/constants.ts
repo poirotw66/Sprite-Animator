@@ -68,7 +68,7 @@ export const DEBOUNCE_DELAY = 50; // ms for re-slicing
 // - Green: Standard green screen #00B140 (R=0, G=177, B=64) - industry standard
 export const CHROMA_KEY_COLORS = {
   magenta: { r: 255, g: 0, b: 255, hex: '#FF00FF', name: '洋紅色 (Magenta)' },
-  green: { r: 0, g: 177, b: 64, hex: '#00B140', name: '綠幕 (Green Screen)' },
+  green: { r: 0, g: 255, b: 0, hex: '#00FF00', name: '綠幕 (Neon Green)' },
 } as const;
 
 // Legacy - kept for compatibility

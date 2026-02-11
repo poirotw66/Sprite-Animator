@@ -64,23 +64,23 @@ function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: n
 
 /**
  * Check if a color is in the green screen hue range using HSL
- * Green screen typically has hue between 80-160 degrees
- * Target color: #00B140 (RGB: 0, 177, 64, Hue: ~141°)
+ * Green screen typically has hue between 70-170 degrees
+ * Target color: #00FF00 (RGB: 0, 255, 0, Hue: 120°)
  */
 function isGreenScreenHSL(r: number, g: number, b: number, tolerance: number): boolean {
   const { h, s, l } = rgbToHsl(r, g, b);
 
   // Green screen characteristics in HSL:
-  // Hue: 80-160 degrees (wider range for AI variants)
-  // Saturation: > 0.4 (moderately saturated)
-  // Lightness: 0.25-0.75 (wider range)
+  // Hue: 70-170 degrees (wider range for AI variants)
+  // Saturation: > 0.2 (more tolerant of muddy AI backgrounds)
+  // Lightness: 0.15-0.85 (wider range for dark/light grain)
 
-  const hueInRange = h >= 80 - tolerance && h <= 160 + tolerance;
-  const saturationOk = s > 0.4;
-  const lightnessOk = l > 0.25 && l < 0.75;
+  const hueInRange = h >= 70 - tolerance && h <= 170 + tolerance;
+  const saturationOk = s > 0.2;
+  const lightnessOk = l > 0.15 && l < 0.85;
 
-  // RGB check: green must dominate
-  const greenDominant = g > r * 1.3 && g > b * 1.3 && g > 80;
+  // RGB check: green must be notably higher than red and blue
+  const greenDominant = g > r * 1.1 && g > b * 1.1 && g > 40;
 
   return hueInRange && saturationOk && lightnessOk && greenDominant;
 }
@@ -98,6 +98,7 @@ function isMagentaScreenHSL(r: number, g: number, b: number, tolerance: number):
   const hueInRange = h >= 295 - tolerance && h <= 305 + tolerance;
   const saturationOk = s > 0.7;
   const lightnessOk = l > 0.35 && l < 0.75;
+
   const magentaPattern = r > 180 && b > 180 && g < 100 && Math.abs(r - b) < 80;
 
   return hueInRange && saturationOk && lightnessOk && magentaPattern;
@@ -117,7 +118,6 @@ function processChromaKey(
 ): Uint8ClampedArray {
   const totalPixels = data.length / 4;
   const fuzz = (fuzzPercent / 100) * 255;
-  const hueTolerance = fuzzPercent * 1.5; // Hue tolerance in degrees
 
   let transparentCount = 0;
   const reportInterval = Math.max(1, Math.floor(totalPixels / 100));
@@ -178,15 +178,12 @@ function processChromaKey(
   const targetIsGreen = targetColorHsl.h >= 70 && targetColorHsl.h <= 170;
 
   // Calculate adaptive fuzz based on detected background
-  // If we detected an actual background color, use larger tolerance for RGB matching
   const adaptiveFuzz = maxCount > 10 ? fuzz * 1.5 : fuzz;
 
-  // Process each pixel - Pass 1: Connectivity-based Background Masking (The "Professional" Approach)
-  // This identifies pixels that are actually part of the background by starting from the corners
+  // Pass 1: Connectivity-based Background Masking
   const bgMask = new Uint8Array(totalPixels); // 0: foreground, 1: potential background, 2: confirmed background
   const similarityMask = new Uint8Array(totalPixels);
 
-  // Step 1.1: Identify all pixels that "look like" background
   for (let i = 0; i < totalPixels; i++) {
     const idx = i * 4;
     const r = data[idx];
@@ -198,37 +195,30 @@ function processChromaKey(
     const bDiff = b - targetColor.b;
     const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
 
-    // Use a slightly more generous threshold for the initial mask
     let isMatch = distance <= adaptiveFuzz + 20;
 
     if (isMatch) {
       if (targetIsMagenta) {
         isMatch = r > g * 1.1 && b > g * 1.1;
       } else if (targetIsGreen) {
-        isMatch = g > r * 1.05 && g > b * 1.05;
+        isMatch = g > r * 1.01 && g > b * 1.01;
       }
     }
 
     similarityMask[i] = isMatch ? 1 : 0;
   }
 
-  // Step 1.2: Flood Fill from corners to find connected background
   const queue: number[] = [];
-  const corners = [
-    0, // Top-left
-    width - 1, // Top-right
-    (height - 1) * width, // Bottom-left
-    height * width - 1 // Bottom-right
-  ];
+  const corners = [0, width - 1, (height - 1) * width, height * width - 1];
 
   for (const startNode of corners) {
     if (similarityMask[startNode] === 1 && bgMask[startNode] === 0) {
       queue.push(startNode);
-      bgMask[startNode] = 2; // Confirmed background
+      bgMask[startNode] = 2;
     }
   }
 
-  // Also seed from edges (important for sprite sheets where character might not touch corners)
+  // Seed from edges
   for (let x = 0; x < width; x += Math.max(1, Math.floor(width / 20))) {
     const top = x;
     const bottom = (height - 1) * width + x;
@@ -248,7 +238,6 @@ function processChromaKey(
     const x = curr % width;
     const y = Math.floor(curr / width);
 
-    // Check 4-connected neighbors
     const neighbors = [];
     if (x > 0) neighbors.push(curr - 1);
     if (x < width - 1) neighbors.push(curr + 1);
@@ -261,16 +250,57 @@ function processChromaKey(
         queue.push(next);
       }
     }
-
-    // Performance optimization: prevent queue from exploding on huge images
-    if (head % 5000 === 0) {
-      // Yield if needed, but in worker we just stay synchronous for speed
-    }
   }
 
   onProgress(20);
 
-  // Step 1.3: Compute final Alpha based on confirmed Background Region + Hole Scavenging
+  // Step 1.2.5: Noise Reduction (Speckle Removal)
+  const foregroundMask = new Uint8Array(totalPixels);
+  for (let i = 0; i < totalPixels; i++) {
+    if (bgMask[i] === 0) foregroundMask[i] = 1;
+  }
+
+  const visited = new Uint8Array(totalPixels);
+  const MAX_ISLAND_SIZE = 400;
+
+  for (let i = 0; i < totalPixels; i++) {
+    if (foregroundMask[i] === 1 && visited[i] === 0) {
+      const island = [];
+      const islandQueue = [i];
+      visited[i] = 1;
+      let islandHead = 0;
+
+      while (islandHead < islandQueue.length && islandQueue.length <= MAX_ISLAND_SIZE) {
+        const curr = islandQueue[islandHead++];
+        island.push(curr);
+        const x = curr % width;
+        const y = Math.floor(curr / width);
+
+        const neighbors = [];
+        if (x > 0) neighbors.push(curr - 1);
+        if (x < width - 1) neighbors.push(curr + 1);
+        if (y > 0) neighbors.push(curr - width);
+        if (y < height - 1) neighbors.push(curr + width);
+
+        for (const next of neighbors) {
+          if (foregroundMask[next] === 1 && visited[next] === 0) {
+            visited[next] = 1;
+            islandQueue.push(next);
+          }
+        }
+      }
+
+      if (islandQueue.length <= MAX_ISLAND_SIZE) {
+        for (const pixelIdx of island) {
+          bgMask[pixelIdx] = 2;
+        }
+      }
+    }
+  }
+
+  onProgress(25);
+
+  // Step 1.3: Compute final Alpha
   const alphaChannel = new Uint8Array(totalPixels);
   const softness = 10;
 
@@ -292,7 +322,6 @@ function processChromaKey(
     const bDiff = b - targetColor.b;
     const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
 
-    // Case A: Confirmed background (connected to edge)
     if (bgMask[i] === 2) {
       if (distance <= adaptiveFuzz) {
         alphaChannel[i] = 0;
@@ -303,26 +332,21 @@ function processChromaKey(
         alphaChannel[i] = 255;
       }
     }
-    // Case B: Hole Scavenging (disconnected islands like holes in letters)
     else if (distance < adaptiveFuzz * 0.95) {
-      // Enhanced check for disconnected holes: sensitive to dark residue in text
       let isCertainHole = false;
       if (targetIsMagenta) {
-        // Look for magenta signature: R & B notably higher than G
-        // Lowered brightness requirement (100) to catch dark residue inside small text
         isCertainHole = (r > g * 1.4 && b > g * 1.4 && (r + b) > 100) || (r > g * 3 || b > g * 3);
       } else if (targetIsGreen) {
         isCertainHole = (g > r * 1.4 && g > b * 1.4 && g > 80) || (g > r * 2.5);
       }
 
       if (isCertainHole) {
-        alphaChannel[i] = 15; // Near transparent instead of 0 to keep text anti-aliasing smooth
+        alphaChannel[i] = 15;
       } else {
         alphaChannel[i] = 255;
       }
     }
     else {
-      // Internal pixels stay fully opaque
       alphaChannel[i] = 255;
     }
   }
@@ -359,7 +383,7 @@ function processChromaKey(
 
   onProgress(60);
 
-  // Pass 3: Final Decontamination (Targeting text residue)
+  // Pass 3: Final Decontamination
   for (let i = 0; i < data.length; i += 4) {
     const pixelIdx = i / 4;
     const alpha = erodedAlpha[pixelIdx];
@@ -375,9 +399,6 @@ function processChromaKey(
 
     if (targetIsMagenta) {
       const magContrast = (r + b) / 2 - g;
-
-      // NEW: Dark Detail Decontamination (Specially for Text)
-      // If the pixel is dark (text-like) and has magenta tint, force it to neutral
       if (avg < 100 && magContrast > 4) {
         const decontamIntensity = isEdge ? 1.0 : 0.85;
         const gray = avg;
@@ -385,19 +406,15 @@ function processChromaKey(
         data[i + 1] = Math.round(g * (1 - decontamIntensity) + gray * decontamIntensity);
         data[i + 2] = Math.round(b * (1 - decontamIntensity) + gray * decontamIntensity);
       }
-      // Normal edge suppression
       else if (isEdge && magContrast > 5) {
         const spillIntensity = 0.95;
         data[i] = Math.round(r - (r - g) * spillIntensity);
         data[i + 2] = Math.round(b - (b - g) * spillIntensity);
-
-        // Edge Gray-blend
         const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
         data[i] = Math.round(data[i] * 0.6 + gray * 0.4);
         data[i + 1] = Math.round(data[i + 1] * 0.6 + gray * 0.4);
         data[i + 2] = Math.round(data[i + 2] * 0.6 + gray * 0.4);
       }
-      // Internal high-contrast correction (safe mode for character colors)
       else if (!isEdge && magContrast > 20) {
         const spillIntensity = Math.min(0.5, (magContrast - 15) / 40);
         data[i] = Math.round(r - (r - g) * spillIntensity);
@@ -405,7 +422,6 @@ function processChromaKey(
       }
     } else if (targetIsGreen) {
       const greenContrast = g - (r + b) / 2;
-      // Dark decontamination for green
       if (avg < 100 && greenContrast > 4) {
         const gray = avg;
         data[i] = Math.round(r * 0.15 + gray * 0.85);
@@ -432,16 +448,11 @@ function processChromaKey(
 self.onmessage = function (e: MessageEvent<ChromaKeyWorkerMessage>) {
   const { type, data, width, height, chromaKey, fuzzPercent, id } = e.data;
 
-  if (type === 'cancel') {
-    // Cancel processing (could implement cancellation logic here)
-    return;
-  }
+  if (type === 'cancel') return;
 
   if (type === 'process' && data && width && height) {
     try {
-      // Convert array to Uint8ClampedArray
       const imageData = new Uint8ClampedArray(data);
-
       const processed = processChromaKey(
         imageData,
         width,
@@ -449,15 +460,10 @@ self.onmessage = function (e: MessageEvent<ChromaKeyWorkerMessage>) {
         chromaKey,
         fuzzPercent,
         (progress) => {
-          self.postMessage({
-            type: 'progress',
-            progress,
-            id,
-          } as ChromaKeyWorkerResponse);
+          self.postMessage({ type: 'progress', progress, id } as ChromaKeyWorkerResponse);
         }
       );
 
-      // Convert back to array for transfer
       self.postMessage({
         type: 'complete',
         data: Array.from(processed),
