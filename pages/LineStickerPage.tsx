@@ -99,6 +99,7 @@ const LineStickerPage: React.FC = () => {
 
     const [spriteSheetImage, setSpriteSheetImage] = useState<string | null>(null);
     const [processedSpriteSheet, setProcessedSpriteSheet] = useState<string | null>(null);
+    const [showOriginalInSpriteView, setShowOriginalInSpriteView] = useState(false);
     const [stickerFrames, setStickerFrames] = useState<string[]>([]);
     const [selectedFrames, setSelectedFrames] = useState<boolean[]>([]);
     const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('magenta');
@@ -650,7 +651,17 @@ const LineStickerPage: React.FC = () => {
 
                         {(spriteSheetImage || sheetImages[currentSheetIndex]) ? (
                             <div className="space-y-8">
-                                <div className="flex gap-2 mb-4">
+                                <div className="flex flex-wrap items-center gap-2 mb-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowOriginalInSpriteView(prev => !prev)}
+                                        className={`text-xs px-3 py-1.5 rounded-lg border-2 transition-all ${showOriginalInSpriteView
+                                            ? 'bg-amber-50 border-amber-300 text-amber-700'
+                                            : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300'
+                                            }`}
+                                    >
+                                        {showOriginalInSpriteView ? t.lineStickerShowProcessed : t.lineStickerShowOriginal}
+                                    </button>
                                     <button
                                         onClick={() => {
                                             const img = stickerSetMode ? (sheetImages[currentSheetIndex] ?? null) : (spriteSheetImage ?? null);
@@ -685,9 +696,11 @@ const LineStickerPage: React.FC = () => {
 
                                 <Suspense fallback={<div className="aspect-video bg-slate-50 rounded-xl animate-pulse" />}>
                                     <SpriteSheetViewer
-                                        spriteSheetImage={stickerSetMode
-                                            ? (processedSheetImages[currentSheetIndex] || sheetImages[currentSheetIndex] || null)
-                                            : (processedSpriteSheet || spriteSheetImage || null)}
+                                        spriteSheetImage={showOriginalInSpriteView
+                                            ? (stickerSetMode ? (sheetImages[currentSheetIndex] ?? null) : spriteSheetImage)
+                                            : (stickerSetMode
+                                                ? (processedSheetImages[currentSheetIndex] || sheetImages[currentSheetIndex] || null)
+                                                : (processedSpriteSheet || spriteSheetImage || null))}
                                         onImageLoad={handleImageLoad}
                                         isGenerating={isGenerating}
                                         sliceSettings={stickerSetMode ? { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 } : { ...sliceSettings, cols: gridCols, rows: gridRows }}
