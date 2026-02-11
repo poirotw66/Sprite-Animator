@@ -181,163 +181,235 @@ function processChromaKey(
   // If we detected an actual background color, use larger tolerance for RGB matching
   const adaptiveFuzz = maxCount > 10 ? fuzz * 1.5 : fuzz;
 
-  // Process each pixel - Pass 1: Alpha calculation with soft edges and erosion
-  const alphaChannel = new Uint8Array(totalPixels);
-  const softness = 12; // Range for alpha transition (fringe)
+  // Process each pixel - Pass 1: Connectivity-based Background Masking (The "Professional" Approach)
+  // This identifies pixels that are actually part of the background by starting from the corners
+  const bgMask = new Uint8Array(totalPixels); // 0: foreground, 1: potential background, 2: confirmed background
+  const similarityMask = new Uint8Array(totalPixels);
 
-  for (let i = 0; i < data.length; i += 4) {
-    const red = data[i];
-    const green = data[i + 1];
-    const blue = data[i + 2];
-    const alpha = data[i + 3];
+  // Step 1.1: Identify all pixels that "look like" background
+  for (let i = 0; i < totalPixels; i++) {
+    const idx = i * 4;
+    const r = data[idx];
+    const g = data[idx + 1];
+    const b = data[idx + 2];
 
-    if (alpha === 0) {
-      alphaChannel[i / 4] = 0;
-      continue;
-    }
-
-    // RGB distance check to detected background color
-    const rDiff = red - targetColor.r;
-    const gDiff = green - targetColor.g;
-    const bDiff = blue - targetColor.b;
+    const rDiff = r - targetColor.r;
+    const gDiff = g - targetColor.g;
+    const bDiff = b - targetColor.b;
     const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
 
-    let shouldRemove = false;
-    let computedAlpha = 255;
+    // Use a slightly more generous threshold for the initial mask
+    let isMatch = distance <= adaptiveFuzz + 20;
 
-    // Primary check: RGB distance
-    if (distance <= adaptiveFuzz + softness) {
+    if (isMatch) {
       if (targetIsMagenta) {
-        const looksLikeMagenta = red > green * 1.2 && blue > green * 1.2;
-        if (looksLikeMagenta) {
-          if (distance <= adaptiveFuzz) {
-            computedAlpha = 0;
-            shouldRemove = true;
-          } else {
-            // Soft edge transition
-            const ratio = (distance - adaptiveFuzz) / softness;
-            computedAlpha = Math.floor(255 * ratio);
-          }
-        }
+        isMatch = r > g * 1.1 && b > g * 1.1;
       } else if (targetIsGreen) {
-        const looksLikeGreen = green > red * 1.1 && green > blue * 1.1;
-        if (looksLikeGreen) {
-          if (distance <= adaptiveFuzz) {
-            computedAlpha = 0;
-            shouldRemove = true;
-          } else {
-            const ratio = (distance - adaptiveFuzz) / softness;
-            computedAlpha = Math.floor(255 * ratio);
-          }
-        }
-      } else if (distance <= adaptiveFuzz) {
-        computedAlpha = 0;
-        shouldRemove = true;
+        isMatch = g > r * 1.05 && g > b * 1.05;
       }
     }
 
-    // HSL-based detection for more accuracy
-    if (computedAlpha > 0) {
-      const { h, s, l } = rgbToHsl(red, green, blue);
-      if (targetIsMagenta) {
-        const hDiff = Math.abs(h - targetColorHsl.h);
-        const normalizedHDiff = hDiff > 180 ? 360 - hDiff : hDiff;
+    similarityMask[i] = isMatch ? 1 : 0;
+  }
 
-        if (normalizedHDiff < hueTolerance + 5 && s > 0.3) {
-          if (normalizedHDiff < hueTolerance) {
-            computedAlpha = 0;
-          } else {
-            const ratio = (normalizedHDiff - hueTolerance) / 5;
-            computedAlpha = Math.min(computedAlpha, Math.floor(255 * ratio));
-          }
-        }
-      } else if (targetIsGreen) {
-        const hDiff = Math.abs(h - targetColorHsl.h);
-        const normalizedHDiff = hDiff > 180 ? 360 - hDiff : hDiff;
+  // Step 1.2: Flood Fill from corners to find connected background
+  const queue: number[] = [];
+  const corners = [
+    0, // Top-left
+    width - 1, // Top-right
+    (height - 1) * width, // Bottom-left
+    height * width - 1 // Bottom-right
+  ];
 
-        if (normalizedHDiff < hueTolerance + 10 && s > 0.2) {
-          if (normalizedHDiff < hueTolerance) {
-            computedAlpha = 0;
-          } else {
-            const ratio = (normalizedHDiff - hueTolerance) / 10;
-            computedAlpha = Math.min(computedAlpha, Math.floor(255 * ratio));
-          }
-        }
-      }
-    }
-
-    alphaChannel[i / 4] = computedAlpha;
-
-    // Report progress
-    if (i % (reportInterval * 16) === 0) {
-      const progress = Math.min(30, Math.round((i / data.length) * 30));
-      onProgress(progress);
+  for (const startNode of corners) {
+    if (similarityMask[startNode] === 1 && bgMask[startNode] === 0) {
+      queue.push(startNode);
+      bgMask[startNode] = 2; // Confirmed background
     }
   }
 
-  // Pass 2: Edge Erosion (Shrink the mask by 1 pixel to remove the halo)
+  // Also seed from edges (important for sprite sheets where character might not touch corners)
+  for (let x = 0; x < width; x += Math.max(1, Math.floor(width / 20))) {
+    const top = x;
+    const bottom = (height - 1) * width + x;
+    if (similarityMask[top] === 1 && bgMask[top] === 0) { queue.push(top); bgMask[top] = 2; }
+    if (similarityMask[bottom] === 1 && bgMask[bottom] === 0) { queue.push(bottom); bgMask[bottom] = 2; }
+  }
+  for (let y = 0; y < height; y += Math.max(1, Math.floor(height / 20))) {
+    const left = y * width;
+    const right = y * width + (width - 1);
+    if (similarityMask[left] === 1 && bgMask[left] === 0) { queue.push(left); bgMask[left] = 2; }
+    if (similarityMask[right] === 1 && bgMask[right] === 0) { queue.push(right); bgMask[right] = 2; }
+  }
+
+  let head = 0;
+  while (head < queue.length) {
+    const curr = queue[head++];
+    const x = curr % width;
+    const y = Math.floor(curr / width);
+
+    // Check 4-connected neighbors
+    const neighbors = [];
+    if (x > 0) neighbors.push(curr - 1);
+    if (x < width - 1) neighbors.push(curr + 1);
+    if (y > 0) neighbors.push(curr - width);
+    if (y < height - 1) neighbors.push(curr + width);
+
+    for (const next of neighbors) {
+      if (similarityMask[next] === 1 && bgMask[next] === 0) {
+        bgMask[next] = 2;
+        queue.push(next);
+      }
+    }
+
+    // Performance optimization: prevent queue from exploding on huge images
+    if (head % 5000 === 0) {
+      // Yield if needed, but in worker we just stay synchronous for speed
+    }
+  }
+
+  onProgress(20);
+
+  // Step 1.3: Compute final Alpha based on confirmed Background Region + Hole Scavenging
+  const alphaChannel = new Uint8Array(totalPixels);
+  const softness = 10;
+
+  for (let i = 0; i < totalPixels; i++) {
+    const idx = i * 4;
+    const alpha = data[idx + 3];
+
+    if (alpha === 0) {
+      alphaChannel[i] = 0;
+      continue;
+    }
+
+    const r = data[idx];
+    const g = data[idx + 1];
+    const b = data[idx + 2];
+
+    const rDiff = r - targetColor.r;
+    const gDiff = g - targetColor.g;
+    const bDiff = b - targetColor.b;
+    const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
+
+    // Case A: Confirmed background (connected to edge)
+    if (bgMask[i] === 2) {
+      if (distance <= adaptiveFuzz) {
+        alphaChannel[i] = 0;
+      } else if (distance <= adaptiveFuzz + softness) {
+        const ratio = (distance - adaptiveFuzz) / softness;
+        alphaChannel[i] = Math.floor(255 * ratio);
+      } else {
+        alphaChannel[i] = 255;
+      }
+    }
+    // Case B: Hole Scavenging (disconnected islands like holes in letters)
+    else if (distance < adaptiveFuzz * 0.9) {
+      // Balanced check for disconnected holes: must be suspicious but doesn't need to be pure magenta
+      let isCertainHole = false;
+      if (targetIsMagenta) {
+        // Look for magenta signature: R & B notably higher than G
+        isCertainHole = r > g * 1.5 && b > g * 1.5 && (r + b) > 200;
+      } else if (targetIsGreen) {
+        isCertainHole = g > r * 1.4 && g > b * 1.4 && g > 120;
+      }
+
+      if (isCertainHole) {
+        alphaChannel[i] = 0;
+      } else {
+        alphaChannel[i] = 255;
+      }
+    }
+    else {
+      // Internal pixels stay fully opaque
+      alphaChannel[i] = 255;
+    }
+  }
+
+  onProgress(40);
+
+  // Pass 2: Edge Erosion
   const erodedAlpha = new Uint8Array(alphaChannel);
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
       const i = y * width + x;
-      if (alphaChannel[i] > 0) {
-        // Check 4-connectivity neighbors
-        if (alphaChannel[i - 1] === 0 || alphaChannel[i + 1] === 0 ||
-          alphaChannel[i - width] === 0 || alphaChannel[i + width] === 0) {
-          // If a pixel is on the edge, reduce its alpha or make it transparent
-          // This removes the "bleeding" edge
-          erodedAlpha[i] = Math.floor(alphaChannel[i] * 0.5);
+      // If foreground but adjacent to confirmed background, erode it
+      if (alphaChannel[i] > 200 && bgMask[i] === 0) {
+        const hasBgNeighbor =
+          bgMask[i - 1] === 2 || bgMask[i + 1] === 2 ||
+          bgMask[i - width] === 2 || bgMask[i + width] === 2;
+
+        if (hasBgNeighbor) {
+          // Check if the color is indeed suspicious (spill)
+          const idx = i * 4;
+          const r = data[idx];
+          const g = data[idx + 1];
+          const b = data[idx + 2];
+
+          let isSpill = false;
+          if (targetIsMagenta) isSpill = r > g * 1.2 && b > g * 1.2;
+          else if (targetIsGreen) isSpill = g > r * 1.2;
+
+          if (isSpill) {
+            erodedAlpha[i] = 150; // Moderate erosion
+          }
         }
       }
     }
-    if (y % 100 === 0) onProgress(30 + Math.round((y / height) * 20));
   }
 
-  // Pass 3: Apply alpha and Spill Suppression (Color Decontamination)
+  onProgress(60);
+
+  // Pass 3: Protective Spill Suppression
   for (let i = 0; i < data.length; i += 4) {
-    const alpha = erodedAlpha[i / 4];
+    const pixelIdx = i / 4;
+    const alpha = erodedAlpha[pixelIdx];
     data[i + 3] = alpha;
 
     if (alpha === 0) continue;
 
-    // Spill suppression: Remove the background color tint from edge pixels
-    // Most intensive on the semi-transparent edges
     const red = data[i];
     const green = data[i + 1];
     const blue = data[i + 2];
 
-    const spillIntensity = (255 - alpha) / 255; // Higher on edges
+    const isEdge = alpha < 255;
 
     if (targetIsMagenta) {
-      // Magenta is high R and B. To suppress, we want to normalize R/B towards G
-      // A common formula: R = min(R, G), B = min(B, G)
-      // We'll use a weighted blend based on edge proximity
-      if (red > green || blue > green) {
-        const targetR = Math.min(red, green + (red - green) * (1 - spillIntensity));
-        const targetB = Math.min(blue, green + (blue - green) * (1 - spillIntensity));
+      const magContrast = (red + blue) / 2 - green;
 
-        data[i] = Math.round(targetR);
-        data[i + 2] = Math.round(targetB);
+      // Separate logic for edge vs internal to protect character colors
+      if (isEdge && magContrast > 5) {
+        // High intensity suppression for edges (halos)
+        const spillIntensity = 0.9;
+        data[i] = Math.round(red - (red - green) * spillIntensity);
+        data[i + 2] = Math.round(blue - (blue - green) * spillIntensity);
 
-        // Further desaturate if it's very pinkish
-        if (spillIntensity > 0.3 && red > green * 1.5 && blue > green * 1.5) {
-          const gray = (red + green * 2 + blue) / 4;
-          data[i] = Math.round(data[i] * (1 - spillIntensity * 0.5) + gray * spillIntensity * 0.5);
-          data[i + 1] = Math.round(data[i + 1] * (1 - spillIntensity * 0.5) + gray * spillIntensity * 0.5);
-          data[i + 2] = Math.round(data[i + 2] * (1 - spillIntensity * 0.5) + gray * spillIntensity * 0.5);
-        }
+        // Moderate desaturation only for edges to merge with background
+        const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        data[i] = Math.round(data[i] * 0.7 + gray * 0.3);
+        data[i + 1] = Math.round(data[i + 1] * 0.7 + gray * 0.3);
+        data[i + 2] = Math.round(data[i + 2] * 0.7 + gray * 0.3);
+      }
+      else if (!isEdge && magContrast > 15) {
+        // Very conservative suppression for internal pixels to avoid "blackning"
+        // Only trigger if contrast is high (indicating clear residue)
+        const spillIntensity = Math.min(0.4, (magContrast - 15) / 50);
+        data[i] = Math.round(red - (red - green) * spillIntensity);
+        data[i + 2] = Math.round(blue - (blue - green) * spillIntensity);
       }
     } else if (targetIsGreen) {
-      // Green suppression: normalize G towards the average of R and B
-      if (green > red || green > blue) {
+      const greenContrast = green - (red + blue) / 2;
+      if (isEdge && greenContrast > 5) {
         const rbAvg = (red + blue) / 2;
-        const targetG = Math.min(green, rbAvg + (green - rbAvg) * (1 - spillIntensity));
-        data[i + 1] = Math.round(targetG);
+        data[i + 1] = Math.round(green - (green - rbAvg) * 0.9);
+      } else if (!isEdge && greenContrast > 20) {
+        const rbAvg = (red + blue) / 2;
+        data[i + 1] = Math.round(green - (green - rbAvg) * 0.3);
       }
     }
 
-    if (i % (reportInterval * 16) === 0) {
-      const progress = 50 + Math.min(50, Math.round((i / data.length) * 50));
+    if (i % (reportInterval * 32) === 0) {
+      const progress = 70 + Math.min(30, Math.round((i / data.length) * 30));
       onProgress(progress);
     }
   }

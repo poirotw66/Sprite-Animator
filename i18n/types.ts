@@ -316,4 +316,16 @@ export interface Translations {
   lineStickerPreviewCropped: string;
   lineStickerPreviewCropHint: string;
   lineStickerIncludeText: string;
+
+  // RM BG Tool
+  rmbgTitle: string;
+  rmbgDesc: string;
+  rmbgUploadTitle: string;
+  rmbgUploadHint: string;
+  rmbgProcessButton: string;
+  rmbgProcessing: string;
+  rmbgDownloadOriginal: string;
+  rmbgDownloadProcessed: string;
+  rmbgChromaKeyLabel: string;
+  rmbgToleranceLabel: string;
 }

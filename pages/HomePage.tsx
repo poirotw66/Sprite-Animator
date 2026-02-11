@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, MessageCircle, ArrowRight } from 'lucide-react';
+import { Zap, MessageCircle, ArrowRight, Eraser } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 
@@ -34,6 +34,14 @@ const HomePage: React.FC = () => {
             borderColor: 'border-green-200 hover:border-green-300',
             hoverGlow: 'hover:shadow-green-200/50',
         },
+        {
+            id: 'rmbg',
+            path: '/rmbg',
+            icon: <Eraser className="w-10 h-10 md:w-12 md:h-12 text-white" />,
+            gradient: 'from-purple-500 to-indigo-600',
+            borderColor: 'border-purple-200 hover:border-purple-300',
+            hoverGlow: 'hover:shadow-purple-200/50',
+        },
     ];
 
     const getToolInfo = (id: string) => {
@@ -42,6 +50,8 @@ const HomePage: React.FC = () => {
                 return { title: t.spriteAnimatorTool, desc: t.spriteAnimatorDesc };
             case 'line-sticker':
                 return { title: t.lineStickerTool, desc: t.lineStickerDesc };
+            case 'rmbg':
+                return { title: t.rmbgTitle, desc: t.rmbgDesc };
             default:
                 return { title: '', desc: '' };
         }
@@ -68,8 +78,8 @@ const HomePage: React.FC = () => {
             </header>
 
             {/* Tool Cards */}
-            <main className="max-w-5xl mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+            <main className="max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                     {tools.map((tool) => {
                         const info = getToolInfo(tool.id);
                         return (

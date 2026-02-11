@@ -313,5 +313,17 @@ export const zhTW: Translations = {
   lineStickerDownloadSelected: '下載已選 ({n})',
   lineStickerPreviewCropped: '切割預覽',
   lineStickerPreviewCropHint: '（可點擊選擇個別貼圖）',
-  lineStickerIncludeText: '在貼圖上加入文字',
+  lineStickerIncludeText: '包含文字',
+
+  // RM BG Tool
+  rmbgTitle: '精靈圖背景移除',
+  rmbgDesc: '專門為 AI 生成的洋紅色或綠色背景精靈圖設計的去背工具，具備專業級邊緣處理與防破洞算法。',
+  rmbgUploadTitle: '上傳精靈圖',
+  rmbgUploadHint: '點擊或拖放圖片至此處進行去背',
+  rmbgProcessButton: '開始去背處理',
+  rmbgProcessing: '正在處理影像...',
+  rmbgDownloadOriginal: '下載原始圖',
+  rmbgDownloadProcessed: '下載去背圖',
+  rmbgChromaKeyLabel: '背景顏色 (Chroma Key)',
+  rmbgToleranceLabel: '容差值 (Fuzz)',
 };

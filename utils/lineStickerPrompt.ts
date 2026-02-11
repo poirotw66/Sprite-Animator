@@ -263,33 +263,33 @@ export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
     },
     pixel: {
         label: '像素藝術',
-        styleType: '16-bit 像素藝術風格 (Pixel Art)',
-        drawingMethod: '明顯的像素顆粒，格狀繪圖法',
-        background: '純色背景，強調像素邊緣'
+        styleType: "16-bit 復古像素風格 (Pixel Art), 高對比調色盤, 具備 SNES/GBA 遊戲質感",
+        drawingMethod: "精確像素點繪, 保持邊緣銳利無平滑模糊 (No anti-aliasing), 強化格狀紋理與乾淨線條",
+        background: "純色背景，確保像素邊緣清晰不渲染"
     },
     minimalist: {
         label: '極簡線條',
-        styleType: '極簡扁平插畫風格 (Minimalist Flat)',
-        drawingMethod: '粗線條輪廓，色塊填充，無陰影',
-        background: '乾淨的單色背景'
+        styleType: "極簡扁平插畫 (Minimalist Flat), 卡娜赫拉風格 (Kanahei style), 療癒系可愛貼圖",
+        drawingMethod: "柔和的深棕色粗輪廓線 (Soft thick outlines), 簡單純色填充, 點點眼與粉嫩腮紅細節, 圓潤簡化的形狀",
+        background: "純色粉嫩背景 (Solid pastel background), 獨立構圖 (Isolated for easy clipping)"
     },
     anime: {
-        label: '日系動漫',
-        styleType: '現代日系動漫精緻風格 (Modern Anime)',
-        drawingMethod: '細膩的賽璐珞上色，層次感陰影',
-        background: '單一淺色背景'
+        label: "日系動漫",
+        styleType: "現代精緻日系動漫風格 (Modern Anime), 賽璐珞風格 (Cell-shaded), 高畫質 2D 渲染",
+        drawingMethod: "細膩俐落的線條, 二級陰影層次 (Two-tone shadows), 精緻的眼部細節與髮絲反光",
+        background: "純淨淺色背景, 確保主體輪廓邊緣清晰"
     },
     cartoon: {
-        label: '美式卡通',
-        styleType: '活力美式卡通風格 (Vibrant Cartoon)',
-        drawingMethod: '粗黑外框線，鮮豔對比色',
-        background: '飽和度高的純色背景'
+        label: "美式卡通",
+        styleType: "現代美式卡通風格 (Vibrant Cartoon), 動態張力強, 角色表情誇張",
+        drawingMethod: "粗黑且穩定的外框線, 飽和對比色塊填充, 簡單的幾何化結構, 具備商業插畫感",
+        background: "高飽和度純色背景, 無陰影渲染, 呈現完全扁平化 (Flat design)"
     },
     watercolor: {
-        label: '手繪水彩',
-        styleType: '柔和水彩手繪風格 (Soft Watercolor)',
-        drawingMethod: '水漬暈染感，透明感層次',
-        background: '紙張質感底色或淡色背景'
+        label: "手繪水彩",
+        styleType: "柔和日系手繪水彩風格 (Soft Watercolor), 療癒系插畫, 邊緣帶有自然擴散感",
+        drawingMethod: "層次透明水漬暈染 (Wet-on-wet technique), 手繪筆觸邊緣, 柔和邊緣線條, 具備物理墨水流動感",
+        background: "米白色紙張紋理背景 (Canvas texture), 模擬真實水彩紙效果"
     }
 };
 

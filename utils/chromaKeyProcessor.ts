@@ -20,18 +20,18 @@ function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: n
   r /= 255;
   g /= 255;
   b /= 255;
-  
+
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
   const l = (max + min) / 2;
-  
+
   if (max === min) {
     return { h: 0, s: 0, l };
   }
-  
+
   const d = max - min;
   const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-  
+
   let h: number;
   switch (max) {
     case r:
@@ -44,7 +44,7 @@ function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: n
       h = ((r - g) / d + 4) * 60;
       break;
   }
-  
+
   return { h, s, l };
 }
 
@@ -54,19 +54,19 @@ function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: n
  */
 function isGreenScreenHSL(r: number, g: number, b: number, tolerance: number): boolean {
   const { h, s, l } = rgbToHsl(r, g, b);
-  
+
   // Green screen characteristics in HSL:
   // Hue: 80-160 degrees (wider range for AI variants)
   // Saturation: > 0.4 (moderately saturated)
   // Lightness: 0.25-0.75 (wider range)
-  
+
   const hueInRange = h >= 80 - tolerance && h <= 160 + tolerance;
   const saturationOk = s > 0.4;
   const lightnessOk = l > 0.25 && l < 0.75;
-  
+
   // RGB check: green must dominate
   const greenDominant = g > r * 1.3 && g > b * 1.3 && g > 80;
-  
+
   return hueInRange && saturationOk && lightnessOk && greenDominant;
 }
 
@@ -77,13 +77,13 @@ function isGreenScreenHSL(r: number, g: number, b: number, tolerance: number): b
  */
 function isMagentaScreenHSL(r: number, g: number, b: number, tolerance: number): boolean {
   const { h, s, l } = rgbToHsl(r, g, b);
-  
+
   // Strict HSL check for pure magenta
   const hueInRange = h >= 295 - tolerance && h <= 305 + tolerance;
   const saturationOk = s > 0.7;
   const lightnessOk = l > 0.35 && l < 0.75;
   const magentaPattern = r > 180 && b > 180 && g < 100 && Math.abs(r - b) < 80;
-  
+
   return hueInRange && saturationOk && lightnessOk && magentaPattern;
 }
 
@@ -156,11 +156,11 @@ export const removeChromaKeyWithWorker = async (
         reject(error instanceof Error ? error : new Error('Processing failed'));
       }
     };
-    
+
     img.onerror = () => {
       reject(new Error('Failed to load image'));
     };
-    
+
     img.crossOrigin = 'anonymous';
     img.src = base64Image;
   });
@@ -252,7 +252,7 @@ function processInMainThread(
       const height = imageData.height;
       const sampleSize = Math.min(100, Math.floor(Math.sqrt(totalPixels) / 10));
       const colorMap = new Map<string, number>();
-      
+
       // Sample corners
       for (let y = 0; y < sampleSize; y++) {
         for (let x = 0; x < sampleSize; x++) {
@@ -271,27 +271,27 @@ function processInMainThread(
           }
         }
       }
-      
+
       let maxCount = 0;
       const chromaHsl = rgbToHsl(chromaKey.r, chromaKey.g, chromaKey.b);
       const lookingForMagenta = chromaHsl.h >= 270 && chromaHsl.h <= 330;
       const lookingForGreen = chromaHsl.h >= 70 && chromaHsl.h <= 170;
-      
+
       for (const [key, count] of colorMap.entries()) {
         if (count > maxCount) {
           const [r, g, b] = key.split(',').map(Number);
           const hsl = rgbToHsl(r, g, b);
-          
+
           const isMagentaLike = hsl.h >= 270 && hsl.h <= 330 && hsl.s > 0.3;
           const isGreenLike = hsl.h >= 70 && hsl.h <= 170 && hsl.s > 0.2 && g > r && g > b;
-          
+
           if ((lookingForMagenta && isMagentaLike) || (lookingForGreen && isGreenLike)) {
             targetColor = { r, g, b };
             maxCount = count;
           }
         }
       }
-      
+
       const targetHsl = rgbToHsl(targetColor.r, targetColor.g, targetColor.b);
       targetIsMagenta = targetHsl.h >= 270 && targetHsl.h <= 330;
       targetIsGreen = targetHsl.h >= 70 && targetHsl.h <= 170;
@@ -304,11 +304,12 @@ function processInMainThread(
       if (!colorDetected) {
         detectBackgroundColor();
       }
-      
+
       // Calculate adaptive fuzz based on detected background
       const adaptiveFuzz = colorDetected ? fuzz * 1.5 : fuzz;
 
-      // Process chunk using HSL-based detection
+      // Pass 1: Background Removal + Hole Scavenging
+      const softness = 10;
       for (let i = startIndex; i < endIndex; i += 4) {
         const red = data[i];
         const green = data[i + 1];
@@ -317,71 +318,69 @@ function processInMainThread(
 
         if (alpha === 0) continue;
 
-        // RGB distance check to detected background color
         const rDiff = red - targetColor.r;
         const gDiff = green - targetColor.g;
         const bDiff = blue - targetColor.b;
         const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
-        
-        let shouldRemove = false;
-        
-        // Primary check: RGB distance to detected background color
-        // Only remove if the pixel looks like the background (not just close in RGB)
-        if (distance <= adaptiveFuzz) {
-          // Additional safety check: ensure it's actually magenta-ish or green-ish
-          if (targetIsMagenta) {
-            // For magenta: R and B should be notably higher than G
-            // Stricter check to avoid removing character colors
-            const looksLikeMagenta = red > green * 1.3 && blue > green * 1.3 && 
-                                     (red + blue) > (green * 3) && green < 150;
-            shouldRemove = looksLikeMagenta;
-          } else if (targetIsGreen) {
-            // For green: G should be notably higher than R and B
-            // More permissive for green variants while avoiding character colors
-            const looksLikeGreen = green > red * 1.2 && green > blue * 1.2 && 
-                                   green > 80 && red < 180 && blue < 180;
-            shouldRemove = looksLikeGreen;
-          } else {
-            shouldRemove = true;
-          }
+
+        // Simple connectivity approximation for main thread: 
+        // We look for pixels that look like background
+        let looksLikeBackground = false;
+        if (targetIsMagenta) looksLikeBackground = red > green * 1.1 && blue > green * 1.1;
+        else if (targetIsGreen) looksLikeBackground = green > red * 1.1;
+
+        let computedAlpha = 255;
+        if (distance <= adaptiveFuzz + softness && looksLikeBackground) {
+          if (distance <= adaptiveFuzz) computedAlpha = 0;
+          else computedAlpha = Math.floor(255 * ((distance - adaptiveFuzz) / softness));
         }
-        
-        // HSL-based detection - the ONLY secondary detection method
-        // This is the single source of truth for chroma key detection
-        if (!shouldRemove) {
-          if (targetIsMagenta) {
-            shouldRemove = isMagentaScreenHSL(red, green, blue, hueTolerance);
-          } else if (targetIsGreen) {
-            shouldRemove = isGreenScreenHSL(red, green, blue, hueTolerance);
-          }
+        // Hole Scavenging: remove disconnected pure background pixels (strict)
+        else if (distance < adaptiveFuzz * 0.85) {
+          let isCertainHole = false;
+          if (targetIsMagenta) isCertainHole = red > green * 2.5 && blue > green * 2.5 && (red + blue) > 300;
+          else if (targetIsGreen) isCertainHole = green > red * 1.8 && green > blue * 1.8 && green > 150;
+
+          if (isCertainHole) computedAlpha = 0;
         }
-        
-        // NO fallback patterns - HSL detection is authoritative
-        
-        if (shouldRemove) {
-          data[i + 3] = 0;
-        }
+
+        data[i + 3] = computedAlpha;
       }
-      
-      // Edge cleanup pass - only for semi-transparent pixels, use HSL detection
+
+      // Pass 2: Enhanced Spill Suppression (Decontamination)
       for (let i = startIndex; i < endIndex; i += 4) {
         const alpha = data[i + 3];
-        if (alpha === 0 || alpha === 255) continue;
-        
+        if (alpha === 0) continue;
+
         const red = data[i];
         const green = data[i + 1];
         const blue = data[i + 2];
-        
-        // Use the same strict HSL detection for edge cleanup
-        let isChromaEdge = false;
+        const isEdge = alpha < 255;
+
         if (targetIsMagenta) {
-          isChromaEdge = isMagentaScreenHSL(red, green, blue, hueTolerance * 1.5);
+          const magContrast = (red + blue) / 2 - green;
+          if (magContrast > 3) {
+            const spillIntensity = isEdge ? 0.98 : Math.min(0.85, magContrast / 25);
+            const targetR = red - (red - green) * spillIntensity;
+            const targetB = blue - (blue - green) * spillIntensity;
+            data[i] = Math.round(targetR);
+            data[i + 2] = Math.round(targetB);
+
+            // Text edge desaturation (High-accuracy for neutral colors)
+            if (magContrast > 15 || (isEdge && magContrast > 5)) {
+              const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
+              const blend = isEdge ? 0.6 : 0.4;
+              data[i] = Math.round(data[i] * (1 - blend) + gray * blend);
+              data[i + 1] = Math.round(data[i + 1] * (1 - blend) + gray * blend);
+              data[i + 2] = Math.round(data[i + 2] * (1 - blend) + gray * blend);
+            }
+          }
         } else if (targetIsGreen) {
-          isChromaEdge = isGreenScreenHSL(red, green, blue, hueTolerance * 1.5);
-        }
-        
-        if (isChromaEdge) {
-          data[i + 3] = Math.floor(alpha * 0.3); // Reduce alpha significantly
+          const greenContrast = green - (red + blue) / 2;
+          if (greenContrast > 3) {
+            const spillIntensity = isEdge ? 0.95 : Math.min(0.7, greenContrast / 30);
+            const rbAvg = (red + blue) / 2;
+            data[i + 1] = Math.round(green - (green - rbAvg) * spillIntensity);
+          }
         }
       }
 

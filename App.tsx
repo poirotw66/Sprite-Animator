@@ -6,6 +6,7 @@ import { Loader2 } from './components/Icons';
 const HomePage = lazy(() => import('./pages/HomePage'));
 const SpriteAnimatorPage = lazy(() => import('./pages/SpriteAnimatorPage'));
 const LineStickerPage = lazy(() => import('./pages/LineStickerPage'));
+const RemoveBackgroundPage = lazy(() => import('./pages/RemoveBackgroundPage'));
 
 // Loading fallback component
 const PageLoader: React.FC = () => (
@@ -25,6 +26,7 @@ const App: React.FC = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/sprite-animation" element={<SpriteAnimatorPage />} />
           <Route path="/line-sticker" element={<LineStickerPage />} />
+          <Route path="/rmbg" element={<RemoveBackgroundPage />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

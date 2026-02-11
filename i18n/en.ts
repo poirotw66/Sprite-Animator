@@ -313,5 +313,17 @@ export const en: Translations = {
   lineStickerDownloadSelected: 'Download Selected ({n})',
   lineStickerPreviewCropped: 'Cropped Preview',
   lineStickerPreviewCropHint: '(Click to select stickers)',
-  lineStickerIncludeText: 'Include Text on Stickers',
+  lineStickerIncludeText: 'Include Text',
+
+  // RM BG Tool
+  rmbgTitle: 'Sprite Background Remover',
+  rmbgDesc: 'A specialized tool for removing magenta or green backgrounds from AI-generated sprite sheets, featuring professional-grade edge cleanup and internal color protection.',
+  rmbgUploadTitle: 'Upload Sprite Sheet',
+  rmbgUploadHint: 'Click or drag and drop image here to remove background',
+  rmbgProcessButton: 'Process Background Removal',
+  rmbgProcessing: 'Processing image...',
+  rmbgDownloadOriginal: 'Download Original',
+  rmbgDownloadProcessed: 'Download Processed',
+  rmbgChromaKeyLabel: 'Background Color (Chroma Key)',
+  rmbgToleranceLabel: 'Tolerance (Fuzz)',
 };
