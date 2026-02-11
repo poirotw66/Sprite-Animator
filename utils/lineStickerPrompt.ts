@@ -66,92 +66,92 @@ export const FONT_PRESETS: Record<string, { label: string; promptDesc: string }>
     pop: { label: '流行體', promptDesc: '流行活潑字體' },
 };
 
-export const BASE_PROMPT = `🎨 LINE 貼圖精靈圖生成
+export const BASE_PROMPT = `🎨 LINE Sticker Sprite Sheet Generation
 
-### 【任務說明】
+### [Task Description]
 
-請繪製一張 **LINE 貼圖用的精靈圖（Sprite Sheet）**，
-內容為參考使用者上傳的圖片中的角色，繪製 **{TOTAL_FRAMES} 個 Q 版半身像表情貼圖**，
-以 **{COLS} × {ROWS} 網格布局** 排列，每一格皆可獨立拆分成單一 LINE 貼圖使用。
+Please draw a **Sprite Sheet for LINE stickers**.
+Based on the character in the user-provided reference image, create **{TOTAL_FRAMES} Chibi-style bust stickers**,
+arranged in a **{COLS} × {ROWS} grid layout**. Each cell must be clear and divisible into an individual LINE sticker.
 
-**角色參考說明**：
-* 請參考使用者上傳的圖片中的角色設計
-* 保持角色的基本特徵（髮型、服裝、配色等）
-* 將角色轉換為 Q 版風格，但保留原角色的辨識度
+**Character Reference Instructions**:
+* Refer to the character design in the uploaded image.
+* Maintain core features (hair style, outfit, color palette, etc.).
+* Convert the character into a Chibi style while maintaining recognizability.
 
-**重要提醒**：
-* 每一格都必須在貼圖上清晰顯示對應的短語文字
-* 每一格的動作、表情、文字都必須不同
-
----
-
-### 【精靈圖布局（Sprite Sheet Layout）】CRITICAL
-
-* 布局規格：
-  **整張圖必須是嚴格的 {COLS} × {ROWS} 網格（共 {TOTAL_FRAMES} 格）**
-  * 整張圖從左到右均分為 {COLS} 欄、從上到下均分為 {ROWS} 列
-  * **不得有外圍留白**：圖像四邊即為網格邊界，最左、最右、最上、最下都不許有多餘空白
-  * 格與格之間 **不得有間隙**：相鄰格子共用同一條邊線，不可畫出分隔線或留空
-
-* 每一格的填滿規則（非常重要）：
-  * **角色與文字必須盡量填滿該格**：角色約佔單格高度的 70%～85%，避免角色過小、周圍大片空白
-  * 單格內只保留極少內邊距（約 5%～10%）避免裁切到臉或文字，其餘空間應由角色與文字佔滿
-  * ❌ 禁止：角色小小一個在格子中央、四周大量留白
-  * ✅ 正確：角色放大、半身或頭部填滿格子，文字緊鄰角色，整體視覺飽滿
-
-* 布局規則（嚴格遵守）：
-  * 每一格 = 一張可獨立使用的 LINE 貼圖
-  * 角色與文字 **不得跨越格線或接觸相鄰格子**
-  * 不可顯示任何分隔線、格線或邊框
+**Critical Reminders**:
+* Every sticker MUST clearly display its corresponding short phrase text.
+* Actions, facial expressions, and text MUST be unique for every single cell.
 
 ---
 
-### 【表情設計原則（非常重要）】
+### [Sprite Sheet Layout] CRITICAL
 
-* 每一格貼圖需對應 **單一、明確的情緒**
-* **每一格的動作、表情、文字都必須不同**，絕對不能重複
-* 表情需包含：臉部表情＋肢體動作（如手勢、姿勢、道具）
-* **每一格都必須在貼圖上清晰顯示對應的短語文字**
+* Layout Specifications:
+  **The entire image MUST be a strict {COLS} × {ROWS} grid (total {TOTAL_FRAMES} cells).**
+  * Divide the image equally into {COLS} columns from left to right and {ROWS} rows from top to bottom.
+  * **No Outer Margins**: The image edges are the grid boundaries. No empty space at the very left, right, top, or bottom.
+  * **No Gaps Between Cells**: Adjacent cells share the same boundary lines. Do not draw separating lines or leave gaps.
 
----
+* Filling Rules per Cell (Very Important):
+  * **Character and text MUST fill the cell as much as possible**: The character should occupy ~70%–85% of the cell height. Avoid small characters with large empty spaces.
+  * Maintain minimum internal padding (~5%–10%) to avoid cutting off parts of the face or text.
+  * ❌ FORBIDDEN: Small character in the center with large wasted space around.
+  * ✅ CORRECT: Large character (bust or head) filling the cell, with text placed closely, creating a full visual impact.
 
-### 【角色一致性規則】
-
-* 不變項（所有格需保持一致）：臉型比例、膚色、髮型輪廓、主要服裝與配色
-* 可變項（允許變化）：表情、眼睛形狀、嘴型、手勢與姿勢、小道具（符合主題）
-
----
-
-### 【背景顏色要求（重要）】
-
-背景必須是純色 **{BG_COLOR}**，用於後續去背處理。
-不得出現場景、漸變、陰影或其他背景元素。
+* Strict Layout Rules:
+  * Each cell = One independent LINE sticker.
+  * Character and text **MUST NOT cross grid lines or touch adjacent cells**.
+  * DO NOT show any dividers, lines, or borders between cells.
 
 ---
 
-### 【最終目標】生成一張可直接按 {COLS}×{ROWS} 等分裁切的精靈圖。
+### [Expression Design Principles]
+
+* Each sticker must correspond to a **single, clear emotion**.
+* **Actions, expressions, and text MUST be different for every cell**—no repetitions allowed.
+* Expressions should include: Facial features + Body language/postures (gestures, posture, props).
+* **Every cell MUST clearly display its corresponding short phrase.**
+
+---
+
+### [Character Consistency Rules]
+
+* Invariants (must stay the same): Face proportions, skin tone, hair silhouette, main outfit, and color scheme.
+* Variants (allowed to change): Expressions, eye shapes, mouth shapes, gestures, postures, and small props (theme-related).
+
+---
+
+### [Background Requirement]
+
+The background must be a solid, flat color: **{BG_COLOR}**.
+No scenes, gradients, shadows, or other background elements allowed.
+
+---
+
+### [Final Goal] Generate a sprite sheet that can be perfectly divided into {COLS}×{ROWS} equal parts.
 `;
 
 /**
  * Generate action suggestions based on phrase
  */
 export const getActionHint = (phrase: string): string => {
-    if (phrase.includes('成功') || phrase.includes('升級')) return '舉手慶祝、開心笑、比讚';
-    if (phrase.includes('失敗') || phrase.includes('歸零')) return '垂頭喪氣、無奈表情、攤手';
-    if (phrase.includes('查') || phrase.includes('規則')) return '翻書、思考、專注看書';
-    if (phrase.includes('骰') || phrase.includes('檢定') || phrase.includes('暗骰')) return '丟骰子、緊張等待、看結果';
-    if (phrase.includes('暴擊') || phrase.includes('攻擊')) return '揮拳、戰鬥姿勢、興奮表情';
-    if (phrase.includes('技能')) return '施法手勢、出招姿勢、專注表情';
-    if (phrase.includes('早安') || phrase.includes('晚安')) return '揮手、微笑、打招呼';
-    if (phrase.includes('謝謝') || phrase.includes('不客氣')) return '鞠躬、點頭、友善微笑';
-    if (phrase.includes('辛苦了') || phrase.includes('加油')) return '比讚、鼓勵手勢、溫暖笑容';
-    if (phrase.includes('好累') || phrase.includes('累')) return '打哈欠、疲憊表情、擦汗';
-    if (phrase.includes('開心') || phrase.includes('哈哈')) return '大笑、跳躍、比耶';
-    if (phrase.includes('嗚嗚')) return '擦淚、委屈、哭哭表情';
-    if (phrase.includes('咦')) return '歪頭、疑惑、問號表情';
-    if (phrase.includes('收到') || phrase.includes('了解') || phrase.includes('OK')) return '點頭、OK手勢、確認表情';
-    if (phrase === 'KKT' || phrase === 'KKO') return '滿懷期待地看向觀眾、可愛表情';
-    return '符合語意的自然動作和表情';
+    if (phrase.includes('成功') || phrase.includes('升級') || phrase.includes('Success') || phrase.includes('Level Up')) return 'raising hands in celebration, happy laugh, thumbs up';
+    if (phrase.includes('失敗') || phrase.includes('歸零') || phrase.includes('Fail') || phrase.includes('Zero')) return 'dejected look, helpless expression, shrugging';
+    if (phrase.includes('查') || phrase.includes('規則') || phrase.includes('Check') || phrase.includes('Rule')) return 'flipping through a book, thinking, focused look';
+    if (phrase.includes('骰') || phrase.includes('檢定') || phrase.includes('暗骰') || phrase.includes('Dice') || phrase.includes('Roll')) return 'throwing dice, waiting tensely, checking result';
+    if (phrase.includes('暴擊') || phrase.includes('攻擊') || phrase.includes('Critical') || phrase.includes('Attack')) return 'punching, combat stance, excited expression';
+    if (phrase.includes('技能') || phrase.includes('Skill')) return 'casting spell gesture, move stance, focused expression';
+    if (phrase.includes('早安') || phrase.includes('晚安') || phrase.includes('Morning') || phrase.includes('Night')) return 'waving, smiling, greeting';
+    if (phrase.includes('謝謝') || phrase.includes('不客氣') || phrase.includes('Thanks')) return 'bowing, nodding, friendly smile';
+    if (phrase.includes('辛苦了') || phrase.includes('加油') || phrase.includes('Work hard') || phrase.includes('Go for it')) return 'thumbs up, encouraging gesture, warm smile';
+    if (phrase.includes('好累') || phrase.includes('累') || phrase.includes('Tired')) return 'yawning, exhausted expression, wiping sweat';
+    if (phrase.includes('開心') || phrase.includes('哈哈') || phrase.includes('Happy') || phrase.includes('Haha')) return 'laughing, jumping, Peace sign';
+    if (phrase.includes('嗚嗚') || phrase.includes('Sob')) return 'wiping tears, aggrieved, crying expression';
+    if (phrase.includes('咦') || phrase.includes('Huh')) return 'tilting head, confused, question mark expression';
+    if (phrase.includes('收到') || phrase.includes('了解') || phrase.includes('OK') || phrase.includes('Got it')) return 'nodding, OK gesture, confirmed expression';
+    if (phrase === 'KKT' || phrase === 'KKO') return 'looking towards audience with great anticipation, cute expression';
+    return 'natural action and expression matching the text meaning';
 };
 
 export function buildLineStickerPrompt(
@@ -163,24 +163,24 @@ export function buildLineStickerPrompt(
     const totalFrames = cols * rows;
     const bgColorText = bgColor === 'magenta' ? 'magenta #FF00FF' : 'green #00FF00';
 
-    const characterSection = `### 【角色設定】\n* 描述：${slots.character.appearance}\n* 性格：${slots.character.personality}\n* 規則：${slots.character.originalImageRules}\n\n`;
-    const styleSection = `### 【風格設定】\n* 風格：${slots.style.styleType}\n* 技法：${slots.style.drawingMethod}\n* 背景：${slots.style.background}\n\n`;
+    const characterSection = `### [Character Setting]\n* Description: ${slots.character.appearance}\n* Personality: ${slots.character.personality}\n* Rules: ${slots.character.originalImageRules}\n\n`;
+    const styleSection = `### [Style Setting]\n* Style: ${slots.style.styleType}\n* Technique: ${slots.style.drawingMethod}\n* Background: ${slots.style.background}\n\n`;
 
     const allPhrases = [...slots.theme.examplePhrases];
     if (slots.theme.specialStickers) allPhrases.push(...slots.theme.specialStickers.texts);
 
     const phrasesForFrames: string[] = [];
     for (let i = 0; i < totalFrames; i++) {
-        phrasesForFrames.push(allPhrases.length > 0 ? allPhrases[i % allPhrases.length] : `表情 ${i + 1}`);
+        phrasesForFrames.push(allPhrases.length > 0 ? allPhrases[i % allPhrases.length] : `Expression ${i + 1}`);
     }
 
-    const themeSection = `### 【每一格的要求】\n${phrasesForFrames.map((phrase, index) => {
+    const themeSection = `### [Requirements Per Cell]\n${phrasesForFrames.map((phrase, index) => {
         const row = Math.floor(index / cols) + 1;
         const col = (index % cols) + 1;
-        return `**第 ${index + 1} 格 (${row}, ${col})**: "${phrase}" - ${getActionHint(phrase)}`;
+        return `**Cell ${index + 1} (${row}, ${col})**: "${phrase}" - ${getActionHint(phrase)}`;
     }).join('\n')}\n\n`;
 
-    const textSection = `### 【文字設定】\n* 語言：${slots.text.language}\n* 風格：${slots.text.textStyle}\n* 顏色：${slots.text.textColor}\n`;
+    const textSection = `### [Text Setting]\n* Language: ${slots.text.language}\n* Style: ${slots.text.textStyle}\n* Color: ${slots.text.textColor}\n`;
 
     const basePrompt = BASE_PROMPT.replace(/{TOTAL_FRAMES}/g, totalFrames.toString())
         .replace(/{COLS}/g, cols.toString())

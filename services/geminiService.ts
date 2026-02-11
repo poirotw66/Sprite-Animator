@@ -389,90 +389,91 @@ export async function generateStickerPhrases(
       break;
   }
 
-  const prompt = `你是一位非常熟悉 LINE 貼圖市場的爆款貼圖企劃與文案設計師，
-擅長設計「會被大量拿來用」的貼圖短語，而不是漂亮但沒人用的句子。
+  const prompt = `You are an expert LINE sticker planner and copywriter, highly experienced in the LINE sticker market.
+You specialize in designing "viral" sticker phrases that users will actually use frequently in daily chats, rather than just pretty but impractical sentences.
 
-【任務目標】
-根據我提供的「主題」，生成一整組可用於 LINE 貼圖的「短語清單」。
+### [Objective]
+Based on the "Theme" provided, generate a complete set of "Sticker Phrases" suitable for a LINE sticker set.
 
-【主題】
+### [Theme]
 ${themeContext}
 
-【語言】
-${language}。請依此語言輸出短語（若為繁體中文則每句不超過 6 個字；英文則 1～3 個字為佳）。
+### [Language]
+${language}. Please output phrases in this specific language. 
+(Note: For Traditional/Simplified Chinese, phrases should not exceed 6 characters; for English, 1-3 words are preferred.)
 
-【短語模式】
-- 模式：${modeLabel}
-- 提示：${modeHint}
+### [Phrase Mode]
+- Mode: ${modeLabel}
+- Hint: ${modeHint}
 
-【輸出數量（嚴格遵守）】
-請輸出一組「共 ${contentCount} 句」的貼圖短語，並依下列比例分配：
+### [Output Quantity] (Strictly Follow)
+Generate exactly ${contentCount} phrases in total, distributed according to the ratios below.
 
-【分類與比例（嚴格遵守）】
-請將短語分成以下四類，並明確標示分類名稱：
+### [Categories and Ratios] (Strictly Follow)
+Divide the phrases into the following four categories and clearly label them:
 
-1. 萬用日常（${n40} 句，約 40%）
-   - 日常聊天一定會用到
-   - 可單獨作為回覆
-   - 不帶強烈情緒也能使用
+1. Universal Daily (${n40} phrases, ~40%)
+   - Essential for daily conversations.
+   - Can be used as standalone replies.
+   - Neutral emotion, widely applicable.
 
-2. 情緒爆發（${n30} 句，約 30%）
-   - 情緒明確、可投射（包含正向與負向的高張情緒）
-   - 可以是崩潰、厭世、煩躁、撐住，也可以是超興奮、笑到瘋、爽爆、嗨翻之類的狀態
-   - 但仍需符合「LINE 聊天實用」，要是聊天時真的會用到的反應
+2. Emotional Outburst (${n30} phrases, ~30%)
+   - Highly expressive and relatable (both positive and negative high-arousal emotions).
+   - Can include "breakdown," "world-weary," "annoyed," "hanging in there," or "super excited," "laughing to death," "feeling awesome," etc.
+   - MUST be practical for real chat reactions.
 
-3. 關係互動（${n20} 句，約 20%）
-   - 對人說的話
-   - 包含關心、撒嬌、道歉、安慰、想念
-   - 適合朋友、情人、曖昧使用
+3. Social Interaction (${n20} phrases, ~20%)
+   - Phrases directed at others.
+   - Includes caring, acting cute (aegyo), apologizing, comforting, or missing someone.
+   - Suitable for friends, lovers, crushes, or close colleagues.
 
-4. 梗圖型（${n10} 句，約 10%）
-   - 帶有記憶點或反差感
-   - 可冷幽默、反諷、自嘲
-   - 不追逐短期流行語，避免過時
+4. Meme/Iconic (${n10} phrases, ~10%)
+   - Memorable, witty, or involving a "twist."
+   - Can be deadpan humor, irony, or self-deprecation.
+   - Avoid short-lived internet slang that ages quickly; aim for timeless relatability.
 
-【文字風格規則（非常重要）】
-- 每句簡短、偏口語、聊天感
-- 一眼就懂，不能解釋
-- 避免書面語與完整長句
-- 適合放在貼圖上，不是社群貼文
+### [Text Style Rules] (Very Important)
+- Keep it short, colloquial, and "chat-like."
+- Instant understanding; no explanation needed.
+- Avoid formal language or full, complex sentences.
+- Optimized for placement ON a sticker, not a social media caption.
 
-【語氣與共鳴（必達）】
-- 要有「感同身受」感：讓人看了覺得「對對對就是這樣」「這我」
-- 帶一點網路鄉民的戲謔感：可自嘲、可嘴人、可吐槽、會心一笑
-- 不要正經八百，要像真實網友在群組裡會打的那種話
-- 可以有一點點賤、一點點厭世、一點點廢，但不要人身攻擊或過激
+### [Tone and Resonance] (Must Achieve)
+- "Relatability" is key: Make users feel "Yes, this is exactly me" or "I need this for exactly that situation."
+- A touch of playful/cheeky internet humor: Self-deprecating, slightly trolling, or a witty comeback.
+- Don't be too serious. Sound like a real person in a group chat.
+- It's okay to be a bit "trashy," "lazy," or "done with life," but never offensive or hateful.
 
-【市場適配規則】
-- 假設使用者會在「已讀不回、敷衍回覆、情緒表達、快速回應」時使用
-- 每一句都必須能獨立存在
-- 不能依賴上下文才成立
+### [Market Fit Rules]
+- Assume users use these for: "Read but no reply," "Polite brush-offs," "Intense emotion," or "Quick reactions."
+- Every phrase must be able to stand alone.
+- Do not rely on specific context to be understood.
 
-【輸出格式（嚴格遵守）】
-請依照以下格式輸出，每行一個短語，前方用「- 」：
+### [Output Format] (Strictly Follow)
+Output following this format, one phrase per line starting with "- ":
 
-萬用日常：
-- 短語
-- 短語
+Universal Daily:
+- phrase
+- phrase
 
-情緒爆發：
-- 短語
-- 短語
+Emotional Outburst:
+- phrase
+- phrase
 
-關係互動：
-- 短語
+Social Interaction:
+- phrase
 
-梗圖型：
-- 短語
+Meme/Iconic:
+- phrase
 
-【禁止事項】
-❌ 不要解釋
-❌ 不要分析
-❌ 不要加表情符號
-❌ 不要加任何多餘文字
-❌ 不要標示「第幾張」
+### [Prohibitions]
+❌ No explanations
+❌ No analysis
+❌ No emojis
+❌ No extra filler text
+❌ No "Sticker 1", "Sticker 2" labels
 
-現在，請根據「主題」開始生成。`;
+Now, please start generating based on the "Theme".`;
 
   const response = await ai.models.generateContent({
     model,
