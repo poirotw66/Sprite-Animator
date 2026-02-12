@@ -494,6 +494,7 @@ function processChromaKey(
   onProgress(90);
 
   // Pass 4: Edge color sampling - blend edge band pixels toward opaque neighbor colors to reduce halo
+  // Pass 4b: Dark edge lift - stronger blend for pixels darker than neighbors (removes black/dark ring)
   const sampled = new Uint8ClampedArray(data.length);
   sampled.set(data);
   for (let y = 1; y < height - 1; y++) {
@@ -519,9 +520,17 @@ function processChromaKey(
         }
       }
       if (count > 0) {
-        data[i] = Math.round(sampled[i] * (1 - blend) + (sumR / count) * blend);
-        data[i + 1] = Math.round(sampled[i + 1] * (1 - blend) + (sumG / count) * blend);
-        data[i + 2] = Math.round(sampled[i + 2] * (1 - blend) + (sumB / count) * blend);
+        const nR = sumR / count;
+        const nG = sumG / count;
+        const nB = sumB / count;
+        const lumP = (sampled[i] + sampled[i + 1] + sampled[i + 2]) / 3;
+        const lumN = (nR + nG + nB) / 3;
+        // If this edge pixel is noticeably darker than the foreground neighbors (dark halo), use stronger blend to lift it
+        const isDarkEdge = lumN > 40 && lumP < lumN * 0.92;
+        const effectiveBlend = isDarkEdge ? Math.min(0.55, blend + 0.28) : blend;
+        data[i] = Math.round(sampled[i] * (1 - effectiveBlend) + nR * effectiveBlend);
+        data[i + 1] = Math.round(sampled[i + 1] * (1 - effectiveBlend) + nG * effectiveBlend);
+        data[i + 2] = Math.round(sampled[i + 2] * (1 - effectiveBlend) + nB * effectiveBlend);
       }
     }
   }
