@@ -75,6 +75,11 @@ export const CHROMA_KEY_COLORS = {
 export const CHROMA_KEY_COLOR = CHROMA_KEY_COLORS.magenta;
 export const CHROMA_KEY_FUZZ = 35; // 35% tolerance (0-100) - increased for better coverage
 
+/** Edge band radius (px) for spill suppression; tunable from frontend. Default 2. */
+export const CHROMA_KEY_EDGE_BAND_RADIUS = 2;
+/** Edge color blend strength (0–1) toward opaque neighbors; tunable from frontend. Default 0.22. */
+export const CHROMA_KEY_EDGE_BLEND = 0.22;
+
 // Frame interpolation settings for smooth GIF export
 export const DEFAULT_INTERPOLATION_FRAMES = 2; // Number of frames to insert between keyframes
 export const GIF_TARGET_FPS = 24; // Target FPS for smooth GIF output

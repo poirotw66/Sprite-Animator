@@ -13,11 +13,15 @@
 
 export interface ChromaKeyWorkerMessage {
   type: 'process' | 'cancel';
-  data: number[]; // ImageData.data as array (cannot transfer ImageData directly)
+  data: number[];
   width: number;
   height: number;
   chromaKey: { r: number; g: number; b: number };
   fuzzPercent: number;
+  /** Edge band radius (px); default 2. */
+  edgeBandRadius?: number;
+  /** Edge color blend 0–1; default 0.22. */
+  edgeBlend?: number;
   id?: string;
 }
 
@@ -109,6 +113,9 @@ function isMagentaScreenHSL(r: number, g: number, b: number, tolerance: number):
   return hueInRange && saturationOk && lightnessOk && magentaPattern;
 }
 
+const DEFAULT_EDGE_BAND_RADIUS = 2;
+const DEFAULT_EDGE_BLEND = 0.22;
+
 /**
  * Process chroma key removal with progress reporting
  * Uses HSL color space for accurate green/magenta detection
@@ -119,10 +126,14 @@ function processChromaKey(
   height: number,
   chromaKey: { r: number; g: number; b: number },
   fuzzPercent: number,
-  onProgress: (progress: number) => void
+  onProgress: (progress: number) => void,
+  edgeBandRadius: number = DEFAULT_EDGE_BAND_RADIUS,
+  edgeBlend: number = DEFAULT_EDGE_BLEND
 ): Uint8ClampedArray {
   const totalPixels = data.length / 4;
   const fuzz = (fuzzPercent / 100) * 255;
+  const radius = Math.max(1, Math.min(5, Math.round(edgeBandRadius)));
+  const blend = Math.max(0, Math.min(1, Number(edgeBlend)));
 
   let transparentCount = 0;
   const reportInterval = Math.max(1, Math.floor(totalPixels / 100));
@@ -388,16 +399,14 @@ function processChromaKey(
 
   onProgress(55);
 
-  // Build edge band mask: pixels within 2px of semi-transparent or transparent (for spill suppression)
-  // Ref: spill suppression on a dilated edge band reduces background color halo (Wikipedia Chroma key, industry practice)
-  const EDGE_BAND_RADIUS = 2;
+  // Build edge band mask: pixels within radius px of semi-transparent or transparent (for spill suppression)
   const edgeBand = new Uint8Array(totalPixels);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = y * width + x;
       if (erodedAlpha[i] < 255) {
-        for (let dy = -EDGE_BAND_RADIUS; dy <= EDGE_BAND_RADIUS; dy++) {
-          for (let dx = -EDGE_BAND_RADIUS; dx <= EDGE_BAND_RADIUS; dx++) {
+        for (let dy = -radius; dy <= radius; dy++) {
+          for (let dx = -radius; dx <= radius; dx++) {
             const ny = y + dy;
             const nx = x + dx;
             if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
@@ -510,7 +519,6 @@ function processChromaKey(
         }
       }
       if (count > 0) {
-        const blend = 0.22;
         data[i] = Math.round(sampled[i] * (1 - blend) + (sumR / count) * blend);
         data[i + 1] = Math.round(sampled[i + 1] * (1 - blend) + (sumG / count) * blend);
         data[i + 2] = Math.round(sampled[i + 2] * (1 - blend) + (sumB / count) * blend);
@@ -524,7 +532,7 @@ function processChromaKey(
 
 // Worker message handler
 self.onmessage = function (e: MessageEvent<ChromaKeyWorkerMessage>) {
-  const { type, data, width, height, chromaKey, fuzzPercent, id } = e.data;
+  const { type, data, width, height, chromaKey, fuzzPercent, edgeBandRadius, edgeBlend, id } = e.data;
 
   if (type === 'cancel') return;
 
@@ -539,7 +547,9 @@ self.onmessage = function (e: MessageEvent<ChromaKeyWorkerMessage>) {
         fuzzPercent,
         (progress) => {
           self.postMessage({ type: 'progress', progress, id } as ChromaKeyWorkerResponse);
-        }
+        },
+        edgeBandRadius,
+        edgeBlend
       );
 
       self.postMessage({

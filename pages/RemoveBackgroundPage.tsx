@@ -6,7 +6,7 @@ import { useSettings } from '../hooks/useSettings';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { removeBackgroundAI } from '../utils/aiBackgroundRemoval';
-import { CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ, GRID_PATTERN_URL } from '../utils/constants';
+import { CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ, CHROMA_KEY_EDGE_BAND_RADIUS, CHROMA_KEY_EDGE_BLEND, GRID_PATTERN_URL } from '../utils/constants';
 import { logger } from '../utils/logger';
 import { Link } from 'react-router-dom';
 import type { ChromaKeyColorType, BgRemovalMethod } from '../types';
@@ -19,6 +19,8 @@ const RemoveBackgroundPage: React.FC = () => {
     const [processedImage, setProcessedImage] = useState<string | null>(null);
     const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('magenta');
     const [tolerance, setTolerance] = useState<number>(CHROMA_KEY_FUZZ);
+    const [edgeBandRadius, setEdgeBandRadius] = useState<number>(CHROMA_KEY_EDGE_BAND_RADIUS);
+    const [edgeBlend, setEdgeBlend] = useState<number>(CHROMA_KEY_EDGE_BLEND);
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
     const [error, setError] = useState<string | null>(null);
@@ -73,7 +75,8 @@ const RemoveBackgroundPage: React.FC = () => {
                     originalImage,
                     targetColor,
                     tolerance,
-                    (p) => setProgress(p)
+                    (p) => setProgress(p),
+                    { edgeBandRadius, edgeBlend }
                 );
             }
             setProcessedImage(result);
@@ -84,7 +87,7 @@ const RemoveBackgroundPage: React.FC = () => {
         } finally {
             setIsProcessing(false);
         }
-    }, [originalImage, chromaKeyColor, tolerance, bgRemovalMethod]);
+    }, [originalImage, chromaKeyColor, tolerance, edgeBandRadius, edgeBlend, bgRemovalMethod]);
 
     // Handle download
     const handleDownload = useCallback(() => {
@@ -236,6 +239,50 @@ const RemoveBackgroundPage: React.FC = () => {
                                     <div className="flex justify-between text-[10px] text-slate-400 font-medium">
                                         <span>Strict</span>
                                         <span>Loose</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Edge tuning (band radius & blend) */}
+                            {bgRemovalMethod === 'chroma' && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-sm font-semibold text-slate-700">
+                                                {t.rmbgEdgeBandLabel}
+                                            </label>
+                                            <span className="text-xs font-mono font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-md border border-orange-100">
+                                                {edgeBandRadius} px
+                                            </span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="1"
+                                            max="5"
+                                            step="1"
+                                            value={edgeBandRadius}
+                                            onChange={(e) => setEdgeBandRadius(Number(e.target.value))}
+                                            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                                        />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-sm font-semibold text-slate-700">
+                                                {t.rmbgEdgeBlendLabel}
+                                            </label>
+                                            <span className="text-xs font-mono font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-md border border-orange-100">
+                                                {Math.round(edgeBlend * 100)}%
+                                            </span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="0.1"
+                                            max="0.5"
+                                            step="0.01"
+                                            value={edgeBlend}
+                                            onChange={(e) => setEdgeBlend(Number(e.target.value))}
+                                            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                                        />
                                     </div>
                                 </div>
                             )}

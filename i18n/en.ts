@@ -340,6 +340,8 @@ export const en: Translations = {
   rmbgDownloadProcessed: 'Download Processed',
   rmbgChromaKeyLabel: 'Background Color (Chroma Key)',
   rmbgToleranceLabel: 'Tolerance (Fuzz)',
+  rmbgEdgeBandLabel: 'Edge band radius (px)',
+  rmbgEdgeBlendLabel: 'Edge blend (%)',
   bgRemovalMethodLabel: 'Removal Method',
   bgRemovalChroma: 'Chroma Key',
   bgRemovalAI: 'AI Smart Remover (RMBG)',

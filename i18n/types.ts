@@ -342,6 +342,8 @@ export interface Translations {
   rmbgDownloadProcessed: string;
   rmbgChromaKeyLabel: string;
   rmbgToleranceLabel: string;
+  rmbgEdgeBandLabel: string;
+  rmbgEdgeBlendLabel: string;
   bgRemovalMethodLabel: string;
   bgRemovalChroma: string;
   bgRemovalAI: string;

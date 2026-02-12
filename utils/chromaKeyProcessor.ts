@@ -87,21 +87,31 @@ function isMagentaScreenHSL(r: number, g: number, b: number, tolerance: number):
   return hueInRange && saturationOk && lightnessOk && magentaPattern;
 }
 
+/** Optional tuning for edge spill suppression; exposed on frontend. */
+export interface ChromaKeyOptions {
+  /** Edge band radius in pixels (1–5). Default from CHROMA_KEY_EDGE_BAND_RADIUS. */
+  edgeBandRadius?: number;
+  /** Edge color blend strength 0–1 toward opaque neighbors. Default from CHROMA_KEY_EDGE_BLEND. */
+  edgeBlend?: number;
+}
+
 /**
  * Removes chroma key background using Web Worker for non-blocking processing.
  * Falls back to main thread processing if Web Worker is not available.
- * 
+ *
  * @param base64Image - Base64 encoded image with chroma key background
  * @param chromaKey - RGB color to remove (default: {r: 255, g: 0, b: 255} for #FF00FF)
  * @param fuzzPercent - Tolerance percentage (0-100, default: 10)
  * @param onProgress - Optional callback for progress updates (0-100)
+ * @param options - Optional edge tuning (edgeBandRadius, edgeBlend)
  * @returns Promise resolving to base64 encoded image with transparent background
  */
 export const removeChromaKeyWithWorker = async (
   base64Image: string,
   chromaKey: { r: number; g: number; b: number } = { r: 255, g: 0, b: 255 },
   fuzzPercent: number = 10,
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
+  options?: ChromaKeyOptions
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -126,7 +136,8 @@ export const removeChromaKeyWithWorker = async (
               imageData,
               chromaKey,
               fuzzPercent,
-              onProgress
+              onProgress,
+              options
             );
             ctx.putImageData(processed, 0, 0);
             resolve(canvas.toDataURL('image/png'));
@@ -173,7 +184,8 @@ function processWithWorker(
   imageData: ImageData,
   chromaKey: { r: number; g: number; b: number },
   fuzzPercent: number,
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
+  options?: ChromaKeyOptions
 ): Promise<ImageData> {
   return new Promise((resolve, reject) => {
     try {
@@ -217,6 +229,8 @@ function processWithWorker(
         height: imageData.height,
         chromaKey,
         fuzzPercent,
+        edgeBandRadius: options?.edgeBandRadius,
+        edgeBlend: options?.edgeBlend,
         id: requestId,
       });
     } catch (error) {

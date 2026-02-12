@@ -340,6 +340,8 @@ export const zhTW: Translations = {
   rmbgDownloadProcessed: '下載去背圖',
   rmbgChromaKeyLabel: '背景顏色 (Chroma Key)',
   rmbgToleranceLabel: '容差值 (Fuzz)',
+  rmbgEdgeBandLabel: '邊緣帶半徑 (px)',
+  rmbgEdgeBlendLabel: '邊緣取樣混合 (%)',
   bgRemovalMethodLabel: '去背方式',
   bgRemovalChroma: '色差去背 (Chroma Key)',
   bgRemovalAI: 'AI 智慧去背 (RMBG)',
