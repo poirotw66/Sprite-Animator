@@ -17,7 +17,7 @@ const RemoveBackgroundPage: React.FC = () => {
     // State
     const [originalImage, setOriginalImage] = useState<string | null>(null);
     const [processedImage, setProcessedImage] = useState<string | null>(null);
-    const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('magenta');
+    const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('green');
     const [tolerance, setTolerance] = useState<number>(CHROMA_KEY_FUZZ);
     const [edgeBandRadius, setEdgeBandRadius] = useState<number>(CHROMA_KEY_EDGE_BAND_RADIUS);
     const [edgeBlend, setEdgeBlend] = useState<number>(CHROMA_KEY_EDGE_BLEND);

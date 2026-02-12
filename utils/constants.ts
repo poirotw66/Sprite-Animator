@@ -16,7 +16,7 @@ export const DEFAULT_CONFIG: AnimationConfig = {
   mode: 'sheet' as const,
   gridCols: 3,
   gridRows: 2,
-  chromaKeyColor: 'magenta' as const, // Default to magenta, can be 'green' for green screen
+  chromaKeyColor: 'green' as const, // Default to green screen; can use 'magenta' for magenta
   enableInterpolation: false, // Disabled by default to avoid ghosting artifacts
 } satisfies AnimationConfig;
 

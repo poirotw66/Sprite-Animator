@@ -677,7 +677,7 @@ export const generateSpriteSheet = async (
   apiKey: string,
   model: string,
   onProgress?: ProgressCallback,
-  chromaKeyColor: ChromaKeyColorType = 'magenta',
+  chromaKeyColor: ChromaKeyColorType = 'green',
   outputResolution?: ImageResolution
 ): Promise<string> => {
   if (!apiKey) throw new Error("API Key is missing");

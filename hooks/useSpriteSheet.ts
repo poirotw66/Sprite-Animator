@@ -36,7 +36,7 @@ export const useSpriteSheet = (
   sliceSettings: SliceSettings,
   removeBackground: boolean,
   mode: 'frame' | 'sheet',
-  chromaKeyColor: ChromaKeyColorType = 'magenta'
+  chromaKeyColor: ChromaKeyColorType = 'green'
 ) => {
   const [generatedFrames, setGeneratedFrames] = useState<string[]>([]);
   const [sheetDimensions, setSheetDimensions] = useState({ width: 0, height: 0 });

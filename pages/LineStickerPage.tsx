@@ -104,7 +104,7 @@ const LineStickerPage: React.FC = () => {
     const [showOriginalInSpriteView, setShowOriginalInSpriteView] = useState(false);
     const [stickerFrames, setStickerFrames] = useState<string[]>([]);
     const [selectedFrames, setSelectedFrames] = useState<boolean[]>([]);
-    const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('magenta');
+    const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('green');
     const [selectedResolution, setSelectedResolution] = useState<ImageResolution>('1K');
     const [selectedPhraseMode, setSelectedPhraseMode] = useState<StickerPhraseMode>('balanced');
     const [includeText, setIncludeText] = useState(true);

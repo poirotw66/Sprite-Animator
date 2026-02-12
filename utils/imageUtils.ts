@@ -147,7 +147,7 @@ export const sliceSpriteSheet = async (
   removeBg: boolean,
   threshold: number = 230,
   frameOverrides?: FrameOverride[],
-  chromaKeyColor: ChromaKeyColorType = 'magenta',
+  chromaKeyColor: ChromaKeyColorType = 'green',
   paddingFour?: PaddingFour
 ): Promise<string[]> => {
   return new Promise((resolve, reject) => {
