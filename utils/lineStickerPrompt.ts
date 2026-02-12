@@ -81,6 +81,28 @@ export const BASE_PROMPT = `🎨 LINE Sticker Sprite Sheet Generation
 * **Per cell**: Character {AND_TEXT} must occupy ~70–85% of cell height. Minimum internal padding ~5–10%. Character {AND_TEXT} must NOT cross grid lines or touch adjacent cells. One independent sticker per cell. {AND_CLOSE_TEXT}
 `;
 
+// When includeText: enforce separate Character Zone vs Text Zone so text never overlaps character
+const LAYOUT_PROTECTION_RULES = `
+### [Layout Protection Rules — CRITICAL] (when text is included)
+
+* Each cell must contain **two clearly separated zones**:
+  1. **Character Zone**: Main silhouette area (hair, face, body, hands, props).
+  2. **Text Zone**: Dedicated area for the short phrase only.
+
+* **Text MUST NOT overlap** the character silhouette. No text on hair, face, hands, or props.
+* Maintain at least **5–8% visual gap** between the text bounding box and the character silhouette.
+* The character occupies the **visual center**; place text **around** the character, not on top.
+
+* **Text placement must vary** across the {TOTAL_FRAMES} cells. Allowed placements:
+  - Top center / Bottom center
+  - Top left / Top right / Bottom left / Bottom right
+  - Slight diagonal offset
+  - Beside head (left or right side)
+
+* Do **NOT** use the same text alignment pattern more than twice in a row.
+* Text must always remain **fully inside** its cell boundaries (no clipping at edges).
+`;
+
 /** Fallback when no action description is provided (e.g. theme preset or API failure). */
 export const getActionHint = (_phrase: string): string =>
     'natural action and expression matching the text meaning (自然動作與表情符合語意)';
@@ -108,13 +130,18 @@ export function buildLineStickerPrompt(
         .replace(/{AND_TEXT}/g, includeText ? 'and text' : '')
         .replace(/{AND_CLOSE_TEXT}/g, includeText ? 'Large character (bust or head) filling the cell, with text placed clearly.' : 'Large character (bust or head) filling the cell.');
 
-    // 2. Style / Art Medium (technical: flat shading, no shadows; LINE sticker: white stroke)
+    const layoutProtectionSection = includeText
+        ? LAYOUT_PROTECTION_RULES.replace(/{TOTAL_FRAMES}/g, totalFrames.toString())
+        : '';
+
+    // 2. Style / Art Medium (technical: flat shading, no shadows; LINE sticker: white stroke on character only, no grid separators)
     const styleSection = `### [2. Style / Art Medium]
 
 * **Style**: ${slots.style.styleType}
 * **Technique**: ${slots.style.drawingMethod}
 * **Lighting (technical)**: Flat shading only. No drop shadows, no gradients, no ambient occlusion. Sharp edges against background.
-* **LINE sticker style**: Thick white stroke around the character silhouette. Clean, visible outline so the sticker stays readable on any chat background (e.g. dark blue or photo) after the colored background is removed.
+* **LINE sticker style**: Thick white stroke around the character silhouette only. Clean, visible outline so the sticker stays readable on any chat background after the colored background is removed.
+* **No grid separators**: Do NOT draw any line, frame, or border between cells or around the image. The grid is logical only (for splitting later); adjacent cells must share the same background with no visible divider.
 `;
 
     // 3. Subject / Character
@@ -126,10 +153,11 @@ export function buildLineStickerPrompt(
 * **Consistency**: Invariants = face proportions, skin tone, hair silhouette, main outfit, color scheme. Variants = expressions, eye shapes, mouth shapes, gestures, postures, small props.
 `;
 
-    // 4. Lighting & Background (technical parameters)
+    // 4. Lighting & Background (technical parameters) — exact hex for chroma key
+    const bgHex = bgColor === 'magenta' ? '#FF00FF' : '#00FF00';
     const lightingSection = `### [4. Lighting & Background] CRITICAL
 
-* **Background**: Solid background in **${bgColorText}**. Use this exact color for the entire canvas.
+* **Background color (exact)**: The entire canvas must be **exactly ${bgColorText}** (hex ${bgHex}). Every cell must use this same color—no gradients, no pink/purple variants (e.g. do NOT use #E91E63 or similar). One single RGB value for all background pixels so that chroma key removal works uniformly.
 * **Lighting**: No shadows. Flat shading only. Ambient occlusion disabled.
 * **Uniform**: Same color across the entire sprite sheet. No ground, clouds, or decorative elements. Character edges must be sharp and clean against the background.
 `;
@@ -175,7 +203,7 @@ ${phrasesForFrames.map((phrase, index) => {
     const finalSection = `
 ### [7. Final Goal]
 
-Output a single image: perfect square, {TOTAL_FRAMES} equal rectangles ({COLS}×{ROWS}). Each rectangle = one LINE sticker. Splittable at exactly {CELL_WIDTH_PCT}% width and {CELL_HEIGHT_PCT}% height per cell.
+Output a single image: perfect square, {TOTAL_FRAMES} equal rectangles ({COLS}×{ROWS}). Each rectangle = one LINE sticker. Splittable at exactly {CELL_WIDTH_PCT}% width and {CELL_HEIGHT_PCT}% height per cell. No visible borders or lines between cells—one continuous background.
 `.replace(/{TOTAL_FRAMES}/g, totalFrames.toString())
         .replace(/{COLS}/g, cols.toString())
         .replace(/{ROWS}/g, rows.toString())
@@ -183,6 +211,7 @@ Output a single image: perfect square, {TOTAL_FRAMES} equal rectangles ({COLS}×
         .replace(/{CELL_HEIGHT_PCT}/g, cellHeightPct.toString());
 
     return `${layoutPrompt}
+${layoutProtectionSection}
 ${styleSection}
 ${characterSection}
 ${lightingSection}
