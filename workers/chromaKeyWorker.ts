@@ -525,9 +525,20 @@ function processChromaKey(
         const nB = sumB / count;
         const lumP = (sampled[i] + sampled[i + 1] + sampled[i + 2]) / 3;
         const lumN = (nR + nG + nB) / 3;
-        // If this edge pixel is noticeably darker than the foreground neighbors (dark halo), use stronger blend to lift it
-        const isDarkEdge = lumN > 40 && lumP < lumN * 0.92;
-        const effectiveBlend = isDarkEdge ? Math.min(0.55, blend + 0.28) : blend;
+        // Dark edge: pixel darker than foreground neighbors -> stronger blend to remove black ring / anti-alias tint
+        const ratio = lumN > 15 ? lumP / lumN : 1;
+        let effectiveBlend = blend;
+        if (lumP < 75 && lumN > 60) {
+          effectiveBlend = Math.min(0.85, blend + 0.65); // near-black residue (e.g. black background bleed) -> very strong lift
+        } else if (ratio < 0.82) {
+          effectiveBlend = Math.min(0.78, blend + 0.52); // clearly dark fringe
+        } else if (ratio < 0.92) {
+          effectiveBlend = Math.min(0.65, blend + 0.38); // moderate dark halo
+        } else if (ratio < 0.98) {
+          effectiveBlend = Math.min(0.52, blend + 0.24); // slight dark tint (anti-aliasing)
+        } else if (ratio < 1.0) {
+          effectiveBlend = Math.min(0.40, blend + 0.14); // barely darker -> minimal extra pull
+        }
         data[i] = Math.round(sampled[i] * (1 - effectiveBlend) + nR * effectiveBlend);
         data[i + 1] = Math.round(sampled[i + 1] * (1 - effectiveBlend) + nG * effectiveBlend);
         data[i + 2] = Math.round(sampled[i + 2] * (1 - effectiveBlend) + nB * effectiveBlend);
