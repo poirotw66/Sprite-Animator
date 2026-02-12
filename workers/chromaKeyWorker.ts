@@ -2,7 +2,12 @@
  * Web Worker for chroma key removal processing.
  * Processes images in the background to avoid blocking the main thread.
  * Uses HSL color space for more accurate green screen detection.
- * 
+ *
+ * Edge / spill handling (reduces background color halo on character borders):
+ * - Edge band: pixels within 2px of semi-transparent are treated as edge for spill suppression.
+ * - Despill: magenta R/B pulled toward G (cap at G); green G capped at max(R,B)+margin (Wikipedia-style).
+ * - Edge color sampling: edge band pixels blend 22% toward opaque neighbor average to pull tint toward foreground.
+ *
  * @module chromaKeyWorker
  */
 
@@ -381,9 +386,33 @@ function processChromaKey(
     }
   }
 
+  onProgress(55);
+
+  // Build edge band mask: pixels within 2px of semi-transparent or transparent (for spill suppression)
+  // Ref: spill suppression on a dilated edge band reduces background color halo (Wikipedia Chroma key, industry practice)
+  const EDGE_BAND_RADIUS = 2;
+  const edgeBand = new Uint8Array(totalPixels);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = y * width + x;
+      if (erodedAlpha[i] < 255) {
+        for (let dy = -EDGE_BAND_RADIUS; dy <= EDGE_BAND_RADIUS; dy++) {
+          for (let dx = -EDGE_BAND_RADIUS; dx <= EDGE_BAND_RADIUS; dx++) {
+            const ny = y + dy;
+            const nx = x + dx;
+            if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
+              edgeBand[ny * width + nx] = 1;
+            }
+          }
+        }
+      }
+    }
+  }
+
   onProgress(60);
 
-  // Pass 3: Final Decontamination
+  // Pass 3: Final Decontamination (spill suppression) with full edge band
+  // Despill formulas: green g' = min(g, max(r,b)) style; magenta: pull R,B toward G (Wikipedia / industry)
   for (let i = 0; i < data.length; i += 4) {
     const pixelIdx = i / 4;
     const alpha = erodedAlpha[pixelIdx];
@@ -391,31 +420,36 @@ function processChromaKey(
 
     if (alpha === 0) continue;
 
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
+    let r = data[i];
+    let g = data[i + 1];
+    let b = data[i + 2];
     const avg = (r + g + b) / 3;
     const isEdge = alpha < 255;
+    const inEdgeBand = edgeBand[pixelIdx] === 1;
+    const applyStrongDespill = isEdge || inEdgeBand;
 
     if (targetIsMagenta) {
       const magContrast = (r + b) / 2 - g;
       if (avg < 100 && magContrast > 4) {
-        const decontamIntensity = isEdge ? 1.0 : 0.85;
+        const decontamIntensity = applyStrongDespill ? 1.0 : 0.85;
         const gray = avg;
         data[i] = Math.round(r * (1 - decontamIntensity) + gray * decontamIntensity);
         data[i + 1] = Math.round(g * (1 - decontamIntensity) + gray * decontamIntensity);
         data[i + 2] = Math.round(b * (1 - decontamIntensity) + gray * decontamIntensity);
       }
-      else if (isEdge && magContrast > 5) {
-        const spillIntensity = 0.95;
-        data[i] = Math.round(r - (r - g) * spillIntensity);
-        data[i + 2] = Math.round(b - (b - g) * spillIntensity);
+      else if (applyStrongDespill && magContrast > 3) {
+        // Full-strength spill suppression on edge band (k=1.0); cap R,B at G to avoid overshoot
+        const spillK = inEdgeBand ? 1.0 : 0.95;
+        const newR = Math.max(g, Math.round(r - (r - g) * spillK));
+        const newB = Math.max(g, Math.round(b - (b - g) * spillK));
+        data[i] = newR;
+        data[i + 2] = newB;
         const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
         data[i] = Math.round(data[i] * 0.6 + gray * 0.4);
         data[i + 1] = Math.round(data[i + 1] * 0.6 + gray * 0.4);
         data[i + 2] = Math.round(data[i + 2] * 0.6 + gray * 0.4);
       }
-      else if (!isEdge && magContrast > 20) {
+      else if (!applyStrongDespill && magContrast > 20) {
         const spillIntensity = Math.min(0.5, (magContrast - 15) / 40);
         data[i] = Math.round(r - (r - g) * spillIntensity);
         data[i + 2] = Math.round(b - (b - g) * spillIntensity);
@@ -428,15 +462,59 @@ function processChromaKey(
         data[i + 1] = Math.round(g * 0.15 + gray * 0.85);
         data[i + 2] = Math.round(b * 0.15 + gray * 0.85);
       }
-      else if (isEdge && greenContrast > 5) {
-        const rbAvg = (r + b) / 2;
-        data[i + 1] = Math.round(g - (g - rbAvg) * 0.95);
+      else if (applyStrongDespill && greenContrast > 3) {
+        // Despill: cap green at max(r,b) + small margin (Wikipedia: (r, min(g,b), b) style; we use max(r,b) for natural look)
+        const rbMax = Math.max(r, b);
+        const gCapped = Math.min(g, rbMax + 15);
+        data[i + 1] = Math.round(gCapped);
+        if (inEdgeBand && greenContrast > 10) {
+          const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          data[i] = Math.round(data[i] * 0.85 + gray * 0.15);
+          data[i + 1] = Math.round(data[i + 1] * 0.85 + gray * 0.15);
+          data[i + 2] = Math.round(data[i + 2] * 0.85 + gray * 0.15);
+        }
       }
     }
 
     if (i % (reportInterval * 32) === 0) {
-      const progress = 70 + Math.min(30, Math.round((i / data.length) * 30));
+      const progress = 70 + Math.min(20, Math.round((i / data.length) * 20));
       onProgress(progress);
+    }
+  }
+
+  onProgress(90);
+
+  // Pass 4: Edge color sampling - blend edge band pixels toward opaque neighbor colors to reduce halo
+  const sampled = new Uint8ClampedArray(data.length);
+  sampled.set(data);
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const i = (y * width + x) * 4;
+      const pixelIdx = i / 4;
+      if (edgeBand[pixelIdx] === 0) continue;
+      const alpha = sampled[i + 3];
+      if (alpha === 0) continue;
+
+      let sumR = 0, sumG = 0, sumB = 0;
+      let count = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          const ni = ((y + dy) * width + (x + dx)) * 4;
+          if (sampled[ni + 3] >= 250) {
+            sumR += sampled[ni];
+            sumG += sampled[ni + 1];
+            sumB += sampled[ni + 2];
+            count++;
+          }
+        }
+      }
+      if (count > 0) {
+        const blend = 0.22;
+        data[i] = Math.round(sampled[i] * (1 - blend) + (sumR / count) * blend);
+        data[i + 1] = Math.round(sampled[i + 1] * (1 - blend) + (sumG / count) * blend);
+        data[i + 2] = Math.round(sampled[i + 2] * (1 - blend) + (sumB / count) * blend);
+      }
     }
   }
 

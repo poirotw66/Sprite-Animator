@@ -349,7 +349,7 @@ function processInMainThread(
         data[i + 3] = computedAlpha;
       }
 
-      // Pass 2: Final Decontamination (Targeting text residue)
+      // Pass 2: Final Decontamination (spill suppression; worker uses edge band + sampling for best quality)
       for (let i = startIndex; i < endIndex; i += 4) {
         const alpha = data[i + 3];
         if (alpha === 0) continue;
@@ -363,7 +363,6 @@ function processInMainThread(
         if (targetIsMagenta) {
           const magContrast = (r + b) / 2 - g;
 
-          // Dark Detail Decontamination for Text
           if (avg < 100 && magContrast > 4) {
             const gray = avg;
             const decontam = isEdge ? 1.0 : 0.85;
@@ -371,11 +370,10 @@ function processInMainThread(
             data[i + 1] = Math.round(g * (1 - decontam) + gray * decontam);
             data[i + 2] = Math.round(b * (1 - decontam) + gray * decontam);
           }
-          else if (isEdge && magContrast > 5) {
+          else if (isEdge && magContrast > 3) {
             const spillIntensity = 0.95;
-            data[i] = Math.round(r - (r - g) * spillIntensity);
-            data[i + 2] = Math.round(b - (b - g) * spillIntensity);
-
+            data[i] = Math.max(g, Math.round(r - (r - g) * spillIntensity));
+            data[i + 2] = Math.max(g, Math.round(b - (b - g) * spillIntensity));
             const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
             data[i] = Math.round(data[i] * 0.6 + gray * 0.4);
             data[i + 1] = Math.round(data[i + 1] * 0.6 + gray * 0.4);
@@ -394,9 +392,9 @@ function processInMainThread(
             data[i + 1] = Math.round(g * 0.15 + gray * 0.85);
             data[i + 2] = Math.round(b * 0.15 + gray * 0.85);
           }
-          else if (isEdge && greenContrast > 5) {
-            const rbAvg = (r + b) / 2;
-            data[i + 1] = Math.round(g - (g - rbAvg) * 0.95);
+          else if (isEdge && greenContrast > 3) {
+            const rbMax = Math.max(r, b);
+            data[i + 1] = Math.round(Math.min(g, rbMax + 15));
           }
         }
       }
