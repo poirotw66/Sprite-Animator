@@ -138,7 +138,7 @@ function processChromaKey(
   let transparentCount = 0;
   const reportInterval = Math.max(1, Math.floor(totalPixels / 100));
 
-  // Detect the actual background color by sampling corners
+  // Detect the actual background color by sampling corners, edges, and center (so middle cells are represented)
   const sampleSize = Math.min(100, Math.floor(Math.sqrt(totalPixels) / 10));
   const colorMap = new Map<string, number>();
 
@@ -151,6 +151,14 @@ function processChromaKey(
       samplePoints.push([width - 1 - x, height - 1 - y]);
     }
   }
+  // Add center and grid so middle cells (e.g. 4x4 sprite) contribute to dominant color
+  const cx = Math.floor(width / 2);
+  const cy = Math.floor(height / 2);
+  samplePoints.push([cx, cy]);
+  samplePoints.push([Math.floor(width * 0.25), cy]);
+  samplePoints.push([Math.floor(width * 0.75), cy]);
+  samplePoints.push([cx, Math.floor(height * 0.25)]);
+  samplePoints.push([cx, Math.floor(height * 0.75)]);
 
   for (const [x, y] of samplePoints) {
     const idx = (y * width + x) * 4;
@@ -176,7 +184,7 @@ function processChromaKey(
       const [r, g, b] = key.split(',').map(Number);
       const hsl = rgbToHsl(r, g, b);
 
-      const isMagentaLike = hsl.h >= 270 && hsl.h <= 330 && hsl.s > 0.3;
+      const isMagentaLike = ((hsl.h >= 270 && hsl.h <= 360) || (hsl.h >= 0 && hsl.h <= 35)) && hsl.s > 0.25 && r > g * 1.2 && b > g;
       const isGreenLike = hsl.h >= 70 && hsl.h <= 170 && hsl.s > 0.2 && g > r && g > b;
 
       if ((lookingForMagenta && isMagentaLike) || (lookingForGreen && isGreenLike)) {
@@ -190,8 +198,15 @@ function processChromaKey(
   const targetColorHsl = rgbToHsl(targetColor.r, targetColor.g, targetColor.b);
 
   // Determine if target is magenta or green based on detected color
-  const targetIsMagenta = targetColorHsl.h >= 270 && targetColorHsl.h <= 330;
+  const targetIsMagenta = (targetColorHsl.h >= 270 && targetColorHsl.h <= 360) || (targetColorHsl.h >= 0 && targetColorHsl.h <= 35);
   const targetIsGreen = targetColorHsl.h >= 70 && targetColorHsl.h <= 170;
+
+  // Magenta-like pixel: catches #FF00FF and AI variants like #E91E63 (pink) so middle cells are removed
+  const isMagentaLikePixel = (r: number, g: number, b: number): boolean => {
+    const { h, s } = rgbToHsl(r, g, b);
+    const hueOk = (h >= 270 && h <= 360) || (h >= 0 && h <= 35);
+    return hueOk && s > 0.25 && r > g * 1.2 && b > g && (r > 100 || b > 80);
+  };
 
   // Calculate adaptive fuzz based on detected background
   const adaptiveFuzz = maxCount > 10 ? fuzz * 1.5 : fuzz;
@@ -212,7 +227,6 @@ function processChromaKey(
     const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
 
     let isMatch = distance <= adaptiveFuzz + 20;
-
     if (isMatch) {
       if (targetIsMagenta) {
         isMatch = r > g * 1.1 && b > g * 1.1;
@@ -220,15 +234,31 @@ function processChromaKey(
         isMatch = g > r * 1.01 && g > b * 1.01;
       }
     }
+    // So middle cells with #E91E63 etc. are treated as background even when far from corner target
+    if (targetIsMagenta && isMagentaLikePixel(r, g, b)) isMatch = true;
 
     similarityMask[i] = isMatch ? 1 : 0;
   }
 
   const queue: number[] = [];
   const corners = [0, width - 1, (height - 1) * width, height * width - 1];
+  const centerIdx = cy * width + cx;
+  const centerGrid = [
+    Math.floor(width * 0.25) + cy * width,
+    Math.floor(width * 0.75) + cy * width,
+    cx + Math.floor(height * 0.25) * width,
+    cx + Math.floor(height * 0.75) * width,
+    centerIdx,
+  ];
 
   for (const startNode of corners) {
     if (similarityMask[startNode] === 1 && bgMask[startNode] === 0) {
+      queue.push(startNode);
+      bgMask[startNode] = 2;
+    }
+  }
+  for (const startNode of centerGrid) {
+    if (startNode >= 0 && startNode < totalPixels && similarityMask[startNode] === 1 && bgMask[startNode] === 0) {
       queue.push(startNode);
       bgMask[startNode] = 2;
     }
@@ -347,6 +377,9 @@ function processChromaKey(
       } else {
         alphaChannel[i] = 255;
       }
+    } else if (targetIsMagenta && isMagentaLikePixel(r, g, b)) {
+      // Middle cells may be disconnected by white grid lines; remove magenta/pink anyway
+      alphaChannel[i] = 0;
     }
     else if (distance < adaptiveFuzz * 0.95) {
       let isCertainHole = false;
