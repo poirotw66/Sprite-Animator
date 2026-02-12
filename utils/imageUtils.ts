@@ -6,6 +6,7 @@
 
 import { logger } from './logger';
 import type { ChromaKeyColorType } from '../types';
+import { removeChromaKeyWithWorker } from './chromaKeyProcessor';
 
 /**
  * Configuration for slicing a sprite sheet into individual frames.
@@ -1261,177 +1262,14 @@ export const cleanBase64 = (base64: string): string => {
 };
 
 /**
- * Removes chroma key (magenta #FF00FF) background from an image using fuzz tolerance.
- * Similar to ImageMagick's: magick sprite.png -fuzz 2% -transparent "#FF00FF" output.png
- * 
- * @param base64Image - Base64 encoded image with chroma key background
- * @param chromaKey - RGB color to remove (default: {r: 255, g: 0, b: 255} for #FF00FF)
- * @param fuzzPercent - Tolerance percentage (0-100, default: 2)
- * @returns Promise resolving to base64 encoded image with transparent background
- * 
- * @example
- * ```typescript
- * const processed = await removeChromaKey(spriteSheetBase64, {r: 255, g: 0, b: 255}, 2);
- * ```
+ * Chroma key removal: delegates to the canonical implementation in chromaKeyProcessor
+ * so the whole app uses the same algorithm (HSL-based, Web Worker, progress support).
  */
-export const removeChromaKey = async (
+export const removeChromaKey = (
   base64Image: string,
   chromaKey: { r: number; g: number; b: number } = { r: 255, g: 0, b: 255 },
-  fuzzPercent: number = 2
-): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-      if (!ctx) {
-        reject(new Error('Canvas context failed'));
-        return;
-      }
-
-      // Draw the image
-      ctx.drawImage(img, 0, 0);
-
-      // Get image data
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-
-      // Calculate total pixels first
-      const totalPixels = data.length / 4;
-
-      // First pass: Detect the actual background color by sampling corners and edges
-      // These areas are most likely to be background
-      const width = canvas.width;
-      const height = canvas.height;
-      const sampleSize = Math.min(100, Math.floor(Math.sqrt(totalPixels) / 10));
-      const colorMap = new Map<string, number>();
-      
-      // Sample corners and edges for background color detection
-      const samplePoints: Array<[number, number]> = [];
-      for (let y = 0; y < sampleSize; y++) {
-        for (let x = 0; x < sampleSize; x++) {
-          // Top-left corner
-          samplePoints.push([x, y]);
-          // Top-right corner
-          samplePoints.push([width - 1 - x, y]);
-          // Bottom-left corner
-          samplePoints.push([x, height - 1 - y]);
-          // Bottom-right corner
-          samplePoints.push([width - 1 - x, height - 1 - y]);
-        }
-      }
-      
-      // Count color occurrences in sample areas
-      for (const [x, y] of samplePoints) {
-        const idx = (y * width + x) * 4;
-        if (idx < data.length) {
-          const r = data[idx];
-          const g = data[idx + 1];
-          const b = data[idx + 2];
-          const key = `${r},${g},${b}`;
-          colorMap.set(key, (colorMap.get(key) || 0) + 1);
-        }
-      }
-      
-      // Find the most common color (likely the background)
-      let mostCommonColor = chromaKey;
-      let maxCount = 0;
-      for (const [key, count] of colorMap.entries()) {
-        if (count > maxCount) {
-          const [r, g, b] = key.split(',').map(Number);
-          // Check if it's magenta-like (high R, low G, high B)
-          if (r > 180 && g < 100 && b > 100) {
-            mostCommonColor = { r, g, b };
-            maxCount = count;
-          }
-        }
-      }
-      
-      logger.debug('Background color detection', {
-        color: mostCommonColor,
-        count: maxCount,
-      });
-      
-      // Use detected color or fallback to provided chromaKey
-      const targetColor = maxCount > 10 ? mostCommonColor : chromaKey;
-      
-      // Calculate fuzz tolerance - use a more permissive approach
-      const fuzz = (fuzzPercent / 100) * 255;
-      
-      let transparentCount = 0;
-      let samplePixels: Array<{ r: number; g: number; b: number; distance?: number }> = [];
-      let sampleCount = 0;
-
-      // Process each pixel
-      for (let i = 0; i < data.length; i += 4) {
-        const red = data[i];
-        const green = data[i + 1];
-        const blue = data[i + 2];
-        const alpha = data[i + 3];
-
-        // Skip if already transparent
-        if (alpha === 0) {
-          transparentCount++;
-          continue;
-        }
-
-        // Sample first 10 pixels for debugging
-        if (sampleCount < 10) {
-          const rDiff = red - targetColor.r;
-          const gDiff = green - targetColor.g;
-          const bDiff = blue - targetColor.b;
-          const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
-          samplePixels.push({ r: red, g: green, b: blue, distance });
-          sampleCount++;
-        }
-
-        // Calculate Euclidean distance from detected background color
-        const rDiff = red - targetColor.r;
-        const gDiff = green - targetColor.g;
-        const bDiff = blue - targetColor.b;
-        const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
-
-        // More permissive matching: Check if it's close to detected background color
-        // Also check if it follows magenta-like pattern (high R, low G, high B)
-        const rClose = Math.abs(red - targetColor.r) <= fuzz;
-        const gClose = Math.abs(green - targetColor.g) <= fuzz;
-        const bClose = Math.abs(blue - targetColor.b) <= fuzz;
-        
-        // Pattern-based matching for magenta-like colors
-        const isMagentaLike = red > 180 && green < 100 && blue > 100;
-        const isWithinDistance = distance <= fuzz;
-        const isCloseToTarget = rClose && gClose && bClose;
-        
-        // Match if it's close to detected color OR follows magenta pattern
-        if (isCloseToTarget || isWithinDistance || (isMagentaLike && distance < fuzz * 5)) {
-          data[i + 3] = 0; // Set alpha to 0 (transparent)
-          transparentCount++;
-        }
-      }
-      
-      // Debug: Log processing results (only in development)
-      logger.debug('Chroma key removal', {
-        targetColor,
-        fuzz: fuzz.toFixed(1),
-        transparentPixels: transparentCount,
-        totalPixels,
-        percentage: ((transparentCount/totalPixels)*100).toFixed(1),
-        samplePixels: samplePixels.slice(0, 3), // Only log first 3 in dev
-      });
-
-      // Put processed data back
-      ctx.putImageData(imageData, 0, 0);
-
-      // Return as base64
-      resolve(canvas.toDataURL('image/png'));
-    };
-    img.onerror = (e) => reject(e);
-    img.src = base64Image;
-  });
-};
+  fuzzPercent: number = 10
+): Promise<string> => removeChromaKeyWithWorker(base64Image, chromaKey, fuzzPercent);
 
 /**
  * Removes white/light background from an image (legacy method).
