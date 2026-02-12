@@ -327,6 +327,7 @@ export const zhTW: Translations = {
   lineStickerPromptPreviewTitle: '產圖提示詞預覽',
   lineStickerPromptConfirmHint: '請確認上方提示詞後再點擊「生成精靈圖」。',
   lineStickerPromptEmptyHint: '點「產生提示詞」可預覽將送給產圖模型的完整提示詞。',
+  lineStickerActionDescPlaceholder: '動作描述 (英中對照)',
 
   // RM BG Tool
   rmbgTitle: '精靈圖背景移除',

@@ -327,6 +327,7 @@ export const en: Translations = {
   lineStickerPromptPreviewTitle: 'Image generation prompt preview',
   lineStickerPromptConfirmHint: 'Please confirm the prompt above before clicking Generate.',
   lineStickerPromptEmptyHint: 'Click "Generate Prompt" to preview the full prompt sent to the image model.',
+  lineStickerActionDescPlaceholder: 'Action (EN + ZH)',
 
   // RM BG Tool
   rmbgTitle: 'Sprite Background Remover',

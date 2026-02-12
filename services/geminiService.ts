@@ -480,7 +480,7 @@ Now, please start generating based on the "Theme".`;
     contents: { parts: [{ text: prompt }] },
     config: {
       temperature: 0.9,
-      maxOutputTokens: 8192,
+      maxOutputTokens: 16384,
     },
   });
 
@@ -578,6 +578,67 @@ Now, please start generating based on the "Theme".`;
   );
 
   return result;
+}
+
+/**
+ * Ask Gemini to generate one action description per phrase (for LINE sticker pose/expression).
+ * Returns array in same order as input; each item is "English (中文)" format.
+ */
+export async function generateActionDescriptions(
+  apiKey: string,
+  phrases: string[],
+  model: string = PHRASE_GENERATION_MODEL
+): Promise<string[]> {
+  if (!apiKey) throw new Error('API Key is missing');
+  if (phrases.length === 0) return [];
+
+  const ai = new GoogleGenAI({ apiKey });
+  const list = phrases.map((p, i) => `${i + 1}. ${p}`).join('\n');
+
+  const prompt = `You are an expert at describing character poses and expressions for LINE stickers.
+
+Given the following list of sticker PHRASES (short text that will appear on each sticker), output exactly ONE action description per phrase, in the same order.
+
+**Output format (strict):**
+- One line per phrase.
+- Each line must be: English description (中文描述)
+- English: concrete pose/expression (e.g. waving, smiling, thumbs up; tilting head, confused).
+- 中文: short Chinese description matching the English (e.g. 揮手、微笑、比讚；歪頭、困惑).
+- No numbering, no bullets, no extra text. Only the "English (中文)" line.
+
+**Phrases:**
+${list}
+
+**Output (exactly ${phrases.length} lines, one per phrase):**`;
+
+  const response = await ai.models.generateContent({
+    model,
+    contents: { parts: [{ text: prompt }] },
+    config: {
+      temperature: 0.7,
+      maxOutputTokens: 8192,
+    },
+  });
+
+  const text = response.text ?? '';
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line) => line.replace(/^\s*\d+[\.\)\:\-\s]+/, '').trim())
+    .filter((line) => line.length > 0);
+
+  if (lines.length >= phrases.length) {
+    return lines.slice(0, phrases.length);
+  }
+  if (lines.length > 0) {
+    const padded = [...lines];
+    while (padded.length < phrases.length) {
+      padded.push(lines[padded.length % lines.length] ?? 'natural pose (自然動作)');
+    }
+    return padded.slice(0, phrases.length);
+  }
+  return phrases.map(() => 'natural action and expression matching the text meaning (自然動作與表情符合語意)');
 }
 
 /**

@@ -329,6 +329,7 @@ export interface Translations {
   lineStickerPromptPreviewTitle: string;
   lineStickerPromptConfirmHint: string;
   lineStickerPromptEmptyHint: string;
+  lineStickerActionDescPlaceholder: string;
 
   // RM BG Tool
   rmbgTitle: string;

@@ -24,6 +24,8 @@ interface UseLineStickerGenerationProps {
     selectedTheme: ThemeOption;
     customThemeContext: string;
     customPhrasesList: string[];
+    /** Optional per-cell action descriptions (same length as customPhrasesList); used in [5. Grid Content]. */
+    customActionDescsList?: string[];
     selectedLanguage: keyof typeof TEXT_PRESETS;
     selectedTextColor: keyof typeof TEXT_COLOR_PRESETS;
     selectedFont: keyof typeof FONT_PRESETS;
@@ -44,6 +46,7 @@ export const useLineStickerGeneration = ({
     selectedTheme,
     customThemeContext,
     customPhrasesList,
+    customActionDescsList,
     selectedLanguage,
     selectedTextColor,
     selectedFont,
@@ -58,7 +61,9 @@ export const useLineStickerGeneration = ({
     const [statusText, setStatusText] = useState('');
     const [error, setError] = useState<string | null>(null);
 
-    const buildPrompt = useCallback((phraseListOverride?: string[]) => {
+    const totalFrames = gridCols * gridRows;
+
+    const buildPrompt = useCallback((phraseListOverride?: string[], actionDescsOverride?: string[]) => {
         let characterSlot = { ...DEFAULT_CHARACTER_SLOT };
 
         if (characterPreset !== 'custom') {
@@ -70,14 +75,13 @@ export const useLineStickerGeneration = ({
             if (characterPersonality.trim()) characterSlot.personality = characterPersonality.trim();
         }
 
-        // Always prefer user phrases (override or textarea) over preset; only fall back to preset when user has none
         const examplePhrases =
             phraseListOverride ??
             (customPhrasesList.length > 0 ? customPhrasesList : (selectedTheme === 'custom' ? [] : THEME_PRESETS[selectedTheme].examplePhrases));
 
         const themeSlot = selectedTheme === 'custom'
             ? {
-                chatContext: customThemeContext.trim() || '自訂聊天主題',
+                chatContext: customThemeContext.trim() || 'Custom chat theme',
                 examplePhrases,
             }
             : {
@@ -96,7 +100,13 @@ export const useLineStickerGeneration = ({
             },
         };
 
-        return buildLineStickerPrompt(slots, gridCols, gridRows, chromaKeyColor, includeText);
+        const actionDescs = actionDescsOverride ?? (customActionDescsList && customActionDescsList.length >= totalFrames
+            ? customActionDescsList.slice(0, totalFrames)
+            : customActionDescsList && customActionDescsList.length > 0
+                ? [...customActionDescsList, ...Array(totalFrames - customActionDescsList.length).fill('')].slice(0, totalFrames)
+                : undefined);
+
+        return buildLineStickerPrompt(slots, gridCols, gridRows, chromaKeyColor, includeText, actionDescs);
     }, [
         characterPreset,
         characterAppearance,
@@ -104,6 +114,8 @@ export const useLineStickerGeneration = ({
         selectedTheme,
         customThemeContext,
         customPhrasesList,
+        customActionDescsList,
+        totalFrames,
         selectedStyle,
         selectedLanguage,
         selectedTextColor,
@@ -114,7 +126,7 @@ export const useLineStickerGeneration = ({
         includeText,
     ]);
 
-    const generateSingleSheet = useCallback(async (phraseListOverride?: string[]) => {
+    const generateSingleSheet = useCallback(async (phraseListOverride?: string[], actionDescsOverride?: string[]) => {
         if (!apiKey) {
             setError(t.errorApiKey);
             return null;
@@ -125,7 +137,7 @@ export const useLineStickerGeneration = ({
         setStatusText(t.lineStickerGenerating);
 
         try {
-            const prompt = buildPrompt(phraseListOverride);
+            const prompt = buildPrompt(phraseListOverride, actionDescsOverride);
             // generateSpriteSheet(imageBase64, prompt, cols, rows, apiKey, model, onProgress, chromaKeyColor, outputResolution)
             const result = await generateSpriteSheet(
                 sourceImage || '',

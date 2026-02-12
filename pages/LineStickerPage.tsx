@@ -10,7 +10,7 @@ import { SettingsModal } from '../components/SettingsModal';
 import { useSettings } from '../hooks/useSettings';
 import { useLineStickerDownload } from '../hooks/useLineStickerDownload';
 import { useLineStickerGeneration } from '../hooks/useLineStickerGeneration';
-import { generateStickerPhrases } from '../services/geminiService';
+import { generateStickerPhrases, generateActionDescriptions } from '../services/geminiService';
 import { sliceSpriteSheet, SliceSettings, getEffectivePadding, FrameOverride, PaddingFour } from '../utils/imageUtils';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { removeBackgroundAI } from '../utils/aiBackgroundRemoval';
@@ -36,6 +36,7 @@ import {
     TEXT_COLOR_PRESETS,
     FONT_PRESETS,
     CHARACTER_PRESETS,
+    getActionHint,
     type ThemeOption,
 } from '../utils/lineStickerPrompt';
 
@@ -90,6 +91,7 @@ const LineStickerPage: React.FC = () => {
     // Set mode state
     const [stickerSetMode, setStickerSetMode] = useState(false);
     const [setPhrasesList, setSetPhrasesList] = useState<string[]>([]);
+    const [actionDescsList, setActionDescsList] = useState<string[]>([]);
     const [sheetImages, setSheetImages] = useState<(string | null)[]>([null, null, null]);
     const [processedSheetImages, setProcessedSheetImages] = useState<(string | null)[]>([null, null, null]);
     const [sheetFrames, setSheetFrames] = useState<string[][]>(() => [[], [], []]);
@@ -121,6 +123,17 @@ const LineStickerPage: React.FC = () => {
         return padded;
     }, [stickerSetMode, setPhrasesList, customPhrases, gridCols, gridRows]);
 
+    // Action descriptions for hook (same length as phrasesForHook); empty falls back to getActionHint(phrase)
+    const actionDescsForHook = useMemo(() => {
+        if (stickerSetMode) {
+            const list = actionDescsList.length >= 48 ? actionDescsList : [...actionDescsList, ...Array(48 - actionDescsList.length).fill('')];
+            return list.slice(0, 48);
+        }
+        const total = gridCols * gridRows;
+        const padded = actionDescsList.length >= total ? actionDescsList.slice(0, total) : [...actionDescsList, ...Array(total - actionDescsList.length).fill('')];
+        return padded;
+    }, [stickerSetMode, actionDescsList, gridCols, gridRows]);
+
     // Display phrase grid: single = gridCols*gridRows, set = current sheet 16
     const phraseGridList = useMemo(() => {
         if (stickerSetMode) {
@@ -130,6 +143,17 @@ const LineStickerPage: React.FC = () => {
         }
         return phrasesForHook;
     }, [stickerSetMode, currentSheetIndex, setPhrasesList, phrasesForHook]);
+
+    const actionDescGridList = useMemo(() => {
+        if (stickerSetMode) {
+            const start = currentSheetIndex * 16;
+            const sheet = actionDescsList.slice(start, start + 16);
+            return sheet.length >= 16 ? sheet : [...sheet, ...Array(16 - sheet.length).fill('')];
+        }
+        const total = gridCols * gridRows;
+        const list = actionDescsList.slice(0, total);
+        return list.length >= total ? list : [...list, ...Array(total - list.length).fill('')];
+    }, [stickerSetMode, currentSheetIndex, actionDescsList, gridCols, gridRows]);
 
     const phraseGridCols = stickerSetMode ? 4 : gridCols;
     const phraseGridRows = stickerSetMode ? 4 : gridRows;
@@ -154,6 +178,26 @@ const LineStickerPage: React.FC = () => {
         }
     }, [stickerSetMode, currentSheetIndex, gridCols, gridRows, customPhrases]);
 
+    const updateActionDescAt = useCallback((index: number, value: string) => {
+        if (stickerSetMode) {
+            const globalIndex = currentSheetIndex * 16 + index;
+            setActionDescsList(prev => {
+                const next = prev.length >= 48 ? [...prev] : [...prev, ...Array(48 - prev.length).fill('')];
+                const n = next.slice(0, 48);
+                n[globalIndex] = value;
+                return n;
+            });
+        } else {
+            const total = gridCols * gridRows;
+            setActionDescsList(prev => {
+                const next = prev.length >= total ? [...prev] : [...prev, ...Array(total - prev.length).fill('')];
+                const n = next.slice(0, total);
+                n[index] = value;
+                return n;
+            });
+        }
+    }, [stickerSetMode, currentSheetIndex, gridCols, gridRows]);
+
     useEffect(() => {
         if (selectedTheme === 'custom') return;
         const theme = THEME_PRESETS[selectedTheme];
@@ -161,6 +205,7 @@ const LineStickerPage: React.FC = () => {
             const p = theme.examplePhrases.join('\n');
             setCustomPhrases(p);
             setSetPhrasesList(theme.examplePhrases);
+            setActionDescsList(theme.examplePhrases.map((phrase: string) => getActionHint(phrase)));
         }
     }, [selectedTheme]);
 
@@ -188,6 +233,7 @@ const LineStickerPage: React.FC = () => {
         selectedTheme,
         customThemeContext,
         customPhrasesList: phrasesForHook,
+        customActionDescsList: actionDescsForHook,
         selectedLanguage,
         selectedTextColor,
         selectedFont,
@@ -296,7 +342,9 @@ const LineStickerPage: React.FC = () => {
                     setIsGenerating(false);
                     return;
                 }
-                const res = await generateSingleSheet(setPhrasesList.slice(currentSheetIndex * 16, (currentSheetIndex + 1) * 16));
+                const phraseSlice = setPhrasesList.slice(currentSheetIndex * 16, (currentSheetIndex + 1) * 16);
+                const actionSlice = actionDescsList.slice(currentSheetIndex * 16, (currentSheetIndex + 1) * 16);
+                const res = await generateSingleSheet(phraseSlice, actionSlice);
                 if (!res) { setIsGenerating(false); return; }
                 setSheetImages(p => { const n = [...p]; n[currentSheetIndex] = res; return n; });
                 setStatusText(t.statusProcessing);
@@ -324,7 +372,7 @@ const LineStickerPage: React.FC = () => {
                 setStatusText('');
             }
         } catch (err: any) { setError(`${t.errorGeneration}: ${err.message}`); } finally { setIsGenerating(false); }
-    }, [sourceImage, stickerSetMode, setPhrasesList, currentSheetIndex, generateSingleSheet, t, chromaKeyColor, bgRemovalMethod, setStatusText, setError, sliceProcessedSheetToFrames, setIsGenerating]);
+    }, [sourceImage, stickerSetMode, setPhrasesList, actionDescsList, currentSheetIndex, generateSingleSheet, t, chromaKeyColor, bgRemovalMethod, setStatusText, setError, sliceProcessedSheetToFrames, setIsGenerating]);
 
     const handleGenerateAllSheets = useCallback(async () => {
         if (!sourceImage) { setError(t.errorNoImage); return; }
@@ -337,7 +385,9 @@ const LineStickerPage: React.FC = () => {
         setError(null);
         try {
             const results = await Promise.all([0, 1, 2].map(async (i) => {
-                return generateSingleSheet(setPhrasesList.slice(i * 16, (i + 1) * 16));
+                const phraseSlice = setPhrasesList.slice(i * 16, (i + 1) * 16);
+                const actionSlice = actionDescsList.slice(i * 16, (i + 1) * 16);
+                return generateSingleSheet(phraseSlice, actionSlice);
             }));
             setIsGenerating(true);
             const valid = results.filter((r): r is string => r !== null);
@@ -357,7 +407,7 @@ const LineStickerPage: React.FC = () => {
             setSelectedFramesBySheet(allFrames.map(f => new Array(f.length).fill(false)));
             setStatusText('');
         } catch (err: any) { setError(`${t.errorGeneration}: ${err.message}`); } finally { setIsGenerating(false); }
-    }, [sourceImage, setPhrasesList, generateSingleSheet, t, chromaKeyColor, bgRemovalMethod, setStatusText, setError, sliceProcessedSheetToFrames, setIsGenerating]);
+    }, [sourceImage, setPhrasesList, actionDescsList, generateSingleSheet, t, chromaKeyColor, bgRemovalMethod, setStatusText, setError, sliceProcessedSheetToFrames, setIsGenerating]);
 
     const buildFullContext = useCallback(() => {
         const themeInfo = selectedTheme === 'custom'
@@ -662,6 +712,13 @@ const LineStickerPage: React.FC = () => {
                                         const phrases = await generateStickerPhrases(apiKey, fullContext, langLabel, count, selectedPhraseMode);
                                         setCustomPhrases(phrases.join('\n'));
                                         setSetPhrasesList(phrases);
+                                        try {
+                                            const actionDescs = await generateActionDescriptions(apiKey, phrases);
+                                            setActionDescsList(actionDescs);
+                                        } catch (actionErr: any) {
+                                            logger.warn('Action descriptions fallback to getActionHint:', actionErr?.message);
+                                            setActionDescsList(phrases.map((phrase: string) => getActionHint(phrase)));
+                                        }
                                     } catch (err: any) { setError(err.message); } finally { setIsGeneratingPhrases(false); }
                                 }} disabled={isGeneratingPhrases} className="text-xs text-green-600 flex items-center gap-1 font-semibold hover:text-green-700">
                                     {isGeneratingPhrases ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
@@ -682,19 +739,28 @@ const LineStickerPage: React.FC = () => {
                                 style={{
                                     display: 'grid',
                                     gridTemplateColumns: `repeat(${phraseGridCols}, minmax(0, 1fr))`,
-                                    gridAutoRows: 'minmax(2rem, auto)',
+                                    gridAutoRows: 'auto',
                                 }}
                             >
                                 {phraseGridList.map((phrase, index) => (
-                                    <input
-                                        key={stickerSetMode ? `s${currentSheetIndex}-${index}` : index}
-                                        type="text"
-                                        value={phrase}
-                                        onChange={e => updatePhraseAt(index, e.target.value)}
-                                        placeholder={`${index + 1}`}
-                                        className="w-full min-w-0 p-2 border border-slate-200 rounded-lg text-xs font-mono focus:ring-2 focus:ring-green-500 focus:border-green-400 outline-none bg-white"
-                                        aria-label={stickerSetMode ? `Sheet ${currentSheetIndex + 1} cell ${index + 1}` : `Cell ${index + 1}`}
-                                    />
+                                    <div key={stickerSetMode ? `s${currentSheetIndex}-${index}` : index} className="flex flex-col gap-1">
+                                        <input
+                                            type="text"
+                                            value={phrase}
+                                            onChange={e => updatePhraseAt(index, e.target.value)}
+                                            placeholder={`${index + 1}`}
+                                            className="w-full min-w-0 p-2 border border-slate-200 rounded-lg text-xs font-mono focus:ring-2 focus:ring-green-500 focus:border-green-400 outline-none bg-white"
+                                            aria-label={stickerSetMode ? `Sheet ${currentSheetIndex + 1} cell ${index + 1} phrase` : `Cell ${index + 1} phrase`}
+                                        />
+                                        <textarea
+                                            rows={2}
+                                            value={actionDescGridList[index] ?? ''}
+                                            onChange={e => updateActionDescAt(index, e.target.value)}
+                                            placeholder={t.lineStickerActionDescPlaceholder}
+                                            className="w-full min-w-0 min-h-[3.5rem] p-1.5 border border-slate-100 rounded text-xs text-slate-500 focus:ring-2 focus:ring-green-500 outline-none bg-slate-50 resize-y"
+                                            aria-label={stickerSetMode ? `Sheet ${currentSheetIndex + 1} cell ${index + 1} action` : `Cell ${index + 1} action`}
+                                        />
+                                    </div>
                                 ))}
                             </div>
                         </div>
@@ -709,7 +775,10 @@ const LineStickerPage: React.FC = () => {
                                         const phraseList = stickerSetMode
                                             ? setPhrasesList.slice(currentSheetIndex * 16, (currentSheetIndex + 1) * 16)
                                             : undefined;
-                                        const prompt = buildPrompt(phraseList);
+                                        const actionDescs = stickerSetMode
+                                            ? actionDescsList.slice(currentSheetIndex * 16, (currentSheetIndex + 1) * 16)
+                                            : undefined;
+                                        const prompt = buildPrompt(phraseList, actionDescs);
                                         setPreviewPrompt(prompt);
                                         setError(null);
                                     }}
