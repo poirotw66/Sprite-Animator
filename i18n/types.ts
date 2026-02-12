@@ -309,6 +309,8 @@ export interface Translations {
   lineStickerGeneratingAll: string;
   lineStickerDownloadThis: string;
   lineStickerDownload3Zip: string;
+  lineStickerDownload3SheetsFramesZip: string;
+  lineStickerDownloadAllOneClick: string;
   lineStickerDownloadSheetN: string;
 
   // LINE Sticker Tool - Error / Status

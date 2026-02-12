@@ -307,6 +307,8 @@ export const en: Translations = {
   lineStickerGeneratingAll: 'Generating in parallel...',
   lineStickerDownloadThis: 'Download This',
   lineStickerDownload3Zip: 'Download 3 as ZIP',
+  lineStickerDownload3SheetsFramesZip: 'Download 3 Sets of Frames (ZIP)',
+  lineStickerDownloadAllOneClick: 'Download All (3 Sheets + 3 Frame ZIPs)',
   lineStickerDownloadSheetN: 'Download Sheet {n} (16 frames)',
 
   // LINE Sticker Tool - Error / Status

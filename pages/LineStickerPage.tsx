@@ -252,6 +252,8 @@ const LineStickerPage: React.FC = () => {
         downloadAllAsZip,
         downloadStickerSetZip,
         downloadCurrentSheetZip,
+        downloadAllSheetsFramesZip,
+        downloadSetOneClick,
     } = useLineStickerDownload({
         stickerFrames,
         sheetFrames,
@@ -961,7 +963,9 @@ const LineStickerPage: React.FC = () => {
                                 <div className="flex flex-wrap gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
                                     {stickerSetMode ? (
                                         <div className="flex flex-wrap gap-2 w-full">
+                                            <button onClick={downloadSetOneClick} disabled={isDownloading || (!processedSheetImages.every(img => !!img) && !sheetFrames.some(arr => arr.length > 0))} className="px-5 py-2.5 bg-green-600 text-white text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-green-700 disabled:opacity-50 transition-all shadow-md"><Download className="w-4 h-4" />{t.lineStickerDownloadAllOneClick}</button>
                                             <button onClick={downloadStickerSetZip} disabled={isDownloading || !processedSheetImages.every(img => !!img)} className="px-5 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-slate-800 disabled:opacity-50 transition-all shadow-md"><FileArchive className="w-4 h-4" />{t.lineStickerDownload3Zip}</button>
+                                            <button onClick={downloadAllSheetsFramesZip} disabled={isDownloading || !sheetFrames.some(arr => arr.length > 0)} className="px-5 py-2.5 bg-slate-700 text-white text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-slate-600 disabled:opacity-50 transition-all shadow-md"><FileArchive className="w-4 h-4" />{t.lineStickerDownload3SheetsFramesZip}</button>
                                             <button onClick={downloadCurrentSheetZip} disabled={isDownloading || !processedSheetImages[currentSheetIndex]} className="px-5 py-2.5 bg-green-500 text-white text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-green-600 disabled:opacity-50 transition-all shadow-md"><Download className="w-4 h-4" />{t.lineStickerDownloadCurrentSheet}</button>
                                         </div>
                                     ) : (

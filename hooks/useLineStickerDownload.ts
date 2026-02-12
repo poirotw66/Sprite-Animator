@@ -152,6 +152,60 @@ export const useLineStickerDownload = ({
         await downloadSelectedAsZip(indices);
     }, [sheetFrames, currentSheetIndex, downloadSelectedAsZip]);
 
+    /** One ZIP containing 3 folders (sheet_1, sheet_2, sheet_3), each with 16 sliced frame images. */
+    const downloadAllSheetsFramesZip = useCallback(async () => {
+        const hasAny = sheetFrames.some((arr) => arr.length > 0);
+        if (!hasAny) return;
+        setIsDownloading(true);
+        try {
+            const zip = new JSZip();
+            const ext = downloadFormat;
+            for (let s = 0; s < sheetFrames.length; s++) {
+                const frames = sheetFrames[s];
+                if (!frames || frames.length === 0) continue;
+                const folder = zip.folder(`sheet_${s + 1}`);
+                if (!folder) continue;
+                for (let i = 0; i < frames.length; i++) {
+                    const frame = frames[i];
+                    if (frame) {
+                        const blob = await convertToFormat(frame, downloadFormat);
+                        folder.file(`sticker_${String(i + 1).padStart(2, '0')}.${ext}`, blob);
+                    }
+                }
+            }
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(zipBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `line_stickers_3_sheets_frames_${Date.now()}.zip`;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (err) {
+            logger.error('Failed to export 3 sheets frames ZIP:', err);
+            setError(t.errorExportZip);
+        } finally {
+            setIsDownloading(false);
+        }
+    }, [sheetFrames, downloadFormat, convertToFormat, setError, t]);
+
+    /** One-click: download ZIP of 3 sprite sheets, then ZIP of 3 sets of sliced frames. */
+    const downloadSetOneClick = useCallback(async () => {
+        const hasSheets = processedSheetImages.some((img) => !!img);
+        const hasFrames = sheetFrames.some((arr) => arr.length > 0);
+        if (!hasSheets && !hasFrames) return;
+        setIsDownloading(true);
+        try {
+            if (hasSheets) {
+                await downloadStickerSetZip();
+                setIsDownloading(true);
+                await new Promise((r) => setTimeout(r, 400));
+            }
+            if (hasFrames) await downloadAllSheetsFramesZip();
+        } finally {
+            setIsDownloading(false);
+        }
+    }, [processedSheetImages, sheetFrames, downloadStickerSetZip, downloadAllSheetsFramesZip]);
+
     return {
         isDownloading,
         downloadFormat,
@@ -161,5 +215,7 @@ export const useLineStickerDownload = ({
         downloadAllAsZip,
         downloadStickerSetZip,
         downloadCurrentSheetZip,
+        downloadAllSheetsFramesZip,
+        downloadSetOneClick,
     };
 };

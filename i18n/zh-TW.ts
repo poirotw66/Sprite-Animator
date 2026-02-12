@@ -307,6 +307,8 @@ export const zhTW: Translations = {
   lineStickerGeneratingAll: '並行產生中...',
   lineStickerDownloadThis: '下載這張',
   lineStickerDownload3Zip: '下載 3 張為 ZIP',
+  lineStickerDownload3SheetsFramesZip: '下載 3 組切圖 (ZIP)',
+  lineStickerDownloadAllOneClick: '一鍵下載全部（3 張精靈圖 + 3 組切圖 ZIP）',
   lineStickerDownloadSheetN: '下載第 {n} 張 16 格',
 
   // LINE Sticker Tool - Error / Status
