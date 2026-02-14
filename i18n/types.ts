@@ -338,6 +338,9 @@ export interface Translations {
   // RM BG Tool
   rmbgTitle: string;
   rmbgDesc: string;
+  partingTitle: string;
+  partingDesc: string;
+  partingOptimizeButton: string;
   rmbgUploadTitle: string;
   rmbgUploadHint: string;
   rmbgProcessButton: string;

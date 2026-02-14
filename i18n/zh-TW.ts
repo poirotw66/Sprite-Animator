@@ -336,6 +336,9 @@ export const zhTW: Translations = {
   // RM BG Tool
   rmbgTitle: '精靈圖背景移除',
   rmbgDesc: '專門為 AI 生成的洋紅色或綠色背景精靈圖設計的去背工具，具備專業級邊緣處理與防破洞算法。',
+  partingTitle: '精靈圖拆分',
+  partingDesc: '上傳精靈圖，設定欄列與邊距後切分並下載為單張或 ZIP。',
+  partingOptimizeButton: '自動優化切分',
   rmbgUploadTitle: '上傳精靈圖',
   rmbgUploadHint: '點擊或拖放圖片至此處進行去背',
   rmbgProcessButton: '開始去背處理',

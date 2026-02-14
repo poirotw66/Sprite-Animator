@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, MessageCircle, ArrowRight, Eraser } from 'lucide-react';
+import { Zap, MessageCircle, ArrowRight, Eraser, Grid } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 
@@ -42,6 +42,14 @@ const HomePage: React.FC = () => {
             borderColor: 'border-purple-200 hover:border-purple-300',
             hoverGlow: 'hover:shadow-purple-200/50',
         },
+        {
+            id: 'parting',
+            path: '/parting',
+            icon: <Grid className="w-10 h-10 md:w-12 md:h-12 text-white" />,
+            gradient: 'from-teal-500 to-cyan-500',
+            borderColor: 'border-teal-200 hover:border-teal-300',
+            hoverGlow: 'hover:shadow-teal-200/50',
+        },
     ];
 
     const getToolInfo = (id: string) => {
@@ -52,6 +60,8 @@ const HomePage: React.FC = () => {
                 return { title: t.lineStickerTool, desc: t.lineStickerDesc };
             case 'rmbg':
                 return { title: t.rmbgTitle, desc: t.rmbgDesc };
+            case 'parting':
+                return { title: t.partingTitle, desc: t.partingDesc };
             default:
                 return { title: '', desc: '' };
         }

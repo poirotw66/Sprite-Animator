@@ -336,6 +336,9 @@ export const en: Translations = {
   // RM BG Tool
   rmbgTitle: 'Sprite Background Remover',
   rmbgDesc: 'A specialized tool for removing magenta or green backgrounds from AI-generated sprite sheets, featuring professional-grade edge cleanup and internal color protection.',
+  partingTitle: 'Sprite Sheet Splitter',
+  partingDesc: 'Upload a sprite sheet, set columns and padding, then split and download as individual images or ZIP.',
+  partingOptimizeButton: 'Auto-optimize slice',
   rmbgUploadTitle: 'Upload Sprite Sheet',
   rmbgUploadHint: 'Click or drag and drop image here to remove background',
   rmbgProcessButton: 'Process Background Removal',
