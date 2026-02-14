@@ -48,45 +48,6 @@ function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: n
   return { h, s, l };
 }
 
-/**
- * Check if a color is in the green screen hue range using HSL
- * Target color: #00B140 (RGB: 0, 177, 64, Hue: ~141°)
- */
-function isGreenScreenHSL(r: number, g: number, b: number, tolerance: number): boolean {
-  const { h, s, l } = rgbToHsl(r, g, b);
-
-  // Green screen characteristics in HSL:
-  // Hue: 70-170 degrees (wider range for AI variants)
-  // Saturation: > 0.2 (more tolerant of muddy AI backgrounds)
-  // Lightness: 0.15-0.85 (wider range for dark/light grain)
-
-  const hueInRange = h >= 70 - tolerance && h <= 170 + tolerance;
-  const saturationOk = s > 0.2;
-  const lightnessOk = l > 0.15 && l < 0.85;
-
-  // RGB check: green must be notably higher than red and blue
-  const greenDominant = g > r * 1.1 && g > b * 1.1 && g > 40;
-
-  return hueInRange && saturationOk && lightnessOk && greenDominant;
-}
-
-/**
- * Check if a color is magenta screen using HSL
- * Target color: #FF00FF (RGB: 255, 0, 255, Hue: 300°)
- * Strict detection - rely on RGB distance matching for variants
- */
-function isMagentaScreenHSL(r: number, g: number, b: number, tolerance: number): boolean {
-  const { h, s, l } = rgbToHsl(r, g, b);
-
-  // Strict HSL check for pure magenta
-  const hueInRange = h >= 295 - tolerance && h <= 305 + tolerance;
-  const saturationOk = s > 0.7;
-  const lightnessOk = l > 0.35 && l < 0.75;
-  const magentaPattern = r > 180 && b > 180 && g < 100 && Math.abs(r - b) < 80;
-
-  return hueInRange && saturationOk && lightnessOk && magentaPattern;
-}
-
 /** Optional tuning for edge spill suppression; exposed on frontend. */
 export interface ChromaKeyOptions {
   /** Edge band radius in pixels (1–5). Default from CHROMA_KEY_EDGE_BAND_RADIUS. */

@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, lazy, Suspense, useEffect, useMem
 import { Link } from 'react-router-dom';
 import {
     ArrowLeft, Settings, Upload, Loader2, Download, Check, Image, FileArchive,
-    Plus, Trash2, Wand2, ImageIcon
+    Plus, Trash2, Wand2, ImageIcon, Copy
 } from '../components/Icons';
 import { useLanguage } from '../hooks/useLanguage';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
@@ -110,6 +110,7 @@ const LineStickerPage: React.FC = () => {
     const [includeText, setIncludeText] = useState(true);
     const [bgRemovalMethod, setBgRemovalMethod] = useState<BgRemovalMethod>('chroma');
     const [previewPrompt, setPreviewPrompt] = useState<string | null>(null);
+    const [promptCopied, setPromptCopied] = useState(false);
 
     // Phrase list for hook: exact length (single = gridCols*gridRows, set = 48)
     const phrasesForHook = useMemo(() => {
@@ -373,7 +374,7 @@ const LineStickerPage: React.FC = () => {
                 setProcessedSpriteSheet(processed);
                 setStatusText('');
             }
-        } catch (err: any) { setError(`${t.errorGeneration}: ${err.message}`); } finally { setIsGenerating(false); }
+        } catch (err: unknown) { setError(`${t.errorGeneration}: ${err instanceof Error ? err.message : String(err)}`); } finally { setIsGenerating(false); }
     }, [sourceImage, stickerSetMode, setPhrasesList, actionDescsList, currentSheetIndex, generateSingleSheet, t, chromaKeyColor, bgRemovalMethod, setStatusText, setError, sliceProcessedSheetToFrames, setIsGenerating]);
 
     const handleGenerateAllSheets = useCallback(async () => {
@@ -408,7 +409,7 @@ const LineStickerPage: React.FC = () => {
             setSheetFrames(allFrames);
             setSelectedFramesBySheet(allFrames.map(f => new Array(f.length).fill(false)));
             setStatusText('');
-        } catch (err: any) { setError(`${t.errorGeneration}: ${err.message}`); } finally { setIsGenerating(false); }
+        } catch (err: unknown) { setError(`${t.errorGeneration}: ${err instanceof Error ? err.message : String(err)}`); } finally { setIsGenerating(false); }
     }, [sourceImage, setPhrasesList, actionDescsList, generateSingleSheet, t, chromaKeyColor, bgRemovalMethod, setStatusText, setError, sliceProcessedSheetToFrames, setIsGenerating]);
 
     const buildFullContext = useCallback(() => {
@@ -717,11 +718,11 @@ const LineStickerPage: React.FC = () => {
                                         try {
                                             const actionDescs = await generateActionDescriptions(apiKey, phrases);
                                             setActionDescsList(actionDescs);
-                                        } catch (actionErr: any) {
-                                            logger.warn('Action descriptions fallback to getActionHint:', actionErr?.message);
+                                        } catch (actionErr: unknown) {
+                                            logger.warn('Action descriptions fallback to getActionHint:', actionErr instanceof Error ? actionErr.message : actionErr);
                                             setActionDescsList(phrases.map((phrase: string) => getActionHint(phrase)));
                                         }
-                                    } catch (err: any) { setError(err.message); } finally { setIsGeneratingPhrases(false); }
+                                    } catch (err: unknown) { setError(err instanceof Error ? err.message : String(err)); } finally { setIsGeneratingPhrases(false); }
                                 }} disabled={isGeneratingPhrases} className="text-xs text-green-600 flex items-center gap-1 font-semibold hover:text-green-700">
                                     {isGeneratingPhrases ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
                                     {t.lineStickerGeneratePhrases}
@@ -794,7 +795,22 @@ const LineStickerPage: React.FC = () => {
                                     <pre className="text-xs text-slate-700 whitespace-pre-wrap font-mono bg-white border border-slate-200 rounded-lg p-3 max-h-48 overflow-y-auto" role="region" aria-label={t.lineStickerPromptPreviewTitle}>
                                         {previewPrompt}
                                     </pre>
-                                    <p className="text-xs text-slate-500">{t.lineStickerPromptConfirmHint}</p>
+                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                        <p className="text-xs text-slate-500">{t.lineStickerPromptConfirmHint}</p>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(previewPrompt).then(() => {
+                                                    setPromptCopied(true);
+                                                    setTimeout(() => setPromptCopied(false), 2000);
+                                                });
+                                            }}
+                                            className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 font-medium inline-flex items-center gap-1.5"
+                                        >
+                                            {promptCopied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                                            {promptCopied ? t.lineStickerCopyPromptDone : t.lineStickerCopyPrompt}
+                                        </button>
+                                    </div>
                                 </>
                             ) : (
                                 <p className="text-xs text-slate-500">{t.lineStickerPromptEmptyHint}</p>

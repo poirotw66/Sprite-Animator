@@ -144,12 +144,12 @@ export function buildLineStickerPrompt(
 * **No grid separators**: Do NOT draw any line, frame, or border between cells or around the image. The grid is logical only (for splitting later); adjacent cells must share the same background with no visible divider.
 `;
 
-    // 3. Subject / Character
-    const characterSection = `### [3. Subject / Character]
+    // 3. Subject / Character — image-first: uploaded image is primary; preset is optional style hint
+    const characterSection = `### [3. Subject / Character] CRITICAL — Image is primary
 
-* **Description**: ${slots.character.appearance}
-* **Personality**: ${slots.character.personality}
-* **Reference**: Use the uploaded image. Maintain core features (hair, outfit, color palette). Redesign in the requested style. ${slots.character.originalImageRules}
+* **Primary reference**: The **uploaded image is the main source**. Draw **this exact character**: same face, hair, outfit, color palette, proportions, and recognisable features. Do not replace them with a generic character from the style hint below.
+* **Style hint (optional, light touch)**: If you need a slight vibe adjustment only, lean toward: ${slots.character.appearance}. Personality tone: ${slots.character.personality}. Apply this only as a light nuance (e.g. line softness or pose energy), not as a new character design.
+* **Rules**: ${slots.character.originalImageRules}
 * **Consistency**: Invariants = face proportions, skin tone, hair silhouette, main outfit, color scheme. Variants = expressions, eye shapes, mouth shapes, gestures, postures, small props.
 `;
 
@@ -346,7 +346,7 @@ export const CHARACTER_PRESETS: Record<string, { label: string; appearance: stri
 export const DEFAULT_CHARACTER_SLOT: CharacterSlot = {
     appearance: CHARACTER_PRESETS.cute.appearance,
     personality: CHARACTER_PRESETS.cute.personality,
-    originalImageRules: 'Do not copy the reference image directly; redesign in the requested style.',
+    originalImageRules: 'Keep the character from the reference image; only apply the style hint lightly (e.g. slightly softer or cooler lines) without changing who the character is.',
 };
 
 export const TEXT_PRESETS: Record<string, TextSlot & { label: string }> = {

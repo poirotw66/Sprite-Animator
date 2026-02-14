@@ -327,6 +327,8 @@ export const zhTW: Translations = {
   lineStickerIncludeText: '包含文字',
   lineStickerGeneratePrompt: '產生提示詞',
   lineStickerPromptPreviewTitle: '產圖提示詞預覽',
+  lineStickerCopyPrompt: '複製提示詞',
+  lineStickerCopyPromptDone: '已複製',
   lineStickerPromptConfirmHint: '請確認上方提示詞後再點擊「生成精靈圖」。',
   lineStickerPromptEmptyHint: '點「產生提示詞」可預覽將送給產圖模型的完整提示詞。',
   lineStickerActionDescPlaceholder: '動作描述 (英中對照)',

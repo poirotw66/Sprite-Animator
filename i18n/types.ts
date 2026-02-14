@@ -329,6 +329,8 @@ export interface Translations {
   lineStickerIncludeText: string;
   lineStickerGeneratePrompt: string;
   lineStickerPromptPreviewTitle: string;
+  lineStickerCopyPrompt: string;
+  lineStickerCopyPromptDone: string;
   lineStickerPromptConfirmHint: string;
   lineStickerPromptEmptyHint: string;
   lineStickerActionDescPlaceholder: string;
