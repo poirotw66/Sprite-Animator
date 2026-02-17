@@ -32,6 +32,7 @@ const SpriteSheetViewer = lazy(() =>
 import {
     THEME_PRESETS,
     STYLE_PRESETS,
+    STYLE_PRESET_ORDER,
     TEXT_PRESETS,
     TEXT_COLOR_PRESETS,
     FONT_PRESETS,
@@ -553,8 +554,10 @@ const LineStickerPage: React.FC = () => {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerStyleLabel}</label>
-                                <select value={selectedStyle} onChange={e => setSelectedStyle(e.target.value as any)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
-                                    {Object.keys(STYLE_PRESETS).map(k => <option key={k} value={k}>{(STYLE_PRESETS as any)[k].label}</option>)}
+                                <select value={selectedStyle} onChange={e => setSelectedStyle(e.target.value as keyof typeof STYLE_PRESETS)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
+                                    {STYLE_PRESET_ORDER.map((k) => (
+                                        <option key={k} value={k}>{STYLE_PRESETS[k].label}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>

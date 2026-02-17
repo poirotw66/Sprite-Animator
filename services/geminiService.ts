@@ -367,87 +367,76 @@ export async function generateStickerPhrases(
   let modeHint: string;
   switch (mode) {
     case 'emotional':
-      modeLabel = '情緒失控版（全部情緒爆發）';
-      modeHint = '幾乎所有短語都應是情緒爆發、暴躁、崩潰、厭世、自嘲，看起來像網路鄉民在抱怨或發牢騷。';
+      modeLabel = '情緒版（全部情緒）';
+      modeHint = '以情緒表達為主（開心、累、煩、感動等），用字簡潔、適合貼圖，避免過度抱怨或網路用語。';
       break;
     case 'meme':
       modeLabel = '梗圖版（全部梗圖）';
-      modeHint = '所有短語都要像梗圖文案，要有 punchline 與反差感，適合貼在迷因圖上嘴人或自嘲。';
+      modeHint = '帶一點反差或自嘲感，但仍要簡短好懂、適合印在貼圖上；避免只有圈內人才懂的梗。';
       break;
     case 'interaction':
       modeLabel = '關係互動版（全部關係互動）';
-      modeHint = '全部短語都是對人說的話，偏關心、安慰、嘴砲但帶關係感，適合朋友、情人、曖昧、好同事。';
+      modeHint = '全部是對人說的話：感謝、抱歉、打氣、想你等，簡潔自然，適合朋友、情人、同事。';
       break;
     case 'theme-deep':
       modeLabel = '符合主題版（內梗向）';
-      modeHint = '每一句都要明顯呼應主題的內梗與語境，讓熟悉這個主題的人一看就懂在講什麼。';
+      modeHint = '每句都要呼應主題，讓懂這主題的人一看就懂；用字仍保持簡潔、適合貼圖。';
       break;
     case 'balanced':
     default:
       modeLabel = '黃金比例版（平衡）';
-      modeHint = '依預設黃金比例分配四類短語。關鍵在於：每一類型的短語都必須「深度融合」目前的主題背景。例如主題是職場，萬用日常應帶有專業或辦公感；主題是 TRPG，萬用日常則應帶有遊戲檢定或冒險感。';
+      modeHint = '依比例分配四類短語，每類都要貼合主題。用字簡潔、好懂、適合 LINE 貼圖，避免過度鄉民或網路梗。';
       break;
   }
 
-  const prompt = `You are an expert LINE sticker planner and copywriter, highly experienced in the LINE sticker market.
-You specialize in designing "viral" sticker phrases that users will actually use frequently in daily chats, rather than just pretty but impractical sentences.
+  const prompt = `You are an expert LINE sticker copywriter. Your goal is to write short, clear phrases that fit ON a sticker and are used in daily chat.
 
 ### [Objective]
-Based on the "Theme" provided, generate a complete set of "Sticker Phrases" suitable for a LINE sticker set.
+Generate a set of "Sticker Phrases" for a LINE sticker set based on the Theme. Each phrase must be concise and suitable for printing on a sticker.
 
 ### [Theme]
 ${themeContext}
 
 ### [Language]
-${language}. Please output phrases in this specific language. 
-(Note: For Traditional/Simplified Chinese, phrases should not exceed 6 characters; for English, 1-3 words are preferred.)
+${language}. Output phrases in this language only.
+(Chinese: at most 6 characters; English: 1–3 words.)
 
 ### [Phrase Mode]
 - Mode: ${modeLabel}
 - Hint: ${modeHint}
 
 ### [Output Quantity] (Strictly Follow)
-Generate exactly ${contentCount} phrases in total, distributed according to the ratios below.
+Generate exactly ${contentCount} phrases, distributed as below.
 
 ### [Categories and Ratios] (Strictly Follow)
-Divide the phrases into the following four categories and clearly label them:
+Label the four categories clearly:
 
 1. Universal Daily (${n40} phrases, ~40%)
-   - Essential for daily conversations.
-   - Can be used as standalone replies.
-   - Neutral emotion, widely applicable.
+   - For everyday replies; neutral, widely usable.
+   - Standalone; no context needed.
 
 2. Emotional Outburst (${n30} phrases, ~30%)
-   - Highly expressive and relatable (both positive and negative high-arousal emotions).
-   - Can include "breakdown," "world-weary," "annoyed," "hanging in there," or "super excited," "laughing to death," "feeling awesome," etc.
-   - MUST be practical for real chat reactions.
+   - Strong but clear emotions (happy, tired, annoyed, moved, etc.).
+   - Usable as real chat reactions; not obscure.
 
 3. Social Interaction (${n20} phrases, ~20%)
-   - Phrases directed at others.
-   - Includes caring, acting cute (aegyo), apologizing, comforting, or missing someone.
-   - Suitable for friends, lovers, crushes, or close colleagues.
+   - Directed at others: thanks, sorry, cheering up, missing you, etc.
+   - Suitable for friends, partners, colleagues.
 
 4. Meme/Iconic (${n10} phrases, ~10%)
-   - Memorable, witty, or involving a "twist."
-   - Can be deadpan humor, irony, or self-deprecation.
-   - Avoid short-lived internet slang that ages quickly; aim for timeless relatability.
+   - Memorable or slightly witty; light twist or self-deprecation.
+   - Prefer timeless, widely understood expressions over niche internet slang.
 
 ### [Text Style Rules] (Very Important)
-- Keep it short, colloquial, and "chat-like."
-- Instant understanding; no explanation needed.
-- Avoid formal language or full, complex sentences.
-- Optimized for placement ON a sticker, not a social media caption.
+- Concise and clear: easy to read at a glance on a sticker.
+- Natural chat tone; avoid formal or long sentences.
+- No heavy slang, niche memes, or "internet-only" jargon unless the phrase mode explicitly asks for it.
+- Optimized for ON-sticker use, not for long captions.
 
-### [Tone and Resonance] (Must Achieve)
-- "Relatability" is key: Make users feel "Yes, this is exactly me" or "I need this for exactly that situation."
-- A touch of playful/cheeky internet humor: Self-deprecating, slightly trolling, or a witty comeback.
-- Don't be too serious. Sound like a real person in a group chat.
-- It's okay to be a bit "trashy," "lazy," or "done with life," but never offensive or hateful.
-
-### [Market Fit Rules]
-- Assume users use these for: "Read but no reply," "Polite brush-offs," "Intense emotion," or "Quick reactions."
-- Every phrase must be able to stand alone.
-- Do not rely on specific context to be understood.
+### [Tone and Resonance]
+- Relatable: users should think "I’d use this in chat."
+- Friendly and natural; avoid overly "trashy," cynical, or meme-heavy tone in the default balance.
+- Every phrase must stand alone and be understood without explanation.
 
 ### [Output Format] (Strictly Follow)
 Output following this format, one phrase per line starting with "- ":
@@ -467,13 +456,13 @@ Meme/Iconic:
 - phrase
 
 ### [Prohibitions]
-❌ No explanations
-❌ No analysis
+❌ No explanations or analysis
 ❌ No emojis
-❌ No extra filler text
-❌ No "Sticker 1", "Sticker 2" labels
+❌ No filler text or "Sticker 1/2" labels
+❌ No heavy internet slang, niche memes, or jargon that only a small group understands
+❌ No long or complicated sentences
 
-Now, please start generating based on the "Theme".`;
+Now generate the phrases based on the Theme.`;
 
   const response = await ai.models.generateContent({
     model,

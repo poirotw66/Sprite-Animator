@@ -307,7 +307,47 @@ export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
         styleType: "Soft watercolor style, healing illustration, natural bleed at edges",
         drawingMethod: "Wet-on-wet technique, hand-drawn brush edges, soft outlines, organic paint flow",
     },
+    yurukawa: {
+        label: "慵懶軟懶風",
+        styleType: "Yuru-kawa style, kawaii aesthetic, chibi, Japanese healing and lazy atmosphere, relaxed and lazy vibe, funny expression, suitable for personified characters (tired, lazy, cute)",
+        drawingMethod: "Simple line art, marker coloring style, low saturation, earthy tones, beige and brown dominant colors, simple vector art. Avoid: photorealistic, highly detailed, volumetric lighting, glossy finish, complex background, serious tone, dark colors.",
+    },
+    pastel: {
+        label: "蠟筆粉彩",
+        styleType: "Soft pastel and crayon style, dreamy and gentle, kawaii sticker look",
+        drawingMethod: "Pastel or wax crayon texture, soft edges, low saturation, light pink and mint tones, rounded shapes, gentle shading",
+    },
+    flat: {
+        label: "扁平時尚",
+        styleType: "Flat design illustration, modern app and icon style, geometric simplification",
+        drawingMethod: "Solid flat color blocks, minimal or no gradients, clean vector shapes, limited palette, no soft shadows",
+    },
+    doodle: {
+        label: "塗鴉手繪",
+        styleType: "Casual doodle and sketch style, hand-drawn feel, playful and loose",
+        drawingMethod: "Sketchy or marker-like lines, slightly imperfect outlines, simple fills, notebook or memo vibe",
+    },
+    gouache: {
+        label: "不透明水彩",
+        styleType: "Gouache and opaque watercolor style, matte and soft, picture-book illustration feel",
+        drawingMethod: "Flat opaque color layers, soft brush edges, minimal blending, warm and cozy palette",
+    },
 };
+
+/** Display order for style dropdown: recommended and LINE-friendly first, then variety. */
+export const STYLE_PRESET_ORDER: (keyof typeof STYLE_PRESETS)[] = [
+    'chibi',
+    'minimalist',
+    'yurukawa',
+    'anime',
+    'watercolor',
+    'pastel',
+    'cartoon',
+    'flat',
+    'doodle',
+    'gouache',
+    'pixel',
+];
 
 // label: for UI; appearance / personality: English for image model
 export const CHARACTER_PRESETS: Record<string, { label: string; appearance: string; personality: string }> = {
