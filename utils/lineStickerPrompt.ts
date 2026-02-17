@@ -76,9 +76,10 @@ export const BASE_PROMPT = `🎨 LINE Sticker Sprite Sheet Generation
 * **Canvas**: Perfect square (1:1 aspect ratio). High resolution output.
 * **Grid**: {COLS}×{ROWS} = {TOTAL_FRAMES} cells. Each cell exactly **{CELL_WIDTH_PCT}% of image width** and **{CELL_HEIGHT_PCT}% of image height**.
 * **Margins**: None. Image edges = grid boundaries. No empty space at left, right, top, or bottom.
-* **Gaps**: No gaps between cells. Adjacent cells share the same boundary. Do not draw dividers or borders.
+* **Gaps**: No gaps between cells. Adjacent cells share the same boundary. Do NOT draw any dividers, borders, frame lines (框線), or grid lines (格線) between or around cells.
+* **Forbidden**: No visible 框線 (frame/border lines), 格線 (grid lines), 邊框 (borders), or 分隔線 (separator lines) anywhere on the image. The grid is invisible—only the background color fills the space.
 * **Output**: The image MUST be perfectly splittable into {TOTAL_FRAMES} equal rectangles.
-* **Per cell**: Character {AND_TEXT} must occupy ~70–85% of cell height. Minimum internal padding ~5–10%. Character {AND_TEXT} must NOT cross grid lines or touch adjacent cells. One independent sticker per cell. {AND_CLOSE_TEXT}
+* **Per cell**: Character {AND_TEXT} must occupy ~70–85% of cell height. Do NOT draw a box, frame, or border around each cell. Minimum internal padding ~5–10%. Character {AND_TEXT} must NOT cross grid lines or touch adjacent cells. One independent sticker per cell. {AND_CLOSE_TEXT}
 `;
 
 // When includeText: enforce separate Character Zone vs Text Zone so text never overlaps character
@@ -141,7 +142,7 @@ export function buildLineStickerPrompt(
 * **Technique**: ${slots.style.drawingMethod}
 * **Lighting (technical)**: Flat shading only. No drop shadows, no gradients, no ambient occlusion. Sharp edges against background.
 * **LINE sticker style**: Thick white stroke around the character silhouette only. Clean, visible outline so the sticker stays readable on any chat background after the colored background is removed.
-* **No grid separators**: Do NOT draw any line, frame, or border between cells or around the image. The grid is logical only (for splitting later); adjacent cells must share the same background with no visible divider.
+* **No 框線 (frame lines) or grid separators**: Do NOT draw any line, frame, border, box, or divider between cells or around the image or around each sticker. No visible 格線 (grid lines) or 邊框 (borders). The grid is logical only (for splitting later); adjacent cells must share the same background with zero visible lines.
 `;
 
     // 3. Subject / Character — image-first: uploaded image is primary; preset is optional style hint
@@ -203,7 +204,7 @@ ${phrasesForFrames.map((phrase, index) => {
     const finalSection = `
 ### [7. Final Goal]
 
-Output a single image: perfect square, {TOTAL_FRAMES} equal rectangles ({COLS}×{ROWS}). Each rectangle = one LINE sticker. Splittable at exactly {CELL_WIDTH_PCT}% width and {CELL_HEIGHT_PCT}% height per cell. No visible borders or lines between cells—one continuous background.
+Output a single image: perfect square, {TOTAL_FRAMES} equal rectangles ({COLS}×{ROWS}). Each rectangle = one LINE sticker. Splittable at exactly {CELL_WIDTH_PCT}% width and {CELL_HEIGHT_PCT}% height per cell. CRITICAL: No visible 框線, borders, grid lines, or separator lines—one continuous background only. Do not draw any frame or line between or around cells.
 `.replace(/{TOTAL_FRAMES}/g, totalFrames.toString())
         .replace(/{COLS}/g, cols.toString())
         .replace(/{ROWS}/g, rows.toString())
