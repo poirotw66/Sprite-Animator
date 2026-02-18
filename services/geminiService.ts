@@ -736,57 +736,58 @@ ${chromaKeyColor === 'magenta'
 
     if (onProgress) onProgress(`正在生成 ${cols}x${rows} LINE 貼圖精靈圖 (比例 ${targetAspectRatio})...`);
   } else {
-    // Per-pose timing hints for smooth animation (use "Cell" to avoid model drawing numbers on image)
+    const cellWidthPct = Math.round(100 / cols);
+    const cellHeightPct = Math.round(100 / rows);
+    // Per-cell list in LINE style: **Cell N (row R, col C)**: Action | timing (do NOT draw numbers on image)
     const cellDescriptions = Array.from({ length: totalFrames }, (_, i) => {
       const progress = i / totalFrames;
       const degrees = Math.round(progress * 360 / totalFrames * 10) / 10;
-      return `Cell (${Math.floor(i / cols) + 1},${(i % cols) + 1}): ${degrees}° into the motion cycle (TINY change from previous cell)`;
+      const row = Math.floor(i / cols) + 1;
+      const col = (i % cols) + 1;
+      return `**Cell ${i + 1} (row ${row}, col ${col})**: Action: "${prompt}" | ${degrees}° into motion cycle. TINY change from previous cell.`;
     }).join('\n');
 
-    // LINE-style exact background wording (same as LINE sticker tool for stable chroma key)
     const bgColorNameExact = chromaKeyColor === 'magenta' ? 'Pure Magenta #FF00FF' : 'Neon Green #00FF00';
-    const backgroundSection = `
-### [Background] CRITICAL — Same as LINE sticker tool
-* **Background color (exact)**: The entire canvas must be **exactly ${bgColorNameExact}** (hex ${bgColorHex}). Every cell must use this same color—no gradients, no pink/purple/green variants (e.g. do NOT use #E91E63, #00B140, or similar). One single RGB value for all background pixels so that chroma key removal works uniformly.
+
+    // 2. Construct prompt: LINE-style order [1] Layout → [2] Style → [3] Subject → [4] Background → [5] Task & Per-cell → [6] Final Goal → [7] Forbidden
+    fullPrompt = `
+🎨 Character Animation Sprite Sheet Generation
+
+### [1. Global Layout] CRITICAL
+
+* **Canvas**: Grid aspect ${cols}×${rows}. High resolution output. No letterboxing—image edges = grid boundaries.
+* **Grid**: ${cols}×${rows} = ${totalFrames} cells. Each cell exactly **${cellWidthPct}% of image width** and **${cellHeightPct}% of image height**.
+* **Margins**: None. No empty space at left, right, top, or bottom.
+* **Gaps**: No gaps between cells. Adjacent cells share the same boundary. Do NOT draw any dividers, borders, frame lines (框線), or grid lines (格線) between or around cells.
+* **Forbidden**: No visible 框線, 格線, 邊框, or 分隔線 anywhere. The grid is invisible—only the background color fills the space.
+* **Output**: The image MUST be perfectly splittable into ${totalFrames} equal rectangles.
+* **Per cell**: Character must occupy ~70–85% of cell height. Do NOT draw a box, frame, or border around each cell. Minimum internal padding ~5–10%. Character must NOT cross grid lines or touch adjacent cells. One independent pose per cell.
+
+### [2. Style / Art Medium]
+
+* **Lighting (technical)**: Flat shading only. No drop shadows, no gradients, no ambient occlusion. Sharp edges against background.
+* **No 框線 or grid separators**: Do NOT draw any line, frame, border, box, or divider between cells or around the image or around each pose. The grid is logical only (for splitting later); adjacent cells must share the same background with zero visible lines.
+
+### [3. Subject / Character] CRITICAL — Image is primary
+
+* **Primary reference**: The **uploaded image is the main source**. Draw **this exact character**: same face, hair, outfit, color palette, proportions, and recognisable features. Do not replace them with a generic character.
+* **Consistency**: Invariants = face proportions, skin tone, hair silhouette, main outfit, color scheme. Variants = pose, expression, limb positions only (micro changes between cells).
+
+### [4. Lighting & Background] CRITICAL
+
+* **Background color (exact)**: The entire canvas must be **exactly ${bgColorNameExact}** (hex ${bgColorHex}). Every cell must use this same color—no gradients, no pink/purple/green variants (e.g. do NOT use #E91E63 or similar). One single RGB value for all background pixels so that chroma key removal works uniformly.
 * **Lighting**: No shadows. Flat shading only. Ambient occlusion disabled.
 * **Uniform**: Same color across the entire sprite sheet. No ground, clouds, or decorative elements. Character edges must be sharp and clean against the background.
-`;
+* Do NOT use similar colors—ONLY the EXACT hex ${bgColorHex} (${bgColorRGB}). Every background pixel MUST be this value.
 
-    // 2. Construct a prompt that enforces MINIMAL frame-to-frame changes for animation
-    fullPrompt = `
-You are creating a sprite sheet for ULTRA-SMOOTH looping animation.
+### [5. Task & Motion]
 
-══════════════════════════════════════════════════════════════
-BACKGROUND (EXACT) — READ FIRST — Same rule as LINE sticker
-══════════════════════════════════════════════════════════════
-${backgroundSection}
-
-${chromaKeyColor === 'magenta'
-        ? `MAGENTA: R=255, G=0, B=255 only. NOT pink (#FF69B4), NOT purple (#800080).`
-        : `GREEN: ${bgColorRGB} only. NOT darker green (#00B140), NOT forest green (#228B22).`}
-Every background pixel MUST be EXACTLY ${bgColorHex}. No gradients.
-
-══════════════════════════════════════════════════════════════
-THE MOST IMPORTANT RULE - READ THIS FIRST
-══════════════════════════════════════════════════════════════
-Imagine recording a video at ${totalFrames * 4} FPS, then keeping only every 4th frame.
-Each cell should look almost IDENTICAL to its neighbors.
-The difference between one cell and the next should be BARELY NOTICEABLE.
-
-If someone quickly glances at all ${totalFrames} cells, they should think:
-"These all look almost the same - just tiny differences"
-
-This is CORRECT. This is what makes smooth animation.
-
-══════════════════════════════════════════════════════════════
-TASK
-══════════════════════════════════════════════════════════════
 Action: "${prompt}"
-Layout: ${totalFrames} poses in a ${cols}×${rows} grid (left→right, top→bottom)
+Layout: ${totalFrames} poses in a ${cols}×${rows} grid (left→right, top→bottom). Order: row by row, each cell exactly ${cellWidthPct}% width × ${cellHeightPct}% height.
 
-══════════════════════════════════════════════════════════════
-CELL-BY-CELL MICRO-MOVEMENTS (do NOT draw cell numbers or labels on the image)
-══════════════════════════════════════════════════════════════
+**THE MOST IMPORTANT RULE**: Imagine recording a video at ${totalFrames * 4} FPS, then keeping only every 4th frame. Each cell should look almost IDENTICAL to its neighbors. The difference between one cell and the next should be BARELY NOTICEABLE. If someone quickly glances at all ${totalFrames} cells, they should think: "These all look almost the same—just tiny differences." This is CORRECT for smooth animation.
+
+**Grid Content — Per Cell** (do NOT draw cell numbers, numerals, or labels on the image):
 ${cellDescriptions}
 
 Between ANY two consecutive cells:
@@ -794,119 +795,30 @@ Between ANY two consecutive cells:
 • Body shifts by only ~${Math.max(1, Math.round(5 / totalFrames))}% to ${Math.max(2, Math.round(8 / totalFrames))}% of height MAX
 • Head tilts by only ~${Math.max(1, Math.round(5 / totalFrames))}° to ${Math.max(2, Math.round(8 / totalFrames))}° MAX
 • Facial expression: NO change or microscopic change only
+(THESE ARE MAXIMUM VALUES—smaller is better.)
 
-THESE ARE MAXIMUM VALUES - smaller is better!
+Onion skin test: Overlaying the first and second cell at 50% opacity should look like ONE slightly blurry figure, not two separate poses. Overlaying all ${totalFrames} cells should look like ONE character with motion blur.
 
-══════════════════════════════════════════════════════════════
-VISUALIZATION: ONION SKIN TEST
-══════════════════════════════════════════════════════════════
-If you overlay the first and second cell at 50% opacity each:
-→ The character should appear as ONE slightly blurry figure
-→ NOT as two clearly separate poses
+For "${prompt}": arm swing per cell ~${Math.round(45 / totalFrames)}°; body bob per cell ~${Math.round(10 / totalFrames)}%; foot movement per cell ~${Math.round(15 / totalFrames)}%. Think: "Is this change small enough to be smooth at 12 FPS?"
 
-If you overlay ALL ${totalFrames} cells:
-→ Should look like ONE character with motion blur
-→ NOT like ${totalFrames} different characters
+Perfect loop: The last cell (bottom-right) → first cell (top-left) must have the SAME tiny difference as any other adjacent pair. The animation is a CIRCLE; the last cell flows INTO the first cell.
 
-══════════════════════════════════════════════════════════════
-WHAT "SMALL MOTION" ACTUALLY MEANS
-══════════════════════════════════════════════════════════════
-For "${prompt}":
+Character anchor (fixed across all cells): foot/ground contact Y, overall size, center position per cell, art style and proportions.
 
-If the action involves arm movement:
-- Total arm swing across ALL frames: ~30-60°
-- Per frame: only ${Math.round(45 / totalFrames)}° change
+Common mistakes to avoid: Do not make each cell a "key pose"; make tiny increments like video frames. Do not show the full action range in one step—show 1/${totalFrames}th of the action per cell.
 
-If the action involves body bobbing:
-- Total bob across ALL frames: ~5-15% of body height  
-- Per frame: only ${Math.round(10 / totalFrames)}% change
+### [6. Final Goal]
 
-If the action involves stepping:
-- Total foot movement: ~10-20% of body width
-- Per frame: only ${Math.round(15 / totalFrames)}% change
+Output a single image: ${cols}×${rows} grid, ${totalFrames} equal rectangles. Splittable at exactly ${cellWidthPct}% width and ${cellHeightPct}% height per cell. CRITICAL: No visible 框線, borders, grid lines, or separator lines—one continuous background only. One pose per cell with minimal change between cells. Do not draw any frame or line between or around cells.
 
-THINK: "Is this change small enough to be smooth at 12 FPS?"
+### [7. Forbidden]
 
-══════════════════════════════════════════════════════════════
-PERFECT LOOP CONNECTION
-══════════════════════════════════════════════════════════════
-The last cell (bottom-right) → first cell (top-left) must have the SAME tiny difference
-as any other adjacent pair.
-
-The animation is a CIRCLE, not a line.
-The last cell is NOT an "ending pose" - it flows INTO the first cell.
-
-══════════════════════════════════════════════════════════════
-CHARACTER ANCHOR POINTS (CRITICAL)
-══════════════════════════════════════════════════════════════
-These must stay FIXED across all ${totalFrames} cells:
-• Character's foot/ground contact point (same Y position)
-• Overall character size (no zooming in/out)
-• Character's center position in each grid cell
-• Art style, colors, line thickness, proportions
-
-══════════════════════════════════════════════════════════════
-COMMON MISTAKES TO AVOID
-══════════════════════════════════════════════════════════════
-❌ WRONG: First cell (standing) → second cell (jumping high) = TOO MUCH CHANGE
-✅ RIGHT: First cell (knees slightly bent) → second cell (knees bent 5° more)
-
-❌ WRONG: Arms in completely different positions between frames
-✅ RIGHT: Arms move only a few degrees between frames
-
-❌ WRONG: Making each frame a "key pose" like concept art
-✅ RIGHT: Making each frame a tiny increment, like video frames
-
-❌ WRONG: Thinking "I need to show the full action range"
-✅ RIGHT: Thinking "I need to show 1/${totalFrames}th of the action per frame"
-
-══════════════════════════════════════════════════════════════
-FINAL OUTPUT REQUIREMENTS
-══════════════════════════════════════════════════════════════
-• Single image containing ${cols}×${rows} grid of poses
-• Background MUST be EXACTLY ${bgColorHex} (${bgColorRGB}) - NO OTHER COLOR
-• All ${totalFrames} poses nearly identical with microscopic differences
-• Smooth loop: last cell connects seamlessly to first cell
-• NO text, numbers, labels, borders, or UI elements — do NOT draw "1", "2", "3", "Frame", or any numerals/labels on the image
-• Character poses should be SEAMLESSLY placed on background
-
-══════════════════════════════════════════════════════════════
-ABSOLUTELY FORBIDDEN - CRITICAL - READ CAREFULLY
-══════════════════════════════════════════════════════════════
-• NO frame numbers, cell numbers, numerals (1, 2, 3...), or text labels drawn on the image — the grid has no visible labels
-• NO BORDERS OR FRAMES around individual poses or the entire image
-• NO GRID LINES separating the poses - poses must blend into background
-• NO BLACK LINES, WHITE LINES, or any colored lines between frames
-• NO RECTANGLES or BOXES around each character pose
-• NO ground line, floor line, or baseline under the character's feet
-• NO shadow under the character
-• NO platform or surface for the character to stand on  
-• NO horizontal or vertical lines of any color anywhere
-• NO color variations in background - ONLY EXACTLY ${bgColorHex}
-• NO outlines around the sprite sheet or individual cells
-• NO gradients - background must be perfectly flat solid ${bgColorHex}
-• DO NOT use similar colors - ONLY the EXACT hex value ${bgColorHex}
-
-⚠️ BACKGROUND COLOR IS CRITICAL FOR PROCESSING ⚠️
-The background MUST be EXACTLY ${bgColorHex} (${bgColorRGB}).
-Using any other shade will cause the chroma key removal to fail.
-
-${chromaKeyColor === 'magenta'
-        ? `MAGENTA REQUIREMENT - MEMORIZE THIS:
-  • R=255, G=0, B=255 → ${bgColorHex}. NOT pink (G>100), NOT purple (R<200 or B<200).`
-        : `GREEN REQUIREMENT - MEMORIZE THIS:
-  • ${bgColorRGB} → ${bgColorHex}. NOT darker green, NOT forest green. Only this exact value.`}
-
-If you're unsure, imagine filling the background with a paint bucket tool
-set to EXACTLY ${bgColorRGB}. Every background pixel should be this exact value.
-
-⚠️ VERY IMPORTANT: Each character pose should be placed DIRECTLY on the
-${bgColorHex} background with NO visible separation between grid cells.
-The grid is CONCEPTUAL only - there should be NO visual indication of it.
-
-The character should appear to FLOAT on the ${bgColorHex} background.
-There should be NOTHING under the character's feet except ${bgColorHex}.
-NO BORDERS. NO FRAMES. NO LINES. JUST CHARACTERS ON SOLID ${bgColorHex}.
+• NO frame numbers, cell numbers, numerals (1, 2, 3...), or text labels drawn on the image—the grid has no visible labels.
+• NO borders, frames, grid lines, dividers, rectangles, or boxes around or between cells.
+• NO ground line, floor line, baseline, shadow, platform, or surface under the character.
+• NO horizontal or vertical lines of any color anywhere.
+• NO color variations in background—ONLY EXACTLY ${bgColorHex}. No gradients.
+• Background MUST be exactly ${bgColorHex} (${bgColorRGB}); any other shade will break chroma key removal.
 
 Generate the sprite sheet with MINIMAL frame-to-frame variation.
 `;
