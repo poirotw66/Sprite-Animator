@@ -138,6 +138,8 @@ export interface Translations {
   getApiKey: string;
   modelLabel: string;
   modelRecommended: string;
+  outputResolutionLabel: string;
+  outputResolutionHint: string;
   saveAndApply: string;
   validating: string;
   validationSuccess: string;

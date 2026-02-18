@@ -28,6 +28,8 @@ const PartingPage: React.FC = () => {
     setApiKey,
     selectedModel,
     setSelectedModel,
+    outputResolution,
+    setOutputResolution,
     showSettings,
     setShowSettings,
     saveSettings,
@@ -183,9 +185,11 @@ const PartingPage: React.FC = () => {
         setApiKey={setApiKey}
         selectedModel={selectedModel}
         setSelectedModel={setSelectedModel}
+        outputResolution={outputResolution}
+        setOutputResolution={setOutputResolution}
         showSettings={showSettings}
         onClose={() => setShowSettings(false)}
-        onSave={saveSettings}
+        onSave={(key, model, token, res) => saveSettings(key, model, token, res)}
       />
 
       <header className="sticky top-0 z-20 max-w-7xl mx-auto mb-4 md:mb-8 -mx-4 px-4 md:mx-0 md:px-0 safe-top">

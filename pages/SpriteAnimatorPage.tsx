@@ -25,7 +25,7 @@ import { useSpriteSheet } from '../hooks/useSpriteSheet';
 import { useExport } from '../hooks/useExport';
 import { useProjectHistory } from '../hooks/useProjectHistory';
 import { ProjectHistory } from '../components/ProjectHistory';
-import { DEFAULT_CONFIG, DEFAULT_SLICE_SETTINGS, MODEL_RESOLUTIONS, type ImageResolution } from '../utils/constants';
+import { DEFAULT_CONFIG, DEFAULT_SLICE_SETTINGS } from '../utils/constants';
 import { optimizeSliceSettings } from '../utils/imageUtils';
 import { logger } from '../utils/logger';
 import type { SavedProject } from '../types';
@@ -40,6 +40,8 @@ const SpriteAnimatorPage: React.FC = () => {
     setApiKey,
     selectedModel,
     setSelectedModel,
+    outputResolution,
+    setOutputResolution,
     showSettings,
     setShowSettings,
     saveSettings,
@@ -59,12 +61,7 @@ const SpriteAnimatorPage: React.FC = () => {
   // Background removal
   const [removeBackground, setRemoveBackground] = useState(true);
 
-  // Output resolution for sheet mode (1K / 2K / 4K by model)
-  const [selectedResolution, setSelectedResolution] = useState<ImageResolution>('1K');
-  React.useEffect(() => {
-    const allowed = MODEL_RESOLUTIONS[selectedModel] ?? ['1K'];
-    if (!allowed.includes(selectedResolution)) setSelectedResolution(allowed[0]);
-  }, [selectedModel]);
+  // Output resolution from settings (2.5 Flash = 1K only; 3 Pro = 1K/2K/4K)
 
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
@@ -236,7 +233,7 @@ const SpriteAnimatorPage: React.FC = () => {
           selectedModel,
           (status) => setStatusText(status),
           config.chromaKeyColor,
-          selectedResolution
+          outputResolution
         );
 
         setSpriteSheetImage(sheetImage);
@@ -309,6 +306,7 @@ const SpriteAnimatorPage: React.FC = () => {
     sourceImage,
     config,
     selectedModel,
+    outputResolution,
     apiKey,
     setSpriteSheetFrames,
     setShowSettings,
@@ -454,9 +452,11 @@ const SpriteAnimatorPage: React.FC = () => {
         setApiKey={setApiKey}
         selectedModel={selectedModel}
         setSelectedModel={setSelectedModel}
+        outputResolution={outputResolution}
+        setOutputResolution={setOutputResolution}
         showSettings={showSettings}
         onClose={() => setShowSettings(false)}
-        onSave={saveSettings}
+        onSave={(key, model, token, res) => saveSettings(key, model, token, res)}
       />
 
       <header className="sticky top-0 z-20 max-w-7xl mx-auto mb-4 md:mb-8 -mx-4 px-4 md:mx-0 md:px-0 safe-top">
@@ -533,8 +533,8 @@ const SpriteAnimatorPage: React.FC = () => {
             error={error}
             onGenerate={handleGenerate}
             selectedModel={selectedModel}
-            selectedResolution={selectedResolution}
-            setSelectedResolution={setSelectedResolution}
+            selectedResolution={outputResolution}
+            setSelectedResolution={setOutputResolution}
           />
         </div>
 

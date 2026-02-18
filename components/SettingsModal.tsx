@@ -1,6 +1,7 @@
 import React from 'react';
 import { Settings, X, ShieldCheck, ShieldAlert } from './Icons';
-import { SUPPORTED_MODELS } from '../utils/constants';
+import { MODEL_RESOLUTIONS, SUPPORTED_MODELS } from '../utils/constants';
+import type { ImageResolution } from '../utils/constants';
 import { GoogleGenAI } from '@google/genai';
 import { useLanguage } from '../hooks/useLanguage';
 
@@ -9,9 +10,11 @@ interface SettingsModalProps {
   setApiKey: (key: string) => void;
   selectedModel: string;
   setSelectedModel: (model: string) => void;
+  outputResolution: ImageResolution;
+  setOutputResolution: (value: ImageResolution) => void;
   showSettings: boolean;
   onClose: () => void;
-  onSave: (key: string, model: string, hfToken: string) => void;
+  onSave: (key: string, model: string, hfToken: string, outputResolution: ImageResolution) => void;
   hfToken: string;
   setHfToken: (token: string) => void;
 }
@@ -21,6 +24,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
   setApiKey,
   selectedModel,
   setSelectedModel,
+  outputResolution,
+  setOutputResolution,
   showSettings,
   onClose,
   onSave,
@@ -90,8 +95,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
       }
     }
 
-    // Save and close
-    onSave(apiKey, selectedModel, hfToken);
+    // Save and close (resolution is constrained by model in parent)
+    onSave(apiKey, selectedModel, hfToken, outputResolution);
   };
 
   // Clear validation state when key changes
@@ -252,6 +257,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                 );
               })}
             </select>
+
+            {/* Output size: 3 Pro = 1K/2K/4K; 2.5 Flash = 1K only */}
+            <div className="mt-4">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                {t.outputResolutionLabel}
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {(MODEL_RESOLUTIONS[selectedModel] ?? ['1K']).map((res) => (
+                  <button
+                    key={res}
+                    type="button"
+                    onClick={() => setOutputResolution(res as ImageResolution)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition-colors ${
+                      outputResolution === res
+                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                    }`}
+                  >
+                    {res}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500 mt-1.5">{t.outputResolutionHint}</p>
+            </div>
           </div>
 
           <div className="pt-2 border-t border-slate-100">

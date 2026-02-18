@@ -136,6 +136,8 @@ export const zhTW: Translations = {
   getApiKey: '獲取 Key',
   modelLabel: '模型選擇',
   modelRecommended: '(推薦)',
+  outputResolutionLabel: '輸出尺寸',
+  outputResolutionHint: 'Gemini 2.5 Flash 僅支援 1K；Gemini 3 Pro 支援 1K / 2K / 4K',
   saveAndApply: '儲存並應用',
   validating: '驗證中...',
   validationSuccess: 'API Key 驗證成功！',

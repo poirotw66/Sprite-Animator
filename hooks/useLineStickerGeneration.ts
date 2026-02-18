@@ -13,6 +13,7 @@ import {
 import { generateSpriteSheet } from '../services/geminiService';
 import { logger } from '../utils/logger';
 import { useLanguage } from './useLanguage';
+import type { ImageResolution } from '../utils/constants';
 
 interface UseLineStickerGenerationProps {
     apiKey: string | null;
@@ -34,6 +35,8 @@ interface UseLineStickerGenerationProps {
     chromaKeyColor: 'magenta' | 'green';
     sourceImage: string | null;
     includeText: boolean;
+    /** Output resolution (1K / 2K / 4K). Gemini 2.5 Flash supports 1K only. */
+    selectedResolution?: ImageResolution;
 }
 
 export const useLineStickerGeneration = ({
@@ -55,6 +58,7 @@ export const useLineStickerGeneration = ({
     chromaKeyColor,
     sourceImage,
     includeText,
+    selectedResolution,
 }: UseLineStickerGenerationProps) => {
     const { t } = useLanguage();
     const [isGenerating, setIsGenerating] = useState(false);
@@ -147,7 +151,8 @@ export const useLineStickerGeneration = ({
                 apiKey,
                 selectedModel,
                 (status) => setStatusText(status),
-                chromaKeyColor
+                chromaKeyColor,
+                selectedResolution
             );
             return result;
         } catch (err: any) {
@@ -158,7 +163,7 @@ export const useLineStickerGeneration = ({
             setIsGenerating(false);
             setStatusText('');
         }
-    }, [apiKey, selectedModel, sourceImage, buildPrompt, t]);
+    }, [apiKey, selectedModel, sourceImage, buildPrompt, selectedResolution, t]);
 
     return {
         isGenerating,

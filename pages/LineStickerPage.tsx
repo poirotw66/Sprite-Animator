@@ -17,7 +17,7 @@ import { removeBackgroundAI } from '../utils/aiBackgroundRemoval';
 import { ChromaKeyColorType, BgRemovalMethod } from '../types';
 import {
     CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ, DEFAULT_SLICE_SETTINGS,
-    MODEL_RESOLUTIONS, type ImageResolution, type StickerPhraseMode
+    type StickerPhraseMode
 } from '../utils/constants';
 import { logger } from '../utils/logger';
 
@@ -52,6 +52,8 @@ const LineStickerPage: React.FC = () => {
         setApiKey,
         selectedModel,
         setSelectedModel,
+        outputResolution,
+        setOutputResolution,
         hfToken,
         setHfToken,
         showSettings,
@@ -106,7 +108,6 @@ const LineStickerPage: React.FC = () => {
     const [stickerFrames, setStickerFrames] = useState<string[]>([]);
     const [selectedFrames, setSelectedFrames] = useState<boolean[]>([]);
     const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('green');
-    const [selectedResolution, setSelectedResolution] = useState<ImageResolution>('1K');
     const [selectedPhraseMode, setSelectedPhraseMode] = useState<StickerPhraseMode>('balanced');
     const [includeText, setIncludeText] = useState(true);
     const [bgRemovalMethod, setBgRemovalMethod] = useState<BgRemovalMethod>('chroma');
@@ -211,11 +212,6 @@ const LineStickerPage: React.FC = () => {
         }
     }, [selectedTheme]);
 
-    useEffect(() => {
-        const allowed = MODEL_RESOLUTIONS[selectedModel] || ['1K'];
-        if (!allowed.includes(selectedResolution)) setSelectedResolution(allowed[0] as ImageResolution);
-    }, [selectedModel]);
-
     const {
         isGenerating,
         setIsGenerating,
@@ -244,6 +240,7 @@ const LineStickerPage: React.FC = () => {
         chromaKeyColor,
         sourceImage,
         includeText,
+        selectedResolution: outputResolution,
     });
 
     const {
@@ -482,9 +479,11 @@ const LineStickerPage: React.FC = () => {
                 setApiKey={setApiKey}
                 selectedModel={selectedModel}
                 setSelectedModel={setSelectedModel}
+                outputResolution={outputResolution}
+                setOutputResolution={setOutputResolution}
                 showSettings={showSettings}
                 onClose={() => setShowSettings(false)}
-                onSave={saveSettings}
+                onSave={(key, model, token, res) => saveSettings(key, model, token, res)}
                 hfToken={hfToken}
                 setHfToken={setHfToken}
             />

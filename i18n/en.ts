@@ -136,6 +136,8 @@ export const en: Translations = {
   getApiKey: 'Get Key',
   modelLabel: 'Model Selection',
   modelRecommended: '(Recommended)',
+  outputResolutionLabel: 'Output size',
+  outputResolutionHint: 'Gemini 2.5 Flash: 1K only; Gemini 3 Pro: 1K / 2K / 4K',
   saveAndApply: 'Save & Apply',
   validating: 'Validating...',
   validationSuccess: 'API Key validated successfully!',

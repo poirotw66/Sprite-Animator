@@ -32,6 +32,8 @@ const RemoveBackgroundPage: React.FC = () => {
         setApiKey,
         selectedModel,
         setSelectedModel,
+        outputResolution,
+        setOutputResolution,
         hfToken,
         setHfToken,
         showSettings,
@@ -134,9 +136,11 @@ const RemoveBackgroundPage: React.FC = () => {
                 setApiKey={setApiKey}
                 selectedModel={selectedModel}
                 setSelectedModel={setSelectedModel}
+                outputResolution={outputResolution}
+                setOutputResolution={setOutputResolution}
                 showSettings={showSettings}
                 onClose={() => setShowSettings(false)}
-                onSave={saveSettings}
+                onSave={(key, model, token, res) => saveSettings(key, model, token, res)}
                 hfToken={hfToken}
                 setHfToken={setHfToken}
             />
