@@ -736,25 +736,44 @@ ${chromaKeyColor === 'magenta'
 
     if (onProgress) onProgress(`正在生成 ${cols}x${rows} LINE 貼圖精靈圖 (比例 ${targetAspectRatio})...`);
   } else {
-    // Generate detailed per-frame description with TINY increments for animation
-    const frameDescriptions = Array.from({ length: totalFrames }, (_, i) => {
-      const progress = i / totalFrames; // 0 to ~0.83 for 6 frames
+    // Per-pose timing hints for smooth animation (use "Cell" to avoid model drawing numbers on image)
+    const cellDescriptions = Array.from({ length: totalFrames }, (_, i) => {
+      const progress = i / totalFrames;
       const degrees = Math.round(progress * 360 / totalFrames * 10) / 10;
-      return `Frame ${i + 1}: ${degrees}° into the motion cycle (TINY change from ${i === 0 ? 'Frame ' + totalFrames : 'Frame ' + i})`;
+      return `Cell (${Math.floor(i / cols) + 1},${(i % cols) + 1}): ${degrees}° into the motion cycle (TINY change from previous cell)`;
     }).join('\n');
+
+    // LINE-style exact background wording (same as LINE sticker tool for stable chroma key)
+    const bgColorNameExact = chromaKeyColor === 'magenta' ? 'Pure Magenta #FF00FF' : 'Neon Green #00FF00';
+    const backgroundSection = `
+### [Background] CRITICAL — Same as LINE sticker tool
+* **Background color (exact)**: The entire canvas must be **exactly ${bgColorNameExact}** (hex ${bgColorHex}). Every cell must use this same color—no gradients, no pink/purple/green variants (e.g. do NOT use #E91E63, #00B140, or similar). One single RGB value for all background pixels so that chroma key removal works uniformly.
+* **Lighting**: No shadows. Flat shading only. Ambient occlusion disabled.
+* **Uniform**: Same color across the entire sprite sheet. No ground, clouds, or decorative elements. Character edges must be sharp and clean against the background.
+`;
 
     // 2. Construct a prompt that enforces MINIMAL frame-to-frame changes for animation
     fullPrompt = `
 You are creating a sprite sheet for ULTRA-SMOOTH looping animation.
 
 ══════════════════════════════════════════════════════════════
+BACKGROUND (EXACT) — READ FIRST — Same rule as LINE sticker
+══════════════════════════════════════════════════════════════
+${backgroundSection}
+
+${chromaKeyColor === 'magenta'
+        ? `MAGENTA: R=255, G=0, B=255 only. NOT pink (#FF69B4), NOT purple (#800080).`
+        : `GREEN: ${bgColorRGB} only. NOT darker green (#00B140), NOT forest green (#228B22).`}
+Every background pixel MUST be EXACTLY ${bgColorHex}. No gradients.
+
+══════════════════════════════════════════════════════════════
 THE MOST IMPORTANT RULE - READ THIS FIRST
 ══════════════════════════════════════════════════════════════
 Imagine recording a video at ${totalFrames * 4} FPS, then keeping only every 4th frame.
-Each frame should look almost IDENTICAL to its neighbors.
-The difference between Frame N and Frame N+1 should be BARELY NOTICEABLE.
+Each cell should look almost IDENTICAL to its neighbors.
+The difference between one cell and the next should be BARELY NOTICEABLE.
 
-If someone quickly glances at all ${totalFrames} frames, they should think:
+If someone quickly glances at all ${totalFrames} cells, they should think:
 "These all look almost the same - just tiny differences"
 
 This is CORRECT. This is what makes smooth animation.
@@ -765,40 +784,12 @@ TASK
 Action: "${prompt}"
 Layout: ${totalFrames} poses in a ${cols}×${rows} grid (left→right, top→bottom)
 
-⚠️ CRITICAL BACKGROUND COLOR REQUIREMENT ⚠️
-Background MUST be EXACTLY this color (for chroma key removal):
-• Hex: ${bgColorHex}
-• ${bgColorRGB}
-• Color name: ${bgColorName}
-
-${chromaKeyColor === 'magenta'
-        ? `MAGENTA COLOR GUIDE:
-  ✅ CORRECT: Pure magenta ${bgColorHex} - R=255, G=0, B=255 (#FF00FF )
-     (Imagine: Maximum red + Maximum blue + Zero green = Electric magenta)
-  ❌ WRONG: Pink (#FF69B4), Purple (#800080), Hot Pink (#FF1493)
-  ❌ WRONG: Any color with G > 50 is NOT magenta
-  
-  Visual Check: The background should look like a bright, electric magenta/fuchsia
-  that hurts your eyes - NOT a soft pink or purple.`
-        : `GREEN COLOR GUIDE:
-  ✅ CORRECT: Standard green screen ${bgColorHex} - R=0, G=177, B=64 (#00B140)
-     (Imagine: Zero red + High green + Low blue = Professional green screen)
-  ❌ WRONG: Lime (#00FF00), Forest Green (#228B22), Neon Green (#39FF14)
-  ❌ WRONG: Any color with R > 50 or B > 130 is NOT standard green screen
-  
-  Visual Check: The background should look like a professional video green screen
-  used in film studios - NOT lime green or grass green.`}
-
-DO NOT use any other shade or variant.
-The background MUST be this EXACT color value ${bgColorHex}.
-Think of it as a color picker set to EXACTLY ${bgColorRGB}.
-
 ══════════════════════════════════════════════════════════════
-FRAME-BY-FRAME MICRO-MOVEMENTS
+CELL-BY-CELL MICRO-MOVEMENTS (do NOT draw cell numbers or labels on the image)
 ══════════════════════════════════════════════════════════════
-${frameDescriptions}
+${cellDescriptions}
 
-Between ANY two consecutive frames:
+Between ANY two consecutive cells:
 • Limbs rotate by only ~${Math.max(3, Math.round(15 / totalFrames))}° to ${Math.max(5, Math.round(25 / totalFrames))}° MAX
 • Body shifts by only ~${Math.max(1, Math.round(5 / totalFrames))}% to ${Math.max(2, Math.round(8 / totalFrames))}% of height MAX
 • Head tilts by only ~${Math.max(1, Math.round(5 / totalFrames))}° to ${Math.max(2, Math.round(8 / totalFrames))}° MAX
@@ -809,11 +800,11 @@ THESE ARE MAXIMUM VALUES - smaller is better!
 ══════════════════════════════════════════════════════════════
 VISUALIZATION: ONION SKIN TEST
 ══════════════════════════════════════════════════════════════
-If you overlay Frame 1 and Frame 2 at 50% opacity each:
+If you overlay the first and second cell at 50% opacity each:
 → The character should appear as ONE slightly blurry figure
 → NOT as two clearly separate poses
 
-If you overlay ALL ${totalFrames} frames:
+If you overlay ALL ${totalFrames} cells:
 → Should look like ONE character with motion blur
 → NOT like ${totalFrames} different characters
 
@@ -839,16 +830,16 @@ THINK: "Is this change small enough to be smooth at 12 FPS?"
 ══════════════════════════════════════════════════════════════
 PERFECT LOOP CONNECTION
 ══════════════════════════════════════════════════════════════
-Frame ${totalFrames} → Frame 1 must have the SAME tiny difference
-as Frame 1 → Frame 2 or any other adjacent pair.
+The last cell (bottom-right) → first cell (top-left) must have the SAME tiny difference
+as any other adjacent pair.
 
 The animation is a CIRCLE, not a line.
-Frame ${totalFrames} is NOT an "ending pose" - it flows INTO Frame 1.
+The last cell is NOT an "ending pose" - it flows INTO the first cell.
 
 ══════════════════════════════════════════════════════════════
 CHARACTER ANCHOR POINTS (CRITICAL)
 ══════════════════════════════════════════════════════════════
-These must stay FIXED across all ${totalFrames} frames:
+These must stay FIXED across all ${totalFrames} cells:
 • Character's foot/ground contact point (same Y position)
 • Overall character size (no zooming in/out)
 • Character's center position in each grid cell
@@ -857,8 +848,8 @@ These must stay FIXED across all ${totalFrames} frames:
 ══════════════════════════════════════════════════════════════
 COMMON MISTAKES TO AVOID
 ══════════════════════════════════════════════════════════════
-❌ WRONG: Frame 1 (standing) → Frame 2 (jumping high) = TOO MUCH CHANGE
-✅ RIGHT: Frame 1 (knees slightly bent) → Frame 2 (knees bent 5° more)
+❌ WRONG: First cell (standing) → second cell (jumping high) = TOO MUCH CHANGE
+✅ RIGHT: First cell (knees slightly bent) → second cell (knees bent 5° more)
 
 ❌ WRONG: Arms in completely different positions between frames
 ✅ RIGHT: Arms move only a few degrees between frames
@@ -875,13 +866,14 @@ FINAL OUTPUT REQUIREMENTS
 • Single image containing ${cols}×${rows} grid of poses
 • Background MUST be EXACTLY ${bgColorHex} (${bgColorRGB}) - NO OTHER COLOR
 • All ${totalFrames} poses nearly identical with microscopic differences
-• Smooth loop: Frame ${totalFrames} connects seamlessly to Frame 1
-• NO text, numbers, labels, borders, or UI elements
+• Smooth loop: last cell connects seamlessly to first cell
+• NO text, numbers, labels, borders, or UI elements — do NOT draw "1", "2", "3", "Frame", or any numerals/labels on the image
 • Character poses should be SEAMLESSLY placed on background
 
 ══════════════════════════════════════════════════════════════
 ABSOLUTELY FORBIDDEN - CRITICAL - READ CAREFULLY
 ══════════════════════════════════════════════════════════════
+• NO frame numbers, cell numbers, numerals (1, 2, 3...), or text labels drawn on the image — the grid has no visible labels
 • NO BORDERS OR FRAMES around individual poses or the entire image
 • NO GRID LINES separating the poses - poses must blend into background
 • NO BLACK LINES, WHITE LINES, or any colored lines between frames
@@ -901,20 +893,9 @@ Using any other shade will cause the chroma key removal to fail.
 
 ${chromaKeyColor === 'magenta'
         ? `MAGENTA REQUIREMENT - MEMORIZE THIS:
-  • R must be 255 (maximum)
-  • G must be 0 (zero)
-  • B must be 255 (maximum)
-  • Result: ${bgColorHex} - Pure electric magenta
-  • NOT pink (which has G > 100)
-  • NOT purple (which has R < 200 or B < 200)`
-        : `GREEN SCREEN REQUIREMENT - MEMORIZE THIS:
-  • R must be 0 (zero)
-  • G must be 177 (high but not maximum)
-  • B must be 64 (low-medium)
-  • Result: ${bgColorHex} - Professional green screen
-  • NOT lime green (which has G = 255)
-  • NOT neon green (which has R > 50 or B < 20)
-  • NOT forest green (which has G < 150)`}
+  • R=255, G=0, B=255 → ${bgColorHex}. NOT pink (G>100), NOT purple (R<200 or B<200).`
+        : `GREEN REQUIREMENT - MEMORIZE THIS:
+  • ${bgColorRGB} → ${bgColorHex}. NOT darker green, NOT forest green. Only this exact value.`}
 
 If you're unsure, imagine filling the background with a paint bucket tool
 set to EXACTLY ${bgColorRGB}. Every background pixel should be this exact value.
