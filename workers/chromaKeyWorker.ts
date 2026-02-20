@@ -116,6 +116,13 @@ function isMagentaScreenHSL(r: number, g: number, b: number, tolerance: number):
 const DEFAULT_EDGE_BAND_RADIUS = 2;
 const DEFAULT_EDGE_BLEND = 0.22;
 
+/** Pixels with all channels above this are treated as near-white (e.g. white borders); we skip spill/blend to avoid color residue. */
+const NEAR_WHITE_THRESHOLD = 240;
+
+function isNearWhite(r: number, g: number, b: number): boolean {
+  return r >= NEAR_WHITE_THRESHOLD && g >= NEAR_WHITE_THRESHOLD && b >= NEAR_WHITE_THRESHOLD;
+}
+
 /**
  * Process chroma key removal with progress reporting
  * Uses HSL color space for accurate green/magenta detection
@@ -455,6 +462,7 @@ function processChromaKey(
 
   // Pass 3: Final Decontamination (spill suppression) with full edge band
   // Despill formulas: green g' = min(g, max(r,b)) style; magenta: pull R,B toward G (Wikipedia / industry)
+  // Skip color modification for near-white pixels (e.g. white borders) to avoid green/magenta residue.
   for (let i = 0; i < data.length; i += 4) {
     const pixelIdx = i / 4;
     const alpha = erodedAlpha[pixelIdx];
@@ -465,6 +473,8 @@ function processChromaKey(
     let r = data[i];
     let g = data[i + 1];
     let b = data[i + 2];
+    if (isNearWhite(r, g, b)) continue; // preserve white borders; avoid tint residue from spill/blend
+
     const avg = (r + g + b) / 3;
     const isEdge = alpha < 255;
     const inEdgeBand = edgeBand[pixelIdx] === 1;
@@ -528,6 +538,7 @@ function processChromaKey(
 
   // Pass 4: Edge color sampling - blend edge band pixels toward opaque neighbor colors to reduce halo
   // Pass 4b: Dark edge lift - stronger blend for pixels darker than neighbors (removes black/dark ring)
+  // Skip blending for near-white pixels so white borders are not tinted by neighbor average.
   const sampled = new Uint8ClampedArray(data.length);
   sampled.set(data);
   for (let y = 1; y < height - 1; y++) {
@@ -537,6 +548,7 @@ function processChromaKey(
       if (edgeBand[pixelIdx] === 0) continue;
       const alpha = sampled[i + 3];
       if (alpha === 0) continue;
+      if (isNearWhite(sampled[i], sampled[i + 1], sampled[i + 2])) continue;
 
       let sumR = 0, sumG = 0, sumB = 0;
       let count = 0;

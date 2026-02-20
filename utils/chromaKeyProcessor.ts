@@ -325,6 +325,8 @@ function processInMainThread(
       }
 
       // Pass 2: Final Decontamination (spill suppression; worker uses edge band + sampling for best quality)
+      // Skip near-white pixels (e.g. white borders) to avoid color residue.
+      const NEAR_WHITE = 240;
       for (let i = startIndex; i < endIndex; i += 4) {
         const alpha = data[i + 3];
         if (alpha === 0) continue;
@@ -332,6 +334,8 @@ function processInMainThread(
         const r = data[i];
         const g = data[i + 1];
         const b = data[i + 2];
+        if (r >= NEAR_WHITE && g >= NEAR_WHITE && b >= NEAR_WHITE) continue;
+
         const avg = (r + g + b) / 3;
         const isEdge = alpha < 255;
 

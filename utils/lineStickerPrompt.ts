@@ -21,6 +21,10 @@ export interface StyleSlot {
     drawingMethod: string;
     /** Omitted in prompt: background is always the chroma key (e.g. Pure Magenta) for sprite-sheet cutting. */
     background?: string;
+    /** When 'style', outline color follows the style (e.g. dark brown, black); otherwise use white stroke for LINE readability. */
+    outlinePreference?: 'white' | 'style';
+    /** When 'soft', allow gentle shading/wash for paint-like styles; default 'flat' keeps strict flat shading for chroma key. */
+    lightingPreference?: 'flat' | 'soft';
 }
 
 export interface CharacterSlot {
@@ -135,13 +139,19 @@ export function buildLineStickerPrompt(
         ? LAYOUT_PROTECTION_RULES.replace(/{TOTAL_FRAMES}/g, totalFrames.toString())
         : '';
 
-    // 2. Style / Art Medium (technical: flat shading, no shadows; LINE sticker: white stroke on character only, no grid separators)
+    // 2. Style / Art Medium (technical: lighting per style; LINE sticker: outline per style or white)
+    const outlineRule = slots.style.outlinePreference === 'style'
+        ? '* **LINE sticker style**: Visible outline around the character silhouette as specified by the style (e.g. dark brown or black). Keep it clean and readable on any chat background after the colored background is removed.'
+        : '* **LINE sticker style**: Thick white stroke around the character silhouette only. Clean, visible outline so the sticker stays readable on any chat background after the colored background is removed.';
+    const lightingTechnical = slots.style.lightingPreference === 'soft'
+        ? '* **Lighting (technical)**: Soft, subtle shading allowed (e.g. gentle wash or soft gradients); no harsh drop shadows or complex lighting. Character must remain clearly separated from background for clean chroma key.'
+        : '* **Lighting (technical)**: Flat shading only. No drop shadows, no gradients, no ambient occlusion. Sharp edges against background.';
     const styleSection = `### [2. Style / Art Medium]
 
 * **Style**: ${slots.style.styleType}
 * **Technique**: ${slots.style.drawingMethod}
-* **Lighting (technical)**: Flat shading only. No drop shadows, no gradients, no ambient occlusion. Sharp edges against background.
-* **LINE sticker style**: Thick white stroke around the character silhouette only. Clean, visible outline so the sticker stays readable on any chat background after the colored background is removed.
+${lightingTechnical}
+${outlineRule}
 * **No 框線 (frame lines) or grid separators**: Do NOT draw any line, frame, border, box, or divider between cells or around the image or around each sticker. No visible 格線 (grid lines) or 邊框 (borders). The grid is logical only (for splitting later); adjacent cells must share the same background with zero visible lines.
 `;
 
@@ -156,10 +166,13 @@ export function buildLineStickerPrompt(
 
     // 4. Lighting & Background (technical parameters) — exact hex for chroma key
     const bgHex = bgColor === 'magenta' ? '#FF00FF' : '#00FF00';
+    const lightingLine = slots.style.lightingPreference === 'soft'
+        ? '* **Lighting**: Minimal shadows. Soft shading only; no harsh drop shadows. Ambient occlusion disabled.'
+        : '* **Lighting**: No shadows. Flat shading only. Ambient occlusion disabled.';
     const lightingSection = `### [4. Lighting & Background] CRITICAL
 
 * **Background color (exact)**: The entire canvas must be **exactly ${bgColorText}** (hex ${bgHex}). Every cell must use this same color—no gradients, no pink/purple variants (e.g. do NOT use #E91E63 or similar). One single RGB value for all background pixels so that chroma key removal works uniformly.
-* **Lighting**: No shadows. Flat shading only. Ambient occlusion disabled.
+${lightingLine}
 * **Uniform**: Same color across the entire sprite sheet. No ground, clouds, or decorative elements. Character edges must be sharp and clean against the background.
 `;
 
@@ -280,7 +293,7 @@ export const THEME_PRESETS: Record<string, ThemeSlot & { label: string }> = {
 export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
     chibi: {
         label: 'Q 版可愛',
-        styleType: "Chibi, 2-head body ratio, LINE sticker art style",
+        styleType: "Chibi, 2-head body ratio, LINE sticker art style, versatile for any character type",
         drawingMethod: "Soft hand-drawn, thick clean outlines, soft cell shading",
     },
     pixel: {
@@ -292,6 +305,7 @@ export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
         label: '極簡線條',
         styleType: "Minimalist flat illustration, Kanahei style, cute healing sticker look",
         drawingMethod: "Soft thick brown outlines, simple flat color fill, dot eyes and soft blush, rounded simplified shapes",
+        outlinePreference: 'style',
     },
     anime: {
         label: "日系動漫",
@@ -302,11 +316,13 @@ export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
         label: "美式卡通",
         styleType: "Vibrant cartoon style, strong motion, exaggerated expressions",
         drawingMethod: "Thick black outlines, saturated color blocks, geometric simplification, commercial illustration feel",
+        outlinePreference: 'style',
     },
     watercolor: {
         label: "手繪水彩",
         styleType: "Soft watercolor style, healing illustration, natural bleed at edges",
         drawingMethod: "Wet-on-wet technique, hand-drawn brush edges, soft outlines, organic paint flow",
+        lightingPreference: 'soft',
     },
     yurukawa: {
         label: "慵懶軟懶風",
@@ -332,12 +348,20 @@ export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
         label: "不透明水彩",
         styleType: "Gouache and opaque watercolor style, matte and soft, picture-book illustration feel",
         drawingMethod: "Flat opaque color layers, soft brush edges, minimal blending, warm and cozy palette",
+        lightingPreference: 'soft',
+    },
+    lineChibi: {
+        label: "日系貼圖暖色",
+        styleType: "Cute chibi character in Japanese LINE sticker style, suitable for animals and mascots. Hand-drawn digital illustration with thick dark brown outlines and flat colors. Round, squishy body, tiny paws, minimalist expressive facial expressions.",
+        drawingMethod: "Soft warm color palette (cream and muted orange). High contrast, minimalist and cozy aesthetic. Isolated character, clean and readable for stickers. Avoid: photorealistic, complex shading, cold colors, busy details.",
+        outlinePreference: 'style',
     },
 };
 
 /** Display order for style dropdown: recommended and LINE-friendly first, then variety. */
 export const STYLE_PRESET_ORDER: (keyof typeof STYLE_PRESETS)[] = [
     'chibi',
+    'lineChibi',
     'minimalist',
     'yurukawa',
     'anime',
