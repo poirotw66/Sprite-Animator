@@ -11,7 +11,7 @@ const RETRY_DELAY_MS = 1000;
  * Wraps a dynamic import with retries. Use for React.lazy() to reduce "Failed to fetch
  * dynamically imported module" on GitHub Pages when index.html is cached but chunk hashes changed.
  */
-export function lazyWithRetry<T extends { default: ComponentType<unknown> }>(
+export function lazyWithRetry<T extends { default: ComponentType<any> }>(
   importFn: () => Promise<T>,
   retries = DEFAULT_RETRIES
 ) {

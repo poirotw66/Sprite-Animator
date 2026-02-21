@@ -15,8 +15,8 @@ interface SettingsModalProps {
   showSettings: boolean;
   onClose: () => void;
   onSave: (key: string, model: string, hfToken: string, outputResolution: ImageResolution) => void;
-  hfToken: string;
-  setHfToken: (token: string) => void;
+  hfToken?: string;
+  setHfToken?: (token: string) => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
@@ -29,8 +29,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
   showSettings,
   onClose,
   onSave,
-  hfToken,
-  setHfToken,
+  hfToken = '',
+  setHfToken = () => {},
 }) => {
   const { t } = useLanguage();
   // All hooks must be called before any conditional returns

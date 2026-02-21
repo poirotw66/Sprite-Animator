@@ -11,6 +11,7 @@ import { SettingsModal } from '../components/SettingsModal';
 import { useSettings } from '../hooks/useSettings';
 import { useLineStickerDownload } from '../hooks/useLineStickerDownload';
 import { useLineStickerGeneration } from '../hooks/useLineStickerGeneration';
+import { useLineStickerPhraseGrid } from '../hooks/useLineStickerPhraseGrid';
 import { generateStickerPhrases, generateActionDescriptions } from '../services/geminiService';
 import { sliceSpriteSheet, SliceSettings, getEffectivePadding, FrameOverride, PaddingFour } from '../utils/imageUtils';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
@@ -116,92 +117,27 @@ const LineStickerPage: React.FC = () => {
     const [previewPrompt, setPreviewPrompt] = useState<string | null>(null);
     const [promptCopied, setPromptCopied] = useState(false);
 
-    // Phrase list for hook: exact length (single = gridCols*gridRows, set = 48)
-    const phrasesForHook = useMemo(() => {
-        if (stickerSetMode) {
-            const list = setPhrasesList.length >= 48 ? setPhrasesList : [...setPhrasesList, ...Array(48 - setPhrasesList.length).fill('')];
-            return list.slice(0, 48);
-        }
-        const total = gridCols * gridRows;
-        const fromText = customPhrases.split('\n').map((l: string) => l.trim());
-        const padded = fromText.length >= total ? fromText.slice(0, total) : [...fromText, ...Array(total - fromText.length).fill('')];
-        return padded;
-    }, [stickerSetMode, setPhrasesList, customPhrases, gridCols, gridRows]);
-
-    // Action descriptions for hook (same length as phrasesForHook); empty falls back to getActionHint(phrase)
-    const actionDescsForHook = useMemo(() => {
-        if (stickerSetMode) {
-            const list = actionDescsList.length >= 48 ? actionDescsList : [...actionDescsList, ...Array(48 - actionDescsList.length).fill('')];
-            return list.slice(0, 48);
-        }
-        const total = gridCols * gridRows;
-        const padded = actionDescsList.length >= total ? actionDescsList.slice(0, total) : [...actionDescsList, ...Array(total - actionDescsList.length).fill('')];
-        return padded;
-    }, [stickerSetMode, actionDescsList, gridCols, gridRows]);
-
-    // Display phrase grid: single = gridCols*gridRows, set = current sheet 16
-    const phraseGridList = useMemo(() => {
-        if (stickerSetMode) {
-            const start = currentSheetIndex * 16;
-            const sheet = setPhrasesList.slice(start, start + 16);
-            return sheet.length >= 16 ? sheet : [...sheet, ...Array(16 - sheet.length).fill('')];
-        }
-        return phrasesForHook;
-    }, [stickerSetMode, currentSheetIndex, setPhrasesList, phrasesForHook]);
-
-    const actionDescGridList = useMemo(() => {
-        if (stickerSetMode) {
-            const start = currentSheetIndex * 16;
-            const sheet = actionDescsList.slice(start, start + 16);
-            return sheet.length >= 16 ? sheet : [...sheet, ...Array(16 - sheet.length).fill('')];
-        }
-        const total = gridCols * gridRows;
-        const list = actionDescsList.slice(0, total);
-        return list.length >= total ? list : [...list, ...Array(total - list.length).fill('')];
-    }, [stickerSetMode, currentSheetIndex, actionDescsList, gridCols, gridRows]);
-
-    const phraseGridCols = stickerSetMode ? 4 : gridCols;
-    const phraseGridRows = stickerSetMode ? 4 : gridRows;
-
-    const updatePhraseAt = useCallback((index: number, value: string) => {
-        if (stickerSetMode) {
-            const globalIndex = currentSheetIndex * 16 + index;
-            setSetPhrasesList(prev => {
-                const next = prev.length >= 48 ? [...prev] : [...prev, ...Array(48 - prev.length).fill('')];
-                const n = next.slice(0, 48);
-                n[globalIndex] = value;
-                return n;
-            });
-        } else {
-            const total = gridCols * gridRows;
-            const arr = customPhrases.split('\n').map((l: string) => l.trim());
-            const padded = arr.length >= total ? arr.slice(0, total) : [...arr, ...Array(total - arr.length).fill('')];
-            const next = [...padded];
-            next[index] = value;
-            setCustomPhrases(next.join('\n'));
-            setSetPhrasesList(next);
-        }
-    }, [stickerSetMode, currentSheetIndex, gridCols, gridRows, customPhrases]);
-
-    const updateActionDescAt = useCallback((index: number, value: string) => {
-        if (stickerSetMode) {
-            const globalIndex = currentSheetIndex * 16 + index;
-            setActionDescsList(prev => {
-                const next = prev.length >= 48 ? [...prev] : [...prev, ...Array(48 - prev.length).fill('')];
-                const n = next.slice(0, 48);
-                n[globalIndex] = value;
-                return n;
-            });
-        } else {
-            const total = gridCols * gridRows;
-            setActionDescsList(prev => {
-                const next = prev.length >= total ? [...prev] : [...prev, ...Array(total - prev.length).fill('')];
-                const n = next.slice(0, total);
-                n[index] = value;
-                return n;
-            });
-        }
-    }, [stickerSetMode, currentSheetIndex, gridCols, gridRows]);
+    const {
+        phrasesForHook,
+        actionDescsForHook,
+        phraseGridList,
+        actionDescGridList,
+        phraseGridCols,
+        phraseGridRows,
+        updatePhraseAt,
+        updateActionDescAt,
+    } = useLineStickerPhraseGrid({
+        stickerSetMode,
+        currentSheetIndex,
+        setPhrasesList,
+        setSetPhrasesList,
+        customPhrases,
+        setCustomPhrases,
+        actionDescsList,
+        setActionDescsList,
+        gridCols,
+        gridRows,
+    });
 
     useEffect(() => {
         if (selectedTheme === 'custom') return;
@@ -930,7 +866,7 @@ const LineStickerPage: React.FC = () => {
                                         sliceSettings={stickerSetMode ? { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 } : { ...sliceSettings, cols: gridCols, rows: gridRows }}
                                         setSliceSettings={stickerSetMode
                                             ? () => { } // Read-only in set mode view
-                                            : (val) => {
+                                            : (val: SliceSettings | ((prev: SliceSettings) => SliceSettings)) => {
                                                 if (typeof val === 'function') {
                                                     const next = val({ ...sliceSettings, cols: gridCols, rows: gridRows });
                                                     setSliceSettings(next);

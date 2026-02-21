@@ -7,68 +7,14 @@
 import { logger } from './logger';
 import type { ChromaKeyColorType } from '../types';
 import { removeChromaKeyWithWorker } from './chromaKeyProcessor';
-
-/**
- * Configuration for slicing a sprite sheet into individual frames.
- * Supports symmetric padding (paddingX, paddingY) or four-edge padding (paddingLeft/Right/Top/Bottom).
- * When four-edge is set, it takes precedence for slice math.
- */
-export interface SliceSettings {
-  cols: number;
-  rows: number;
-  paddingX: number;
-  paddingY: number;
-  /** When set, used as left padding; otherwise paddingX */
-  paddingLeft?: number;
-  /** When set, used as right padding; otherwise paddingX */
-  paddingRight?: number;
-  /** When set, used as top padding; otherwise paddingY */
-  paddingTop?: number;
-  /** When set, used as bottom padding; otherwise paddingY */
-  paddingBottom?: number;
-  shiftX: number;
-  shiftY: number;
-  // Optional: Track which values were auto-optimized
-  autoOptimized?: {
-    paddingX?: boolean;
-    paddingY?: boolean;
-    shiftX?: boolean;
-    shiftY?: boolean;
-  };
-  /** 'equal' = divide by cols/rows; 'inferred' = use inferred cell rects from gaps */
-  sliceMode?: 'equal' | 'inferred';
-  /** When sliceMode === 'inferred', use these explicit cell rects (e.g. from external source). */
-  inferredCellRects?: Array<{ x: number; y: number; width: number; height: number }>;
-}
-
-/**
- * Resolve effective four-edge padding from SliceSettings.
- * Used so that symmetric (paddingX/paddingY) and four-edge (paddingLeft/Right/Top/Bottom) can coexist.
- */
-export function getEffectivePadding(settings: SliceSettings): {
-  left: number;
-  right: number;
-  top: number;
-  bottom: number;
-} {
-  return {
-    left: settings.paddingLeft ?? settings.paddingX,
-    right: settings.paddingRight ?? settings.paddingX,
-    top: settings.paddingTop ?? settings.paddingY,
-    bottom: settings.paddingBottom ?? settings.paddingY,
-  };
-}
-
-/**
- * Per-frame override for cutting position and crop size.
- * - offsetX, offsetY: Position offset in pixels from the cell center (-60 to 60).
- * - scale: Crop size ratio 0.25–1 (25%–100%), aspect ratio fixed to the cell.
- */
-export interface FrameOverride {
-  offsetX?: number;
-  offsetY?: number;
-  scale?: number;
-}
+import {
+  getEffectivePadding,
+  type FrameOverride,
+  type PaddingFour,
+  type SliceSettings,
+} from './spriteSlicing';
+export { getEffectivePadding };
+export type { FrameOverride, PaddingFour, SliceSettings };
 
 /**
  * Slices a sprite sheet image into multiple individual frame images.
@@ -128,14 +74,6 @@ export interface FrameOverride {
  * );
  * ```
  */
-/** Optional four-edge padding for sliceSpriteSheet (overrides symmetric paddingX/paddingY when provided). */
-export interface PaddingFour {
-  left: number;
-  right: number;
-  top: number;
-  bottom: number;
-}
-
 export const sliceSpriteSheet = async (
   base64Image: string,
   cols: number,
