@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, Suspense, useEffect, useMemo } from 'react';
+import React, { useState, Suspense } from 'react';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
 import { Link } from 'react-router-dom';
 import {
@@ -12,16 +12,19 @@ import { useSettings } from '../hooks/useSettings';
 import { useLineStickerDownload } from '../hooks/useLineStickerDownload';
 import { useLineStickerGeneration } from '../hooks/useLineStickerGeneration';
 import { useLineStickerPhraseGrid } from '../hooks/useLineStickerPhraseGrid';
-import { generateStickerPhrases, generateActionDescriptions } from '../services/geminiService';
-import { sliceSpriteSheet, SliceSettings, getEffectivePadding, FrameOverride, PaddingFour } from '../utils/imageUtils';
-import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
-import { removeBackgroundAI } from '../utils/aiBackgroundRemoval';
+import { useLineStickerPhraseGeneration } from '../hooks/useLineStickerPhraseGeneration';
+import { useLineStickerImageInput } from '../hooks/useLineStickerImageInput';
+import { useLineStickerSelection } from '../hooks/useLineStickerSelection';
+import { useLineStickerSheetGeneration } from '../hooks/useLineStickerSheetGeneration';
+import { useLineStickerThemePresetSync } from '../hooks/useLineStickerThemePresetSync';
+import { useLineStickerSlicing } from '../hooks/useLineStickerSlicing';
+import { useLineStickerPromptPreview } from '../hooks/useLineStickerPromptPreview';
+import { SliceSettings, FrameOverride } from '../utils/imageUtils';
 import { ChromaKeyColorType, BgRemovalMethod } from '../types';
 import {
-    CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ, DEFAULT_SLICE_SETTINGS,
+    DEFAULT_SLICE_SETTINGS,
     type StickerPhraseMode
 } from '../utils/constants';
-import { logger } from '../utils/logger';
 
 // Lazy load heavy components for code splitting
 const FrameGrid = lazyWithRetry(() =>
@@ -40,13 +43,10 @@ import {
     FONT_PRESETS,
     FONT_PRESET_ORDER,
     CHARACTER_PRESETS,
-    getActionHint,
     type ThemeOption,
 } from '../utils/lineStickerPrompt';
 
-const SET_PHRASES_COUNT = 48;
 const SHEETS_COUNT = 3;
-const FRAMES_PER_SHEET = 16;
 
 const LineStickerPage: React.FC = () => {
     const { t } = useLanguage();
@@ -67,7 +67,6 @@ const LineStickerPage: React.FC = () => {
 
     // Image upload state
     const [sourceImage, setSourceImage] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Grid settings
     const [gridCols, setGridCols] = useState(4);
@@ -92,7 +91,6 @@ const LineStickerPage: React.FC = () => {
     const [selectedTextColor, setSelectedTextColor] = useState<keyof typeof TEXT_COLOR_PRESETS>('black');
     const [selectedFont, setSelectedFont] = useState<keyof typeof FONT_PRESETS>('handwritten');
     const [customPhrases, setCustomPhrases] = useState<string>('');
-    const [isGeneratingPhrases, setIsGeneratingPhrases] = useState(false);
 
     // Set mode state
     const [stickerSetMode, setStickerSetMode] = useState(false);
@@ -114,9 +112,6 @@ const LineStickerPage: React.FC = () => {
     const [selectedPhraseMode, setSelectedPhraseMode] = useState<StickerPhraseMode>('balanced');
     const [includeText, setIncludeText] = useState(true);
     const [bgRemovalMethod, setBgRemovalMethod] = useState<BgRemovalMethod>('chroma');
-    const [previewPrompt, setPreviewPrompt] = useState<string | null>(null);
-    const [promptCopied, setPromptCopied] = useState(false);
-
     const {
         phrasesForHook,
         actionDescsForHook,
@@ -138,17 +133,12 @@ const LineStickerPage: React.FC = () => {
         gridCols,
         gridRows,
     });
-
-    useEffect(() => {
-        if (selectedTheme === 'custom') return;
-        const theme = THEME_PRESETS[selectedTheme];
-        if (theme) {
-            const p = theme.examplePhrases.join('\n');
-            setCustomPhrases(p);
-            setSetPhrasesList(theme.examplePhrases);
-            setActionDescsList(theme.examplePhrases.map((phrase: string) => getActionHint(phrase)));
-        }
-    }, [selectedTheme]);
+    useLineStickerThemePresetSync({
+        selectedTheme,
+        setCustomPhrases,
+        setSetPhrasesList,
+        setActionDescsList,
+    });
 
     const {
         isGenerating,
@@ -181,6 +171,28 @@ const LineStickerPage: React.FC = () => {
         selectedResolution: outputResolution,
     });
 
+    const { isGeneratingPhrases, handleGeneratePhrases } = useLineStickerPhraseGeneration({
+        getEffectiveApiKey,
+        setError,
+        setShowSettings,
+        stickerSetMode,
+        gridCols,
+        gridRows,
+        selectedTheme,
+        customThemeContext,
+        characterPreset,
+        characterAppearance,
+        characterPersonality,
+        selectedLanguage,
+        selectedPhraseMode,
+        setCustomPhrases,
+        setSetPhrasesList,
+        setActionDescsList,
+        t: {
+            errorApiKey: t.errorApiKey,
+        },
+    });
+
     const {
         isDownloading,
         downloadFormat,
@@ -201,232 +213,101 @@ const LineStickerPage: React.FC = () => {
         setError,
     });
 
-    const sliceProcessedSheetToFrames = useCallback(async (processedImage: string): Promise<string[]> => {
-        const settings = { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 };
-        const pad: PaddingFour = { left: 10, right: 10, top: 10, bottom: 10 };
-        return sliceSpriteSheet(
-            processedImage,
-            settings.cols,
-            settings.rows,
-            settings.paddingX,
-            settings.paddingY,
-            settings.shiftX,
-            settings.shiftY,
-            false,
-            230,
-            [],
-            chromaKeyColor,
-            pad
-        );
-    }, [chromaKeyColor]);
+    const { handleImageLoad, sliceProcessedSheetToFrames } = useLineStickerSlicing({
+        chromaKeyColor,
+        processedSpriteSheet,
+        sliceSettings,
+        frameOverrides,
+        gridCols,
+        gridRows,
+        sheetDimensions,
+        setStickerFrames,
+        setSelectedFrames,
+        stickerSetMode,
+        currentSheetIndex,
+        processedSheetImages,
+        sheetFrameOverrides,
+        setSheetFrames,
+        setSheetDimensions,
+    });
 
-    useEffect(() => {
-        if (!processedSpriteSheet || !sheetDimensions.width || !sheetDimensions.height) return;
-        let cancelled = false;
-        const run = async () => {
-            try {
-                const pad: PaddingFour = getEffectivePadding(sliceSettings);
-                const frames = await sliceSpriteSheet(
-                    processedSpriteSheet,
-                    gridCols,
-                    gridRows,
-                    sliceSettings.paddingX,
-                    sliceSettings.paddingY,
-                    sliceSettings.shiftX,
-                    sliceSettings.shiftY,
-                    false,
-                    230,
-                    frameOverrides,
-                    chromaKeyColor,
-                    pad
-                );
-                if (!cancelled) {
-                    setStickerFrames(frames);
-                    setSelectedFrames(new Array(frames.length).fill(false));
-                }
-            } catch (err) { if (!cancelled) logger.error('Slice fail:', err); }
-        };
-        const timer = setTimeout(run, 100);
-        return () => { cancelled = true; clearTimeout(timer); };
-    }, [processedSpriteSheet, sliceSettings, frameOverrides, gridCols, gridRows, chromaKeyColor, sheetDimensions]);
+    const { handleGenerate, handleGenerateAllSheets } = useLineStickerSheetGeneration({
+        getEffectiveApiKey,
+        sourceImage,
+        stickerSetMode,
+        setPhrasesList,
+        actionDescsList,
+        currentSheetIndex,
+        generateSingleSheet,
+        t: {
+            errorApiKey: t.errorApiKey,
+            errorNoImage: t.errorNoImage,
+            lineStickerErrorNeedPhrases: t.lineStickerErrorNeedPhrases,
+            lineStickerParallelGenerating: t.lineStickerParallelGenerating,
+            statusProcessing: t.statusProcessing,
+            errorGeneration: t.errorGeneration,
+        },
+        chromaKeyColor,
+        bgRemovalMethod,
+        setStatusText,
+        setError,
+        setShowSettings,
+        sliceProcessedSheetToFrames,
+        setIsGenerating,
+        setSheetImages,
+        setProcessedSheetImages,
+        setSheetFrames,
+        setSelectedFramesBySheet,
+        setSpriteSheetImage,
+        setProcessedSpriteSheet,
+        setIsProcessingChromaKey,
+        setChromaKeyProgress,
+    });
 
-    useEffect(() => {
-        if (!stickerSetMode) return;
-        const processed = processedSheetImages[currentSheetIndex];
-        if (!processed || !sheetDimensions.width || !sheetDimensions.height) return;
-        const overrides = sheetFrameOverrides[currentSheetIndex] || [];
-        const settings = { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 };
-        let cancelled = false;
-        const pad: PaddingFour = { left: 10, right: 10, top: 10, bottom: 10 };
-        const run = async () => {
-            try {
-                const frames = await sliceSpriteSheet(processed, settings.cols, settings.rows, settings.paddingX, settings.paddingY, settings.shiftX, settings.shiftY, false, 230, overrides, chromaKeyColor, pad);
-                if (!cancelled) {
-                    setSheetFrames(prev => { const n = [...prev]; n[currentSheetIndex] = frames; return n; });
-                }
-            } catch (err) { if (!cancelled) logger.error('Set mode re-slice fail:', err); }
-        };
-        const timer = setTimeout(run, 100);
-        return () => { cancelled = true; clearTimeout(timer); };
-    }, [stickerSetMode, currentSheetIndex, processedSheetImages, sheetFrameOverrides, sheetDimensions, chromaKeyColor]);
+    const {
+        fileInputRef,
+        handleImageUpload,
+        handleDrop,
+        handleDragOver,
+        openFilePicker,
+    } = useLineStickerImageInput({
+        setSourceImage,
+        setSpriteSheetImage,
+        setStickerFrames,
+        setSelectedFrames,
+        setError,
+    });
 
-    const handleGenerate = useCallback(async () => {
-        if (!getEffectiveApiKey()) { setError(t.errorApiKey); setShowSettings(true); return; }
-        if (!sourceImage) { setError(t.errorNoImage); return; }
-        setIsGenerating(true);
-        setError(null);
-        try {
-            if (stickerSetMode) {
-                if (setPhrasesList.length < FRAMES_PER_SHEET) {
-                    setError(t.lineStickerErrorNeedPhrases.replace('{n}', String(setPhrasesList.length)));
-                    setIsGenerating(false);
-                    return;
-                }
-                const phraseSlice = setPhrasesList.slice(currentSheetIndex * 16, (currentSheetIndex + 1) * 16);
-                const actionSlice = actionDescsList.slice(currentSheetIndex * 16, (currentSheetIndex + 1) * 16);
-                const res = await generateSingleSheet(phraseSlice, actionSlice);
-                if (!res) { setIsGenerating(false); return; }
-                setSheetImages(p => { const n = [...p]; n[currentSheetIndex] = res; return n; });
-                setStatusText(t.statusProcessing);
-                setIsProcessingChromaKey(true);
-                const processed = bgRemovalMethod === 'ai'
-                    ? await removeBackgroundAI(res, chromaKeyColor)
-                    : await removeChromaKeyWithWorker(res, CHROMA_KEY_COLORS[chromaKeyColor], CHROMA_KEY_FUZZ, p => setChromaKeyProgress(p));
-                setIsProcessingChromaKey(false);
-                setProcessedSheetImages(p => { const n = [...p]; n[currentSheetIndex] = processed; return n; });
-                const frames = await sliceProcessedSheetToFrames(processed);
-                setSheetFrames(p => { const n = [...p]; n[currentSheetIndex] = frames; return n; });
-                setSelectedFramesBySheet(p => { const n = p.map(a => [...a]); n[currentSheetIndex] = new Array(frames.length).fill(false); return n; });
-                setStatusText('');
-            } else {
-                const res = await generateSingleSheet();
-                if (!res) { setIsGenerating(false); return; }
-                setSpriteSheetImage(res);
-                setStatusText(t.statusProcessing);
-                setIsProcessingChromaKey(true);
-                const processed = bgRemovalMethod === 'ai'
-                    ? await removeBackgroundAI(res, chromaKeyColor)
-                    : await removeChromaKeyWithWorker(res, CHROMA_KEY_COLORS[chromaKeyColor], CHROMA_KEY_FUZZ, p => setChromaKeyProgress(p));
-                setIsProcessingChromaKey(false);
-                setProcessedSpriteSheet(processed);
-                setStatusText('');
-            }
-        } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : String(err);
-            if (msg.includes('API Key is missing')) {
-                setError(t.errorApiKey);
-                setShowSettings(true);
-            } else {
-                setError(`${t.errorGeneration}: ${msg}`);
-            }
-        } finally { setIsGenerating(false); }
-    }, [getEffectiveApiKey, sourceImage, stickerSetMode, setPhrasesList, actionDescsList, currentSheetIndex, generateSingleSheet, t, chromaKeyColor, bgRemovalMethod, setStatusText, setError, setShowSettings, sliceProcessedSheetToFrames, setIsGenerating]);
-
-    const handleGenerateAllSheets = useCallback(async () => {
-        if (!getEffectiveApiKey()) { setError(t.errorApiKey); setShowSettings(true); return; }
-        if (!sourceImage) { setError(t.errorNoImage); return; }
-        if (setPhrasesList.length < SET_PHRASES_COUNT) {
-            setError(t.lineStickerErrorNeedPhrases.replace('{n}', String(setPhrasesList.length)));
-            return;
-        }
-        setStatusText(t.lineStickerParallelGenerating);
-        setIsGenerating(true);
-        setError(null);
-        try {
-            const results = await Promise.all([0, 1, 2].map(async (i) => {
-                const phraseSlice = setPhrasesList.slice(i * 16, (i + 1) * 16);
-                const actionSlice = actionDescsList.slice(i * 16, (i + 1) * 16);
-                return generateSingleSheet(phraseSlice, actionSlice);
-            }));
-            setIsGenerating(true);
-            const valid = results.filter((r): r is string => r !== null);
-            if (valid.length < 3) {
-                setError(t.errorGeneration);
-                setIsGenerating(false);
-                return;
-            }
-            setSheetImages(valid);
-            setStatusText(t.statusProcessing);
-            const processed = bgRemovalMethod === 'ai'
-                ? await Promise.all(valid.map(img => removeBackgroundAI(img, chromaKeyColor)))
-                : await Promise.all(valid.map(img => removeChromaKeyWithWorker(img, CHROMA_KEY_COLORS[chromaKeyColor], CHROMA_KEY_FUZZ)));
-            setProcessedSheetImages(processed);
-            const allFrames = await Promise.all(processed.map(img => sliceProcessedSheetToFrames(img)));
-            setSheetFrames(allFrames);
-            setSelectedFramesBySheet(allFrames.map(f => new Array(f.length).fill(false)));
-            setStatusText('');
-        } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : String(err);
-            if (msg.includes('API Key is missing')) {
-                setError(t.errorApiKey);
-                setShowSettings(true);
-            } else {
-                setError(`${t.errorGeneration}: ${msg}`);
-            }
-        } finally { setIsGenerating(false); }
-    }, [getEffectiveApiKey, sourceImage, setPhrasesList, actionDescsList, generateSingleSheet, t, chromaKeyColor, bgRemovalMethod, setStatusText, setError, setShowSettings, sliceProcessedSheetToFrames, setIsGenerating]);
-
-    const buildFullContext = useCallback(() => {
-        const themeInfo = selectedTheme === 'custom'
-            ? (customThemeContext || '自訂主題')
-            : `${THEME_PRESETS[selectedTheme].label} (${THEME_PRESETS[selectedTheme].chatContext})`;
-
-        let characterValue = '';
-        if (characterPreset !== 'custom') {
-            characterValue = CHARACTER_PRESETS[characterPreset].label;
-        } else {
-            characterValue = `${characterAppearance} (${characterPersonality})`;
-        }
-
-        return `角色：${characterValue}\n主題：${themeInfo}`;
-    }, [characterPreset, characterAppearance, characterPersonality, selectedTheme, customThemeContext]);
-
-    const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => setSheetDimensions({ width: e.currentTarget.naturalWidth, height: e.currentTarget.naturalHeight });
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const rd = new FileReader();
-            rd.onload = ev => { setSourceImage(ev.target?.result as string); setSpriteSheetImage(null); setStickerFrames([]); setSelectedFrames([]); setError(null); };
-            rd.readAsDataURL(file);
-        }
-    };
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        const file = e.dataTransfer.files?.[0];
-        if (file?.type.startsWith('image/')) {
-            const rd = new FileReader();
-            rd.onload = ev => { setSourceImage(ev.target?.result as string); setSpriteSheetImage(null); setStickerFrames([]); setSelectedFrames([]); setError(null); };
-            rd.readAsDataURL(file);
-        }
-    };
-    const handleDragOver = (e: React.DragEvent) => e.preventDefault();
-
-    const selectAll = useCallback(() => {
-        if (stickerSetMode) {
-            setSelectedFramesBySheet(prev => {
-                const next = prev.map(a => [...a]);
-                next[currentSheetIndex] = new Array(sheetFrames[currentSheetIndex].length).fill(true);
-                return next;
-            });
-        } else {
-            setSelectedFrames(new Array(stickerFrames.length).fill(true));
-        }
-    }, [stickerSetMode, currentSheetIndex, sheetFrames, stickerFrames.length]);
-
-    const deselectAll = useCallback(() => {
-        if (stickerSetMode) {
-            setSelectedFramesBySheet(prev => {
-                const next = prev.map(a => [...a]);
-                next[currentSheetIndex] = new Array(sheetFrames[currentSheetIndex].length).fill(false);
-                return next;
-            });
-        } else {
-            setSelectedFrames(new Array(stickerFrames.length).fill(false));
-        }
-    }, [stickerSetMode, currentSheetIndex, sheetFrames]);
+    const {
+        selectAll,
+        deselectAll,
+        selectedCount,
+        selectedIndices,
+    } = useLineStickerSelection({
+        stickerSetMode,
+        currentSheetIndex,
+        sheetFrames,
+        stickerFrames,
+        selectedFramesBySheet,
+        selectedFrames,
+        setSelectedFramesBySheet,
+        setSelectedFrames,
+    });
+    const {
+        previewPrompt,
+        promptCopied,
+        handleGeneratePromptPreview,
+        handleCopyPrompt,
+    } = useLineStickerPromptPreview({
+        stickerSetMode,
+        currentSheetIndex,
+        setPhrasesList,
+        actionDescsList,
+        buildPrompt,
+        setError,
+    });
 
     const hasCustomKey = !!apiKey.trim();
-    const selectedCount = stickerSetMode ? (selectedFramesBySheet[currentSheetIndex]?.filter(Boolean).length || 0) : selectedFrames.filter(Boolean).length;
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans px-4 pb-8 md:px-6 lg:px-8 pt-4 md:pt-6">
@@ -472,7 +353,7 @@ const LineStickerPage: React.FC = () => {
                 <div className="lg:col-span-5 space-y-6">
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                         <h2 className="text-lg font-semibold text-slate-900 mb-4">{t.lineStickerUploadTitle}</h2>
-                        <div onClick={() => fileInputRef.current?.click()} onDrop={handleDrop} onDragOver={handleDragOver} className="aspect-square border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-green-400 bg-slate-50 transition-all overflow-hidden">
+                        <div onClick={openFilePicker} onDrop={handleDrop} onDragOver={handleDragOver} className="aspect-square border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-green-400 bg-slate-50 transition-all overflow-hidden">
                             {sourceImage ? <img src={sourceImage} alt="Source" className="w-full h-full object-contain" /> : (
                                 <div className="text-center p-4">
                                     <Upload className="w-10 h-10 text-slate-400 mx-auto mb-2" />
@@ -662,35 +543,7 @@ const LineStickerPage: React.FC = () => {
                         <div>
                             <div className="flex justify-between items-center mb-2">
                                 <label className="text-sm font-medium text-slate-700">{t.lineStickerPhraseListSet}</label>
-                                <button onClick={async () => {
-                                    const key = getEffectiveApiKey();
-                                    if (!key) { setError(t.errorApiKey); setShowSettings(true); return; }
-                                    setIsGeneratingPhrases(true);
-                                    try {
-                                        const count = stickerSetMode ? 48 : (gridCols * gridRows);
-                                        const fullContext = buildFullContext();
-                                        const langLabel = TEXT_PRESETS[selectedLanguage]?.label || selectedLanguage;
-
-                                        const phrases = await generateStickerPhrases(key, fullContext, langLabel, count, selectedPhraseMode);
-                                        setCustomPhrases(phrases.join('\n'));
-                                        setSetPhrasesList(phrases);
-                                        try {
-                                            const actionDescs = await generateActionDescriptions(key, phrases);
-                                            setActionDescsList(actionDescs);
-                                        } catch (actionErr: unknown) {
-                                            logger.warn('Action descriptions fallback to getActionHint:', actionErr instanceof Error ? actionErr.message : actionErr);
-                                            setActionDescsList(phrases.map((phrase: string) => getActionHint(phrase)));
-                                        }
-                                    } catch (err: unknown) {
-                                        const msg = err instanceof Error ? err.message : String(err);
-                                        if (msg.includes('API Key is missing')) {
-                                            setError(t.errorApiKey);
-                                            setShowSettings(true);
-                                        } else {
-                                            setError(msg);
-                                        }
-                                    } finally { setIsGeneratingPhrases(false); }
-                                }} disabled={isGeneratingPhrases} className="text-xs text-green-600 flex items-center gap-1 font-semibold hover:text-green-700">
+                                <button onClick={handleGeneratePhrases} disabled={isGeneratingPhrases} className="text-xs text-green-600 flex items-center gap-1 font-semibold hover:text-green-700">
                                     {isGeneratingPhrases ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
                                     {t.lineStickerGeneratePhrases}
                                 </button>
@@ -741,17 +594,7 @@ const LineStickerPage: React.FC = () => {
                                 <h3 className="text-sm font-semibold text-slate-800">{t.lineStickerPromptPreviewTitle}</h3>
                                 <button
                                     type="button"
-                                    onClick={() => {
-                                        const phraseList = stickerSetMode
-                                            ? setPhrasesList.slice(currentSheetIndex * 16, (currentSheetIndex + 1) * 16)
-                                            : undefined;
-                                        const actionDescs = stickerSetMode
-                                            ? actionDescsList.slice(currentSheetIndex * 16, (currentSheetIndex + 1) * 16)
-                                            : undefined;
-                                        const prompt = buildPrompt(phraseList, actionDescs);
-                                        setPreviewPrompt(prompt);
-                                        setError(null);
-                                    }}
+                                    onClick={handleGeneratePromptPreview}
                                     className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 font-medium"
                                 >
                                     {t.lineStickerGeneratePrompt}
@@ -766,12 +609,7 @@ const LineStickerPage: React.FC = () => {
                                         <p className="text-xs text-slate-500">{t.lineStickerPromptConfirmHint}</p>
                                         <button
                                             type="button"
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(previewPrompt).then(() => {
-                                                    setPromptCopied(true);
-                                                    setTimeout(() => setPromptCopied(false), 2000);
-                                                });
-                                            }}
+                                            onClick={handleCopyPrompt}
                                             className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 font-medium inline-flex items-center gap-1.5"
                                         >
                                             {promptCopied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -954,7 +792,7 @@ const LineStickerPage: React.FC = () => {
                                     ) : (
                                         <div className="flex flex-wrap gap-2 w-full">
                                             <button onClick={downloadAllAsZip} disabled={isDownloading || stickerFrames.length === 0} className="px-5 py-2.5 bg-green-500 text-white text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-green-600 disabled:opacity-50 transition-all shadow-md"><Download className="w-4 h-4" />{t.lineStickerDownloadAll}</button>
-                                            <button onClick={() => downloadSelectedAsZip(selectedFrames.map((s, i) => s ? i : -1).filter(i => i !== -1))} disabled={isDownloading || selectedCount === 0} className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-slate-50 disabled:opacity-50 transition-all shadow-sm"><Check className="w-4 h-4" />{t.lineStickerDownloadSelected.replace('{n}', String(selectedCount))}</button>
+                                            <button onClick={() => downloadSelectedAsZip(selectedIndices)} disabled={isDownloading || selectedCount === 0} className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-slate-50 disabled:opacity-50 transition-all shadow-sm"><Check className="w-4 h-4" />{t.lineStickerDownloadSelected.replace('{n}', String(selectedCount))}</button>
                                         </div>
                                     )}
                                 </div>
