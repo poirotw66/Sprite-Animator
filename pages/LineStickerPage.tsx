@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useRef, lazy, Suspense, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useRef, Suspense, useEffect, useMemo } from 'react';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 import { Link } from 'react-router-dom';
 import {
     ArrowLeft, Settings, Upload, Loader2, Download, Check, Image, FileArchive,
@@ -22,10 +23,10 @@ import {
 import { logger } from '../utils/logger';
 
 // Lazy load heavy components for code splitting
-const FrameGrid = lazy(() =>
+const FrameGrid = lazyWithRetry(() =>
     import('../components/FrameGrid').then(module => ({ default: module.FrameGrid }))
 );
-const SpriteSheetViewer = lazy(() =>
+const SpriteSheetViewer = lazyWithRetry(() =>
     import('../components/SpriteSheetViewer').then(module => ({ default: module.SpriteSheetViewer }))
 );
 
@@ -333,6 +334,7 @@ const LineStickerPage: React.FC = () => {
     }, [stickerSetMode, currentSheetIndex, processedSheetImages, sheetFrameOverrides, sheetDimensions, chromaKeyColor]);
 
     const handleGenerate = useCallback(async () => {
+        if (!getEffectiveApiKey()) { setError(t.errorApiKey); setShowSettings(true); return; }
         if (!sourceImage) { setError(t.errorNoImage); return; }
         setIsGenerating(true);
         setError(null);
@@ -372,10 +374,19 @@ const LineStickerPage: React.FC = () => {
                 setProcessedSpriteSheet(processed);
                 setStatusText('');
             }
-        } catch (err: unknown) { setError(`${t.errorGeneration}: ${err instanceof Error ? err.message : String(err)}`); } finally { setIsGenerating(false); }
-    }, [sourceImage, stickerSetMode, setPhrasesList, actionDescsList, currentSheetIndex, generateSingleSheet, t, chromaKeyColor, bgRemovalMethod, setStatusText, setError, sliceProcessedSheetToFrames, setIsGenerating]);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            if (msg.includes('API Key is missing')) {
+                setError(t.errorApiKey);
+                setShowSettings(true);
+            } else {
+                setError(`${t.errorGeneration}: ${msg}`);
+            }
+        } finally { setIsGenerating(false); }
+    }, [getEffectiveApiKey, sourceImage, stickerSetMode, setPhrasesList, actionDescsList, currentSheetIndex, generateSingleSheet, t, chromaKeyColor, bgRemovalMethod, setStatusText, setError, setShowSettings, sliceProcessedSheetToFrames, setIsGenerating]);
 
     const handleGenerateAllSheets = useCallback(async () => {
+        if (!getEffectiveApiKey()) { setError(t.errorApiKey); setShowSettings(true); return; }
         if (!sourceImage) { setError(t.errorNoImage); return; }
         if (setPhrasesList.length < SET_PHRASES_COUNT) {
             setError(t.lineStickerErrorNeedPhrases.replace('{n}', String(setPhrasesList.length)));
@@ -407,8 +418,16 @@ const LineStickerPage: React.FC = () => {
             setSheetFrames(allFrames);
             setSelectedFramesBySheet(allFrames.map(f => new Array(f.length).fill(false)));
             setStatusText('');
-        } catch (err: unknown) { setError(`${t.errorGeneration}: ${err instanceof Error ? err.message : String(err)}`); } finally { setIsGenerating(false); }
-    }, [sourceImage, setPhrasesList, actionDescsList, generateSingleSheet, t, chromaKeyColor, bgRemovalMethod, setStatusText, setError, sliceProcessedSheetToFrames, setIsGenerating]);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            if (msg.includes('API Key is missing')) {
+                setError(t.errorApiKey);
+                setShowSettings(true);
+            } else {
+                setError(`${t.errorGeneration}: ${msg}`);
+            }
+        } finally { setIsGenerating(false); }
+    }, [getEffectiveApiKey, sourceImage, setPhrasesList, actionDescsList, generateSingleSheet, t, chromaKeyColor, bgRemovalMethod, setStatusText, setError, setShowSettings, sliceProcessedSheetToFrames, setIsGenerating]);
 
     const buildFullContext = useCallback(() => {
         const themeInfo = selectedTheme === 'custom'
@@ -707,24 +726,33 @@ const LineStickerPage: React.FC = () => {
                             <div className="flex justify-between items-center mb-2">
                                 <label className="text-sm font-medium text-slate-700">{t.lineStickerPhraseListSet}</label>
                                 <button onClick={async () => {
-                                    if (!apiKey) { setShowSettings(true); return; }
+                                    const key = getEffectiveApiKey();
+                                    if (!key) { setError(t.errorApiKey); setShowSettings(true); return; }
                                     setIsGeneratingPhrases(true);
                                     try {
                                         const count = stickerSetMode ? 48 : (gridCols * gridRows);
                                         const fullContext = buildFullContext();
                                         const langLabel = TEXT_PRESETS[selectedLanguage]?.label || selectedLanguage;
 
-                                        const phrases = await generateStickerPhrases(apiKey, fullContext, langLabel, count, selectedPhraseMode);
+                                        const phrases = await generateStickerPhrases(key, fullContext, langLabel, count, selectedPhraseMode);
                                         setCustomPhrases(phrases.join('\n'));
                                         setSetPhrasesList(phrases);
                                         try {
-                                            const actionDescs = await generateActionDescriptions(apiKey, phrases);
+                                            const actionDescs = await generateActionDescriptions(key, phrases);
                                             setActionDescsList(actionDescs);
                                         } catch (actionErr: unknown) {
                                             logger.warn('Action descriptions fallback to getActionHint:', actionErr instanceof Error ? actionErr.message : actionErr);
                                             setActionDescsList(phrases.map((phrase: string) => getActionHint(phrase)));
                                         }
-                                    } catch (err: unknown) { setError(err instanceof Error ? err.message : String(err)); } finally { setIsGeneratingPhrases(false); }
+                                    } catch (err: unknown) {
+                                        const msg = err instanceof Error ? err.message : String(err);
+                                        if (msg.includes('API Key is missing')) {
+                                            setError(t.errorApiKey);
+                                            setShowSettings(true);
+                                        } else {
+                                            setError(msg);
+                                        }
+                                    } finally { setIsGeneratingPhrases(false); }
                                 }} disabled={isGeneratingPhrases} className="text-xs text-green-600 flex items-center gap-1 font-semibold hover:text-green-700">
                                     {isGeneratingPhrases ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
                                     {t.lineStickerGeneratePhrases}

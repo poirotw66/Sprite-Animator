@@ -1,13 +1,14 @@
-import React, { lazy, Suspense } from 'react';
+import React, { Suspense } from 'react';
+import { lazyWithRetry } from './utils/lazyWithRetry';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Loader2 } from './components/Icons';
 
 // Lazy load pages for code splitting
-const HomePage = lazy(() => import('./pages/HomePage'));
-const SpriteAnimatorPage = lazy(() => import('./pages/SpriteAnimatorPage'));
-const LineStickerPage = lazy(() => import('./pages/LineStickerPage'));
-const RemoveBackgroundPage = lazy(() => import('./pages/RemoveBackgroundPage'));
-const PartingPage = lazy(() => import('./pages/PartingPage'));
+const HomePage = lazyWithRetry(() => import('./pages/HomePage'));
+const SpriteAnimatorPage = lazyWithRetry(() => import('./pages/SpriteAnimatorPage'));
+const LineStickerPage = lazyWithRetry(() => import('./pages/LineStickerPage'));
+const RemoveBackgroundPage = lazyWithRetry(() => import('./pages/RemoveBackgroundPage'));
+const PartingPage = lazyWithRetry(() => import('./pages/PartingPage'));
 
 // Loading fallback component
 const PageLoader: React.FC = () => (

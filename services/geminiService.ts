@@ -6,6 +6,9 @@ import type { ChromaKeyColorType } from '../types';
 
 export type ProgressCallback = (status: string) => void;
 
+/** Message thrown when API key is missing; UI can detect this to open Settings. */
+export const API_KEY_MISSING_MESSAGE = 'API Key is missing. Please add your key in Settings (gear icon).';
+
 // Helper for delay
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -326,7 +329,7 @@ export async function generateStickerPhrases(
   mode: StickerPhraseMode = 'balanced',
   model: string = PHRASE_GENERATION_MODEL
 ): Promise<string[]> {
-  if (!apiKey) throw new Error('API Key is missing');
+  if (!apiKey) throw new Error(API_KEY_MISSING_MESSAGE);
 
   const ai = new GoogleGenAI({ apiKey });
 
@@ -669,7 +672,7 @@ export const generateSpriteSheet = async (
   chromaKeyColor: ChromaKeyColorType = 'green',
   outputResolution?: ImageResolution
 ): Promise<string> => {
-  if (!apiKey) throw new Error("API Key is missing");
+  if (!apiKey) throw new Error(API_KEY_MISSING_MESSAGE);
 
   const ai = new GoogleGenAI({ apiKey: apiKey });
 
@@ -904,7 +907,7 @@ export const generateAnimationFrames = async (
 ): Promise<string[]> => {
 
   if (!apiKey) {
-    throw new Error("API Key is missing. Please check settings.");
+    throw new Error(API_KEY_MISSING_MESSAGE);
   }
 
   const ai = new GoogleGenAI({ apiKey: apiKey });

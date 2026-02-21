@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, Suspense } from 'react';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Settings, Loader2, Download, Check, FileArchive, Grid } from '../components/Icons';
 import { useLanguage } from '../hooks/useLanguage';
@@ -14,10 +15,10 @@ import { logger } from '../utils/logger';
 import type { SliceSettings } from '../utils/imageUtils';
 import type { ChromaKeyColorType } from '../types';
 
-const SpriteSheetViewer = lazy(() =>
+const SpriteSheetViewer = lazyWithRetry(() =>
   import('../components/SpriteSheetViewer').then((m) => ({ default: m.SpriteSheetViewer }))
 );
-const FrameGrid = lazy(() =>
+const FrameGrid = lazyWithRetry(() =>
   import('../components/FrameGrid').then((m) => ({ default: m.FrameGrid }))
 );
 

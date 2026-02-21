@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 import { Link } from 'react-router-dom';
 import { RefreshCw, Settings, Zap, Loader2, Save, ArrowLeft } from '../components/Icons';
 import { SettingsModal } from '../components/SettingsModal';
@@ -8,13 +9,13 @@ import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useLanguage } from '../hooks/useLanguage';
 
 // Lazy load heavy components for code splitting
-const SpriteSheetViewer = lazy(() =>
+const SpriteSheetViewer = lazyWithRetry(() =>
   import('../components/SpriteSheetViewer').then(module => ({ default: module.SpriteSheetViewer }))
 );
-const AnimationPreview = lazy(() =>
+const AnimationPreview = lazyWithRetry(() =>
   import('../components/AnimationPreview').then(module => ({ default: module.AnimationPreview }))
 );
-const FrameGrid = lazy(() =>
+const FrameGrid = lazyWithRetry(() =>
   import('../components/FrameGrid').then(module => ({ default: module.FrameGrid }))
 );
 import { generateAnimationFrames, generateSpriteSheet } from '../services/geminiService';
@@ -286,7 +287,10 @@ const SpriteAnimatorPage: React.FC = () => {
       const rawMsg = err instanceof Error ? err.message : 'Unknown error';
       let displayMsg = t.errorGeneration;
 
-      if (
+      if (rawMsg.includes('API Key is missing')) {
+        displayMsg = t.errorApiKey;
+        setShowSettings(true);
+      } else if (
         rawMsg.includes('429') ||
         rawMsg.includes('Quota') ||
         rawMsg.includes('RESOURCE_EXHAUSTED')

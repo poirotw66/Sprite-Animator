@@ -163,7 +163,7 @@ export const zhTW: Translations = {
   greenBg: '綠幕背景',
 
   // Error Messages
-  errorApiKey: '請先設定 API Key',
+  errorApiKey: '請在設定中新增您的 Gemini API Key（齒輪圖示）。Key 僅儲存於本機瀏覽器。',
   errorNoImage: '請先上傳圖片',
   errorNoPrompt: '請輸入動作提示詞',
   errorGeneration: '生成發生錯誤',

@@ -163,7 +163,7 @@ export const en: Translations = {
   greenBg: 'Green BG',
 
   // Error Messages
-  errorApiKey: 'Please set API Key first',
+  errorApiKey: 'Please add your Gemini API key in Settings (gear icon). It is stored only in your browser.',
   errorNoImage: 'Please upload an image first',
   errorNoPrompt: 'Please enter an action prompt',
   errorGeneration: 'Generation error',

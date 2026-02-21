@@ -1,5 +1,6 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { RefreshCw, AlertTriangle } from './Icons';
+import { CHUNK_LOAD_ERROR_MESSAGE } from '../utils/lazyWithRetry';
 
 interface Props {
   children: ReactNode;
@@ -71,8 +72,11 @@ export class ErrorBoundary extends Component<Props, State> {
             {this.state.error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                 <h2 className="font-semibold text-red-800 mb-2">錯誤信息：</h2>
-                <p className="text-red-700 text-sm font-mono break-all">
-                  {this.state.error.message}
+                <p className="text-red-700 text-sm break-all">
+                  {this.state.error.message.includes('Failed to fetch dynamically imported module') ||
+                  this.state.error.message.includes(CHUNK_LOAD_ERROR_MESSAGE)
+                    ? '程式可能已更新。請重新整理頁面 (F5 或 Cmd+R) 以載入最新版本。'
+                    : this.state.error.message}
                 </p>
                 {this.state.error.stack && (
                   <details className="mt-4">
