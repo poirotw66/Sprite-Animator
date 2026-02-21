@@ -152,7 +152,8 @@ export const useLineStickerGeneration = ({
                 selectedModel,
                 (status) => setStatusText(status),
                 chromaKeyColor,
-                selectedResolution
+                selectedResolution,
+                includeText
             );
             return result;
         } catch (err: any) {

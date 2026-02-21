@@ -26,12 +26,12 @@ Given the following list of sticker PHRASES (short text that will appear on each
 - Every line must be visually distinct—no two cells should describe the same pose or expression.
 
 **Output format (strict):**
-- One line per phrase. Each line: English description (中文描述)
-- No numbering, no bullets, no extra text. Only the "English (中文)" line.
+- One line per phrase. Each line: English description only (optionally with translation in parentheses).
+- No numbering, no bullets, no extra text. Only the description line.
 - Example lines:
-  waving hand (揮手)
-  thumbs up with smile (比讚微笑)
-  tilting head confused (歪頭困惑)
+  waving hand
+  thumbs up with smile
+  tilting head confused
 
 **Phrases:**
 ${list}
@@ -62,13 +62,13 @@ ${list}
     const padded = [...lines];
     while (padded.length < phrases.length) {
       padded.push(
-        lines[padded.length % lines.length] ?? 'natural pose (自然動作)'
+        lines[padded.length % lines.length] ?? 'natural pose'
       );
     }
     return padded.slice(0, phrases.length);
   }
   return phrases.map(
     () =>
-      'natural action and expression matching the text meaning (自然動作與表情符合語意)'
+      'natural action and expression matching the text meaning'
   );
 }

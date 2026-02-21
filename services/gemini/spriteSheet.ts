@@ -24,7 +24,9 @@ export async function generateSpriteSheet(
   model: string,
   onProgress?: ProgressCallback,
   chromaKeyColor: ChromaKeyColorType = 'green',
-  outputResolution?: ImageResolution
+  outputResolution?: ImageResolution,
+  /** For LINE sticker mode only: when false, prompt suffix explicitly forbids any text in the image. */
+  lineStickerIncludeText?: boolean
 ): Promise<string> {
   if (!apiKey) throw new Error(API_KEY_MISSING_MESSAGE);
 
@@ -47,6 +49,9 @@ export async function generateSpriteSheet(
     bgColorHex,
     bgColorRGB,
     chromaKeyColor,
+    ...(isLineStickerPrompt(prompt) && {
+      includeText: lineStickerIncludeText ?? true,
+    }),
   };
 
   const fullPrompt = isLineStickerPrompt(prompt)

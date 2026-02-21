@@ -15,6 +15,7 @@ export function isLineStickerPrompt(prompt: string): boolean {
 
 /**
  * Builds background color + layout suffix for LINE sticker mode.
+ * When includeText is false, layout wording avoids "text" and a strict no-text block is appended.
  */
 export function buildLineStickerPromptSuffix(
   prompt: string,
@@ -25,6 +26,8 @@ export function buildLineStickerPromptSuffix(
     bgColorHex: string;
     bgColorRGB: string;
     chromaKeyColor: ChromaKeyColorType;
+    /** When false, no text/labels in image; layout and a strict no-text rule are applied. */
+    includeText?: boolean;
   }
 ): string {
   const {
@@ -34,43 +37,60 @@ export function buildLineStickerPromptSuffix(
     bgColorHex,
     bgColorRGB,
     chromaKeyColor,
+    includeText = true,
   } = opts;
 
   const bgColorRequirement = `
 ---
 
-### 【背景顏色要求（CRITICAL）】
+### [Background Color — CRITICAL]
 
-背景必須是純色 **${bgColorHex}**（${bgColorRGB}），用於後續去背處理。
-不得出現場景、漸變、陰影或其他背景元素。
+The background MUST be a solid color **${bgColorHex}** (${bgColorRGB}) for chroma key removal. No scenery, gradients, shadows, or other background elements.
 
 ${chromaKeyColor === 'magenta'
     ? `⚠️ MAGENTA REQUIREMENT:
   • R = 255, G = 0, B = 255
-  • 必須是純洋紅色 #FF00FF，不是粉色或紫色
+  • Must be pure magenta #FF00FF, not pink or purple.
 
-⚠️ 去背友善（避免文字處殘留）：
-  • 文字與角色輪廓、陰影**禁止使用**洋紅、粉紅、紫色或任何接近 #FF00FF 的顏色
-  • 僅使用黑色、白色或與洋紅對比明顯的深色（如深灰、深藍、深棕），避免去背後在文字邊緣產生洋紅殘留`
+⚠️ Chroma-key friendly (avoid text-edge residue):
+  • Do NOT use magenta, pink, purple, or any color close to #FF00FF for text, character outlines, or shadows.
+  • Use only black, white, or dark colors that contrast with magenta (e.g. dark gray, navy, dark brown) so that after keying there is no magenta bleed on text edges.`
     : `⚠️ GREEN SCREEN REQUIREMENT:
   • R = 0, G = 177, B = 64
-  • 必須是標準綠幕 #00B140，不是青綠色或草綠色`}
+  • Must be standard green screen #00B140, not cyan or grass green.`}
 
-背景的每個像素都必須是 EXACTLY ${bgColorHex}。
+Every background pixel MUST be EXACTLY ${bgColorHex}.
 `;
+
+  // When includeText is false, do not mention "text" in layout so the model is not encouraged to draw text
+  const fillBullet = includeText
+    ? `3. **Fill**: In each cell, character and text must occupy most of the area (character ~70–85% of cell height). Minimal internal padding only. Forbidden: tiny character with large empty space around.`
+    : `3. **Fill**: In each cell, character must occupy most of the area (character ~70–85% of cell height). Minimal internal padding only. Forbidden: tiny character with large empty space. Do NOT draw any text, numbers, or labels in the image.`;
 
   const layoutEnforcement = `
 ---
 
-### 【輸出格式強制（OUTPUT FORMAT - MUST FOLLOW）】
+### [Output Format — MUST FOLLOW]
 
-1. **網格**：整張圖必須可被精確均分為 **${cols} 欄 × ${rows} 列**，共 **${totalFrames} 格**。從左到右、從上到下每格等大，無外圍留白、無格與格之間的縫隙或線條。
-2. **禁止框線與白線**：不得繪製任何 框線、格線、邊框、分隔線 或 格子外框。格與格之間不得出現任何白色框線、白色分隔線或白色格線；相鄰兩格交界處必須是同一片背景色，不能有一條白色縫隙或白線把兩格分開。格子與格子之間視覺上連成一片背景。
-3. **填滿**：每一格內角色與文字需佔滿大部分面積（角色約佔格高 70%～85%），單格內僅保留極少內邊距，禁止「角色很小、周圍一大片空白」的構圖。
-4. **一致性**：所有格子的尺寸與對齊方式必須一致，使後續可依固定比例裁成 ${cols}×${rows} 張獨立貼圖。
+1. **Grid**: The image must be exactly divisible into **${cols} columns × ${rows} rows**, **${totalFrames} cells** total. Left to right, top to bottom; equal size per cell. No outer margins, no gaps or lines between cells.
+2. **No frame or white lines**: Do NOT draw any frame lines, grid lines, borders, separators, or cell outlines. No white frame lines, white separators, or white grid lines between cells. Where two cells meet, both sides must be the same background color with no visible white gap or line. Cells must visually form one continuous background.
+${fillBullet}
+4. **Consistency**: All cells must have the same size and alignment so the image can be split into ${cols}×${rows} independent stickers at fixed ratios.
 `;
 
-  return prompt + bgColorRequirement + layoutEnforcement;
+  const noTextBlock =
+    !includeText
+      ? `
+
+### [No Text — CRITICAL]
+
+* **DO NOT** draw any text, letters, numbers, words, labels, or captions in any cell.
+* Only character poses and expressions. The image must be completely free of written text.
+* If the prompt above mentions "phrase" or "text", treat it as theme/expression only — do not render any text in the image.
+`
+      : '';
+
+  return prompt + bgColorRequirement + layoutEnforcement + noTextBlock;
 }
 
 /**
@@ -117,8 +137,8 @@ export function buildAnimationSpriteSheetPrompt(
 * **Canvas**: Grid aspect ${cols}×${rows}. High resolution output. No letterboxing—image edges = grid boundaries.
 * **Grid**: ${cols}×${rows} = ${totalFrames} cells. Each cell exactly **${cellWidthPct}% of image width** and **${cellHeightPct}% of image height**.
 * **Margins**: None. No empty space at left, right, top, or bottom.
-* **Gaps**: No gaps between cells. Adjacent cells share the same boundary. Do NOT draw any dividers, borders, frame lines (框線), or grid lines (格線) between or around cells.
-* **Forbidden**: No visible 框線, 格線, 邊框, or 分隔線 anywhere. The grid is invisible—only the background color fills the space.
+* **Gaps**: No gaps between cells. Adjacent cells share the same boundary. Do NOT draw any dividers, borders, frame lines, or grid lines between or around cells.
+* **Forbidden**: No visible frame lines, grid lines, borders, or separators anywhere. The grid is invisible—only the background color fills the space.
 * **No white separator lines**: Do NOT draw any white lines, white strips, or white borders between cells. Where one cell meets the next, both sides must be the same background color (${bgColorHex}) with no visible white gap, white rule, or white divider. The boundary between two cells must be invisible—same color on both sides.
 * **Output**: The image MUST be perfectly splittable into ${totalFrames} equal rectangles.
 * **Per cell**: Character must occupy ~70–85% of cell height. Do NOT draw a box, frame, or border around each cell. Minimum internal padding ~5–10%. Character must NOT cross grid lines or touch adjacent cells. One independent pose per cell.
@@ -126,7 +146,7 @@ export function buildAnimationSpriteSheetPrompt(
 ### [2. Style / Art Medium]
 
 * **Lighting (technical)**: Flat shading only. No drop shadows, no gradients, no ambient occlusion. Sharp edges against background.
-* **No 框線 or grid separators**: Do NOT draw any line, frame, border, box, or divider between cells or around the image or around each pose. The grid is logical only (for splitting later); adjacent cells must share the same background with zero visible lines. No white lines between cells—same background color on both sides of every cell edge.
+* **No frame lines or grid separators**: Do NOT draw any line, frame, border, box, or divider between cells or around the image or around each pose. The grid is logical only (for splitting later); adjacent cells must share the same background with zero visible lines. No white lines between cells—same background color on both sides of every cell edge.
 
 ### [3. Subject / Character] CRITICAL — Image is primary
 
@@ -169,7 +189,7 @@ Common mistakes to avoid: Do not make each cell a "key pose"; make tiny incremen
 
 ### [6. Final Goal]
 
-Output a single image: ${cols}×${rows} grid, ${totalFrames} equal rectangles. Splittable at exactly ${cellWidthPct}% width and ${cellHeightPct}% height per cell. CRITICAL: No visible 框線, borders, grid lines, or separator lines—one continuous background only. One pose per cell with minimal change between cells. Do not draw any frame or line between or around cells.
+Output a single image: ${cols}×${rows} grid, ${totalFrames} equal rectangles. Splittable at exactly ${cellWidthPct}% width and ${cellHeightPct}% height per cell. CRITICAL: No visible frame lines, borders, grid lines, or separator lines—one continuous background only. One pose per cell with minimal change between cells. Do not draw any frame or line between or around cells.
 
 ### [7. Forbidden]
 

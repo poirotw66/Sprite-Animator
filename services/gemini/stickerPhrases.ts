@@ -54,30 +54,30 @@ export async function generateStickerPhrases(
   let modeHint: string;
   switch (mode) {
     case 'emotional':
-      modeLabel = '情緒版（全部情緒）';
+      modeLabel = 'Emotional (all emotional)';
       modeHint =
-        '以情緒表達為主（開心、累、煩、感動等），用字簡潔、適合貼圖，避免過度抱怨或網路用語。';
+        'Focus on emotions (happy, tired, annoyed, moved, etc.). Keep phrases short and sticker-friendly; avoid heavy complaints or niche slang.';
       break;
     case 'meme':
-      modeLabel = '梗圖版（全部梗圖）';
+      modeLabel = 'Meme (all meme-style)';
       modeHint =
-        '帶一點反差或自嘲感，但仍要簡短好懂、適合印在貼圖上；避免只有圈內人才懂的梗。';
+        'Slight twist or self-deprecation, but keep phrases short and easy to understand for stickers; avoid inside jokes only a small group gets.';
       break;
     case 'interaction':
-      modeLabel = '關係互動版（全部關係互動）';
+      modeLabel = 'Social interaction (all interaction)';
       modeHint =
-        '全部是對人說的話：感謝、抱歉、打氣、想你等，簡潔自然，適合朋友、情人、同事。';
+        'All phrases directed at others: thanks, sorry, cheering up, missing you, etc. Natural and concise for friends, partners, colleagues.';
       break;
     case 'theme-deep':
-      modeLabel = '符合主題版（內梗向）';
+      modeLabel = 'Theme-aligned (theme-deep)';
       modeHint =
-        '每句都要呼應主題，讓懂這主題的人一看就懂；用字仍保持簡潔、適合貼圖。';
+        'Every phrase must resonate with the theme so anyone who knows the theme gets it; keep wording short and sticker-friendly.';
       break;
     case 'balanced':
     default:
-      modeLabel = '黃金比例版（平衡）';
+      modeLabel = 'Balanced (golden ratio)';
       modeHint =
-        '依比例分配四類短語，每類都要貼合主題。用字簡潔、好懂、適合 LINE 貼圖，避免過度鄉民或網路梗。';
+        'Distribute the four categories by ratio; each category must fit the theme. Short, clear, LINE-sticker friendly; avoid heavy internet or niche slang.';
       break;
   }
 
