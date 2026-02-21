@@ -70,7 +70,48 @@ export const FONT_PRESETS: Record<string, { label: string; promptDesc: string }>
     bold: { label: '黑體', promptDesc: 'Bold sans-serif' },
     cute: { label: '萌系', promptDesc: 'Cute, playful font' },
     pop: { label: '流行體', promptDesc: 'Pop, trendy font' },
+    pinkBubble: { label: '粉嫩泡泡風', promptDesc: 'Pink bubble font, thick white border, floating hearts, kawaii' },
+    thinHandwritten: { label: '簡約手繪風', promptDesc: 'Thin handwritten style, sparkles, stars, whimsical doodle' },
+    catEar: { label: '貓耳裝飾體', promptDesc: 'Black rounded font, cat ear accents, feline theme, minimalist' },
+    crayon: { label: '蠟筆筆觸風', promptDesc: 'Red crayon texture, hand-drawn, waxy stroke, childlike' },
+    stitched: { label: '虛線縫紉體', promptDesc: 'Dashed line font, stitched effect, sewing style, craft aesthetic' },
+    puffyCloud: { label: '雲朵蓬蓬體', promptDesc: 'Puffy cloud font, thick black outline, blue sky background' },
+    cherryBlossom: { label: '櫻花點綴體', promptDesc: 'Dark brown font, cherry blossom accents, floral theme, elegant' },
+    animalPartners: { label: '動物夥伴風', promptDesc: 'Pink rounded font, cute animal icons, bears and cats, sticker' },
+    pastel3d: { label: '粉彩漸層 3D', promptDesc: 'Pastel gradient, 3D drop shadow, sticker cut-out, soft colors' },
+    bobaPearl: { label: '珍奶珍珠體', promptDesc: 'Bubble tea theme, boba pearls inside letters, brown gradient' },
+    neonGlow: { label: '霓虹放光體', promptDesc: 'Neon glow font, red-orange light, dark background, electric' },
+    marshmallowCloud: { label: '棉花糖雲朵', promptDesc: 'Marshmallow font, purple pink gradient, dreamy cloud background' },
+    pixelRetro: { label: '復古像素風', promptDesc: '8-bit pixel art, rainbow gradient, retro gaming style' },
+    rainbowConfetti: { label: '彩虹碎片體', promptDesc: 'Rainbow color font, confetti background, party celebration' },
+    chalkboard: { label: '黑板粉筆風', promptDesc: 'Chalkboard style, white chalk texture, hand-drawn doodles' },
+    comicBook: { label: '美式漫畫風', promptDesc: 'Comic book style, bold outlines, pop art, action background' },
 };
+
+/** Display order for font dropdown: classic first, then themed styles. */
+export const FONT_PRESET_ORDER: (keyof typeof FONT_PRESETS)[] = [
+    'handwritten',
+    'round',
+    'bold',
+    'cute',
+    'pop',
+    'pinkBubble',
+    'thinHandwritten',
+    'catEar',
+    'crayon',
+    'stitched',
+    'puffyCloud',
+    'cherryBlossom',
+    'animalPartners',
+    'pastel3d',
+    'bobaPearl',
+    'neonGlow',
+    'marshmallowCloud',
+    'pixelRetro',
+    'rainbowConfetti',
+    'chalkboard',
+    'comicBook',
+];
 
 // Global-to-local order: Layout → Style → Subject → Lighting/Background → Per-cell → Text → Final
 export const BASE_PROMPT = `🎨 LINE Sticker Sprite Sheet Generation
@@ -213,6 +254,7 @@ ${phrasesForFrames.map((phrase, index) => {
 * **Language**: ${slots.text.language}
 * **Font style**: ${slots.text.textStyle}
 * **Color**: ${slots.text.textColor}
+* **Font adherence (CRITICAL)**: Draw every phrase text in the **exact** font style described above. Match the shape, decoration, texture, and visual effect of the font (e.g. bubble outline, crayon stroke, neon glow, pixel blocks). Do not fall back to a generic or plain font—the chosen style must be clearly visible on every cell.
 `;
     } else {
         textSection = `### [6. Text Setting]

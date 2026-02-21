@@ -37,6 +37,7 @@ import {
     TEXT_PRESETS,
     TEXT_COLOR_PRESETS,
     FONT_PRESETS,
+    FONT_PRESET_ORDER,
     CHARACTER_PRESETS,
     getActionHint,
     type ThemeOption,
@@ -693,7 +694,7 @@ const LineStickerPage: React.FC = () => {
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerFontStyleLabel}</label>
                                     <select value={selectedFont} onChange={e => setSelectedFont(e.target.value as any)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
-                                        {Object.keys(FONT_PRESETS).map(k => <option key={k} value={k}>{(FONT_PRESETS as any)[k].label}</option>)}
+                                        {FONT_PRESET_ORDER.map(k => <option key={k} value={k}>{FONT_PRESETS[k].label}</option>)}
                                     </select>
                                 </div>
                             </div>
