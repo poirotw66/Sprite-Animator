@@ -829,23 +829,64 @@ Generate the sprite sheet with MINIMAL frame-to-frame variation.
     if (onProgress) onProgress(`正在生成 ${cols}x${rows} 連貫動作精靈圖 (比例 ${targetAspectRatio})...`);
   }
 
-  const response = await retryOperation(async () => {
-    return await ai.models.generateContent({
-      model: model,
-      contents: {
-        parts: [
-          { inlineData: { mimeType: 'image/png', data: cleanBase64 } },
-          { text: fullPrompt }
-        ]
-      },
-      config: {
-        imageConfig: {
-          aspectRatio: targetAspectRatio,
-          ...(outputResolution && { imageSize: outputResolution })
-        }
-      }
-    });
-  }, onProgress);
+  const isInvalidArgument = (err: unknown): boolean => {
+    const msg = err instanceof Error ? err.message : String(err);
+    return msg.includes('400') || msg.includes('INVALID_ARGUMENT') || msg.includes('invalid argument');
+  };
+
+  const buildConfig = (includeImageSize: boolean) => ({
+    imageConfig: {
+      aspectRatio: targetAspectRatio,
+      ...(includeImageSize && outputResolution && { imageSize: outputResolution })
+    }
+  });
+
+  let response: Awaited<ReturnType<typeof ai.models.generateContent>>;
+  try {
+    response = await retryOperation(async () => {
+      return await ai.models.generateContent({
+        model: model,
+        contents: {
+          parts: [
+            { inlineData: { mimeType: 'image/png', data: cleanBase64 } },
+            { text: fullPrompt }
+          ]
+        },
+        config: buildConfig(true)
+      });
+    }, onProgress);
+  } catch (firstErr) {
+    if (!isInvalidArgument(firstErr)) throw firstErr;
+    if (onProgress) onProgress('正在重試（略過輸出尺寸參數）...');
+    try {
+      response = await retryOperation(async () => {
+        return await ai.models.generateContent({
+          model: model,
+          contents: {
+            parts: [
+              { inlineData: { mimeType: 'image/png', data: cleanBase64 } },
+              { text: fullPrompt }
+            ]
+          },
+          config: buildConfig(false)
+        });
+      }, onProgress);
+    } catch (secondErr) {
+      if (!isInvalidArgument(secondErr)) throw secondErr;
+      if (onProgress) onProgress('正在重試（略過影像設定）...');
+      response = await retryOperation(async () => {
+        return await ai.models.generateContent({
+          model: model,
+          contents: {
+            parts: [
+              { inlineData: { mimeType: 'image/png', data: cleanBase64 } },
+              { text: fullPrompt }
+            ]
+          }
+        });
+      }, onProgress);
+    }
+  }
 
   const parts = response.candidates?.[0]?.content?.parts;
   if (parts) {
