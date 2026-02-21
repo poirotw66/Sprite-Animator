@@ -738,7 +738,7 @@ ${chromaKeyColor === 'magenta'
 ### 【輸出格式強制（OUTPUT FORMAT - MUST FOLLOW）】
 
 1. **網格**：整張圖必須可被精確均分為 **${cols} 欄 × ${rows} 列**，共 **${totalFrames} 格**。從左到右、從上到下每格等大，無外圍留白、無格與格之間的縫隙或線條。
-2. **禁止框線**：不得繪製任何 框線、格線、邊框、分隔線 或 格子外框。格與格之間只能是一片連續背景色，不能有任何可見的線條或框。
+2. **禁止框線與白線**：不得繪製任何 框線、格線、邊框、分隔線 或 格子外框。格與格之間不得出現任何白色框線、白色分隔線或白色格線；相鄰兩格交界處必須是同一片背景色，不能有一條白色縫隙或白線把兩格分開。格子與格子之間視覺上連成一片背景。
 3. **填滿**：每一格內角色與文字需佔滿大部分面積（角色約佔格高 70%～85%），單格內僅保留極少內邊距，禁止「角色很小、周圍一大片空白」的構圖。
 4. **一致性**：所有格子的尺寸與對齊方式必須一致，使後續可依固定比例裁成 ${cols}×${rows} 張獨立貼圖。
 `;
@@ -771,13 +771,14 @@ ${chromaKeyColor === 'magenta'
 * **Margins**: None. No empty space at left, right, top, or bottom.
 * **Gaps**: No gaps between cells. Adjacent cells share the same boundary. Do NOT draw any dividers, borders, frame lines (框線), or grid lines (格線) between or around cells.
 * **Forbidden**: No visible 框線, 格線, 邊框, or 分隔線 anywhere. The grid is invisible—only the background color fills the space.
+* **No white separator lines**: Do NOT draw any white lines, white strips, or white borders between cells. Where one cell meets the next, both sides must be the same background color (${bgColorHex}) with no visible white gap, white rule, or white divider. The boundary between two cells must be invisible—same color on both sides.
 * **Output**: The image MUST be perfectly splittable into ${totalFrames} equal rectangles.
 * **Per cell**: Character must occupy ~70–85% of cell height. Do NOT draw a box, frame, or border around each cell. Minimum internal padding ~5–10%. Character must NOT cross grid lines or touch adjacent cells. One independent pose per cell.
 
 ### [2. Style / Art Medium]
 
 * **Lighting (technical)**: Flat shading only. No drop shadows, no gradients, no ambient occlusion. Sharp edges against background.
-* **No 框線 or grid separators**: Do NOT draw any line, frame, border, box, or divider between cells or around the image or around each pose. The grid is logical only (for splitting later); adjacent cells must share the same background with zero visible lines.
+* **No 框線 or grid separators**: Do NOT draw any line, frame, border, box, or divider between cells or around the image or around each pose. The grid is logical only (for splitting later); adjacent cells must share the same background with zero visible lines. No white lines between cells—same background color on both sides of every cell edge.
 
 ### [3. Subject / Character] CRITICAL — Image is primary
 
@@ -826,6 +827,7 @@ Output a single image: ${cols}×${rows} grid, ${totalFrames} equal rectangles. S
 
 • NO frame numbers, cell numbers, numerals (1, 2, 3...), or text labels drawn on the image—the grid has no visible labels.
 • NO borders, frames, grid lines, dividers, rectangles, or boxes around or between cells.
+• NO white lines, white strips, or white dividers between cells—same background color on both sides of every cell boundary.
 • NO ground line, floor line, baseline, shadow, platform, or surface under the character.
 • NO horizontal or vertical lines of any color anywhere.
 • NO color variations in background—ONLY EXACTLY ${bgColorHex}. No gradients.

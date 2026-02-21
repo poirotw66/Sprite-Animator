@@ -123,6 +123,7 @@ export const BASE_PROMPT = `🎨 LINE Sticker Sprite Sheet Generation
 * **Margins**: None. Image edges = grid boundaries. No empty space at left, right, top, or bottom.
 * **Gaps**: No gaps between cells. Adjacent cells share the same boundary. Do NOT draw any dividers, borders, frame lines (框線), or grid lines (格線) between or around cells.
 * **Forbidden**: No visible 框線 (frame/border lines), 格線 (grid lines), 邊框 (borders), or 分隔線 (separator lines) anywhere on the image. The grid is invisible—only the background color fills the space.
+* **No white separator lines**: Do NOT draw any white lines, white strips, or white borders between cells. Where one cell meets the next, both sides must be the same background color with no visible white gap, white rule, or white divider. The boundary between two cells must be invisible—same color on both sides.
 * **Output**: The image MUST be perfectly splittable into {TOTAL_FRAMES} equal rectangles.
 * **Per cell**: Character {AND_TEXT} must occupy ~70–85% of cell height. Do NOT draw a box, frame, or border around each cell. Minimum internal padding ~5–10%. Character {AND_TEXT} must NOT cross grid lines or touch adjacent cells. One independent sticker per cell. {AND_CLOSE_TEXT}
 `;
@@ -193,7 +194,7 @@ export function buildLineStickerPrompt(
 * **Technique**: ${slots.style.drawingMethod}
 ${lightingTechnical}
 ${outlineRule}
-* **No 框線 (frame lines) or grid separators**: Do NOT draw any line, frame, border, box, or divider between cells or around the image or around each sticker. No visible 格線 (grid lines) or 邊框 (borders). The grid is logical only (for splitting later); adjacent cells must share the same background with zero visible lines.
+* **No 框線 (frame lines) or grid separators**: Do NOT draw any line, frame, border, box, or divider between cells or around the image or around each sticker. No visible 格線 (grid lines) or 邊框 (borders). The grid is logical only (for splitting later); adjacent cells must share the same background with zero visible lines. No white lines between cells—same background color on both sides of every cell edge.
 `;
 
     // 3. Subject / Character — image-first: uploaded image is primary; preset is optional style hint
@@ -267,7 +268,7 @@ ${phrasesForFrames.map((phrase, index) => {
     const finalSection = `
 ### [7. Final Goal]
 
-Output a single image: perfect square, {TOTAL_FRAMES} equal rectangles ({COLS}×{ROWS}). Each rectangle = one LINE sticker. Splittable at exactly {CELL_WIDTH_PCT}% width and {CELL_HEIGHT_PCT}% height per cell. CRITICAL: No visible 框線, borders, grid lines, or separator lines—one continuous background only. Do not draw any frame or line between or around cells.
+Output a single image: perfect square, {TOTAL_FRAMES} equal rectangles ({COLS}×{ROWS}). Each rectangle = one LINE sticker. Splittable at exactly {CELL_WIDTH_PCT}% width and {CELL_HEIGHT_PCT}% height per cell. CRITICAL: No visible 框線, borders, grid lines, or separator lines—one continuous background only. No white lines between cells—same background color on both sides of every cell boundary. Do not draw any frame or line between or around cells.
 `.replace(/{TOTAL_FRAMES}/g, totalFrames.toString())
         .replace(/{COLS}/g, cols.toString())
         .replace(/{ROWS}/g, rows.toString())
