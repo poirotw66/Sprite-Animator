@@ -409,7 +409,7 @@ ${language}. Output phrases in this language only.
 - Hint: ${modeHint}
 
 ### [Output Quantity] (Strictly Follow)
-Generate exactly ${contentCount} phrases, distributed as below.
+Generate exactly ${contentCount} phrases, distributed as below. The total number of phrase lines (excluding category headers) must be exactly ${contentCount}.
 
 ### [Categories and Ratios] (Strictly Follow)
 Label the four categories clearly:
@@ -435,6 +435,7 @@ Label the four categories clearly:
 - Natural chat tone; avoid formal or long sentences.
 - No heavy slang, niche memes, or "internet-only" jargon unless the phrase mode explicitly asks for it.
 - Optimized for ON-sticker use, not for long captions.
+- No repeated or near-identical phrases: each phrase must be clearly different in meaning from the others.
 
 ### [Tone and Resonance]
 - Relatable: users should think "I’d use this in chat."
@@ -464,6 +465,7 @@ Meme/Iconic:
 ❌ No filler text or "Sticker 1/2" labels
 ❌ No heavy internet slang, niche memes, or jargon that only a small group understands
 ❌ No long or complicated sentences
+❌ No duplicate or near-synonym phrases across the set
 
 Now generate the phrases based on the Theme.`;
 
@@ -591,12 +593,18 @@ export async function generateActionDescriptions(
 
 Given the following list of sticker PHRASES (short text that will appear on each sticker), output exactly ONE action description per phrase, in the same order.
 
+**Rules (important):**
+- Describe only visible, drawable pose/expression: gesture (e.g. waving, thumbs up), face (e.g. smiling, eyes closed), or posture (e.g. tilting head). Avoid abstract moods without a clear visual.
+- Each action must be concrete and specific so an illustrator can draw it.
+- Every line must be visually distinct—no two cells should describe the same pose or expression.
+
 **Output format (strict):**
-- One line per phrase.
-- Each line must be: English description (中文描述)
-- English: concrete pose/expression (e.g. waving, smiling, thumbs up; tilting head, confused).
-- 中文: short Chinese description matching the English (e.g. 揮手、微笑、比讚；歪頭、困惑).
+- One line per phrase. Each line: English description (中文描述)
 - No numbering, no bullets, no extra text. Only the "English (中文)" line.
+- Example lines:
+  waving hand (揮手)
+  thumbs up with smile (比讚微笑)
+  tilting head confused (歪頭困惑)
 
 **Phrases:**
 ${list}

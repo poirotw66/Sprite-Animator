@@ -184,15 +184,23 @@ ${lightingLine}
         phrasesForFrames.push(allPhrases.length > 0 ? allPhrases[i % allPhrases.length] : `Expression ${i + 1}`);
     }
     const textRuleCell = includeText ? 'Every cell MUST clearly display its assigned short phrase text.' : 'DO NOT include any text in the images; poses and expressions only.';
+    const actionForImage = (raw: string): string => {
+        const s = raw.trim();
+        const maxLen = 80;
+        const enOnly = s.replace(/\s*[（(].*$/, '').trim();
+        const use = enOnly.length > 0 ? enOnly : s;
+        return use.length > maxLen ? use.slice(0, maxLen) + '...' : use;
+    };
     const themeSection = `### [5. Grid Content — Per Cell]
 
-${textRuleCell} Actions and expressions MUST be unique per cell. No repetitions.
+${textRuleCell} Actions and expressions MUST be unique per cell. No repetitions. Vary pose and expression clearly (e.g. different hand gestures, face direction, open/closed eyes) so each cell is visually distinct.
 
 ${phrasesForFrames.map((phrase, index) => {
         const row = Math.floor(index / cols) + 1;
         const col = (index % cols) + 1;
         const textLabel = includeText ? `Text: "${phrase}"` : `Theme: "${phrase}" (NO text in image)`;
-        const actionLabel = (actionDescs && actionDescs[index]?.trim()) ? actionDescs[index].trim() : getActionHint(phrase);
+        const rawAction = (actionDescs && actionDescs[index]?.trim()) ? actionDescs[index].trim() : getActionHint(phrase);
+        const actionLabel = actionForImage(rawAction);
         return `**Cell ${index + 1} (row ${row}, col ${col})**: ${textLabel} | Action: ${actionLabel}`;
     }).join('\n')}
 `;
