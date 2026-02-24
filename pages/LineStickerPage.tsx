@@ -42,8 +42,8 @@ import {
     TEXT_COLOR_PRESETS,
     FONT_PRESETS,
     FONT_PRESET_ORDER,
-    CHARACTER_PRESETS,
     type ThemeOption,
+    type LineStickerStyleOption,
 } from '../utils/lineStickerPrompt';
 
 const SHEETS_COUNT = 3;
@@ -81,10 +81,8 @@ const LineStickerPage: React.FC = () => {
     const [chromaKeyProgress, setChromaKeyProgress] = useState(0);
     const [isProcessingChromaKey, setIsProcessingChromaKey] = useState(false);
 
-    const [characterPreset, setCharacterPreset] = useState<keyof typeof CHARACTER_PRESETS | 'custom'>('cute');
-    const [characterAppearance, setCharacterAppearance] = useState('');
-    const [characterPersonality, setCharacterPersonality] = useState('');
-    const [selectedStyle, setSelectedStyle] = useState<keyof typeof STYLE_PRESETS>('chibi');
+    const [selectedStyle, setSelectedStyle] = useState<LineStickerStyleOption>('chibi');
+    const [customStyleText, setCustomStyleText] = useState('');
     const [selectedTheme, setSelectedTheme] = useState<ThemeOption>('custom');
     const [customThemeContext, setCustomThemeContext] = useState<string>('');
     const [customThemeScenario, setCustomThemeScenario] = useState<string>('');
@@ -153,10 +151,8 @@ const LineStickerPage: React.FC = () => {
     } = useLineStickerGeneration({
         apiKey: getEffectiveApiKey(),
         selectedModel,
-        characterPreset,
-        characterAppearance,
-        characterPersonality,
         selectedStyle,
+        customStyleText,
         selectedTheme,
         customThemeContext,
         customPhrasesList: phrasesForHook,
@@ -182,9 +178,6 @@ const LineStickerPage: React.FC = () => {
         selectedTheme,
         customThemeContext,
         customThemeScenario,
-        characterPreset,
-        characterAppearance,
-        characterPersonality,
         selectedLanguage,
         selectedPhraseMode,
         setCustomPhrases,
@@ -392,31 +385,24 @@ const LineStickerPage: React.FC = () => {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerStyleLabel}</label>
-                                <select value={selectedStyle} onChange={e => setSelectedStyle(e.target.value as keyof typeof STYLE_PRESETS)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
+                                <select value={selectedStyle} onChange={e => setSelectedStyle(e.target.value as LineStickerStyleOption)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
                                     {STYLE_PRESET_ORDER.map((k) => (
                                         <option key={k} value={k}>{STYLE_PRESETS[k].label}</option>
                                     ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerCharacterVibe || '角色形象'}</label>
-                                <select value={characterPreset} onChange={e => setCharacterPreset(e.target.value as any)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
-                                    {Object.keys(CHARACTER_PRESETS).map(k => <option key={k} value={k}>{CHARACTER_PRESETS[k].label}</option>)}
-                                    <option value="custom">{t.lineStickerThemeCustom}</option>
+                                    <option value="custom">{t.lineStickerStyleCustom}</option>
                                 </select>
                             </div>
                         </div>
 
-                        {characterPreset === 'custom' && (
-                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerDescLabel}</label>
-                                    <textarea value={characterAppearance} onChange={e => setCharacterAppearance(e.target.value)} placeholder={t.lineStickerDescPlaceholder} className="w-full h-20 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none resize-none" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerPersonalityLabel || '個性描述'}</label>
-                                    <input type="text" value={characterPersonality} onChange={e => setCharacterPersonality(e.target.value)} placeholder="例如：溫柔、害羞、愛吐槽" className="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none" />
-                                </div>
+                        {selectedStyle === 'custom' && (
+                            <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                                <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerStyleCustomLabel}</label>
+                                <textarea
+                                    value={customStyleText}
+                                    onChange={e => setCustomStyleText(e.target.value)}
+                                    placeholder={t.lineStickerStyleCustomPlaceholder}
+                                    className="w-full h-20 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none resize-none"
+                                />
                             </div>
                         )}
 

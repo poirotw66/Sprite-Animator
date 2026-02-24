@@ -6,9 +6,9 @@ import {
     FONT_PRESETS,
     THEME_PRESETS,
     DEFAULT_CHARACTER_SLOT,
-    CHARACTER_PRESETS,
     buildLineStickerPrompt,
     type ThemeOption,
+    type LineStickerStyleOption,
 } from '../utils/lineStickerPrompt';
 import { generateSpriteSheet } from '../services/geminiService';
 import { logger } from '../utils/logger';
@@ -18,10 +18,9 @@ import type { ImageResolution } from '../utils/constants';
 interface UseLineStickerGenerationProps {
     apiKey: string | null;
     selectedModel: string;
-    characterPreset: keyof typeof CHARACTER_PRESETS | 'custom';
-    characterAppearance: string;
-    characterPersonality: string;
-    selectedStyle: keyof typeof STYLE_PRESETS;
+    selectedStyle: LineStickerStyleOption;
+    /** Used when selectedStyle === 'custom'. */
+    customStyleText?: string;
     selectedTheme: ThemeOption;
     customThemeContext: string;
     customPhrasesList: string[];
@@ -42,10 +41,8 @@ interface UseLineStickerGenerationProps {
 export const useLineStickerGeneration = ({
     apiKey,
     selectedModel,
-    characterPreset,
-    characterAppearance,
-    characterPersonality,
     selectedStyle,
+    customStyleText = '',
     selectedTheme,
     customThemeContext,
     customPhrasesList,
@@ -68,16 +65,7 @@ export const useLineStickerGeneration = ({
     const totalFrames = gridCols * gridRows;
 
     const buildPrompt = useCallback((phraseListOverride?: string[], actionDescsOverride?: string[]) => {
-        let characterSlot = { ...DEFAULT_CHARACTER_SLOT };
-
-        if (characterPreset !== 'custom') {
-            const preset = CHARACTER_PRESETS[characterPreset];
-            characterSlot.appearance = preset.appearance;
-            characterSlot.personality = preset.personality;
-        } else {
-            if (characterAppearance.trim()) characterSlot.appearance = characterAppearance.trim();
-            if (characterPersonality.trim()) characterSlot.personality = characterPersonality.trim();
-        }
+        const characterSlot = { ...DEFAULT_CHARACTER_SLOT };
 
         const examplePhrases =
             phraseListOverride ??
@@ -93,8 +81,18 @@ export const useLineStickerGeneration = ({
                 examplePhrases,
             };
 
+        const styleSlot =
+            selectedStyle === 'custom'
+                ? {
+                    styleType: customStyleText.trim() || 'Custom style (user did not specify).',
+                    drawingMethod: customStyleText.trim()
+                        ? `Apply this style consistently: ${customStyleText.trim()}`
+                        : 'Follow the style description above.',
+                }
+                : STYLE_PRESETS[selectedStyle];
+
         const slots = {
-            style: STYLE_PRESETS[selectedStyle],
+            style: styleSlot,
             character: characterSlot,
             theme: themeSlot,
             text: {
@@ -112,9 +110,8 @@ export const useLineStickerGeneration = ({
 
         return buildLineStickerPrompt(slots, gridCols, gridRows, chromaKeyColor, includeText, actionDescs);
     }, [
-        characterPreset,
-        characterAppearance,
-        characterPersonality,
+        selectedStyle,
+        customStyleText,
         selectedTheme,
         customThemeContext,
         customPhrasesList,

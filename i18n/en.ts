@@ -268,6 +268,9 @@ export const en: Translations = {
   // LINE Sticker Tool - Style / Theme / Phrases
   lineStickerStyleLabel: 'Sticker Style',
   lineStickerStyleHint: 'Select drawing style for the stickers',
+  lineStickerStyleCustom: 'Custom',
+  lineStickerStyleCustomLabel: 'Custom style description',
+  lineStickerStyleCustomPlaceholder: 'e.g.: Ghibli style, thick cel-shading, low-poly 3D...',
   lineStickerThemeLabel: 'Chat Theme',
   lineStickerThemeTrpg: 'TRPG Campaign',
   lineStickerThemeDaily: 'Daily Chat',

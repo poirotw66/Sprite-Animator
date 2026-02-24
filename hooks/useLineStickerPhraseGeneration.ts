@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import { generateActionDescriptions, generateStickerPhrases } from '../services/geminiService';
 import {
-  CHARACTER_PRESETS,
   getActionHint,
   TEXT_PRESETS,
   THEME_PRESETS,
@@ -24,9 +23,6 @@ interface UseLineStickerPhraseGenerationParams {
   selectedTheme: ThemeOption;
   customThemeContext: string;
   customThemeScenario?: string;
-  characterPreset: keyof typeof CHARACTER_PRESETS | 'custom';
-  characterAppearance: string;
-  characterPersonality: string;
   selectedLanguage: keyof typeof TEXT_PRESETS;
   selectedPhraseMode: StickerPhraseMode;
   setCustomPhrases: (value: string) => void;
@@ -45,9 +41,6 @@ export function useLineStickerPhraseGeneration({
   selectedTheme,
   customThemeContext,
   customThemeScenario,
-  characterPreset,
-  characterAppearance,
-  characterPersonality,
   selectedLanguage,
   selectedPhraseMode,
   setCustomPhrases,
@@ -68,21 +61,13 @@ export function useLineStickerPhraseGeneration({
         ? (customThemeScenario?.trim() && `Scenario/audience: ${customThemeScenario.trim()}`) || ''
         : `Scenario/audience: ${THEME_PRESETS[selectedTheme].chatContext}`;
 
-    const characterValue =
-      characterPreset !== 'custom'
-        ? CHARACTER_PRESETS[characterPreset].label
-        : `${characterAppearance} (${characterPersonality})`;
-
-    const blocks = [`Character: ${characterValue}`, `Theme: ${themeInfo}`];
+    const blocks = ['Character/style: From uploaded reference image only (no preset).', `Theme: ${themeInfo}`];
     if (scenarioLine) blocks.push(scenarioLine);
     return blocks.join('\n');
   }, [
     selectedTheme,
     customThemeContext,
     customThemeScenario,
-    characterPreset,
-    characterAppearance,
-    characterPersonality,
   ]);
 
   const handleGeneratePhrases = useCallback(async () => {

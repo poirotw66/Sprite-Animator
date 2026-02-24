@@ -4,7 +4,7 @@
  * This file implements a modular prompt system with slots:
  * - Base: Core requirements that never change
  * - Style Slot: Art style and visual approach
- * - Character Slot: Character appearance and personality
+ * - Character Slot: Reference-image rules only (style from uploaded image + grid)
  * - Theme Slot: Chat context and use cases
  * - Text Slot: Language and text content
  */
@@ -28,8 +28,7 @@ export interface StyleSlot {
 }
 
 export interface CharacterSlot {
-    appearance: string;
-    personality: string;
+    /** Rules for drawing from the reference image; style is determined by the uploaded image and sticker grid only. */
     originalImageRules: string;
 }
 
@@ -195,10 +194,10 @@ ${outlineRule}
 `;
 
     // 3. Subject / Character — image-first: uploaded image is primary; preset is optional style hint
-    const characterSection = `### [3. Subject / Character] CRITICAL — Image is primary
+    const characterSection = `### [3. Subject / Character] CRITICAL — Image and grid only
 
-* **Primary reference**: The **uploaded image is the main source**. Draw **this exact character**: same face, hair, outfit, color palette, proportions, and recognisable features. Do not replace them with a generic character from the style hint below.
-* **Style hint (optional, light touch)**: If you need a slight vibe adjustment only, lean toward: ${slots.character.appearance}. Personality tone: ${slots.character.personality}. Apply this only as a light nuance (e.g. line softness or pose energy), not as a new character design.
+* **Character and style source**: The **uploaded image is the only reference** for both the character and the visual style (line weight, shading, proportions, color palette, art style). Do not apply any other character preset, appearance, or personality from elsewhere. Draw this exact character and match the look of the reference.
+* **Layout source**: Sticker separation is defined by the grid only (one character per cell, cell boundaries as in [1. Global Layout]). Composition and framing follow the grid; do not add any style or character traits that are not in the uploaded image.
 * **Rules**: ${slots.character.originalImageRules}
 * **Consistency**: Invariants = face proportions, skin tone, hair silhouette, main outfit, color scheme. Variants = expressions, eye shapes, mouth shapes, gestures, postures, small props.
 `;
@@ -406,6 +405,9 @@ export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
     },
 };
 
+/** Style key: preset key or 'custom' for user-defined style. */
+export type LineStickerStyleOption = keyof typeof STYLE_PRESETS | 'custom';
+
 /** Display order for style dropdown: recommended and LINE-friendly first, then variety. */
 export const STYLE_PRESET_ORDER: (keyof typeof STYLE_PRESETS)[] = [
     'chibi',
@@ -457,9 +459,7 @@ export const CHARACTER_PRESETS: Record<string, { label: string; appearance: stri
 };
 
 export const DEFAULT_CHARACTER_SLOT: CharacterSlot = {
-    appearance: CHARACTER_PRESETS.cute.appearance,
-    personality: CHARACTER_PRESETS.cute.personality,
-    originalImageRules: 'Keep the character from the reference image; only apply the style hint lightly (e.g. slightly softer or cooler lines) without changing who the character is.',
+    originalImageRules: 'Draw exactly the character and visual style from the reference image. Do not apply any other character or style preset. Layout and composition follow the sticker grid (one character per cell).',
 };
 
 export const TEXT_PRESETS: Record<string, TextSlot & { label: string }> = {

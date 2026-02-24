@@ -268,6 +268,9 @@ export const zhTW: Translations = {
   // LINE Sticker Tool - Style / Theme / Phrases
   lineStickerStyleLabel: '貼圖風格（Style Slot）',
   lineStickerStyleHint: '選擇貼圖的繪製風格，會影響角色呈現方式',
+  lineStickerStyleCustom: '自訂',
+  lineStickerStyleCustomLabel: '自訂風格描述',
+  lineStickerStyleCustomPlaceholder: '例如：吉卜力風格、厚塗賽璐珞、低多邊形 3D...',
   lineStickerThemeLabel: '聊天主題（Theme Slot）',
   lineStickerThemeTrpg: 'TRPG 跑團',
   lineStickerThemeDaily: '日常聊天',
