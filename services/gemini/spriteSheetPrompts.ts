@@ -64,18 +64,17 @@ Every background pixel MUST be EXACTLY ${bgColorHex}.
 
   // When includeText is false, do not mention "text" in layout so the model is not encouraged to draw text
   const fillBullet = includeText
-    ? `3. **Fill**: In each cell, character and text must occupy most of the area (character ~70–85% of cell height). Minimal internal padding only. Forbidden: tiny character with large empty space around.`
-    : `3. **Fill**: In each cell, character must occupy most of the area (character ~70–85% of cell height). Minimal internal padding only. Forbidden: tiny character with large empty space. Do NOT draw any text, numbers, or labels in the image.`;
+    ? `2. **Fill**: In each cell, character and text must occupy most of the area (character ~70–85% of cell height). Minimal internal padding only. Forbidden: tiny character with large empty space around.`
+    : `2. **Fill**: In each cell, character must occupy most of the area (character ~70–85% of cell height). Minimal internal padding only. Forbidden: tiny character with large empty space. Do NOT draw any text, numbers, or labels in the image.`;
 
   const layoutEnforcement = `
 ---
 
 ### [Output Format — MUST FOLLOW]
 
-1. **Grid**: The image must be exactly divisible into **${cols} columns × ${rows} rows**, **${totalFrames} cells** total. Left to right, top to bottom; equal size per cell. No outer margins, no gaps or lines between cells.
-2. **No frame or white lines**: Do NOT draw any frame lines, grid lines, borders, separators, or cell outlines. No white frame lines, white separators, or white grid lines between cells. Where two cells meet, both sides must be the same background color with no visible white gap or line. Cells must visually form one continuous background.
+1. **Grid**: The image must be exactly divisible into **${cols} columns × ${rows} rows**, **${totalFrames} cells** total. Left to right, top to bottom; equal size per cell. No outer margins. Obey [1. Global Layout] — NO VISIBLE DIVIDERS (no lines of any kind between cells; one continuous background only).
 ${fillBullet}
-4. **Consistency**: All cells must have the same size and alignment so the image can be split into ${cols}×${rows} independent stickers at fixed ratios.
+3. **Consistency**: All cells must have the same size and alignment so the image can be split into ${cols}×${rows} independent stickers at fixed ratios.
 `;
 
   const noTextBlock =
@@ -137,16 +136,13 @@ export function buildAnimationSpriteSheetPrompt(
 * **Canvas**: Grid aspect ${cols}×${rows}. High resolution output. No letterboxing—image edges = grid boundaries.
 * **Grid**: ${cols}×${rows} = ${totalFrames} cells. Each cell exactly **${cellWidthPct}% of image width** and **${cellHeightPct}% of image height**.
 * **Margins**: None. No empty space at left, right, top, or bottom.
-* **Gaps**: No gaps between cells. Adjacent cells share the same boundary. Do NOT draw any dividers, borders, frame lines, or grid lines between or around cells.
-* **Forbidden**: No visible frame lines, grid lines, borders, or separators anywhere. The grid is invisible—only the background color fills the space.
-* **No white separator lines**: Do NOT draw any white lines, white strips, or white borders between cells. Where one cell meets the next, both sides must be the same background color (${bgColorHex}) with no visible white gap, white rule, or white divider. The boundary between two cells must be invisible—same color on both sides.
+* **NO VISIBLE DIVIDERS — ABSOLUTE, NON-NEGOTIABLE**: You MUST NOT draw ANY of the following anywhere on the image: grid lines, frame lines, borders, dividers, separator lines, cell outlines, boxes around or between cells, white lines, white strips, white borders, or any visible line of any color between or around cells. The grid is LOGICAL ONLY (for splitting later). Where one cell meets the next, both sides MUST be the EXACT SAME background color (${bgColorHex}) with ZERO visible gap, rule, or edge. The boundary between any two cells must be COMPLETELY INVISIBLE. One continuous background only—no lines of any kind. Drawing any visible line between cells makes the output invalid.
 * **Output**: The image MUST be perfectly splittable into ${totalFrames} equal rectangles.
-* **Per cell**: Character must occupy ~70–85% of cell height. Do NOT draw a box, frame, or border around each cell. Minimum internal padding ~5–10%. Character must NOT cross grid lines or touch adjacent cells. One independent pose per cell.
+* **Per cell**: Character must occupy ~70–85% of cell height. Minimum internal padding ~5–10%. Character must stay within its cell and not touch adjacent cells. One independent pose per cell.
 
 ### [2. Style / Art Medium]
 
 * **Lighting (technical)**: Flat shading only. No drop shadows, no gradients, no ambient occlusion. Sharp edges against background.
-* **No frame lines or grid separators**: Do NOT draw any line, frame, border, box, or divider between cells or around the image or around each pose. The grid is logical only (for splitting later); adjacent cells must share the same background with zero visible lines. No white lines between cells—same background color on both sides of every cell edge.
 
 ### [3. Subject / Character] CRITICAL — Image is primary
 
@@ -189,13 +185,12 @@ Common mistakes to avoid: Do not make each cell a "key pose"; make tiny incremen
 
 ### [6. Final Goal]
 
-Output a single image: ${cols}×${rows} grid, ${totalFrames} equal rectangles. Splittable at exactly ${cellWidthPct}% width and ${cellHeightPct}% height per cell. CRITICAL: No visible frame lines, borders, grid lines, or separator lines—one continuous background only. One pose per cell with minimal change between cells. Do not draw any frame or line between or around cells.
+Output a single image: ${cols}×${rows} grid, ${totalFrames} equal rectangles. Splittable at exactly ${cellWidthPct}% width and ${cellHeightPct}% height per cell. Obey [1. Global Layout] — NO VISIBLE DIVIDERS. One pose per cell with minimal change between cells.
 
 ### [7. Forbidden]
 
 • NO frame numbers, cell numbers, numerals (1, 2, 3...), or text labels drawn on the image—the grid has no visible labels.
-• NO borders, frames, grid lines, dividers, rectangles, or boxes around or between cells.
-• NO white lines, white strips, or white dividers between cells—same background color on both sides of every cell boundary.
+• NO visible dividers of any kind (see [1. Global Layout] — NO VISIBLE DIVIDERS).
 • NO ground line, floor line, baseline, shadow, platform, or surface under the character.
 • NO horizontal or vertical lines of any color anywhere.
 • NO color variations in background—ONLY EXACTLY ${bgColorHex}. No gradients.

@@ -121,11 +121,9 @@ export const BASE_PROMPT = `🎨 LINE Sticker Sprite Sheet Generation
 * **Canvas**: Perfect square (1:1 aspect ratio). High resolution output.
 * **Grid**: {COLS}×{ROWS} = {TOTAL_FRAMES} cells. Each cell exactly **{CELL_WIDTH_PCT}% of image width** and **{CELL_HEIGHT_PCT}% of image height**.
 * **Margins**: None. Image edges = grid boundaries. No empty space at left, right, top, or bottom.
-* **Gaps**: No gaps between cells. Adjacent cells share the same boundary. Do NOT draw any dividers, borders, frame lines, or grid lines between or around cells.
-* **Forbidden**: No visible frame lines, grid lines, borders, or separator lines anywhere on the image. The grid is invisible—only the background color fills the space.
-* **No white separator lines**: Do NOT draw any white lines, white strips, or white borders between cells. Where one cell meets the next, both sides must be the same background color with no visible white gap, white rule, or white divider. The boundary between two cells must be invisible—same color on both sides.
+* **NO VISIBLE DIVIDERS — ABSOLUTE, NON-NEGOTIABLE**: You MUST NOT draw ANY of the following anywhere on the image: grid lines, frame lines, borders, dividers, separator lines, cell outlines, boxes around or between cells, white lines, white strips, white borders, or any visible line of any color between or around cells. The grid is LOGICAL ONLY (for splitting later). Where one cell meets the next, both sides MUST be the EXACT SAME background color with ZERO visible gap, rule, or edge. The boundary between any two cells must be COMPLETELY INVISIBLE. One continuous background only—no lines of any kind. Drawing any visible line between cells makes the output invalid.
 * **Output**: The image MUST be perfectly splittable into {TOTAL_FRAMES} equal rectangles.
-* **Per cell**: Character {AND_TEXT} must occupy ~70–85% of cell height. Do NOT draw a box, frame, or border around each cell. Minimum internal padding ~5–10%. Character {AND_TEXT} must NOT cross grid lines or touch adjacent cells. One independent sticker per cell. {AND_CLOSE_TEXT}
+* **Per cell**: Character {AND_TEXT} must occupy ~70–85% of cell height. Minimum internal padding ~5–10%. Character {AND_TEXT} must stay within its cell and not touch adjacent cells. One independent sticker per cell. {AND_CLOSE_TEXT}
 `;
 
 // When includeText: enforce separate Character Zone vs Text Zone so text never overlaps character
@@ -194,7 +192,6 @@ export function buildLineStickerPrompt(
 * **Technique**: ${slots.style.drawingMethod}
 ${lightingTechnical}
 ${outlineRule}
-* **No frame lines or grid separators**: Do NOT draw any line, frame, border, box, or divider between cells or around the image or around each sticker. No visible grid lines or borders. The grid is logical only (for splitting later); adjacent cells must share the same background with zero visible lines. No white lines between cells—same background color on both sides of every cell edge.
 `;
 
     // 3. Subject / Character — image-first: uploaded image is primary; preset is optional style hint
@@ -268,7 +265,7 @@ ${phrasesForFrames.map((phrase, index) => {
     const finalSection = `
 ### [7. Final Goal]
 
-Output a single image: perfect square, {TOTAL_FRAMES} equal rectangles ({COLS}×{ROWS}). Each rectangle = one LINE sticker. Splittable at exactly {CELL_WIDTH_PCT}% width and {CELL_HEIGHT_PCT}% height per cell. CRITICAL: No visible frame lines, borders, grid lines, or separator lines—one continuous background only. No white lines between cells—same background color on both sides of every cell boundary. Do not draw any frame or line between or around cells.
+Output a single image: perfect square, {TOTAL_FRAMES} equal rectangles ({COLS}×{ROWS}). Each rectangle = one LINE sticker. Splittable at exactly {CELL_WIDTH_PCT}% width and {CELL_HEIGHT_PCT}% height per cell. Obey [1. Global Layout] — NO VISIBLE DIVIDERS (one continuous background only).
 `.replace(/{TOTAL_FRAMES}/g, totalFrames.toString())
         .replace(/{COLS}/g, cols.toString())
         .replace(/{ROWS}/g, rows.toString())
