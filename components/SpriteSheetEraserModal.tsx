@@ -310,7 +310,7 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
       }}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col border border-slate-200"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] flex flex-col border border-slate-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 border-b border-slate-200 flex justify-between items-center flex-shrink-0">
@@ -403,7 +403,7 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
 
         <div
           ref={scrollContainerRef}
-          className="flex-1 min-h-0 overflow-auto flex items-center justify-center p-4 relative"
+          className="flex-1 min-h-0 overflow-auto p-4 relative"
           style={{
             backgroundImage: `url(${GRID_PATTERN_URL})`,
             backgroundSize: '20px 20px',
@@ -412,24 +412,20 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
         >
           <div
             style={{
+              display: 'inline-block',
               width: (canvasSize.w || 400) * zoom,
               height: (canvasSize.h || 300) * zoom,
+              minWidth: (canvasSize.w || 400) * zoom,
+              minHeight: (canvasSize.h || 300) * zoom,
               position: 'relative',
-              flexShrink: 0,
+              overflow: 'hidden',
             }}
           >
-            <div
-              style={{
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                width: (canvasSize.w || 400) * zoom,
-                height: (canvasSize.h || 300) * zoom,
-                overflow: 'hidden',
-              }}
-            >
               <div
                 style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
                   width: canvasSize.w || 400,
                   height: canvasSize.h || 300,
                   transform: `scale(${zoom})`,
@@ -466,7 +462,6 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
                 </svg>
               )}
               </div>
-            </div>
           </div>
           {cursorCircle && (
             <div
