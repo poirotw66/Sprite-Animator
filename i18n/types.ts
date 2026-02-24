@@ -111,6 +111,11 @@ export interface Translations {
   spriteSheetEraserConfirm: string;
   spriteSheetEraserLoadError: string;
   spriteSheetEraserExportError: string;
+  spriteSheetEraserUndo: string;
+  spriteSheetEraserZoomIn: string;
+  spriteSheetEraserZoomOut: string;
+  spriteSheetEraserRuler: string;
+  spriteSheetEraserRulerHint: string;
   spriteSheetReRunChromaKey: string;
 
   // Frame Grid

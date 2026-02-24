@@ -109,6 +109,11 @@ export const zhTW: Translations = {
   spriteSheetEraserConfirm: '套用',
   spriteSheetEraserLoadError: '無法載入圖片',
   spriteSheetEraserExportError: '無法匯出圖片',
+  spriteSheetEraserUndo: '復原',
+  spriteSheetEraserZoomIn: '放大',
+  spriteSheetEraserZoomOut: '縮小',
+  spriteSheetEraserRuler: '直尺（水平／垂直）',
+  spriteSheetEraserRulerHint: '開啟後拖曳可沿水平或垂直線擦除',
   spriteSheetReRunChromaKey: '重新去背',
 
   // Frame Grid

@@ -109,6 +109,11 @@ export const en: Translations = {
   spriteSheetEraserConfirm: 'Apply',
   spriteSheetEraserLoadError: 'Failed to load image',
   spriteSheetEraserExportError: 'Failed to export image',
+  spriteSheetEraserUndo: 'Undo',
+  spriteSheetEraserZoomIn: 'Zoom in',
+  spriteSheetEraserZoomOut: 'Zoom out',
+  spriteSheetEraserRuler: 'Ruler (horizontal/vertical)',
+  spriteSheetEraserRulerHint: 'When on, drag to erase along a horizontal or vertical line',
   spriteSheetReRunChromaKey: 'Re-run chroma key',
 
   // Frame Grid

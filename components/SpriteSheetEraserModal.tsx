@@ -1,10 +1,11 @@
 /**
  * Modal for erasing regions of a sprite sheet image.
  * Erased areas become transparent (alpha 0) so the result is suitable for chroma-key / transparent background.
+ * Features: Undo, canvas zoom, virtual ruler (snap to horizontal/vertical line).
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { X, Check } from './Icons';
+import { X, Check, RotateCcw, ZoomIn, ZoomOut, Ruler } from './Icons';
 import { useLanguage } from '../hooks/useLanguage';
 import { GRID_PATTERN_URL } from '../utils/constants';
 
@@ -17,6 +18,10 @@ export interface SpriteSheetEraserModalProps {
 const MIN_BRUSH = 4;
 const MAX_BRUSH = 80;
 const DEFAULT_BRUSH = 24;
+const MAX_UNDO = 30;
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 3;
+const ZOOM_STEP = 0.25;
 
 function getCanvasPoint(
   canvas: HTMLCanvasElement,
@@ -60,6 +65,48 @@ function eraseCircle(
   ctx.putImageData(imageData, 0, 0);
 }
 
+/** Erase a horizontal or vertical line (axis-aligned) with given brush radius. */
+function eraseLine(
+  ctx: CanvasRenderingContext2D,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  radius: number
+): void {
+  const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+  const data = imageData.data;
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const horizontal = Math.abs(x1 - x0) >= Math.abs(y1 - y0);
+  const xMin = Math.max(0, Math.min(x0, x1) - radius);
+  const xMax = Math.min(w, Math.max(x0, x1) + radius + 1);
+  const yMin = Math.max(0, Math.min(y0, y1) - radius);
+  const yMax = Math.min(h, Math.max(y0, y1) + radius + 1);
+  const r2 = radius * radius;
+  for (let y = yMin; y < yMax; y++) {
+    for (let x = xMin; x < xMax; x++) {
+      let dist2: number;
+      if (horizontal) {
+        const py = y0;
+        const t = x1 === x0 ? 0 : (x - x0) / (x1 - x0);
+        const px = t >= 0 && t <= 1 ? x : t < 0 ? x0 : x1;
+        dist2 = (x - px) * (x - px) + (y - py) * (y - py);
+      } else {
+        const px = x0;
+        const t = y1 === y0 ? 0 : (y - y0) / (y1 - y0);
+        const py = t >= 0 && t <= 1 ? y : t < 0 ? y0 : y1;
+        dist2 = (x - px) * (x - px) + (y - py) * (y - py);
+      }
+      if (dist2 <= r2) {
+        const i = (y * w + x) * 4;
+        data[i + 3] = 0;
+      }
+    }
+  }
+  ctx.putImageData(imageData, 0, 0);
+}
+
 export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
   imageUrl,
   onConfirm,
@@ -67,11 +114,19 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
 }) => {
   const { t } = useLanguage();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH);
   const [isDrawing, setIsDrawing] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cursorCircle, setCursorCircle] = useState<{ x: number; y: number; diameterPx: number } | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [rulerOn, setRulerOn] = useState(false);
+  const rulerStartRef = useRef<{ x: number; y: number } | null>(null);
+  const [rulerPreview, setRulerPreview] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 });
+  const historyRef = useRef<ImageData[]>([]);
+  const [historyLength, setHistoryLength] = useState(0);
 
   const drawImageToCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -85,6 +140,14 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
       canvas.width = img.naturalWidth;
       canvas.height = img.naturalHeight;
       ctx.drawImage(img, 0, 0);
+      setCanvasSize({ w: img.naturalWidth, h: img.naturalHeight });
+      historyRef.current = [];
+      try {
+        historyRef.current.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+      } catch (_) {
+        // ignore if canvas too large
+      }
+      setHistoryLength(historyRef.current.length);
       setImageLoaded(true);
     };
     img.onerror = () => setError(t.spriteSheetEraserLoadError);
@@ -95,6 +158,32 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
     drawImageToCanvas();
   }, [drawImageToCanvas]);
 
+  const pushState = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || historyRef.current.length >= MAX_UNDO) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    try {
+      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      historyRef.current.push(img);
+      setHistoryLength(historyRef.current.length);
+    } catch (_) {
+      // ignore
+    }
+  }, []);
+
+  const undo = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || historyRef.current.length <= 1) return;
+    historyRef.current.pop();
+    const prev = historyRef.current[historyRef.current.length - 1];
+    if (!prev) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.putImageData(prev, 0, 0);
+    setHistoryLength(historyRef.current.length);
+  }, []);
+
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       e.preventDefault();
@@ -102,12 +191,18 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
       if (!canvas) return;
       const point = getCanvasPoint(canvas, e.clientX, e.clientY);
       if (!point) return;
-      setIsDrawing(true);
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      eraseCircle(ctx, point.x, point.y, brushSize);
+      if (rulerOn) {
+        rulerStartRef.current = point;
+        setRulerPreview({ x0: point.x, y0: point.y, x1: point.x, y1: point.y });
+      } else {
+        pushState();
+        setIsDrawing(true);
+        eraseCircle(ctx, point.x, point.y, brushSize);
+      }
     },
-    [brushSize]
+    [brushSize, rulerOn, pushState]
   );
 
   const handlePointerMove = useCallback(
@@ -116,10 +211,21 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
       if (canvas) {
         const rect = canvas.getBoundingClientRect();
         const scale = rect.width / canvas.width;
-        // brushSize is eraser radius in canvas pixels; cursor circle shows diameter in screen pixels
         const diameterPx = Math.max(8, Math.round(2 * brushSize * scale));
         setCursorCircle({ x: e.clientX, y: e.clientY, diameterPx });
-        if (isDrawing) {
+        if (rulerOn && rulerStartRef.current) {
+          const point = getCanvasPoint(canvas, e.clientX, e.clientY);
+          if (point) {
+            const { x: x0, y: y0 } = rulerStartRef.current;
+            const { x: x1, y: y1 } = point;
+            const horizontal = Math.abs(x1 - x0) >= Math.abs(y1 - y0);
+            setRulerPreview(
+              horizontal
+                ? { x0, y0, x1: point.x, y1: y0 }
+                : { x0, y0, x1: x0, y1: point.y }
+            );
+          }
+        } else if (isDrawing && !rulerOn) {
           e.preventDefault();
           const point = getCanvasPoint(canvas, e.clientX, e.clientY);
           if (point) {
@@ -129,17 +235,44 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
         }
       }
     },
-    [isDrawing, brushSize]
+    [isDrawing, brushSize, rulerOn]
   );
 
-  const handlePointerUp = useCallback(() => {
-    setIsDrawing(false);
-  }, []);
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent<HTMLCanvasElement>) => {
+      const canvas = canvasRef.current;
+      if (rulerOn && rulerStartRef.current && canvas) {
+        const point = getCanvasPoint(canvas, e.clientX, e.clientY);
+        if (point) {
+          const { x: x0, y: y0 } = rulerStartRef.current;
+          const { x: x1, y: y1 } = point;
+          const horizontal = Math.abs(x1 - x0) >= Math.abs(y1 - y0);
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            pushState();
+            if (horizontal) {
+              eraseLine(ctx, x0, y0, x1, y0, brushSize);
+            } else {
+              eraseLine(ctx, x0, y0, x0, y1, brushSize);
+            }
+          }
+        }
+        rulerStartRef.current = null;
+        setRulerPreview(null);
+      }
+      setIsDrawing(false);
+    },
+    [rulerOn, brushSize, pushState]
+  );
 
   const handlePointerLeave = useCallback(() => {
     setIsDrawing(false);
     setCursorCircle(null);
-  }, []);
+    if (rulerOn) {
+      rulerStartRef.current = null;
+      setRulerPreview(null);
+    }
+  }, [rulerOn]);
 
   const handleConfirm = useCallback(() => {
     const canvas = canvasRef.current;
@@ -153,6 +286,9 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
     }
   }, [onConfirm, onClose, t.spriteSheetEraserExportError]);
 
+  const zoomIn = useCallback(() => setZoom((z) => Math.min(MAX_ZOOM, z + ZOOM_STEP)), []);
+  const zoomOut = useCallback(() => setZoom((z) => Math.max(MIN_ZOOM, z - ZOOM_STEP)), []);
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -160,6 +296,8 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [onClose]);
+
+  const canUndoState = imageLoaded && historyLength > 1;
 
   return (
     <div
@@ -193,19 +331,68 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
           {t.spriteSheetEraserHint}
         </p>
 
-        <div className="flex items-center gap-4 px-4 py-2 flex-shrink-0">
-          <label className="text-sm font-medium text-slate-700">
-            {t.spriteSheetEraserBrushSize}
-          </label>
-          <input
-            type="range"
-            min={MIN_BRUSH}
-            max={MAX_BRUSH}
-            value={brushSize}
-            onChange={(e) => setBrushSize(Number(e.target.value))}
-            className="flex-1 max-w-xs h-2 rounded-full accent-green-600"
-          />
-          <span className="text-sm text-slate-500 tabular-nums w-8">{brushSize}px</span>
+        <div className="flex flex-wrap items-center gap-3 px-4 py-2 flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-slate-700">
+              {t.spriteSheetEraserBrushSize}
+            </label>
+            <input
+              type="range"
+              min={MIN_BRUSH}
+              max={MAX_BRUSH}
+              value={brushSize}
+              onChange={(e) => setBrushSize(Number(e.target.value))}
+              className="w-24 h-2 rounded-full accent-green-600"
+            />
+            <span className="text-sm text-slate-500 tabular-nums w-8">{brushSize}px</span>
+          </div>
+          <button
+            type="button"
+            onClick={undo}
+            disabled={!canUndoState}
+            className="p-2 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+            title={t.spriteSheetEraserUndo}
+            aria-label={t.spriteSheetEraserUndo}
+          >
+            <RotateCcw className="w-4 h-4" />
+            <span className="text-sm">{t.spriteSheetEraserUndo}</span>
+          </button>
+          <div className="flex items-center gap-1 border border-slate-200 rounded-lg p-0.5">
+            <button
+              type="button"
+              onClick={zoomOut}
+              disabled={zoom <= MIN_ZOOM}
+              className="p-2 rounded-md text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+              title={t.spriteSheetEraserZoomOut}
+              aria-label={t.spriteSheetEraserZoomOut}
+            >
+              <ZoomOut className="w-4 h-4" />
+            </button>
+            <span className="text-sm text-slate-600 min-w-[3rem] text-center tabular-nums">
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              type="button"
+              onClick={zoomIn}
+              disabled={zoom >= MAX_ZOOM}
+              className="p-2 rounded-md text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+              title={t.spriteSheetEraserZoomIn}
+              aria-label={t.spriteSheetEraserZoomIn}
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => setRulerOn((on) => !on)}
+            className={`p-2 rounded-lg border flex items-center gap-1.5 ${rulerOn ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+            title={t.spriteSheetEraserRulerHint}
+            aria-label={t.spriteSheetEraserRuler}
+            aria-pressed={rulerOn}
+          >
+            <Ruler className="w-4 h-4" />
+            <span className="text-sm">{t.spriteSheetEraserRuler}</span>
+          </button>
         </div>
 
         {error && (
@@ -215,19 +402,66 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
         )}
 
         <div
+          ref={scrollContainerRef}
           className="flex-1 min-h-0 overflow-auto flex items-center justify-center p-4 relative"
-          style={{ backgroundImage: `url(${GRID_PATTERN_URL})`, backgroundSize: '20px 20px', cursor: cursorCircle ? 'none' : undefined }}
+          style={{
+            backgroundImage: `url(${GRID_PATTERN_URL})`,
+            backgroundSize: '20px 20px',
+            cursor: cursorCircle ? 'none' : 'crosshair',
+          }}
         >
-          <canvas
-            ref={canvasRef}
-            className="max-w-full h-auto border border-slate-300 shadow-lg"
-            style={{ maxHeight: 'min(60vh, 800px)', cursor: cursorCircle ? 'none' : 'crosshair' }}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerLeave}
-            onPointerCancel={handlePointerUp}
-          />
+          <div
+            style={{
+              width: canvasSize.w * zoom,
+              height: canvasSize.h * zoom,
+              position: 'relative',
+              flexShrink: 0,
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                width: canvasSize.w,
+                height: canvasSize.h,
+                transform: `scale(${zoom})`,
+                transformOrigin: '0 0',
+              }}
+            >
+              <canvas
+                ref={canvasRef}
+                width={canvasSize.w || undefined}
+                height={canvasSize.h || undefined}
+                className="border border-slate-300 shadow-lg block"
+                style={{ cursor: cursorCircle ? 'none' : 'crosshair', display: 'block' }}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerLeave}
+                onPointerCancel={handlePointerUp}
+              />
+              {rulerPreview && canvasSize.w > 0 && (
+                <svg
+                  className="pointer-events-none absolute"
+                  width={canvasSize.w}
+                  height={canvasSize.h}
+                  style={{ left: 0, top: 0, zIndex: 1 }}
+                  aria-hidden
+                >
+                  <line
+                    x1={rulerPreview.x0}
+                    y1={rulerPreview.y0}
+                    x2={rulerPreview.x1}
+                    y2={rulerPreview.y1}
+                    stroke="rgba(34, 197, 94, 0.8)"
+                    strokeWidth={Math.max(2, brushSize * 2)}
+                    strokeLinecap="round"
+                  />
+                </svg>
+              )}
+            </div>
+          </div>
           {cursorCircle && (
             <div
               className="pointer-events-none fixed border-2 border-violet-500 rounded-full bg-violet-500/20 z-[60]"
