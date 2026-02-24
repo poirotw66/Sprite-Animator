@@ -122,7 +122,7 @@ export const BASE_PROMPT = `🎨 LINE Sticker Sprite Sheet Generation
 * **Margins**: None. Image edges = grid boundaries. No empty space at left, right, top, or bottom.
 * **NO VISIBLE DIVIDERS — ABSOLUTE, NON-NEGOTIABLE**: You MUST NOT draw ANY of the following anywhere on the image: grid lines, frame lines, borders, dividers, separator lines, cell outlines, boxes around or between cells, white lines, white strips, white borders, or any visible line of any color between or around cells. The grid is LOGICAL ONLY (for splitting later). Where one cell meets the next, both sides MUST be the EXACT SAME background color with ZERO visible gap, rule, or edge. The boundary between any two cells must be COMPLETELY INVISIBLE. One continuous background only—no lines of any kind. Drawing any visible line between cells makes the output invalid.
 * **Output**: The image MUST be perfectly splittable into {TOTAL_FRAMES} equal rectangles.
-* **Per cell**: Character {AND_TEXT} must occupy ~70–85% of cell height. Minimum internal padding ~5–10%. Character {AND_TEXT} must stay within its cell and not touch adjacent cells. One independent sticker per cell. {AND_CLOSE_TEXT}
+* **Per cell**: Subject(s) from the reference {AND_TEXT} must occupy ~70–85% of cell height. Minimum internal padding ~5–10%. Subject(s) must stay within the cell and not touch adjacent cells. One independent sticker per cell. {AND_CLOSE_TEXT}
 `;
 
 // When includeText: enforce separate Character Zone vs Text Zone so text never overlaps character
@@ -130,12 +130,12 @@ const LAYOUT_PROTECTION_RULES = `
 ### [Layout Protection Rules — CRITICAL] (when text is included)
 
 * Each cell must contain **two clearly separated zones**:
-  1. **Character Zone**: Main silhouette area (hair, face, body, hands, props).
+  1. **Subject Zone**: Main silhouette area (character(s), hair, face(s), body/bodies, hands, props).
   2. **Text Zone**: Dedicated area for the short phrase only.
 
-* **Text MUST NOT overlap** the character silhouette. No text on hair, face, hands, or props.
-* Maintain at least **5–8% visual gap** between the text bounding box and the character silhouette.
-* The character occupies the **visual center**; place text **around** the character, not on top.
+* **Text MUST NOT overlap** the subject silhouette(s). No text on hair, face(s), hands, or props.
+* Maintain at least **5–8% visual gap** between the text bounding box and the subject silhouette(s).
+* The subject(s) occupy the **visual center**; place text **around** them, not on top.
 
 * **Text placement must vary** across the {TOTAL_FRAMES} cells. Allowed placements:
   - Top center / Bottom center
@@ -172,7 +172,7 @@ export function buildLineStickerPrompt(
         .replace(/{CELL_WIDTH_PCT}/g, cellWidthPct.toString())
         .replace(/{CELL_HEIGHT_PCT}/g, cellHeightPct.toString())
         .replace(/{AND_TEXT}/g, includeText ? 'and text' : '')
-        .replace(/{AND_CLOSE_TEXT}/g, includeText ? 'Large character (bust or head) filling the cell, with text placed clearly.' : 'Large character (bust or head) filling the cell.');
+        .replace(/{AND_CLOSE_TEXT}/g, includeText ? 'Subject(s) from reference (e.g. bust/head or group) filling the cell, with text placed clearly.' : 'Subject(s) from reference (e.g. bust/head or group) filling the cell.');
 
     const layoutProtectionSection = includeText
         ? LAYOUT_PROTECTION_RULES.replace(/{TOTAL_FRAMES}/g, totalFrames.toString())
@@ -180,10 +180,10 @@ export function buildLineStickerPrompt(
 
     // 2. Style / Art Medium (technical: lighting per style; LINE sticker: outline per style or white)
     const outlineRule = slots.style.outlinePreference === 'style'
-        ? '* **LINE sticker style**: Visible outline around the character silhouette as specified by the style (e.g. dark brown or black). Keep it clean and readable on any chat background after the colored background is removed.'
-        : '* **LINE sticker style**: Thick white stroke around the character silhouette only. Clean, visible outline so the sticker stays readable on any chat background after the colored background is removed.';
+        ? '* **LINE sticker style**: Visible outline around the subject silhouette(s) as specified by the style (e.g. dark brown or black). Keep it clean and readable on any chat background after the colored background is removed.'
+        : '* **LINE sticker style**: Thick white stroke around the subject silhouette(s) only. Clean, visible outline so the sticker stays readable on any chat background after the colored background is removed.';
     const lightingTechnical = slots.style.lightingPreference === 'soft'
-        ? '* **Lighting (technical)**: Soft, subtle shading allowed (e.g. gentle wash or soft gradients); no harsh drop shadows or complex lighting. Character must remain clearly separated from background for clean chroma key.'
+        ? '* **Lighting (technical)**: Soft, subtle shading allowed (e.g. gentle wash or soft gradients); no harsh drop shadows or complex lighting. Subject(s) must remain clearly separated from background for clean chroma key.'
         : '* **Lighting (technical)**: Flat shading only. No drop shadows, no gradients, no ambient occlusion. Sharp edges against background.';
     const styleSection = `### [2. Style / Art Medium]
 
@@ -196,10 +196,10 @@ ${outlineRule}
     // 3. Subject / Character — image-first: uploaded image is primary; preset is optional style hint
     const characterSection = `### [3. Subject / Character] CRITICAL — Image and grid only
 
-* **Character and style source**: The **uploaded image is the only reference** for both the character and the visual style (line weight, shading, proportions, color palette, art style). Do not apply any other character preset, appearance, or personality from elsewhere. Draw this exact character and match the look of the reference.
-* **Layout source**: Sticker separation is defined by the grid only (one character per cell, cell boundaries as in [1. Global Layout]). Composition and framing follow the grid; do not add any style or character traits that are not in the uploaded image.
+* **Subject and style source**: The **uploaded image is the only reference** for who and what to draw, and for the visual style (line weight, shading, proportions, color palette, art style). Do not add or remove subjects. If the reference shows **one** character, draw that one in every cell. If the reference shows **multiple characters** (e.g. two or more people, or a person and a pet), draw **all of them** in every cell—same number, same relative positions and proportions, same composition. Do not simplify to a single character.
+* **Layout source**: Sticker separation is defined by the grid only (one composition per cell, cell boundaries as in [1. Global Layout]). Each cell repeats the same subject(s) as in the reference; do not add or drop any character from the reference.
 * **Rules**: ${slots.character.originalImageRules}
-* **Consistency**: Invariants = face proportions, skin tone, hair silhouette, main outfit, color scheme. Variants = expressions, eye shapes, mouth shapes, gestures, postures, small props.
+* **Consistency**: Invariants = number of subjects, face proportions, skin tones, hair silhouettes, outfits, color scheme. Variants = expressions, eye shapes, mouth shapes, gestures, postures, small props.
 `;
 
     // 4. Lighting & Background (technical parameters) — exact hex for chroma key
@@ -211,7 +211,7 @@ ${outlineRule}
 
 * **Background color (exact)**: The entire canvas must be **exactly ${bgColorText}** (hex ${bgHex}). Every cell must use this same color—no gradients, no pink/purple variants (e.g. do NOT use #E91E63 or similar). One single RGB value for all background pixels so that chroma key removal works uniformly.
 ${lightingLine}
-* **Uniform**: Same color across the entire sprite sheet. No ground, clouds, or decorative elements. Character edges must be sharp and clean against the background.
+* **Uniform**: Same color across the entire sprite sheet. No ground, clouds, or decorative elements. Subject edges must be sharp and clean against the background.
 `;
 
     // 5. Grid Content — Per cell (local details)
@@ -459,7 +459,7 @@ export const CHARACTER_PRESETS: Record<string, { label: string; appearance: stri
 };
 
 export const DEFAULT_CHARACTER_SLOT: CharacterSlot = {
-    originalImageRules: 'Draw exactly the character and visual style from the reference image. Do not apply any other character or style preset. Layout and composition follow the sticker grid (one character per cell).',
+    originalImageRules: 'Draw exactly the subject(s) and visual style from the reference image. If the reference has multiple characters, include all of them in every cell with the same composition. Do not reduce to one character. Layout follows the sticker grid (one composition per cell).',
 };
 
 export const TEXT_PRESETS: Record<string, TextSlot & { label: string }> = {
