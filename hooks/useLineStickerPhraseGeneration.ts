@@ -23,6 +23,7 @@ interface UseLineStickerPhraseGenerationParams {
   gridRows: number;
   selectedTheme: ThemeOption;
   customThemeContext: string;
+  customThemeScenario?: string;
   characterPreset: keyof typeof CHARACTER_PRESETS | 'custom';
   characterAppearance: string;
   characterPersonality: string;
@@ -43,6 +44,7 @@ export function useLineStickerPhraseGeneration({
   gridRows,
   selectedTheme,
   customThemeContext,
+  customThemeScenario,
   characterPreset,
   characterAppearance,
   characterPersonality,
@@ -58,18 +60,26 @@ export function useLineStickerPhraseGeneration({
   const buildFullContext = useCallback((): string => {
     const themeInfo =
       selectedTheme === 'custom'
-        ? customThemeContext || '自訂主題'
+        ? customThemeContext?.trim() || 'Custom theme'
         : `${THEME_PRESETS[selectedTheme].label} (${THEME_PRESETS[selectedTheme].chatContext})`;
+
+    const scenarioLine =
+      selectedTheme === 'custom'
+        ? (customThemeScenario?.trim() && `Scenario/audience: ${customThemeScenario.trim()}`) || ''
+        : `Scenario/audience: ${THEME_PRESETS[selectedTheme].chatContext}`;
 
     const characterValue =
       characterPreset !== 'custom'
         ? CHARACTER_PRESETS[characterPreset].label
         : `${characterAppearance} (${characterPersonality})`;
 
-    return `角色：${characterValue}\n主題：${themeInfo}`;
+    const blocks = [`Character: ${characterValue}`, `Theme: ${themeInfo}`];
+    if (scenarioLine) blocks.push(scenarioLine);
+    return blocks.join('\n');
   }, [
     selectedTheme,
     customThemeContext,
+    customThemeScenario,
     characterPreset,
     characterAppearance,
     characterPersonality,
@@ -88,13 +98,17 @@ export function useLineStickerPhraseGeneration({
       const count = stickerSetMode ? 48 : gridCols * gridRows;
       const fullContext = buildFullContext();
       const langLabel = TEXT_PRESETS[selectedLanguage]?.label || selectedLanguage;
+      const examplePhrases =
+        selectedTheme === 'custom' ? [] : THEME_PRESETS[selectedTheme].examplePhrases;
 
       const phrases = await generateStickerPhrases(
         key,
         fullContext,
         langLabel,
         count,
-        selectedPhraseMode
+        selectedPhraseMode,
+        undefined,
+        examplePhrases
       );
       setCustomPhrases(phrases.join('\n'));
       setSetPhrasesList(phrases);
@@ -129,6 +143,7 @@ export function useLineStickerPhraseGeneration({
     gridCols,
     gridRows,
     buildFullContext,
+    selectedTheme,
     selectedLanguage,
     selectedPhraseMode,
     setCustomPhrases,

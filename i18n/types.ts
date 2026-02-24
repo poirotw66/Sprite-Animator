@@ -268,6 +268,8 @@ export interface Translations {
   lineStickerThemeWorkplace: string;
   lineStickerThemeCustom: string;
   lineStickerCustomThemePlaceholder: string;
+  lineStickerCustomThemeScenarioLabel: string;
+  lineStickerCustomThemeScenarioPlaceholder: string;
   lineStickerCustomThemeHint: string;
   lineStickerThemeHint: string;
   lineStickerPhraseListSet: string;

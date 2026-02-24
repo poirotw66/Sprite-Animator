@@ -87,6 +87,7 @@ const LineStickerPage: React.FC = () => {
     const [selectedStyle, setSelectedStyle] = useState<keyof typeof STYLE_PRESETS>('chibi');
     const [selectedTheme, setSelectedTheme] = useState<ThemeOption>('custom');
     const [customThemeContext, setCustomThemeContext] = useState<string>('');
+    const [customThemeScenario, setCustomThemeScenario] = useState<string>('');
     const [selectedLanguage, setSelectedLanguage] = useState<keyof typeof TEXT_PRESETS>('zh-TW');
     const [selectedTextColor, setSelectedTextColor] = useState<keyof typeof TEXT_COLOR_PRESETS>('black');
     const [selectedFont, setSelectedFont] = useState<keyof typeof FONT_PRESETS>('handwritten');
@@ -109,7 +110,7 @@ const LineStickerPage: React.FC = () => {
     const [stickerFrames, setStickerFrames] = useState<string[]>([]);
     const [selectedFrames, setSelectedFrames] = useState<boolean[]>([]);
     const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('green');
-    const [selectedPhraseMode, setSelectedPhraseMode] = useState<StickerPhraseMode>('balanced');
+    const [selectedPhraseMode, setSelectedPhraseMode] = useState<StickerPhraseMode>('theme-deep');
     const [includeText, setIncludeText] = useState(true);
     const [bgRemovalMethod, setBgRemovalMethod] = useState<BgRemovalMethod>('chroma');
     const {
@@ -180,6 +181,7 @@ const LineStickerPage: React.FC = () => {
         gridRows,
         selectedTheme,
         customThemeContext,
+        customThemeScenario,
         characterPreset,
         characterAppearance,
         characterPersonality,
@@ -427,7 +429,13 @@ const LineStickerPage: React.FC = () => {
                         </div>
 
                         {selectedTheme === 'custom' && (
-                            <textarea value={customThemeContext} onChange={e => setCustomThemeContext(e.target.value)} placeholder={t.lineStickerCustomThemePlaceholder} className="w-full h-20 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none resize-none" />
+                            <>
+                                <textarea value={customThemeContext} onChange={e => setCustomThemeContext(e.target.value)} placeholder={t.lineStickerCustomThemePlaceholder} className="w-full h-20 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none resize-none" />
+                                <div className="mt-2">
+                                    <label className="block text-xs font-medium text-slate-500 mb-1">{t.lineStickerCustomThemeScenarioLabel}</label>
+                                    <input type="text" value={customThemeScenario} onChange={e => setCustomThemeScenario(e.target.value)} placeholder={t.lineStickerCustomThemeScenarioPlaceholder} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none" />
+                                </div>
+                            </>
                         )}
 
                         {/* Chroma Key Selector */}

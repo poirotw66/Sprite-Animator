@@ -13,7 +13,8 @@ export async function generateStickerPhrases(
   language: string,
   totalFrames: number,
   mode: StickerPhraseMode = 'balanced',
-  model: string = PHRASE_GENERATION_MODEL
+  model: string = PHRASE_GENERATION_MODEL,
+  examplePhrases: string[] = []
 ): Promise<string[]> {
   if (!apiKey) throw new Error(API_KEY_MISSING_MESSAGE);
 
@@ -81,13 +82,20 @@ export async function generateStickerPhrases(
       break;
   }
 
+  const exampleBlock =
+    examplePhrases.length > 0
+      ? `\n### [Reference Example Phrases] (same theme, same language style)\nUse these as style reference; generate new phrases in the same vein. Do not copy.\n${examplePhrases.slice(0, 12).map((p) => `- ${p}`).join('\n')}\n`
+      : '';
+
   const prompt = `You are an expert LINE sticker copywriter. Your goal is to write short, clear phrases that fit ON a sticker and are used in daily chat.
 
 ### [Objective]
 Generate a set of "Sticker Phrases" for a LINE sticker set based on the Theme. Each phrase must be concise and suitable for printing on a sticker.
+- Phrases must fit the theme so that people familiar with it feel resonance.
+- Users should think: "I would use this in this situation."
 
 ### [Theme]
-${themeContext}
+${themeContext}${exampleBlock}
 
 ### [Language]
 ${language}. Output phrases in this language only.
@@ -127,7 +135,8 @@ Label the four categories clearly:
 - No repeated or near-identical phrases: each phrase must be clearly different in meaning from the others.
 
 ### [Tone and Resonance]
-- Relatable: users should think "I'd use this in chat."
+- Theme resonance: every phrase should resonate with people who know or use this theme/situation. Someone in that context should think "I would say this."
+- Relatable: users should think "I'd use this in chat in this context."
 - Friendly and natural; avoid overly "trashy," cynical, or meme-heavy tone in the default balance.
 - Every phrase must stand alone and be understood without explanation.
 
