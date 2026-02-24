@@ -102,6 +102,8 @@ export const zhTW: Translations = {
   showOriginal: '顯示原圖',
   showProcessed: '顯示去背',
   spriteSheetPlaceholder: '生成的網格原圖將顯示於此（去背後）',
+  lineStickerUploadSpriteSheet: '上傳精靈圖',
+  lineStickerUploadSpriteSheetHint: '直接上傳精靈圖可跳過生成，測試去背、切分與下載流程',
   spriteSheetEdit: '編輯精靈圖',
   spriteSheetEraserTitle: '編輯精靈圖',
   spriteSheetEraserHint: '使用橡皮擦擦除不需要的區域，擦除後該區域將呈現透明（去背）。',

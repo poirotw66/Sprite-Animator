@@ -102,6 +102,8 @@ export const en: Translations = {
   showOriginal: 'Show Original',
   showProcessed: 'Show Processed',
   spriteSheetPlaceholder: 'Generated sprite sheet will appear here (after processing)',
+  lineStickerUploadSpriteSheet: 'Upload sprite sheet',
+  lineStickerUploadSpriteSheetHint: 'Upload a sprite sheet to skip generation and test chroma key, slice, and download',
   spriteSheetEdit: 'Edit sprite sheet',
   spriteSheetEraserTitle: 'Edit sprite sheet',
   spriteSheetEraserHint: 'Use the eraser to remove unwanted areas; erased regions will be transparent.',

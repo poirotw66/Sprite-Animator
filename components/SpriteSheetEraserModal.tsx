@@ -120,7 +120,7 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cursorCircle, setCursorCircle] = useState<{ x: number; y: number; diameterPx: number } | null>(null);
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(0.5);
   const [rulerOn, setRulerOn] = useState(false);
   const rulerStartRef = useRef<{ x: number; y: number } | null>(null);
   const [rulerPreview, setRulerPreview] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
@@ -412,8 +412,8 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
         >
           <div
             style={{
-              width: canvasSize.w * zoom,
-              height: canvasSize.h * zoom,
+              width: (canvasSize.w || 400) * zoom,
+              height: (canvasSize.h || 300) * zoom,
               position: 'relative',
               flexShrink: 0,
             }}
@@ -423,16 +423,21 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
                 position: 'absolute',
                 left: 0,
                 top: 0,
-                width: canvasSize.w,
-                height: canvasSize.h,
-                transform: `scale(${zoom})`,
-                transformOrigin: '0 0',
+                width: (canvasSize.w || 400) * zoom,
+                height: (canvasSize.h || 300) * zoom,
+                overflow: 'hidden',
               }}
             >
+              <div
+                style={{
+                  width: canvasSize.w || 400,
+                  height: canvasSize.h || 300,
+                  transform: `scale(${zoom})`,
+                  transformOrigin: '0 0',
+                }}
+              >
               <canvas
                 ref={canvasRef}
-                width={canvasSize.w || undefined}
-                height={canvasSize.h || undefined}
                 className="border border-slate-300 shadow-lg block"
                 style={{ cursor: cursorCircle ? 'none' : 'crosshair', display: 'block' }}
                 onPointerDown={handlePointerDown}
@@ -441,7 +446,7 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
                 onPointerLeave={handlePointerLeave}
                 onPointerCancel={handlePointerUp}
               />
-              {rulerPreview && canvasSize.w > 0 && (
+              {rulerPreview && canvasSize.w > 0 && canvasSize.h > 0 && (
                 <svg
                   className="pointer-events-none absolute"
                   width={canvasSize.w}
@@ -460,6 +465,7 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
                   />
                 </svg>
               )}
+              </div>
             </div>
           </div>
           {cursorCircle && (

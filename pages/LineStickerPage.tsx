@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense, useRef, useCallback } from 'react';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
 import { Link } from 'react-router-dom';
 import {
@@ -104,6 +104,7 @@ const LineStickerPage: React.FC = () => {
 
     const [spriteSheetImage, setSpriteSheetImage] = useState<string | null>(null);
     const [processedSpriteSheet, setProcessedSpriteSheet] = useState<string | null>(null);
+    const spriteSheetFileInputRef = useRef<HTMLInputElement>(null);
     const [showOriginalInSpriteView, setShowOriginalInSpriteView] = useState(false);
     const [stickerFrames, setStickerFrames] = useState<string[]>([]);
     const [selectedFrames, setSelectedFrames] = useState<boolean[]>([]);
@@ -303,6 +304,35 @@ const LineStickerPage: React.FC = () => {
     });
 
     const hasCustomKey = !!apiKey.trim();
+
+    const handleSpriteSheetUpload = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const file = e.target.files?.[0];
+            if (!file || !file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                const dataUrl = reader.result as string;
+                if (stickerSetMode) {
+                    setSheetImages(prev => {
+                        const n = [...prev];
+                        n[currentSheetIndex] = dataUrl;
+                        return n;
+                    });
+                    setProcessedSheetImages(prev => {
+                        const n = [...prev];
+                        n[currentSheetIndex] = null;
+                        return n;
+                    });
+                } else {
+                    setSpriteSheetImage(dataUrl);
+                    setProcessedSpriteSheet(null);
+                }
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
+        },
+        [stickerSetMode, currentSheetIndex]
+    );
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans px-4 pb-8 md:px-6 lg:px-8 pt-4 md:pt-6">
@@ -818,9 +848,26 @@ const LineStickerPage: React.FC = () => {
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex-1 min-h-[400px] flex flex-col items-center justify-center text-slate-300 border-2 border-dashed border-slate-100 rounded-3xl">
+                            <div className="flex-1 min-h-[400px] flex flex-col items-center justify-center text-slate-300 border-2 border-dashed border-slate-100 rounded-3xl p-6">
                                 <ImageIcon className="w-20 h-20 mb-4 opacity-10" />
-                                <p className="text-sm font-medium">{t.spriteSheetPlaceholder}</p>
+                                <p className="text-sm font-medium mb-4">{t.spriteSheetPlaceholder}</p>
+                                <input
+                                    ref={spriteSheetFileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleSpriteSheetUpload}
+                                    className="hidden"
+                                    aria-hidden
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => spriteSheetFileInputRef.current?.click()}
+                                    className="px-5 py-2.5 bg-white border-2 border-slate-200 rounded-xl text-slate-700 font-medium hover:bg-slate-50 hover:border-slate-300 flex items-center gap-2 transition-all shadow-sm"
+                                >
+                                    <Upload className="w-4 h-4" />
+                                    {t.lineStickerUploadSpriteSheet}
+                                </button>
+                                <p className="text-xs text-slate-400 mt-3 max-w-sm text-center">{t.lineStickerUploadSpriteSheetHint}</p>
                             </div>
                         )}
                     </div>
