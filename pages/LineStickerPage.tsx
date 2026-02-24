@@ -25,6 +25,7 @@ import {
     DEFAULT_SLICE_SETTINGS,
     type StickerPhraseMode
 } from '../utils/constants';
+import { buildPhraseSetExport, parsePhraseSetJson } from '../utils/lineStickerPhraseSetFormat';
 
 // Lazy load heavy components for code splitting
 const FrameGrid = lazyWithRetry(() =>
@@ -105,6 +106,7 @@ const LineStickerPage: React.FC = () => {
     const [spriteSheetImage, setSpriteSheetImage] = useState<string | null>(null);
     const [processedSpriteSheet, setProcessedSpriteSheet] = useState<string | null>(null);
     const spriteSheetFileInputRef = useRef<HTMLInputElement>(null);
+    const phraseSetFileInputRef = useRef<HTMLInputElement>(null);
     const [showOriginalInSpriteView, setShowOriginalInSpriteView] = useState(false);
     const [stickerFrames, setStickerFrames] = useState<string[]>([]);
     const [selectedFrames, setSelectedFrames] = useState<boolean[]>([]);
@@ -332,6 +334,55 @@ const LineStickerPage: React.FC = () => {
             e.target.value = '';
         },
         [stickerSetMode, currentSheetIndex]
+    );
+
+    const handleDownloadPhraseSet = useCallback(() => {
+        const payload = buildPhraseSetExport({
+            mode: stickerSetMode ? 'set' : 'single',
+            gridCols,
+            gridRows,
+            phrases: phrasesForHook,
+            actionDescs: actionDescsForHook,
+        });
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `line-sticker-phrase-set-${payload.mode}-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }, [stickerSetMode, gridCols, gridRows, phrasesForHook, actionDescsForHook]);
+
+    const handleUploadPhraseSet = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                const text = reader.result as string;
+                const data = parsePhraseSetJson(text);
+                if (!data) {
+                    setError(t.lineStickerPhraseSetUploadError);
+                    return;
+                }
+                setError(null);
+                if (data.mode === 'single' && data.gridCols != null && data.gridRows != null) {
+                    setStickerSetMode(false);
+                    setGridCols(data.gridCols);
+                    setGridRows(data.gridRows);
+                    setCustomPhrases(data.phrases.join('\n'));
+                    setActionDescsList(data.actionDescs ?? data.phrases.map(() => ''));
+                } else {
+                    setStickerSetMode(true);
+                    setSetPhrasesList(data.phrases);
+                    setActionDescsList(data.actionDescs ?? data.phrases.map(() => ''));
+                    setCurrentSheetIndex(0);
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
+            e.target.value = '';
+        },
+        [t.lineStickerPhraseSetUploadError]
     );
 
     return (
@@ -565,12 +616,30 @@ const LineStickerPage: React.FC = () => {
                         </div>
 
                         <div>
-                            <div className="flex justify-between items-center mb-2">
+                            <div className="flex flex-wrap justify-between items-center gap-2 mb-2">
                                 <label className="text-sm font-medium text-slate-700">{t.lineStickerPhraseListSet}</label>
-                                <button onClick={handleGeneratePhrases} disabled={isGeneratingPhrases} className="text-xs text-green-600 flex items-center gap-1 font-semibold hover:text-green-700">
-                                    {isGeneratingPhrases ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
-                                    {t.lineStickerGeneratePhrases}
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={handleGeneratePhrases} disabled={isGeneratingPhrases} className="text-xs text-green-600 flex items-center gap-1 font-semibold hover:text-green-700">
+                                        {isGeneratingPhrases ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+                                        {t.lineStickerGeneratePhrases}
+                                    </button>
+                                    <input
+                                        ref={phraseSetFileInputRef}
+                                        type="file"
+                                        accept=".json,application/json"
+                                        onChange={handleUploadPhraseSet}
+                                        className="hidden"
+                                        aria-hidden
+                                    />
+                                    <button type="button" onClick={() => phraseSetFileInputRef.current?.click()} className="text-xs text-slate-600 flex items-center gap-1 font-medium hover:text-slate-800 border border-slate-200 rounded-lg px-2 py-1.5 bg-white hover:bg-slate-50">
+                                        <Upload className="w-3.5 h-3.5" />
+                                        {t.lineStickerPhraseSetUpload}
+                                    </button>
+                                    <button type="button" onClick={handleDownloadPhraseSet} className="text-xs text-slate-600 flex items-center gap-1 font-medium hover:text-slate-800 border border-slate-200 rounded-lg px-2 py-1.5 bg-white hover:bg-slate-50">
+                                        <Download className="w-3.5 h-3.5" />
+                                        {t.lineStickerPhraseSetDownload}
+                                    </button>
+                                </div>
                             </div>
                             {stickerSetMode && (
                                 <div className="flex gap-1 mb-2">

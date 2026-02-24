@@ -305,6 +305,9 @@ export const zhTW: Translations = {
   lineStickerPhraseGenHint48: '依主題與語言一次產生 48 句，對應 3 張精靈圖',
   lineStickerPhraseActionHint: '角色會根據每個短語的語意自動做出對應的表情和動作（如：成功→慶祝、失敗→沮喪、查規則→翻書等）',
   lineStickerPhraseSetPlaceholder: '先點「產生 48 句短語」',
+  lineStickerPhraseSetDownload: '下載短語組',
+  lineStickerPhraseSetUpload: '上傳短語組',
+  lineStickerPhraseSetUploadError: '無法讀取短語組檔案，請確認為本工具匯出的 JSON 格式',
 
   // LINE Sticker Tool - Language / Color / Font
   lineStickerTextLangLabel: '文字語言（Text Slot）',

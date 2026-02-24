@@ -307,6 +307,9 @@ export interface Translations {
   lineStickerPhraseGenHint48: string;
   lineStickerPhraseActionHint: string;
   lineStickerPhraseSetPlaceholder: string;
+  lineStickerPhraseSetDownload: string;
+  lineStickerPhraseSetUpload: string;
+  lineStickerPhraseSetUploadError: string;
 
   // LINE Sticker Tool - Language / Color / Font
   lineStickerTextLangLabel: string;

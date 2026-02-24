@@ -305,6 +305,9 @@ export const en: Translations = {
   lineStickerPhraseGenHint48: 'Generate 48 phrases for 3 sprite sheets based on theme and language',
   lineStickerPhraseActionHint: 'Character will automatically react to each phrase with fitting expressions and gestures (e.g.: success → cheer, failure → droop, check rules → read book)',
   lineStickerPhraseSetPlaceholder: 'Click "Generate 48 Phrases" first',
+  lineStickerPhraseSetDownload: 'Download phrase set',
+  lineStickerPhraseSetUpload: 'Upload phrase set',
+  lineStickerPhraseSetUploadError: 'Could not read phrase set file; ensure it is JSON exported by this tool',
 
   // LINE Sticker Tool - Language / Color / Font
   lineStickerTextLangLabel: 'Text Language',
