@@ -111,6 +111,7 @@ export interface Translations {
   spriteSheetEraserHint: string;
   spriteSheetEraserBrushSize: string;
   spriteSheetEraserConfirm: string;
+  spriteSheetEraserLoading: string;
   spriteSheetEraserLoadError: string;
   spriteSheetEraserExportError: string;
   spriteSheetEraserUndo: string;

@@ -109,6 +109,7 @@ export const en: Translations = {
   spriteSheetEraserHint: 'Use the eraser to remove unwanted areas; erased regions will be transparent.',
   spriteSheetEraserBrushSize: 'Eraser size',
   spriteSheetEraserConfirm: 'Apply',
+  spriteSheetEraserLoading: 'Loading image…',
   spriteSheetEraserLoadError: 'Failed to load image',
   spriteSheetEraserExportError: 'Failed to export image',
   spriteSheetEraserUndo: 'Undo',

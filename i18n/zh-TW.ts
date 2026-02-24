@@ -109,6 +109,7 @@ export const zhTW: Translations = {
   spriteSheetEraserHint: '使用橡皮擦擦除不需要的區域，擦除後該區域將呈現透明（去背）。',
   spriteSheetEraserBrushSize: '橡皮擦大小',
   spriteSheetEraserConfirm: '套用',
+  spriteSheetEraserLoading: '載入圖片中…',
   spriteSheetEraserLoadError: '無法載入圖片',
   spriteSheetEraserExportError: '無法匯出圖片',
   spriteSheetEraserUndo: '復原',
