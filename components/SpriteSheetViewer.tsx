@@ -1,8 +1,9 @@
 import React, { useCallback, useMemo, useState, useRef } from 'react';
-import { Download, Grid3X3, Loader2, Sliders, RefreshCw, Move, Eye, EyeOff } from './Icons';
+import { Download, Grid3X3, Loader2, Sliders, RefreshCw, Move, Eye, EyeOff, Eraser } from './Icons';
 import { SliceSettings, getEffectivePadding } from '../utils/imageUtils';
 import { GRID_PATTERN_URL } from '../utils/constants';
 import { useLanguage } from '../hooks/useLanguage';
+import { SpriteSheetEraserModal } from './SpriteSheetEraserModal';
 
 interface SpriteSheetViewerProps {
   spriteSheetImage: string | null;
@@ -14,6 +15,7 @@ interface SpriteSheetViewerProps {
   onImageLoad: (e: React.SyntheticEvent<HTMLImageElement>) => void;
   onDownload: (isProcessed: boolean) => void;
   onDownloadOriginal?: () => void; // Download original sprite sheet
+  onEditedImage?: (dataUrl: string) => void; // When user confirms eraser edit, replace current image
   chromaKeyProgress?: number; // Progress of chroma key removal (0-100)
   isProcessingChromaKey?: boolean; // Whether chroma key removal is in progress
 }
@@ -28,11 +30,13 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   onImageLoad,
   onDownload,
   onDownloadOriginal,
+  onEditedImage,
   chromaKeyProgress = 0,
   isProcessingChromaKey = false,
 }) => {
   const { t } = useLanguage();
   const [showOriginal, setShowOriginal] = useState(false);
+  const [openEraserModal, setOpenEraserModal] = useState(false);
   const handleColsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSliceSettings((p) => ({ ...p, cols: Math.max(1, Number(e.target.value)) }));
   }, [setSliceSettings]);
@@ -399,8 +403,30 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
               {t.downloadProcessed}
             </button>
           )}
+          {spriteSheetImage && onEditedImage && (
+            <button
+              type="button"
+              onClick={() => setOpenEraserModal(true)}
+              className="text-xs flex items-center gap-1.5 text-violet-600 bg-violet-50 hover:bg-violet-100 px-3 py-1.5 rounded-full transition-all duration-200 font-semibold cursor-pointer border border-violet-200 hover:border-violet-300 hover:shadow-sm"
+              aria-label={t.spriteSheetEdit}
+            >
+              <Eraser className="w-3.5 h-3.5" />
+              {t.spriteSheetEdit}
+            </button>
+          )}
         </div>
       </div>
+
+      {openEraserModal && spriteSheetImage && onEditedImage && (
+        <SpriteSheetEraserModal
+          imageUrl={spriteSheetImage}
+          onConfirm={(dataUrl) => {
+            onEditedImage(dataUrl);
+            setOpenEraserModal(false);
+          }}
+          onClose={() => setOpenEraserModal(false)}
+        />
+      )}
 
       <div className="bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 min-h-[200px] flex items-center justify-center relative overflow-hidden group select-none">
         {!spriteSheetImage && !isGenerating && !isProcessingChromaKey && (

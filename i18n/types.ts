@@ -104,12 +104,21 @@ export interface Translations {
   showOriginal: string;
   showProcessed: string;
   spriteSheetPlaceholder: string;
+  spriteSheetEdit: string;
+  spriteSheetEraserTitle: string;
+  spriteSheetEraserHint: string;
+  spriteSheetEraserBrushSize: string;
+  spriteSheetEraserConfirm: string;
+  spriteSheetEraserLoadError: string;
+  spriteSheetEraserExportError: string;
+  spriteSheetReRunChromaKey: string;
 
   // Frame Grid
   frameGridTitle: string;
   editFrame: string;
   resetFrame: string;
   closeEditor: string;
+  cancel: string;
   offset: string;
   scale: string;
   usePrevAsRef: string;

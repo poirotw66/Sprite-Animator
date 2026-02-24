@@ -233,7 +233,7 @@ const LineStickerPage: React.FC = () => {
         setSheetDimensions,
     });
 
-    const { handleGenerate, handleGenerateAllSheets } = useLineStickerSheetGeneration({
+    const { handleGenerate, handleGenerateAllSheets, reRunChromaKey } = useLineStickerSheetGeneration({
         getEffectiveApiKey,
         sourceImage,
         stickerSetMode,
@@ -698,6 +698,23 @@ const LineStickerPage: React.FC = () => {
                                     >
                                         {t.downloadProcessed}
                                     </button>
+                                    <button
+                                        type="button"
+                                        disabled={isProcessingChromaKey || (stickerSetMode ? !sheetImages[currentSheetIndex] : !spriteSheetImage)}
+                                        onClick={async () => {
+                                            const img = stickerSetMode ? (sheetImages[currentSheetIndex] ?? null) : spriteSheetImage;
+                                            if (!img) return;
+                                            try {
+                                                const result = await reRunChromaKey(img);
+                                                if (stickerSetMode) setProcessedSheetImages(prev => { const n = [...prev]; n[currentSheetIndex] = result; return n; });
+                                                else setProcessedSpriteSheet(result);
+                                            } catch (_) { /* error already set by hook */ }
+                                        }}
+                                        className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-teal-600 hover:bg-teal-50 disabled:opacity-50 flex items-center gap-1.5"
+                                    >
+                                        {isProcessingChromaKey ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                                        {t.spriteSheetReRunChromaKey}
+                                    </button>
                                 </div>
 
                                 <Suspense fallback={<div className="aspect-video bg-slate-50 rounded-xl animate-pulse" />}>
@@ -725,6 +742,15 @@ const LineStickerPage: React.FC = () => {
                                                 }
                                             }
                                         }
+                                        onEditedImage={(dataUrl) => {
+                                            if (showOriginalInSpriteView) {
+                                                if (stickerSetMode) setSheetImages(prev => { const n = [...prev]; n[currentSheetIndex] = dataUrl; return n; });
+                                                else setSpriteSheetImage(dataUrl);
+                                            } else {
+                                                if (stickerSetMode) setProcessedSheetImages(prev => { const n = [...prev]; n[currentSheetIndex] = dataUrl; return n; });
+                                                else setProcessedSpriteSheet(dataUrl);
+                                            }
+                                        }}
                                         chromaKeyProgress={chromaKeyProgress}
                                         isProcessingChromaKey={isProcessingChromaKey}
                                         sheetDimensions={sheetDimensions}

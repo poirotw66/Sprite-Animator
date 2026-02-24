@@ -99,6 +99,21 @@ export function useLineStickerSheetGeneration({
     [bgRemovalMethod, chromaKeyColor, setChromaKeyProgress]
   );
 
+  const reRunChromaKey = useCallback(
+    async (image: string): Promise<string> => {
+      setIsProcessingChromaKey(true);
+      setChromaKeyProgress(0);
+      try {
+        const result = await removeBackground(image, true);
+        setChromaKeyProgress(100);
+        return result;
+      } finally {
+        setIsProcessingChromaKey(false);
+      }
+    },
+    [removeBackground, setIsProcessingChromaKey, setChromaKeyProgress]
+  );
+
   const handleGenerate = useCallback(async () => {
     if (!getEffectiveApiKey()) {
       setError(t.errorApiKey);
@@ -297,5 +312,6 @@ export function useLineStickerSheetGeneration({
   return {
     handleGenerate,
     handleGenerateAllSheets,
+    reRunChromaKey,
   };
 }
