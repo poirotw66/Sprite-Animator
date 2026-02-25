@@ -88,7 +88,7 @@ So for soft-lighting styles, the model may occasionally add slight background va
 
 ## 5. Where Things Are Consistent
 
-- **Magenta:** All references use #FF00FF (255, 0, 255); no contradiction in the prompt.
+- **Magenta:** All references use #FF00FF (255, 0, 255); no contradiction in the prompt. Verified: constants, LINE prompt body/suffix, animation prompt, chromaKeyWorker comment, chromaKeyProcessor default, normalizeBackgroundColor target, and isChromaKeyPixel all use the same #FF00FF.
 - **Animation mode** (non-LINE): Uses `bgColorHex` / `bgColorRGB` from the same constants and does not append the LINE suffix; no #00B140 in that path.
 - **Chroma key worker** (`workers/chromaKeyWorker.ts`): Expects #00FF00 for green (comment line 77); no #00B140 there.
 
