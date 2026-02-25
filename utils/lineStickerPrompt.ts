@@ -147,6 +147,19 @@ const LAYOUT_PROTECTION_RULES = `
 * Text must always remain **fully inside** its cell boundaries (no clipping at edges).
 `;
 
+/** Text placement options for per-cell assignment. Cycle through these so each cell has an explicit, diverse position. */
+const TEXT_PLACEMENTS: readonly string[] = [
+    'Top center',
+    'Bottom center',
+    'Top left',
+    'Top right',
+    'Bottom left',
+    'Bottom right',
+    'Slight diagonal offset (top-left to bottom-right)',
+    'Beside head (left)',
+    'Beside head (right)',
+];
+
 /** Fallback when no action description is provided (e.g. theme preset or API failure). */
 export const getActionHint = (_phrase: string): string =>
     'natural action and expression matching the text meaning';
@@ -229,9 +242,12 @@ ${lightingLine}
         const use = enOnly.length > 0 ? enOnly : s;
         return use.length > maxLen ? use.slice(0, maxLen) + '...' : use;
     };
+    const textPositionRule = includeText
+        ? ' Each cell lists a **Text position** — you MUST place the phrase text in that exact position within the cell (e.g. "Top center" = text in the top center of the cell). Do not use the same position for every cell; follow the per-cell instruction.'
+        : '';
     const themeSection = `### [5. Grid Content — Per Cell]
 
-${textRuleCell} Actions and expressions MUST be unique per cell. No repetitions. Vary pose and expression clearly (e.g. different hand gestures, face direction, open/closed eyes) so each cell is visually distinct.
+${textRuleCell}${textPositionRule} Actions and expressions MUST be unique per cell. No repetitions. Vary pose and expression clearly (e.g. different hand gestures, face direction, open/closed eyes) so each cell is visually distinct.
 
 ${phrasesForFrames.map((phrase, index) => {
         const row = Math.floor(index / cols) + 1;
@@ -239,7 +255,8 @@ ${phrasesForFrames.map((phrase, index) => {
         const textLabel = includeText ? `Text: "${phrase}"` : `Theme: "${phrase}" (NO text in image)`;
         const rawAction = (actionDescs && actionDescs[index]?.trim()) ? actionDescs[index].trim() : getActionHint(phrase);
         const actionLabel = actionForImage(rawAction);
-        return `**Cell ${index + 1} (row ${row}, col ${col})**: ${textLabel} | Action: ${actionLabel}`;
+        const textPosition = includeText ? ` | Text position: ${TEXT_PLACEMENTS[index % TEXT_PLACEMENTS.length]}` : '';
+        return `**Cell ${index + 1} (row ${row}, col ${col})**: ${textLabel}${textPosition} | Action: ${actionLabel}`;
     }).join('\n')}
 `;
 
