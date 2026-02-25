@@ -27,7 +27,7 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │  ❌ Chroma Key Removal FAILS (色度去背失敗)                     │
 │                                                                   │
-│  Target: #00B140 (R=0, G=177, B=64)                            │
+│  Target: #00FF00 (R=0, G=255, B=0)                             │
 │  Actual: Various greens (各種綠色)                              │
 │  Result: Background NOT removed (背景沒有去除)                  │
 │                                                                   │
@@ -49,7 +49,7 @@
 │  • b < 150                                                       │
 │  • g > r + 40                                                    │
 │  • g > b                                                         │
-│  • OR distance from #00B140 < 80                                │
+│  • OR distance from #00FF00 < 80                                │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -59,8 +59,8 @@
 │                                                                   │
 │  For each detected background pixel:                             │
 │  data[i]   = 0    (R)                                           │
-│  data[i+1] = 177  (G)  ← Target: #00B140                       │
-│  data[i+2] = 64   (B)                                           │
+│  data[i+1] = 255  (G)  ← Target: #00FF00                       │
+│  data[i+2] = 0    (B)                                           │
 │  data[i+3] = (keep original alpha for anti-aliasing)           │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -70,20 +70,20 @@
 │                                                                   │
 │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐           │
 │  │ Frame 1 │  │ Frame 2 │  │ Frame 3 │  │ Frame 4 │           │
-│  │ #00B140 │  │ #00B140 │  │ #00B140 │  │ #00B140 │           │
+│  │ #00FF00 │  │ #00FF00 │  │ #00FF00 │  │ #00FF00 │           │
 │  │  (Exact)│  │  (Exact)│  │  (Exact)│  │  (Exact)│           │
 │  └─────────┘  └─────────┘  └─────────┘  └─────────┘           │
 │                                                                   │
-│  ALL frames now have EXACT #00B140 background!                  │
-│  (所有幀現在都有精確的 #00B140 背景!)                            │
+│  ALL frames now have EXACT #00FF00 background!                  │
+│  (所有幀現在都有精確的 #00FF00 背景!)                            │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │  ✅ Chroma Key Removal SUCCESS (色度去背成功)                   │
 │                                                                   │
-│  Target: #00B140 (R=0, G=177, B=64)                            │
-│  Actual: #00B140 (R=0, G=177, B=64) ← MATCH!                   │
+│  Target: #00FF00 (R=0, G=255, B=0)                             │
+│  Actual: #00FF00 (R=0, G=255, B=0) ← MATCH!                    │
 │  Result: Perfect background removal (完美去背)                  │
 │                                                                   │
 │  ✨ Clean edges on character                                    │
@@ -147,10 +147,11 @@ Target: #FF00FF (R=255, G=0, B=255)
 ### Green Detection (綠色檢測)
 
 ```
-Target: #00B140 (R=0, G=177, B=64)
+Target: #00FF00 (R=0, G=255, B=0)
 
 ✅ WILL BE NORMALIZED (會被標準化):
-   #00FF00  (0, 255, 0)     ← Lime green (green-like)
+   #00FF00  (0, 255, 0)     ← Target (pure neon green)
+   #00B140  (0, 177, 64)    ← Green-like variant
    #00C850  (0, 200, 80)    ← Close variant
    #10B145  (16, 177, 69)   ← Very close
    #00A030  (0, 160, 48)    ← Darker green

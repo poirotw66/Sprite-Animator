@@ -5,9 +5,9 @@
 使用者反映綠幕圖片生成後無法正確去背,因為 AI 模型生成的綠色與去背算法檢測的標準綠幕色不同。
 
 ### 具體現象
-- AI 生成的背景色: `#00FF00`, `#00C850`, `#10B145` 等變體
-- 預期的標準綠幕色: `#00B140` (R=0, G=177, B=64)
-- 結果: 色度去背失敗,背景殘留
+- AI 生成的背景色: `#00B140`, `#00C850`, `#10B145` 等變體
+- 預期的綠幕色: `#00FF00` (R=0, G=255, B=0) 純綠
+- 結果: 色度去背失敗或殘留
 
 同樣問題也出現在洋紅色背景:
 - AI 生成: `#FE00FE`, `#FC00FC`, `#FF10FF` 等
@@ -54,9 +54,9 @@ Visual Check: Electric magenta that hurts your eyes
 
 **綠幕**:
 ```
-✅ CORRECT: Standard green screen #00B140 - R=0, G=177, B=64
-❌ WRONG: Lime (#00FF00), Forest Green (#228B22)
-Visual Check: Professional video green screen
+✅ CORRECT: Pure neon green #00FF00 - R=0, G=255, B=0
+❌ WRONG: Cyan, Forest Green (#228B22), grass green
+Visual Check: Bright neon green
 ```
 
 ## 技術細節 (Technical Details)

@@ -651,17 +651,13 @@ const isChromaKeyPixel = (r: number, g: number, b: number, a: number): boolean =
   // This prevents false positives on character colors (pink clothes, green accessories, etc.)
   
   // Pure magenta chroma key (#FF00FF): R=255, G=0, B=255
-  // Only match if it's VERY close to pure magenta
   const isPureMagenta = r > 240 && g < 30 && b > 240 && Math.abs(r - b) < 20;
   
-  // Standard green screen (#00B140): R=0, G=177, B=64
-  // Only match if it's VERY close to standard green screen
+  // Target green: #00FF00 (R=0, G=255, B=0). Also match #00B140-like for compatibility.
+  const isPureGreen = g > 240 && r < 30 && b < 30;
   const isStandardGreen = g > 150 && g < 200 && r < 30 && b < 100 && (g - r) > 120 && (g - b) > 50;
   
-  // Pure bright green (#00FF00): R=0, G=255, B=0
-  const isPureGreen = g > 240 && r < 30 && b < 30;
-  
-  return isPureMagenta || isStandardGreen || isPureGreen;
+  return isPureMagenta || isPureGreen || isStandardGreen;
 };
 
 /**

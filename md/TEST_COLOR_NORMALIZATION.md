@@ -24,7 +24,7 @@
 3. **測試 2: 綠幕變體 (Green Screen Variants)**
    - 點擊「Run Green Test」按鈕
    - 查看各種綠色變體是否能被正確識別
-   - ✅ 表示會被標準化為 #00B140
+   - ✅ 表示會被標準化為 #00FF00
    - ❌ 表示不會被標準化
 
 4. **測試 3: 視覺比較 (Visual Comparison)**
@@ -52,13 +52,13 @@
 
 | Color | RGB | Should Normalize? | Reason |
 |-------|-----|-------------------|--------|
-| #00B140 | (0, 177, 64) | ✅ Yes | Target color |
-| #00FF00 | (0, 255, 0) | ✅ Yes | Lime green, green-like |
+| #00FF00 | (0, 255, 0) | ✅ Yes | Target color (pure neon green) |
+| #00B140 | (0, 177, 64) | ✅ Yes | Green-like, normalized to target |
 | #00C850 | (0, 200, 80) | ✅ Yes | Close to target |
 | #10B145 | (16, 177, 69) | ✅ Yes | Within tolerance |
 | #00A030 | (0, 160, 48) | ✅ Yes | Green-like |
 | #228B22 | (34, 139, 34) | ⚠️ Maybe | Forest green (borderline) |
-| #32CD32 | (50, 205, 50) | ❌ No | Lime green (R too high) |
+| #32CD32 | (50, 205, 50) | ❌ No | R too high |
 
 ## 驗證標準 (Validation Criteria)
 
@@ -109,7 +109,7 @@ const spriteSheet = await generateSpriteSheet(
 1. 下載處理後的精靈圖
 2. 在圖片編輯軟體中開啟
 3. 使用顏色選擇器檢查背景顏色
-4. 確認背景為精確的 #FF00FF 或 #00B140
+4. 確認背景為精確的 #FF00FF 或 #00FF00
 
 ### 步驟 4: 測試去背
 

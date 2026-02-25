@@ -65,10 +65,9 @@ export const BACKGROUND_REMOVAL_THRESHOLD = 230; // For white background removal
 
 export const DEBOUNCE_DELAY = 50; // ms for re-slicing
 
-// Chroma key color options
-// Standard chroma key colors:
+// Chroma key color options (must match prompt and chroma key removal target)
 // - Magenta: Pure magenta #FF00FF (R=255, G=0, B=255)
-// - Green: Standard green screen #00B140 (R=0, G=177, B=64) - industry standard
+// - Green: Pure neon green #00FF00 (R=0, G=255, B=0)
 export const CHROMA_KEY_COLORS = {
   magenta: { r: 255, g: 0, b: 255, hex: '#FF00FF', name: '洋紅色 (Magenta)' },
   green: { r: 0, g: 255, b: 0, hex: '#00FF00', name: '綠幕 (Neon Green)' },

@@ -56,8 +56,8 @@ ${chromaKeyColor === 'magenta'
   • Do NOT use magenta, pink, purple, or any color close to #FF00FF for text, character outlines, or shadows.
   • Use only black, white, or dark colors that contrast with magenta (e.g. dark gray, navy, dark brown) so that after keying there is no magenta bleed on text edges.`
     : `⚠️ GREEN SCREEN REQUIREMENT:
-  • R = 0, G = 177, B = 64
-  • Must be standard green screen #00B140, not cyan or grass green.`}
+  • R = 0, G = 255, B = 0
+  • Must be pure neon green #00FF00, not cyan or grass green.`}
 
 Every background pixel MUST be EXACTLY ${bgColorHex}.
 `;

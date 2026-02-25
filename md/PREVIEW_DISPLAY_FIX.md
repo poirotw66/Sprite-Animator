@@ -42,13 +42,10 @@ const isGreenLike = (g > 180 && r < 100 && b < 100) ||
 // Only match if it's VERY close to pure magenta
 const isPureMagenta = r > 240 && g < 30 && b > 240 && Math.abs(r - b) < 20;
 
-// Standard green screen (#00B140): R=0, G=177, B=64
-// Only match if it's VERY close to standard green screen
+// Target green: #00FF00 (R=0, G=255, B=0). Also match #00B140-like for compatibility.
+const isPureGreen = g > 240 && r < 30 && b < 30;
 const isStandardGreen = g > 150 && g < 200 && r < 30 && b < 100 && 
   (g - r) > 120 && (g - b) > 50;
-
-// Pure bright green (#00FF00): R=0, G=255, B=0
-const isPureGreen = g > 240 && r < 30 && b < 30;
 ```
 
 **改進**:
@@ -74,8 +71,8 @@ const isPureGreen = g > 240 && r < 30 && b < 30;
 
 | 顏色範例 | RGB | 之前 | 之後 | 說明 |
 |---------|-----|------|------|------|
-| #00B140 (標準綠幕) | (0, 177, 64) | ✅ | ✅ | 目標色 |
-| #00FF00 (純綠) | (0, 255, 0) | ✅ | ✅ | 純綠色 |
+| #00FF00 (純綠) | (0, 255, 0) | ✅ | ✅ | 目標色 |
+| #00B140 (綠幕變體) | (0, 177, 64) | ✅ | ✅ | 相容 |
 | #00C850 | (0, 200, 80) | ✅ | ✅ | 接近標準 |
 | #80FF80 (淺綠) | (128, 255, 128) | ✅ | ❌ | R太高,不匹配 |
 | #50C850 (草綠) | (80, 200, 80) | ✅ | ❌ | R太高,不匹配 |
@@ -157,7 +154,7 @@ const isPureGreen = g > 240 && r < 30 && b < 30;
 ### 這個函數的設計原則
 
 1. **只匹配真正的色度去背色**
-   - 必須非常接近純色 (#FF00FF 或 #00B140)
+   - 必須非常接近純色 (#FF00FF 或 #00FF00)
    - 不應該匹配人物的任何顏色
 
 2. **寧可漏判,不可誤判**

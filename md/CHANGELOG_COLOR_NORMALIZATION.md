@@ -9,8 +9,8 @@
 AI 模型生成的綠幕圖片無法正確去背,因為模型生成的綠色與去背算法檢測的標準綠幕色不同。
 
 ### 技術原因
-- **目標顏色**: `#00B140` (R=0, G=177, B=64) - 標準綠幕
-- **AI 實際生成**: `#00FF00`, `#10B145`, `#00C850` 等變體
+- **目標顏色**: `#00FF00` (R=0, G=255, B=0) - 純綠幕
+- **AI 實際生成**: `#00B140`, `#10B145`, `#00C850` 等變體
 - **結果**: 色度去背算法無法識別這些變體,導致背景殘留
 
 同樣的問題也發生在洋紅色背景:
@@ -55,13 +55,11 @@ that hurts your eyes - NOT a soft pink or purple.
 
 **綠幕提示**:
 ```
-✅ CORRECT: Standard green screen #00B140 - R=0, G=177, B=64
-   (Imagine: Zero red + High green + Low blue = Professional green screen)
-❌ WRONG: Lime (#00FF00), Forest Green (#228B22), Neon Green (#39FF14)
-❌ WRONG: Any color with R > 50 or B > 130 is NOT standard green screen
+✅ CORRECT: Pure neon green #00FF00 - R=0, G=255, B=0
+   (Imagine: Zero red + Maximum green + Zero blue = Neon green)
+❌ WRONG: Cyan, Forest Green (#228B22), grass green, or any shade with significant R/B.
 
-Visual Check: The background should look like a professional video green screen
-used in film studios - NOT lime green or grass green.
+Visual Check: The background should look like bright neon green - NOT cyan or grass green.
 ```
 
 ## 技術細節 (Technical Details)

@@ -10,7 +10,7 @@
 - 🖼️ **Flexible Sprite Sheet Processing**:
   - Adjustable grid slicing (Cols/Rows)
   - Support for Padding (scaling) and Shift (offset) adjustments
-  - **Automatic Precise Background Removal**: Chroma key removal (supports magenta #FF00FF and green screen #00B140)
+  - **Automatic Precise Background Removal**: Chroma key removal (supports magenta #FF00FF and green screen #00FF00)
   - **Intelligent Color Normalization**: Automatically corrects AI-generated color variations for perfect background removal
   - Real-time grid slicing preview
   - **Industrial-Grade Slicing**: Integer coordinates, boundary checking, pixel-perfect alignment
