@@ -827,7 +827,7 @@ const LineStickerPage: React.FC = () => {
                                                 }
                                             }
                                         }
-                                        onEditedImage={(dataUrl) => {
+                                        onEditedImage={(dataUrl: string) => {
                                             if (showOriginalInSpriteView) {
                                                 if (stickerSetMode) setSheetImages(prev => { const n = [...prev]; n[currentSheetIndex] = dataUrl; return n; });
                                                 else setSpriteSheetImage(dataUrl);
