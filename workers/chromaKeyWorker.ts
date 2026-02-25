@@ -208,11 +208,16 @@ function processChromaKey(
   const targetIsMagenta = (targetColorHsl.h >= 270 && targetColorHsl.h <= 360) || (targetColorHsl.h >= 0 && targetColorHsl.h <= 35);
   const targetIsGreen = targetColorHsl.h >= 70 && targetColorHsl.h <= 170;
 
-  // Magenta-like pixel: catches #FF00FF and AI variants like #E91E63 (pink) so middle cells are removed
+  // Magenta-like pixel: only true magenta hue (~270–360°). Exclude red/pink (0–35°) to avoid removing blush/lips.
+  // Require very low G (g < 50): pure magenta has G=0; edge blends (magenta+blue) have noticeable G from blue,
+  // so this keeps anti-aliased edges and blue shirt edges from being removed.
+  // Require not blue-dominant (b <= r + 30) to protect blue clothing.
   const isMagentaLikePixel = (r: number, g: number, b: number): boolean => {
     const { h, s } = rgbToHsl(r, g, b);
-    const hueOk = (h >= 270 && h <= 360) || (h >= 0 && h <= 35);
-    return hueOk && s > 0.25 && r > g * 1.2 && b > g && (r > 100 || b > 80);
+    const hueOk = h >= 270 && h <= 360;
+    const veryLowGreen = g < 50;
+    const notBlueDominant = b <= r + 30;
+    return hueOk && veryLowGreen && notBlueDominant && s > 0.25 && r > g * 1.2 && b > g && (r > 100 || b > 80);
   };
 
   // Calculate adaptive fuzz based on detected background
@@ -236,7 +241,9 @@ function processChromaKey(
     let isMatch = distance <= adaptiveFuzz + 20;
     if (isMatch) {
       if (targetIsMagenta) {
-        isMatch = r > g * 1.1 && b > g * 1.1;
+        // Only treat as background if very close to pure magenta (g < 50). Edge blends (magenta+blue) have G from blue,
+        // so this prevents cutting into character edges (blue shirt, anti-aliasing).
+        isMatch = r > g * 1.1 && b > g * 1.1 && b <= r + 30 && g < 50;
       } else if (targetIsGreen) {
         isMatch = g > r * 1.01 && g > b * 1.01;
       }
@@ -384,14 +391,16 @@ function processChromaKey(
       } else {
         alphaChannel[i] = 255;
       }
-    } else if (targetIsMagenta && isMagentaLikePixel(r, g, b)) {
-      // Middle cells may be disconnected by white grid lines; remove magenta/pink anyway
-      alphaChannel[i] = 0;
     }
+    // Do not force alpha=0 for magenta-like pixels that are not in the connected background (avoids removing blush/lips).
     else if (distance < adaptiveFuzz * 0.95) {
       let isCertainHole = false;
       if (targetIsMagenta) {
-        isCertainHole = (r > g * 1.4 && b > g * 1.4 && (r + b) > 100) || (r > g * 3 || b > g * 3);
+        // First clause: magenta-shaped (R and B high, G low). Second: extreme R or B dominance but require g < 80
+        // so strong red on character (e.g. red text, lips with G~80) is not treated as hole.
+        isCertainHole =
+          (r > g * 1.4 && b > g * 1.4 && (r + b) > 100) ||
+          ((r > g * 3 || b > g * 3) && g < 80);
       } else if (targetIsGreen) {
         isCertainHole = (g > r * 1.4 && g > b * 1.4 && g > 80) || (g > r * 2.5);
       }
@@ -426,7 +435,7 @@ function processChromaKey(
           const b = data[idx + 2];
 
           let isSpill = false;
-          if (targetIsMagenta) isSpill = r > g * 1.1 && b > g * 1.1;
+          if (targetIsMagenta) isSpill = r > g * 1.1 && b > g * 1.1 && b <= r + 30 && g < 100;
           else if (targetIsGreen) isSpill = g > r * 1.1;
 
           if (isSpill) {
@@ -481,6 +490,8 @@ function processChromaKey(
     const applyStrongDespill = isEdge || inEdgeBand;
 
     if (targetIsMagenta) {
+      // Skip despill on blue-dominant pixels (character blue edges) so we do not dull or remove blue.
+      if (b > r + 30) continue;
       const magContrast = (r + b) / 2 - g;
       if (avg < 100 && magContrast > 4) {
         const decontamIntensity = applyStrongDespill ? 1.0 : 0.85;

@@ -362,13 +362,13 @@ export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
     },
     pixel: {
         label: '像素藝術',
-        styleType: "16-bit Retro Pixel Art, SNES/GBA style, pixel-perfect, limited color palette",
+        styleType: "16-bit Retro Pixel Art, SNES/GBA style, pixel-perfect",
         drawingMethod: "Precise pixel placement, sharp edges no anti-aliasing, clear grid texture and clean lines",
     },
     minimalist: {
         label: '極簡線條',
         styleType: "Minimalist flat illustration, Kanahei style, cute healing sticker look",
-        drawingMethod: "Soft thick brown outlines, simple flat color fill, dot eyes and soft blush, rounded simplified shapes",
+        drawingMethod: "Soft thick outlines, simple flat color fill, dot eyes and soft cheek detail, rounded simplified shapes",
         outlinePreference: 'style',
     },
     anime: {
@@ -379,7 +379,7 @@ export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
     cartoon: {
         label: "美式卡通",
         styleType: "Vibrant cartoon style, strong motion, exaggerated expressions",
-        drawingMethod: "Thick black outlines, saturated color blocks, geometric simplification, commercial illustration feel",
+        drawingMethod: "Thick dark outlines, saturated color blocks, geometric simplification, commercial illustration feel",
         outlinePreference: 'style',
     },
     watercolor: {
@@ -391,17 +391,17 @@ export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
     yurukawa: {
         label: "慵懶軟懶風",
         styleType: "Yuru-kawa style, kawaii aesthetic, chibi, Japanese healing and lazy atmosphere, relaxed and lazy vibe, funny expression, suitable for personified characters (tired, lazy, cute)",
-        drawingMethod: "Simple line art, marker coloring style, low saturation, earthy tones, beige and brown dominant colors, simple vector art. Avoid: photorealistic, highly detailed, volumetric lighting, glossy finish, complex background, serious tone, dark colors.",
+        drawingMethod: "Simple line art, marker coloring style, low saturation, simple vector art. Avoid: photorealistic, highly detailed, volumetric lighting, glossy finish, complex background, serious tone.",
     },
     pastel: {
         label: "蠟筆粉彩",
         styleType: "Soft pastel and crayon style, dreamy and gentle, kawaii sticker look",
-        drawingMethod: "Pastel or wax crayon texture, soft edges, low saturation, light pink and mint tones, rounded shapes, gentle shading",
+        drawingMethod: "Pastel or wax crayon texture, soft edges, low saturation, rounded shapes, gentle shading",
     },
     flat: {
         label: "扁平時尚",
         styleType: "Flat design illustration, modern app and icon style, geometric simplification",
-        drawingMethod: "Solid flat color blocks, minimal or no gradients, clean vector shapes, limited palette, no soft shadows",
+        drawingMethod: "Solid flat color blocks, minimal or no gradients, clean vector shapes, no soft shadows",
     },
     doodle: {
         label: "塗鴉手繪",
@@ -411,13 +411,13 @@ export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
     gouache: {
         label: "不透明水彩",
         styleType: "Gouache and opaque watercolor style, matte and soft, picture-book illustration feel",
-        drawingMethod: "Flat opaque color layers, soft brush edges, minimal blending, warm and cozy palette",
+        drawingMethod: "Flat opaque color layers, soft brush edges, minimal blending",
         lightingPreference: 'soft',
     },
     lineChibi: {
         label: "日系貼圖暖色",
-        styleType: "Cute chibi character in Japanese LINE sticker style, suitable for animals and mascots. Hand-drawn digital illustration with thick dark brown outlines and flat colors. Round, squishy body, tiny paws, minimalist expressive facial expressions.",
-        drawingMethod: "Soft warm color palette (cream and muted orange). High contrast, minimalist and cozy aesthetic. Isolated character, clean and readable for stickers. Avoid: photorealistic, complex shading, cold colors, busy details.",
+        styleType: "Cute chibi character in Japanese LINE sticker style, suitable for animals and mascots. Hand-drawn digital illustration with thick dark outlines and flat colors. Round, squishy body, tiny paws, minimalist expressive facial expressions.",
+        drawingMethod: "High contrast, minimalist and cozy aesthetic. Isolated character, clean and readable for stickers. Avoid: photorealistic, complex shading, busy details.",
         outlinePreference: 'style',
     },
 };
