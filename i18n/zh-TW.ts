@@ -154,7 +154,7 @@ export const zhTW: Translations = {
   modelLabel: '模型選擇',
   modelRecommended: '(推薦)',
   outputResolutionLabel: '輸出尺寸',
-  outputResolutionHint: 'Gemini 2.5 Flash 僅支援 1K；Gemini 3 Pro 支援 1K / 2K / 4K',
+  outputResolutionHint: '2.5 Flash 僅 1K；3 Pro 支援 1K / 2K / 4K；3.1 Flash 支援 0.5K / 1K / 2K / 4K',
   saveAndApply: '儲存並應用',
   validating: '驗證中...',
   validationSuccess: 'API Key 驗證成功！',
@@ -326,7 +326,7 @@ export const zhTW: Translations = {
   lineStickerSheetN: '第 {n} 張',
   lineStickerSheetInfo: '每張 4×4（16 格），共 3 張 48 格',
   lineStickerResolutionLabel: '輸出解析度',
-  lineStickerResolutionHint: 'gemini-2.5-flash-image 僅支援 1K；gemini-3-pro-image-preview 支援 1K / 2K / 4K',
+  lineStickerResolutionHint: '2.5-flash 僅 1K；3-pro 支援 1K / 2K / 4K；3.1-flash 支援 0.5K / 1K / 2K / 4K',
 
   // LINE Sticker Tool - Generate / Download buttons
   lineStickerGenerateSheetN: '產生第 {n} 張',

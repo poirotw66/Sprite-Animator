@@ -247,6 +247,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                   displayName = `Gemini 2.5 Flash Image ${t.modelRecommended}`;
                 } else if (model === 'gemini-3-pro-image-preview') {
                   displayName = 'Gemini 3 Pro Image Preview';
+                } else if (model === 'gemini-3.1-flash-image-preview') {
+                  displayName = 'Gemini 3.1 Flash Image Preview (Nano Banana 2)';
                 } else {
                   displayName = model;
                 }

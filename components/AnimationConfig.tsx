@@ -344,7 +344,7 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
                 </button>
               ))}
             </div>
-            <p className="text-[10px] text-slate-500 mt-1">2.5-flash: 1K only; 3-pro: 1K / 2K / 4K</p>
+            <p className="text-[10px] text-slate-500 mt-1">2.5-flash: 1K only; 3-pro: 1K / 2K / 4K; 3.1-flash: 0.5K / 1K / 2K / 4K</p>
           </div>
         )}
 

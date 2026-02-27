@@ -154,7 +154,7 @@ export const en: Translations = {
   modelLabel: 'Model Selection',
   modelRecommended: '(Recommended)',
   outputResolutionLabel: 'Output size',
-  outputResolutionHint: 'Gemini 2.5 Flash: 1K only; Gemini 3 Pro: 1K / 2K / 4K',
+  outputResolutionHint: '2.5 Flash: 1K only; 3 Pro: 1K / 2K / 4K; 3.1 Flash: 0.5K / 1K / 2K / 4K',
   saveAndApply: 'Save & Apply',
   validating: 'Validating...',
   validationSuccess: 'API Key validated successfully!',
@@ -326,7 +326,7 @@ export const en: Translations = {
   lineStickerSheetN: 'Sheet {n}',
   lineStickerSheetInfo: 'Each 4×4 (16 frames), 3 sheets = 48 total',
   lineStickerResolutionLabel: 'Output Resolution',
-  lineStickerResolutionHint: 'gemini-2.5-flash-image supports 1K only; gemini-3-pro-image-preview supports 1K / 2K / 4K',
+  lineStickerResolutionHint: '2.5-flash: 1K only; 3-pro: 1K / 2K / 4K; 3.1-flash: 0.5K / 1K / 2K / 4K',
 
   // LINE Sticker Tool - Generate / Download buttons
   lineStickerGenerateSheetN: 'Generate Sheet {n}',

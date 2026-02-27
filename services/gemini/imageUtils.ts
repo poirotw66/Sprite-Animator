@@ -125,6 +125,10 @@ export function getBestAspectRatio(cols: number, rows: number): string {
     { str: '4:3', val: 1.333 },
     { str: '9:16', val: 0.5625 },
     { str: '16:9', val: 1.778 },
+    { str: '1:4', val: 0.25 },
+    { str: '4:1', val: 4.0 },
+    { str: '1:8', val: 0.125 },
+    { str: '8:1', val: 8.0 },
   ];
 
   return supported.reduce((prev, curr) =>
