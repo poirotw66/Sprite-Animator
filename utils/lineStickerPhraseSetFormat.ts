@@ -64,7 +64,6 @@ export function parsePhraseSetJson(json: string): LineStickerPhraseSetJson | nul
   if (mode !== 'single' && mode !== 'set') return null;
   const phrases = o.phrases;
   if (!isStringArray(phrases)) return null;
-  const expectedLen = mode === 'set' ? 48 : undefined;
   if (mode === 'single') {
     const cols = o.gridCols;
     const rows = o.gridRows;
@@ -72,13 +71,35 @@ export function parsePhraseSetJson(json: string): LineStickerPhraseSetJson | nul
     if (!isNonNegativeInteger(rows) || rows < 1 || rows > 8) return null;
     if (phrases.length !== cols * rows) return null;
   } else {
-    if (phrases.length !== 48) return null;
+    if (phrases.length > 48) return null;
   }
   const actionDescs = o.actionDescs;
   if (actionDescs !== undefined) {
-    if (!isStringArray(actionDescs) || actionDescs.length !== phrases.length) return null;
+    if (!isStringArray(actionDescs)) return null;
+    if (mode === 'set' && actionDescs.length > phrases.length) return null;
+    if (mode === 'single' && actionDescs.length !== phrases.length) return null;
   }
   const name = o.name;
+  if (mode === 'set') {
+    const basePhrases =
+      phrases.length < 48 ? [...phrases, ...Array(48 - phrases.length).fill('')] : phrases;
+    let normalizedActionDescs: string[] | undefined;
+    if (actionDescs !== undefined) {
+      const limited = actionDescs.slice(0, basePhrases.length);
+      normalizedActionDescs =
+        limited.length < basePhrases.length
+          ? [...limited, ...Array(basePhrases.length - limited.length).fill('')]
+          : limited;
+    }
+    return {
+      format: PHRASE_SET_FORMAT,
+      version: PHRASE_SET_VERSION,
+      mode,
+      phrases: basePhrases,
+      actionDescs: normalizedActionDescs,
+      name: typeof name === 'string' ? name : undefined,
+    };
+  }
   return {
     format: PHRASE_SET_FORMAT,
     version: PHRASE_SET_VERSION,
