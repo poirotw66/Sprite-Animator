@@ -1,12 +1,7 @@
 import React, { useState, Suspense, useRef, useCallback } from 'react';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
-import { Link } from 'react-router-dom';
-import {
-    ArrowLeft, Settings, Upload, Loader2, Download, Check, Image, FileArchive,
-    Plus, Trash2, Wand2, ImageIcon, Copy
-} from '../components/Icons';
+import { Plus, Loader2, Check } from '../components/Icons';
 import { useLanguage } from '../hooks/useLanguage';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { SettingsModal } from '../components/SettingsModal';
 import { useSettings } from '../hooks/useSettings';
 import { useLineStickerDownload } from '../hooks/useLineStickerDownload';
@@ -26,6 +21,14 @@ import {
     type StickerPhraseMode
 } from '../utils/constants';
 import { buildPhraseSetExport, parsePhraseSetJson } from '../utils/lineStickerPhraseSetFormat';
+
+import {
+    LineStickerHeader,
+    LineStickerUploadCard,
+    LineStickerPhraseSection,
+    LineStickerDownloadSection,
+    LineStickerResultEmptyState,
+} from '../components/LineSticker';
 
 // Lazy load heavy components for code splitting
 const FrameGrid = lazyWithRetry(() =>
@@ -402,44 +405,25 @@ const LineStickerPage: React.FC = () => {
                 setHfToken={setHfToken}
             />
 
-            {/* Header */}
-            <header className="max-w-7xl mx-auto mb-6">
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <Link to="/" className="p-2 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors border border-slate-200">
-                            <ArrowLeft className="w-5 h-5" />
-                        </Link>
-                        <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                            <div className="bg-green-500 p-1.5 rounded-lg shadow-sm">
-                                <Image className="w-5 h-5 text-white" />
-                            </div>
-                            {t.lineStickerTitle}
-                        </h1>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <LanguageSwitcher />
-                        <button onClick={() => setShowSettings(true)} className={`p-2 rounded-xl transition-all border ${hasCustomKey ? 'text-green-700 bg-green-50 border-green-200' : 'text-slate-600 bg-white border-slate-200'}`}>
-                            <Settings className="w-5 h-5" />
-                        </button>
-                    </div>
-                </div>
-            </header>
+            <LineStickerHeader
+                title={t.lineStickerTitle}
+                hasCustomKey={hasCustomKey}
+                onOpenSettings={() => setShowSettings(true)}
+            />
 
             <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* Left Panel */}
                 <div className="lg:col-span-5 space-y-6">
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                        <h2 className="text-lg font-semibold text-slate-900 mb-4">{t.lineStickerUploadTitle}</h2>
-                        <div onClick={openFilePicker} onDrop={handleDrop} onDragOver={handleDragOver} className="aspect-square border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-green-400 bg-slate-50 transition-all overflow-hidden">
-                            {sourceImage ? <img src={sourceImage} alt="Source" className="w-full h-full object-contain" /> : (
-                                <div className="text-center p-4">
-                                    <Upload className="w-10 h-10 text-slate-400 mx-auto mb-2" />
-                                    <p className="text-slate-600 font-medium">{t.lineStickerUploadHint}</p>
-                                </div>
-                            )}
-                            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                        </div>
-                    </div>
+                    <LineStickerUploadCard
+                        title={t.lineStickerUploadTitle}
+                        uploadHint={t.lineStickerUploadHint}
+                        sourceImage={sourceImage}
+                        fileInputRef={fileInputRef}
+                        onOpenFilePicker={openFilePicker}
+                        onDrop={handleDrop}
+                        onDragOver={handleDragOver}
+                        onImageUpload={handleImageUpload}
+                    />
 
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
                         <h2 className="text-lg font-semibold text-slate-900">{t.lineStickerGridSettings}</h2>
@@ -616,109 +600,30 @@ const LineStickerPage: React.FC = () => {
                             </div>
                         </div>
 
-                        <div>
-                            <div className="flex flex-wrap justify-between items-center gap-2 mb-2">
-                                <label className="text-sm font-medium text-slate-700">{t.lineStickerPhraseListSet}</label>
-                                <div className="flex items-center gap-2">
-                                    <button onClick={handleGeneratePhrases} disabled={isGeneratingPhrases} className="text-xs text-green-600 flex items-center gap-1 font-semibold hover:text-green-700">
-                                        {isGeneratingPhrases ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
-                                        {t.lineStickerGeneratePhrases}
-                                    </button>
-                                    <input
-                                        ref={phraseSetFileInputRef}
-                                        type="file"
-                                        accept=".json,application/json"
-                                        onChange={handleUploadPhraseSet}
-                                        className="hidden"
-                                        aria-hidden
-                                    />
-                                    <button type="button" onClick={() => phraseSetFileInputRef.current?.click()} className="text-xs text-slate-600 flex items-center gap-1 font-medium hover:text-slate-800 border border-slate-200 rounded-lg px-2 py-1.5 bg-white hover:bg-slate-50">
-                                        <Upload className="w-3.5 h-3.5" />
-                                        {t.lineStickerPhraseSetUpload}
-                                    </button>
-                                    <button type="button" onClick={handleDownloadPhraseSet} className="text-xs text-slate-600 flex items-center gap-1 font-medium hover:text-slate-800 border border-slate-200 rounded-lg px-2 py-1.5 bg-white hover:bg-slate-50">
-                                        <Download className="w-3.5 h-3.5" />
-                                        {t.lineStickerPhraseSetDownload}
-                                    </button>
-                                </div>
-                            </div>
-                            {stickerSetMode && (
-                                <div className="flex gap-1 mb-2">
-                                    {[0, 1, 2].map(i => (
-                                        <button key={i} type="button" onClick={() => setCurrentSheetIndex(i as 0 | 1 | 2)} className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${currentSheetIndex === i ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-slate-100 text-slate-600 border border-transparent hover:bg-slate-200'}`}>
-                                            {t.lineStickerSheetN.replace('{n}', String(i + 1))}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                            <div
-                                className="gap-1.5 w-full"
-                                style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: `repeat(${phraseGridCols}, minmax(0, 1fr))`,
-                                    gridAutoRows: 'auto',
-                                }}
-                            >
-                                {phraseGridList.map((phrase, index) => (
-                                    <div key={stickerSetMode ? `s${currentSheetIndex}-${index}` : index} className="flex flex-col gap-1">
-                                        <input
-                                            type="text"
-                                            value={phrase}
-                                            onChange={e => updatePhraseAt(index, e.target.value)}
-                                            placeholder={`${index + 1}`}
-                                            className="w-full min-w-0 p-2 border border-slate-200 rounded-lg text-xs font-mono focus:ring-2 focus:ring-green-500 focus:border-green-400 outline-none bg-white"
-                                            aria-label={stickerSetMode ? `Sheet ${currentSheetIndex + 1} cell ${index + 1} phrase` : `Cell ${index + 1} phrase`}
-                                        />
-                                        <textarea
-                                            rows={2}
-                                            value={actionDescGridList[index] ?? ''}
-                                            onChange={e => updateActionDescAt(index, e.target.value)}
-                                            placeholder={t.lineStickerActionDescPlaceholder}
-                                            className="w-full min-w-0 min-h-[3.5rem] p-1.5 border border-slate-100 rounded text-xs text-slate-500 focus:ring-2 focus:ring-green-500 outline-none bg-slate-50 resize-y"
-                                            aria-label={stickerSetMode ? `Sheet ${currentSheetIndex + 1} cell ${index + 1} action` : `Cell ${index + 1} action`}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Prompt preview: generate prompt first, then confirm before generating image */}
-                        <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                            <div className="flex items-center justify-between gap-2 flex-wrap">
-                                <h3 className="text-sm font-semibold text-slate-800">{t.lineStickerPromptPreviewTitle}</h3>
-                                <button
-                                    type="button"
-                                    onClick={handleGeneratePromptPreview}
-                                    className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 font-medium"
-                                >
-                                    {t.lineStickerGeneratePrompt}
-                                </button>
-                            </div>
-                            {previewPrompt ? (
-                                <>
-                                    <pre className="text-xs text-slate-700 whitespace-pre-wrap font-mono bg-white border border-slate-200 rounded-lg p-3 max-h-48 overflow-y-auto" role="region" aria-label={t.lineStickerPromptPreviewTitle}>
-                                        {previewPrompt}
-                                    </pre>
-                                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                                        <p className="text-xs text-slate-500">{t.lineStickerPromptConfirmHint}</p>
-                                        <button
-                                            type="button"
-                                            onClick={handleCopyPrompt}
-                                            className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 font-medium inline-flex items-center gap-1.5"
-                                        >
-                                            {promptCopied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
-                                            {promptCopied ? t.lineStickerCopyPromptDone : t.lineStickerCopyPrompt}
-                                        </button>
-                                    </div>
-                                </>
-                            ) : (
-                                <p className="text-xs text-slate-500">{t.lineStickerPromptEmptyHint}</p>
-                            )}
-                        </div>
-                        <button onClick={stickerSetMode ? handleGenerateAllSheets : handleGenerate} disabled={isGenerating || !sourceImage || !previewPrompt} className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                            {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />}
-                            {stickerSetMode ? t.lineStickerGenerateAll : t.lineStickerGenerate}
-                        </button>
+                        <LineStickerPhraseSection
+                            t={t}
+                            stickerSetMode={stickerSetMode}
+                            currentSheetIndex={currentSheetIndex}
+                            phraseGridList={phraseGridList}
+                            actionDescGridList={actionDescGridList}
+                            phraseGridCols={phraseGridCols}
+                            updatePhraseAt={updatePhraseAt}
+                            updateActionDescAt={updateActionDescAt}
+                            isGeneratingPhrases={isGeneratingPhrases}
+                            handleGeneratePhrases={handleGeneratePhrases}
+                            phraseSetFileInputRef={phraseSetFileInputRef}
+                            handleUploadPhraseSet={handleUploadPhraseSet}
+                            handleDownloadPhraseSet={handleDownloadPhraseSet}
+                            setCurrentSheetIndex={setCurrentSheetIndex}
+                            previewPrompt={previewPrompt}
+                            promptCopied={promptCopied}
+                            handleGeneratePromptPreview={handleGeneratePromptPreview}
+                            handleCopyPrompt={handleCopyPrompt}
+                            isGenerating={isGenerating}
+                            sourceImage={sourceImage}
+                            onGenerate={handleGenerate}
+                            onGenerateAllSheets={handleGenerateAllSheets}
+                        />
                     </div>
                 </div>
 
@@ -901,44 +806,33 @@ const LineStickerPage: React.FC = () => {
                                     </Suspense>
                                 </div>
 
-                                <div className="flex flex-wrap gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                    {stickerSetMode ? (
-                                        <div className="flex flex-wrap gap-2 w-full">
-                                            <button onClick={downloadSetOneClick} disabled={isDownloading || (!processedSheetImages.every(img => !!img) && !sheetFrames.some(arr => arr.length > 0))} className="px-5 py-2.5 bg-green-600 text-white text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-green-700 disabled:opacity-50 transition-all shadow-md"><Download className="w-4 h-4" />{t.lineStickerDownloadAllOneClick}</button>
-                                            <button onClick={downloadStickerSetZip} disabled={isDownloading || !processedSheetImages.every(img => !!img)} className="px-5 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-slate-800 disabled:opacity-50 transition-all shadow-md"><FileArchive className="w-4 h-4" />{t.lineStickerDownload3Zip}</button>
-                                            <button onClick={downloadAllSheetsFramesZip} disabled={isDownloading || !sheetFrames.some(arr => arr.length > 0)} className="px-5 py-2.5 bg-slate-700 text-white text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-slate-600 disabled:opacity-50 transition-all shadow-md"><FileArchive className="w-4 h-4" />{t.lineStickerDownload3SheetsFramesZip}</button>
-                                            <button onClick={downloadCurrentSheetZip} disabled={isDownloading || !processedSheetImages[currentSheetIndex]} className="px-5 py-2.5 bg-green-500 text-white text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-green-600 disabled:opacity-50 transition-all shadow-md"><Download className="w-4 h-4" />{t.lineStickerDownloadCurrentSheet}</button>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-wrap gap-2 w-full">
-                                            <button onClick={downloadAllAsZip} disabled={isDownloading || stickerFrames.length === 0} className="px-5 py-2.5 bg-green-500 text-white text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-green-600 disabled:opacity-50 transition-all shadow-md"><Download className="w-4 h-4" />{t.lineStickerDownloadAll}</button>
-                                            <button onClick={() => downloadSelectedAsZip(selectedIndices)} disabled={isDownloading || selectedCount === 0} className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-slate-50 disabled:opacity-50 transition-all shadow-sm"><Check className="w-4 h-4" />{t.lineStickerDownloadSelected.replace('{n}', String(selectedCount))}</button>
-                                        </div>
-                                    )}
-                                </div>
+                                <LineStickerDownloadSection
+                                    t={t}
+                                    stickerSetMode={stickerSetMode}
+                                    isDownloading={isDownloading}
+                                    processedSheetImages={processedSheetImages}
+                                    sheetFrames={sheetFrames}
+                                    processedSheetImagesCurrent={processedSheetImages[currentSheetIndex] ?? null}
+                                    stickerFramesLength={stickerFrames.length}
+                                    selectedCount={selectedCount}
+                                    onDownloadSetOneClick={downloadSetOneClick}
+                                    onDownloadStickerSetZip={downloadStickerSetZip}
+                                    onDownloadAllSheetsFramesZip={downloadAllSheetsFramesZip}
+                                    onDownloadCurrentSheetZip={downloadCurrentSheetZip}
+                                    onDownloadAllAsZip={downloadAllAsZip}
+                                    onDownloadSelectedAsZip={downloadSelectedAsZip}
+                                    selectedIndices={selectedIndices}
+                                />
                             </div>
                         ) : (
-                            <div className="flex-1 min-h-[400px] flex flex-col items-center justify-center text-slate-300 border-2 border-dashed border-slate-100 rounded-3xl p-6">
-                                <ImageIcon className="w-20 h-20 mb-4 opacity-10" />
-                                <p className="text-sm font-medium mb-4">{t.spriteSheetPlaceholder}</p>
-                                <input
-                                    ref={spriteSheetFileInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleSpriteSheetUpload}
-                                    className="hidden"
-                                    aria-hidden
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => spriteSheetFileInputRef.current?.click()}
-                                    className="px-5 py-2.5 bg-white border-2 border-slate-200 rounded-xl text-slate-700 font-medium hover:bg-slate-50 hover:border-slate-300 flex items-center gap-2 transition-all shadow-sm"
-                                >
-                                    <Upload className="w-4 h-4" />
-                                    {t.lineStickerUploadSpriteSheet}
-                                </button>
-                                <p className="text-xs text-slate-400 mt-3 max-w-sm text-center">{t.lineStickerUploadSpriteSheetHint}</p>
-                            </div>
+                            <LineStickerResultEmptyState
+                                placeholderText={t.spriteSheetPlaceholder}
+                                uploadButtonText={t.lineStickerUploadSpriteSheet}
+                                uploadHint={t.lineStickerUploadSpriteSheetHint}
+                                onUploadClick={() => spriteSheetFileInputRef.current?.click()}
+                                onFileChange={handleSpriteSheetUpload}
+                                fileInputRef={spriteSheetFileInputRef}
+                            />
                         )}
                     </div>
                 </div>
