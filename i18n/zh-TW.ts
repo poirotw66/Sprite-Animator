@@ -275,6 +275,7 @@ export const zhTW: Translations = {
 
   // LINE Sticker Tool - Style / Theme / Phrases
   lineStickerStyleLabel: '貼圖風格（Style Slot）',
+  lineStickerStyleMatchUploaded: '與上傳角色一致',
   lineStickerStyleHint: '選擇貼圖的繪製風格，會影響角色呈現方式',
   lineStickerStyleCustom: '自訂',
   lineStickerStyleCustomLabel: '自訂風格描述',

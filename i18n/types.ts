@@ -277,6 +277,7 @@ export interface Translations {
 
   // LINE Sticker Tool - Style / Theme / Phrases
   lineStickerStyleLabel: string;
+  lineStickerStyleMatchUploaded: string;
   lineStickerStyleHint: string;
   lineStickerStyleCustom: string;
   lineStickerStyleCustomLabel: string;

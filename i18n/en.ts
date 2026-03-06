@@ -275,6 +275,7 @@ export const en: Translations = {
 
   // LINE Sticker Tool - Style / Theme / Phrases
   lineStickerStyleLabel: 'Sticker Style',
+  lineStickerStyleMatchUploaded: 'Match uploaded character',
   lineStickerStyleHint: 'Select drawing style for the stickers',
   lineStickerStyleCustom: 'Custom',
   lineStickerStyleCustomLabel: 'Custom style description',

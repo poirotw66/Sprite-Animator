@@ -355,6 +355,12 @@ export const THEME_PRESETS: Record<string, ThemeSlot & { label: string }> = {
 
 // label: for UI (zh-TW); styleType / drawingMethod: English for image model
 export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
+    matchUploaded: {
+        label: '與上傳角色一致',
+        styleType: "STRICT: Use only the visual style of the uploaded reference image. Do not apply any other art style, genre, or aesthetic. The reference image defines the only acceptable style.",
+        drawingMethod: "Match the reference image exactly: same line weight, same coloring method (flat or shaded), same proportions, same level of detail, same medium (digital, paint, etc.). Do not reinterpret or stylize; preserve the character's existing look. All cells must look like they were drawn in the same style as the reference.",
+        outlinePreference: 'style',
+    },
     chibi: {
         label: 'Q 版可愛',
         styleType: "Chibi, 2-head body ratio, LINE sticker art style, versatile for any character type",
@@ -427,6 +433,7 @@ export type LineStickerStyleOption = keyof typeof STYLE_PRESETS | 'custom';
 
 /** Display order for style dropdown: recommended and LINE-friendly first, then variety. */
 export const STYLE_PRESET_ORDER: (keyof typeof STYLE_PRESETS)[] = [
+    'matchUploaded',
     'chibi',
     'lineChibi',
     'minimalist',

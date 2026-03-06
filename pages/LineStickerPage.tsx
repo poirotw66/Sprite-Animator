@@ -533,7 +533,7 @@ const LineStickerPage: React.FC = () => {
                                 <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerStyleLabel}</label>
                                 <select value={selectedStyle} onChange={e => setSelectedStyle(e.target.value as LineStickerStyleOption)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
                                     {STYLE_PRESET_ORDER.map((k) => (
-                                        <option key={k} value={k}>{STYLE_PRESETS[k].label}</option>
+                                        <option key={k} value={k}>{k === 'matchUploaded' ? t.lineStickerStyleMatchUploaded : STYLE_PRESETS[k].label}</option>
                                     ))}
                                     <option value="custom">{t.lineStickerStyleCustom}</option>
                                 </select>
