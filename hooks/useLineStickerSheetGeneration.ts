@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
+import { getErrorMessage } from '../types/errors';
 import { removeBackgroundAI } from '../utils/aiBackgroundRemoval';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ } from '../utils/constants';
@@ -8,7 +9,7 @@ import type { BgRemovalMethod, ChromaKeyColorType } from '../types';
 const SET_PHRASES_COUNT = 48;
 const FRAMES_PER_SHEET = 16;
 
-interface GenerationTexts {
+export interface LineStickerGenerationTexts {
   errorApiKey: string;
   errorNoImage: string;
   lineStickerErrorNeedPhrases: string;
@@ -17,24 +18,11 @@ interface GenerationTexts {
   errorGeneration: string;
 }
 
-interface UseLineStickerSheetGenerationParams {
-  getEffectiveApiKey: () => string;
-  sourceImage: string | null;
-  stickerSetMode: boolean;
-  setPhrasesList: string[];
-  actionDescsList: string[];
-  currentSheetIndex: 0 | 1 | 2;
-  generateSingleSheet: (
-    phraseListOverride?: string[],
-    actionDescsOverride?: string[]
-  ) => Promise<string | null>;
-  t: GenerationTexts;
-  chromaKeyColor: ChromaKeyColorType;
-  bgRemovalMethod: BgRemovalMethod;
+/** Grouped setters to keep hook options readable and testable. */
+export interface LineStickerGenerationSetters {
   setStatusText: (value: string) => void;
   setError: (value: string | null) => void;
   setShowSettings: (value: boolean) => void;
-  sliceProcessedSheetToFrames: (processedImage: string) => Promise<string[]>;
   setIsGenerating: (value: boolean) => void;
   setSheetImages: Dispatch<SetStateAction<(string | null)[]>>;
   setProcessedSheetImages: Dispatch<SetStateAction<(string | null)[]>>;
@@ -46,34 +34,55 @@ interface UseLineStickerSheetGenerationParams {
   setChromaKeyProgress: Dispatch<SetStateAction<number>>;
 }
 
-export function useLineStickerSheetGeneration({
-  getEffectiveApiKey,
-  sourceImage,
-  stickerSetMode,
-  setPhrasesList,
-  actionDescsList,
-  currentSheetIndex,
-  generateSingleSheet,
-  t,
-  chromaKeyColor,
-  bgRemovalMethod,
-  setStatusText,
-  setError,
-  setShowSettings,
-  sliceProcessedSheetToFrames,
-  setIsGenerating,
-  setSheetImages,
-  setProcessedSheetImages,
-  setSheetFrames,
-  setSelectedFramesBySheet,
-  setSpriteSheetImage,
-  setProcessedSpriteSheet,
-  setIsProcessingChromaKey,
-  setChromaKeyProgress,
-}: UseLineStickerSheetGenerationParams) {
+/** Single options object for LINE sticker sheet generation (replaces 20+ flat params). */
+export interface UseLineStickerSheetGenerationOptions {
+  api: { getEffectiveApiKey: () => string };
+  sourceImage: string | null;
+  stickerSetMode: boolean;
+  setPhrasesList: string[];
+  actionDescsList: string[];
+  currentSheetIndex: 0 | 1 | 2;
+  generateSingleSheet: (
+    phraseListOverride?: string[],
+    actionDescsOverride?: string[]
+  ) => Promise<string | null>;
+  texts: LineStickerGenerationTexts;
+  chroma: { chromaKeyColor: ChromaKeyColorType; bgRemovalMethod: BgRemovalMethod };
+  setters: LineStickerGenerationSetters;
+  sliceProcessedSheetToFrames: (processedImage: string) => Promise<string[]>;
+}
+
+export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenerationOptions) {
+  const {
+    api: { getEffectiveApiKey },
+    sourceImage,
+    stickerSetMode,
+    setPhrasesList,
+    actionDescsList,
+    currentSheetIndex,
+    generateSingleSheet,
+    texts: t,
+    chroma: { chromaKeyColor, bgRemovalMethod },
+    setters: {
+      setStatusText,
+      setError,
+      setShowSettings,
+      setIsGenerating,
+      setSheetImages,
+      setProcessedSheetImages,
+      setSheetFrames,
+      setSelectedFramesBySheet,
+      setSpriteSheetImage,
+      setProcessedSpriteSheet,
+      setIsProcessingChromaKey,
+      setChromaKeyProgress,
+    },
+    sliceProcessedSheetToFrames,
+  } = options;
+
   const toUserError = useCallback(
     (err: unknown) => {
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = getErrorMessage(err);
       if (msg.includes('API Key is missing')) {
         setError(t.errorApiKey);
         setShowSettings(true);

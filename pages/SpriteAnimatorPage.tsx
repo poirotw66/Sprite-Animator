@@ -26,6 +26,7 @@ import { useSpriteSheet } from '../hooks/useSpriteSheet';
 import { useExport } from '../hooks/useExport';
 import { useProjectHistory } from '../hooks/useProjectHistory';
 import { ProjectHistory } from '../components/ProjectHistory';
+import { getErrorMessage, isQuotaError } from '../types/errors';
 import { DEFAULT_CONFIG, DEFAULT_SLICE_SETTINGS } from '../utils/constants';
 import { optimizeSliceSettings } from '../utils/imageUtils';
 import { logger } from '../utils/logger';
@@ -284,17 +285,13 @@ const SpriteAnimatorPage: React.FC = () => {
         setFrameModeFrames(frames);
       }
     } catch (err: unknown) {
-      const rawMsg = err instanceof Error ? err.message : 'Unknown error';
+      const rawMsg = getErrorMessage(err);
       let displayMsg = t.errorGeneration;
 
       if (rawMsg.includes('API Key is missing')) {
         displayMsg = t.errorApiKey;
         setShowSettings(true);
-      } else if (
-        rawMsg.includes('429') ||
-        rawMsg.includes('Quota') ||
-        rawMsg.includes('RESOURCE_EXHAUSTED')
-      ) {
+      } else if (isQuotaError(err)) {
         displayMsg = t.errorRateLimit;
       } else {
         displayMsg = `${t.errorGeneration}: ${rawMsg}`;
@@ -414,7 +411,7 @@ const SpriteAnimatorPage: React.FC = () => {
     try {
       await handleDownloadApng();
     } catch (err) {
-      handleExportError(err instanceof Error ? err : new Error(t.errorExportApng));
+      handleExportError(new Error(getErrorMessage(err)));
     }
   }, [handleDownloadApng, handleExportError, t]);
 
@@ -422,7 +419,7 @@ const SpriteAnimatorPage: React.FC = () => {
     try {
       await handleDownloadGif();
     } catch (err) {
-      handleExportError(err instanceof Error ? err : new Error(t.errorExportGif));
+      handleExportError(new Error(getErrorMessage(err)));
     }
   }, [handleDownloadGif, handleExportError, t]);
 
@@ -430,7 +427,7 @@ const SpriteAnimatorPage: React.FC = () => {
     try {
       await handleDownloadZip();
     } catch (err) {
-      handleExportError(err instanceof Error ? err : new Error(t.errorExportZip));
+      handleExportError(new Error(getErrorMessage(err)));
     }
   }, [handleDownloadZip, handleExportError, t]);
 
@@ -625,7 +622,7 @@ const SpriteAnimatorPage: React.FC = () => {
                           className="flex-shrink-0 px-2 py-1 rounded hover:bg-red-100 text-red-600 font-medium"
                           aria-label={t.reset}
                         >
-                          ×
+                          ?
                         </button>
                       </div>
                     )}
@@ -650,7 +647,7 @@ const SpriteAnimatorPage: React.FC = () => {
                         className="min-h-[40px] px-4 flex items-center justify-center gap-2 rounded-lg text-sm font-semibold bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation tap-highlight"
                         aria-label={t.saveProject}
                       >
-                        {isSavingProject ? <span className="animate-pulse">…</span> : <Save className="w-4 h-4" />}
+                        {isSavingProject ? <span className="animate-pulse">?</span> : <Save className="w-4 h-4" />}
                         {t.saveProject}
                       </button>
                     </div>

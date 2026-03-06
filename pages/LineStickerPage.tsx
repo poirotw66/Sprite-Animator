@@ -230,14 +230,14 @@ const LineStickerPage: React.FC = () => {
     });
 
     const { handleGenerate, handleGenerateAllSheets, reRunChromaKey } = useLineStickerSheetGeneration({
-        getEffectiveApiKey,
+        api: { getEffectiveApiKey },
         sourceImage,
         stickerSetMode,
         setPhrasesList,
         actionDescsList,
         currentSheetIndex,
         generateSingleSheet,
-        t: {
+        texts: {
             errorApiKey: t.errorApiKey,
             errorNoImage: t.errorNoImage,
             lineStickerErrorNeedPhrases: t.lineStickerErrorNeedPhrases,
@@ -245,21 +245,22 @@ const LineStickerPage: React.FC = () => {
             statusProcessing: t.statusProcessing,
             errorGeneration: t.errorGeneration,
         },
-        chromaKeyColor,
-        bgRemovalMethod,
-        setStatusText,
-        setError,
-        setShowSettings,
+        chroma: { chromaKeyColor, bgRemovalMethod },
+        setters: {
+            setStatusText,
+            setError,
+            setShowSettings,
+            setIsGenerating,
+            setSheetImages,
+            setProcessedSheetImages,
+            setSheetFrames,
+            setSelectedFramesBySheet,
+            setSpriteSheetImage,
+            setProcessedSpriteSheet,
+            setIsProcessingChromaKey,
+            setChromaKeyProgress,
+        },
         sliceProcessedSheetToFrames,
-        setIsGenerating,
-        setSheetImages,
-        setProcessedSheetImages,
-        setSheetFrames,
-        setSelectedFramesBySheet,
-        setSpriteSheetImage,
-        setProcessedSpriteSheet,
-        setIsProcessingChromaKey,
-        setChromaKeyProgress,
     });
 
     const {

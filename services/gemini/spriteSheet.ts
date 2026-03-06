@@ -3,6 +3,7 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
+import { getErrorMessage } from '../../types/errors';
 import { CHROMA_KEY_COLORS, type ImageResolution } from '../../utils/constants';
 import type { ChromaKeyColorType } from '../../types';
 import { retryOperation } from './retry';
@@ -71,7 +72,7 @@ export async function generateSpriteSheet(
   }
 
   const isInvalidArgument = (err: unknown): boolean => {
-    const msg = err instanceof Error ? err.message : String(err);
+    const msg = getErrorMessage(err);
     return (
       msg.includes('400') ||
       msg.includes('INVALID_ARGUMENT') ||

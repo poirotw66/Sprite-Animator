@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { getErrorMessage } from '../types/errors';
 import { generateActionDescriptions, generateStickerPhrases } from '../services/geminiService';
 import {
   getActionHint,
@@ -104,12 +105,12 @@ export function useLineStickerPhraseGeneration({
       } catch (actionErr: unknown) {
         logger.warn(
           'Action descriptions fallback to getActionHint:',
-          actionErr instanceof Error ? actionErr.message : actionErr
+          getErrorMessage(actionErr)
         );
         setActionDescsList(phrases.map((phrase) => getActionHint(phrase)));
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = getErrorMessage(err);
       if (msg.includes('API Key is missing')) {
         setError(t.errorApiKey);
         setShowSettings(true);
