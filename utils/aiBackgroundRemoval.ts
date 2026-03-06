@@ -92,7 +92,7 @@ export async function getSegmenter() {
         segmenter = await pipeline('image-segmentation', targetModel, config);
         logger.info(`${targetModel} initialized.`);
         return segmenter;
-    } catch (err: any) {
+    } catch (err: unknown) {
         logger.warn(`${targetModel} load failed. Final fallback to public 1.4...`, err);
 
         try {
@@ -100,7 +100,7 @@ export async function getSegmenter() {
             segmenter = await pipeline('image-segmentation', 'briaai/RMBG-1.4', { device: 'webgpu', dtype: 'fp32' });
             currentModelId = 'briaai/RMBG-1.4';
             return segmenter;
-        } catch (fatal: any) {
+        } catch (fatal: unknown) {
             logger.error(`[CRITICAL] All models failed to initialize.`, fatal);
             throw fatal;
         }
@@ -198,7 +198,7 @@ export async function removeBackgroundAI(base64Image: string, chromaKeyType?: 'm
         }
 
         return canvas.toDataURL('image/png');
-    } catch (err) {
+    } catch (err: unknown) {
         logger.error('Background removal failed:', err);
         throw err;
     }

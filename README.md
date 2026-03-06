@@ -127,26 +127,40 @@ Sprite-Animator/
 ├── components/          # React 組件
 │   ├── SettingsModal.tsx
 │   ├── ImageUpload.tsx
-│   ├── AnimationConfigPanel.tsx
+│   ├── AnimationConfig.tsx
 │   ├── SpriteSheetViewer.tsx
+│   ├── SpriteSheetEraserModal.tsx
 │   ├── AnimationPreview.tsx
 │   ├── FrameGrid.tsx
 │   ├── ErrorBoundary.tsx
+│   ├── ProjectHistory.tsx
+│   ├── LanguageSwitcher.tsx
+│   ├── ExampleSelector.tsx
 │   └── Icons.tsx
 ├── hooks/               # 自定義 Hooks
 │   ├── useSettings.ts
 │   ├── useAnimation.ts
 │   ├── useSpriteSheet.ts
-│   └── useExport.ts
+│   ├── useExport.ts
+│   └── ...
 ├── services/            # API 服務
 │   └── geminiService.ts
 ├── utils/               # 工具函數
 │   ├── constants.ts
-│   ├── imageUtils.ts
-│   ├── chromaKeyProcessor.ts  # 去背處理器（Web Worker）
-│   └── logger.ts              # 日誌工具
+│   ├── logger.ts
+│   ├── imageUtils.ts         # re-export 與共用圖像工具
+│   ├── sliceSpriteSheet.ts   # 網格切片
+│   ├── optimizeSliceSettings.ts  # 自動優化切片參數
+│   ├── sliceByCellRects.ts   # 依 cell rect 切片
+│   ├── imageContentAnalysis.ts   # 內容分析（對齊、質心）
+│   ├── imageCrop.ts          # 單格裁切與 template match
+│   ├── spriteSlicing.ts      # 切片類型與 getEffectivePadding
+│   ├── imageInterpolation.ts # 幀插值、平滑動畫
+│   ├── chromaKeyProcessor.ts # 去背處理器（Web Worker）
+│   ├── aiBackgroundRemoval.ts # AI 去背
+│   └── ...
 ├── workers/            # Web Workers
-│   └── chromaKeyWorker.ts     # 去背處理 Worker
+│   └── chromaKeyWorker.ts    # 去背處理 Worker
 ├── types/               # TypeScript 類型定義
 │   ├── index.ts
 │   └── errors.ts

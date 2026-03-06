@@ -4,6 +4,7 @@ import { useLanguage } from '../hooks/useLanguage';
 import { SettingsModal } from '../components/SettingsModal';
 import { useSettings } from '../hooks/useSettings';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { getErrorMessage } from '../types/errors';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { removeBackgroundAI } from '../utils/aiBackgroundRemoval';
 import { CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ, CHROMA_KEY_EDGE_BAND_RADIUS, CHROMA_KEY_EDGE_BLEND, GRID_PATTERN_URL } from '../utils/constants';
@@ -83,9 +84,9 @@ const RemoveBackgroundPage: React.FC = () => {
             }
             setProcessedImage(result);
             setShowOriginal(false);
-        } catch (err: any) {
+        } catch (err: unknown) {
             logger.error('Background removal failed', err);
-            setError(err.message || 'Processing failed');
+            setError(getErrorMessage(err) || 'Processing failed');
         } finally {
             setIsProcessing(false);
         }

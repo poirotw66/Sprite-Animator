@@ -10,6 +10,7 @@ import {
     type ThemeOption,
     type LineStickerStyleOption,
 } from '../utils/lineStickerPrompt';
+import { getErrorMessage } from '../types/errors';
 import { generateSpriteSheet } from '../services/geminiService';
 import { logger } from '../utils/logger';
 import { useLanguage } from './useLanguage';
@@ -153,9 +154,9 @@ export const useLineStickerGeneration = ({
                 includeText
             );
             return result;
-        } catch (err: any) {
+        } catch (err: unknown) {
             logger.error('Generation failed:', err);
-            setError(err.message || t.errorGeneration);
+            setError(getErrorMessage(err) || t.errorGeneration);
             return null;
         } finally {
             setIsGenerating(false);
