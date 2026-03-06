@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo, Suspense } from 'react';
+import React, { useState, useCallback, useMemo, Suspense } from 'react';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Settings, Loader2, Download, Check, FileArchive, Grid } from '../components/Icons';
@@ -7,13 +7,8 @@ import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { SettingsModal } from '../components/SettingsModal';
 import { useSettings } from '../hooks/useSettings';
 import { ImageUpload } from '../components/ImageUpload';
-import { useSpriteSheet } from '../hooks/useSpriteSheet';
+import { useSpriteSheetFlow } from '../hooks/useSpriteSheetFlow';
 import { useLineStickerDownload } from '../hooks/useLineStickerDownload';
-import { optimizeSliceSettings } from '../utils/imageUtils';
-import { DEFAULT_SLICE_SETTINGS } from '../utils/constants';
-import { logger } from '../utils/logger';
-import type { SliceSettings } from '../utils/imageUtils';
-import type { ChromaKeyColorType } from '../types';
 
 const SpriteSheetViewer = lazyWithRetry(() =>
   import('../components/SpriteSheetViewer').then((m) => ({ default: m.SpriteSheetViewer }))
@@ -36,38 +31,19 @@ const PartingPage: React.FC = () => {
     saveSettings,
   } = useSettings();
 
-  const [spriteSheetImage, setSpriteSheetImage] = useState<string | null>(null);
-  const [sliceSettings, setSliceSettings] = useState<SliceSettings>(DEFAULT_SLICE_SETTINGS);
-  const [removeBackground, setRemoveBackground] = useState(true);
-  const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('green');
-  const [frameIncluded, setFrameIncluded] = useState<boolean[]>([]);
   const [currentGridIndex, setCurrentGridIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [optimizeStatus, setOptimizeStatus] = useState<string | null>(null);
 
-  const {
-    generatedFrames,
-    sheetDimensions,
-    handleImageLoad,
-    processedSpriteSheet,
-    chromaKeyProgress,
-    isProcessingChromaKey,
-    frameOverrides,
-    setFrameOverrides,
-  } = useSpriteSheet(
-    spriteSheetImage,
-    sliceSettings,
-    removeBackground,
-    'sheet',
-    chromaKeyColor
-  );
+  const flow = useSpriteSheetFlow({ runChromaAutomatically: true });
+  const { setImage } = flow;
 
   const {
     isDownloading,
     downloadAllAsZip,
     downloadSelectedAsZip,
   } = useLineStickerDownload({
-    stickerFrames: generatedFrames,
+    stickerFrames: flow.frames,
     sheetFrames: [],
     stickerSetMode: false,
     currentSheetIndex: 0,
@@ -76,29 +52,17 @@ const PartingPage: React.FC = () => {
     setError,
   });
 
-  // Sync frameIncluded when frame count changes
-  useEffect(() => {
-    if (generatedFrames.length > 0) {
-      setFrameIncluded((prev) => {
-        if (prev.length === generatedFrames.length) return prev;
-        return new Array(generatedFrames.length).fill(true);
-      });
-    } else {
-      setFrameIncluded([]);
-    }
-  }, [generatedFrames.length]);
-
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setSpriteSheetImage((event.target?.result as string) ?? null);
+        setImage((event.target?.result as string) ?? null);
         setError(null);
       };
       reader.readAsDataURL(file);
     }
-  }, []);
+  }, [setImage]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -106,78 +70,54 @@ const PartingPage: React.FC = () => {
     if (file?.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setSpriteSheetImage((event.target?.result as string) ?? null);
+        setImage((event.target?.result as string) ?? null);
         setError(null);
       };
       reader.readAsDataURL(file);
     }
-  }, []);
+  }, [setImage]);
 
   const onDownloadSpriteSheet = useCallback(
     (isProcessed: boolean) => {
-      const img = isProcessed ? processedSpriteSheet : spriteSheetImage;
+      const img = isProcessed ? flow.processedImage : flow.image;
       if (!img) return;
       const a = document.createElement('a');
       a.href = img;
       a.download = `sprite-sheet-${isProcessed ? 'processed' : 'original'}.png`;
       a.click();
     },
-    [processedSpriteSheet, spriteSheetImage]
+    [flow.processedImage, flow.image]
   );
 
   const onDownloadOriginal = useCallback(() => {
-    if (!spriteSheetImage) return;
+    if (!flow.image) return;
     const a = document.createElement('a');
-    a.href = spriteSheetImage;
+    a.href = flow.image;
     a.download = 'sprite-sheet-original.png';
     a.click();
-  }, [spriteSheetImage]);
+  }, [flow.image]);
 
   const handleOptimizeSlice = useCallback(async () => {
-    const image = processedSpriteSheet ?? spriteSheetImage;
-    if (!image) return;
     setOptimizeStatus(t.statusOptimizing);
     try {
-      const optimized = await optimizeSliceSettings(
-        image,
-        sliceSettings.cols,
-        sliceSettings.rows
-      );
-      setSliceSettings((prev) => ({
-        ...prev,
-        paddingLeft: optimized.paddingLeft,
-        paddingRight: optimized.paddingRight,
-        paddingTop: optimized.paddingTop,
-        paddingBottom: optimized.paddingBottom,
-        paddingX: Math.round((optimized.paddingLeft + optimized.paddingRight) / 2),
-        paddingY: Math.round((optimized.paddingTop + optimized.paddingBottom) / 2),
-        shiftX: optimized.shiftX,
-        shiftY: optimized.shiftY,
-        autoOptimized: {
-          paddingX: true,
-          paddingY: true,
-          shiftX: true,
-          shiftY: true,
-        },
-      }));
+      await flow.optimizeSlice();
       setOptimizeStatus(t.statusOptimized);
       setTimeout(() => setOptimizeStatus(null), 2000);
-    } catch (err) {
-      logger.warn('Optimize slice failed', err);
+    } catch {
       setOptimizeStatus(null);
     }
-  }, [processedSpriteSheet, spriteSheetImage, sliceSettings.cols, sliceSettings.rows, t]);
+  }, [flow, t.statusOptimizing, t.statusOptimized]);
 
   const handleFrameClick = useCallback((index: number) => {
     setCurrentGridIndex(index);
   }, []);
 
   const selectedIndices = useMemo(
-    () => frameIncluded.map((v, i) => (v ? i : -1)).filter((i) => i >= 0),
-    [frameIncluded]
+    () => flow.frameIncluded.map((v, i) => (v ? i : -1)).filter((i) => i >= 0),
+    [flow.frameIncluded]
   );
 
-  const displayImage = processedSpriteSheet ?? spriteSheetImage;
+  const displayImage = flow.processedImage ?? flow.image;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 font-sans overflow-x-hidden px-4 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] md:px-6 lg:px-8 md:pt-6 lg:pt-8 md:pb-6 lg:pb-8">
@@ -229,12 +169,12 @@ const PartingPage: React.FC = () => {
       <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 md:gap-6">
         <div className="lg:col-span-5 space-y-4 sm:space-y-5 md:space-y-6">
           <ImageUpload
-            sourceImage={spriteSheetImage}
+            sourceImage={flow.image}
             onImageUpload={handleImageUpload}
             onDrop={handleDrop}
           />
 
-          {spriteSheetImage && (
+          {flow.image && (
             <>
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
                 <h3 className="text-sm font-semibold text-slate-700 mb-3">{t.sliceSettings}</h3>
@@ -242,39 +182,39 @@ const PartingPage: React.FC = () => {
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={removeBackground}
-                      onChange={(e) => setRemoveBackground(e.target.checked)}
+                      checked={flow.removeBackground}
+                      onChange={(e) => flow.setRemoveBackground(e.target.checked)}
                       className="rounded border-slate-300"
                     />
                     <span className="text-sm text-slate-700">{t.removeBackground}</span>
                   </label>
-                  {removeBackground && (
+                  {flow.removeBackground && (
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => setChromaKeyColor('magenta')}
+                        onClick={() => flow.setChromaKeyColor('magenta')}
                         className={`flex-1 flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all text-sm font-medium ${
-                          chromaKeyColor === 'magenta'
+                          flow.chromaKeyColor === 'magenta'
                             ? 'border-pink-400 bg-pink-50 text-pink-800'
                             : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                         }`}
                       >
                         <span className="w-4 h-4 rounded-full bg-[#FF00FF]" />
                         {t.magentaColor}
-                        {chromaKeyColor === 'magenta' && <Check className="w-4 h-4" />}
+                        {flow.chromaKeyColor === 'magenta' && <Check className="w-4 h-4" />}
                       </button>
                       <button
                         type="button"
-                        onClick={() => setChromaKeyColor('green')}
+                        onClick={() => flow.setChromaKeyColor('green')}
                         className={`flex-1 flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all text-sm font-medium ${
-                          chromaKeyColor === 'green'
+                          flow.chromaKeyColor === 'green'
                             ? 'border-green-400 bg-green-50 text-green-800'
                             : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                         }`}
                       >
                         <span className="w-4 h-4 rounded-full bg-[#00FF00]" />
                         {t.greenScreen}
-                        {chromaKeyColor === 'green' && <Check className="w-4 h-4" />}
+                        {flow.chromaKeyColor === 'green' && <Check className="w-4 h-4" />}
                       </button>
                     </div>
                   )}
@@ -291,16 +231,16 @@ const PartingPage: React.FC = () => {
                 >
                   <SpriteSheetViewer
                     spriteSheetImage={displayImage}
-                    originalSpriteSheet={spriteSheetImage}
+                    originalSpriteSheet={flow.image}
                     isGenerating={false}
-                    sheetDimensions={sheetDimensions}
-                    sliceSettings={sliceSettings}
-                    setSliceSettings={setSliceSettings}
-                    onImageLoad={handleImageLoad}
+                    sheetDimensions={flow.sheetDimensions}
+                    sliceSettings={flow.sliceSettings}
+                    setSliceSettings={flow.setSliceSettings}
+                    onImageLoad={flow.handleImageLoad}
                     onDownload={onDownloadSpriteSheet}
                     onDownloadOriginal={onDownloadOriginal}
-                    chromaKeyProgress={chromaKeyProgress}
-                    isProcessingChromaKey={isProcessingChromaKey}
+                    chromaKeyProgress={flow.chromaKeyProgress}
+                    isProcessingChromaKey={flow.isProcessingChromaKey}
                   />
                 </Suspense>
               )}
@@ -334,12 +274,12 @@ const PartingPage: React.FC = () => {
                 className="px-2 py-1 rounded hover:bg-red-100 text-red-700"
                 aria-label={t.reset}
               >
-                ×
+                ?
               </button>
             </div>
           )}
 
-          {generatedFrames.length > 0 ? (
+          {flow.frames.length > 0 ? (
             <>
               <Suspense
                 fallback={
@@ -351,22 +291,22 @@ const PartingPage: React.FC = () => {
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6">
                   <h2 className="text-lg font-semibold text-slate-900 mb-4">{t.gridSliceSettings}</h2>
                   <FrameGrid
-                    frames={generatedFrames}
+                    frames={flow.frames}
                     currentFrameIndex={currentGridIndex}
                     onFrameClick={handleFrameClick}
-                    frameOverrides={frameOverrides}
-                    setFrameOverrides={setFrameOverrides}
+                    frameOverrides={flow.frameOverrides}
+                    setFrameOverrides={flow.setFrameOverrides}
                     enablePerFrameEdit={true}
-                    processedSpriteSheet={processedSpriteSheet}
-                    sliceSettings={sliceSettings}
-                    sheetDimensions={sheetDimensions}
-                    frameIncluded={frameIncluded}
-                    setFrameIncluded={setFrameIncluded}
+                    processedSpriteSheet={flow.processedImage}
+                    sliceSettings={flow.sliceSettings}
+                    sheetDimensions={flow.sheetDimensions}
+                    frameIncluded={flow.frameIncluded}
+                    setFrameIncluded={flow.setFrameIncluded}
                   />
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button
                       onClick={downloadAllAsZip}
-                      disabled={isDownloading || generatedFrames.length === 0}
+                      disabled={isDownloading || flow.frames.length === 0}
                       className="px-5 py-2.5 bg-teal-500 text-white text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-teal-600 disabled:opacity-50 transition-all shadow-md"
                     >
                       <Download className="w-4 h-4" />

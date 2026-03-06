@@ -14,6 +14,7 @@ import { useLineStickerSheetGeneration } from '../hooks/useLineStickerSheetGener
 import { useLineStickerThemePresetSync } from '../hooks/useLineStickerThemePresetSync';
 import { useLineStickerSlicing } from '../hooks/useLineStickerSlicing';
 import { useLineStickerPromptPreview } from '../hooks/useLineStickerPromptPreview';
+import { useSpriteSheetFlow } from '../hooks/useSpriteSheetFlow';
 import { SliceSettings, FrameOverride } from '../utils/imageUtils';
 import { ChromaKeyColorType, BgRemovalMethod } from '../types';
 import {
@@ -117,6 +118,15 @@ const LineStickerPage: React.FC = () => {
     const [selectedPhraseMode, setSelectedPhraseMode] = useState<StickerPhraseMode>('theme-deep');
     const [includeText, setIncludeText] = useState(true);
     const [bgRemovalMethod, setBgRemovalMethod] = useState<BgRemovalMethod>('chroma');
+
+    // Single-sheet mode: shared flow (upload ? slice ? remove bg ? frames) with PartingPage
+    const singleSheetFlow = useSpriteSheetFlow({
+        runChromaAutomatically: bgRemovalMethod === 'chroma',
+        initialSliceSettings: { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 } as SliceSettings,
+    });
+    const effectiveGridCols = stickerSetMode ? gridCols : singleSheetFlow.sliceSettings.cols;
+    const effectiveGridRows = stickerSetMode ? gridRows : singleSheetFlow.sliceSettings.rows;
+
     const {
         phrasesForHook,
         actionDescsForHook,
@@ -135,8 +145,8 @@ const LineStickerPage: React.FC = () => {
         setCustomPhrases,
         actionDescsList,
         setActionDescsList,
-        gridCols,
-        gridRows,
+        gridCols: effectiveGridCols,
+        gridRows: effectiveGridRows,
     });
     useLineStickerThemePresetSync({
         selectedTheme,
@@ -166,8 +176,8 @@ const LineStickerPage: React.FC = () => {
         selectedLanguage,
         selectedTextColor,
         selectedFont,
-        gridCols,
-        gridRows,
+        gridCols: effectiveGridCols,
+        gridRows: effectiveGridRows,
         chromaKeyColor,
         sourceImage,
         includeText,
@@ -179,8 +189,8 @@ const LineStickerPage: React.FC = () => {
         setError,
         setShowSettings,
         stickerSetMode,
-        gridCols,
-        gridRows,
+        gridCols: effectiveGridCols,
+        gridRows: effectiveGridRows,
         selectedTheme,
         customThemeContext,
         customThemeScenario,
@@ -205,7 +215,7 @@ const LineStickerPage: React.FC = () => {
         downloadAllSheetsFramesZip,
         downloadSetOneClick,
     } = useLineStickerDownload({
-        stickerFrames,
+        stickerFrames: stickerSetMode ? stickerFrames : singleSheetFlow.frames,
         sheetFrames,
         stickerSetMode,
         currentSheetIndex,
@@ -214,16 +224,16 @@ const LineStickerPage: React.FC = () => {
         setError,
     });
 
-    const { handleImageLoad, sliceProcessedSheetToFrames } = useLineStickerSlicing({
+    const { handleImageLoad: slicingHandleImageLoad, sliceProcessedSheetToFrames: slicingSliceToFrames } = useLineStickerSlicing({
         chromaKeyColor,
-        processedSpriteSheet,
-        sliceSettings,
-        frameOverrides,
+        processedSpriteSheet: stickerSetMode ? processedSpriteSheet : null,
+        sliceSettings: stickerSetMode ? sliceSettings : singleSheetFlow.sliceSettings,
+        frameOverrides: stickerSetMode ? frameOverrides : singleSheetFlow.frameOverrides,
         gridCols,
         gridRows,
-        sheetDimensions,
-        setStickerFrames,
-        setSelectedFrames,
+        sheetDimensions: stickerSetMode ? sheetDimensions : singleSheetFlow.sheetDimensions,
+        setStickerFrames: stickerSetMode ? setStickerFrames : singleSheetFlow.setFrames,
+        setSelectedFrames: stickerSetMode ? setSelectedFrames : singleSheetFlow.setFrameIncluded,
         stickerSetMode,
         currentSheetIndex,
         processedSheetImages,
@@ -231,6 +241,9 @@ const LineStickerPage: React.FC = () => {
         setSheetFrames,
         setSheetDimensions,
     });
+
+    const handleImageLoad = stickerSetMode ? slicingHandleImageLoad : singleSheetFlow.handleImageLoad;
+    const sliceProcessedSheetToFrames = stickerSetMode ? slicingSliceToFrames : singleSheetFlow.sliceProcessedSheetToFrames;
 
     const { handleGenerate, handleGenerateAllSheets, reRunChromaKey } = useLineStickerSheetGeneration({
         api: { getEffectiveApiKey },
@@ -258,10 +271,10 @@ const LineStickerPage: React.FC = () => {
             setProcessedSheetImages,
             setSheetFrames,
             setSelectedFramesBySheet,
-            setSpriteSheetImage,
-            setProcessedSpriteSheet,
-            setIsProcessingChromaKey,
-            setChromaKeyProgress,
+            setSpriteSheetImage: stickerSetMode ? setSpriteSheetImage : singleSheetFlow.setImage,
+            setProcessedSpriteSheet: stickerSetMode ? setProcessedSpriteSheet : singleSheetFlow.setProcessedImage,
+            setIsProcessingChromaKey: stickerSetMode ? setIsProcessingChromaKey : singleSheetFlow.setIsProcessingChromaKey,
+            setChromaKeyProgress: stickerSetMode ? setChromaKeyProgress : singleSheetFlow.setChromaKeyProgress,
         },
         sliceProcessedSheetToFrames,
     });
@@ -274,9 +287,9 @@ const LineStickerPage: React.FC = () => {
         openFilePicker,
     } = useLineStickerImageInput({
         setSourceImage,
-        setSpriteSheetImage,
-        setStickerFrames,
-        setSelectedFrames,
+        setSpriteSheetImage: stickerSetMode ? setSpriteSheetImage : singleSheetFlow.setImage,
+        setStickerFrames: stickerSetMode ? setStickerFrames : singleSheetFlow.setFrames,
+        setSelectedFrames: stickerSetMode ? setSelectedFrames : singleSheetFlow.setFrameIncluded,
         setError,
     });
 
@@ -289,11 +302,11 @@ const LineStickerPage: React.FC = () => {
         stickerSetMode,
         currentSheetIndex,
         sheetFrames,
-        stickerFrames,
+        stickerFrames: stickerSetMode ? stickerFrames : singleSheetFlow.frames,
         selectedFramesBySheet,
-        selectedFrames,
+        selectedFrames: stickerSetMode ? selectedFrames : singleSheetFlow.frameIncluded,
         setSelectedFramesBySheet,
-        setSelectedFrames,
+        setSelectedFrames: stickerSetMode ? setSelectedFrames : singleSheetFlow.setFrameIncluded,
     });
     const {
         previewPrompt,
@@ -310,6 +323,51 @@ const LineStickerPage: React.FC = () => {
     });
 
     const hasCustomKey = !!apiKey.trim();
+
+    // Effective values: single-sheet mode uses shared flow; set mode uses local state
+    const effectiveSpriteSheetImage = stickerSetMode ? (sheetImages[currentSheetIndex] ?? null) : singleSheetFlow.image;
+    const effectiveProcessedSpriteSheet = stickerSetMode ? (processedSheetImages[currentSheetIndex] ?? null) : singleSheetFlow.processedImage;
+    const effectiveStickerFrames = stickerSetMode ? sheetFrames[currentSheetIndex] ?? [] : singleSheetFlow.frames;
+    const effectiveSelectedFrames = stickerSetMode ? (selectedFramesBySheet[currentSheetIndex] ?? []) : singleSheetFlow.frameIncluded;
+    const effectiveSetSelectedFrames = stickerSetMode
+        ? (val: boolean[] | ((prev: boolean[]) => boolean[])) => {
+            setSelectedFramesBySheet((prev) => {
+                const next = prev.map((a) => [...a]);
+                const s = typeof val === 'function' ? val(next[currentSheetIndex] ?? []) : val;
+                next[currentSheetIndex] = s;
+                return next;
+            });
+        }
+        : singleSheetFlow.setFrameIncluded;
+    const effectiveFrameOverrides = stickerSetMode ? (sheetFrameOverrides[currentSheetIndex] ?? []) : singleSheetFlow.frameOverrides;
+    const effectiveSetFrameOverrides = stickerSetMode
+        ? (val: FrameOverride[] | ((prev: FrameOverride[]) => FrameOverride[])) => {
+            setSheetFrameOverrides((prev) => {
+                const next = prev.map((a) => [...a]);
+                const s = typeof val === 'function' ? val(next[currentSheetIndex] ?? []) : val;
+                next[currentSheetIndex] = s;
+                return next;
+            });
+        }
+        : singleSheetFlow.setFrameOverrides;
+    const effectiveSheetDimensions = stickerSetMode ? sheetDimensions : singleSheetFlow.sheetDimensions;
+    const effectiveChromaKeyProgress = stickerSetMode ? chromaKeyProgress : singleSheetFlow.chromaKeyProgress;
+    const effectiveIsProcessingChromaKey = stickerSetMode ? isProcessingChromaKey : singleSheetFlow.isProcessingChromaKey;
+    const effectiveSliceSettingsForView = stickerSetMode ? { ...sliceSettings, cols: gridCols, rows: gridRows } : singleSheetFlow.sliceSettings;
+    const effectiveSetSliceSettingsForView = stickerSetMode
+        ? (val: SliceSettings | ((prev: SliceSettings) => SliceSettings)) => {
+            if (typeof val === 'function') {
+                const next = val({ ...sliceSettings, cols: gridCols, rows: gridRows });
+                setSliceSettings(next);
+                setGridCols(next.cols);
+                setGridRows(next.rows);
+            } else {
+                setSliceSettings(val);
+                setGridCols(val.cols);
+                setGridRows(val.rows);
+            }
+        }
+        : singleSheetFlow.setSliceSettings;
 
     const handleSpriteSheetUpload = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -330,21 +388,20 @@ const LineStickerPage: React.FC = () => {
                         return n;
                     });
                 } else {
-                    setSpriteSheetImage(dataUrl);
-                    setProcessedSpriteSheet(null);
+                    singleSheetFlow.setImage(dataUrl);
                 }
             };
             reader.readAsDataURL(file);
             e.target.value = '';
         },
-        [stickerSetMode, currentSheetIndex]
+        [stickerSetMode, currentSheetIndex, singleSheetFlow]
     );
 
     const handleDownloadPhraseSet = useCallback(() => {
         const payload = buildPhraseSetExport({
             mode: stickerSetMode ? 'set' : 'single',
-            gridCols,
-            gridRows,
+            gridCols: effectiveGridCols,
+            gridRows: effectiveGridRows,
             phrases: phrasesForHook,
             actionDescs: actionDescsForHook,
         });
@@ -355,7 +412,7 @@ const LineStickerPage: React.FC = () => {
         a.download = `line-sticker-phrase-set-${payload.mode}-${Date.now()}.json`;
         a.click();
         URL.revokeObjectURL(url);
-    }, [stickerSetMode, gridCols, gridRows, phrasesForHook, actionDescsForHook]);
+    }, [stickerSetMode, effectiveGridCols, effectiveGridRows, phrasesForHook, actionDescsForHook]);
 
     const handleUploadPhraseSet = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -374,6 +431,7 @@ const LineStickerPage: React.FC = () => {
                     setStickerSetMode(false);
                     setGridCols(data.gridCols);
                     setGridRows(data.gridRows);
+                    singleSheetFlow.setSliceSettings(prev => ({ ...prev, cols: data.gridCols!, rows: data.gridRows! }));
                     setCustomPhrases(data.phrases.join('\n'));
                     setActionDescsList(data.actionDescs ?? data.phrases.map(() => ''));
                 } else {
@@ -439,11 +497,33 @@ const LineStickerPage: React.FC = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-2">{t.cols}</label>
-                                    <input type="number" min="1" max="8" value={gridCols} onChange={e => setGridCols(Number(e.target.value))} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500" />
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="8"
+                                        value={effectiveGridCols}
+                                        onChange={e => {
+                                            const v = Number(e.target.value);
+                                            if (stickerSetMode) setGridCols(v);
+                                            else singleSheetFlow.setSliceSettings(prev => ({ ...prev, cols: v }));
+                                        }}
+                                        className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500"
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-2">{t.rows}</label>
-                                    <input type="number" min="1" max="8" value={gridRows} onChange={e => setGridRows(Number(e.target.value))} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500" />
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="8"
+                                        value={effectiveGridRows}
+                                        onChange={e => {
+                                            const v = Number(e.target.value);
+                                            if (stickerSetMode) setGridRows(v);
+                                            else singleSheetFlow.setSliceSettings(prev => ({ ...prev, rows: v }));
+                                        }}
+                                        className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500"
+                                    />
                                 </div>
                             </div>
                         )}
@@ -646,7 +726,7 @@ const LineStickerPage: React.FC = () => {
                         {error && <div className="mb-4 p-4 bg-red-50 text-red-700 border border-red-100 rounded-xl text-sm flex items-center gap-2 animate-in slide-in-from-top-2"><Plus className="w-5 h-5 rotate-45" />{error}</div>}
                         {statusText && <div className="mb-4 p-4 bg-green-50 text-green-700 border border-green-100 rounded-xl text-sm flex items-center gap-3"><Loader2 className="w-4 h-4 animate-spin" />{statusText}</div>}
 
-                        {(spriteSheetImage || sheetImages[currentSheetIndex]) ? (
+                        {(effectiveSpriteSheetImage != null) ? (
                             <div className="space-y-8">
                                 <div className="flex flex-wrap items-center gap-2 mb-4">
                                     <button
@@ -661,49 +741,48 @@ const LineStickerPage: React.FC = () => {
                                     </button>
                                     <button
                                         onClick={() => {
-                                            const img = stickerSetMode ? (sheetImages[currentSheetIndex] ?? null) : (spriteSheetImage ?? null);
-                                            if (img) {
+                                            if (effectiveSpriteSheetImage) {
                                                 const link = document.createElement('a');
-                                                link.href = img;
+                                                link.href = effectiveSpriteSheetImage;
                                                 link.download = `sprite-sheet-${stickerSetMode ? currentSheetIndex + 1 : 'single'}-original.png`;
                                                 link.click();
                                             }
                                         }}
-                                        disabled={stickerSetMode ? !sheetImages[currentSheetIndex] : !spriteSheetImage}
+                                        disabled={!effectiveSpriteSheetImage}
                                         className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50"
                                     >
                                         {t.downloadOriginal}
                                     </button>
                                     <button
                                         onClick={() => {
-                                            const img = stickerSetMode ? (processedSheetImages[currentSheetIndex] ?? null) : (processedSpriteSheet ?? null);
-                                            if (img) {
+                                            if (effectiveProcessedSpriteSheet) {
                                                 const link = document.createElement('a');
-                                                link.href = img;
+                                                link.href = effectiveProcessedSpriteSheet;
                                                 link.download = `sprite-sheet-${stickerSetMode ? currentSheetIndex + 1 : 'single'}-processed.png`;
                                                 link.click();
                                             }
                                         }}
-                                        disabled={stickerSetMode ? !processedSheetImages[currentSheetIndex] : !processedSpriteSheet}
+                                        disabled={!effectiveProcessedSpriteSheet}
                                         className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-green-600 hover:bg-green-50 disabled:opacity-50"
                                     >
                                         {t.downloadProcessed}
                                     </button>
                                     <button
                                         type="button"
-                                        disabled={isProcessingChromaKey || (stickerSetMode ? !sheetImages[currentSheetIndex] : !spriteSheetImage)}
+                                        disabled={effectiveIsProcessingChromaKey || !effectiveSpriteSheetImage}
                                         onClick={async () => {
-                                            const img = stickerSetMode ? (sheetImages[currentSheetIndex] ?? null) : spriteSheetImage;
-                                            if (!img) return;
+                                            if (!effectiveSpriteSheetImage) return;
                                             try {
-                                                const result = await reRunChromaKey(img);
+                                                const result = stickerSetMode
+                                                    ? await reRunChromaKey(effectiveSpriteSheetImage)
+                                                    : await singleSheetFlow.reRunChromaKey(effectiveSpriteSheetImage);
                                                 if (stickerSetMode) setProcessedSheetImages(prev => { const n = [...prev]; n[currentSheetIndex] = result; return n; });
-                                                else setProcessedSpriteSheet(result);
+                                                else singleSheetFlow.setProcessedImage(result);
                                             } catch (_) { /* error already set by hook */ }
                                         }}
                                         className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-teal-600 hover:bg-teal-50 disabled:opacity-50 flex items-center gap-1.5"
                                     >
-                                        {isProcessingChromaKey ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                                        {effectiveIsProcessingChromaKey ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                                         {t.spriteSheetReRunChromaKey}
                                     </button>
                                 </div>
@@ -711,44 +790,26 @@ const LineStickerPage: React.FC = () => {
                                 <Suspense fallback={<div className="aspect-video bg-slate-50 rounded-xl animate-pulse" />}>
                                     <SpriteSheetViewer
                                         spriteSheetImage={showOriginalInSpriteView
-                                            ? (stickerSetMode ? (sheetImages[currentSheetIndex] ?? null) : spriteSheetImage)
-                                            : (stickerSetMode
-                                                ? (processedSheetImages[currentSheetIndex] || sheetImages[currentSheetIndex] || null)
-                                                : (processedSpriteSheet || spriteSheetImage || null))}
+                                            ? effectiveSpriteSheetImage
+                                            : (effectiveProcessedSpriteSheet || effectiveSpriteSheetImage)}
                                         onImageLoad={handleImageLoad}
                                         isGenerating={isGenerating}
-                                        sliceSettings={stickerSetMode ? { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 } : { ...sliceSettings, cols: gridCols, rows: gridRows }}
-                                        setSliceSettings={stickerSetMode
-                                            ? () => { } // Read-only in set mode view
-                                            : (val: SliceSettings | ((prev: SliceSettings) => SliceSettings)) => {
-                                                if (typeof val === 'function') {
-                                                    const next = val({ ...sliceSettings, cols: gridCols, rows: gridRows });
-                                                    setSliceSettings(next);
-                                                    setGridCols(next.cols);
-                                                    setGridRows(next.rows);
-                                                } else {
-                                                    setSliceSettings(val);
-                                                    setGridCols(val.cols);
-                                                    setGridRows(val.rows);
-                                                }
-                                            }
-                                        }
+                                        sliceSettings={stickerSetMode ? { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 } : effectiveSliceSettingsForView}
+                                        setSliceSettings={stickerSetMode ? () => {} : effectiveSetSliceSettingsForView}
                                         onEditedImage={(dataUrl: string) => {
                                             if (showOriginalInSpriteView) {
                                                 if (stickerSetMode) setSheetImages(prev => { const n = [...prev]; n[currentSheetIndex] = dataUrl; return n; });
-                                                else setSpriteSheetImage(dataUrl);
+                                                else singleSheetFlow.setImage(dataUrl);
                                             } else {
                                                 if (stickerSetMode) setProcessedSheetImages(prev => { const n = [...prev]; n[currentSheetIndex] = dataUrl; return n; });
-                                                else setProcessedSpriteSheet(dataUrl);
+                                                else singleSheetFlow.setProcessedImage(dataUrl);
                                             }
                                         }}
-                                        chromaKeyProgress={chromaKeyProgress}
-                                        isProcessingChromaKey={isProcessingChromaKey}
-                                        sheetDimensions={sheetDimensions}
+                                        chromaKeyProgress={effectiveChromaKeyProgress}
+                                        isProcessingChromaKey={effectiveIsProcessingChromaKey}
+                                        sheetDimensions={effectiveSheetDimensions}
                                         onDownload={(isProcessed: boolean) => {
-                                            const img = isProcessed
-                                                ? (stickerSetMode ? processedSheetImages[currentSheetIndex] : processedSpriteSheet)
-                                                : (stickerSetMode ? sheetImages[currentSheetIndex] : spriteSheetImage);
+                                            const img = isProcessed ? effectiveProcessedSpriteSheet : effectiveSpriteSheetImage;
                                             if (img) {
                                                 const link = document.createElement('a');
                                                 link.href = img;
@@ -769,39 +830,17 @@ const LineStickerPage: React.FC = () => {
                                     </div>
                                     <Suspense fallback={<div className="grid grid-cols-4 gap-2"><div className="aspect-square bg-slate-50 animate-pulse rounded-lg" /></div>}>
                                         <FrameGrid
-                                            frames={stickerSetMode ? sheetFrames[currentSheetIndex] : stickerFrames}
+                                            frames={effectiveStickerFrames}
                                             currentFrameIndex={0}
                                             onFrameClick={() => { }}
-                                            frameIncluded={stickerSetMode ? (selectedFramesBySheet[currentSheetIndex] || []) : selectedFrames}
-                                            setFrameIncluded={(val: boolean[] | ((prev: boolean[]) => boolean[])) => {
-                                                if (stickerSetMode) {
-                                                    setSelectedFramesBySheet(prev => {
-                                                        const next = prev.map(a => [...a]);
-                                                        const s = typeof val === 'function' ? val(next[currentSheetIndex] || []) : val;
-                                                        next[currentSheetIndex] = s;
-                                                        return next;
-                                                    });
-                                                } else {
-                                                    setSelectedFrames(val);
-                                                }
-                                            }}
-                                            frameOverrides={stickerSetMode ? (sheetFrameOverrides[currentSheetIndex] || []) : frameOverrides}
-                                            setFrameOverrides={(val: FrameOverride[] | ((prev: FrameOverride[]) => FrameOverride[])) => {
-                                                if (stickerSetMode) {
-                                                    setSheetFrameOverrides(prev => {
-                                                        const next = prev.map(a => [...a]);
-                                                        const s = typeof val === 'function' ? val(next[currentSheetIndex] || []) : val;
-                                                        next[currentSheetIndex] = s;
-                                                        return next;
-                                                    });
-                                                } else {
-                                                    setFrameOverrides(val);
-                                                }
-                                            }}
+                                            frameIncluded={effectiveSelectedFrames}
+                                            setFrameIncluded={effectiveSetSelectedFrames}
+                                            frameOverrides={effectiveFrameOverrides}
+                                            setFrameOverrides={effectiveSetFrameOverrides}
                                             enablePerFrameEdit={true}
-                                            processedSpriteSheet={stickerSetMode ? (processedSheetImages[currentSheetIndex]) : processedSpriteSheet}
-                                            sliceSettings={stickerSetMode ? { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 } : { ...sliceSettings, cols: gridCols, rows: gridRows }}
-                                            sheetDimensions={sheetDimensions}
+                                            processedSpriteSheet={effectiveProcessedSpriteSheet}
+                                            sliceSettings={stickerSetMode ? { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 } : effectiveSliceSettingsForView}
+                                            sheetDimensions={effectiveSheetDimensions}
                                         />
                                     </Suspense>
                                 </div>
@@ -812,8 +851,8 @@ const LineStickerPage: React.FC = () => {
                                     isDownloading={isDownloading}
                                     processedSheetImages={processedSheetImages}
                                     sheetFrames={sheetFrames}
-                                    processedSheetImagesCurrent={processedSheetImages[currentSheetIndex] ?? null}
-                                    stickerFramesLength={stickerFrames.length}
+                                    processedSheetImagesCurrent={stickerSetMode ? (processedSheetImages[currentSheetIndex] ?? null) : singleSheetFlow.processedImage}
+                                    stickerFramesLength={effectiveStickerFrames.length}
                                     selectedCount={selectedCount}
                                     onDownloadSetOneClick={downloadSetOneClick}
                                     onDownloadStickerSetZip={downloadStickerSetZip}
