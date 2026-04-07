@@ -22,6 +22,13 @@ export function useLineStickerSelection({
   setSelectedFramesBySheet,
   setSelectedFrames,
 }: UseLineStickerSelectionParams) {
+  const activeSelectedFrames = useMemo(() => {
+    if (stickerSetMode) {
+      return selectedFramesBySheet[currentSheetIndex] ?? [];
+    }
+    return selectedFrames;
+  }, [stickerSetMode, selectedFramesBySheet, currentSheetIndex, selectedFrames]);
+
   const selectAll = useCallback(() => {
     if (stickerSetMode) {
       setSelectedFramesBySheet((prev) => {
@@ -63,17 +70,14 @@ export function useLineStickerSelection({
   ]);
 
   const selectedCount = useMemo(() => {
-    if (stickerSetMode) {
-      return selectedFramesBySheet[currentSheetIndex]?.filter(Boolean).length || 0;
-    }
-    return selectedFrames.filter(Boolean).length;
-  }, [stickerSetMode, selectedFramesBySheet, currentSheetIndex, selectedFrames]);
+    return activeSelectedFrames.filter(Boolean).length;
+  }, [activeSelectedFrames]);
 
   const selectedIndices = useMemo(() => {
-    return selectedFrames
+    return activeSelectedFrames
       .map((selected, index) => (selected ? index : -1))
       .filter((index) => index !== -1);
-  }, [selectedFrames]);
+  }, [activeSelectedFrames]);
 
   return {
     selectAll,

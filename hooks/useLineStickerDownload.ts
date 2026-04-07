@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import JSZip from 'jszip';
 import { logger } from '../utils/logger';
 import { useLanguage } from './useLanguage';
@@ -27,9 +27,24 @@ export const useLineStickerDownload = ({
     const { t } = useLanguage();
     const [isDownloading, setIsDownloading] = useState(false);
     const [downloadFormat, setDownloadFormat] = useState<DownloadFormat>('png');
+    const conversionCacheRef = useRef<Map<string, Promise<Blob>>>(new Map());
+
+    useEffect(() => {
+        conversionCacheRef.current.clear();
+    }, [stickerFrames, sheetFrames, processedSheetImages, sheetImages]);
+
+    const getCacheKey = useCallback((base64: string, format: DownloadFormat) => {
+        return `${format}:${base64}`;
+    }, []);
 
     const convertToFormat = useCallback(async (base64: string, format: DownloadFormat): Promise<Blob> => {
-        return new Promise((resolve, reject) => {
+        const cacheKey = getCacheKey(base64, format);
+        const cached = conversionCacheRef.current.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
+        const conversionPromise = new Promise<Blob>((resolve, reject) => {
             const img = document.createElement('img');
             img.onload = () => {
                 const canvas = document.createElement('canvas');
@@ -53,8 +68,14 @@ export const useLineStickerDownload = ({
             };
             img.onerror = () => reject(new Error('Failed to load image for format conversion'));
             img.src = base64;
+        }).catch((error) => {
+            conversionCacheRef.current.delete(cacheKey);
+            throw error;
         });
-    }, []);
+
+        conversionCacheRef.current.set(cacheKey, conversionPromise);
+        return conversionPromise;
+    }, [getCacheKey]);
 
     const downloadSingle = useCallback(async (index: number) => {
         const frames = stickerSetMode ? sheetFrames[currentSheetIndex] : stickerFrames;

@@ -1,8 +1,9 @@
 import React from 'react';
 import { Download, FileArchive, Check } from '../Icons';
+import type { Translations } from '../../i18n/types';
 
 export interface LineStickerDownloadSectionProps {
-  t: Record<string, string>;
+  t: Translations;
   stickerSetMode: boolean;
   isDownloading: boolean;
   processedSheetImages: (string | null)[];

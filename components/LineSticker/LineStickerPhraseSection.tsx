@@ -1,9 +1,11 @@
 import React from 'react';
-import { Loader2, Wand2, Upload, Download, Copy, Check } from '../Icons';
+import { Loader2, Wand2, Upload, Download, Copy, Check, RefreshCw, AlertTriangle } from '../Icons';
+import type { Translations } from '../../i18n/types';
+import type { LineStickerSheetStatus } from '../../hooks/useLineStickerSheetGeneration';
 
 export interface LineStickerPhraseSectionProps {
   /** i18n */
-  t: Record<string, string>;
+  t: Translations;
   stickerSetMode: boolean;
   currentSheetIndex: 0 | 1 | 2;
   phraseGridList: string[];
@@ -27,6 +29,11 @@ export interface LineStickerPhraseSectionProps {
   sourceImage: string | null;
   onGenerate: () => void;
   onGenerateAllSheets: () => void;
+  onCancelGeneration: () => void;
+  sheetStatuses: LineStickerSheetStatus[];
+  hasFailedSheets: boolean;
+  onRetryFailedSheets: () => void;
+  onRetrySheet: (sheetIndex: 0 | 1 | 2) => void;
 }
 
 export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> = ({
@@ -52,6 +59,11 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
   sourceImage,
   onGenerate,
   onGenerateAllSheets,
+  onCancelGeneration,
+  sheetStatuses,
+  hasFailedSheets,
+  onRetryFailedSheets,
+  onRetrySheet,
 }) => (
   <>
     <div>
@@ -197,17 +209,105 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
       )}
     </div>
 
-    <button
-      onClick={stickerSetMode ? onGenerateAllSheets : onGenerate}
-      disabled={isGenerating || !sourceImage || !previewPrompt}
-      className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-    >
+    {stickerSetMode && (
+      <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <h3 className="text-sm font-semibold text-slate-800">{t.lineStickerSheetProgressTitle}</h3>
+          {hasFailedSheets && (
+            <button
+              type="button"
+              onClick={onRetryFailedSheets}
+              disabled={isGenerating}
+              className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              {t.lineStickerRetryFailed}
+            </button>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          {sheetStatuses.map((status) => {
+            const isFailed = status.stage === 'failed';
+            const isCompleted = status.stage === 'completed';
+            const isActive = status.stage === 'queued' || status.stage === 'generating' || status.stage === 'processing' || status.stage === 'slicing';
+            const progressBarColor = isFailed
+              ? 'bg-red-500'
+              : isCompleted
+                ? 'bg-emerald-500'
+                : 'bg-green-500';
+
+            return (
+              <div key={status.sheetIndex} className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-900">
+                        {t.lineStickerSheetN.replace('{n}', String(status.sheetIndex + 1))}
+                      </span>
+                      {isActive ? <Loader2 className="w-3.5 h-3.5 text-green-600 animate-spin" /> : null}
+                      {isCompleted ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : null}
+                      {isFailed ? <AlertTriangle className="w-3.5 h-3.5 text-red-600" /> : null}
+                    </div>
+                    <p className={`text-xs mt-1 ${isFailed ? 'text-red-600' : 'text-slate-600'}`}>
+                      {status.message || t.lineStickerSheetN.replace('{n}', String(status.sheetIndex + 1))}
+                    </p>
+                    {status.error ? (
+                      <p className="text-xs mt-1 text-red-600 break-words">{status.error}</p>
+                    ) : null}
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs font-medium text-slate-500">{status.progress}%</span>
+                    {isFailed ? (
+                      <button
+                        type="button"
+                        onClick={() => onRetrySheet(status.sheetIndex)}
+                        disabled={isGenerating}
+                        className="text-xs px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 font-medium inline-flex items-center gap-1 disabled:opacity-50"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        {t.lineStickerRetrySheetN.replace('{n}', String(status.sheetIndex + 1))}
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${progressBarColor}`}
+                    style={{ width: `${status.progress}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    )}
+
+    <div className="flex flex-col sm:flex-row gap-3">
+      <button
+        onClick={stickerSetMode ? onGenerateAllSheets : onGenerate}
+        disabled={isGenerating || !sourceImage || !previewPrompt}
+        className="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+      >
+        {isGenerating ? (
+          <Loader2 className="w-5 h-5 animate-spin" />
+        ) : (
+          <Wand2 className="w-5 h-5" />
+        )}
+        {stickerSetMode ? t.lineStickerGenerateAll : t.lineStickerGenerate}
+      </button>
       {isGenerating ? (
-        <Loader2 className="w-5 h-5 animate-spin" />
-      ) : (
-        <Wand2 className="w-5 h-5" />
-      )}
-      {stickerSetMode ? t.lineStickerGenerateAll : t.lineStickerGenerate}
-    </button>
+        <button
+          type="button"
+          onClick={onCancelGeneration}
+          className="sm:w-auto py-4 px-5 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-all"
+        >
+          {t.cancel}
+        </button>
+      ) : null}
+    </div>
   </>
 );

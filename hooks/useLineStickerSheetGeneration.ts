@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { getErrorMessage } from '../types/errors';
 import { removeBackgroundAI } from '../utils/aiBackgroundRemoval';
@@ -8,12 +8,52 @@ import type { BgRemovalMethod, ChromaKeyColorType } from '../types';
 
 const SET_PHRASES_COUNT = 48;
 const FRAMES_PER_SHEET = 16;
+const BULK_CONCURRENCY = 2;
+const SHEET_INDICES = [0, 1, 2] as const;
+const CANCELLED_REQUEST_MESSAGE = '__line_sticker_generation_cancelled__';
+
+type SheetIndex = (typeof SHEET_INDICES)[number];
+
+export type LineStickerSheetStage =
+  | 'idle'
+  | 'queued'
+  | 'generating'
+  | 'processing'
+  | 'slicing'
+  | 'completed'
+  | 'failed';
+
+export interface LineStickerSheetStatus {
+  sheetIndex: SheetIndex;
+  stage: LineStickerSheetStage;
+  progress: number;
+  message: string;
+  error: string | null;
+  attempts: number;
+}
+
+function isActiveSheetStage(stage: LineStickerSheetStage): boolean {
+  return (
+    stage === 'queued' ||
+    stage === 'generating' ||
+    stage === 'processing' ||
+    stage === 'slicing'
+  );
+}
 
 export interface LineStickerGenerationTexts {
   errorApiKey: string;
   errorNoImage: string;
   lineStickerErrorNeedPhrases: string;
   lineStickerParallelGenerating: string;
+  lineStickerGeneratingSheetN: string;
+  lineStickerProcessingSheetN: string;
+  lineStickerQueuedSheetN: string;
+  lineStickerSlicingSheetN: string;
+  lineStickerSheetReadyN: string;
+  lineStickerSheetFailedN: string;
+  lineStickerRetryFailed: string;
+  lineStickerErrorSomeSheetsFailed: string;
   statusProcessing: string;
   errorGeneration: string;
 }
@@ -44,12 +84,20 @@ export interface UseLineStickerSheetGenerationOptions {
   currentSheetIndex: 0 | 1 | 2;
   generateSingleSheet: (
     phraseListOverride?: string[],
-    actionDescsOverride?: string[]
+    actionDescsOverride?: string[],
+    options?: {
+      suppressUiState?: boolean;
+      throwOnError?: boolean;
+      onStatusChange?: (status: string) => void;
+    }
   ) => Promise<string | null>;
   texts: LineStickerGenerationTexts;
   chroma: { chromaKeyColor: ChromaKeyColorType; bgRemovalMethod: BgRemovalMethod };
   setters: LineStickerGenerationSetters;
-  sliceProcessedSheetToFrames: (processedImage: string) => Promise<string[]>;
+  sliceProcessedSheetToFrames: (
+    processedImage: string,
+    options?: { sheetIndex?: 0 | 1 | 2 }
+  ) => Promise<string[]>;
 }
 
 export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenerationOptions) {
@@ -80,6 +128,132 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
     sliceProcessedSheetToFrames,
   } = options;
 
+  const [sheetStatuses, setSheetStatuses] = useState<LineStickerSheetStatus[]>(() =>
+    SHEET_INDICES.map((sheetIndex) => ({
+      sheetIndex,
+      stage: 'idle',
+      progress: 0,
+      message: '',
+      error: null,
+      attempts: 0,
+    }))
+  );
+  const requestCounterRef = useRef(0);
+  const activeRequestIdRef = useRef<number | null>(null);
+
+  const failedSheetIndices = useMemo(
+    () =>
+      sheetStatuses
+        .filter((status) => status.stage === 'failed')
+        .map((status) => status.sheetIndex),
+    [sheetStatuses]
+  );
+
+  const updateSheetStatus = useCallback(
+    (
+      sheetIndex: SheetIndex,
+      updater:
+        | Partial<LineStickerSheetStatus>
+        | ((current: LineStickerSheetStatus) => Partial<LineStickerSheetStatus>)
+    ) => {
+      setSheetStatuses((prev) =>
+        prev.map((entry) => {
+          if (entry.sheetIndex !== sheetIndex) {
+            return entry;
+          }
+          const patch = typeof updater === 'function' ? updater(entry) : updater;
+          return { ...entry, ...patch };
+        })
+      );
+    },
+    []
+  );
+
+  const isRequestActive = useCallback((requestId: number) => {
+    return activeRequestIdRef.current === requestId;
+  }, []);
+
+  const isCancelledRequestError = useCallback((err: unknown) => {
+    return err instanceof Error && err.message === CANCELLED_REQUEST_MESSAGE;
+  }, []);
+
+  const throwIfRequestInactive = useCallback(
+    (requestId: number) => {
+      if (!isRequestActive(requestId)) {
+        throw new Error(CANCELLED_REQUEST_MESSAGE);
+      }
+    },
+    [isRequestActive]
+  );
+
+  const resetInFlightSheetStatuses = useCallback(() => {
+    setSheetStatuses((prev) =>
+      prev.map((status) =>
+        isActiveSheetStage(status.stage)
+          ? {
+              ...status,
+              stage: 'idle',
+              progress: 0,
+              message: '',
+              error: null,
+            }
+          : status
+      )
+    );
+  }, []);
+
+  const startRequest = useCallback(() => {
+    const requestId = requestCounterRef.current + 1;
+    requestCounterRef.current = requestId;
+    activeRequestIdRef.current = requestId;
+    resetInFlightSheetStatuses();
+    setChromaKeyProgress(0);
+    setIsProcessingChromaKey(false);
+    return requestId;
+  }, [resetInFlightSheetStatuses, setChromaKeyProgress, setIsProcessingChromaKey]);
+
+  const finishRequest = useCallback(
+    (requestId: number, clearStatusText: boolean = true) => {
+      if (!isRequestActive(requestId)) {
+        return;
+      }
+      activeRequestIdRef.current = null;
+      setIsGenerating(false);
+      setIsProcessingChromaKey(false);
+      setChromaKeyProgress(0);
+      if (clearStatusText) {
+        setStatusText('');
+      }
+    },
+    [
+      isRequestActive,
+      setChromaKeyProgress,
+      setIsGenerating,
+      setIsProcessingChromaKey,
+      setStatusText,
+    ]
+  );
+
+  const cancelActiveGeneration = useCallback(() => {
+    activeRequestIdRef.current = null;
+    resetInFlightSheetStatuses();
+    setIsGenerating(false);
+    setIsProcessingChromaKey(false);
+    setChromaKeyProgress(0);
+    setStatusText('');
+  }, [
+    resetInFlightSheetStatuses,
+    setChromaKeyProgress,
+    setIsGenerating,
+    setIsProcessingChromaKey,
+    setStatusText,
+  ]);
+
+  const getSheetLabel = useCallback(
+    (sheetIndex: SheetIndex) => String(sheetIndex + 1),
+    []
+  );
+
   const toUserError = useCallback(
     (err: unknown) => {
       const msg = getErrorMessage(err);
@@ -94,7 +268,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
   );
 
   const removeBackground = useCallback(
-    async (image: string, withProgress: boolean): Promise<string> => {
+    async (image: string, onProgress?: (progress: number) => void): Promise<string> => {
       if (bgRemovalMethod === 'ai') {
         return removeBackgroundAI(image, chromaKeyColor);
       }
@@ -102,10 +276,10 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
         image,
         CHROMA_KEY_COLORS[chromaKeyColor],
         CHROMA_KEY_FUZZ,
-        withProgress ? (progress) => setChromaKeyProgress(progress) : undefined
+        onProgress
       );
     },
-    [bgRemovalMethod, chromaKeyColor, setChromaKeyProgress]
+    [bgRemovalMethod, chromaKeyColor]
   );
 
   const reRunChromaKey = useCallback(
@@ -113,7 +287,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
       setIsProcessingChromaKey(true);
       setChromaKeyProgress(0);
       try {
-        const result = await removeBackground(image, true);
+        const result = await removeBackground(image, (progress) => setChromaKeyProgress(progress));
         setChromaKeyProgress(100);
         return result;
       } finally {
@@ -122,6 +296,295 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
     },
     [removeBackground, setIsProcessingChromaKey, setChromaKeyProgress]
   );
+
+  const runSetSheetPipeline = useCallback(
+    async (
+      sheetIndex: SheetIndex,
+      options: {
+        useGlobalProgress?: boolean;
+        requestId: number;
+      }
+    ) => {
+      const { useGlobalProgress = false, requestId } = options;
+      throwIfRequestInactive(requestId);
+
+      const phraseSlice = setPhrasesList.slice(
+        sheetIndex * FRAMES_PER_SHEET,
+        (sheetIndex + 1) * FRAMES_PER_SHEET
+      );
+      const actionSlice = actionDescsList.slice(
+        sheetIndex * FRAMES_PER_SHEET,
+        (sheetIndex + 1) * FRAMES_PER_SHEET
+      );
+
+      if (phraseSlice.length < FRAMES_PER_SHEET) {
+        throw new Error(
+          t.lineStickerErrorNeedPhrases.replace('{n}', String(setPhrasesList.length))
+        );
+      }
+
+      updateSheetStatus(sheetIndex, (current) => ({
+        stage: 'generating',
+        progress: 15,
+        message: t.lineStickerGeneratingSheetN.replace('{n}', getSheetLabel(sheetIndex)),
+        error: null,
+        attempts: current.attempts + 1,
+      }));
+
+      const generated = await generateSingleSheet(phraseSlice, actionSlice, {
+        suppressUiState: true,
+        throwOnError: true,
+        onStatusChange: (status) => {
+          if (!status || !isRequestActive(requestId)) {
+            return;
+          }
+          updateSheetStatus(sheetIndex, {
+            message: status,
+          });
+        },
+      });
+      throwIfRequestInactive(requestId);
+      if (!generated) {
+        throw new Error(t.errorGeneration);
+      }
+
+      setSheetImages((prev) => {
+        const next = [...prev];
+        next[sheetIndex] = generated;
+        return next;
+      });
+
+      updateSheetStatus(sheetIndex, {
+        stage: 'processing',
+        progress: 40,
+        message: t.lineStickerProcessingSheetN.replace('{n}', getSheetLabel(sheetIndex)),
+        error: null,
+      });
+
+      if (useGlobalProgress) {
+        throwIfRequestInactive(requestId);
+        setIsProcessingChromaKey(true);
+        setChromaKeyProgress(0);
+      }
+
+      const processed = await removeBackground(generated, (progress) => {
+        if (!isRequestActive(requestId)) {
+          return;
+        }
+        const normalizedProgress = Math.min(85, 40 + Math.round(progress * 0.45));
+        updateSheetStatus(sheetIndex, {
+          stage: 'processing',
+          progress: normalizedProgress,
+          message: t.lineStickerProcessingSheetN.replace('{n}', getSheetLabel(sheetIndex)),
+        });
+        if (useGlobalProgress) {
+          setChromaKeyProgress(progress);
+        }
+      });
+      throwIfRequestInactive(requestId);
+
+      setProcessedSheetImages((prev) => {
+        const next = [...prev];
+        next[sheetIndex] = processed;
+        return next;
+      });
+
+      updateSheetStatus(sheetIndex, {
+        stage: 'slicing',
+        progress: 90,
+        message: t.lineStickerSlicingSheetN.replace('{n}', getSheetLabel(sheetIndex)),
+        error: null,
+      });
+
+      const frames = await sliceProcessedSheetToFrames(processed, { sheetIndex });
+      throwIfRequestInactive(requestId);
+      setSheetFrames((prev) => {
+        const next = [...prev];
+        next[sheetIndex] = frames;
+        return next;
+      });
+      setSelectedFramesBySheet((prev) => {
+        const next = prev.map((entry) => [...entry]);
+        next[sheetIndex] = new Array(frames.length).fill(false);
+        return next;
+      });
+
+      if (useGlobalProgress) {
+        throwIfRequestInactive(requestId);
+        setChromaKeyProgress(100);
+        setIsProcessingChromaKey(false);
+      }
+
+      updateSheetStatus(sheetIndex, {
+        stage: 'completed',
+        progress: 100,
+        message: t.lineStickerSheetReadyN.replace('{n}', getSheetLabel(sheetIndex)),
+        error: null,
+      });
+    },
+    [
+      actionDescsList,
+      generateSingleSheet,
+      isRequestActive,
+      getSheetLabel,
+      removeBackground,
+      setChromaKeyProgress,
+      setIsProcessingChromaKey,
+      setPhrasesList,
+      setProcessedSheetImages,
+      setSelectedFramesBySheet,
+      setSheetFrames,
+      setSheetImages,
+      sliceProcessedSheetToFrames,
+      t,
+      throwIfRequestInactive,
+      updateSheetStatus,
+    ]
+  );
+
+  const markSheetFailed = useCallback(
+    (requestId: number, sheetIndex: SheetIndex, err: unknown) => {
+      if (!isRequestActive(requestId) || isCancelledRequestError(err)) {
+        return;
+      }
+      const message = getErrorMessage(err);
+      updateSheetStatus(sheetIndex, {
+        stage: 'failed',
+        message: t.lineStickerSheetFailedN.replace('{n}', getSheetLabel(sheetIndex)),
+        error: message,
+      });
+    },
+    [getSheetLabel, isCancelledRequestError, isRequestActive, t, updateSheetStatus]
+  );
+
+  const retrySheet = useCallback(
+    async (sheetIndex: SheetIndex) => {
+      if (!getEffectiveApiKey()) {
+        setError(t.errorApiKey);
+        setShowSettings(true);
+        return;
+      }
+      if (!sourceImage) {
+        setError(t.errorNoImage);
+        return;
+      }
+
+      const requestId = startRequest();
+      setIsGenerating(true);
+      setError(null);
+      setStatusText(t.lineStickerGeneratingSheetN.replace('{n}', getSheetLabel(sheetIndex)));
+      try {
+        await runSetSheetPipeline(sheetIndex, { useGlobalProgress: true, requestId });
+        if (isRequestActive(requestId)) {
+          setStatusText('');
+        }
+      } catch (err: unknown) {
+        if (!isCancelledRequestError(err)) {
+          markSheetFailed(requestId, sheetIndex, err);
+          if (isRequestActive(requestId)) {
+            toUserError(err);
+          }
+        }
+      } finally {
+        finishRequest(requestId);
+      }
+    },
+    [
+      finishRequest,
+      getEffectiveApiKey,
+      getSheetLabel,
+      isCancelledRequestError,
+      isRequestActive,
+      markSheetFailed,
+      runSetSheetPipeline,
+      setError,
+      setIsGenerating,
+      setShowSettings,
+      setStatusText,
+      sourceImage,
+      startRequest,
+      t,
+      toUserError,
+    ]
+  );
+
+  const retryFailedSheets = useCallback(async () => {
+    if (failedSheetIndices.length === 0) {
+      return;
+    }
+
+    if (!getEffectiveApiKey()) {
+      setError(t.errorApiKey);
+      setShowSettings(true);
+      return;
+    }
+    if (!sourceImage) {
+      setError(t.errorNoImage);
+      return;
+    }
+
+    const requestId = startRequest();
+    setStatusText(t.lineStickerRetryFailed);
+    setIsGenerating(true);
+    setError(null);
+    setIsProcessingChromaKey(bgRemovalMethod === 'chroma');
+    try {
+      const queue = [...failedSheetIndices];
+      queue.forEach((sheetIndex) => {
+        if (!isRequestActive(requestId)) {
+          return;
+        }
+        updateSheetStatus(sheetIndex, {
+          stage: 'queued',
+          progress: 5,
+          message: t.lineStickerQueuedSheetN.replace('{n}', getSheetLabel(sheetIndex)),
+          error: null,
+        });
+      });
+
+      const workers = Array.from(
+        { length: Math.min(BULK_CONCURRENCY, queue.length) },
+        async () => {
+          while (queue.length > 0 && isRequestActive(requestId)) {
+            const nextSheet = queue.shift();
+            if (nextSheet == null) {
+              return;
+            }
+            try {
+              await runSetSheetPipeline(nextSheet, { requestId });
+            } catch (err: unknown) {
+              if (!isCancelledRequestError(err)) {
+                markSheetFailed(requestId, nextSheet, err);
+              }
+            }
+          }
+        }
+      );
+
+      await Promise.all(workers);
+    } finally {
+      finishRequest(requestId);
+    }
+  }, [
+    bgRemovalMethod,
+    failedSheetIndices,
+    finishRequest,
+    getEffectiveApiKey,
+    getSheetLabel,
+    isCancelledRequestError,
+    isRequestActive,
+    markSheetFailed,
+    runSetSheetPipeline,
+    setError,
+    setIsGenerating,
+    setIsProcessingChromaKey,
+    setShowSettings,
+    setStatusText,
+    sourceImage,
+    startRequest,
+    t,
+    updateSheetStatus,
+  ]);
 
   const handleGenerate = useCallback(async () => {
     if (!getEffectiveApiKey()) {
@@ -134,6 +597,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
       return;
     }
 
+    const requestId = startRequest();
     setIsGenerating(true);
     setError(null);
     try {
@@ -146,70 +610,60 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
           return;
         }
 
-        const phraseSlice = setPhrasesList.slice(
-          currentSheetIndex * FRAMES_PER_SHEET,
-          (currentSheetIndex + 1) * FRAMES_PER_SHEET
+        setStatusText(
+          t.lineStickerGeneratingSheetN.replace('{n}', getSheetLabel(currentSheetIndex))
         );
-        const actionSlice = actionDescsList.slice(
-          currentSheetIndex * FRAMES_PER_SHEET,
-          (currentSheetIndex + 1) * FRAMES_PER_SHEET
-        );
-        const generated = await generateSingleSheet(phraseSlice, actionSlice);
-        if (!generated) {
-          setIsGenerating(false);
-          return;
+        await runSetSheetPipeline(currentSheetIndex, {
+          useGlobalProgress: true,
+          requestId,
+        });
+        if (isRequestActive(requestId)) {
+          setStatusText('');
         }
-
-        setSheetImages((prev) => {
-          const next = [...prev];
-          next[currentSheetIndex] = generated;
-          return next;
-        });
-
-        setStatusText(t.statusProcessing);
-        setIsProcessingChromaKey(true);
-        const processed = await removeBackground(generated, true);
-        setIsProcessingChromaKey(false);
-
-        setProcessedSheetImages((prev) => {
-          const next = [...prev];
-          next[currentSheetIndex] = processed;
-          return next;
-        });
-
-        const frames = await sliceProcessedSheetToFrames(processed);
-        setSheetFrames((prev) => {
-          const next = [...prev];
-          next[currentSheetIndex] = frames;
-          return next;
-        });
-        setSelectedFramesBySheet((prev) => {
-          const next = prev.map((entry) => [...entry]);
-          next[currentSheetIndex] = new Array(frames.length).fill(false);
-          return next;
-        });
-        setStatusText('');
       } else {
-        const generated = await generateSingleSheet();
+        const generated = await generateSingleSheet(undefined, undefined, {
+          suppressUiState: true,
+          throwOnError: true,
+          onStatusChange: (status) => {
+            if (!status || !isRequestActive(requestId)) {
+              return;
+            }
+            setStatusText(status);
+          },
+        });
+        throwIfRequestInactive(requestId);
         if (!generated) {
-          setIsGenerating(false);
-          return;
+          throw new Error(t.errorGeneration);
         }
 
         setSpriteSheetImage(generated);
         setStatusText(t.statusProcessing);
         setIsProcessingChromaKey(true);
-        const processed = await removeBackground(generated, true);
+        const processed = await removeBackground(generated, (progress) => {
+          if (!isRequestActive(requestId)) {
+            return;
+          }
+          setChromaKeyProgress(progress);
+        });
+        throwIfRequestInactive(requestId);
         setIsProcessingChromaKey(false);
         setProcessedSpriteSheet(processed);
         setStatusText('');
       }
     } catch (err: unknown) {
-      toUserError(err);
+      if (!isCancelledRequestError(err)) {
+        if (stickerSetMode) {
+          markSheetFailed(requestId, currentSheetIndex, err);
+        }
+        if (isRequestActive(requestId)) {
+          toUserError(err);
+        }
+      }
     } finally {
-      setIsGenerating(false);
+      finishRequest(requestId);
     }
   }, [
+    finishRequest,
     getEffectiveApiKey,
     setError,
     t,
@@ -217,20 +671,21 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
     sourceImage,
     setIsGenerating,
     stickerSetMode,
-    setPhrasesList,
     currentSheetIndex,
-    actionDescsList,
     generateSingleSheet,
-    setSheetImages,
+    getSheetLabel,
+    isCancelledRequestError,
+    isRequestActive,
+    markSheetFailed,
     setStatusText,
     setIsProcessingChromaKey,
     removeBackground,
-    setProcessedSheetImages,
-    sliceProcessedSheetToFrames,
-    setSheetFrames,
-    setSelectedFramesBySheet,
+    runSetSheetPipeline,
     setSpriteSheetImage,
     setProcessedSpriteSheet,
+    setChromaKeyProgress,
+    startRequest,
+    throwIfRequestInactive,
     toUserError,
   ]);
 
@@ -251,54 +706,65 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
       return;
     }
 
+    const requestId = startRequest();
     setStatusText(t.lineStickerParallelGenerating);
     setIsGenerating(true);
+    setIsProcessingChromaKey(bgRemovalMethod === 'chroma');
+    setChromaKeyProgress(0);
     setError(null);
     try {
-      const results = await Promise.all(
-        [0, 1, 2].map((i) => {
-          const phraseSlice = setPhrasesList.slice(
-            i * FRAMES_PER_SHEET,
-            (i + 1) * FRAMES_PER_SHEET
-          );
-          const actionSlice = actionDescsList.slice(
-            i * FRAMES_PER_SHEET,
-            (i + 1) * FRAMES_PER_SHEET
-          );
-          return generateSingleSheet(phraseSlice, actionSlice);
-        })
+      SHEET_INDICES.forEach((sheetIndex) => {
+        if (!isRequestActive(requestId)) {
+          return;
+        }
+        updateSheetStatus(sheetIndex, {
+          stage: 'queued',
+          progress: 5,
+          message: t.lineStickerQueuedSheetN.replace('{n}', getSheetLabel(sheetIndex)),
+          error: null,
+        });
+      });
+
+      const queue = [...SHEET_INDICES];
+      const failedIndices: SheetIndex[] = [];
+      const workers = Array.from(
+        { length: Math.min(BULK_CONCURRENCY, queue.length) },
+        async () => {
+          while (queue.length > 0 && isRequestActive(requestId)) {
+            const nextSheet = queue.shift();
+            if (nextSheet == null) {
+              return;
+            }
+            try {
+              await runSetSheetPipeline(nextSheet, { requestId });
+            } catch (err: unknown) {
+              if (!isCancelledRequestError(err)) {
+                failedIndices.push(nextSheet);
+                markSheetFailed(requestId, nextSheet, err);
+              }
+            }
+          }
+        }
       );
 
-      setIsGenerating(true);
-      const validResults = results.filter((value): value is string => value !== null);
-      if (validResults.length < 3) {
-        setError(t.errorGeneration);
-        setIsGenerating(false);
-        return;
+      await Promise.all(workers);
+
+      if (isRequestActive(requestId) && failedIndices.length > 0) {
+        setError(t.lineStickerErrorSomeSheetsFailed);
       }
-
-      setSheetImages(validResults);
-      setStatusText(t.statusProcessing);
-
-      const processed = await Promise.all(
-        validResults.map((image) => removeBackground(image, false))
-      );
-      setProcessedSheetImages(processed);
-
-      const allFrames = await Promise.all(
-        processed.map((image) => sliceProcessedSheetToFrames(image))
-      );
-      setSheetFrames(allFrames);
-      setSelectedFramesBySheet(
-        allFrames.map((frames) => new Array(frames.length).fill(false))
-      );
-      setStatusText('');
+      if (isRequestActive(requestId)) {
+        setStatusText('');
+      }
     } catch (err: unknown) {
-      toUserError(err);
+      if (!isCancelledRequestError(err) && isRequestActive(requestId)) {
+        toUserError(err);
+      }
     } finally {
-      setIsGenerating(false);
+      finishRequest(requestId);
     }
   }, [
+    bgRemovalMethod,
+    finishRequest,
     getEffectiveApiKey,
     setError,
     t,
@@ -307,20 +773,26 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
     setPhrasesList,
     setStatusText,
     setIsGenerating,
-    actionDescsList,
-    generateSingleSheet,
-    setSheetImages,
-    removeBackground,
-    setProcessedSheetImages,
-    sliceProcessedSheetToFrames,
-    setSheetFrames,
-    setSelectedFramesBySheet,
+    setIsProcessingChromaKey,
+    setChromaKeyProgress,
+    getSheetLabel,
+    isCancelledRequestError,
+    isRequestActive,
+    markSheetFailed,
+    runSetSheetPipeline,
+    startRequest,
     toUserError,
+    updateSheetStatus,
   ]);
 
   return {
     handleGenerate,
     handleGenerateAllSheets,
     reRunChromaKey,
+    sheetStatuses,
+    retryFailedSheets,
+    retrySheet,
+    hasFailedSheets: failedSheetIndices.length > 0,
+    cancelActiveGeneration,
   };
 }

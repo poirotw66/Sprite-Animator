@@ -348,6 +348,14 @@ export interface Translations {
   lineStickerGeneratingSheetN: string;
   lineStickerProcessingSheetN: string;
   lineStickerParallelGenerating: string;
+  lineStickerQueuedSheetN: string;
+  lineStickerSlicingSheetN: string;
+  lineStickerSheetReadyN: string;
+  lineStickerSheetFailedN: string;
+  lineStickerRetryFailed: string;
+  lineStickerRetrySheetN: string;
+  lineStickerErrorSomeSheetsFailed: string;
+  lineStickerSheetProgressTitle: string;
   lineStickerPhrasePlaceholder: string;
   lineStickerTotalFramesSet: string;
   lineStickerDownloadCurrentSheet: string;

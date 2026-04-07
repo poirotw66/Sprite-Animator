@@ -12,6 +12,7 @@ interface SpriteSheetViewerProps {
   sheetDimensions: { width: number; height: number };
   sliceSettings: SliceSettings;
   setSliceSettings: React.Dispatch<React.SetStateAction<SliceSettings>>;
+  lockGridSize?: boolean;
   onImageLoad: (e: React.SyntheticEvent<HTMLImageElement>) => void;
   onDownload: (isProcessed: boolean) => void;
   onDownloadOriginal?: () => void; // Download original sprite sheet
@@ -27,6 +28,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   sheetDimensions,
   sliceSettings,
   setSliceSettings,
+  lockGridSize = false,
   onImageLoad,
   onDownload,
   onDownloadOriginal,
@@ -759,7 +761,8 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                   max="10"
                   value={sliceSettings.cols}
                   onChange={handleColsChange}
-                  className="flex-1 text-center text-sm font-bold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200"
+                  disabled={lockGridSize}
+                  className="flex-1 text-center text-sm font-bold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
                   aria-label={t.cols}
                 />
                 {cellInfo && (
@@ -777,7 +780,8 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                   max="10"
                   value={sliceSettings.rows}
                   onChange={handleRowsChange}
-                  className="flex-1 text-center text-sm font-bold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200"
+                  disabled={lockGridSize}
+                  className="flex-1 text-center text-sm font-bold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
                   aria-label={t.rows}
                 />
                 {cellInfo && (

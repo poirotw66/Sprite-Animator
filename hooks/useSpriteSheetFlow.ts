@@ -3,8 +3,8 @@
  * Used by PartingPage and LineStickerPage (single-sheet mode) to avoid duplicate logic.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import type { SyntheticEvent } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import type { Dispatch, SetStateAction, SyntheticEvent } from 'react';
 import {
   sliceSpriteSheet,
   sliceSpriteSheetByCellRects,
@@ -33,11 +33,11 @@ export interface UseSpriteSheetFlowOptions {
 export interface UseSpriteSheetFlowResult {
   // Source image (uploaded or set by page)
   image: string | null;
-  setImage: (value: string | null) => void;
+  setImage: Dispatch<SetStateAction<string | null>>;
 
   // After chroma key (or external set via setProcessedImage)
   processedImage: string | null;
-  setProcessedImage: (value: string | null) => void;
+  setProcessedImage: Dispatch<SetStateAction<string | null>>;
 
   // Slice config
   sliceSettings: SliceSettings;
@@ -64,8 +64,8 @@ export interface UseSpriteSheetFlowResult {
   // Chroma key progress (setters for external callers e.g. generation hook)
   chromaKeyProgress: number;
   isProcessingChromaKey: boolean;
-  setChromaKeyProgress: (value: number) => void;
-  setIsProcessingChromaKey: (value: boolean) => void;
+  setChromaKeyProgress: Dispatch<SetStateAction<number>>;
+  setIsProcessingChromaKey: Dispatch<SetStateAction<boolean>>;
 
   // Actions
   reRunChromaKey: (image: string) => Promise<string>;
@@ -94,10 +94,6 @@ export function useSpriteSheetFlow(
   const [isProcessingChromaKey, setIsProcessingChromaKey] = useState(false);
 
   const activeChromaKeyColor = CHROMA_KEY_COLORS[chromaKeyColor];
-
-  const setProcessedImage = useCallback((value: string | null) => {
-    setProcessedImageState(value);
-  }, []);
 
   // Chroma key: when image changes and runChromaAutomatically && removeBackground
   useEffect(() => {
@@ -340,7 +336,7 @@ export function useSpriteSheetFlow(
     image,
     setImage,
     processedImage,
-    setProcessedImage,
+    setProcessedImage: setProcessedImageState,
     sliceSettings,
     setSliceSettings,
     removeBackground,

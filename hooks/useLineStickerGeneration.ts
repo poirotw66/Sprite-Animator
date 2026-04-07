@@ -39,6 +39,12 @@ interface UseLineStickerGenerationProps {
     selectedResolution?: ImageResolution;
 }
 
+interface GenerateSingleSheetOptions {
+    suppressUiState?: boolean;
+    throwOnError?: boolean;
+    onStatusChange?: (status: string) => void;
+}
+
 export const useLineStickerGeneration = ({
     apiKey,
     selectedModel,
@@ -128,15 +134,29 @@ export const useLineStickerGeneration = ({
         includeText,
     ]);
 
-    const generateSingleSheet = useCallback(async (phraseListOverride?: string[], actionDescsOverride?: string[]) => {
+    const generateSingleSheet = useCallback(async (
+        phraseListOverride?: string[],
+        actionDescsOverride?: string[],
+        options: GenerateSingleSheetOptions = {}
+    ) => {
+        const { suppressUiState = false, throwOnError = false, onStatusChange } = options;
+
         if (!apiKey) {
-            setError(t.errorApiKey);
+            if (!suppressUiState) {
+                setError(t.errorApiKey);
+            }
+            if (throwOnError) {
+                throw new Error(t.errorApiKey);
+            }
             return null;
         }
 
-        setIsGenerating(true);
-        setError(null);
-        setStatusText(t.lineStickerGenerating);
+        if (!suppressUiState) {
+            setIsGenerating(true);
+            setError(null);
+            setStatusText(t.lineStickerGenerating);
+        }
+        onStatusChange?.(t.lineStickerGenerating);
 
         try {
             const prompt = buildPrompt(phraseListOverride, actionDescsOverride);
@@ -148,7 +168,12 @@ export const useLineStickerGeneration = ({
                 gridRows,
                 apiKey,
                 selectedModel,
-                (status) => setStatusText(status),
+                (status) => {
+                    if (!suppressUiState) {
+                        setStatusText(status);
+                    }
+                    onStatusChange?.(status);
+                },
                 chromaKeyColor,
                 selectedResolution,
                 includeText
@@ -156,11 +181,20 @@ export const useLineStickerGeneration = ({
             return result;
         } catch (err: unknown) {
             logger.error('Generation failed:', err);
-            setError(getErrorMessage(err) || t.errorGeneration);
+            const errorMessage = getErrorMessage(err) || t.errorGeneration;
+            if (!suppressUiState) {
+                setError(errorMessage);
+            }
+            if (throwOnError) {
+                throw err;
+            }
             return null;
         } finally {
-            setIsGenerating(false);
-            setStatusText('');
+            if (!suppressUiState) {
+                setIsGenerating(false);
+                setStatusText('');
+            }
+            onStatusChange?.('');
         }
     }, [apiKey, selectedModel, sourceImage, buildPrompt, selectedResolution, t]);
 

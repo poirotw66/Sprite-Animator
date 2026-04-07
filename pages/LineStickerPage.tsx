@@ -52,6 +52,19 @@ import {
 } from '../utils/lineStickerPrompt';
 
 const SHEETS_COUNT = 3;
+const SET_MODE_COLS = 4;
+const SET_MODE_ROWS = 4;
+
+const createSetModeSliceSettings = (): SliceSettings => ({
+    ...DEFAULT_SLICE_SETTINGS,
+    cols: SET_MODE_COLS,
+    rows: SET_MODE_ROWS,
+    sliceMode: 'equal',
+    inferredCellRects: undefined,
+});
+
+const createSetModeSliceSettingsList = () =>
+    Array.from({ length: SHEETS_COUNT }, () => createSetModeSliceSettings());
 
 const LineStickerPage: React.FC = () => {
     const { t } = useLanguage();
@@ -78,7 +91,7 @@ const LineStickerPage: React.FC = () => {
     const [gridRows, setGridRows] = useState(4);
 
     // Advanced Slicing State
-    const [sliceSettings, setSliceSettings] = useState<SliceSettings>(DEFAULT_SLICE_SETTINGS);
+    const [sheetSliceSettings, setSheetSliceSettings] = useState<SliceSettings[]>(() => createSetModeSliceSettingsList());
     const [sheetDimensions, setSheetDimensions] = useState({ width: 0, height: 0 });
     const [frameOverrides, setFrameOverrides] = useState<FrameOverride[]>([]);
 
@@ -122,10 +135,11 @@ const LineStickerPage: React.FC = () => {
     // Single-sheet mode: shared flow (upload ? slice ? remove bg ? frames) with PartingPage
     const singleSheetFlow = useSpriteSheetFlow({
         runChromaAutomatically: bgRemovalMethod === 'chroma',
-        initialSliceSettings: { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 } as SliceSettings,
+        initialSliceSettings: { ...DEFAULT_SLICE_SETTINGS, cols: SET_MODE_COLS, rows: SET_MODE_ROWS } as SliceSettings,
     });
-    const effectiveGridCols = stickerSetMode ? gridCols : singleSheetFlow.sliceSettings.cols;
-    const effectiveGridRows = stickerSetMode ? gridRows : singleSheetFlow.sliceSettings.rows;
+    const effectiveGridCols = stickerSetMode ? SET_MODE_COLS : singleSheetFlow.sliceSettings.cols;
+    const effectiveGridRows = stickerSetMode ? SET_MODE_ROWS : singleSheetFlow.sliceSettings.rows;
+    const currentSetSliceSettings = sheetSliceSettings[currentSheetIndex] ?? createSetModeSliceSettings();
 
     const {
         phrasesForHook,
@@ -227,10 +241,11 @@ const LineStickerPage: React.FC = () => {
     const { handleImageLoad: slicingHandleImageLoad, sliceProcessedSheetToFrames: slicingSliceToFrames } = useLineStickerSlicing({
         chromaKeyColor,
         processedSpriteSheet: stickerSetMode ? processedSpriteSheet : null,
-        sliceSettings: stickerSetMode ? sliceSettings : singleSheetFlow.sliceSettings,
+        sliceSettings: stickerSetMode ? currentSetSliceSettings : singleSheetFlow.sliceSettings,
+        sheetSliceSettings,
         frameOverrides: stickerSetMode ? frameOverrides : singleSheetFlow.frameOverrides,
-        gridCols,
-        gridRows,
+        gridCols: effectiveGridCols,
+        gridRows: effectiveGridRows,
         sheetDimensions: stickerSetMode ? sheetDimensions : singleSheetFlow.sheetDimensions,
         setStickerFrames: stickerSetMode ? setStickerFrames : singleSheetFlow.setFrames,
         setSelectedFrames: stickerSetMode ? setSelectedFrames : singleSheetFlow.setFrameIncluded,
@@ -245,7 +260,16 @@ const LineStickerPage: React.FC = () => {
     const handleImageLoad = stickerSetMode ? slicingHandleImageLoad : singleSheetFlow.handleImageLoad;
     const sliceProcessedSheetToFrames = stickerSetMode ? slicingSliceToFrames : singleSheetFlow.sliceProcessedSheetToFrames;
 
-    const { handleGenerate, handleGenerateAllSheets, reRunChromaKey } = useLineStickerSheetGeneration({
+    const {
+        handleGenerate,
+        handleGenerateAllSheets,
+        reRunChromaKey,
+        sheetStatuses,
+        retryFailedSheets,
+        retrySheet,
+        hasFailedSheets,
+        cancelActiveGeneration,
+    } = useLineStickerSheetGeneration({
         api: { getEffectiveApiKey },
         sourceImage,
         stickerSetMode,
@@ -258,6 +282,14 @@ const LineStickerPage: React.FC = () => {
             errorNoImage: t.errorNoImage,
             lineStickerErrorNeedPhrases: t.lineStickerErrorNeedPhrases,
             lineStickerParallelGenerating: t.lineStickerParallelGenerating,
+            lineStickerGeneratingSheetN: t.lineStickerGeneratingSheetN,
+            lineStickerProcessingSheetN: t.lineStickerProcessingSheetN,
+            lineStickerQueuedSheetN: t.lineStickerQueuedSheetN,
+            lineStickerSlicingSheetN: t.lineStickerSlicingSheetN,
+            lineStickerSheetReadyN: t.lineStickerSheetReadyN,
+            lineStickerSheetFailedN: t.lineStickerSheetFailedN,
+            lineStickerRetryFailed: t.lineStickerRetryFailed,
+            lineStickerErrorSomeSheetsFailed: t.lineStickerErrorSomeSheetsFailed,
             statusProcessing: t.statusProcessing,
             errorGeneration: t.errorGeneration,
         },
@@ -353,18 +385,31 @@ const LineStickerPage: React.FC = () => {
     const effectiveSheetDimensions = stickerSetMode ? sheetDimensions : singleSheetFlow.sheetDimensions;
     const effectiveChromaKeyProgress = stickerSetMode ? chromaKeyProgress : singleSheetFlow.chromaKeyProgress;
     const effectiveIsProcessingChromaKey = stickerSetMode ? isProcessingChromaKey : singleSheetFlow.isProcessingChromaKey;
-    const effectiveSliceSettingsForView = stickerSetMode ? { ...sliceSettings, cols: gridCols, rows: gridRows } : singleSheetFlow.sliceSettings;
+    const effectiveSliceSettingsForView = stickerSetMode ? currentSetSliceSettings : singleSheetFlow.sliceSettings;
     const effectiveSetSliceSettingsForView = stickerSetMode
         ? (val: SliceSettings | ((prev: SliceSettings) => SliceSettings)) => {
+            const currentSettings = sheetSliceSettings[currentSheetIndex] ?? createSetModeSliceSettings();
             if (typeof val === 'function') {
-                const next = val({ ...sliceSettings, cols: gridCols, rows: gridRows });
-                setSliceSettings(next);
-                setGridCols(next.cols);
-                setGridRows(next.rows);
+                const next = val(currentSettings);
+                setSheetSliceSettings((prev) => {
+                    const updated = prev.map((entry) => ({ ...entry }));
+                    updated[currentSheetIndex] = {
+                        ...next,
+                        cols: SET_MODE_COLS,
+                        rows: SET_MODE_ROWS,
+                    };
+                    return updated;
+                });
             } else {
-                setSliceSettings(val);
-                setGridCols(val.cols);
-                setGridRows(val.rows);
+                setSheetSliceSettings((prev) => {
+                    const updated = prev.map((entry) => ({ ...entry }));
+                    updated[currentSheetIndex] = {
+                        ...val,
+                        cols: SET_MODE_COLS,
+                        rows: SET_MODE_ROWS,
+                    };
+                    return updated;
+                });
             }
         }
         : singleSheetFlow.setSliceSettings;
@@ -436,6 +481,7 @@ const LineStickerPage: React.FC = () => {
                     setActionDescsList(data.actionDescs ?? data.phrases.map(() => ''));
                 } else {
                     setStickerSetMode(true);
+                    setSheetSliceSettings(createSetModeSliceSettingsList());
                     setSetPhrasesList(data.phrases);
                     setActionDescsList(data.actionDescs ?? data.phrases.map(() => ''));
                     setCurrentSheetIndex(0);
@@ -703,6 +749,11 @@ const LineStickerPage: React.FC = () => {
                             sourceImage={sourceImage}
                             onGenerate={handleGenerate}
                             onGenerateAllSheets={handleGenerateAllSheets}
+                            onCancelGeneration={cancelActiveGeneration}
+                            sheetStatuses={sheetStatuses}
+                            hasFailedSheets={hasFailedSheets}
+                            onRetryFailedSheets={retryFailedSheets}
+                            onRetrySheet={retrySheet}
                         />
                     </div>
                 </div>
@@ -794,8 +845,9 @@ const LineStickerPage: React.FC = () => {
                                             : (effectiveProcessedSpriteSheet || effectiveSpriteSheetImage)}
                                         onImageLoad={handleImageLoad}
                                         isGenerating={isGenerating}
-                                        sliceSettings={stickerSetMode ? { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 } : effectiveSliceSettingsForView}
-                                        setSliceSettings={stickerSetMode ? () => {} : effectiveSetSliceSettingsForView}
+                                        sliceSettings={effectiveSliceSettingsForView}
+                                        setSliceSettings={effectiveSetSliceSettingsForView}
+                                        lockGridSize={stickerSetMode}
                                         onEditedImage={(dataUrl: string) => {
                                             if (showOriginalInSpriteView) {
                                                 if (stickerSetMode) setSheetImages(prev => { const n = [...prev]; n[currentSheetIndex] = dataUrl; return n; });
@@ -839,7 +891,7 @@ const LineStickerPage: React.FC = () => {
                                             setFrameOverrides={effectiveSetFrameOverrides}
                                             enablePerFrameEdit={true}
                                             processedSpriteSheet={effectiveProcessedSpriteSheet}
-                                            sliceSettings={stickerSetMode ? { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 } : effectiveSliceSettingsForView}
+                                            sliceSettings={effectiveSliceSettingsForView}
                                             sheetDimensions={effectiveSheetDimensions}
                                         />
                                     </Suspense>

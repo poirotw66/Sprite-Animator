@@ -15,6 +15,7 @@ interface UseLineStickerSlicingParams {
   chromaKeyColor: ChromaKeyColorType;
   processedSpriteSheet: string | null;
   sliceSettings: SliceSettings;
+  sheetSliceSettings: SliceSettings[];
   frameOverrides: FrameOverride[];
   gridCols: number;
   gridRows: number;
@@ -29,10 +30,21 @@ interface UseLineStickerSlicingParams {
   setSheetDimensions: Dispatch<SetStateAction<{ width: number; height: number }>>;
 }
 
+interface SliceProcessedSheetOptions {
+  sheetIndex?: 0 | 1 | 2;
+}
+
+const createDefaultSetSliceSettings = (): SliceSettings => ({
+  ...DEFAULT_SLICE_SETTINGS,
+  cols: 4,
+  rows: 4,
+});
+
 export function useLineStickerSlicing({
   chromaKeyColor,
   processedSpriteSheet,
   sliceSettings,
+  sheetSliceSettings,
   frameOverrides,
   gridCols,
   gridRows,
@@ -47,25 +59,47 @@ export function useLineStickerSlicing({
   setSheetDimensions,
 }: UseLineStickerSlicingParams) {
   const sliceProcessedSheetToFrames = useCallback(
-    async (processedImage: string): Promise<string[]> => {
-      const settings = { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 };
-      const pad: PaddingFour = { left: 10, right: 10, top: 10, bottom: 10 };
+    async (
+      processedImage: string,
+      options?: SliceProcessedSheetOptions
+    ): Promise<string[]> => {
+      const targetSheetIndex = options?.sheetIndex ?? currentSheetIndex;
+      const settings = stickerSetMode
+        ? (sheetSliceSettings[targetSheetIndex] ?? createDefaultSetSliceSettings())
+        : sliceSettings;
+      const overrides = stickerSetMode
+        ? (sheetFrameOverrides[targetSheetIndex] ?? [])
+        : frameOverrides;
+      const cols = stickerSetMode ? settings.cols : gridCols;
+      const rows = stickerSetMode ? settings.rows : gridRows;
+      const pad: PaddingFour = getEffectivePadding(settings);
+
       return sliceSpriteSheet(
         processedImage,
-        settings.cols,
-        settings.rows,
+        cols,
+        rows,
         settings.paddingX,
         settings.paddingY,
         settings.shiftX,
         settings.shiftY,
         false,
         230,
-        [],
+        overrides,
         chromaKeyColor,
         pad
       );
     },
-    [chromaKeyColor]
+    [
+      chromaKeyColor,
+      currentSheetIndex,
+      frameOverrides,
+      gridCols,
+      gridRows,
+      sheetFrameOverrides,
+      sheetSliceSettings,
+      sliceSettings,
+      stickerSetMode,
+    ]
   );
 
   useEffect(() => {
@@ -118,9 +152,9 @@ export function useLineStickerSlicing({
     const processed = processedSheetImages[currentSheetIndex];
     if (!processed || !sheetDimensions.width || !sheetDimensions.height) return;
     const overrides = sheetFrameOverrides[currentSheetIndex] || [];
-    const settings = { ...DEFAULT_SLICE_SETTINGS, cols: 4, rows: 4 };
+    const settings = sheetSliceSettings[currentSheetIndex] ?? createDefaultSetSliceSettings();
     let cancelled = false;
-    const pad: PaddingFour = { left: 10, right: 10, top: 10, bottom: 10 };
+    const pad: PaddingFour = getEffectivePadding(settings);
     const run = async () => {
       try {
         const frames = await sliceSpriteSheet(
@@ -158,6 +192,7 @@ export function useLineStickerSlicing({
     currentSheetIndex,
     processedSheetImages,
     sheetFrameOverrides,
+    sheetSliceSettings,
     sheetDimensions,
     chromaKeyColor,
     setSheetFrames,
