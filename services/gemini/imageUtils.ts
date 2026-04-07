@@ -4,6 +4,7 @@
 
 import { logger } from '../../utils/logger';
 import type { ChromaKeyColorType } from '../../types';
+import { createAbortError, throwIfAborted } from '../../utils/abort';
 
 /**
  * Normalizes background color in AI-generated images to exact chroma key color.
@@ -12,11 +13,29 @@ import type { ChromaKeyColorType } from '../../types';
 export async function normalizeBackgroundColor(
   base64Image: string,
   targetColor: { r: number; g: number; b: number },
-  colorType: ChromaKeyColorType
+  colorType: ChromaKeyColorType,
+  signal?: AbortSignal
 ): Promise<string> {
+  throwIfAborted(signal);
   return new Promise((resolve, reject) => {
     const img = new Image();
+    const handleAbort = () => {
+      img.src = '';
+      reject(createAbortError());
+    };
+
+    signal?.addEventListener('abort', handleAbort, { once: true });
+
     img.onload = () => {
+      signal?.removeEventListener('abort', handleAbort);
+
+      try {
+        throwIfAborted(signal);
+      } catch (error) {
+        reject(error);
+        return;
+      }
+
       const canvas = document.createElement('canvas');
       canvas.width = img.width;
       canvas.height = img.height;
@@ -35,6 +54,10 @@ export async function normalizeBackgroundColor(
       let normalizedCount = 0;
 
       for (let i = 0; i < data.length; i += 4) {
+        if (signal?.aborted) {
+          reject(createAbortError());
+          return;
+        }
         const r = data[i]!;
         const g = data[i + 1]!;
         const b = data[i + 2]!;
@@ -107,8 +130,10 @@ export async function normalizeBackgroundColor(
       resolve(canvas.toDataURL('image/png'));
     };
 
-    img.onerror = () =>
+    img.onerror = () => {
+      signal?.removeEventListener('abort', handleAbort);
       reject(new Error('Failed to load image for color normalization'));
+    };
     img.src = base64Image;
   });
 }

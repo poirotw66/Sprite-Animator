@@ -7,6 +7,7 @@
  */
 
 import { logger } from './logger';
+import { createAbortError, isAbortError, throwIfAborted } from './abort';
 
 export interface ChromaKeyProgress {
   progress: number; // 0-100
@@ -72,12 +73,23 @@ export const removeChromaKeyWithWorker = async (
   chromaKey: { r: number; g: number; b: number } = { r: 255, g: 0, b: 255 },
   fuzzPercent: number = 10,
   onProgress?: (progress: number) => void,
-  options?: ChromaKeyOptions
+  options?: ChromaKeyOptions,
+  signal?: AbortSignal
 ): Promise<string> => {
+  throwIfAborted(signal);
   return new Promise((resolve, reject) => {
     const img = new Image();
+    const handleAbort = () => {
+      img.src = '';
+      reject(createAbortError());
+    };
+
+    signal?.addEventListener('abort', handleAbort, { once: true });
+
     img.onload = async () => {
+      signal?.removeEventListener('abort', handleAbort);
       try {
+        throwIfAborted(signal);
         const canvas = document.createElement('canvas');
         canvas.width = img.width;
         canvas.height = img.height;
@@ -98,17 +110,22 @@ export const removeChromaKeyWithWorker = async (
               chromaKey,
               fuzzPercent,
               onProgress,
-              options
+              options,
+              signal
             );
             ctx.putImageData(processed, 0, 0);
             resolve(canvas.toDataURL('image/png'));
           } catch (workerError) {
+            if (isAbortError(workerError)) {
+              throw workerError;
+            }
             logger.warn('Web Worker processing failed, falling back to main thread', workerError);
             const processed = await processInMainThread(
               imageData,
               chromaKey,
               fuzzPercent,
-              onProgress
+              onProgress,
+              signal
             );
             ctx.putImageData(processed, 0, 0);
             resolve(canvas.toDataURL('image/png'));
@@ -119,7 +136,8 @@ export const removeChromaKeyWithWorker = async (
             imageData,
             chromaKey,
             fuzzPercent,
-            onProgress
+            onProgress,
+            signal
           );
           ctx.putImageData(processed, 0, 0);
           resolve(canvas.toDataURL('image/png'));
@@ -130,6 +148,7 @@ export const removeChromaKeyWithWorker = async (
     };
 
     img.onerror = () => {
+      signal?.removeEventListener('abort', handleAbort);
       reject(new Error('Failed to load image'));
     };
 
@@ -146,7 +165,8 @@ function processWithWorker(
   chromaKey: { r: number; g: number; b: number },
   fuzzPercent: number,
   onProgress?: (progress: number) => void,
-  options?: ChromaKeyOptions
+  options?: ChromaKeyOptions,
+  signal?: AbortSignal
 ): Promise<ImageData> {
   return new Promise((resolve, reject) => {
     try {
@@ -156,6 +176,12 @@ function processWithWorker(
       );
 
       const requestId = `chroma-key-${Date.now()}-${Math.random()}`;
+      const handleAbort = () => {
+        worker.terminate();
+        reject(createAbortError());
+      };
+
+      signal?.addEventListener('abort', handleAbort, { once: true });
 
       worker.onmessage = (e: MessageEvent) => {
         const { type, progress, data: processedData, width, height, error, id } = e.data;
@@ -165,6 +191,7 @@ function processWithWorker(
         if (type === 'progress' && progress !== undefined) {
           onProgress?.(progress);
         } else if (type === 'complete' && processedData && width && height) {
+          signal?.removeEventListener('abort', handleAbort);
           worker.terminate();
           const result = new ImageData(
             new Uint8ClampedArray(processedData),
@@ -173,12 +200,14 @@ function processWithWorker(
           );
           resolve(result);
         } else if (type === 'error') {
+          signal?.removeEventListener('abort', handleAbort);
           worker.terminate();
           reject(new Error(error || 'Worker processing failed'));
         }
       };
 
       worker.onerror = (error) => {
+        signal?.removeEventListener('abort', handleAbort);
         worker.terminate();
         reject(error);
       };
@@ -207,9 +236,10 @@ function processInMainThread(
   imageData: ImageData,
   chromaKey: { r: number; g: number; b: number },
   fuzzPercent: number,
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
+  signal?: AbortSignal
 ): Promise<ImageData> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const data = imageData.data;
     const totalPixels = data.length / 4;
     const fuzz = (fuzzPercent / 100) * 255;
@@ -274,6 +304,13 @@ function processInMainThread(
     };
 
     const processChunk = () => {
+      try {
+        throwIfAborted(signal);
+      } catch (error) {
+        reject(error);
+        return;
+      }
+
       const endIndex = Math.min(startIndex + chunkSize * 4, data.length);
 
       if (!colorDetected) {

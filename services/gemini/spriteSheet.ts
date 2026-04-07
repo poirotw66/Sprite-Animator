@@ -15,6 +15,7 @@ import {
 } from './spriteSheetPrompts';
 import { API_KEY_MISSING_MESSAGE } from './types';
 import type { ProgressCallback } from './types';
+import { throwIfAborted } from '../../utils/abort';
 
 export async function generateSpriteSheet(
   imageBase64: string,
@@ -27,9 +28,11 @@ export async function generateSpriteSheet(
   chromaKeyColor: ChromaKeyColorType = 'green',
   outputResolution?: ImageResolution,
   /** For LINE sticker mode only: when false, prompt suffix explicitly forbids any text in the image. */
-  lineStickerIncludeText?: boolean
+  lineStickerIncludeText?: boolean,
+  signal?: AbortSignal
 ): Promise<string> {
   if (!apiKey) throw new Error(API_KEY_MISSING_MESSAGE);
+  throwIfAborted(signal);
 
   const ai = new GoogleGenAI({ apiKey });
   const bgColor = CHROMA_KEY_COLORS[chromaKeyColor];
@@ -81,6 +84,7 @@ export async function generateSpriteSheet(
   };
 
   const buildConfig = (includeImageSize: boolean) => ({
+    abortSignal: signal,
     imageConfig: {
       aspectRatio: targetAspectRatio,
       ...(includeImageSize &&
@@ -104,7 +108,10 @@ export async function generateSpriteSheet(
   try {
     response = await retryOperation(
       () => generateRequest(buildConfig(true)),
-      onProgress
+      onProgress,
+      5,
+      4000,
+      signal
     );
   } catch (firstErr) {
     if (!isInvalidArgument(firstErr)) throw firstErr;
@@ -112,7 +119,10 @@ export async function generateSpriteSheet(
     try {
       response = await retryOperation(
         () => generateRequest(buildConfig(false)),
-        onProgress
+        onProgress,
+        5,
+        4000,
+        signal
       );
     } catch (secondErr) {
       if (!isInvalidArgument(secondErr)) throw secondErr;
@@ -127,12 +137,17 @@ export async function generateSpriteSheet(
                 { text: fullPrompt },
               ],
             },
+            config: { abortSignal: signal },
           }),
-        onProgress
+        onProgress,
+        5,
+        4000,
+        signal
       );
     }
   }
 
+  throwIfAborted(signal);
   const parts = response.candidates?.[0]?.content?.parts;
   if (parts) {
     for (const part of parts) {
@@ -142,7 +157,8 @@ export async function generateSpriteSheet(
         const normalizedImage = await normalizeBackgroundColor(
           generatedImage,
           bgColor,
-          chromaKeyColor
+          chromaKeyColor,
+          signal
         );
         return normalizedImage;
       }

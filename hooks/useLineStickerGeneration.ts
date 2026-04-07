@@ -43,6 +43,7 @@ interface GenerateSingleSheetOptions {
     suppressUiState?: boolean;
     throwOnError?: boolean;
     onStatusChange?: (status: string) => void;
+    signal?: AbortSignal;
 }
 
 export const useLineStickerGeneration = ({
@@ -139,7 +140,7 @@ export const useLineStickerGeneration = ({
         actionDescsOverride?: string[],
         options: GenerateSingleSheetOptions = {}
     ) => {
-        const { suppressUiState = false, throwOnError = false, onStatusChange } = options;
+        const { suppressUiState = false, throwOnError = false, onStatusChange, signal } = options;
 
         if (!apiKey) {
             if (!suppressUiState) {
@@ -176,7 +177,8 @@ export const useLineStickerGeneration = ({
                 },
                 chromaKeyColor,
                 selectedResolution,
-                includeText
+                includeText,
+                signal
             );
             return result;
         } catch (err: unknown) {

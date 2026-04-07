@@ -87,9 +87,11 @@ export function useLineStickerPhraseGrid({
       }
 
       const total = gridCols * gridRows;
-      const next = ensureLength(singlePhrasesList, total);
-      next[index] = value;
-      setSinglePhrasesList(next);
+      setSinglePhrasesList((prev) => {
+        const next = ensureLength(prev, total);
+        next[index] = value;
+        return next;
+      });
     },
     [
       stickerSetMode,
@@ -97,7 +99,6 @@ export function useLineStickerPhraseGrid({
       setSetPhrasesList,
       gridCols,
       gridRows,
-      singlePhrasesList,
       setSinglePhrasesList,
     ]
   );

@@ -3,6 +3,38 @@ import JSZip from 'jszip';
 import { logger } from '../utils/logger';
 import { useLanguage } from './useLanguage';
 
+const DOWNLOAD_CONCURRENCY = 3;
+
+async function mapWithConcurrency<T, R>(
+    items: T[],
+    concurrency: number,
+    mapper: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+    if (items.length === 0) {
+        return [];
+    }
+
+    const results = new Array<R>(items.length);
+    let nextIndex = 0;
+    const workerCount = Math.min(concurrency, items.length);
+
+    const workers = Array.from({ length: workerCount }, async () => {
+        while (true) {
+            const currentIndex = nextIndex;
+            nextIndex += 1;
+
+            if (currentIndex >= items.length) {
+                return;
+            }
+
+            results[currentIndex] = await mapper(items[currentIndex]!, currentIndex);
+        }
+    });
+
+    await Promise.all(workers);
+    return results;
+}
+
 export type DownloadFormat = 'png' | 'jpg';
 
 interface UseLineStickerDownloadProps {
@@ -107,13 +139,25 @@ export const useLineStickerDownload = ({
             const zip = new JSZip();
             const frames = stickerSetMode ? sheetFrames[currentSheetIndex] : stickerFrames;
 
-            for (const index of selectedIndices) {
+            const files = await mapWithConcurrency(selectedIndices, DOWNLOAD_CONCURRENCY, async (index) => {
                 const frame = frames[index];
-                if (frame) {
-                    const blob = await convertToFormat(frame, downloadFormat);
-                    zip.file(`sticker_${String(index + 1).padStart(2, '0')}.${downloadFormat}`, blob);
+                if (!frame) {
+                    return null;
                 }
-            }
+
+                const blob = await convertToFormat(frame, downloadFormat);
+                return {
+                    fileName: `sticker_${String(index + 1).padStart(2, '0')}.${downloadFormat}`,
+                    blob,
+                };
+            });
+
+            files.forEach((file) => {
+                if (!file) {
+                    return;
+                }
+                zip.file(file.fileName, file.blob);
+            });
 
             const zipBlob = await zip.generateAsync({ type: 'blob' });
             const url = URL.createObjectURL(zipBlob);
@@ -181,19 +225,31 @@ export const useLineStickerDownload = ({
         try {
             const zip = new JSZip();
             const ext = downloadFormat;
-            for (let s = 0; s < sheetFrames.length; s++) {
-                const frames = sheetFrames[s];
-                if (!frames || frames.length === 0) continue;
-                const folder = zip.folder(`sheet_${s + 1}`);
-                if (!folder) continue;
-                for (let i = 0; i < frames.length; i++) {
-                    const frame = frames[i];
-                    if (frame) {
-                        const blob = await convertToFormat(frame, downloadFormat);
-                        folder.file(`sticker_${String(i + 1).padStart(2, '0')}.${ext}`, blob);
-                    }
+            const tasks = sheetFrames.flatMap((frames, sheetIndex) =>
+                frames.map((frame, frameIndex) => ({ frame, frameIndex, sheetIndex }))
+            );
+
+            const files = await mapWithConcurrency(tasks, DOWNLOAD_CONCURRENCY, async ({ frame, frameIndex, sheetIndex }) => {
+                if (!frame) {
+                    return null;
                 }
-            }
+
+                const blob = await convertToFormat(frame, downloadFormat);
+                return {
+                    folderName: `sheet_${sheetIndex + 1}`,
+                    fileName: `sticker_${String(frameIndex + 1).padStart(2, '0')}.${ext}`,
+                    blob,
+                };
+            });
+
+            files.forEach((file) => {
+                if (!file) {
+                    return;
+                }
+                const folder = zip.folder(file.folderName);
+                folder?.file(file.fileName, file.blob);
+            });
+
             const zipBlob = await zip.generateAsync({ type: 'blob' });
             const url = URL.createObjectURL(zipBlob);
             const a = document.createElement('a');

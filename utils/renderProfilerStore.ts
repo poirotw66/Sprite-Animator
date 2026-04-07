@@ -14,6 +14,13 @@ type Listener = () => void;
 
 const profilerMap = new Map<string, RenderProfilerEntry>();
 const listeners = new Set<Listener>();
+let snapshotCache: RenderProfilerEntry[] = [];
+
+const rebuildSnapshotCache = () => {
+  snapshotCache = Array.from(profilerMap.values()).sort(
+    (left, right) => right.lastUpdatedAt - left.lastUpdatedAt
+  );
+};
 
 const emit = () => {
   listeners.forEach((listener) => listener());
@@ -21,11 +28,13 @@ const emit = () => {
 
 export const updateRenderProfilerEntry = (entry: RenderProfilerEntry) => {
   profilerMap.set(entry.id, entry);
+  rebuildSnapshotCache();
   emit();
 };
 
 export const clearRenderProfilerEntries = () => {
   profilerMap.clear();
+  rebuildSnapshotCache();
   emit();
 };
 
@@ -37,5 +46,5 @@ export const subscribeRenderProfilerStore = (listener: Listener) => {
 };
 
 export const getRenderProfilerSnapshot = (): RenderProfilerEntry[] => (
-  Array.from(profilerMap.values()).sort((left, right) => right.lastUpdatedAt - left.lastUpdatedAt)
+  snapshotCache
 );

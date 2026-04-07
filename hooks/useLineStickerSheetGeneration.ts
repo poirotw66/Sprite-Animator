@@ -5,6 +5,7 @@ import { removeBackgroundAI } from '../utils/aiBackgroundRemoval';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ } from '../utils/constants';
 import type { BgRemovalMethod, ChromaKeyColorType } from '../types';
+import { createAbortError, isAbortError } from '../utils/abort';
 
 const SET_PHRASES_COUNT = 48;
 const FRAMES_PER_SHEET = 16;
@@ -89,6 +90,7 @@ export interface UseLineStickerSheetGenerationOptions {
       suppressUiState?: boolean;
       throwOnError?: boolean;
       onStatusChange?: (status: string) => void;
+      signal?: AbortSignal;
     }
   ) => Promise<string | null>;
   texts: LineStickerGenerationTexts;
@@ -140,6 +142,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
   );
   const requestCounterRef = useRef(0);
   const activeRequestIdRef = useRef<number | null>(null);
+  const activeAbortControllerRef = useRef<AbortController | null>(null);
 
   const failedSheetIndices = useMemo(
     () =>
@@ -174,7 +177,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
   }, []);
 
   const isCancelledRequestError = useCallback((err: unknown) => {
-    return err instanceof Error && err.message === CANCELLED_REQUEST_MESSAGE;
+    return (err instanceof Error && err.message === CANCELLED_REQUEST_MESSAGE) || isAbortError(err);
   }, []);
 
   const throwIfRequestInactive = useCallback(
@@ -203,9 +206,11 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
   }, []);
 
   const startRequest = useCallback(() => {
+    activeAbortControllerRef.current?.abort(createAbortError('Superseded by a newer request'));
     const requestId = requestCounterRef.current + 1;
     requestCounterRef.current = requestId;
     activeRequestIdRef.current = requestId;
+    activeAbortControllerRef.current = new AbortController();
     resetInFlightSheetStatuses();
     setChromaKeyProgress(0);
     setIsProcessingChromaKey(false);
@@ -218,6 +223,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
         return;
       }
       activeRequestIdRef.current = null;
+      activeAbortControllerRef.current = null;
       setIsGenerating(false);
       setIsProcessingChromaKey(false);
       setChromaKeyProgress(0);
@@ -235,6 +241,8 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
   );
 
   const cancelActiveGeneration = useCallback(() => {
+    activeAbortControllerRef.current?.abort(createAbortError('User cancelled generation'));
+    activeAbortControllerRef.current = null;
     activeRequestIdRef.current = null;
     resetInFlightSheetStatuses();
     setIsGenerating(false);
@@ -268,15 +276,21 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
   );
 
   const removeBackground = useCallback(
-    async (image: string, onProgress?: (progress: number) => void): Promise<string> => {
+    async (
+      image: string,
+      signal?: AbortSignal,
+      onProgress?: (progress: number) => void
+    ): Promise<string> => {
       if (bgRemovalMethod === 'ai') {
-        return removeBackgroundAI(image, chromaKeyColor);
+        return removeBackgroundAI(image, chromaKeyColor, signal);
       }
       return removeChromaKeyWithWorker(
         image,
         CHROMA_KEY_COLORS[chromaKeyColor],
         CHROMA_KEY_FUZZ,
-        onProgress
+        onProgress,
+        undefined,
+        signal
       );
     },
     [bgRemovalMethod, chromaKeyColor]
@@ -287,7 +301,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
       setIsProcessingChromaKey(true);
       setChromaKeyProgress(0);
       try {
-        const result = await removeBackground(image, (progress) => setChromaKeyProgress(progress));
+        const result = await removeBackground(image, undefined, (progress) => setChromaKeyProgress(progress));
         setChromaKeyProgress(100);
         return result;
       } finally {
@@ -306,6 +320,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
       }
     ) => {
       const { useGlobalProgress = false, requestId } = options;
+      const signal = activeAbortControllerRef.current?.signal;
       throwIfRequestInactive(requestId);
 
       const phraseSlice = setPhrasesList.slice(
@@ -334,6 +349,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
       const generated = await generateSingleSheet(phraseSlice, actionSlice, {
         suppressUiState: true,
         throwOnError: true,
+        signal,
         onStatusChange: (status) => {
           if (!status || !isRequestActive(requestId)) {
             return;
@@ -367,7 +383,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
         setChromaKeyProgress(0);
       }
 
-      const processed = await removeBackground(generated, (progress) => {
+      const processed = await removeBackground(generated, signal, (progress) => {
         if (!isRequestActive(requestId)) {
           return;
         }
@@ -606,7 +622,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
           setError(
             t.lineStickerErrorNeedPhrases.replace('{n}', String(setPhrasesList.length))
           );
-          setIsGenerating(false);
+          finishRequest(requestId);
           return;
         }
 
@@ -624,6 +640,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
         const generated = await generateSingleSheet(undefined, undefined, {
           suppressUiState: true,
           throwOnError: true,
+          signal: activeAbortControllerRef.current?.signal,
           onStatusChange: (status) => {
             if (!status || !isRequestActive(requestId)) {
               return;
@@ -639,7 +656,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
         setSpriteSheetImage(generated);
         setStatusText(t.statusProcessing);
         setIsProcessingChromaKey(true);
-        const processed = await removeBackground(generated, (progress) => {
+        const processed = await removeBackground(generated, activeAbortControllerRef.current?.signal, (progress) => {
           if (!isRequestActive(requestId)) {
             return;
           }

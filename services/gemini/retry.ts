@@ -3,6 +3,7 @@
  */
 
 import { isQuotaError as checkQuotaError } from '../../types/errors';
+import { abortableDelay, isAbortError } from '../../utils/abort';
 import { logger } from '../../utils/logger';
 
 export const wait = (ms: number): Promise<void> =>
@@ -17,13 +18,18 @@ export async function retryOperation<T>(
   operation: () => Promise<T>,
   onStatusUpdate?: (msg: string) => void,
   retries = 5,
-  baseDelay = 4000
+  baseDelay = 4000,
+  signal?: AbortSignal
 ): Promise<T> {
   let lastError: unknown;
   for (let i = 0; i < retries; i++) {
     try {
       return await operation();
     } catch (error: unknown) {
+      if (isAbortError(error)) {
+        throw error;
+      }
+
       lastError = error;
 
       if (isQuotaError(error) && i < retries - 1) {
@@ -39,7 +45,7 @@ export async function retryOperation<T>(
           );
         }
 
-        await wait(delay);
+        await abortableDelay(delay, signal);
         continue;
       }
 

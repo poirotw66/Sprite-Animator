@@ -1,6 +1,7 @@
 import { pipeline, env } from '@huggingface/transformers';
 import { logger } from './logger';
 import { CHROMA_KEY_COLORS } from './constants';
+import { createAbortError, throwIfAborted } from './abort';
 
 const ENGINE_VERSION = '2026.02.11.V8.1_STABLE';
 
@@ -110,11 +111,24 @@ export async function getSegmenter() {
 /**
  * Load image helper
  */
-async function loadImageData(url: string): Promise<{ canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, imageData: ImageData }> {
+async function loadImageData(url: string, signal?: AbortSignal): Promise<{ canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, imageData: ImageData }> {
+    throwIfAborted(signal);
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
+        const handleAbort = () => {
+            img.src = '';
+            reject(createAbortError());
+        };
+        signal?.addEventListener('abort', handleAbort, { once: true });
         img.onload = () => {
+            signal?.removeEventListener('abort', handleAbort);
+            try {
+                throwIfAborted(signal);
+            } catch (error) {
+                reject(error);
+                return;
+            }
             const canvas = document.createElement('canvas');
             canvas.width = img.width;
             canvas.height = img.height;
@@ -123,7 +137,10 @@ async function loadImageData(url: string): Promise<{ canvas: HTMLCanvasElement, 
             ctx.drawImage(img, 0, 0);
             resolve({ canvas, ctx, imageData: ctx.getImageData(0, 0, canvas.width, canvas.height) });
         };
-        img.onerror = () => reject(new Error('Image decode failure'));
+        img.onerror = () => {
+            signal?.removeEventListener('abort', handleAbort);
+            reject(new Error('Image decode failure'));
+        };
         img.src = url;
     });
 }
@@ -131,17 +148,20 @@ async function loadImageData(url: string): Promise<{ canvas: HTMLCanvasElement, 
 /**
  * Main Background Removal function
  */
-export async function removeBackgroundAI(base64Image: string, chromaKeyType?: 'magenta' | 'green'): Promise<string> {
+export async function removeBackgroundAI(base64Image: string, chromaKeyType?: 'magenta' | 'green', signal?: AbortSignal): Promise<string> {
     try {
+        throwIfAborted(signal);
         const pipe = await getSegmenter();
+        throwIfAborted(signal);
 
         // 1. Inference
         const output = await pipe(base64Image);
+        throwIfAborted(signal);
         const result = Array.isArray(output) ? output[0] : output;
         if (!result) throw new Error('AI produced no result data');
 
         // 2. Handle original image
-        const { canvas, ctx } = await loadImageData(base64Image);
+        const { canvas, ctx } = await loadImageData(base64Image, signal);
         const { width, height } = canvas;
 
         // 3. Render mask
@@ -157,6 +177,9 @@ export async function removeBackgroundAI(base64Image: string, chromaKeyType?: 'm
         const maskRGBA = new Uint8ClampedArray(totalPixels * 4);
 
         for (let i = 0; i < totalPixels; ++i) {
+            if (signal?.aborted) {
+                throw createAbortError();
+            }
             let alpha: number;
             if (channels === 1) alpha = target.data[i];
             else if (channels === 4) alpha = target.data[i * 4 + 3];
@@ -183,6 +206,9 @@ export async function removeBackgroundAI(base64Image: string, chromaKeyType?: 'm
             const pixels = finalData.data;
             const threshold = 120;
             for (let i = 0; i < pixels.length; i += 4) {
+                if (signal?.aborted) {
+                    throw createAbortError();
+                }
                 if (pixels[i + 3] === 0) continue;
                 const dr = pixels[i] - targetColor.r;
                 const dg = pixels[i + 1] - targetColor.g;
@@ -197,6 +223,7 @@ export async function removeBackgroundAI(base64Image: string, chromaKeyType?: 'm
             ctx.putImageData(finalData, 0, 0);
         }
 
+        throwIfAborted(signal);
         return canvas.toDataURL('image/png');
     } catch (err: unknown) {
         logger.error('Background removal failed:', err);

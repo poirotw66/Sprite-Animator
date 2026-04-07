@@ -48,6 +48,57 @@ interface LineStickerPhraseGridEditorProps {
   updateActionDescAt: (index: number, value: string) => void;
 }
 
+interface LineStickerPhraseCellProps {
+  t: Translations;
+  stickerSetMode: boolean;
+  currentSheetIndex: 0 | 1 | 2;
+  index: number;
+  phrase: string;
+  actionDesc: string;
+  updatePhraseAt: (index: number, value: string) => void;
+  updateActionDescAt: (index: number, value: string) => void;
+}
+
+const LineStickerPhraseCell: React.FC<LineStickerPhraseCellProps> = React.memo(({
+  t,
+  stickerSetMode,
+  currentSheetIndex,
+  index,
+  phrase,
+  actionDesc,
+  updatePhraseAt,
+  updateActionDescAt,
+}) => (
+  <div className="flex flex-col gap-1">
+    <input
+      type="text"
+      value={phrase}
+      onChange={(e) => updatePhraseAt(index, e.target.value)}
+      placeholder={`${index + 1}`}
+      className="w-full min-w-0 p-2 border border-slate-200 rounded-lg text-xs font-mono focus:ring-2 focus:ring-green-500 focus:border-green-400 outline-none bg-white"
+      aria-label={
+        stickerSetMode
+          ? `Sheet ${currentSheetIndex + 1} cell ${index + 1} phrase`
+          : `Cell ${index + 1} phrase`
+      }
+    />
+    <textarea
+      rows={2}
+      value={actionDesc}
+      onChange={(e) => updateActionDescAt(index, e.target.value)}
+      placeholder={t.lineStickerActionDescPlaceholder}
+      className="w-full min-w-0 min-h-[3.5rem] p-1.5 border border-slate-100 rounded text-xs text-slate-500 focus:ring-2 focus:ring-green-500 outline-none bg-slate-50 resize-y"
+      aria-label={
+        stickerSetMode
+          ? `Sheet ${currentSheetIndex + 1} cell ${index + 1} action`
+          : `Cell ${index + 1} action`
+      }
+    />
+  </div>
+));
+
+LineStickerPhraseCell.displayName = 'LineStickerPhraseCell';
+
 const LineStickerPhraseGridEditor: React.FC<LineStickerPhraseGridEditorProps> = React.memo(({
   t,
   stickerSetMode,
@@ -68,35 +119,17 @@ const LineStickerPhraseGridEditor: React.FC<LineStickerPhraseGridEditorProps> = 
       }}
     >
       {phraseGridList.map((phrase, index) => (
-        <div
+        <LineStickerPhraseCell
           key={stickerSetMode ? `s${currentSheetIndex}-${index}` : index}
-          className="flex flex-col gap-1"
-        >
-          <input
-            type="text"
-            value={phrase}
-            onChange={(e) => updatePhraseAt(index, e.target.value)}
-            placeholder={`${index + 1}`}
-            className="w-full min-w-0 p-2 border border-slate-200 rounded-lg text-xs font-mono focus:ring-2 focus:ring-green-500 focus:border-green-400 outline-none bg-white"
-            aria-label={
-              stickerSetMode
-                ? `Sheet ${currentSheetIndex + 1} cell ${index + 1} phrase`
-                : `Cell ${index + 1} phrase`
-            }
-          />
-          <textarea
-            rows={2}
-            value={actionDescGridList[index] ?? ''}
-            onChange={(e) => updateActionDescAt(index, e.target.value)}
-            placeholder={t.lineStickerActionDescPlaceholder}
-            className="w-full min-w-0 min-h-[3.5rem] p-1.5 border border-slate-100 rounded text-xs text-slate-500 focus:ring-2 focus:ring-green-500 outline-none bg-slate-50 resize-y"
-            aria-label={
-              stickerSetMode
-                ? `Sheet ${currentSheetIndex + 1} cell ${index + 1} action`
-                : `Cell ${index + 1} action`
-            }
-          />
-        </div>
+          t={t}
+          stickerSetMode={stickerSetMode}
+          currentSheetIndex={currentSheetIndex}
+          index={index}
+          phrase={phrase}
+          actionDesc={actionDescGridList[index] ?? ''}
+          updatePhraseAt={updatePhraseAt}
+          updateActionDescAt={updateActionDescAt}
+        />
       ))}
     </div>
   </RenderProfiler>
