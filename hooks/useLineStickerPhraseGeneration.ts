@@ -26,7 +26,7 @@ interface UseLineStickerPhraseGenerationParams {
   customThemeScenario?: string;
   selectedLanguage: keyof typeof TEXT_PRESETS;
   selectedPhraseMode: StickerPhraseMode;
-  setCustomPhrases: (value: string) => void;
+  setSinglePhrasesList: (value: string[]) => void;
   setSetPhrasesList: (value: string[]) => void;
   setActionDescsList: (value: string[]) => void;
   t: PhraseGenerationTexts;
@@ -44,7 +44,7 @@ export function useLineStickerPhraseGeneration({
   customThemeScenario,
   selectedLanguage,
   selectedPhraseMode,
-  setCustomPhrases,
+  setSinglePhrasesList,
   setSetPhrasesList,
   setActionDescsList,
   t,
@@ -96,8 +96,11 @@ export function useLineStickerPhraseGeneration({
         undefined,
         examplePhrases
       );
-      setCustomPhrases(phrases.join('\n'));
-      setSetPhrasesList(phrases);
+      if (stickerSetMode) {
+        setSetPhrasesList(phrases);
+      } else {
+        setSinglePhrasesList(phrases);
+      }
 
       try {
         const actionDescs = await generateActionDescriptions(key, phrases);
@@ -132,7 +135,7 @@ export function useLineStickerPhraseGeneration({
     selectedTheme,
     selectedLanguage,
     selectedPhraseMode,
-    setCustomPhrases,
+    setSinglePhrasesList,
     setSetPhrasesList,
     setActionDescsList,
   ]);

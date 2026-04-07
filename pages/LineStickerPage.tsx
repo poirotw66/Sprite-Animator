@@ -1,8 +1,7 @@
-import React, { useState, Suspense, useRef, useCallback } from 'react';
-import { lazyWithRetry } from '../utils/lazyWithRetry';
-import { Plus, Loader2, Check } from '../components/Icons';
+import React, { useState, useRef, useCallback } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
 import { SettingsModal } from '../components/SettingsModal';
+import { RenderProfilerDebugPanel } from '../components/RenderProfilerDebugPanel';
 import { useSettings } from '../hooks/useSettings';
 import { useLineStickerDownload } from '../hooks/useLineStickerDownload';
 import { useLineStickerGeneration } from '../hooks/useLineStickerGeneration';
@@ -15,6 +14,8 @@ import { useLineStickerThemePresetSync } from '../hooks/useLineStickerThemePrese
 import { useLineStickerSlicing } from '../hooks/useLineStickerSlicing';
 import { useLineStickerPromptPreview } from '../hooks/useLineStickerPromptPreview';
 import { useSpriteSheetFlow } from '../hooks/useSpriteSheetFlow';
+import { useLineStickerSettingsPanelViewModel } from '../hooks/useLineStickerSettingsPanelViewModel';
+import { useLineStickerResultPanelViewModel } from '../hooks/useLineStickerResultPanelViewModel';
 import { SliceSettings, FrameOverride } from '../utils/imageUtils';
 import { ChromaKeyColorType, BgRemovalMethod } from '../types';
 import {
@@ -25,28 +26,14 @@ import { buildPhraseSetExport, parsePhraseSetJson } from '../utils/lineStickerPh
 
 import {
     LineStickerHeader,
-    LineStickerUploadCard,
-    LineStickerPhraseSection,
-    LineStickerDownloadSection,
-    LineStickerResultEmptyState,
+    LineStickerSettingsPanel,
+    LineStickerResultPanel,
 } from '../components/LineSticker';
 
-// Lazy load heavy components for code splitting
-const FrameGrid = lazyWithRetry(() =>
-    import('../components/FrameGrid').then(module => ({ default: module.FrameGrid }))
-);
-const SpriteSheetViewer = lazyWithRetry(() =>
-    import('../components/SpriteSheetViewer').then(module => ({ default: module.SpriteSheetViewer }))
-);
-
 import {
-    THEME_PRESETS,
-    STYLE_PRESETS,
-    STYLE_PRESET_ORDER,
     TEXT_PRESETS,
     TEXT_COLOR_PRESETS,
     FONT_PRESETS,
-    FONT_PRESET_ORDER,
     type ThemeOption,
     type LineStickerStyleOption,
 } from '../utils/lineStickerPrompt';
@@ -107,7 +94,7 @@ const LineStickerPage: React.FC = () => {
     const [selectedLanguage, setSelectedLanguage] = useState<keyof typeof TEXT_PRESETS>('zh-TW');
     const [selectedTextColor, setSelectedTextColor] = useState<keyof typeof TEXT_COLOR_PRESETS>('black');
     const [selectedFont, setSelectedFont] = useState<keyof typeof FONT_PRESETS>('handwritten');
-    const [customPhrases, setCustomPhrases] = useState<string>('');
+    const [singlePhrasesList, setSinglePhrasesList] = useState<string[]>([]);
 
     // Set mode state
     const [stickerSetMode, setStickerSetMode] = useState(false);
@@ -122,9 +109,7 @@ const LineStickerPage: React.FC = () => {
 
     const [spriteSheetImage, setSpriteSheetImage] = useState<string | null>(null);
     const [processedSpriteSheet, setProcessedSpriteSheet] = useState<string | null>(null);
-    const spriteSheetFileInputRef = useRef<HTMLInputElement>(null);
     const phraseSetFileInputRef = useRef<HTMLInputElement>(null);
-    const [showOriginalInSpriteView, setShowOriginalInSpriteView] = useState(false);
     const [stickerFrames, setStickerFrames] = useState<string[]>([]);
     const [selectedFrames, setSelectedFrames] = useState<boolean[]>([]);
     const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('green');
@@ -153,10 +138,10 @@ const LineStickerPage: React.FC = () => {
     } = useLineStickerPhraseGrid({
         stickerSetMode,
         currentSheetIndex,
+        singlePhrasesList,
+        setSinglePhrasesList,
         setPhrasesList,
         setSetPhrasesList,
-        customPhrases,
-        setCustomPhrases,
         actionDescsList,
         setActionDescsList,
         gridCols: effectiveGridCols,
@@ -164,7 +149,7 @@ const LineStickerPage: React.FC = () => {
     });
     useLineStickerThemePresetSync({
         selectedTheme,
-        setCustomPhrases,
+        setSinglePhrasesList,
         setSetPhrasesList,
         setActionDescsList,
     });
@@ -210,7 +195,7 @@ const LineStickerPage: React.FC = () => {
         customThemeScenario,
         selectedLanguage,
         selectedPhraseMode,
-        setCustomPhrases,
+        setSinglePhrasesList,
         setSetPhrasesList,
         setActionDescsList,
         t: {
@@ -477,7 +462,7 @@ const LineStickerPage: React.FC = () => {
                     setGridCols(data.gridCols);
                     setGridRows(data.gridRows);
                     singleSheetFlow.setSliceSettings(prev => ({ ...prev, cols: data.gridCols!, rows: data.gridRows! }));
-                    setCustomPhrases(data.phrases.join('\n'));
+                    setSinglePhrasesList(data.phrases);
                     setActionDescsList(data.actionDescs ?? data.phrases.map(() => ''));
                 } else {
                     setStickerSetMode(true);
@@ -492,6 +477,111 @@ const LineStickerPage: React.FC = () => {
         },
         [t.lineStickerPhraseSetUploadError]
     );
+
+    const settingsPanelViewModel = useLineStickerSettingsPanelViewModel({
+        t,
+        sourceImage,
+        fileInputRef,
+        onOpenFilePicker: openFilePicker,
+        onDrop: handleDrop,
+        onDragOver: handleDragOver,
+        onImageUpload: handleImageUpload,
+        stickerSetMode,
+        setStickerSetMode,
+        gridCols: effectiveGridCols,
+        gridRows: effectiveGridRows,
+        setGridCols,
+        setGridRows,
+        setSingleSheetSliceSettings: singleSheetFlow.setSliceSettings,
+        selectedStyle,
+        setSelectedStyle,
+        customStyleText,
+        setCustomStyleText,
+        selectedTheme,
+        setSelectedTheme,
+        customThemeContext,
+        setCustomThemeContext,
+        customThemeScenario,
+        setCustomThemeScenario,
+        bgRemovalMethod,
+        setBgRemovalMethod,
+        chromaKeyColor,
+        setChromaKeyColor,
+        includeText,
+        setIncludeText,
+        selectedLanguage,
+        setSelectedLanguage,
+        selectedFont,
+        setSelectedFont,
+        selectedPhraseMode,
+        setSelectedPhraseMode,
+        currentSheetIndex,
+        phraseGridList,
+        actionDescGridList,
+        phraseGridCols,
+        updatePhraseAt,
+        updateActionDescAt,
+        isGeneratingPhrases,
+        handleGeneratePhrases,
+        phraseSetFileInputRef,
+        handleUploadPhraseSet,
+        handleDownloadPhraseSet,
+        setCurrentSheetIndex,
+        previewPrompt,
+        promptCopied,
+        handleGeneratePromptPreview,
+        handleCopyPrompt,
+        isGenerating,
+        onGenerate: handleGenerate,
+        onGenerateAllSheets: handleGenerateAllSheets,
+        onCancelGeneration: cancelActiveGeneration,
+        sheetStatuses,
+        hasFailedSheets,
+        onRetryFailedSheets: retryFailedSheets,
+        onRetrySheet: retrySheet,
+    });
+
+    const resultPanelViewModel = useLineStickerResultPanelViewModel({
+        stickerSetMode,
+        currentSheetIndex,
+        setCurrentSheetIndex,
+        error,
+        statusText,
+        isGenerating,
+        isDownloading,
+        effectiveSpriteSheetImage,
+        effectiveProcessedSpriteSheet,
+        effectiveStickerFrames,
+        effectiveSelectedFrames,
+        effectiveSetSelectedFrames,
+        effectiveFrameOverrides,
+        effectiveSetFrameOverrides,
+        effectiveSliceSettingsForView,
+        effectiveSetSliceSettingsForView,
+        effectiveSheetDimensions,
+        effectiveChromaKeyProgress,
+        effectiveIsProcessingChromaKey,
+        onImageLoad: handleImageLoad,
+        processedSheetImages,
+        sheetFrames,
+        singleSheetProcessedImage: singleSheetFlow.processedImage,
+        selectedCount,
+        selectedIndices,
+        selectAll,
+        deselectAll,
+        onDownloadSetOneClick: downloadSetOneClick,
+        onDownloadStickerSetZip: downloadStickerSetZip,
+        onDownloadAllSheetsFramesZip: downloadAllSheetsFramesZip,
+        onDownloadCurrentSheetZip: downloadCurrentSheetZip,
+        onDownloadAllAsZip: downloadAllAsZip,
+        onDownloadSelectedAsZip: downloadSelectedAsZip,
+        setSheetImages,
+        setProcessedSheetImages,
+        setSingleSheetImage: singleSheetFlow.setImage,
+        setSingleSheetProcessedImage: singleSheetFlow.setProcessedImage,
+        reRunSetSheetChromaKey: reRunChromaKey,
+        reRunSingleSheetChromaKey: singleSheetFlow.reRunChromaKey,
+    });
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans px-4 pb-8 md:px-6 lg:px-8 pt-4 md:pt-6">
@@ -516,418 +606,21 @@ const LineStickerPage: React.FC = () => {
             />
 
             <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Left Panel */}
-                <div className="lg:col-span-5 space-y-6">
-                    <LineStickerUploadCard
-                        title={t.lineStickerUploadTitle}
-                        uploadHint={t.lineStickerUploadHint}
-                        sourceImage={sourceImage}
-                        fileInputRef={fileInputRef}
-                        onOpenFilePicker={openFilePicker}
-                        onDrop={handleDrop}
-                        onDragOver={handleDragOver}
-                        onImageUpload={handleImageUpload}
-                    />
+                <LineStickerSettingsPanel t={t} viewModel={settingsPanelViewModel} />
 
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
-                        <h2 className="text-lg font-semibold text-slate-900">{t.lineStickerGridSettings}</h2>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerMode}</label>
-                            <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
-                                <button onClick={() => setStickerSetMode(false)} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${!stickerSetMode ? 'bg-white text-green-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>{t.lineStickerModeSingle}</button>
-                                <button onClick={() => setStickerSetMode(true)} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${stickerSetMode ? 'bg-white text-green-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>{t.lineStickerModeSet}</button>
-                            </div>
-                        </div>
-
-                        {!stickerSetMode && (
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">{t.cols}</label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="8"
-                                        value={effectiveGridCols}
-                                        onChange={e => {
-                                            const v = Number(e.target.value);
-                                            if (stickerSetMode) setGridCols(v);
-                                            else singleSheetFlow.setSliceSettings(prev => ({ ...prev, cols: v }));
-                                        }}
-                                        className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">{t.rows}</label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="8"
-                                        value={effectiveGridRows}
-                                        onChange={e => {
-                                            const v = Number(e.target.value);
-                                            if (stickerSetMode) setGridRows(v);
-                                            else singleSheetFlow.setSliceSettings(prev => ({ ...prev, rows: v }));
-                                        }}
-                                        className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500"
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerStyleLabel}</label>
-                                <select value={selectedStyle} onChange={e => setSelectedStyle(e.target.value as LineStickerStyleOption)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
-                                    {STYLE_PRESET_ORDER.map((k) => (
-                                        <option key={k} value={k}>{k === 'matchUploaded' ? t.lineStickerStyleMatchUploaded : STYLE_PRESETS[k].label}</option>
-                                    ))}
-                                    <option value="custom">{t.lineStickerStyleCustom}</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {selectedStyle === 'custom' && (
-                            <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                                <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerStyleCustomLabel}</label>
-                                <textarea
-                                    value={customStyleText}
-                                    onChange={e => setCustomStyleText(e.target.value)}
-                                    placeholder={t.lineStickerStyleCustomPlaceholder}
-                                    className="w-full h-20 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none resize-none"
-                                />
-                            </div>
-                        )}
-
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerThemeLabel}</label>
-                            <select value={selectedTheme} onChange={e => setSelectedTheme(e.target.value as any)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
-                                {Object.keys(THEME_PRESETS).map(k => <option key={k} value={k}>{(THEME_PRESETS as any)[k].label}</option>)}
-                                <option value="custom">{t.lineStickerThemeCustom}</option>
-                            </select>
-                        </div>
-
-                        {selectedTheme === 'custom' && (
-                            <>
-                                <textarea value={customThemeContext} onChange={e => setCustomThemeContext(e.target.value)} placeholder={t.lineStickerCustomThemePlaceholder} className="w-full h-20 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none resize-none" />
-                                <div className="mt-2">
-                                    <label className="block text-xs font-medium text-slate-500 mb-1">{t.lineStickerCustomThemeScenarioLabel}</label>
-                                    <input type="text" value={customThemeScenario} onChange={e => setCustomThemeScenario(e.target.value)} placeholder={t.lineStickerCustomThemeScenarioPlaceholder} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none" />
-                                </div>
-                            </>
-                        )}
-
-                        {/* Chroma Key Selector */}
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">{t.bgRemovalMethodLabel}</label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        onClick={() => setBgRemovalMethod('chroma')}
-                                        className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-200 ${bgRemovalMethod === 'chroma'
-                                            ? 'border-green-500 bg-green-50 text-green-700 shadow-sm'
-                                            : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
-                                            }`}
-                                    >
-                                        <span className="text-sm font-bold">{t.bgRemovalChroma}</span>
-                                    </button>
-                                    <button
-                                        onClick={() => setBgRemovalMethod('ai')}
-                                        className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-200 ${bgRemovalMethod === 'ai'
-                                            ? 'border-green-500 bg-green-50 text-green-700 shadow-sm'
-                                            : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
-                                            }`}
-                                    >
-                                        <span className="text-sm font-bold">{t.bgRemovalAI}</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            {bgRemovalMethod === 'chroma' && (
-                                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">{t.rmbgChromaKeyLabel}</label>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <button
-                                            onClick={() => setChromaKeyColor('magenta')}
-                                            className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-200 ${chromaKeyColor === 'magenta'
-                                                ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700 shadow-sm'
-                                                : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
-                                                }`}
-                                        >
-                                            <div className="w-3 h-3 rounded-full bg-fuchsia-500" />
-                                            <span className="text-sm font-bold">{t.magentaColor}</span>
-                                            {chromaKeyColor === 'magenta' && <Check className="w-3.5 h-3.5 ml-auto" />}
-                                        </button>
-                                        <button
-                                            onClick={() => setChromaKeyColor('green')}
-                                            className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-200 ${chromaKeyColor === 'green'
-                                                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
-                                                : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
-                                                }`}
-                                        >
-                                            <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                                            <span className="text-sm font-bold">{t.greenScreen}</span>
-                                            {chromaKeyColor === 'green' && <Check className="w-3.5 h-3.5 ml-auto" />}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                            <input
-                                type="checkbox"
-                                id="includeText"
-                                checked={includeText}
-                                onChange={e => setIncludeText(e.target.checked)}
-                                className="w-5 h-5 text-green-600 border-slate-300 rounded focus:ring-green-500 cursor-pointer"
-                            />
-                            <label htmlFor="includeText" className="text-sm font-medium text-slate-700 cursor-pointer">
-                                {t.lineStickerIncludeText}
-                            </label>
-                        </div>
-
-                        {includeText && (
-                            <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerTextLangLabel}</label>
-                                    <select value={selectedLanguage} onChange={e => setSelectedLanguage(e.target.value as any)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
-                                        {Object.keys(TEXT_PRESETS).map(k => <option key={k} value={k}>{(TEXT_PRESETS as any)[k].label}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerFontStyleLabel}</label>
-                                    <select value={selectedFont} onChange={e => setSelectedFont(e.target.value as any)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
-                                        {FONT_PRESET_ORDER.map(k => <option key={k} value={k}>{FONT_PRESETS[k].label}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-                        )}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerPhraseStyle}</label>
-                            <div className="flex flex-wrap gap-2">
-                                {[
-                                    { id: 'balanced', label: t.lineStickerPhraseBalanced },
-                                    { id: 'emotional', label: t.lineStickerPhraseEmotional },
-                                    { id: 'meme', label: t.lineStickerPhraseMeme },
-                                    { id: 'interaction', label: t.lineStickerPhraseInteraction },
-                                    { id: 'theme-deep', label: t.lineStickerPhraseThemeDeep },
-                                ].map((mode) => (
-                                    <button
-                                        key={mode.id}
-                                        onClick={() => setSelectedPhraseMode(mode.id as any)}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${selectedPhraseMode === mode.id
-                                            ? 'bg-green-100 text-green-700 border border-green-200'
-                                            : 'bg-white text-slate-600 border border-slate-200 hover:border-green-200'
-                                            }`}
-                                    >
-                                        {mode.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <LineStickerPhraseSection
-                            t={t}
-                            stickerSetMode={stickerSetMode}
-                            currentSheetIndex={currentSheetIndex}
-                            phraseGridList={phraseGridList}
-                            actionDescGridList={actionDescGridList}
-                            phraseGridCols={phraseGridCols}
-                            updatePhraseAt={updatePhraseAt}
-                            updateActionDescAt={updateActionDescAt}
-                            isGeneratingPhrases={isGeneratingPhrases}
-                            handleGeneratePhrases={handleGeneratePhrases}
-                            phraseSetFileInputRef={phraseSetFileInputRef}
-                            handleUploadPhraseSet={handleUploadPhraseSet}
-                            handleDownloadPhraseSet={handleDownloadPhraseSet}
-                            setCurrentSheetIndex={setCurrentSheetIndex}
-                            previewPrompt={previewPrompt}
-                            promptCopied={promptCopied}
-                            handleGeneratePromptPreview={handleGeneratePromptPreview}
-                            handleCopyPrompt={handleCopyPrompt}
-                            isGenerating={isGenerating}
-                            sourceImage={sourceImage}
-                            onGenerate={handleGenerate}
-                            onGenerateAllSheets={handleGenerateAllSheets}
-                            onCancelGeneration={cancelActiveGeneration}
-                            sheetStatuses={sheetStatuses}
-                            hasFailedSheets={hasFailedSheets}
-                            onRetryFailedSheets={retryFailedSheets}
-                            onRetrySheet={retrySheet}
-                        />
-                    </div>
-                </div>
-
-                {/* Right Panel */}
                 <div className="lg:col-span-7 space-y-6">
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 min-h-[500px]">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-semibold text-slate-900">{t.lineStickerResult}</h2>
-                            {stickerSetMode && (
-                                <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
-                                    {[0, 1, 2].map(i => (
-                                        <button key={i} onClick={() => setCurrentSheetIndex(i as any)} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${currentSheetIndex === i ? 'bg-white text-green-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-                                            {t.lineStickerSheetN.replace('{n}', String(i + 1))}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {error && <div className="mb-4 p-4 bg-red-50 text-red-700 border border-red-100 rounded-xl text-sm flex items-center gap-2 animate-in slide-in-from-top-2"><Plus className="w-5 h-5 rotate-45" />{error}</div>}
-                        {statusText && <div className="mb-4 p-4 bg-green-50 text-green-700 border border-green-100 rounded-xl text-sm flex items-center gap-3"><Loader2 className="w-4 h-4 animate-spin" />{statusText}</div>}
-
-                        {(effectiveSpriteSheetImage != null) ? (
-                            <div className="space-y-8">
-                                <div className="flex flex-wrap items-center gap-2 mb-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowOriginalInSpriteView(prev => !prev)}
-                                        className={`text-xs px-3 py-1.5 rounded-lg border-2 transition-all ${showOriginalInSpriteView
-                                            ? 'bg-amber-50 border-amber-300 text-amber-700'
-                                            : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300'
-                                            }`}
-                                    >
-                                        {showOriginalInSpriteView ? t.lineStickerShowProcessed : t.lineStickerShowOriginal}
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (effectiveSpriteSheetImage) {
-                                                const link = document.createElement('a');
-                                                link.href = effectiveSpriteSheetImage;
-                                                link.download = `sprite-sheet-${stickerSetMode ? currentSheetIndex + 1 : 'single'}-original.png`;
-                                                link.click();
-                                            }
-                                        }}
-                                        disabled={!effectiveSpriteSheetImage}
-                                        className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50"
-                                    >
-                                        {t.downloadOriginal}
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (effectiveProcessedSpriteSheet) {
-                                                const link = document.createElement('a');
-                                                link.href = effectiveProcessedSpriteSheet;
-                                                link.download = `sprite-sheet-${stickerSetMode ? currentSheetIndex + 1 : 'single'}-processed.png`;
-                                                link.click();
-                                            }
-                                        }}
-                                        disabled={!effectiveProcessedSpriteSheet}
-                                        className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-green-600 hover:bg-green-50 disabled:opacity-50"
-                                    >
-                                        {t.downloadProcessed}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        disabled={effectiveIsProcessingChromaKey || !effectiveSpriteSheetImage}
-                                        onClick={async () => {
-                                            if (!effectiveSpriteSheetImage) return;
-                                            try {
-                                                const result = stickerSetMode
-                                                    ? await reRunChromaKey(effectiveSpriteSheetImage)
-                                                    : await singleSheetFlow.reRunChromaKey(effectiveSpriteSheetImage);
-                                                if (stickerSetMode) setProcessedSheetImages(prev => { const n = [...prev]; n[currentSheetIndex] = result; return n; });
-                                                else singleSheetFlow.setProcessedImage(result);
-                                            } catch (_) { /* error already set by hook */ }
-                                        }}
-                                        className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-teal-600 hover:bg-teal-50 disabled:opacity-50 flex items-center gap-1.5"
-                                    >
-                                        {effectiveIsProcessingChromaKey ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                                        {t.spriteSheetReRunChromaKey}
-                                    </button>
-                                </div>
-
-                                <Suspense fallback={<div className="aspect-video bg-slate-50 rounded-xl animate-pulse" />}>
-                                    <SpriteSheetViewer
-                                        spriteSheetImage={showOriginalInSpriteView
-                                            ? effectiveSpriteSheetImage
-                                            : (effectiveProcessedSpriteSheet || effectiveSpriteSheetImage)}
-                                        onImageLoad={handleImageLoad}
-                                        isGenerating={isGenerating}
-                                        sliceSettings={effectiveSliceSettingsForView}
-                                        setSliceSettings={effectiveSetSliceSettingsForView}
-                                        lockGridSize={stickerSetMode}
-                                        onEditedImage={(dataUrl: string) => {
-                                            if (showOriginalInSpriteView) {
-                                                if (stickerSetMode) setSheetImages(prev => { const n = [...prev]; n[currentSheetIndex] = dataUrl; return n; });
-                                                else singleSheetFlow.setImage(dataUrl);
-                                            } else {
-                                                if (stickerSetMode) setProcessedSheetImages(prev => { const n = [...prev]; n[currentSheetIndex] = dataUrl; return n; });
-                                                else singleSheetFlow.setProcessedImage(dataUrl);
-                                            }
-                                        }}
-                                        chromaKeyProgress={effectiveChromaKeyProgress}
-                                        isProcessingChromaKey={effectiveIsProcessingChromaKey}
-                                        sheetDimensions={effectiveSheetDimensions}
-                                        onDownload={(isProcessed: boolean) => {
-                                            const img = isProcessed ? effectiveProcessedSpriteSheet : effectiveSpriteSheetImage;
-                                            if (img) {
-                                                const link = document.createElement('a');
-                                                link.href = img;
-                                                link.download = `sprite-sheet-${isProcessed ? 'processed' : 'original'}.png`;
-                                                link.click();
-                                            }
-                                        }}
-                                    />
-                                </Suspense>
-
-                                <div className="border-t border-slate-100 pt-6">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h3 className="font-semibold text-slate-900 flex items-center gap-2">{t.lineStickerPreviewCropped} <span className="text-xs font-normal text-slate-500">{t.lineStickerPreviewCropHint}</span></h3>
-                                        <div className="flex gap-2">
-                                            <button onClick={selectAll} className="text-xs font-semibold text-green-600 hover:text-green-700">{t.lineStickerSelectAll}</button>
-                                            <button onClick={deselectAll} className="text-xs font-semibold text-slate-500 hover:text-slate-600">{t.lineStickerDeselectAll}</button>
-                                        </div>
-                                    </div>
-                                    <Suspense fallback={<div className="grid grid-cols-4 gap-2"><div className="aspect-square bg-slate-50 animate-pulse rounded-lg" /></div>}>
-                                        <FrameGrid
-                                            frames={effectiveStickerFrames}
-                                            currentFrameIndex={0}
-                                            onFrameClick={() => { }}
-                                            frameIncluded={effectiveSelectedFrames}
-                                            setFrameIncluded={effectiveSetSelectedFrames}
-                                            frameOverrides={effectiveFrameOverrides}
-                                            setFrameOverrides={effectiveSetFrameOverrides}
-                                            enablePerFrameEdit={true}
-                                            processedSpriteSheet={effectiveProcessedSpriteSheet}
-                                            sliceSettings={effectiveSliceSettingsForView}
-                                            sheetDimensions={effectiveSheetDimensions}
-                                        />
-                                    </Suspense>
-                                </div>
-
-                                <LineStickerDownloadSection
-                                    t={t}
-                                    stickerSetMode={stickerSetMode}
-                                    isDownloading={isDownloading}
-                                    processedSheetImages={processedSheetImages}
-                                    sheetFrames={sheetFrames}
-                                    processedSheetImagesCurrent={stickerSetMode ? (processedSheetImages[currentSheetIndex] ?? null) : singleSheetFlow.processedImage}
-                                    stickerFramesLength={effectiveStickerFrames.length}
-                                    selectedCount={selectedCount}
-                                    onDownloadSetOneClick={downloadSetOneClick}
-                                    onDownloadStickerSetZip={downloadStickerSetZip}
-                                    onDownloadAllSheetsFramesZip={downloadAllSheetsFramesZip}
-                                    onDownloadCurrentSheetZip={downloadCurrentSheetZip}
-                                    onDownloadAllAsZip={downloadAllAsZip}
-                                    onDownloadSelectedAsZip={downloadSelectedAsZip}
-                                    selectedIndices={selectedIndices}
-                                />
-                            </div>
-                        ) : (
-                            <LineStickerResultEmptyState
-                                placeholderText={t.spriteSheetPlaceholder}
-                                uploadButtonText={t.lineStickerUploadSpriteSheet}
-                                uploadHint={t.lineStickerUploadSpriteSheetHint}
-                                onUploadClick={() => spriteSheetFileInputRef.current?.click()}
-                                onFileChange={handleSpriteSheetUpload}
-                                fileInputRef={spriteSheetFileInputRef}
-                            />
-                        )}
-                    </div>
+                    <LineStickerResultPanel t={t} viewModel={resultPanelViewModel} />
                 </div>
             </main>
+
+            <RenderProfilerDebugPanel
+                title="Line Sticker Profiler"
+                filterIds={[
+                    'LineStickerPhraseGrid',
+                    'LineStickerResultViewer',
+                    'LineStickerResultDownloads',
+                ]}
+            />
         </div>
     );
 };

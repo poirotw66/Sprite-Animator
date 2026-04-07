@@ -4,10 +4,10 @@ import type { Dispatch, SetStateAction } from 'react';
 interface UseLineStickerPhraseGridParams {
   stickerSetMode: boolean;
   currentSheetIndex: 0 | 1 | 2;
+  singlePhrasesList: string[];
+  setSinglePhrasesList: Dispatch<SetStateAction<string[]>>;
   setPhrasesList: string[];
   setSetPhrasesList: Dispatch<SetStateAction<string[]>>;
-  customPhrases: string;
-  setCustomPhrases: Dispatch<SetStateAction<string>>;
   actionDescsList: string[];
   setActionDescsList: Dispatch<SetStateAction<string[]>>;
   gridCols: number;
@@ -27,10 +27,10 @@ function ensureLength(values: string[], size: number): string[] {
 export function useLineStickerPhraseGrid({
   stickerSetMode,
   currentSheetIndex,
+  singlePhrasesList,
+  setSinglePhrasesList,
   setPhrasesList,
   setSetPhrasesList,
-  customPhrases,
-  setCustomPhrases,
   actionDescsList,
   setActionDescsList,
   gridCols,
@@ -41,9 +41,8 @@ export function useLineStickerPhraseGrid({
       return ensureLength(setPhrasesList, SET_COUNT);
     }
     const total = gridCols * gridRows;
-    const fromText = customPhrases.split('\n').map((line) => line.trim());
-    return ensureLength(fromText, total);
-  }, [stickerSetMode, setPhrasesList, customPhrases, gridCols, gridRows]);
+    return ensureLength(singlePhrasesList, total);
+  }, [stickerSetMode, setPhrasesList, singlePhrasesList, gridCols, gridRows]);
 
   const actionDescsForHook = useMemo(() => {
     if (stickerSetMode) {
@@ -88,11 +87,9 @@ export function useLineStickerPhraseGrid({
       }
 
       const total = gridCols * gridRows;
-      const arr = customPhrases.split('\n').map((line) => line.trim());
-      const next = ensureLength(arr, total);
+      const next = ensureLength(singlePhrasesList, total);
       next[index] = value;
-      setCustomPhrases(next.join('\n'));
-      setSetPhrasesList(next);
+      setSinglePhrasesList(next);
     },
     [
       stickerSetMode,
@@ -100,8 +97,8 @@ export function useLineStickerPhraseGrid({
       setSetPhrasesList,
       gridCols,
       gridRows,
-      customPhrases,
-      setCustomPhrases,
+      singlePhrasesList,
+      setSinglePhrasesList,
     ]
   );
 
