@@ -7,6 +7,7 @@ interface UseLineStickerImageInputParams {
   setStickerFrames: Dispatch<SetStateAction<string[]>>;
   setSelectedFrames: Dispatch<SetStateAction<boolean[]>>;
   setError: (value: string | null) => void;
+  resetGeneratedOutputs?: () => void;
 }
 
 export function useLineStickerImageInput({
@@ -15,18 +16,23 @@ export function useLineStickerImageInput({
   setStickerFrames,
   setSelectedFrames,
   setError,
+  resetGeneratedOutputs,
 }: UseLineStickerImageInputParams) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const resetGeneratedState = useCallback(
     (imageData: string) => {
       setSourceImage(imageData);
-      setSpriteSheetImage(null);
-      setStickerFrames([]);
-      setSelectedFrames([]);
+      if (resetGeneratedOutputs) {
+        resetGeneratedOutputs();
+      } else {
+        setSpriteSheetImage(null);
+        setStickerFrames([]);
+        setSelectedFrames([]);
+      }
       setError(null);
     },
-    [setSourceImage, setSpriteSheetImage, setStickerFrames, setSelectedFrames, setError]
+    [resetGeneratedOutputs, setSourceImage, setSpriteSheetImage, setStickerFrames, setSelectedFrames, setError]
   );
 
   const readFile = useCallback(

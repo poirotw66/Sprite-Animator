@@ -53,6 +53,18 @@ const createSetModeSliceSettings = (): SliceSettings => ({
 const createSetModeSliceSettingsList = () =>
     Array.from({ length: SHEETS_COUNT }, () => createSetModeSliceSettings());
 
+const createEmptySetModeImageList = (): (string | null)[] =>
+    Array.from({ length: SHEETS_COUNT }, () => null);
+
+const createEmptySetModeFrameList = (): string[][] =>
+    Array.from({ length: SHEETS_COUNT }, () => []);
+
+const createEmptySetModeOverrideList = (): FrameOverride[][] =>
+    Array.from({ length: SHEETS_COUNT }, () => []);
+
+const createEmptySetModeSelectionList = (): boolean[][] =>
+    Array.from({ length: SHEETS_COUNT }, () => []);
+
 const LineStickerPage: React.FC = () => {
     const { t } = useLanguage();
     const {
@@ -100,11 +112,11 @@ const LineStickerPage: React.FC = () => {
     const [stickerSetMode, setStickerSetMode] = useState(false);
     const [setPhrasesList, setSetPhrasesList] = useState<string[]>([]);
     const [actionDescsList, setActionDescsList] = useState<string[]>([]);
-    const [sheetImages, setSheetImages] = useState<(string | null)[]>([null, null, null]);
-    const [processedSheetImages, setProcessedSheetImages] = useState<(string | null)[]>([null, null, null]);
-    const [sheetFrames, setSheetFrames] = useState<string[][]>(() => [[], [], []]);
-    const [sheetFrameOverrides, setSheetFrameOverrides] = useState<FrameOverride[][]>(() => [[], [], []]);
-    const [selectedFramesBySheet, setSelectedFramesBySheet] = useState<boolean[][]>(() => [[], [], []]);
+    const [sheetImages, setSheetImages] = useState<(string | null)[]>(() => createEmptySetModeImageList());
+    const [processedSheetImages, setProcessedSheetImages] = useState<(string | null)[]>(() => createEmptySetModeImageList());
+    const [sheetFrames, setSheetFrames] = useState<string[][]>(() => createEmptySetModeFrameList());
+    const [sheetFrameOverrides, setSheetFrameOverrides] = useState<FrameOverride[][]>(() => createEmptySetModeOverrideList());
+    const [selectedFramesBySheet, setSelectedFramesBySheet] = useState<boolean[][]>(() => createEmptySetModeSelectionList());
     const [currentSheetIndex, setCurrentSheetIndex] = useState<0 | 1 | 2>(0);
 
     const [spriteSheetImage, setSpriteSheetImage] = useState<string | null>(null);
@@ -250,6 +262,7 @@ const LineStickerPage: React.FC = () => {
         handleGenerateAllSheets,
         reRunChromaKey,
         sheetStatuses,
+        resetSheetStatuses,
         retryFailedSheets,
         retrySheet,
         hasFailedSheets,
@@ -296,6 +309,51 @@ const LineStickerPage: React.FC = () => {
         sliceProcessedSheetToFrames,
     });
 
+    const resetSetModeGeneratedOutputs = useCallback(() => {
+        setCurrentSheetIndex(0);
+        setSheetImages(createEmptySetModeImageList());
+        setProcessedSheetImages(createEmptySetModeImageList());
+        setSheetFrames(createEmptySetModeFrameList());
+        setSheetFrameOverrides(createEmptySetModeOverrideList());
+        setSelectedFramesBySheet(createEmptySetModeSelectionList());
+        setSpriteSheetImage(null);
+        setProcessedSpriteSheet(null);
+        setStickerFrames([]);
+        setSelectedFrames([]);
+        setFrameOverrides([]);
+        setSheetDimensions({ width: 0, height: 0 });
+        setChromaKeyProgress(0);
+        setIsProcessingChromaKey(false);
+        resetSheetStatuses();
+    }, [resetSheetStatuses]);
+
+    const resetSingleModeGeneratedOutputs = useCallback(() => {
+        singleSheetFlow.setImage(null);
+        singleSheetFlow.setProcessedImage(null);
+        singleSheetFlow.setFrames([]);
+        singleSheetFlow.setFrameIncluded([]);
+        singleSheetFlow.setFrameOverrides([]);
+        singleSheetFlow.setChromaKeyProgress(0);
+        singleSheetFlow.setIsProcessingChromaKey(false);
+    }, [singleSheetFlow]);
+
+    const resetGeneratedOutputs = useCallback(() => {
+        cancelActiveGeneration();
+        resetSingleModeGeneratedOutputs();
+        resetSetModeGeneratedOutputs();
+        setStatusText('');
+        setError(null);
+        setIsGenerating(false);
+    }, [cancelActiveGeneration, resetSetModeGeneratedOutputs, resetSingleModeGeneratedOutputs, setError, setIsGenerating, setStatusText]);
+
+    const handleStickerSetModeChange = useCallback((nextMode: boolean) => {
+        if (nextMode === stickerSetMode) {
+            return;
+        }
+        resetGeneratedOutputs();
+        setStickerSetMode(nextMode);
+    }, [resetGeneratedOutputs, stickerSetMode]);
+
     const {
         fileInputRef,
         handleImageUpload,
@@ -308,6 +366,7 @@ const LineStickerPage: React.FC = () => {
         setStickerFrames: stickerSetMode ? setStickerFrames : singleSheetFlow.setFrames,
         setSelectedFrames: stickerSetMode ? setSelectedFrames : singleSheetFlow.setFrameIncluded,
         setError,
+        resetGeneratedOutputs,
     });
 
     const {
@@ -458,14 +517,14 @@ const LineStickerPage: React.FC = () => {
                 }
                 setError(null);
                 if (data.mode === 'single' && data.gridCols != null && data.gridRows != null) {
-                    setStickerSetMode(false);
+                    handleStickerSetModeChange(false);
                     setGridCols(data.gridCols);
                     setGridRows(data.gridRows);
                     singleSheetFlow.setSliceSettings(prev => ({ ...prev, cols: data.gridCols!, rows: data.gridRows! }));
                     setSinglePhrasesList(data.phrases);
                     setActionDescsList(data.actionDescs ?? data.phrases.map(() => ''));
                 } else {
-                    setStickerSetMode(true);
+                    handleStickerSetModeChange(true);
                     setSheetSliceSettings(createSetModeSliceSettingsList());
                     setSetPhrasesList(data.phrases);
                     setActionDescsList(data.actionDescs ?? data.phrases.map(() => ''));
@@ -475,7 +534,7 @@ const LineStickerPage: React.FC = () => {
             reader.readAsText(file, 'UTF-8');
             e.target.value = '';
         },
-        [t.lineStickerPhraseSetUploadError]
+        [handleStickerSetModeChange, setActionDescsList, setError, setGridCols, setGridRows, singleSheetFlow, t.lineStickerPhraseSetUploadError]
     );
 
     const settingsPanelViewModel = useLineStickerSettingsPanelViewModel({
@@ -487,7 +546,7 @@ const LineStickerPage: React.FC = () => {
         onDragOver: handleDragOver,
         onImageUpload: handleImageUpload,
         stickerSetMode,
-        setStickerSetMode,
+        onStickerSetModeChange: handleStickerSetModeChange,
         gridCols: effectiveGridCols,
         gridRows: effectiveGridRows,
         setGridCols,

@@ -24,7 +24,7 @@ import {
 
 export interface LineStickerSettingsConfigViewModel {
   stickerSetMode: boolean;
-  setStickerSetMode: React.Dispatch<React.SetStateAction<boolean>>;
+  onStickerSetModeChange: (value: boolean) => void;
   gridCols: number;
   gridRows: number;
   onGridColsChange: (value: number) => void;
@@ -79,8 +79,8 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerMode}</label>
           <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
-            <button onClick={() => config.setStickerSetMode(false)} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${!config.stickerSetMode ? 'bg-white text-green-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>{t.lineStickerModeSingle}</button>
-            <button onClick={() => config.setStickerSetMode(true)} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${config.stickerSetMode ? 'bg-white text-green-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>{t.lineStickerModeSet}</button>
+            <button onClick={() => config.onStickerSetModeChange(false)} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${!config.stickerSetMode ? 'bg-white text-green-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>{t.lineStickerModeSingle}</button>
+            <button onClick={() => config.onStickerSetModeChange(true)} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${config.stickerSetMode ? 'bg-white text-green-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>{t.lineStickerModeSet}</button>
           </div>
         </div>
 

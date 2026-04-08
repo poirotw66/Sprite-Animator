@@ -42,6 +42,17 @@ function isActiveSheetStage(stage: LineStickerSheetStage): boolean {
   );
 }
 
+function createInitialSheetStatuses(): LineStickerSheetStatus[] {
+  return SHEET_INDICES.map((sheetIndex) => ({
+    sheetIndex,
+    stage: 'idle',
+    progress: 0,
+    message: '',
+    error: null,
+    attempts: 0,
+  }));
+}
+
 export interface LineStickerGenerationTexts {
   errorApiKey: string;
   errorNoImage: string;
@@ -131,14 +142,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
   } = options;
 
   const [sheetStatuses, setSheetStatuses] = useState<LineStickerSheetStatus[]>(() =>
-    SHEET_INDICES.map((sheetIndex) => ({
-      sheetIndex,
-      stage: 'idle',
-      progress: 0,
-      message: '',
-      error: null,
-      attempts: 0,
-    }))
+    createInitialSheetStatuses()
   );
   const requestCounterRef = useRef(0);
   const activeRequestIdRef = useRef<number | null>(null);
@@ -203,6 +207,10 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
           : status
       )
     );
+  }, []);
+
+  const resetSheetStatuses = useCallback(() => {
+    setSheetStatuses(createInitialSheetStatuses());
   }, []);
 
   const startRequest = useCallback(() => {
@@ -807,6 +815,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
     handleGenerateAllSheets,
     reRunChromaKey,
     sheetStatuses,
+    resetSheetStatuses,
     retryFailedSheets,
     retrySheet,
     hasFailedSheets: failedSheetIndices.length > 0,

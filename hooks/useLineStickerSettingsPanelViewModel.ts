@@ -22,7 +22,7 @@ interface UseLineStickerSettingsPanelViewModelParams {
   onDragOver: (event: React.DragEvent) => void;
   onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   stickerSetMode: boolean;
-  setStickerSetMode: React.Dispatch<React.SetStateAction<boolean>>;
+  onStickerSetModeChange: (value: boolean) => void;
   gridCols: number;
   gridRows: number;
   setGridCols: React.Dispatch<React.SetStateAction<number>>;
@@ -85,7 +85,7 @@ export const useLineStickerSettingsPanelViewModel = ({
   onDragOver,
   onImageUpload,
   stickerSetMode,
-  setStickerSetMode,
+  onStickerSetModeChange,
   gridCols,
   gridRows,
   setGridCols,
@@ -161,7 +161,7 @@ export const useLineStickerSettingsPanelViewModel = ({
 
   const config = useMemo(() => ({
     stickerSetMode,
-    setStickerSetMode,
+    onStickerSetModeChange,
     gridCols,
     gridRows,
     onGridColsChange: handleGridColsChange,
@@ -190,7 +190,7 @@ export const useLineStickerSettingsPanelViewModel = ({
     setSelectedPhraseMode,
   }), [
     stickerSetMode,
-    setStickerSetMode,
+    onStickerSetModeChange,
     gridCols,
     gridRows,
     handleGridColsChange,
