@@ -9,6 +9,7 @@ import {
 } from '../utils/lineStickerPrompt';
 import type { StickerPhraseMode } from '../utils/constants';
 import { logger } from '../utils/logger';
+import { LINE_STICKER_TOTAL_SET_FRAMES } from '../utils/lineStickerSetSchema';
 
 interface PhraseGenerationTexts {
   errorApiKey: string;
@@ -81,7 +82,7 @@ export function useLineStickerPhraseGeneration({
 
     setIsGeneratingPhrases(true);
     try {
-      const count = stickerSetMode ? 48 : gridCols * gridRows;
+      const count = stickerSetMode ? LINE_STICKER_TOTAL_SET_FRAMES : gridCols * gridRows;
       const fullContext = buildFullContext();
       const langLabel = TEXT_PRESETS[selectedLanguage]?.label || selectedLanguage;
       const examplePhrases =

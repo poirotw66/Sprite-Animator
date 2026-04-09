@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
 import { SettingsModal } from '../components/SettingsModal';
 import { RenderProfilerDebugPanel } from '../components/RenderProfilerDebugPanel';
@@ -23,6 +23,15 @@ import {
     type StickerPhraseMode
 } from '../utils/constants';
 import { buildPhraseSetExport, parsePhraseSetJson } from '../utils/lineStickerPhraseSetFormat';
+import {
+    createLineStickerSetSliceSettings,
+    createLineStickerSheetArray,
+    DEFAULT_LINE_STICKER_SHEET_INDEX,
+    formatLineStickerSetText,
+    LINE_STICKER_SET_COLS,
+    LINE_STICKER_SET_ROWS,
+    type LineStickerSheetIndex,
+} from '../utils/lineStickerSetSchema';
 
 import {
     LineStickerHeader,
@@ -38,35 +47,42 @@ import {
     type LineStickerStyleOption,
 } from '../utils/lineStickerPrompt';
 
-const SHEETS_COUNT = 3;
-const SET_MODE_COLS = 4;
-const SET_MODE_ROWS = 4;
-
-const createSetModeSliceSettings = (): SliceSettings => ({
-    ...DEFAULT_SLICE_SETTINGS,
-    cols: SET_MODE_COLS,
-    rows: SET_MODE_ROWS,
-    sliceMode: 'equal',
-    inferredCellRects: undefined,
-});
-
 const createSetModeSliceSettingsList = () =>
-    Array.from({ length: SHEETS_COUNT }, () => createSetModeSliceSettings());
+    createLineStickerSheetArray(() => createLineStickerSetSliceSettings());
 
 const createEmptySetModeImageList = (): (string | null)[] =>
-    Array.from({ length: SHEETS_COUNT }, () => null);
+    createLineStickerSheetArray(() => null);
 
 const createEmptySetModeFrameList = (): string[][] =>
-    Array.from({ length: SHEETS_COUNT }, () => []);
+    createLineStickerSheetArray(() => []);
 
 const createEmptySetModeOverrideList = (): FrameOverride[][] =>
-    Array.from({ length: SHEETS_COUNT }, () => []);
+    createLineStickerSheetArray(() => []);
 
 const createEmptySetModeSelectionList = (): boolean[][] =>
-    Array.from({ length: SHEETS_COUNT }, () => []);
+    createLineStickerSheetArray(() => []);
 
 const LineStickerPage: React.FC = () => {
     const { t } = useLanguage();
+    const lineStickerT = useMemo(() => ({
+        ...t,
+        lineStickerModeSet: formatLineStickerSetText(t.lineStickerModeSet),
+        lineStickerModeSetHint: formatLineStickerSetText(t.lineStickerModeSetHint),
+        lineStickerPhraseListSet: formatLineStickerSetText(t.lineStickerPhraseListSet),
+        lineStickerGeneratePhrases48: formatLineStickerSetText(t.lineStickerGeneratePhrases48),
+        lineStickerPhraseGenHint48: formatLineStickerSetText(t.lineStickerPhraseGenHint48),
+        lineStickerPhraseSetPlaceholder: formatLineStickerSetText(t.lineStickerPhraseSetPlaceholder),
+        lineStickerSheetInfo: formatLineStickerSetText(t.lineStickerSheetInfo),
+        lineStickerGenerateAll: formatLineStickerSetText(t.lineStickerGenerateAll),
+        lineStickerDownload3Zip: formatLineStickerSetText(t.lineStickerDownload3Zip),
+        lineStickerDownload3SheetsFramesZip: formatLineStickerSetText(t.lineStickerDownload3SheetsFramesZip),
+        lineStickerDownloadAllOneClick: formatLineStickerSetText(t.lineStickerDownloadAllOneClick),
+        lineStickerDownloadSheetN: formatLineStickerSetText(t.lineStickerDownloadSheetN),
+        lineStickerErrorNeedPhrases: formatLineStickerSetText(t.lineStickerErrorNeedPhrases),
+        lineStickerParallelGenerating: formatLineStickerSetText(t.lineStickerParallelGenerating),
+        lineStickerSheetProgressTitle: formatLineStickerSetText(t.lineStickerSheetProgressTitle),
+        lineStickerTotalFramesSet: formatLineStickerSetText(t.lineStickerTotalFramesSet),
+    }), [t]);
     const {
         apiKey,
         setApiKey,
@@ -117,7 +133,7 @@ const LineStickerPage: React.FC = () => {
     const [sheetFrames, setSheetFrames] = useState<string[][]>(() => createEmptySetModeFrameList());
     const [sheetFrameOverrides, setSheetFrameOverrides] = useState<FrameOverride[][]>(() => createEmptySetModeOverrideList());
     const [selectedFramesBySheet, setSelectedFramesBySheet] = useState<boolean[][]>(() => createEmptySetModeSelectionList());
-    const [currentSheetIndex, setCurrentSheetIndex] = useState<0 | 1 | 2>(0);
+    const [currentSheetIndex, setCurrentSheetIndex] = useState<LineStickerSheetIndex>(DEFAULT_LINE_STICKER_SHEET_INDEX);
 
     const [spriteSheetImage, setSpriteSheetImage] = useState<string | null>(null);
     const [processedSpriteSheet, setProcessedSpriteSheet] = useState<string | null>(null);
@@ -132,11 +148,11 @@ const LineStickerPage: React.FC = () => {
     // Single-sheet mode: shared flow (upload ? slice ? remove bg ? frames) with PartingPage
     const singleSheetFlow = useSpriteSheetFlow({
         runChromaAutomatically: bgRemovalMethod === 'chroma',
-        initialSliceSettings: { ...DEFAULT_SLICE_SETTINGS, cols: SET_MODE_COLS, rows: SET_MODE_ROWS } as SliceSettings,
+        initialSliceSettings: { ...DEFAULT_SLICE_SETTINGS, cols: LINE_STICKER_SET_COLS, rows: LINE_STICKER_SET_ROWS } as SliceSettings,
     });
-    const effectiveGridCols = stickerSetMode ? SET_MODE_COLS : singleSheetFlow.sliceSettings.cols;
-    const effectiveGridRows = stickerSetMode ? SET_MODE_ROWS : singleSheetFlow.sliceSettings.rows;
-    const currentSetSliceSettings = sheetSliceSettings[currentSheetIndex] ?? createSetModeSliceSettings();
+    const effectiveGridCols = stickerSetMode ? LINE_STICKER_SET_COLS : singleSheetFlow.sliceSettings.cols;
+    const effectiveGridRows = stickerSetMode ? LINE_STICKER_SET_ROWS : singleSheetFlow.sliceSettings.rows;
+    const currentSetSliceSettings = sheetSliceSettings[currentSheetIndex] ?? createLineStickerSetSliceSettings();
 
     const {
         phrasesForHook,
@@ -211,7 +227,7 @@ const LineStickerPage: React.FC = () => {
         setSetPhrasesList,
         setActionDescsList,
         t: {
-            errorApiKey: t.errorApiKey,
+            errorApiKey: lineStickerT.errorApiKey,
         },
     });
 
@@ -276,20 +292,20 @@ const LineStickerPage: React.FC = () => {
         currentSheetIndex,
         generateSingleSheet,
         texts: {
-            errorApiKey: t.errorApiKey,
-            errorNoImage: t.errorNoImage,
-            lineStickerErrorNeedPhrases: t.lineStickerErrorNeedPhrases,
-            lineStickerParallelGenerating: t.lineStickerParallelGenerating,
-            lineStickerGeneratingSheetN: t.lineStickerGeneratingSheetN,
-            lineStickerProcessingSheetN: t.lineStickerProcessingSheetN,
-            lineStickerQueuedSheetN: t.lineStickerQueuedSheetN,
-            lineStickerSlicingSheetN: t.lineStickerSlicingSheetN,
-            lineStickerSheetReadyN: t.lineStickerSheetReadyN,
-            lineStickerSheetFailedN: t.lineStickerSheetFailedN,
-            lineStickerRetryFailed: t.lineStickerRetryFailed,
-            lineStickerErrorSomeSheetsFailed: t.lineStickerErrorSomeSheetsFailed,
-            statusProcessing: t.statusProcessing,
-            errorGeneration: t.errorGeneration,
+            errorApiKey: lineStickerT.errorApiKey,
+            errorNoImage: lineStickerT.errorNoImage,
+            lineStickerErrorNeedPhrases: lineStickerT.lineStickerErrorNeedPhrases,
+            lineStickerParallelGenerating: lineStickerT.lineStickerParallelGenerating,
+            lineStickerGeneratingSheetN: lineStickerT.lineStickerGeneratingSheetN,
+            lineStickerProcessingSheetN: lineStickerT.lineStickerProcessingSheetN,
+            lineStickerQueuedSheetN: lineStickerT.lineStickerQueuedSheetN,
+            lineStickerSlicingSheetN: lineStickerT.lineStickerSlicingSheetN,
+            lineStickerSheetReadyN: lineStickerT.lineStickerSheetReadyN,
+            lineStickerSheetFailedN: lineStickerT.lineStickerSheetFailedN,
+            lineStickerRetryFailed: lineStickerT.lineStickerRetryFailed,
+            lineStickerErrorSomeSheetsFailed: lineStickerT.lineStickerErrorSomeSheetsFailed,
+            statusProcessing: lineStickerT.statusProcessing,
+            errorGeneration: lineStickerT.errorGeneration,
         },
         chroma: { chromaKeyColor, bgRemovalMethod },
         setters: {
@@ -310,7 +326,7 @@ const LineStickerPage: React.FC = () => {
     });
 
     const resetSetModeGeneratedOutputs = useCallback(() => {
-        setCurrentSheetIndex(0);
+        setCurrentSheetIndex(DEFAULT_LINE_STICKER_SHEET_INDEX);
         setSheetImages(createEmptySetModeImageList());
         setProcessedSheetImages(createEmptySetModeImageList());
         setSheetFrames(createEmptySetModeFrameList());
@@ -432,15 +448,15 @@ const LineStickerPage: React.FC = () => {
     const effectiveSliceSettingsForView = stickerSetMode ? currentSetSliceSettings : singleSheetFlow.sliceSettings;
     const effectiveSetSliceSettingsForView = stickerSetMode
         ? (val: SliceSettings | ((prev: SliceSettings) => SliceSettings)) => {
-            const currentSettings = sheetSliceSettings[currentSheetIndex] ?? createSetModeSliceSettings();
+            const currentSettings = sheetSliceSettings[currentSheetIndex] ?? createLineStickerSetSliceSettings();
             if (typeof val === 'function') {
                 const next = val(currentSettings);
                 setSheetSliceSettings((prev) => {
                     const updated = prev.map((entry) => ({ ...entry }));
                     updated[currentSheetIndex] = {
                         ...next,
-                        cols: SET_MODE_COLS,
-                        rows: SET_MODE_ROWS,
+                        cols: LINE_STICKER_SET_COLS,
+                        rows: LINE_STICKER_SET_ROWS,
                     };
                     return updated;
                 });
@@ -449,8 +465,8 @@ const LineStickerPage: React.FC = () => {
                     const updated = prev.map((entry) => ({ ...entry }));
                     updated[currentSheetIndex] = {
                         ...val,
-                        cols: SET_MODE_COLS,
-                        rows: SET_MODE_ROWS,
+                        cols: LINE_STICKER_SET_COLS,
+                        rows: LINE_STICKER_SET_ROWS,
                     };
                     return updated;
                 });
@@ -512,7 +528,7 @@ const LineStickerPage: React.FC = () => {
                 const text = reader.result as string;
                 const data = parsePhraseSetJson(text);
                 if (!data) {
-                    setError(t.lineStickerPhraseSetUploadError);
+                    setError(lineStickerT.lineStickerPhraseSetUploadError);
                     return;
                 }
                 setError(null);
@@ -528,17 +544,17 @@ const LineStickerPage: React.FC = () => {
                     setSheetSliceSettings(createSetModeSliceSettingsList());
                     setSetPhrasesList(data.phrases);
                     setActionDescsList(data.actionDescs ?? data.phrases.map(() => ''));
-                    setCurrentSheetIndex(0);
+                    setCurrentSheetIndex(DEFAULT_LINE_STICKER_SHEET_INDEX);
                 }
             };
             reader.readAsText(file, 'UTF-8');
             e.target.value = '';
         },
-        [handleStickerSetModeChange, setActionDescsList, setError, setGridCols, setGridRows, singleSheetFlow, t.lineStickerPhraseSetUploadError]
+        [handleStickerSetModeChange, lineStickerT.lineStickerPhraseSetUploadError, setActionDescsList, setError, setGridCols, setGridRows, singleSheetFlow]
     );
 
     const settingsPanelViewModel = useLineStickerSettingsPanelViewModel({
-        t,
+        t: lineStickerT,
         sourceImage,
         fileInputRef,
         onOpenFilePicker: openFilePicker,
@@ -659,16 +675,16 @@ const LineStickerPage: React.FC = () => {
             />
 
             <LineStickerHeader
-                title={t.lineStickerTitle}
+                title={lineStickerT.lineStickerTitle}
                 hasCustomKey={hasCustomKey}
                 onOpenSettings={() => setShowSettings(true)}
             />
 
             <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <LineStickerSettingsPanel t={t} viewModel={settingsPanelViewModel} />
+                <LineStickerSettingsPanel t={lineStickerT} viewModel={settingsPanelViewModel} />
 
                 <div className="lg:col-span-7 space-y-6">
-                    <LineStickerResultPanel t={t} viewModel={resultPanelViewModel} />
+                    <LineStickerResultPanel t={lineStickerT} viewModel={resultPanelViewModel} />
                 </div>
             </main>
 

@@ -6,6 +6,10 @@ import type { Translations } from '../../i18n/types';
 import { LineStickerDownloadSection } from './LineStickerDownloadSection';
 import { LineStickerResultEmptyState } from './LineStickerResultEmptyState';
 import { RenderProfiler } from '../RenderProfiler';
+import {
+  LINE_STICKER_SHEET_INDICES,
+  type LineStickerSheetIndex,
+} from '../../utils/lineStickerSetSchema';
 
 const FrameGrid = lazyWithRetry(() =>
   import('../FrameGrid').then((module) => ({ default: module.FrameGrid }))
@@ -16,8 +20,8 @@ const SpriteSheetViewer = lazyWithRetry(() =>
 
 export interface LineStickerResultPanelSheetViewModel {
   stickerSetMode: boolean;
-  currentSheetIndex: 0 | 1 | 2;
-  setCurrentSheetIndex: (index: 0 | 1 | 2) => void;
+  currentSheetIndex: LineStickerSheetIndex;
+  setCurrentSheetIndex: (index: LineStickerSheetIndex) => void;
 }
 
 export interface LineStickerResultPanelStatusViewModel {
@@ -283,10 +287,10 @@ export const LineStickerResultPanel: React.FC<LineStickerResultPanelProps> = Rea
         <h2 className="text-lg font-semibold text-slate-900">{t.lineStickerResult}</h2>
         {sheet.stickerSetMode && (
           <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
-            {[0, 1, 2].map((index) => (
+            {LINE_STICKER_SHEET_INDICES.map((index) => (
               <button
                 key={index}
-                onClick={() => sheet.setCurrentSheetIndex(index as 0 | 1 | 2)}
+                onClick={() => sheet.setCurrentSheetIndex(index)}
                 className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
                   sheet.currentSheetIndex === index
                     ? 'bg-white text-green-600 shadow-sm'

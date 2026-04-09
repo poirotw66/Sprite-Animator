@@ -3,12 +3,16 @@ import { Loader2, Wand2, Upload, Download, Copy, Check, RefreshCw, AlertTriangle
 import type { Translations } from '../../i18n/types';
 import type { LineStickerSheetStatus } from '../../hooks/useLineStickerSheetGeneration';
 import { RenderProfiler } from '../RenderProfiler';
+import {
+  LINE_STICKER_SHEET_INDICES,
+  type LineStickerSheetIndex,
+} from '../../utils/lineStickerSetSchema';
 
 export interface LineStickerPhraseSectionProps {
   /** i18n */
   t: Translations;
   stickerSetMode: boolean;
-  currentSheetIndex: 0 | 1 | 2;
+  currentSheetIndex: LineStickerSheetIndex;
   phraseGridList: string[];
   actionDescGridList: string[];
   phraseGridCols: number;
@@ -19,7 +23,7 @@ export interface LineStickerPhraseSectionProps {
   phraseSetFileInputRef: React.RefObject<HTMLInputElement | null>;
   handleUploadPhraseSet: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleDownloadPhraseSet: () => void;
-  setCurrentSheetIndex: (i: 0 | 1 | 2) => void;
+  setCurrentSheetIndex: (i: LineStickerSheetIndex) => void;
   /** Prompt preview */
   previewPrompt: string | null;
   promptCopied: boolean;
@@ -34,13 +38,13 @@ export interface LineStickerPhraseSectionProps {
   sheetStatuses: LineStickerSheetStatus[];
   hasFailedSheets: boolean;
   onRetryFailedSheets: () => void;
-  onRetrySheet: (sheetIndex: 0 | 1 | 2) => void;
+  onRetrySheet: (sheetIndex: LineStickerSheetIndex) => void;
 }
 
 interface LineStickerPhraseGridEditorProps {
   t: Translations;
   stickerSetMode: boolean;
-  currentSheetIndex: 0 | 1 | 2;
+  currentSheetIndex: LineStickerSheetIndex;
   phraseGridList: string[];
   actionDescGridList: string[];
   phraseGridCols: number;
@@ -51,7 +55,7 @@ interface LineStickerPhraseGridEditorProps {
 interface LineStickerPhraseCellProps {
   t: Translations;
   stickerSetMode: boolean;
-  currentSheetIndex: 0 | 1 | 2;
+  currentSheetIndex: LineStickerSheetIndex;
   index: number;
   phrase: string;
   actionDesc: string;
@@ -211,7 +215,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
       </div>
       {stickerSetMode && (
         <div className="flex gap-1 mb-2">
-          {([0, 1, 2] as const).map((i) => (
+          {LINE_STICKER_SHEET_INDICES.map((i) => (
             <button
               key={i}
               type="button"

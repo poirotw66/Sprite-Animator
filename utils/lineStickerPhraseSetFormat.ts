@@ -14,24 +14,26 @@
  *   "name": "My set"
  * }
  *
- * Example (set mode, 48 phrases for 3 sheets):
- * { "format": "line-sticker-phrase-set", "version": 1, "mode": "set", "phrases": [...48 items], "actionDescs": [...] }
+ * Example (set mode, one full sticker set):
+ * { "format": "line-sticker-phrase-set", "version": 1, "mode": "set", "phrases": [...set items], "actionDescs": [...] }
  */
+
+import { LINE_STICKER_TOTAL_SET_FRAMES } from './lineStickerSetSchema';
 
 export const PHRASE_SET_FORMAT = 'line-sticker-phrase-set' as const;
 export const PHRASE_SET_VERSION = 1;
 
-/** Exported/imported phrase set (single sheet or 48-phrase set). */
+/** Exported/imported phrase set (single sheet or one full sticker set). */
 export interface LineStickerPhraseSetJson {
   format: typeof PHRASE_SET_FORMAT;
   version: typeof PHRASE_SET_VERSION;
-  /** 'single' = one sheet with custom grid; 'set' = 3 sheets × 16 = 48 phrases. */
+  /** 'single' = one sheet with custom grid; 'set' = one full configured sticker set. */
   mode: 'single' | 'set';
   /** Grid columns (required when mode is 'single'). */
   gridCols?: number;
   /** Grid rows (required when mode is 'single'). */
   gridRows?: number;
-  /** Phrase text per cell. Length = gridCols*gridRows (single) or 48 (set). */
+  /** Phrase text per cell. Length = gridCols*gridRows (single) or full set size (set). */
   phrases: string[];
   /** Optional action description per cell, same length as phrases. */
   actionDescs?: string[];
@@ -71,7 +73,7 @@ export function parsePhraseSetJson(json: string): LineStickerPhraseSetJson | nul
     if (!isNonNegativeInteger(rows) || rows < 1 || rows > 8) return null;
     if (phrases.length !== cols * rows) return null;
   } else {
-    if (phrases.length > 48) return null;
+    if (phrases.length > LINE_STICKER_TOTAL_SET_FRAMES) return null;
   }
   const actionDescs = o.actionDescs;
   if (actionDescs !== undefined) {
@@ -82,7 +84,9 @@ export function parsePhraseSetJson(json: string): LineStickerPhraseSetJson | nul
   const name = o.name;
   if (mode === 'set') {
     const basePhrases =
-      phrases.length < 48 ? [...phrases, ...Array(48 - phrases.length).fill('')] : phrases;
+      phrases.length < LINE_STICKER_TOTAL_SET_FRAMES
+        ? [...phrases, ...Array(LINE_STICKER_TOTAL_SET_FRAMES - phrases.length).fill('')]
+        : phrases;
     let normalizedActionDescs: string[] | undefined;
     if (actionDescs !== undefined) {
       const limited = actionDescs.slice(0, basePhrases.length);
@@ -125,14 +129,20 @@ export function buildPhraseSetExport(params: {
 }): LineStickerPhraseSetJson {
   const { mode, gridCols, gridRows, phrases, actionDescs, name } = params;
   if (mode === 'set') {
-    const p = phrases.slice(0, 48);
-    const a = actionDescs.slice(0, 48);
+    const p = phrases.slice(0, LINE_STICKER_TOTAL_SET_FRAMES);
+    const a = actionDescs.slice(0, LINE_STICKER_TOTAL_SET_FRAMES);
     return {
       format: PHRASE_SET_FORMAT,
       version: PHRASE_SET_VERSION,
       mode: 'set',
-      phrases: p.length < 48 ? [...p, ...Array(48 - p.length).fill('')] : p,
-      actionDescs: a.length < 48 ? [...a, ...Array(48 - a.length).fill('')] : a,
+      phrases:
+        p.length < LINE_STICKER_TOTAL_SET_FRAMES
+          ? [...p, ...Array(LINE_STICKER_TOTAL_SET_FRAMES - p.length).fill('')]
+          : p,
+      actionDescs:
+        a.length < LINE_STICKER_TOTAL_SET_FRAMES
+          ? [...a, ...Array(LINE_STICKER_TOTAL_SET_FRAMES - a.length).fill('')]
+          : a,
       name,
     };
   }

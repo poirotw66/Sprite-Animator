@@ -2,11 +2,12 @@ import { useCallback, useMemo } from 'react';
 import type React from 'react';
 import type { SliceSettings, FrameOverride } from '../utils/imageUtils';
 import type { LineStickerResultPanelViewModel } from '../components/LineSticker/LineStickerResultPanel';
+import type { LineStickerSheetIndex } from '../utils/lineStickerSetSchema';
 
 interface UseLineStickerResultPanelViewModelParams {
   stickerSetMode: boolean;
-  currentSheetIndex: 0 | 1 | 2;
-  setCurrentSheetIndex: (index: 0 | 1 | 2) => void;
+  currentSheetIndex: LineStickerSheetIndex;
+  setCurrentSheetIndex: (index: LineStickerSheetIndex) => void;
   error: string | null;
   statusText: string;
   isGenerating: boolean;

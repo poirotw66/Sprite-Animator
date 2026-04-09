@@ -1,9 +1,10 @@
 import { useCallback, useMemo } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
+import type { LineStickerSheetIndex } from '../utils/lineStickerSetSchema';
 
 interface UseLineStickerSelectionParams {
   stickerSetMode: boolean;
-  currentSheetIndex: 0 | 1 | 2;
+  currentSheetIndex: LineStickerSheetIndex;
   sheetFrames: string[][];
   stickerFrames: string[];
   selectedFramesBySheet: boolean[][];

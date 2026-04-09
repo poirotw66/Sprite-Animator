@@ -6,14 +6,19 @@ import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ } from '../utils/constants';
 import type { BgRemovalMethod, ChromaKeyColorType } from '../types';
 import { createAbortError, isAbortError } from '../utils/abort';
+import {
+  createLineStickerSheetArray,
+  LINE_STICKER_FRAMES_PER_SHEET,
+  LINE_STICKER_SHEET_INDICES,
+  LINE_STICKER_TOTAL_SET_FRAMES,
+  sliceLineStickerSheetFrames,
+  type LineStickerSheetIndex,
+} from '../utils/lineStickerSetSchema';
 
-const SET_PHRASES_COUNT = 48;
-const FRAMES_PER_SHEET = 16;
 const BULK_CONCURRENCY = 2;
-const SHEET_INDICES = [0, 1, 2] as const;
 const CANCELLED_REQUEST_MESSAGE = '__line_sticker_generation_cancelled__';
 
-type SheetIndex = (typeof SHEET_INDICES)[number];
+type SheetIndex = LineStickerSheetIndex;
 
 export type LineStickerSheetStage =
   | 'idle'
@@ -43,7 +48,7 @@ function isActiveSheetStage(stage: LineStickerSheetStage): boolean {
 }
 
 function createInitialSheetStatuses(): LineStickerSheetStatus[] {
-  return SHEET_INDICES.map((sheetIndex) => ({
+  return createLineStickerSheetArray((sheetIndex) => ({
     sheetIndex,
     stage: 'idle',
     progress: 0,
@@ -93,7 +98,7 @@ export interface UseLineStickerSheetGenerationOptions {
   stickerSetMode: boolean;
   setPhrasesList: string[];
   actionDescsList: string[];
-  currentSheetIndex: 0 | 1 | 2;
+  currentSheetIndex: LineStickerSheetIndex;
   generateSingleSheet: (
     phraseListOverride?: string[],
     actionDescsOverride?: string[],
@@ -109,7 +114,7 @@ export interface UseLineStickerSheetGenerationOptions {
   setters: LineStickerGenerationSetters;
   sliceProcessedSheetToFrames: (
     processedImage: string,
-    options?: { sheetIndex?: 0 | 1 | 2 }
+    options?: { sheetIndex?: LineStickerSheetIndex }
   ) => Promise<string[]>;
 }
 
@@ -331,16 +336,10 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
       const signal = activeAbortControllerRef.current?.signal;
       throwIfRequestInactive(requestId);
 
-      const phraseSlice = setPhrasesList.slice(
-        sheetIndex * FRAMES_PER_SHEET,
-        (sheetIndex + 1) * FRAMES_PER_SHEET
-      );
-      const actionSlice = actionDescsList.slice(
-        sheetIndex * FRAMES_PER_SHEET,
-        (sheetIndex + 1) * FRAMES_PER_SHEET
-      );
+      const phraseSlice = sliceLineStickerSheetFrames(setPhrasesList, sheetIndex);
+      const actionSlice = sliceLineStickerSheetFrames(actionDescsList, sheetIndex);
 
-      if (phraseSlice.length < FRAMES_PER_SHEET) {
+      if (phraseSlice.length < LINE_STICKER_FRAMES_PER_SHEET) {
         throw new Error(
           t.lineStickerErrorNeedPhrases.replace('{n}', String(setPhrasesList.length))
         );
@@ -626,7 +625,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
     setError(null);
     try {
       if (stickerSetMode) {
-        if (setPhrasesList.length < FRAMES_PER_SHEET) {
+        if (setPhrasesList.length < LINE_STICKER_FRAMES_PER_SHEET) {
           setError(
             t.lineStickerErrorNeedPhrases.replace('{n}', String(setPhrasesList.length))
           );
@@ -724,7 +723,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
       setError(t.errorNoImage);
       return;
     }
-    if (setPhrasesList.length < SET_PHRASES_COUNT) {
+    if (setPhrasesList.length < LINE_STICKER_TOTAL_SET_FRAMES) {
       setError(
         t.lineStickerErrorNeedPhrases.replace('{n}', String(setPhrasesList.length))
       );
@@ -738,7 +737,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
     setChromaKeyProgress(0);
     setError(null);
     try {
-      SHEET_INDICES.forEach((sheetIndex) => {
+      LINE_STICKER_SHEET_INDICES.forEach((sheetIndex) => {
         if (!isRequestActive(requestId)) {
           return;
         }
@@ -750,7 +749,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
         });
       });
 
-      const queue = [...SHEET_INDICES];
+      const queue = [...LINE_STICKER_SHEET_INDICES];
       const failedIndices: SheetIndex[] = [];
       const workers = Array.from(
         { length: Math.min(BULK_CONCURRENCY, queue.length) },

@@ -1,9 +1,17 @@
 import { useCallback, useMemo } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
+import {
+  LINE_STICKER_FRAMES_PER_SHEET,
+  LINE_STICKER_SET_COLS,
+  LINE_STICKER_SET_ROWS,
+  LINE_STICKER_TOTAL_SET_FRAMES,
+  sliceLineStickerSheetFrames,
+  type LineStickerSheetIndex,
+} from '../utils/lineStickerSetSchema';
 
 interface UseLineStickerPhraseGridParams {
   stickerSetMode: boolean;
-  currentSheetIndex: 0 | 1 | 2;
+  currentSheetIndex: LineStickerSheetIndex;
   singlePhrasesList: string[];
   setSinglePhrasesList: Dispatch<SetStateAction<string[]>>;
   setPhrasesList: string[];
@@ -13,9 +21,6 @@ interface UseLineStickerPhraseGridParams {
   gridCols: number;
   gridRows: number;
 }
-
-const SET_COUNT = 48;
-const SHEET_FRAME_COUNT = 16;
 
 function ensureLength(values: string[], size: number): string[] {
   if (values.length >= size) {
@@ -38,7 +43,7 @@ export function useLineStickerPhraseGrid({
 }: UseLineStickerPhraseGridParams) {
   const phrasesForHook = useMemo(() => {
     if (stickerSetMode) {
-      return ensureLength(setPhrasesList, SET_COUNT);
+      return ensureLength(setPhrasesList, LINE_STICKER_TOTAL_SET_FRAMES);
     }
     const total = gridCols * gridRows;
     return ensureLength(singlePhrasesList, total);
@@ -46,17 +51,16 @@ export function useLineStickerPhraseGrid({
 
   const actionDescsForHook = useMemo(() => {
     if (stickerSetMode) {
-      return ensureLength(actionDescsList, SET_COUNT);
+      return ensureLength(actionDescsList, LINE_STICKER_TOTAL_SET_FRAMES);
     }
     return ensureLength(actionDescsList, gridCols * gridRows);
   }, [stickerSetMode, actionDescsList, gridCols, gridRows]);
 
   const phraseGridList = useMemo(() => {
     if (stickerSetMode) {
-      const start = currentSheetIndex * SHEET_FRAME_COUNT;
       return ensureLength(
-        setPhrasesList.slice(start, start + SHEET_FRAME_COUNT),
-        SHEET_FRAME_COUNT
+        sliceLineStickerSheetFrames(setPhrasesList, currentSheetIndex),
+        LINE_STICKER_FRAMES_PER_SHEET
       );
     }
     return phrasesForHook;
@@ -64,10 +68,9 @@ export function useLineStickerPhraseGrid({
 
   const actionDescGridList = useMemo(() => {
     if (stickerSetMode) {
-      const start = currentSheetIndex * SHEET_FRAME_COUNT;
       return ensureLength(
-        actionDescsList.slice(start, start + SHEET_FRAME_COUNT),
-        SHEET_FRAME_COUNT
+        sliceLineStickerSheetFrames(actionDescsList, currentSheetIndex),
+        LINE_STICKER_FRAMES_PER_SHEET
       );
     }
     const total = gridCols * gridRows;
@@ -77,9 +80,9 @@ export function useLineStickerPhraseGrid({
   const updatePhraseAt = useCallback(
     (index: number, value: string) => {
       if (stickerSetMode) {
-        const globalIndex = currentSheetIndex * SHEET_FRAME_COUNT + index;
+        const globalIndex = currentSheetIndex * LINE_STICKER_FRAMES_PER_SHEET + index;
         setSetPhrasesList((prev) => {
-          const next = ensureLength(prev, SET_COUNT);
+          const next = ensureLength(prev, LINE_STICKER_TOTAL_SET_FRAMES);
           next[globalIndex] = value;
           return next;
         });
@@ -106,9 +109,9 @@ export function useLineStickerPhraseGrid({
   const updateActionDescAt = useCallback(
     (index: number, value: string) => {
       if (stickerSetMode) {
-        const globalIndex = currentSheetIndex * SHEET_FRAME_COUNT + index;
+        const globalIndex = currentSheetIndex * LINE_STICKER_FRAMES_PER_SHEET + index;
         setActionDescsList((prev) => {
-          const next = ensureLength(prev, SET_COUNT);
+          const next = ensureLength(prev, LINE_STICKER_TOTAL_SET_FRAMES);
           next[globalIndex] = value;
           return next;
         });
@@ -130,8 +133,8 @@ export function useLineStickerPhraseGrid({
     actionDescsForHook,
     phraseGridList,
     actionDescGridList,
-    phraseGridCols: stickerSetMode ? 4 : gridCols,
-    phraseGridRows: stickerSetMode ? 4 : gridRows,
+    phraseGridCols: stickerSetMode ? LINE_STICKER_SET_COLS : gridCols,
+    phraseGridRows: stickerSetMode ? LINE_STICKER_SET_ROWS : gridRows,
     updatePhraseAt,
     updateActionDescAt,
   };

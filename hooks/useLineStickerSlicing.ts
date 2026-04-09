@@ -10,6 +10,10 @@ import {
 } from '../utils/imageUtils';
 import type { ChromaKeyColorType } from '../types';
 import { logger } from '../utils/logger';
+import {
+  createLineStickerSetSliceSettings,
+  type LineStickerSheetIndex,
+} from '../utils/lineStickerSetSchema';
 
 interface UseLineStickerSlicingParams {
   chromaKeyColor: ChromaKeyColorType;
@@ -23,7 +27,7 @@ interface UseLineStickerSlicingParams {
   setStickerFrames: (value: string[]) => void;
   setSelectedFrames: (value: boolean[]) => void;
   stickerSetMode: boolean;
-  currentSheetIndex: 0 | 1 | 2;
+  currentSheetIndex: LineStickerSheetIndex;
   processedSheetImages: (string | null)[];
   sheetFrameOverrides: FrameOverride[][];
   setSheetFrames: Dispatch<SetStateAction<string[][]>>;
@@ -31,14 +35,8 @@ interface UseLineStickerSlicingParams {
 }
 
 interface SliceProcessedSheetOptions {
-  sheetIndex?: 0 | 1 | 2;
+  sheetIndex?: LineStickerSheetIndex;
 }
-
-const createDefaultSetSliceSettings = (): SliceSettings => ({
-  ...DEFAULT_SLICE_SETTINGS,
-  cols: 4,
-  rows: 4,
-});
 
 export function useLineStickerSlicing({
   chromaKeyColor,
@@ -65,7 +63,7 @@ export function useLineStickerSlicing({
     ): Promise<string[]> => {
       const targetSheetIndex = options?.sheetIndex ?? currentSheetIndex;
       const settings = stickerSetMode
-        ? (sheetSliceSettings[targetSheetIndex] ?? createDefaultSetSliceSettings())
+        ? (sheetSliceSettings[targetSheetIndex] ?? createLineStickerSetSliceSettings())
         : sliceSettings;
       const overrides = stickerSetMode
         ? (sheetFrameOverrides[targetSheetIndex] ?? [])
@@ -152,7 +150,7 @@ export function useLineStickerSlicing({
     const processed = processedSheetImages[currentSheetIndex];
     if (!processed || !sheetDimensions.width || !sheetDimensions.height) return;
     const overrides = sheetFrameOverrides[currentSheetIndex] || [];
-    const settings = sheetSliceSettings[currentSheetIndex] ?? createDefaultSetSliceSettings();
+    const settings = sheetSliceSettings[currentSheetIndex] ?? createLineStickerSetSliceSettings();
     let cancelled = false;
     const pad: PaddingFour = getEffectivePadding(settings);
     const run = async () => {

@@ -1,8 +1,12 @@
 import { useCallback, useState } from 'react';
+import {
+  sliceLineStickerSheetFrames,
+  type LineStickerSheetIndex,
+} from '../utils/lineStickerSetSchema';
 
 interface UseLineStickerPromptPreviewParams {
   stickerSetMode: boolean;
-  currentSheetIndex: 0 | 1 | 2;
+  currentSheetIndex: LineStickerSheetIndex;
   setPhrasesList: string[];
   actionDescsList: string[];
   buildPrompt: (phraseListOverride?: string[], actionDescsOverride?: string[]) => string;
@@ -22,10 +26,10 @@ export function useLineStickerPromptPreview({
 
   const handleGeneratePromptPreview = useCallback(() => {
     const phraseList = stickerSetMode
-      ? setPhrasesList.slice(currentSheetIndex * 16, (currentSheetIndex + 1) * 16)
+      ? sliceLineStickerSheetFrames(setPhrasesList, currentSheetIndex)
       : undefined;
     const actionDescs = stickerSetMode
-      ? actionDescsList.slice(currentSheetIndex * 16, (currentSheetIndex + 1) * 16)
+      ? sliceLineStickerSheetFrames(actionDescsList, currentSheetIndex)
       : undefined;
     const prompt = buildPrompt(phraseList, actionDescs);
     setPreviewPrompt(prompt);

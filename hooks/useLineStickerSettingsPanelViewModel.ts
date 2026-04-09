@@ -12,6 +12,7 @@ import type {
 } from '../utils/lineStickerPrompt';
 import type { LineStickerSettingsPanelViewModel } from '../components/LineSticker/LineStickerSettingsPanel';
 import type { LineStickerSheetStatus } from './useLineStickerSheetGeneration';
+import type { LineStickerSheetIndex } from '../utils/lineStickerSetSchema';
 
 interface UseLineStickerSettingsPanelViewModelParams {
   t: Translations;
@@ -50,7 +51,7 @@ interface UseLineStickerSettingsPanelViewModelParams {
   setSelectedFont: React.Dispatch<React.SetStateAction<keyof typeof FONT_PRESETS>>;
   selectedPhraseMode: StickerPhraseMode;
   setSelectedPhraseMode: React.Dispatch<React.SetStateAction<StickerPhraseMode>>;
-  currentSheetIndex: 0 | 1 | 2;
+  currentSheetIndex: LineStickerSheetIndex;
   phraseGridList: string[];
   actionDescGridList: string[];
   phraseGridCols: number;
@@ -61,7 +62,7 @@ interface UseLineStickerSettingsPanelViewModelParams {
   phraseSetFileInputRef: React.RefObject<HTMLInputElement | null>;
   handleUploadPhraseSet: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleDownloadPhraseSet: () => void;
-  setCurrentSheetIndex: (index: 0 | 1 | 2) => void;
+  setCurrentSheetIndex: (index: LineStickerSheetIndex) => void;
   previewPrompt: string | null;
   promptCopied: boolean;
   handleGeneratePromptPreview: () => void;
@@ -73,7 +74,7 @@ interface UseLineStickerSettingsPanelViewModelParams {
   sheetStatuses: LineStickerSheetStatus[];
   hasFailedSheets: boolean;
   onRetryFailedSheets: () => void;
-  onRetrySheet: (sheetIndex: 0 | 1 | 2) => void;
+  onRetrySheet: (sheetIndex: LineStickerSheetIndex) => void;
 }
 
 export const useLineStickerSettingsPanelViewModel = ({
