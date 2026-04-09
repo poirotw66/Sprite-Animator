@@ -367,6 +367,12 @@ export const zhTW: Translations = {
   lineStickerCopyPromptDone: '已複製',
   lineStickerPromptConfirmHint: '請確認上方提示詞後再點擊「生成精靈圖」。',
   lineStickerPromptEmptyHint: '點「產生提示詞」可預覽將送給產圖模型的完整提示詞。',
+  lineStickerPromptSummaryLabel: '提示詞摘要',
+  lineStickerPromptSummaryEmpty: '目前還沒有可摘要的提示詞，先填入短語或動作描述。',
+  lineStickerSetOverviewTitle: '整組總覽',
+  lineStickerSetOverviewHint: '可一次檢查全部張次的提示詞摘要、完成度、失敗原因，並直接切換或重試。',
+  lineStickerSheetIdle: '尚未生成',
+  lineStickerErrorReasonLabel: '失敗原因：',
   lineStickerActionDescPlaceholder: '動作描述 (英中對照)',
 
   // RM BG Tool

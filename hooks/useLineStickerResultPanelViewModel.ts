@@ -3,11 +3,14 @@ import type React from 'react';
 import type { SliceSettings, FrameOverride } from '../utils/imageUtils';
 import type { LineStickerResultPanelViewModel } from '../components/LineSticker/LineStickerResultPanel';
 import type { LineStickerSheetIndex } from '../utils/lineStickerSetSchema';
+import type { LineStickerSetOverviewItem } from '../components/LineSticker/LineStickerSetOverviewPanel';
 
 interface UseLineStickerResultPanelViewModelParams {
   stickerSetMode: boolean;
   currentSheetIndex: LineStickerSheetIndex;
   setCurrentSheetIndex: (index: LineStickerSheetIndex) => void;
+  onSelectOverviewSheet: (index: LineStickerSheetIndex) => void;
+  onRetrySheet: (index: LineStickerSheetIndex) => void;
   error: string | null;
   statusText: string;
   isGenerating: boolean;
@@ -25,6 +28,7 @@ interface UseLineStickerResultPanelViewModelParams {
   effectiveChromaKeyProgress: number;
   effectiveIsProcessingChromaKey: boolean;
   onImageLoad: (event: React.SyntheticEvent<HTMLImageElement>) => void;
+  sheetOverviewItems: LineStickerSetOverviewItem[];
   processedSheetImages: (string | null)[];
   sheetFrames: string[][];
   singleSheetProcessedImage: string | null;
@@ -50,6 +54,8 @@ export const useLineStickerResultPanelViewModel = ({
   stickerSetMode,
   currentSheetIndex,
   setCurrentSheetIndex,
+  onSelectOverviewSheet,
+  onRetrySheet,
   error,
   statusText,
   isGenerating,
@@ -67,6 +73,7 @@ export const useLineStickerResultPanelViewModel = ({
   effectiveChromaKeyProgress,
   effectiveIsProcessingChromaKey,
   onImageLoad,
+  sheetOverviewItems,
   processedSheetImages,
   sheetFrames,
   singleSheetProcessedImage,
@@ -161,7 +168,10 @@ export const useLineStickerResultPanelViewModel = ({
     stickerSetMode,
     currentSheetIndex,
     setCurrentSheetIndex,
-  }), [stickerSetMode, currentSheetIndex, setCurrentSheetIndex]);
+    onSelectOverviewSheet,
+    onRetrySheet,
+    overviewItems: sheetOverviewItems,
+  }), [stickerSetMode, currentSheetIndex, setCurrentSheetIndex, onSelectOverviewSheet, onRetrySheet, sheetOverviewItems]);
 
   const status = useMemo(() => ({
     error,

@@ -13,6 +13,7 @@ import type {
 import type { LineStickerSettingsPanelViewModel } from '../components/LineSticker/LineStickerSettingsPanel';
 import type { LineStickerSheetStatus } from './useLineStickerSheetGeneration';
 import type { LineStickerSheetIndex } from '../utils/lineStickerSetSchema';
+import type { LineStickerSetOverviewItem } from '../components/LineSticker/LineStickerSetOverviewPanel';
 
 interface UseLineStickerSettingsPanelViewModelParams {
   t: Translations;
@@ -63,6 +64,7 @@ interface UseLineStickerSettingsPanelViewModelParams {
   handleUploadPhraseSet: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleDownloadPhraseSet: () => void;
   setCurrentSheetIndex: (index: LineStickerSheetIndex) => void;
+  onSelectOverviewSheet: (index: LineStickerSheetIndex) => void;
   previewPrompt: string | null;
   promptCopied: boolean;
   handleGeneratePromptPreview: () => void;
@@ -72,6 +74,7 @@ interface UseLineStickerSettingsPanelViewModelParams {
   onGenerateAllSheets: () => void;
   onCancelGeneration: () => void;
   sheetStatuses: LineStickerSheetStatus[];
+  sheetOverviewItems: LineStickerSetOverviewItem[];
   hasFailedSheets: boolean;
   onRetryFailedSheets: () => void;
   onRetrySheet: (sheetIndex: LineStickerSheetIndex) => void;
@@ -126,6 +129,7 @@ export const useLineStickerSettingsPanelViewModel = ({
   handleUploadPhraseSet,
   handleDownloadPhraseSet,
   setCurrentSheetIndex,
+  onSelectOverviewSheet,
   previewPrompt,
   promptCopied,
   handleGeneratePromptPreview,
@@ -135,6 +139,7 @@ export const useLineStickerSettingsPanelViewModel = ({
   onGenerateAllSheets,
   onCancelGeneration,
   sheetStatuses,
+  sheetOverviewItems,
   hasFailedSheets,
   onRetryFailedSheets,
   onRetrySheet,
@@ -235,6 +240,7 @@ export const useLineStickerSettingsPanelViewModel = ({
     handleUploadPhraseSet,
     handleDownloadPhraseSet,
     setCurrentSheetIndex,
+    onSelectOverviewSheet,
     previewPrompt,
     promptCopied,
     handleGeneratePromptPreview,
@@ -245,6 +251,7 @@ export const useLineStickerSettingsPanelViewModel = ({
     onGenerateAllSheets,
     onCancelGeneration,
     sheetStatuses,
+    sheetOverviewItems,
     hasFailedSheets,
     onRetryFailedSheets,
     onRetrySheet,
@@ -263,6 +270,7 @@ export const useLineStickerSettingsPanelViewModel = ({
     handleUploadPhraseSet,
     handleDownloadPhraseSet,
     setCurrentSheetIndex,
+    onSelectOverviewSheet,
     previewPrompt,
     promptCopied,
     handleGeneratePromptPreview,
@@ -273,6 +281,7 @@ export const useLineStickerSettingsPanelViewModel = ({
     onGenerateAllSheets,
     onCancelGeneration,
     sheetStatuses,
+    sheetOverviewItems,
     hasFailedSheets,
     onRetryFailedSheets,
     onRetrySheet,

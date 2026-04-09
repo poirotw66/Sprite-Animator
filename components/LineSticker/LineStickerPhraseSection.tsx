@@ -7,6 +7,10 @@ import {
   LINE_STICKER_SHEET_INDICES,
   type LineStickerSheetIndex,
 } from '../../utils/lineStickerSetSchema';
+import {
+  LineStickerSetOverviewPanel,
+  type LineStickerSetOverviewItem,
+} from './LineStickerSetOverviewPanel';
 
 export interface LineStickerPhraseSectionProps {
   /** i18n */
@@ -24,6 +28,7 @@ export interface LineStickerPhraseSectionProps {
   handleUploadPhraseSet: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleDownloadPhraseSet: () => void;
   setCurrentSheetIndex: (i: LineStickerSheetIndex) => void;
+  onSelectOverviewSheet: (sheetIndex: LineStickerSheetIndex) => void;
   /** Prompt preview */
   previewPrompt: string | null;
   promptCopied: boolean;
@@ -36,6 +41,7 @@ export interface LineStickerPhraseSectionProps {
   onGenerateAllSheets: () => void;
   onCancelGeneration: () => void;
   sheetStatuses: LineStickerSheetStatus[];
+  sheetOverviewItems: LineStickerSetOverviewItem[];
   hasFailedSheets: boolean;
   onRetryFailedSheets: () => void;
   onRetrySheet: (sheetIndex: LineStickerSheetIndex) => void;
@@ -156,6 +162,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
   handleUploadPhraseSet,
   handleDownloadPhraseSet,
   setCurrentSheetIndex,
+  onSelectOverviewSheet,
   previewPrompt,
   promptCopied,
   handleGeneratePromptPreview,
@@ -166,6 +173,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
   onGenerateAllSheets,
   onCancelGeneration,
   sheetStatuses,
+  sheetOverviewItems,
   hasFailedSheets,
   onRetryFailedSheets,
   onRetrySheet,
@@ -287,8 +295,11 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
     {stickerSetMode && (
       <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <h3 className="text-sm font-semibold text-slate-800">{t.lineStickerSheetProgressTitle}</h3>
-          {hasFailedSheets && (
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800">{t.lineStickerSetOverviewTitle}</h3>
+            <p className="mt-1 text-xs text-slate-500">{t.lineStickerSetOverviewHint}</p>
+          </div>
+          {hasFailedSheets ? (
             <button
               type="button"
               onClick={onRetryFailedSheets}
@@ -298,66 +309,17 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
               <RefreshCw className="w-3.5 h-3.5" />
               {t.lineStickerRetryFailed}
             </button>
-          )}
+          ) : null}
         </div>
 
-        <div className="space-y-2">
-          {sheetStatuses.map((status) => {
-            const isFailed = status.stage === 'failed';
-            const isCompleted = status.stage === 'completed';
-            const isActive = status.stage === 'queued' || status.stage === 'generating' || status.stage === 'processing' || status.stage === 'slicing';
-            const progressBarColor = isFailed
-              ? 'bg-red-500'
-              : isCompleted
-                ? 'bg-emerald-500'
-                : 'bg-green-500';
-
-            return (
-              <div key={status.sheetIndex} className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-900">
-                        {t.lineStickerSheetN.replace('{n}', String(status.sheetIndex + 1))}
-                      </span>
-                      {isActive ? <Loader2 className="w-3.5 h-3.5 text-green-600 animate-spin" /> : null}
-                      {isCompleted ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : null}
-                      {isFailed ? <AlertTriangle className="w-3.5 h-3.5 text-red-600" /> : null}
-                    </div>
-                    <p className={`text-xs mt-1 ${isFailed ? 'text-red-600' : 'text-slate-600'}`}>
-                      {status.message || t.lineStickerSheetN.replace('{n}', String(status.sheetIndex + 1))}
-                    </p>
-                    {status.error ? (
-                      <p className="text-xs mt-1 text-red-600 break-words">{status.error}</p>
-                    ) : null}
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs font-medium text-slate-500">{status.progress}%</span>
-                    {isFailed ? (
-                      <button
-                        type="button"
-                        onClick={() => onRetrySheet(status.sheetIndex)}
-                        disabled={isGenerating}
-                        className="text-xs px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 font-medium inline-flex items-center gap-1 disabled:opacity-50"
-                      >
-                        <RefreshCw className="w-3.5 h-3.5" />
-                        {t.lineStickerRetrySheetN.replace('{n}', String(status.sheetIndex + 1))}
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                  <div
-                    className={`h-full transition-all duration-300 ${progressBarColor}`}
-                    style={{ width: `${status.progress}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <LineStickerSetOverviewPanel
+          t={t}
+          items={sheetOverviewItems}
+          currentSheetIndex={currentSheetIndex}
+          onSelectSheet={onSelectOverviewSheet}
+          onRetrySheet={onRetrySheet}
+          isGenerating={isGenerating}
+        />
       </div>
     )}
 

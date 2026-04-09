@@ -5,6 +5,10 @@ import type { SliceSettings, FrameOverride } from '../../utils/imageUtils';
 import type { Translations } from '../../i18n/types';
 import { LineStickerDownloadSection } from './LineStickerDownloadSection';
 import { LineStickerResultEmptyState } from './LineStickerResultEmptyState';
+import {
+  LineStickerSetOverviewPanel,
+  type LineStickerSetOverviewItem,
+} from './LineStickerSetOverviewPanel';
 import { RenderProfiler } from '../RenderProfiler';
 import {
   LINE_STICKER_SHEET_INDICES,
@@ -22,6 +26,9 @@ export interface LineStickerResultPanelSheetViewModel {
   stickerSetMode: boolean;
   currentSheetIndex: LineStickerSheetIndex;
   setCurrentSheetIndex: (index: LineStickerSheetIndex) => void;
+  onSelectOverviewSheet: (index: LineStickerSheetIndex) => void;
+  onRetrySheet: (index: LineStickerSheetIndex) => void;
+  overviewItems: LineStickerSetOverviewItem[];
 }
 
 export interface LineStickerResultPanelStatusViewModel {
@@ -314,6 +321,24 @@ export const LineStickerResultPanel: React.FC<LineStickerResultPanelProps> = Rea
         <div className="mb-4 p-4 bg-green-50 text-green-700 border border-green-100 rounded-xl text-sm flex items-center gap-3">
           <Loader2 className="w-4 h-4 animate-spin" />
           {status.statusText}
+        </div>
+      ) : null}
+
+      {sheet.stickerSetMode ? (
+        <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold text-slate-800">{t.lineStickerSetOverviewTitle}</h3>
+            <p className="mt-1 text-xs text-slate-500">{t.lineStickerSetOverviewHint}</p>
+          </div>
+          <LineStickerSetOverviewPanel
+            t={t}
+            items={sheet.overviewItems}
+            currentSheetIndex={sheet.currentSheetIndex}
+            onSelectSheet={sheet.onSelectOverviewSheet}
+            onRetrySheet={sheet.onRetrySheet}
+            isGenerating={status.isGenerating}
+            compact
+          />
         </div>
       ) : null}
 

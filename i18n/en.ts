@@ -367,6 +367,12 @@ export const en: Translations = {
   lineStickerCopyPromptDone: 'Copied',
   lineStickerPromptConfirmHint: 'Please confirm the prompt above before clicking Generate.',
   lineStickerPromptEmptyHint: 'Click "Generate Prompt" to preview the full prompt sent to the image model.',
+  lineStickerPromptSummaryLabel: 'Prompt Summary',
+  lineStickerPromptSummaryEmpty: 'No prompt summary yet. Add phrases or action descriptions first.',
+  lineStickerSetOverviewTitle: 'Set Overview',
+  lineStickerSetOverviewHint: 'Review all sheets at once, switch focus, inspect failures, and retry directly from here.',
+  lineStickerSheetIdle: 'Not generated yet',
+  lineStickerErrorReasonLabel: 'Failure:',
   lineStickerActionDescPlaceholder: 'Action (EN + ZH)',
 
   // RM BG Tool

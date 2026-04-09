@@ -24,16 +24,18 @@ export function useLineStickerPromptPreview({
   const [previewPrompt, setPreviewPrompt] = useState<string | null>(null);
   const [promptCopied, setPromptCopied] = useState(false);
 
-  const handleGeneratePromptPreview = useCallback(() => {
+  const showPromptPreviewForSheet = useCallback((sheetIndex?: LineStickerSheetIndex) => {
+    const targetSheetIndex = sheetIndex ?? currentSheetIndex;
     const phraseList = stickerSetMode
-      ? sliceLineStickerSheetFrames(setPhrasesList, currentSheetIndex)
+      ? sliceLineStickerSheetFrames(setPhrasesList, targetSheetIndex)
       : undefined;
     const actionDescs = stickerSetMode
-      ? sliceLineStickerSheetFrames(actionDescsList, currentSheetIndex)
+      ? sliceLineStickerSheetFrames(actionDescsList, targetSheetIndex)
       : undefined;
     const prompt = buildPrompt(phraseList, actionDescs);
     setPreviewPrompt(prompt);
     setError(null);
+    return prompt;
   }, [
     stickerSetMode,
     setPhrasesList,
@@ -42,6 +44,10 @@ export function useLineStickerPromptPreview({
     buildPrompt,
     setError,
   ]);
+
+  const handleGeneratePromptPreview = useCallback(() => {
+    showPromptPreviewForSheet(currentSheetIndex);
+  }, [currentSheetIndex, showPromptPreviewForSheet]);
 
   const handleCopyPrompt = useCallback(() => {
     if (!previewPrompt) return;
@@ -55,6 +61,7 @@ export function useLineStickerPromptPreview({
     previewPrompt,
     promptCopied,
     handleGeneratePromptPreview,
+    showPromptPreviewForSheet,
     handleCopyPrompt,
   };
 }

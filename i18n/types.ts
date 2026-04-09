@@ -369,6 +369,12 @@ export interface Translations {
   lineStickerCopyPromptDone: string;
   lineStickerPromptConfirmHint: string;
   lineStickerPromptEmptyHint: string;
+  lineStickerPromptSummaryLabel: string;
+  lineStickerPromptSummaryEmpty: string;
+  lineStickerSetOverviewTitle: string;
+  lineStickerSetOverviewHint: string;
+  lineStickerSheetIdle: string;
+  lineStickerErrorReasonLabel: string;
   lineStickerActionDescPlaceholder: string;
 
   // RM BG Tool

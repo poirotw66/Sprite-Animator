@@ -28,10 +28,13 @@ import {
     createLineStickerSheetArray,
     DEFAULT_LINE_STICKER_SHEET_INDEX,
     formatLineStickerSetText,
+    LINE_STICKER_SHEET_INDICES,
     LINE_STICKER_SET_COLS,
     LINE_STICKER_SET_ROWS,
+    sliceLineStickerSheetFrames,
     type LineStickerSheetIndex,
 } from '../utils/lineStickerSetSchema';
+import type { LineStickerSetOverviewItem } from '../components/LineSticker/LineStickerSetOverviewPanel';
 
 import {
     LineStickerHeader,
@@ -61,6 +64,17 @@ const createEmptySetModeOverrideList = (): FrameOverride[][] =>
 
 const createEmptySetModeSelectionList = (): boolean[][] =>
     createLineStickerSheetArray(() => []);
+
+function summarizeSheetPrompt(prompt: string): string {
+    const cellLines = prompt
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line.startsWith('**Cell '))
+        .slice(0, 2);
+    const source = cellLines.length > 0 ? cellLines.join(' ') : prompt;
+    const compact = source.replace(/\*\*/g, '').replace(/\s+/g, ' ').trim();
+    return compact.length > 180 ? `${compact.slice(0, 177)}...` : compact;
+}
 
 const LineStickerPage: React.FC = () => {
     const { t } = useLanguage();
@@ -404,6 +418,7 @@ const LineStickerPage: React.FC = () => {
         previewPrompt,
         promptCopied,
         handleGeneratePromptPreview,
+        showPromptPreviewForSheet,
         handleCopyPrompt,
     } = useLineStickerPromptPreview({
         stickerSetMode,
@@ -413,6 +428,37 @@ const LineStickerPage: React.FC = () => {
         buildPrompt,
         setError,
     });
+
+    const handleSelectOverviewSheet = useCallback((sheetIndex: LineStickerSheetIndex) => {
+        setCurrentSheetIndex(sheetIndex);
+        showPromptPreviewForSheet(sheetIndex);
+    }, [showPromptPreviewForSheet]);
+
+    const sheetOverviewItems = useMemo<LineStickerSetOverviewItem[]>(() => {
+        if (!stickerSetMode) {
+            return [];
+        }
+
+        return LINE_STICKER_SHEET_INDICES.map((sheetIndex) => {
+            const phrases = sliceLineStickerSheetFrames(setPhrasesList, sheetIndex);
+            const actionDescs = sliceLineStickerSheetFrames(actionDescsList, sheetIndex);
+            const hasPromptContent = [...phrases, ...actionDescs].some((entry) => entry.trim().length > 0);
+            const promptSummary = hasPromptContent
+                ? summarizeSheetPrompt(buildPrompt(phrases, actionDescs))
+                : lineStickerT.lineStickerPromptSummaryEmpty;
+            const status = sheetStatuses.find((entry) => entry.sheetIndex === sheetIndex);
+
+            return {
+                sheetIndex,
+                promptSummary,
+                hasPromptContent,
+                progress: status?.progress ?? 0,
+                stage: status?.stage ?? 'idle',
+                message: status?.message ?? '',
+                error: status?.error ?? null,
+            };
+        });
+    }, [actionDescsList, buildPrompt, lineStickerT.lineStickerPromptSummaryEmpty, setPhrasesList, sheetStatuses, stickerSetMode]);
 
     const hasCustomKey = !!apiKey.trim();
 
@@ -602,6 +648,7 @@ const LineStickerPage: React.FC = () => {
         handleUploadPhraseSet,
         handleDownloadPhraseSet,
         setCurrentSheetIndex,
+        onSelectOverviewSheet: handleSelectOverviewSheet,
         previewPrompt,
         promptCopied,
         handleGeneratePromptPreview,
@@ -611,6 +658,7 @@ const LineStickerPage: React.FC = () => {
         onGenerateAllSheets: handleGenerateAllSheets,
         onCancelGeneration: cancelActiveGeneration,
         sheetStatuses,
+        sheetOverviewItems,
         hasFailedSheets,
         onRetryFailedSheets: retryFailedSheets,
         onRetrySheet: retrySheet,
@@ -620,6 +668,8 @@ const LineStickerPage: React.FC = () => {
         stickerSetMode,
         currentSheetIndex,
         setCurrentSheetIndex,
+        onSelectOverviewSheet: handleSelectOverviewSheet,
+        onRetrySheet: retrySheet,
         error,
         statusText,
         isGenerating,
@@ -637,6 +687,7 @@ const LineStickerPage: React.FC = () => {
         effectiveChromaKeyProgress,
         effectiveIsProcessingChromaKey,
         onImageLoad: handleImageLoad,
+        sheetOverviewItems,
         processedSheetImages,
         sheetFrames,
         singleSheetProcessedImage: singleSheetFlow.processedImage,
