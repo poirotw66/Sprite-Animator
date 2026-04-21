@@ -13,6 +13,6 @@ export function buildFallbackHint(decision: BestFitDecision): AutoSliceFallbackH
     suggestedRows: candidate.rows,
     suggestedShiftX: candidate.shiftX,
     suggestedShiftY: candidate.shiftY,
-    reason: 'low_confidence',
+    reason: decision.status === 'hard_guard_failed' ? 'hard_guard_failed' : 'low_confidence',
   };
 }
