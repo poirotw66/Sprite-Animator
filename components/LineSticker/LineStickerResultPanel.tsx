@@ -1,7 +1,7 @@
 import React, { Suspense, useCallback, useRef, useState } from 'react';
 import { lazyWithRetry } from '../../utils/lazyWithRetry';
 import { Plus, Loader2 } from '../Icons';
-import type { SliceSettings, FrameOverride } from '../../utils/imageUtils';
+import type { AutoSliceFallbackHint, SliceSettings, FrameOverride } from '../../utils/imageUtils';
 import type { Translations } from '../../i18n/types';
 import { LineStickerDownloadSection } from './LineStickerDownloadSection';
 import { LineStickerResultEmptyState } from './LineStickerResultEmptyState';
@@ -51,6 +51,8 @@ export interface LineStickerResultPanelViewerViewModel {
   effectiveSheetDimensions: { width: number; height: number };
   effectiveChromaKeyProgress: number;
   effectiveIsProcessingChromaKey: boolean;
+  effectiveAutoSliceHint: AutoSliceFallbackHint | null;
+  onApplyAutoSliceHint: () => void;
   lockGridSize: boolean;
   onImageLoad: (e: React.SyntheticEvent<HTMLImageElement>) => void;
   onReplaceOriginalImage: (dataUrl: string) => void;
@@ -203,6 +205,8 @@ const LineStickerResultViewerSection: React.FC<LineStickerResultViewerSectionPro
             }}
             chromaKeyProgress={viewer.effectiveChromaKeyProgress}
             isProcessingChromaKey={viewer.effectiveIsProcessingChromaKey}
+            autoSliceHint={viewer.effectiveAutoSliceHint}
+            onApplyAutoSliceHint={viewer.onApplyAutoSliceHint}
             sheetDimensions={viewer.effectiveSheetDimensions}
             onDownload={(isProcessed: boolean) => {
               handleDownloadImage(

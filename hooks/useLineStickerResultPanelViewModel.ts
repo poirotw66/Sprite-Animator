@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import type React from 'react';
-import type { SliceSettings, FrameOverride } from '../utils/imageUtils';
+import type { AutoSliceFallbackHint, SliceSettings, FrameOverride } from '../utils/imageUtils';
 import type { LineStickerResultPanelViewModel } from '../components/LineSticker/LineStickerResultPanel';
 import type { LineStickerSheetIndex } from '../utils/lineStickerSetSchema';
 import type { LineStickerSetOverviewItem } from '../components/LineSticker/LineStickerSetOverviewPanel';
@@ -27,6 +27,8 @@ interface UseLineStickerResultPanelViewModelParams {
   effectiveSheetDimensions: { width: number; height: number };
   effectiveChromaKeyProgress: number;
   effectiveIsProcessingChromaKey: boolean;
+  effectiveAutoSliceHint: AutoSliceFallbackHint | null;
+  onApplyAutoSliceHint: () => void;
   onImageLoad: (event: React.SyntheticEvent<HTMLImageElement>) => void;
   sheetOverviewItems: LineStickerSetOverviewItem[];
   processedSheetImages: (string | null)[];
@@ -72,6 +74,8 @@ export const useLineStickerResultPanelViewModel = ({
   effectiveSheetDimensions,
   effectiveChromaKeyProgress,
   effectiveIsProcessingChromaKey,
+  effectiveAutoSliceHint,
+  onApplyAutoSliceHint,
   onImageLoad,
   sheetOverviewItems,
   processedSheetImages,
@@ -193,6 +197,8 @@ export const useLineStickerResultPanelViewModel = ({
     effectiveSheetDimensions,
     effectiveChromaKeyProgress,
     effectiveIsProcessingChromaKey,
+    effectiveAutoSliceHint,
+    onApplyAutoSliceHint,
     lockGridSize: stickerSetMode,
     onImageLoad,
     onReplaceOriginalImage,
@@ -213,6 +219,8 @@ export const useLineStickerResultPanelViewModel = ({
     effectiveSheetDimensions,
     effectiveChromaKeyProgress,
     effectiveIsProcessingChromaKey,
+    effectiveAutoSliceHint,
+    onApplyAutoSliceHint,
     stickerSetMode,
     onImageLoad,
     onReplaceOriginalImage,

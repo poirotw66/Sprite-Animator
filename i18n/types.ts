@@ -104,6 +104,9 @@ export interface Translations {
   showOriginal: string;
   showProcessed: string;
   spriteSheetPlaceholder: string;
+  autoSliceLowConfidence: string;
+  autoSliceSuggestedAdjustment: string;
+  autoSliceApplySuggestion: string;
   lineStickerUploadSpriteSheet: string;
   lineStickerUploadSpriteSheetHint: string;
   spriteSheetEdit: string;

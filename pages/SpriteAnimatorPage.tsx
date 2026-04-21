@@ -84,6 +84,8 @@ const SpriteAnimatorPage: React.FC = () => {
     isProcessingChromaKey, // Whether chroma key removal is in progress
     frameOverrides,
     setFrameOverrides,
+    autoSliceHint,
+    applyAutoSliceHint,
   } = useSpriteSheet(
     spriteSheetImage,
     sliceSettings,
@@ -568,6 +570,8 @@ const SpriteAnimatorPage: React.FC = () => {
                 onDownloadOriginal={wrappedDownloadOriginalSpriteSheet}
                 chromaKeyProgress={chromaKeyProgress}
                 isProcessingChromaKey={isProcessingChromaKey}
+                autoSliceHint={autoSliceHint}
+                onApplyAutoSliceHint={applyAutoSliceHint}
               />
             </Suspense>
           )}

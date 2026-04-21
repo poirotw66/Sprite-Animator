@@ -1,6 +1,10 @@
 import React, { useCallback, useMemo, useState, useRef } from 'react';
 import { Download, Grid3X3, Loader2, Sliders, RefreshCw, Move, Eye, EyeOff, Eraser } from './Icons';
-import { SliceSettings, getEffectivePadding } from '../utils/imageUtils';
+import {
+  type AutoSliceFallbackHint,
+  type SliceSettings,
+  getEffectivePadding,
+} from '../utils/imageUtils';
 import { GRID_PATTERN_URL } from '../utils/constants';
 import { useLanguage } from '../hooks/useLanguage';
 import { SpriteSheetEraserModal } from './SpriteSheetEraserModal';
@@ -19,6 +23,8 @@ interface SpriteSheetViewerProps {
   onEditedImage?: (dataUrl: string) => void; // When user confirms eraser edit, replace current image
   chromaKeyProgress?: number; // Progress of chroma key removal (0-100)
   isProcessingChromaKey?: boolean; // Whether chroma key removal is in progress
+  autoSliceHint?: AutoSliceFallbackHint | null;
+  onApplyAutoSliceHint?: () => void;
 }
 
 export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
@@ -35,6 +41,8 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   onEditedImage,
   chromaKeyProgress = 0,
   isProcessingChromaKey = false,
+  autoSliceHint = null,
+  onApplyAutoSliceHint,
 }) => {
   const { t } = useLanguage();
   const [showOriginal, setShowOriginal] = useState(false);
@@ -80,6 +88,19 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   }, [setSliceSettings]);
 
   const padding = useMemo(() => getEffectivePadding(sliceSettings), [sliceSettings]);
+  const autoSliceSuggestionText = useMemo(() => {
+    if (!autoSliceHint) {
+      return null;
+    }
+
+    const formatSignedValue = (value: number) => (value > 0 ? `+${value}` : String(value));
+
+    return t.autoSliceSuggestedAdjustment
+      .replace('{cols}', String(autoSliceHint.suggestedCols))
+      .replace('{rows}', String(autoSliceHint.suggestedRows))
+      .replace('{shiftX}', formatSignedValue(autoSliceHint.suggestedShiftX))
+      .replace('{shiftY}', formatSignedValue(autoSliceHint.suggestedShiftY));
+  }, [autoSliceHint, t.autoSliceSuggestedAdjustment]);
 
   // Calculate real-time information (four-edge aware)
   const cellInfo = useMemo(() => {
@@ -713,6 +734,20 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
       {/* Manual Slicing Controls Toolbar */}
       {spriteSheetImage && sheetDimensions.width > 0 && (
         <div className="mt-4 p-5 bg-gradient-to-br from-blue-50/80 to-indigo-50/60 border border-blue-200 rounded-xl flex flex-col gap-4 text-sm animate-in fade-in slide-in-from-top-2 shadow-md">
+          {autoSliceHint && autoSliceSuggestionText && onApplyAutoSliceHint && (
+            <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+              <p className="font-semibold">{t.autoSliceLowConfidence}</p>
+              <p className="mt-1 text-amber-900">{autoSliceSuggestionText}</p>
+              <button
+                type="button"
+                onClick={onApplyAutoSliceHint}
+                className="mt-3 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-amber-700"
+              >
+                {t.autoSliceApplySuggestion}
+              </button>
+            </div>
+          )}
+
           {/* Header with Actions */}
           <div className="flex items-center justify-between border-b border-blue-300 pb-3">
             <div className="flex items-center gap-2 text-blue-900 font-bold">

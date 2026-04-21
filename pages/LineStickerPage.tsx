@@ -491,6 +491,10 @@ const LineStickerPage: React.FC = () => {
     const effectiveSheetDimensions = stickerSetMode ? sheetDimensions : singleSheetFlow.sheetDimensions;
     const effectiveChromaKeyProgress = stickerSetMode ? chromaKeyProgress : singleSheetFlow.chromaKeyProgress;
     const effectiveIsProcessingChromaKey = stickerSetMode ? isProcessingChromaKey : singleSheetFlow.isProcessingChromaKey;
+    const effectiveAutoSliceHint = stickerSetMode ? null : singleSheetFlow.autoSliceHint;
+    const effectiveApplyAutoSliceHint = stickerSetMode
+        ? () => {}
+        : singleSheetFlow.applyAutoSliceHint;
     const effectiveSliceSettingsForView = stickerSetMode ? currentSetSliceSettings : singleSheetFlow.sliceSettings;
     const effectiveSetSliceSettingsForView = stickerSetMode
         ? (val: SliceSettings | ((prev: SliceSettings) => SliceSettings)) => {
@@ -686,6 +690,8 @@ const LineStickerPage: React.FC = () => {
         effectiveSheetDimensions,
         effectiveChromaKeyProgress,
         effectiveIsProcessingChromaKey,
+        effectiveAutoSliceHint,
+        onApplyAutoSliceHint: effectiveApplyAutoSliceHint,
         onImageLoad: handleImageLoad,
         sheetOverviewItems,
         processedSheetImages,

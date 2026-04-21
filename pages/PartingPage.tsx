@@ -241,6 +241,8 @@ const PartingPage: React.FC = () => {
                     onDownloadOriginal={onDownloadOriginal}
                     chromaKeyProgress={flow.chromaKeyProgress}
                     isProcessingChromaKey={flow.isProcessingChromaKey}
+                    autoSliceHint={flow.autoSliceHint}
+                    onApplyAutoSliceHint={flow.applyAutoSliceHint}
                   />
                 </Suspense>
               )}
