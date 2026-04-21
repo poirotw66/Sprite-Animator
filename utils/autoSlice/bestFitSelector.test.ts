@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { selectBestCandidate } from './bestFitSelector';
 import type { AutoSliceScoredCandidate } from './types';
+import type { AutoSliceScoredCandidate as ReExportedAutoSliceScoredCandidate } from '../imageUtils';
 
 describe('selectBestCandidate', () => {
   it('returns low-confidence decision below threshold', () => {
@@ -26,9 +27,11 @@ describe('selectBestCandidate', () => {
         },
       },
     ];
+    const reExportSurfaceGuard: ReExportedAutoSliceScoredCandidate[] = candidates;
 
     const result = selectBestCandidate(candidates);
 
+    expect(reExportSurfaceGuard).toHaveLength(1);
     expect(result.status).toBe('low_confidence');
   });
 });
