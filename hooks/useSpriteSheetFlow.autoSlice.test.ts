@@ -5,6 +5,7 @@ import type { AutoSliceImageData, AutoSliceScoredCandidate } from '../utils/auto
 import {
   applyAutoSliceCandidateToSettings,
   applyAutoSliceHintToSettings,
+  buildAutoSliceAttemptKey,
   resolveAutoSlicePipelineForSettings,
 } from './autoSliceIntegration';
 
@@ -102,6 +103,26 @@ describe('sprite sheet auto-slice integration helpers', () => {
 
     expect(result).toBeNull();
     expect(runPipeline).not.toHaveBeenCalled();
+  });
+
+  it('changes attempt key when shift settings change', () => {
+    const baseKey = buildAutoSliceAttemptKey('data:image/png;base64,sheet', sliceSettings);
+    const shiftedKey = buildAutoSliceAttemptKey('data:image/png;base64,sheet', {
+      ...sliceSettings,
+      shiftX: sliceSettings.shiftX + 1,
+    });
+
+    expect(shiftedKey).not.toBe(baseKey);
+  });
+
+  it('changes attempt key when effective padding changes', () => {
+    const baseKey = buildAutoSliceAttemptKey('data:image/png;base64,sheet', sliceSettings);
+    const paddedKey = buildAutoSliceAttemptKey('data:image/png;base64,sheet', {
+      ...sliceSettings,
+      paddingLeft: (sliceSettings.paddingLeft ?? 0) + 1,
+    });
+
+    expect(paddedKey).not.toBe(baseKey);
   });
 
   it('maps an accepted candidate back into slice settings', () => {

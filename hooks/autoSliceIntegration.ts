@@ -20,7 +20,13 @@ export function buildAutoSliceAttemptKey(
   base64Image: string,
   sliceSettings: SliceSettings
 ): string {
-  return `${base64Image}::${sliceSettings.cols}x${sliceSettings.rows}`;
+  const padding = getEffectivePadding(sliceSettings);
+  return [
+    base64Image,
+    `${sliceSettings.cols}x${sliceSettings.rows}`,
+    `shift:${sliceSettings.shiftX},${sliceSettings.shiftY}`,
+    `padding:${padding.left},${padding.right},${padding.top},${padding.bottom}`,
+  ].join('::');
 }
 
 export function applyAutoSliceCandidateToSettings(
