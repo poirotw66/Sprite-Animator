@@ -11,37 +11,6 @@ type ScoreStage = (
 
 type HypothesisStage = (cols: number, rows: number, seed?: Partial<AutoSliceCandidate>) => AutoSliceCandidate[];
 
-function decodeBase64Payload(base64Image: string): Uint8Array {
-  const raw = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
-  if (typeof Buffer !== 'undefined') {
-    return new Uint8Array(Buffer.from(raw, 'base64'));
-  }
-
-  const decoded = atob(raw);
-  const bytes = new Uint8Array(decoded.length);
-  for (let index = 0; index < decoded.length; index += 1) {
-    bytes[index] = decoded.charCodeAt(index);
-  }
-  return bytes;
-}
-
-function toImageData(base64Image: string): AutoSliceImageData {
-  const bytes = decodeBase64Payload(base64Image);
-  const pixelCount = Math.max(1, Math.ceil(bytes.length / 4));
-  const edge = Math.max(1, Math.ceil(Math.sqrt(pixelCount)));
-  const pixels = new Uint8ClampedArray(edge * edge * 4);
-
-  for (let index = 0; index < pixels.length; index += 1) {
-    pixels[index] = bytes[index % bytes.length] ?? 0;
-  }
-
-  return {
-    width: edge,
-    height: edge,
-    pixels,
-  };
-}
-
 export interface AutoSlicePipelineInput {
   base64Image: string;
   cols: number;
@@ -88,9 +57,19 @@ export async function runAutoSlicePipeline(
   const scoreStage = input.scoreCandidates ?? defaultScoreCandidates;
   const hypothesisStage = input.buildGridHypotheses ?? buildGridHypotheses;
   const startedAt = now();
-  const imageData = input.imageData ?? toImageData(input.base64Image);
+  // Keep base64Image in the contract for integration hand-off.
+  void input.base64Image;
   let candidates: AutoSliceCandidate[];
   let scoredCandidates: AutoSliceScoredCandidate[];
+
+  if (!input.imageData) {
+    return {
+      status: 'fallback',
+      reason: 'stage_error',
+      stage: 'scoring',
+      message: 'Real imageData is required for content-aware scoring',
+    };
+  }
 
   try {
     candidates = hypothesisStage(input.cols, input.rows, input.baseCandidate);
@@ -104,7 +83,7 @@ export async function runAutoSlicePipeline(
   }
 
   try {
-    scoredCandidates = await Promise.resolve(scoreStage(candidates, imageData));
+    scoredCandidates = await Promise.resolve(scoreStage(candidates, input.imageData));
   } catch (error) {
     return {
       status: 'fallback',

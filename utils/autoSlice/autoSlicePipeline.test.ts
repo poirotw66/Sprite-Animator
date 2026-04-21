@@ -127,8 +127,8 @@ describe('scoreCandidates', () => {
     );
 
     expect(centerCandidate.score).toBeGreaterThan(edgeCandidate.score);
-    expect(centerCandidate.metrics.bboxStability).toBe(1);
-    expect(edgeCandidate.metrics.bboxStability).toBeLessThan(centerCandidate.metrics.bboxStability);
+    expect(centerCandidate.metrics.foregroundOccupancy).toBeGreaterThan(0);
+    expect(edgeCandidate.metrics.edgePenalty).toBeLessThanOrEqual(centerCandidate.metrics.edgePenalty);
   });
 
   it('uses image content path so identical geometry can score differently', () => {
@@ -157,6 +157,59 @@ describe('scoreCandidates', () => {
     const brightScore = scoreCandidates([candidate], brightImageData)[0].score;
 
     expect(brightScore).toBeGreaterThan(darkScore);
+  });
+
+  it('can change candidate ranking under the same shift-distance trend', () => {
+    const candidates = [
+      {
+        cols: 2,
+        rows: 2,
+        shiftX: -1,
+        shiftY: 0,
+        paddingLeft: 0,
+        paddingRight: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+      },
+      {
+        cols: 2,
+        rows: 2,
+        shiftX: 1,
+        shiftY: 0,
+        paddingLeft: 0,
+        paddingRight: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+      },
+    ];
+    const leftBiasedPixels = new Uint8ClampedArray(8 * 8 * 4).fill(0);
+    const rightBiasedPixels = new Uint8ClampedArray(8 * 8 * 4).fill(0);
+    for (let y = 0; y < 8; y += 1) {
+      for (let x = 0; x < 8; x += 1) {
+        const index = (y * 8 + x) * 4;
+        const leftValue = x < 4 ? 255 : 40;
+        const rightValue = x >= 4 ? 255 : 40;
+        leftBiasedPixels[index] = leftValue;
+        leftBiasedPixels[index + 1] = leftValue;
+        leftBiasedPixels[index + 2] = leftValue;
+        leftBiasedPixels[index + 3] = 255;
+        rightBiasedPixels[index] = rightValue;
+        rightBiasedPixels[index + 1] = rightValue;
+        rightBiasedPixels[index + 2] = rightValue;
+        rightBiasedPixels[index + 3] = 255;
+      }
+    }
+
+    const leftImageData: AutoSliceImageData = { width: 8, height: 8, pixels: leftBiasedPixels };
+    const rightImageData: AutoSliceImageData = { width: 8, height: 8, pixels: rightBiasedPixels };
+
+    const leftRanking = scoreCandidates(candidates, leftImageData);
+    const rightRanking = scoreCandidates(candidates, rightImageData);
+    const leftTop = [...leftRanking].sort((a, b) => b.score - a.score)[0];
+    const rightTop = [...rightRanking].sort((a, b) => b.score - a.score)[0];
+
+    expect(leftTop.candidate).toMatchObject({ shiftX: -1, shiftY: 0 });
+    expect(rightTop.candidate).toMatchObject({ shiftX: 1, shiftY: 0 });
   });
 });
 
@@ -286,6 +339,22 @@ describe('runAutoSlicePipeline', () => {
       reason: 'stage_error',
       stage: 'scoring',
       message: 'scoring exploded',
+    });
+  });
+
+  it('returns structured fallback when imageData is missing', async () => {
+    const result = await runAutoSlicePipeline({
+      base64Image: 'data:image/png;base64,missing-image-data',
+      cols: 4,
+      rows: 4,
+      timeoutMs: 500,
+    });
+
+    expect(result).toEqual({
+      status: 'fallback',
+      reason: 'stage_error',
+      stage: 'scoring',
+      message: 'Real imageData is required for content-aware scoring',
     });
   });
 
