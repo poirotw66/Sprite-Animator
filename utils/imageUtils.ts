@@ -35,6 +35,12 @@ export {
 } from './imageContentAnalysis';
 export type { ContentAnalysis, SmartAutoAlignOptions } from './imageContentAnalysis';
 export { cropCellFromImage, getBestOffsetByTemplateMatch } from './imageCrop';
+export type {
+  AutoSliceCandidate,
+  AutoSliceFallbackHint,
+  AutoSliceMetrics,
+  AutoSliceScoredCandidate,
+} from './autoSlice/types';
 
 /**
  * Loads multiple images and extracts their raw pixel data for export processing.
