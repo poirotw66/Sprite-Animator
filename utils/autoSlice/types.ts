@@ -9,6 +9,12 @@ export interface AutoSliceCandidate {
   paddingBottom: number;
 }
 
+export interface AutoSliceImageData {
+  width: number;
+  height: number;
+  pixels: Uint8ClampedArray;
+}
+
 export interface AutoSliceMetrics {
   bboxStability: number;
   centroidDrift: number;
