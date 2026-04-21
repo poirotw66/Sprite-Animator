@@ -67,6 +67,24 @@ export function shouldShowAutoSliceHint(
   return result?.status === 'low_confidence' || result?.status === 'hard_guard_failed';
 }
 
+export function shouldPresentAutoSliceHint({
+  sourceImageKey,
+  attemptKey,
+  shownAttemptKey,
+  appliedHintSourceKey,
+}: {
+  sourceImageKey: string;
+  attemptKey: string;
+  shownAttemptKey: string | null;
+  appliedHintSourceKey: string | null;
+}): boolean {
+  if (appliedHintSourceKey === sourceImageKey) {
+    return false;
+  }
+
+  return shownAttemptKey !== attemptKey;
+}
+
 export function didAutoSliceSettingsChange(
   current: SliceSettings,
   next: SliceSettings

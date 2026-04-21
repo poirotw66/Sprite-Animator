@@ -30,6 +30,7 @@ import {
   buildAutoSliceAttemptKey,
   didAutoSliceSettingsChange,
   resolveAutoSlicePipelineForSettings,
+  shouldPresentAutoSliceHint,
   shouldShowAutoSliceHint,
 } from './autoSliceIntegration';
 
@@ -106,6 +107,7 @@ export function useSpriteSheetFlow(
   const [autoSliceHint, setAutoSliceHint] = useState<AutoSliceFallbackHint | null>(null);
   const autoSliceAttemptKeyRef = useRef<string | null>(null);
   const autoSliceHintShownKeyRef = useRef<string | null>(null);
+  const autoSliceHintAppliedSourceKeyRef = useRef<string | null>(null);
 
   const activeChromaKeyColor = CHROMA_KEY_COLORS[chromaKeyColor];
 
@@ -158,6 +160,7 @@ export function useSpriteSheetFlow(
     if (!processedImage) {
       autoSliceAttemptKeyRef.current = null;
       autoSliceHintShownKeyRef.current = null;
+      autoSliceHintAppliedSourceKeyRef.current = null;
       setAutoSliceHint(null);
     }
   }, [processedImage]);
@@ -211,7 +214,14 @@ export function useSpriteSheetFlow(
                 return;
               }
             } else if (shouldShowAutoSliceHint(pipelineResult)) {
-              if (autoSliceHintShownKeyRef.current !== autoSliceKey) {
+              if (
+                shouldPresentAutoSliceHint({
+                  sourceImageKey: source,
+                  attemptKey: autoSliceKey,
+                  shownAttemptKey: autoSliceHintShownKeyRef.current,
+                  appliedHintSourceKey: autoSliceHintAppliedSourceKeyRef.current,
+                })
+              ) {
                 autoSliceHintShownKeyRef.current = autoSliceKey;
                 setAutoSliceHint(pipelineResult.hint);
               }
@@ -317,10 +327,13 @@ export function useSpriteSheetFlow(
       if (!currentHint) {
         return currentHint;
       }
+      if (processedImage) {
+        autoSliceHintAppliedSourceKeyRef.current = processedImage;
+      }
       setSliceSettings((prev) => applyAutoSliceHintToSettings(prev, currentHint));
       return null;
     });
-  }, []);
+  }, [processedImage]);
 
   const reRunChromaKey = useCallback(
     async (img: string): Promise<string> => {

@@ -7,6 +7,7 @@ import {
   applyAutoSliceHintToSettings,
   buildAutoSliceAttemptKey,
   resolveAutoSlicePipelineForSettings,
+  shouldPresentAutoSliceHint,
 } from './autoSliceIntegration';
 
 function createScoredCandidate(): AutoSliceScoredCandidate {
@@ -172,5 +173,27 @@ describe('sprite sheet auto-slice integration helpers', () => {
       paddingTop: 2,
       paddingBottom: 4,
     });
+  });
+
+  it('suppresses repeated fallback hints for the same source image after the user applies one', () => {
+    expect(
+      shouldPresentAutoSliceHint({
+        sourceImageKey: 'sheet-a',
+        attemptKey: 'sheet-a::4x4',
+        shownAttemptKey: 'sheet-a::4x4',
+        appliedHintSourceKey: 'sheet-a',
+      })
+    ).toBe(false);
+  });
+
+  it('still allows a new fallback hint for a different source image session', () => {
+    expect(
+      shouldPresentAutoSliceHint({
+        sourceImageKey: 'sheet-b',
+        attemptKey: 'sheet-b::5x2',
+        shownAttemptKey: 'sheet-b::4x4',
+        appliedHintSourceKey: 'sheet-a',
+      })
+    ).toBe(true);
   });
 });

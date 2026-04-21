@@ -19,6 +19,7 @@ import {
   buildAutoSliceAttemptKey,
   didAutoSliceSettingsChange,
   resolveAutoSlicePipelineForSettings,
+  shouldPresentAutoSliceHint,
   shouldShowAutoSliceHint,
 } from './autoSliceIntegration';
 
@@ -66,6 +67,7 @@ export const useSpriteSheet = (
   const lastAlignedSheetRef = useRef<string | null>(null);
   const autoSliceAttemptKeyRef = useRef<string | null>(null);
   const autoSliceHintShownKeyRef = useRef<string | null>(null);
+  const autoSliceHintAppliedSourceKeyRef = useRef<string | null>(null);
 
   // Get the actual chroma key color based on selection
   const activeChromaKeyColor = CHROMA_KEY_COLORS[chromaKeyColor];
@@ -112,6 +114,7 @@ export const useSpriteSheet = (
     if (!processedSpriteSheet || mode !== 'sheet') {
       autoSliceAttemptKeyRef.current = null;
       autoSliceHintShownKeyRef.current = null;
+      autoSliceHintAppliedSourceKeyRef.current = null;
       setAutoSliceHint(null);
     }
   }, [processedSpriteSheet, mode]);
@@ -163,7 +166,14 @@ export const useSpriteSheet = (
                   return;
                 }
               } else if (shouldShowAutoSliceHint(pipelineResult)) {
-                if (autoSliceHintShownKeyRef.current !== autoSliceKey) {
+                if (
+                  shouldPresentAutoSliceHint({
+                    sourceImageKey: processedSpriteSheet,
+                    attemptKey: autoSliceKey,
+                    shownAttemptKey: autoSliceHintShownKeyRef.current,
+                    appliedHintSourceKey: autoSliceHintAppliedSourceKeyRef.current,
+                  })
+                ) {
                   autoSliceHintShownKeyRef.current = autoSliceKey;
                   setAutoSliceHint(pipelineResult.hint);
                 }
@@ -358,11 +368,14 @@ export const useSpriteSheet = (
           return currentHint;
         }
 
+        if (processedSpriteSheet) {
+          autoSliceHintAppliedSourceKeyRef.current = processedSpriteSheet;
+        }
         setSliceSettings((prev) => applyAutoSliceHintToSettings(prev, currentHint));
         return null;
       });
     },
-    [setSliceSettings]
+    [processedSpriteSheet, setSliceSettings]
   );
 
   return {

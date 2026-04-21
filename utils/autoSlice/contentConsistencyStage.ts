@@ -49,7 +49,7 @@ function getPixelIntensity(imageData: AutoSliceImageData, x: number, y: number):
   const alpha = imageData.pixels[index + 3] ?? 255;
   const brightness = (red + green + blue) / (255 * 3);
   const alphaRatio = alpha / 255;
-  return clampToUnitRange((brightness + alphaRatio) / 2);
+  return clampToUnitRange(alphaRatio * (0.7 + brightness * 0.3));
 }
 
 function analyzeCell(
@@ -70,8 +70,12 @@ function analyzeCell(
 
   for (let localY = 0; localY < cellHeight; localY += 1) {
     for (let localX = 0; localX < cellWidth; localX += 1) {
-      const pixelX = ((startX + localX) % imageData.width + imageData.width) % imageData.width;
-      const pixelY = ((startY + localY) % imageData.height + imageData.height) % imageData.height;
+      const pixelX = startX + localX;
+      const pixelY = startY + localY;
+
+      if (pixelX < 0 || pixelX >= imageData.width || pixelY < 0 || pixelY >= imageData.height) {
+        continue;
+      }
 
       const intensity = getPixelIntensity(imageData, pixelX, pixelY);
       if (intensity < 0.45) {

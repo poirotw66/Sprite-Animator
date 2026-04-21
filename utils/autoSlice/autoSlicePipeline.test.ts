@@ -48,7 +48,7 @@ describe('buildGridHypotheses', () => {
   it('builds a deterministic centered candidate window', () => {
     const candidates = buildGridHypotheses(4, 4);
 
-    expect(candidates).toHaveLength(25);
+    expect(candidates).toHaveLength(225);
     expect(candidates[0]).toEqual({
       cols: 4,
       rows: 4,
@@ -59,7 +59,7 @@ describe('buildGridHypotheses', () => {
       paddingTop: 0,
       paddingBottom: 0,
     });
-    expect(candidates.at(-1)).toEqual({
+    expect(candidates[24]).toEqual({
       cols: 4,
       rows: 4,
       shiftX: 2,
@@ -69,7 +69,17 @@ describe('buildGridHypotheses', () => {
       paddingTop: 0,
       paddingBottom: 0,
     });
-    expect(new Set(candidates.map((candidate) => `${candidate.shiftX}:${candidate.shiftY}`)).size).toBe(25);
+    expect(new Set(candidates.map((candidate) => `${candidate.cols}:${candidate.rows}:${candidate.shiftX}:${candidate.shiftY}`)).size).toBe(225);
+  });
+
+  it('adds a small bounded set of nearby grid-count hypotheses after the baseline window', () => {
+    const candidates = buildGridHypotheses(4, 4);
+    const nearbyGridPairs = new Set(candidates.map((candidate) => `${candidate.cols}x${candidate.rows}`));
+
+    expect(candidates.slice(0, 25).every((candidate) => candidate.cols === 4 && candidate.rows === 4)).toBe(true);
+    expect(nearbyGridPairs).toEqual(
+      new Set(['4x4', '3x4', '4x3', '3x3', '3x5', '5x3', '5x4', '4x5', '5x5'])
+    );
   });
 
   it('preserves provided base candidate padding contract', () => {
@@ -128,7 +138,7 @@ describe('scoreCandidates', () => {
 
     expect(centerCandidate.score).toBeGreaterThan(edgeCandidate.score);
     expect(centerCandidate.metrics.foregroundOccupancy).toBeGreaterThan(0);
-    expect(edgeCandidate.metrics.edgePenalty).toBeLessThanOrEqual(centerCandidate.metrics.edgePenalty);
+    expect(edgeCandidate.metrics.foregroundOccupancy).toBeLessThan(centerCandidate.metrics.foregroundOccupancy);
   });
 
   it('uses image content path so identical geometry can score differently', () => {
@@ -157,6 +167,73 @@ describe('scoreCandidates', () => {
     const brightScore = scoreCandidates([candidate], brightImageData)[0].score;
 
     expect(brightScore).toBeGreaterThan(darkScore);
+  });
+
+  it('treats fully transparent bright pixels as empty foreground', () => {
+    const transparentBrightPixels = new Uint8ClampedArray(4 * 4 * 4).fill(0);
+    for (let index = 0; index < transparentBrightPixels.length; index += 4) {
+      transparentBrightPixels[index] = 255;
+      transparentBrightPixels[index + 1] = 255;
+      transparentBrightPixels[index + 2] = 255;
+      transparentBrightPixels[index + 3] = 0;
+    }
+    const imageData: AutoSliceImageData = {
+      width: 4,
+      height: 4,
+      pixels: transparentBrightPixels,
+    };
+
+    const [candidate] = scoreCandidates(
+      [
+        {
+          cols: 2,
+          rows: 2,
+          shiftX: 0,
+          shiftY: 0,
+          paddingLeft: 0,
+          paddingRight: 0,
+          paddingTop: 0,
+          paddingBottom: 0,
+        },
+      ],
+      imageData
+    );
+
+    expect(candidate.metrics.foregroundOccupancy).toBe(0);
+  });
+
+  it('treats out-of-bounds sampling as transparent instead of wrapping around the image', () => {
+    const pixels = new Uint8ClampedArray(4 * 4 * 4).fill(0);
+    for (let y = 0; y < 4; y += 1) {
+      const index = (y * 4) * 4;
+      pixels[index] = 255;
+      pixels[index + 1] = 255;
+      pixels[index + 2] = 255;
+      pixels[index + 3] = 255;
+    }
+    const imageData: AutoSliceImageData = {
+      width: 4,
+      height: 4,
+      pixels,
+    };
+
+    const [candidate] = scoreCandidates(
+      [
+        {
+          cols: 2,
+          rows: 1,
+          shiftX: 1,
+          shiftY: 0,
+          paddingLeft: 0,
+          paddingRight: 0,
+          paddingTop: 0,
+          paddingBottom: 0,
+        },
+      ],
+      imageData
+    );
+
+    expect(candidate.metrics.foregroundOccupancy).toBe(0);
   });
 
   it('can change candidate ranking under the same shift-distance trend', () => {
