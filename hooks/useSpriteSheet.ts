@@ -1,9 +1,26 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { sliceSpriteSheet, sliceSpriteSheetByCellRects, SliceSettings, FrameOverride, getEffectivePadding, getCellRectForFrame, smartAutoAlignFrames } from '../utils/imageUtils';
+import {
+  sliceSpriteSheet,
+  sliceSpriteSheetByCellRects,
+  type AutoSliceFallbackHint,
+  type SliceSettings,
+  type FrameOverride,
+  getEffectivePadding,
+  getCellRectForFrame,
+  smartAutoAlignFrames,
+} from '../utils/imageUtils';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { BACKGROUND_REMOVAL_THRESHOLD, DEBOUNCE_DELAY, CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ } from '../utils/constants';
 import { logger } from '../utils/logger';
 import type { ChromaKeyColorType } from '../types';
+import {
+  applyAutoSliceCandidateToSettings,
+  applyAutoSliceHintToSettings,
+  buildAutoSliceAttemptKey,
+  didAutoSliceSettingsChange,
+  resolveAutoSlicePipelineForSettings,
+  shouldShowAutoSliceHint,
+} from './autoSliceIntegration';
 
 /**
  * Custom hook for managing sprite sheet slicing and frame generation.
@@ -36,7 +53,8 @@ export const useSpriteSheet = (
   sliceSettings: SliceSettings,
   removeBackground: boolean,
   mode: 'frame' | 'sheet',
-  chromaKeyColor: ChromaKeyColorType = 'green'
+  chromaKeyColor: ChromaKeyColorType = 'green',
+  setSliceSettings?: React.Dispatch<React.SetStateAction<SliceSettings>>
 ) => {
   const [generatedFrames, setGeneratedFrames] = useState<string[]>([]);
   const [sheetDimensions, setSheetDimensions] = useState({ width: 0, height: 0 });
@@ -44,7 +62,10 @@ export const useSpriteSheet = (
   const [chromaKeyProgress, setChromaKeyProgress] = useState<number>(0);
   const [isProcessingChromaKey, setIsProcessingChromaKey] = useState<boolean>(false);
   const [frameOverrides, setFrameOverrides] = useState<FrameOverride[]>([]);
+  const [autoSliceHint, setAutoSliceHint] = useState<AutoSliceFallbackHint | null>(null);
   const lastAlignedSheetRef = useRef<string | null>(null);
+  const autoSliceAttemptKeyRef = useRef<string | null>(null);
+  const autoSliceHintShownKeyRef = useRef<string | null>(null);
 
   // Get the actual chroma key color based on selection
   const activeChromaKeyColor = CHROMA_KEY_COLORS[chromaKeyColor];
@@ -87,9 +108,18 @@ export const useSpriteSheet = (
     }
   }, [spriteSheetImage, mode, chromaKeyColor, activeChromaKeyColor]);
 
+  useEffect(() => {
+    if (!processedSpriteSheet || mode !== 'sheet') {
+      autoSliceAttemptKeyRef.current = null;
+      autoSliceHintShownKeyRef.current = null;
+      setAutoSliceHint(null);
+    }
+  }, [processedSpriteSheet, mode]);
+
   // Re-slice when Slice Settings, Toggle or Image updates
   useEffect(() => {
     if (processedSpriteSheet && mode === 'sheet') {
+      let cancelled = false;
       const reSlice = async () => {
         try {
           if (sliceSettings.sliceMode === 'inferred' && sliceSettings.inferredCellRects?.length) {
@@ -97,31 +127,81 @@ export const useSpriteSheet = (
               processedSpriteSheet,
               sliceSettings.inferredCellRects
             );
-            setGeneratedFrames(frames);
+            if (!cancelled) {
+              setGeneratedFrames(frames);
+            }
           } else {
-            const padding = getEffectivePadding(sliceSettings);
+            let effectiveSliceSettings = sliceSettings;
+            const autoSliceKey = buildAutoSliceAttemptKey(processedSpriteSheet, sliceSettings);
+
+            if (autoSliceAttemptKeyRef.current !== autoSliceKey) {
+              autoSliceAttemptKeyRef.current = autoSliceKey;
+              const pipelineResult = await resolveAutoSlicePipelineForSettings(
+                processedSpriteSheet,
+                sliceSettings
+              );
+
+              if (cancelled) {
+                return;
+              }
+
+              if (pipelineResult?.status === 'accepted') {
+                const nextSliceSettings = applyAutoSliceCandidateToSettings(
+                  sliceSettings,
+                  pipelineResult.selected.candidate
+                );
+                setAutoSliceHint(null);
+                effectiveSliceSettings = nextSliceSettings;
+
+                if (
+                  setSliceSettings &&
+                  didAutoSliceSettingsChange(sliceSettings, nextSliceSettings)
+                ) {
+                  setSliceSettings((prev) =>
+                    applyAutoSliceCandidateToSettings(prev, pipelineResult.selected.candidate)
+                  );
+                  return;
+                }
+              } else if (shouldShowAutoSliceHint(pipelineResult)) {
+                if (autoSliceHintShownKeyRef.current !== autoSliceKey) {
+                  autoSliceHintShownKeyRef.current = autoSliceKey;
+                  setAutoSliceHint(pipelineResult.hint);
+                }
+              } else {
+                setAutoSliceHint(null);
+              }
+            }
+
+            const padding = getEffectivePadding(effectiveSliceSettings);
             const frames = await sliceSpriteSheet(
               processedSpriteSheet,
-              sliceSettings.cols,
-              sliceSettings.rows,
-              sliceSettings.paddingX,
-              sliceSettings.paddingY,
-              sliceSettings.shiftX,
-              sliceSettings.shiftY,
+              effectiveSliceSettings.cols,
+              effectiveSliceSettings.rows,
+              effectiveSliceSettings.paddingX,
+              effectiveSliceSettings.paddingY,
+              effectiveSliceSettings.shiftX,
+              effectiveSliceSettings.shiftY,
               false,
               BACKGROUND_REMOVAL_THRESHOLD,
               frameOverrides,
               chromaKeyColor,
               padding
             );
-            setGeneratedFrames(frames);
+            if (!cancelled) {
+              setGeneratedFrames(frames);
+            }
           }
         } catch (e) {
-          logger.error('Re-slice failed', e);
+          if (!cancelled) {
+            logger.error('Re-slice failed', e);
+          }
         }
       };
       const timer = setTimeout(reSlice, DEBOUNCE_DELAY);
-      return () => clearTimeout(timer);
+      return () => {
+        cancelled = true;
+        clearTimeout(timer);
+      };
     } else if (mode !== 'sheet') {
       // Clear frames when switching away from sheet mode
       setGeneratedFrames([]);
@@ -267,6 +347,24 @@ export const useSpriteSheet = (
     [processedSpriteSheet]
   );
 
+  const applyAutoSliceHint = useMemo(
+    () => () => {
+      if (!setSliceSettings) {
+        return;
+      }
+
+      setAutoSliceHint((currentHint) => {
+        if (!currentHint) {
+          return currentHint;
+        }
+
+        setSliceSettings((prev) => applyAutoSliceHintToSettings(prev, currentHint));
+        return null;
+      });
+    },
+    [setSliceSettings]
+  );
+
   return {
     generatedFrames,
     setGeneratedFrames,
@@ -278,5 +376,7 @@ export const useSpriteSheet = (
     isProcessingChromaKey, // Whether chroma key removal is in progress
     frameOverrides,
     setFrameOverrides,
+    autoSliceHint,
+    applyAutoSliceHint,
   };
 };

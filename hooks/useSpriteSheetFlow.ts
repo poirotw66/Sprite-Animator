@@ -3,12 +3,13 @@
  * Used by PartingPage and LineStickerPage (single-sheet mode) to avoid duplicate logic.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Dispatch, SetStateAction, SyntheticEvent } from 'react';
 import {
   sliceSpriteSheet,
   sliceSpriteSheetByCellRects,
   getEffectivePadding,
+  type AutoSliceFallbackHint,
   type SliceSettings,
   type FrameOverride,
 } from '../utils/imageUtils';
@@ -23,6 +24,14 @@ import {
 import { optimizeSliceSettings } from '../utils/optimizeSliceSettings';
 import { logger } from '../utils/logger';
 import type { ChromaKeyColorType } from '../types';
+import {
+  applyAutoSliceCandidateToSettings,
+  applyAutoSliceHintToSettings,
+  buildAutoSliceAttemptKey,
+  didAutoSliceSettingsChange,
+  resolveAutoSlicePipelineForSettings,
+  shouldShowAutoSliceHint,
+} from './autoSliceIntegration';
 
 export interface UseSpriteSheetFlowOptions {
   /** When true (default), run chroma key on image change. When false, processedImage is only set via setProcessedImage (e.g. AI removal). */
@@ -71,6 +80,8 @@ export interface UseSpriteSheetFlowResult {
   reRunChromaKey: (image: string) => Promise<string>;
   sliceProcessedSheetToFrames: (processedImage: string) => Promise<string[]>;
   optimizeSlice: () => Promise<void>;
+  autoSliceHint: AutoSliceFallbackHint | null;
+  applyAutoSliceHint: () => void;
 }
 
 export function useSpriteSheetFlow(
@@ -92,6 +103,9 @@ export function useSpriteSheetFlow(
   const [sheetDimensions, setSheetDimensions] = useState({ width: 0, height: 0 });
   const [chromaKeyProgress, setChromaKeyProgress] = useState(0);
   const [isProcessingChromaKey, setIsProcessingChromaKey] = useState(false);
+  const [autoSliceHint, setAutoSliceHint] = useState<AutoSliceFallbackHint | null>(null);
+  const autoSliceAttemptKeyRef = useRef<string | null>(null);
+  const autoSliceHintShownKeyRef = useRef<string | null>(null);
 
   const activeChromaKeyColor = CHROMA_KEY_COLORS[chromaKeyColor];
 
@@ -140,6 +154,14 @@ export function useSpriteSheetFlow(
     }
   }, [image, removeBackground]);
 
+  useEffect(() => {
+    if (!processedImage) {
+      autoSliceAttemptKeyRef.current = null;
+      autoSliceHintShownKeyRef.current = null;
+      setAutoSliceHint(null);
+    }
+  }, [processedImage]);
+
   // Re-slice when processedImage or sliceSettings or frameOverrides change
   useEffect(() => {
     const source = processedImage;
@@ -163,15 +185,50 @@ export function useSpriteSheetFlow(
             setFrameIncluded(new Array(result.length).fill(true));
           }
         } else {
-          const padding = getEffectivePadding(sliceSettings);
+          let effectiveSliceSettings = sliceSettings;
+          const autoSliceKey = buildAutoSliceAttemptKey(source, sliceSettings);
+
+          if (autoSliceAttemptKeyRef.current !== autoSliceKey) {
+            autoSliceAttemptKeyRef.current = autoSliceKey;
+            const pipelineResult = await resolveAutoSlicePipelineForSettings(source, sliceSettings);
+
+            if (cancelled) {
+              return;
+            }
+
+            if (pipelineResult?.status === 'accepted') {
+              const nextSliceSettings = applyAutoSliceCandidateToSettings(
+                sliceSettings,
+                pipelineResult.selected.candidate
+              );
+              setAutoSliceHint(null);
+              effectiveSliceSettings = nextSliceSettings;
+
+              if (didAutoSliceSettingsChange(sliceSettings, nextSliceSettings)) {
+                setSliceSettings((prev) =>
+                  applyAutoSliceCandidateToSettings(prev, pipelineResult.selected.candidate)
+                );
+                return;
+              }
+            } else if (shouldShowAutoSliceHint(pipelineResult)) {
+              if (autoSliceHintShownKeyRef.current !== autoSliceKey) {
+                autoSliceHintShownKeyRef.current = autoSliceKey;
+                setAutoSliceHint(pipelineResult.hint);
+              }
+            } else {
+              setAutoSliceHint(null);
+            }
+          }
+
+          const padding = getEffectivePadding(effectiveSliceSettings);
           const result = await sliceSpriteSheet(
             source,
-            sliceSettings.cols,
-            sliceSettings.rows,
-            sliceSettings.paddingX,
-            sliceSettings.paddingY,
-            sliceSettings.shiftX,
-            sliceSettings.shiftY,
+            effectiveSliceSettings.cols,
+            effectiveSliceSettings.rows,
+            effectiveSliceSettings.paddingX,
+            effectiveSliceSettings.paddingY,
+            effectiveSliceSettings.shiftX,
+            effectiveSliceSettings.shiftY,
             false,
             BACKGROUND_REMOVAL_THRESHOLD,
             frameOverrides,
@@ -254,6 +311,16 @@ export function useSpriteSheetFlow(
     },
     [processedImage]
   );
+
+  const applyAutoSliceHint = useCallback(() => {
+    setAutoSliceHint((currentHint) => {
+      if (!currentHint) {
+        return currentHint;
+      }
+      setSliceSettings((prev) => applyAutoSliceHintToSettings(prev, currentHint));
+      return null;
+    });
+  }, []);
 
   const reRunChromaKey = useCallback(
     async (img: string): Promise<string> => {
@@ -358,5 +425,7 @@ export function useSpriteSheetFlow(
     reRunChromaKey,
     sliceProcessedSheetToFrames,
     optimizeSlice,
+    autoSliceHint,
+    applyAutoSliceHint,
   };
 }

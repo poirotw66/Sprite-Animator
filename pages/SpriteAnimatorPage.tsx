@@ -84,7 +84,14 @@ const SpriteAnimatorPage: React.FC = () => {
     isProcessingChromaKey, // Whether chroma key removal is in progress
     frameOverrides,
     setFrameOverrides,
-  } = useSpriteSheet(spriteSheetImage, sliceSettings, removeBackground, config.mode, config.chromaKeyColor);
+  } = useSpriteSheet(
+    spriteSheetImage,
+    sliceSettings,
+    removeBackground,
+    config.mode,
+    config.chromaKeyColor,
+    setSliceSettings
+  );
 
   // Frame-by-frame mode frames
   const [frameModeFrames, setFrameModeFrames] = useState<string[]>([]);
