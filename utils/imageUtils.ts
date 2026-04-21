@@ -41,6 +41,8 @@ export type {
   AutoSliceMetrics,
   AutoSliceScoredCandidate,
 } from './autoSlice/types';
+export { runAutoSlicePipeline } from './autoSlice/autoSlicePipeline';
+export type { AutoSlicePipelineInput, AutoSlicePipelineResult } from './autoSlice/autoSlicePipeline';
 
 /**
  * Loads multiple images and extracts their raw pixel data for export processing.
