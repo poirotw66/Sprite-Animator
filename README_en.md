@@ -94,6 +94,12 @@
   - Real-time progress display (0-100%)
   - Ensures no white edges, no checkerboard pattern, no frame illusion
 
+### Slice Consistency (AI Sprite Sheets)
+
+- **Multi-stage auto-alignment pipeline**: Builds multiple grid hypotheses and scores them with content-consistency signals to choose the best slicing candidate.
+- **Automatic acceptance for high-confidence results**: Applies the recommended `Cols`, `Rows`, and shift settings automatically when confidence is high enough.
+- **One-time suggestion for low-confidence cases**: Shows a single correction hint only when confidence is too low, so you can apply the suggestion and preview it immediately.
+
 ## 📷 Usage Examples
 
 The following examples use the same character source image with different action prompts to generate multiple animations and export as GIF.

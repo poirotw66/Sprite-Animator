@@ -233,6 +233,9 @@ describe('runAutoSlicePipeline', () => {
       status: 'accepted',
       confidence: 'high',
     });
+    if (result.status !== 'accepted') {
+      throw new Error(`Expected accepted result, received ${result.status}`);
+    }
     expect(result.selected.candidate.shiftX).toBe(0);
     expect(result.selected.candidate.shiftY).toBe(0);
   });
