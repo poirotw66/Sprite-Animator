@@ -83,6 +83,21 @@ const STYLE_PREVIEW_PLACEHOLDER_LABELS: Record<keyof typeof STYLE_PRESETS, strin
   lineChibi: 'LINE Chibi',
 };
 
+const STYLE_PREVIEW_IMAGE_MAP: Partial<Record<keyof typeof STYLE_PRESETS, string>> = {
+  chibi: '/style-previews/chibi.png',
+  pixel: '/style-previews/pixel.png',
+  minimalist: '/style-previews/minimalist.png',
+  anime: '/style-previews/anime.png',
+  cartoon: '/style-previews/cartoon.png',
+  watercolor: '/style-previews/watercolor.png',
+  yurukawa: '/style-previews/yurukawa.png',
+  pastel: '/style-previews/pastel.png',
+  flat: '/style-previews/flat.png',
+  doodle: '/style-previews/doodle.png',
+  gouache: '/style-previews/Gouache.png',
+  lineChibi: '/style-previews/lineChibi.png',
+};
+
 export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> = React.memo(({
   t,
   viewModel,
@@ -97,6 +112,10 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
   const previewDescription = isPresetStyle
     ? STYLE_PRESETS[config.selectedStyle as keyof typeof STYLE_PRESETS].drawingMethod
     : 'Use your own style description. A preview example will be available here in the future.';
+  const selectedStylePreviewImage = isPresetStyle
+    ? STYLE_PREVIEW_IMAGE_MAP[config.selectedStyle as keyof typeof STYLE_PRESETS] ?? null
+    : null;
+  const previewImageSrc = config.stylePreviewImage ?? selectedStylePreviewImage;
 
   return (
     <div className="lg:col-span-5 space-y-6">
@@ -148,18 +167,29 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
               ))}
               <option value="custom">{t.lineStickerStyleCustom}</option>
             </select>
+            <button
+              onClick={config.onGenerateStylePreview}
+              disabled={config.isGeneratingStylePreview}
+              className={`mt-2 w-full rounded-lg px-3 py-2 text-xs font-semibold transition-all ${
+                config.isGeneratingStylePreview
+                  ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+              }`}
+            >
+              {config.isGeneratingStylePreview ? '產生中...' : '根據上傳圖產生風格預覽'}
+            </button>
           </div>
           <div>
             <span className="block text-sm font-medium text-slate-700 mb-2">Style Preview</span>
             <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
-              {config.stylePreviewImage ? (
+              {previewImageSrc ? (
                 <img
-                  src={config.stylePreviewImage}
+                  src={previewImageSrc}
                   alt="Style preview"
-                  className="h-28 w-full object-cover bg-white"
+                  className="h-52 w-full object-contain bg-white"
                 />
               ) : (
-                <div className="h-28 bg-gradient-to-br from-slate-200 via-slate-100 to-white flex items-center justify-center">
+                <div className="h-52 bg-gradient-to-br from-slate-200 via-slate-100 to-white flex items-center justify-center">
                   <div className="text-center px-3">
                     <p className="text-xs font-semibold text-slate-600 tracking-wide uppercase">{previewTitle}</p>
                     <p className="mt-1 text-[11px] text-slate-500">Placeholder Example</p>
@@ -168,17 +198,6 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
               )}
               <div className="px-3 py-2 border-t border-slate-200">
                 <p className="text-xs text-slate-600 line-clamp-2">{previewDescription}</p>
-                <button
-                  onClick={config.onGenerateStylePreview}
-                  disabled={config.isGeneratingStylePreview}
-                  className={`mt-2 w-full rounded-lg px-3 py-2 text-xs font-semibold transition-all ${
-                    config.isGeneratingStylePreview
-                      ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                      : 'bg-green-100 text-green-700 hover:bg-green-200'
-                  }`}
-                >
-                  {config.isGeneratingStylePreview ? '產生中...' : '根據上傳圖產生風格預覽'}
-                </button>
               </div>
             </div>
           </div>
