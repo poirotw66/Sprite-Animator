@@ -2,7 +2,7 @@
 
 ## 📝 基本使用
 
-### 範例 1：使用預設設定生成 TRPG 主題貼圖
+### 範例 1：使用預設設定生成日常聊天主題貼圖
 
 ```typescript
 import {
@@ -16,7 +16,7 @@ import {
 const slots = {
     style: DEFAULT_STYLE_SLOT,
     character: DEFAULT_CHARACTER_SLOT,
-    theme: THEME_PRESETS.trpg,
+    theme: THEME_PRESETS.daily,
     text: TEXT_PRESETS['zh-TW'],
 };
 
@@ -24,7 +24,7 @@ const prompt = buildLineStickerPrompt(slots, 4, 6, 'magenta');
 console.log(prompt);
 ```
 
-**輸出**：生成一個 4×6 網格（24 格）的 TRPG 主題貼圖 prompt，使用繁體中文，背景為洋紅色。
+**輸出**：生成一個 4×6 網格（24 格）的日常聊天主題貼圖 prompt，使用繁體中文，背景為洋紅色。
 
 ---
 
@@ -56,7 +56,7 @@ const slots = {
     style: DEFAULT_STYLE_SLOT,
     character: DEFAULT_CHARACTER_SLOT,
     theme: {
-        ...THEME_PRESETS.trpg,
+        ...THEME_PRESETS.daily,
         examplePhrases: [
             '我要攻擊！',
             '使用技能',
@@ -74,7 +74,7 @@ const slots = {
 const prompt = buildLineStickerPrompt(slots, 4, 6, 'magenta');
 ```
 
-**輸出**：使用自訂的 TRPG 短語列表生成貼圖。
+**輸出**：使用自訂的日常短語列表生成貼圖。
 
 ---
 
@@ -134,7 +134,7 @@ const prompt = buildLineStickerPrompt(slots, 4, 6, 'magenta');
 
 ## 🎨 完整 Prompt 輸出範例
 
-以下是使用預設設定生成的完整 prompt（4×6 網格，TRPG 主題，繁體中文）：
+以下是使用預設設定生成的完整 prompt（4×6 網格，日常聊天主題，繁體中文）：
 
 ```
 🎨 LINE 貼圖精靈圖生成【完整 Prompt】
@@ -246,7 +246,7 @@ const prompt = buildLineStickerPrompt(slots, 4, 6, 'magenta');
 ### 【表情主題與文字內容（Theme）】
 
 * 聊天主題／語境：
-  TRPG 跑團
+  日常聊天
 
 * 每格貼圖包含：
   * 對應該語境的自然情緒
@@ -295,7 +295,7 @@ const prompt = buildLineStickerPrompt(slots, 4, 6, 'magenta');
 ### 動態生成多個主題
 
 ```typescript
-const themes = ['trpg', 'daily', 'social', 'workplace'];
+const themes = ['daily', 'social', 'workplace'];
 const languages = ['zh-TW', 'en', 'ja'];
 
 themes.forEach((themeKey) => {

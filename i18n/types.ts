@@ -283,7 +283,6 @@ export interface Translations {
   lineStickerStyleCustomLabel: string;
   lineStickerStyleCustomPlaceholder: string;
   lineStickerThemeLabel: string;
-  lineStickerThemeTrpg: string;
   lineStickerThemeDaily: string;
   lineStickerThemeSocial: string;
   lineStickerThemeWorkplace: string;

@@ -281,7 +281,6 @@ export const zhTW: Translations = {
   lineStickerStyleCustomLabel: '自訂風格描述',
   lineStickerStyleCustomPlaceholder: '例如：吉卜力風格、厚塗賽璐珞、低多邊形 3D...',
   lineStickerThemeLabel: '聊天主題（Theme Slot）',
-  lineStickerThemeTrpg: 'TRPG 跑團',
   lineStickerThemeDaily: '日常聊天',
   lineStickerThemeSocial: '社群互動',
   lineStickerThemeWorkplace: '職場對話',

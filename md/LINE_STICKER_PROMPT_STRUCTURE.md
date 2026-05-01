@@ -79,7 +79,7 @@
 
 **定義聊天語境與常用短語**，包含：
 
-- 聊天主題／語境（如：TRPG 跑團、日常聊天、社群互動）
+- 聊天主題／語境（如：日常聊天、社群互動、職場對話）
 - 常用短語列表（每格貼圖對應的短語）
 - 特殊貼圖需求（如：KKT、KKO 表情）
 
@@ -88,7 +88,6 @@
 **位置**：`utils/lineStickerPrompt.ts`
 
 **可用主題**：
-- `trpg`：TRPG 跑團（查規則書、骰子成功、暗骰中...）
 - `daily`：日常聊天（早安、晚安、謝謝、辛苦了...）
 - `social`：社群互動（讚、推、分享、轉發...）
 - `workplace`：職場對話（收到、了解、已完成、進行中...）
@@ -98,7 +97,7 @@
 **範例**：
 ```typescript
 {
-    chatContext: 'TRPG 跑團',
+    chatContext: 'Daily casual chat',
     examplePhrases: [
         '查規則書...',
         '骰子成功！',
@@ -169,7 +168,7 @@ const slots: PromptSlots = {
         ...DEFAULT_CHARACTER_SLOT,
         appearance: '自訂角色描述', // 覆蓋預設值
     },
-    theme: THEME_PRESETS.trpg, // 或使用其他主題
+    theme: THEME_PRESETS.daily, // 或使用其他主題
     text: TEXT_PRESETS['zh-TW'], // 或使用其他語言
 };
 
@@ -186,7 +185,7 @@ const prompt = buildLineStickerPrompt(
 
 1. **上傳角色圖片**
 2. **輸入角色描述**（選填，留空使用預設）
-3. **選擇聊天主題**（TRPG、日常、社群、職場）
+3. **選擇聊天主題**（日常、社群、職場）
 4. **輸入自訂短語**（選填，每行一句，會覆蓋預設主題的短語）
 5. **選擇文字語言**（繁體中文、簡體中文、English、日本語）
 6. **設定網格大小**（4×6、3×8 等）

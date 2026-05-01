@@ -326,8 +326,8 @@ Technique: ${slots.style.drawingMethod}
 }
 
 export const DEFAULT_THEME_SLOT: ThemeSlot = {
-    chatContext: 'TRPG tabletop RPG session',
-    examplePhrases: ['查規則書...', '骰子成功！', '暗骰中...', '暴擊！', '大失敗...', 'GM 手下留情', '先攻檢定！', '豁免檢定！'],
+    chatContext: 'Daily casual chat',
+    examplePhrases: ['早安', '晚安', '謝謝', '不客氣', '辛苦了', '加油', '好累', '開心'],
     specialStickers: { description: '角色滿懷期待地看向觀眾', texts: ['KKT', 'KKO'] }
 };
 
@@ -341,7 +341,6 @@ export const DEFAULT_TEXT_SLOT: TextSlot = {
 
 // label: for UI; chatContext: English for image model; examplePhrases: sticker text (any language)
 export const THEME_PRESETS: Record<string, ThemeSlot & { label: string }> = {
-    trpg: { ...DEFAULT_THEME_SLOT, label: 'TRPG 跑團' },
     daily: {
         label: '日常聊天',
         chatContext: 'Daily casual chat',

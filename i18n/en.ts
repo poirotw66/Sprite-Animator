@@ -281,7 +281,6 @@ export const en: Translations = {
   lineStickerStyleCustomLabel: 'Custom style description',
   lineStickerStyleCustomPlaceholder: 'e.g.: Ghibli style, thick cel-shading, low-poly 3D...',
   lineStickerThemeLabel: 'Chat Theme',
-  lineStickerThemeTrpg: 'TRPG Campaign',
   lineStickerThemeDaily: 'Daily Chat',
   lineStickerThemeSocial: 'Social Media',
   lineStickerThemeWorkplace: 'Workplace',
