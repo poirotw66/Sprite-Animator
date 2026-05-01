@@ -245,8 +245,12 @@ ${lightingLine}
     const textPositionRule = includeText
         ? ' Each cell lists a **Text position** — you MUST place the phrase text in that exact position within the cell (e.g. "Top center" = text in the top center of the cell). Do not use the same position for every cell; follow the per-cell instruction.'
         : '';
+    const themeContextText = slots.theme.chatContext.trim().length > 0
+        ? slots.theme.chatContext.trim()
+        : 'General chat conversation';
     const themeSection = `### [5. Grid Content — Per Cell]
 
+* **Theme context**: ${themeContextText}
 ${textRuleCell}${textPositionRule} Actions and expressions MUST be unique per cell. No repetitions. Vary pose and expression clearly (e.g. different hand gestures, face direction, open/closed eyes) so each cell is visually distinct.
 
 ${phrasesForFrames.map((phrase, index) => {
