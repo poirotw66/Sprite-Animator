@@ -302,6 +302,29 @@ ${textSection}
 ${finalSection}`;
 }
 
+export function buildLineStickerStylePreviewPrompt(
+    slots: Pick<PromptSlots, 'style' | 'character'>
+): string {
+    return `LINE sticker style preview image.
+
+### [Goal]
+Generate exactly one sticker-style image from the uploaded reference image.
+
+### [Character Rules]
+${slots.character.originalImageRules}
+
+### [Style Rules]
+Style: ${slots.style.styleType}
+Technique: ${slots.style.drawingMethod}
+
+### [Composition]
+- Single subject composition.
+- Keep subject clear and centered.
+- No text, letters, captions, or labels.
+- No collage, no multi-panel layout, no grid, no divider lines.
+`;
+}
+
 export const DEFAULT_THEME_SLOT: ThemeSlot = {
     chatContext: 'TRPG tabletop RPG session',
     examplePhrases: ['查規則書...', '骰子成功！', '暗骰中...', '暴擊！', '大失敗...', 'GM 手下留情', '先攻檢定！', '豁免檢定！'],

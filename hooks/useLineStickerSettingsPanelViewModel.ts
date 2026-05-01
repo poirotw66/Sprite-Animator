@@ -32,6 +32,9 @@ interface UseLineStickerSettingsPanelViewModelParams {
   setSingleSheetSliceSettings: React.Dispatch<React.SetStateAction<SliceSettings>>;
   selectedStyle: LineStickerStyleOption;
   setSelectedStyle: React.Dispatch<React.SetStateAction<LineStickerStyleOption>>;
+  stylePreviewImage: string | null;
+  isGeneratingStylePreview: boolean;
+  onGenerateStylePreview: () => void;
   customStyleText: string;
   setCustomStyleText: React.Dispatch<React.SetStateAction<string>>;
   selectedTheme: ThemeOption;
@@ -97,6 +100,9 @@ export const useLineStickerSettingsPanelViewModel = ({
   setSingleSheetSliceSettings,
   selectedStyle,
   setSelectedStyle,
+  stylePreviewImage,
+  isGeneratingStylePreview,
+  onGenerateStylePreview,
   customStyleText,
   setCustomStyleText,
   selectedTheme,
@@ -174,6 +180,9 @@ export const useLineStickerSettingsPanelViewModel = ({
     onGridRowsChange: handleGridRowsChange,
     selectedStyle,
     setSelectedStyle,
+    stylePreviewImage,
+    isGeneratingStylePreview,
+    onGenerateStylePreview,
     customStyleText,
     setCustomStyleText,
     selectedTheme,
@@ -203,6 +212,9 @@ export const useLineStickerSettingsPanelViewModel = ({
     handleGridRowsChange,
     selectedStyle,
     setSelectedStyle,
+    stylePreviewImage,
+    isGeneratingStylePreview,
+    onGenerateStylePreview,
     customStyleText,
     setCustomStyleText,
     selectedTheme,

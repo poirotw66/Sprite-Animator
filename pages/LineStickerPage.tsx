@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
 import { SettingsModal } from '../components/SettingsModal';
 import { RenderProfilerDebugPanel } from '../components/RenderProfilerDebugPanel';
@@ -46,9 +46,13 @@ import {
     TEXT_PRESETS,
     TEXT_COLOR_PRESETS,
     FONT_PRESETS,
+    DEFAULT_CHARACTER_SLOT,
+    STYLE_PRESETS,
+    buildLineStickerStylePreviewPrompt,
     type ThemeOption,
     type LineStickerStyleOption,
 } from '../utils/lineStickerPrompt';
+import { generateSpriteSheet } from '../services/geminiService';
 
 const createSetModeSliceSettingsList = () =>
     createLineStickerSheetArray(() => createLineStickerSetSliceSettings());
@@ -137,6 +141,8 @@ const LineStickerPage: React.FC = () => {
     const [selectedTextColor, setSelectedTextColor] = useState<keyof typeof TEXT_COLOR_PRESETS>('black');
     const [selectedFont, setSelectedFont] = useState<keyof typeof FONT_PRESETS>('handwritten');
     const [singlePhrasesList, setSinglePhrasesList] = useState<string[]>([]);
+    const [stylePreviewImage, setStylePreviewImage] = useState<string | null>(null);
+    const [isGeneratingStylePreview, setIsGeneratingStylePreview] = useState(false);
 
     // Set mode state
     const [stickerSetMode, setStickerSetMode] = useState(false);
@@ -371,10 +377,77 @@ const LineStickerPage: React.FC = () => {
         cancelActiveGeneration();
         resetSingleModeGeneratedOutputs();
         resetSetModeGeneratedOutputs();
+        setStylePreviewImage(null);
         setStatusText('');
         setError(null);
         setIsGenerating(false);
     }, [cancelActiveGeneration, resetSetModeGeneratedOutputs, resetSingleModeGeneratedOutputs, setError, setIsGenerating, setStatusText]);
+
+    useEffect(() => {
+        setStylePreviewImage(null);
+    }, [selectedStyle, customStyleText, sourceImage]);
+
+    const handleGenerateStylePreview = useCallback(async () => {
+        const key = getEffectiveApiKey();
+        if (!key) {
+            setError(lineStickerT.errorApiKey);
+            setShowSettings(true);
+            return;
+        }
+        if (!sourceImage) {
+            setError(lineStickerT.errorNoImage);
+            return;
+        }
+
+        const styleSlot = selectedStyle === 'custom'
+            ? {
+                styleType: customStyleText.trim() || 'Custom style from user input.',
+                drawingMethod: customStyleText.trim()
+                    ? `Apply this style consistently: ${customStyleText.trim()}`
+                    : 'Follow the user-provided style description.',
+            }
+            : STYLE_PRESETS[selectedStyle];
+        const prompt = buildLineStickerStylePreviewPrompt({
+            style: styleSlot,
+            character: DEFAULT_CHARACTER_SLOT,
+        });
+
+        setError(null);
+        setIsGeneratingStylePreview(true);
+        try {
+            const preview = await generateSpriteSheet(
+                sourceImage,
+                prompt,
+                1,
+                1,
+                key,
+                selectedModel,
+                undefined,
+                chromaKeyColor,
+                outputResolution,
+                false
+            );
+            setStylePreviewImage(preview);
+        } catch (err: unknown) {
+            const fallbackMessage = err instanceof Error ? err.message : lineStickerT.errorGeneration;
+            setError(fallbackMessage);
+        } finally {
+            setIsGeneratingStylePreview(false);
+        }
+    }, [
+        chromaKeyColor,
+        customStyleText,
+        getEffectiveApiKey,
+        lineStickerT.errorApiKey,
+        lineStickerT.errorGeneration,
+        lineStickerT.errorNoImage,
+        outputResolution,
+        selectedModel,
+        selectedStyle,
+        setError,
+        setShowSettings,
+        sourceImage,
+    ]);
 
     const handleStickerSetModeChange = useCallback((nextMode: boolean) => {
         if (nextMode === stickerSetMode) {
@@ -616,6 +689,9 @@ const LineStickerPage: React.FC = () => {
         setSingleSheetSliceSettings: singleSheetFlow.setSliceSettings,
         selectedStyle,
         setSelectedStyle,
+        stylePreviewImage,
+        isGeneratingStylePreview,
+        onGenerateStylePreview: handleGenerateStylePreview,
         customStyleText,
         setCustomStyleText,
         selectedTheme,
