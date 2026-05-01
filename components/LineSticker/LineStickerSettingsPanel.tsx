@@ -295,7 +295,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
         </div>
 
         {config.includeText && (
-          <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerTextLangLabel}</label>
               <select value={config.selectedLanguage} onChange={(event) => config.setSelectedLanguage(event.target.value as keyof typeof TEXT_PRESETS)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
@@ -307,6 +307,14 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
               <select value={config.selectedFont} onChange={(event) => config.setSelectedFont(event.target.value as keyof typeof FONT_PRESETS)} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
                 {FONT_PRESET_ORDER.map((key) => <option key={key} value={key}>{FONT_PRESETS[key].label}</option>)}
               </select>
+            </div>
+            <div className="md:col-span-2 rounded-xl border border-slate-200 bg-white p-3">
+              <p className="mb-2 text-xs text-slate-500">字體圖例參考</p>
+              <img
+                src="/font.png"
+                alt="Font style reference"
+                className="w-full max-h-[420px] rounded-lg border border-slate-100 object-contain bg-slate-50"
+              />
             </div>
           </div>
         )}
