@@ -136,7 +136,6 @@ const LineStickerPage: React.FC = () => {
     const [customStyleText, setCustomStyleText] = useState('');
     const [selectedTheme, setSelectedTheme] = useState<ThemeOption>('custom');
     const [customThemeContext, setCustomThemeContext] = useState<string>('');
-    const [customThemeScenario, setCustomThemeScenario] = useState<string>('');
     const [selectedLanguage, setSelectedLanguage] = useState<keyof typeof TEXT_PRESETS>('zh-TW');
     const [selectedTextColor, setSelectedTextColor] = useState<keyof typeof TEXT_COLOR_PRESETS>('black');
     const [selectedFont, setSelectedFont] = useState<keyof typeof FONT_PRESETS>('handwritten');
@@ -240,7 +239,6 @@ const LineStickerPage: React.FC = () => {
         gridRows: effectiveGridRows,
         selectedTheme,
         customThemeContext,
-        customThemeScenario,
         selectedLanguage,
         selectedPhraseMode,
         setSinglePhrasesList,
@@ -698,8 +696,6 @@ const LineStickerPage: React.FC = () => {
         setSelectedTheme,
         customThemeContext,
         setCustomThemeContext,
-        customThemeScenario,
-        setCustomThemeScenario,
         bgRemovalMethod,
         setBgRemovalMethod,
         chromaKeyColor,

@@ -287,8 +287,6 @@ export const zhTW: Translations = {
   lineStickerThemeWorkplace: '職場對話',
   lineStickerThemeCustom: '自訂',
   lineStickerCustomThemePlaceholder: '例如：遊戲公會、讀書會、寵物群組...',
-  lineStickerCustomThemeScenarioLabel: '使用情境／對象（選填）',
-  lineStickerCustomThemeScenarioPlaceholder: '例如：跑團群組、同事、情侶睡前聊天...',
   lineStickerCustomThemeHint: '輸入自訂主題描述，下方可手動填短語或點「產生」由 AI 產生',
   lineStickerThemeHint: '選擇貼圖的聊天語境主題，會自動填入對應短語',
   lineStickerPhraseListSet: '貼圖組短語（{totalFrames} 句，不重複）',

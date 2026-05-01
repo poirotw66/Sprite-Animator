@@ -24,7 +24,6 @@ interface UseLineStickerPhraseGenerationParams {
   gridRows: number;
   selectedTheme: ThemeOption;
   customThemeContext: string;
-  customThemeScenario?: string;
   selectedLanguage: keyof typeof TEXT_PRESETS;
   selectedPhraseMode: StickerPhraseMode;
   setSinglePhrasesList: (value: string[]) => void;
@@ -42,7 +41,6 @@ export function useLineStickerPhraseGeneration({
   gridRows,
   selectedTheme,
   customThemeContext,
-  customThemeScenario,
   selectedLanguage,
   selectedPhraseMode,
   setSinglePhrasesList,
@@ -58,18 +56,11 @@ export function useLineStickerPhraseGeneration({
         ? customThemeContext?.trim() || 'Custom theme'
         : `${THEME_PRESETS[selectedTheme].label} (${THEME_PRESETS[selectedTheme].chatContext})`;
 
-    const scenarioLine =
-      selectedTheme === 'custom'
-        ? (customThemeScenario?.trim() && `Scenario/audience: ${customThemeScenario.trim()}`) || ''
-        : `Scenario/audience: ${THEME_PRESETS[selectedTheme].chatContext}`;
-
     const blocks = ['Character/style: From uploaded reference image only (no preset).', `Theme: ${themeInfo}`];
-    if (scenarioLine) blocks.push(scenarioLine);
     return blocks.join('\n');
   }, [
     selectedTheme,
     customThemeContext,
-    customThemeScenario,
   ]);
 
   const handleGeneratePhrases = useCallback(async () => {

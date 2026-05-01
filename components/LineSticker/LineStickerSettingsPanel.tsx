@@ -40,8 +40,6 @@ export interface LineStickerSettingsConfigViewModel {
   setSelectedTheme: React.Dispatch<React.SetStateAction<ThemeOption>>;
   customThemeContext: string;
   setCustomThemeContext: React.Dispatch<React.SetStateAction<string>>;
-  customThemeScenario: string;
-  setCustomThemeScenario: React.Dispatch<React.SetStateAction<string>>;
   bgRemovalMethod: BgRemovalMethod;
   setBgRemovalMethod: React.Dispatch<React.SetStateAction<BgRemovalMethod>>;
   chromaKeyColor: ChromaKeyColorType;
@@ -224,13 +222,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
         </div>
 
         {config.selectedTheme === 'custom' && (
-          <>
-            <textarea value={config.customThemeContext} onChange={(event) => config.setCustomThemeContext(event.target.value)} placeholder={t.lineStickerCustomThemePlaceholder} className="w-full h-20 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none resize-none" />
-            <div className="mt-2">
-              <label className="block text-xs font-medium text-slate-500 mb-1">{t.lineStickerCustomThemeScenarioLabel}</label>
-              <input type="text" value={config.customThemeScenario} onChange={(event) => config.setCustomThemeScenario(event.target.value)} placeholder={t.lineStickerCustomThemeScenarioPlaceholder} className="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none" />
-            </div>
-          </>
+          <textarea value={config.customThemeContext} onChange={(event) => config.setCustomThemeContext(event.target.value)} placeholder={t.lineStickerCustomThemePlaceholder} className="w-full h-20 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none resize-none" />
         )}
 
         <div className="space-y-4">

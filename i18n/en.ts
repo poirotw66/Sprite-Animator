@@ -287,8 +287,6 @@ export const en: Translations = {
   lineStickerThemeWorkplace: 'Workplace',
   lineStickerThemeCustom: 'Custom',
   lineStickerCustomThemePlaceholder: 'e.g.: Game guild, Book club, Pet group...',
-  lineStickerCustomThemeScenarioLabel: 'Scenario / audience (optional)',
-  lineStickerCustomThemeScenarioPlaceholder: 'e.g.: TRPG group, colleagues, couple chat...',
   lineStickerCustomThemeHint: 'Enter a custom theme description; fill phrases below or click Generate for AI',
   lineStickerThemeHint: 'Select a chat theme to auto-fill matching phrases',
   lineStickerPhraseListSet: 'Sticker Set Phrases ({totalFrames}, no repeats)',

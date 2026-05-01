@@ -41,8 +41,6 @@ interface UseLineStickerSettingsPanelViewModelParams {
   setSelectedTheme: React.Dispatch<React.SetStateAction<ThemeOption>>;
   customThemeContext: string;
   setCustomThemeContext: React.Dispatch<React.SetStateAction<string>>;
-  customThemeScenario: string;
-  setCustomThemeScenario: React.Dispatch<React.SetStateAction<string>>;
   bgRemovalMethod: BgRemovalMethod;
   setBgRemovalMethod: React.Dispatch<React.SetStateAction<BgRemovalMethod>>;
   chromaKeyColor: ChromaKeyColorType;
@@ -109,8 +107,6 @@ export const useLineStickerSettingsPanelViewModel = ({
   setSelectedTheme,
   customThemeContext,
   setCustomThemeContext,
-  customThemeScenario,
-  setCustomThemeScenario,
   bgRemovalMethod,
   setBgRemovalMethod,
   chromaKeyColor,
@@ -189,8 +185,6 @@ export const useLineStickerSettingsPanelViewModel = ({
     setSelectedTheme,
     customThemeContext,
     setCustomThemeContext,
-    customThemeScenario,
-    setCustomThemeScenario,
     bgRemovalMethod,
     setBgRemovalMethod,
     chromaKeyColor,
@@ -221,8 +215,6 @@ export const useLineStickerSettingsPanelViewModel = ({
     setSelectedTheme,
     customThemeContext,
     setCustomThemeContext,
-    customThemeScenario,
-    setCustomThemeScenario,
     bgRemovalMethod,
     setBgRemovalMethod,
     chromaKeyColor,
