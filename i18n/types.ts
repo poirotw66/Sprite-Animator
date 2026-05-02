@@ -245,6 +245,13 @@ export interface Translations {
   lineStickerPromptLabel: string;
   lineStickerPromptPlaceholder: string;
   lineStickerGridSettings: string;
+  lineStickerWorkflowBlurb: string;
+  lineStickerJumpToResult: string;
+  lineStickerSectionStylePreview: string;
+  lineStickerSectionThemeBg: string;
+  lineStickerSectionStickerText: string;
+  lineStickerSectionPhrasesPrompt: string;
+  lineStickerFontPreviewCaption: string;
   lineStickerGenerate: string;
   lineStickerGenerating: string;
   lineStickerResult: string;

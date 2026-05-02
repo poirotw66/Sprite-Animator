@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2, Wand2, Upload, Download, Copy, Check, RefreshCw, AlertTriangle } from '../Icons';
+import { Loader2, Wand2, Upload, Download, Copy, Check, RefreshCw } from '../Icons';
 import type { Translations } from '../../i18n/types';
 import type { LineStickerSheetStatus } from '../../hooks/useLineStickerSheetGeneration';
 import { RenderProfiler } from '../RenderProfiler';
@@ -179,21 +179,33 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
   onRetrySheet,
 }) => (
   <>
-    <div>
-      <div className="flex flex-wrap justify-between items-center gap-2 mb-2">
-        <label className="text-sm font-medium text-slate-700">{t.lineStickerPhraseListSet}</label>
-        <div className="flex items-center gap-2">
+    <div className="space-y-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <label className="text-sm font-semibold text-slate-800">
+            {stickerSetMode ? t.lineStickerPhraseListSet : t.lineStickerPhraseListSingle}
+          </label>
+          <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+            {stickerSetMode ? t.lineStickerPhraseGenHint48 : t.lineStickerPhraseGenHint}
+          </p>
+          <p className="text-[11px] text-slate-400 mt-2 leading-relaxed border-l-2 border-green-200 pl-2">
+            {t.lineStickerPhraseActionHint}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 border border-slate-100 p-2 shrink-0">
           <button
+            type="button"
             onClick={handleGeneratePhrases}
             disabled={isGeneratingPhrases}
-            className="text-xs text-green-600 flex items-center gap-1 font-semibold hover:text-green-700"
+            title={stickerSetMode ? t.lineStickerPhraseGenHint48 : t.lineStickerPhraseGenHint}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-white border border-green-200 rounded-lg px-3 py-2 shadow-sm hover:bg-green-50 disabled:opacity-50 disabled:pointer-events-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 min-h-[40px]"
           >
             {isGeneratingPhrases ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
             ) : (
-              <Wand2 className="w-3 h-3" />
+              <Wand2 className="w-3.5 h-3.5 shrink-0" />
             )}
-            {t.lineStickerGeneratePhrases}
+            {stickerSetMode ? t.lineStickerGeneratePhrases48 : t.lineStickerGeneratePhrases}
           </button>
           <input
             ref={phraseSetFileInputRef}
@@ -206,32 +218,34 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
           <button
             type="button"
             onClick={() => phraseSetFileInputRef.current?.click()}
-            className="text-xs text-slate-600 flex items-center gap-1 font-medium hover:text-slate-800 border border-slate-200 rounded-lg px-2 py-1.5 bg-white hover:bg-slate-50"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg px-3 py-2 bg-white hover:bg-slate-50 min-h-[40px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
           >
-            <Upload className="w-3.5 h-3.5" />
+            <Upload className="w-3.5 h-3.5 shrink-0" />
             {t.lineStickerPhraseSetUpload}
           </button>
           <button
             type="button"
             onClick={handleDownloadPhraseSet}
-            className="text-xs text-slate-600 flex items-center gap-1 font-medium hover:text-slate-800 border border-slate-200 rounded-lg px-2 py-1.5 bg-white hover:bg-slate-50"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg px-3 py-2 bg-white hover:bg-slate-50 min-h-[40px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-3.5 h-3.5 shrink-0" />
             {t.lineStickerPhraseSetDownload}
           </button>
         </div>
       </div>
       {stickerSetMode && (
-        <div className="flex gap-1 mb-2">
+        <div className="flex flex-wrap gap-1.5" role="tablist" aria-label={t.lineStickerSheetSelector}>
           {LINE_STICKER_SHEET_INDICES.map((i) => (
             <button
               key={i}
               type="button"
+              role="tab"
+              aria-selected={currentSheetIndex === i}
               onClick={() => setCurrentSheetIndex(i)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+              className={`min-h-[40px] px-4 py-2 text-xs font-semibold rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${
                 currentSheetIndex === i
-                  ? 'bg-green-100 text-green-700 border border-green-200'
-                  : 'bg-slate-100 text-slate-600 border border-transparent hover:bg-slate-200'
+                  ? 'bg-green-600 text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               {t.lineStickerSheetN.replace('{n}', String(i + 1))}
@@ -251,13 +265,13 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
       />
     </div>
 
-    <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+    <div className="space-y-3 p-4 bg-gradient-to-br from-slate-50 to-emerald-50/30 rounded-xl border border-slate-200 shadow-inner">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h3 className="text-sm font-semibold text-slate-800">{t.lineStickerPromptPreviewTitle}</h3>
         <button
           type="button"
           onClick={handleGeneratePromptPreview}
-          className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 font-medium"
+          className="text-xs px-4 py-2 min-h-[40px] bg-white border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
         >
           {t.lineStickerGeneratePrompt}
         </button>
@@ -323,11 +337,19 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
       </div>
     )}
 
-    <div className="flex flex-col sm:flex-row gap-3">
+    <div className="flex flex-col sm:flex-row gap-3 pt-2">
       <button
+        type="button"
         onClick={stickerSetMode ? onGenerateAllSheets : onGenerate}
         disabled={isGenerating || !sourceImage || !previewPrompt}
-        className="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+        title={
+          !sourceImage
+            ? undefined
+            : !previewPrompt
+              ? t.lineStickerPromptEmptyHint
+              : undefined
+        }
+        className="flex-1 min-h-[52px] py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-green-600/25 hover:shadow-xl hover:from-green-600 hover:to-emerald-700 transition-all disabled:opacity-50 disabled:shadow-none disabled:hover:from-green-500 disabled:hover:to-emerald-600 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
       >
         {isGenerating ? (
           <Loader2 className="w-5 h-5 animate-spin" />
@@ -340,7 +362,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
         <button
           type="button"
           onClick={onCancelGeneration}
-          className="sm:w-auto py-4 px-5 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-all"
+          className="sm:w-auto min-h-[52px] py-4 px-5 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
         >
           {t.cancel}
         </button>

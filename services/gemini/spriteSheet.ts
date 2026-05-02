@@ -10,6 +10,7 @@ import { retryOperation } from './retry';
 import { getBestAspectRatio, normalizeBackgroundColor } from './imageUtils';
 import {
   isLineStickerPrompt,
+  isStylePreviewPrompt,
   buildLineStickerPromptSuffix,
   buildAnimationSpriteSheetPrompt,
 } from './spriteSheetPrompts';
@@ -58,11 +59,16 @@ export async function generateSpriteSheet(
     }),
   };
 
-  const fullPrompt = isLineStickerPrompt(prompt)
-    ? buildLineStickerPromptSuffix(prompt, promptOpts)
-    : buildAnimationSpriteSheetPrompt(prompt, promptOpts);
+  const stylePreview = isStylePreviewPrompt(prompt);
+  const fullPrompt = stylePreview
+    ? prompt
+    : isLineStickerPrompt(prompt)
+      ? buildLineStickerPromptSuffix(prompt, promptOpts)
+      : buildAnimationSpriteSheetPrompt(prompt, promptOpts);
 
-  if (isLineStickerPrompt(prompt)) {
+  if (stylePreview) {
+    if (onProgress) onProgress('正在生成風格預覽...');
+  } else if (isLineStickerPrompt(prompt)) {
     if (onProgress)
       onProgress(
         `正在生成 ${cols}x${rows} LINE 貼圖精靈圖 (比例 ${targetAspectRatio})...`
@@ -153,6 +159,9 @@ export async function generateSpriteSheet(
     for (const part of parts) {
       if (part.inlineData?.data) {
         const generatedImage = `data:image/png;base64,${part.inlineData.data}`;
+        if (stylePreview) {
+          return generatedImage;
+        }
         if (onProgress) onProgress('正在標準化背景顏色...');
         const normalizedImage = await normalizeBackgroundColor(
           generatedImage,

@@ -777,7 +777,7 @@ const LineStickerPage: React.FC = () => {
     });
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans px-4 pb-8 md:px-6 lg:px-8 pt-4 md:pt-6">
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-emerald-50/40 font-sans px-4 pb-10 md:px-6 lg:px-8 pt-4 md:pt-6">
             <SettingsModal
                 apiKey={apiKey}
                 setApiKey={setApiKey}
@@ -796,12 +796,13 @@ const LineStickerPage: React.FC = () => {
                 title={lineStickerT.lineStickerTitle}
                 hasCustomKey={hasCustomKey}
                 onOpenSettings={() => setShowSettings(true)}
+                jumpToResultLabel={lineStickerT.lineStickerJumpToResult}
             />
 
-            <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
                 <LineStickerSettingsPanel t={lineStickerT} viewModel={settingsPanelViewModel} />
 
-                <div className="lg:col-span-7 space-y-6">
+                <div id="line-sticker-result" className="lg:col-span-7 space-y-6 scroll-mt-24">
                     <LineStickerResultPanel t={lineStickerT} viewModel={resultPanelViewModel} />
                 </div>
             </main>

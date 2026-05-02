@@ -3,8 +3,14 @@
  */
 
 import type { ChromaKeyColorType } from '../../types';
+import { LINE_STICKER_STYLE_PREVIEW_MARKER } from '../../utils/lineStickerPrompt';
+
+export function isStylePreviewPrompt(prompt: string): boolean {
+  return prompt.includes(LINE_STICKER_STYLE_PREVIEW_MARKER);
+}
 
 export function isLineStickerPrompt(prompt: string): boolean {
+  if (isStylePreviewPrompt(prompt)) return false;
   return (
     prompt.includes('LINE 貼圖') ||
     prompt.includes('LINE sticker') ||

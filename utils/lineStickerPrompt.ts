@@ -315,13 +315,18 @@ ${textSection}
 ${finalSection}`;
 }
 
+/** Prepended to style-preview prompts so the image pipeline skips chroma-key suffix and post-process. */
+export const LINE_STICKER_STYLE_PREVIEW_MARKER = 'STICKER_STYLE_PREVIEW_V1';
+
 export function buildLineStickerStylePreviewPrompt(
     slots: Pick<PromptSlots, 'style' | 'character'>
 ): string {
-    return `LINE sticker style preview image.
+    return `${LINE_STICKER_STYLE_PREVIEW_MARKER}
+
+Sticker style preview — single illustrative image (not a production sprite sheet).
 
 ### [Goal]
-Generate exactly one sticker-style image from the uploaded reference image.
+Generate exactly one image from the uploaded reference character.
 
 ### [Character Rules]
 ${slots.character.originalImageRules}
@@ -330,11 +335,16 @@ ${slots.character.originalImageRules}
 Style: ${slots.style.styleType}
 Technique: ${slots.style.drawingMethod}
 
+### [Background — CRITICAL]
+- Use a **simple, plain background**: one flat neutral tone (e.g. soft off-white, pale gray-beige, or very light warm gray).
+- **Do NOT** use a green screen (#00FF00), **do NOT** use magenta / pink chroma (#FF00FF), and **do NOT** use any pure color meant for keyed removal.
+- No busy scenery, patterns, or props. Avoid strong gradients; a barely visible subtle wash is acceptable.
+
 ### [Composition]
-- Single subject composition.
-- Keep subject clear and centered.
+- Single subject, clear and centered.
 - No text, letters, captions, or labels.
-- No collage, no multi-panel layout, no grid, no divider lines.
+- No collage, multi-panel layout, grid, or divider lines.
+- One coherent square-friendly illustration.
 `;
 }
 

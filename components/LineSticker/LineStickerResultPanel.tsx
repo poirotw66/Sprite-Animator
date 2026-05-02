@@ -289,16 +289,17 @@ export const LineStickerResultPanel: React.FC<LineStickerResultPanelProps> = Rea
   const spriteSheetFileInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 min-h-[500px]">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white rounded-2xl shadow-md shadow-slate-200/50 ring-1 ring-slate-100 p-6 sm:p-7 min-h-[480px] scroll-mt-24">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <h2 className="text-lg font-semibold text-slate-900">{t.lineStickerResult}</h2>
         {sheet.stickerSetMode && (
-          <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+          <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
             {LINE_STICKER_SHEET_INDICES.map((index) => (
               <button
                 key={index}
+                type="button"
                 onClick={() => sheet.setCurrentSheetIndex(index)}
-                className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
+                className={`min-h-[40px] px-4 py-2 text-xs font-bold rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${
                   sheet.currentSheetIndex === index
                     ? 'bg-white text-green-600 shadow-sm'
                     : 'text-slate-500 hover:text-slate-700'
