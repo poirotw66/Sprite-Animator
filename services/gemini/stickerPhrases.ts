@@ -20,99 +20,57 @@ export async function generateStickerPhrases(
   const ai = new GoogleGenAI({ apiKey });
 
   const contentCount = Math.max(1, totalFrames);
-  const n40 = Math.round(contentCount * 0.4);
-  const n30 = Math.round(contentCount * 0.3);
-  const n20 = Math.round(contentCount * 0.2);
-  const n10 = contentCount - n40 - n30 - n20;
-
-  const modeLabel = 'Theme-aligned';
-  const modeHint =
-    'Every phrase must resonate with the chat theme so anyone in that context gets it; keep wording short and sticker-friendly.';
 
   const exampleBlock =
     examplePhrases.length > 0
-      ? `\n### [Reference Example Phrases] (same theme, same language style)\nUse these as style reference; generate new phrases in the same vein. Do not copy.\n${examplePhrases.slice(0, 12).map((p) => `- ${p}`).join('\n')}\n`
+      ? `\n### [Reference Example Phrases] (same theme, same language tone)\nUse only as vibe reference; invent **new** phrases in the same spirit. Do not copy or lightly tweak.\n${examplePhrases.slice(0, 16).map((p) => `- ${p}`).join('\n')}\n`
       : '';
 
-  const prompt = `You are an expert LINE sticker copywriter. Your goal is to write short, clear phrases that fit ON a sticker and are used in daily chat.
+  const prompt = `You are an expert LINE (Japan/Korea/Taiwan-style chat app) sticker copywriter. Each phrase will be printed ON the sticker image next to or near the character—design for tiny thumbnails in chat bubbles.
 
 ### [Objective]
-Generate a set of "Sticker Phrases" for a LINE sticker set based on the Theme. Each phrase must be concise and suitable for printing on a sticker.
-- Phrases must fit the theme so that people familiar with it feel resonance.
-- Users should think: "I would use this in this situation."
+- Produce exactly **${contentCount}** phrases for one coherent sticker pack matching the Theme below.
+- Every phrase must **earn a tap**: reader thinks "I'll send this instead of typing."
+- Someone using that chat theme daily should recognize every line as useful there.
 
 ### [Theme]
 ${themeContext}${exampleBlock}
 
 ### [Language]
-${language}. Output phrases in this language only.
-(Chinese: at most 6 characters; English: 1–3 words.)
+Output **${language}** only.
 
-### [Phrase Mode]
-- Mode: ${modeLabel}
-- Hint: ${modeHint}
+Hard limits (including punctuation inside the phrase):
+- **Chinese**: usually **2–6 characters** per phrase; occasionally one extra particle only if still sticker-readable; prefer spoken/colloquial fragments (e.g. reactive snippets typical in LINE chat).
+- **Japanese**: **short casual fragments** (often 2–8 mora-equivalent length); plain speech or light slang appropriate to LINE; avoid stiff written/formal textbook Japanese unless the theme demands it.
+- **English**: **1–4 words**, headline-style; contractions OK ("gonna", "I'm ok"); no clauses or commas chaining ideas.
 
-### [Output Quantity] (Strictly Follow)
-Generate exactly ${contentCount} phrases, distributed as below. The total number of phrase lines (excluding category headers) must be exactly ${contentCount}.
+### [LINE sticker suitability — CRITICAL]
+- **Thumbnail-first**: wording must stay legible when scaled small beside the character—avoid dense punctuation, paired quotes, parentheses, slashes, hashtags, URLs, email-like fragments.
+- **Reaction-ready**: phrases cover distinct chat beats within the theme—thanks, OK/wait, surprise, sympathy, teasing, hype, apology-ish, refusal, confusion—without labeling sections; spread moods naturally.
+- **One punch per sticker**: each line is **one** beat (not two sentences joined); interjections and ellipsis sparingly ("..." only if essential).
+- **Pack cohesion**: same vibe as official LINE sticker tone—warm, casual, slightly expressive—not corporate slogans, not literature quotes, not lecture tone.
+- **Pairable with art**: illustrator will draw pose/expression from this text—avoid abstract metaphors no face/body can show.
 
-### [Categories and Ratios] (Strictly Follow)
-Label the four categories clearly:
+### [Theme alignment]
+- Do **not** use category headers or buckets in output.
+- Stay strictly inside the Theme; no generic filler that ignores context.
 
-1. Universal Daily (${n40} phrases, ~40%)
-   - For everyday replies; neutral, widely usable.
-   - Standalone; no context needed.
+### [Quality bar]
+- Natural spoken rhythm; omit subjects where normal in chat ("算了", "來").
+- No duplicate or near-synonym meanings across the ${contentCount} lines.
+- Each phrase understandable alone—no "see previous message" dependency.
 
-2. Emotional Outburst (${n30} phrases, ~30%)
-   - Strong but clear emotions (happy, tired, annoyed, moved, etc.).
-   - Usable as real chat reactions; not obscure.
+### [Output format — STRICT]
+Exactly **${contentCount}** lines, flat list only.
+- Each line: "- " then the phrase only.
+- No headings, numbering, blank lines, preamble, or sign-off.
 
-3. Social Interaction (${n20} phrases, ~20%)
-   - Directed at others: thanks, sorry, cheering up, missing you, etc.
-   - Suitable for friends, partners, colleagues.
+### [Forbidden]
+- Emojis, explanations, meta commentary
+- Labels ("Sticker 1/48"), numbering prefixes on phrases
+- Multi-clause sentences, semicolon chains, bullet nests inside a phrase
 
-4. Meme/Iconic (${n10} phrases, ~10%)
-   - Memorable or slightly witty; light twist or self-deprecation.
-   - Prefer timeless, widely understood expressions over niche internet slang.
-
-### [Text Style Rules] (Very Important)
-- Concise and clear: easy to read at a glance on a sticker.
-- Natural chat tone; avoid formal or long sentences.
-- No heavy slang, niche memes, or "internet-only" jargon unless the phrase mode explicitly asks for it.
-- Optimized for ON-sticker use, not for long captions.
-- No repeated or near-identical phrases: each phrase must be clearly different in meaning from the others.
-
-### [Tone and Resonance]
-- Theme resonance: every phrase should resonate with people who know or use this theme/situation. Someone in that context should think "I would say this."
-- Relatable: users should think "I'd use this in chat in this context."
-- Friendly and natural; avoid overly "trashy," cynical, or meme-heavy tone in the default balance.
-- Every phrase must stand alone and be understood without explanation.
-
-### [Output Format] (Strictly Follow)
-Output following this format, one phrase per line starting with "- ":
-
-Universal Daily:
-- phrase
-- phrase
-
-Emotional Outburst:
-- phrase
-- phrase
-
-Social Interaction:
-- phrase
-
-Meme/Iconic:
-- phrase
-
-### [Prohibitions]
-❌ No explanations or analysis
-❌ No emojis
-❌ No filler text or "Sticker 1/2" labels
-❌ No heavy internet slang, niche memes, or jargon that only a small group understands
-❌ No long or complicated sentences
-❌ No duplicate or near-synonym phrases across the set
-
-Now generate the phrases based on the Theme.`;
+Generate the ${contentCount} phrases now.`;
 
   const response = await ai.models.generateContent({
     model,
@@ -162,6 +120,7 @@ Now generate the phrases based on the Theme.`;
     .map((raw) => raw.trim())
     .filter((line) => line.length > 0)
     .flatMap((line) => {
+      if (/^#{1,6}\s/.test(line)) return [];
       if (sectionHeaders.test(line)) return [];
       const m = line.match(bulletMatch);
       if (m) return [m[1]!.trim()];

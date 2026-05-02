@@ -9,13 +9,15 @@ import { createAbortError, isAbortError } from '../utils/abort';
 import {
   createLineStickerSheetArray,
   LINE_STICKER_FRAMES_PER_SHEET,
+  LINE_STICKER_SHEET_COUNT,
   LINE_STICKER_SHEET_INDICES,
   LINE_STICKER_TOTAL_SET_FRAMES,
   sliceLineStickerSheetFrames,
   type LineStickerSheetIndex,
 } from '../utils/lineStickerSetSchema';
 
-const BULK_CONCURRENCY = 2;
+/** Parallel sheet jobs for one-click generate-all (match sticker set sheet count). */
+const BULK_CONCURRENCY = LINE_STICKER_SHEET_COUNT;
 const CANCELLED_REQUEST_MESSAGE = '__line_sticker_generation_cancelled__';
 
 type SheetIndex = LineStickerSheetIndex;
