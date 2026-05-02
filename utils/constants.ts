@@ -49,17 +49,6 @@ export const MODEL_RESOLUTIONS: Record<string, ImageResolution[]> = {
   'gemini-3.1-flash-image-preview': ['0.5K', '1K', '2K', '4K'],
 };
 
-/**
- * Phrase generation modes for LINE sticker text.
- * Keep in sync with: LineStickerPage (option ids), i18n (labels), stickerPhrases.ts (modeLabel/modeHint).
- */
-export type StickerPhraseMode =
-  | 'balanced'      // Golden ratio: 40% daily, 30% emotional, 20% interaction, 10% meme
-  | 'emotional'     // All phrases are emotional outbursts
-  | 'meme'          // All phrases are meme-style punchlines
-  | 'interaction'   // All phrases are social interaction (thanks, sorry, cheering, missing you, etc.)
-  | 'theme-deep';   // Golden ratio with every phrase strongly tied to the theme
-
 /** Model for text-only tasks (e.g. generating sticker phrases) */
 export const PHRASE_GENERATION_MODEL = 'gemini-3-flash-preview';
 

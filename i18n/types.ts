@@ -292,12 +292,6 @@ export interface Translations {
   lineStickerThemeHint: string;
   lineStickerPhraseListSet: string;
   lineStickerPhraseListSingle: string;
-  lineStickerPhraseStyle: string;
-  lineStickerPhraseBalanced: string;
-  lineStickerPhraseEmotional: string;
-  lineStickerPhraseMeme: string;
-  lineStickerPhraseInteraction: string;
-  lineStickerPhraseThemeDeep: string;
   lineStickerGeneratePhrases: string;
   lineStickerGeneratePhrases48: string;
   lineStickerGeneratingPhrases: string;

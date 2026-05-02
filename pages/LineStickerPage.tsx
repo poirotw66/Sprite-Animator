@@ -18,10 +18,7 @@ import { useLineStickerSettingsPanelViewModel } from '../hooks/useLineStickerSet
 import { useLineStickerResultPanelViewModel } from '../hooks/useLineStickerResultPanelViewModel';
 import { SliceSettings, FrameOverride } from '../utils/imageUtils';
 import { ChromaKeyColorType, BgRemovalMethod } from '../types';
-import {
-    DEFAULT_SLICE_SETTINGS,
-    type StickerPhraseMode
-} from '../utils/constants';
+import { DEFAULT_SLICE_SETTINGS } from '../utils/constants';
 import { buildPhraseSetExport, parsePhraseSetJson } from '../utils/lineStickerPhraseSetFormat';
 import {
     createLineStickerSetSliceSettings,
@@ -160,7 +157,6 @@ const LineStickerPage: React.FC = () => {
     const [stickerFrames, setStickerFrames] = useState<string[]>([]);
     const [selectedFrames, setSelectedFrames] = useState<boolean[]>([]);
     const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('green');
-    const [selectedPhraseMode, setSelectedPhraseMode] = useState<StickerPhraseMode>('theme-deep');
     const [includeText, setIncludeText] = useState(true);
     const [bgRemovalMethod, setBgRemovalMethod] = useState<BgRemovalMethod>('chroma');
 
@@ -196,6 +192,8 @@ const LineStickerPage: React.FC = () => {
     });
     useLineStickerThemePresetSync({
         selectedTheme,
+        gridCols: effectiveGridCols,
+        gridRows: effectiveGridRows,
         setSinglePhrasesList,
         setSetPhrasesList,
         setActionDescsList,
@@ -240,7 +238,6 @@ const LineStickerPage: React.FC = () => {
         selectedTheme,
         customThemeContext,
         selectedLanguage,
-        selectedPhraseMode,
         setSinglePhrasesList,
         setSetPhrasesList,
         setActionDescsList,
@@ -706,8 +703,6 @@ const LineStickerPage: React.FC = () => {
         setSelectedLanguage,
         selectedFont,
         setSelectedFont,
-        selectedPhraseMode,
-        setSelectedPhraseMode,
         currentSheetIndex,
         phraseGridList,
         actionDescGridList,

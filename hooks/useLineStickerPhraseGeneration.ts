@@ -7,7 +7,6 @@ import {
   THEME_PRESETS,
   type ThemeOption,
 } from '../utils/lineStickerPrompt';
-import type { StickerPhraseMode } from '../utils/constants';
 import { logger } from '../utils/logger';
 import { LINE_STICKER_TOTAL_SET_FRAMES } from '../utils/lineStickerSetSchema';
 
@@ -25,7 +24,6 @@ interface UseLineStickerPhraseGenerationParams {
   selectedTheme: ThemeOption;
   customThemeContext: string;
   selectedLanguage: keyof typeof TEXT_PRESETS;
-  selectedPhraseMode: StickerPhraseMode;
   setSinglePhrasesList: (value: string[]) => void;
   setSetPhrasesList: (value: string[]) => void;
   setActionDescsList: (value: string[]) => void;
@@ -42,7 +40,6 @@ export function useLineStickerPhraseGeneration({
   selectedTheme,
   customThemeContext,
   selectedLanguage,
-  selectedPhraseMode,
   setSinglePhrasesList,
   setSetPhrasesList,
   setActionDescsList,
@@ -84,7 +81,6 @@ export function useLineStickerPhraseGeneration({
         fullContext,
         langLabel,
         count,
-        selectedPhraseMode,
         undefined,
         examplePhrases
       );
@@ -126,7 +122,6 @@ export function useLineStickerPhraseGeneration({
     buildFullContext,
     selectedTheme,
     selectedLanguage,
-    selectedPhraseMode,
     setSinglePhrasesList,
     setSetPhrasesList,
     setActionDescsList,

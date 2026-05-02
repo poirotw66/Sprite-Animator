@@ -4,7 +4,7 @@
 
 import { GoogleGenAI } from '@google/genai';
 import { logger } from '../../utils/logger';
-import { PHRASE_GENERATION_MODEL, type StickerPhraseMode } from '../../utils/constants';
+import { PHRASE_GENERATION_MODEL } from '../../utils/constants';
 import { API_KEY_MISSING_MESSAGE } from './types';
 
 export async function generateStickerPhrases(
@@ -12,7 +12,6 @@ export async function generateStickerPhrases(
   themeContext: string,
   language: string,
   totalFrames: number,
-  mode: StickerPhraseMode = 'balanced',
   model: string = PHRASE_GENERATION_MODEL,
   examplePhrases: string[] = []
 ): Promise<string[]> {
@@ -21,66 +20,14 @@ export async function generateStickerPhrases(
   const ai = new GoogleGenAI({ apiKey });
 
   const contentCount = Math.max(1, totalFrames);
-  let n40 = Math.round(contentCount * 0.4);
-  let n30 = Math.round(contentCount * 0.3);
-  let n20 = Math.round(contentCount * 0.2);
-  let n10 = contentCount - n40 - n30 - n20;
+  const n40 = Math.round(contentCount * 0.4);
+  const n30 = Math.round(contentCount * 0.3);
+  const n20 = Math.round(contentCount * 0.2);
+  const n10 = contentCount - n40 - n30 - n20;
 
-  switch (mode) {
-    case 'emotional':
-      n40 = 0;
-      n20 = 0;
-      n10 = 0;
-      n30 = contentCount;
-      break;
-    case 'meme':
-      n40 = 0;
-      n30 = 0;
-      n20 = 0;
-      n10 = contentCount;
-      break;
-    case 'interaction':
-      n40 = 0;
-      n30 = 0;
-      n10 = 0;
-      n20 = contentCount;
-      break;
-    case 'theme-deep':
-    case 'balanced':
-    default:
-      break;
-  }
-
-  let modeLabel: string;
-  let modeHint: string;
-  switch (mode) {
-    case 'emotional':
-      modeLabel = 'Emotional (all emotional)';
-      modeHint =
-        'Focus on emotions (happy, tired, annoyed, moved, etc.). Keep phrases short and sticker-friendly; avoid heavy complaints or niche slang.';
-      break;
-    case 'meme':
-      modeLabel = 'Meme (all meme-style)';
-      modeHint =
-        'Slight twist or self-deprecation, but keep phrases short and easy to understand for stickers; avoid inside jokes only a small group gets.';
-      break;
-    case 'interaction':
-      modeLabel = 'Social interaction (all interaction)';
-      modeHint =
-        'All phrases directed at others: thanks, sorry, cheering up, missing you, etc. Natural and concise for friends, partners, colleagues.';
-      break;
-    case 'theme-deep':
-      modeLabel = 'Theme-aligned (theme-deep)';
-      modeHint =
-        'Every phrase must resonate with the theme so anyone who knows the theme gets it; keep wording short and sticker-friendly.';
-      break;
-    case 'balanced':
-    default:
-      modeLabel = 'Balanced (golden ratio)';
-      modeHint =
-        'Distribute the four categories by ratio; each category must fit the theme. Short, clear, LINE-sticker friendly; avoid heavy internet or niche slang.';
-      break;
-  }
+  const modeLabel = 'Theme-aligned';
+  const modeHint =
+    'Every phrase must resonate with the chat theme so anyone in that context gets it; keep wording short and sticker-friendly.';
 
   const exampleBlock =
     examplePhrases.length > 0

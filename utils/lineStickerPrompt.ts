@@ -43,6 +43,24 @@ export interface ThemeSlot {
     };
 }
 
+/** Example phrases plus optional special sticker texts; order matches prompt cycling. */
+export function collectThemePhraseCycle(theme: Pick<ThemeSlot, 'examplePhrases' | 'specialStickers'>): string[] {
+    const extra = theme.specialStickers?.texts ?? [];
+    return [...theme.examplePhrases, ...extra];
+}
+
+/** Fill exactly totalFrames entries by cycling theme phrases (same rule as grid prompt cells). */
+export function expandThemePhrasesForFrames(
+    theme: Pick<ThemeSlot, 'examplePhrases' | 'specialStickers'>,
+    totalFrames: number
+): string[] {
+    const cycle = collectThemePhraseCycle(theme);
+    if (cycle.length === 0) {
+        return Array.from({ length: totalFrames }, (_, index) => `Expression ${index + 1}`);
+    }
+    return Array.from({ length: totalFrames }, (_, index) => cycle[index % cycle.length]);
+}
+
 export interface TextSlot {
     language: string;
     textStyle: string;
@@ -228,12 +246,7 @@ ${lightingLine}
 `;
 
     // 5. Grid Content — Per cell (local details)
-    const allPhrases = [...slots.theme.examplePhrases];
-    if (slots.theme.specialStickers) allPhrases.push(...slots.theme.specialStickers.texts);
-    const phrasesForFrames: string[] = [];
-    for (let i = 0; i < totalFrames; i++) {
-        phrasesForFrames.push(allPhrases.length > 0 ? allPhrases[i % allPhrases.length] : `Expression ${i + 1}`);
-    }
+    const phrasesForFrames = expandThemePhrasesForFrames(slots.theme, totalFrames);
     const textRuleCell = includeText ? 'Every cell MUST clearly display its assigned short phrase text.' : 'DO NOT include any text in the images; poses and expressions only.';
     const actionForImage = (raw: string): string => {
         const s = raw.trim();
@@ -368,13 +381,47 @@ export const THEME_PRESETS: Record<string, ThemeSlot & { label: string }> = {
     meme: {
         label: '迷因梗圖',
         chatContext: 'Internet memes and viral phrases',
-        examplePhrases: ['真香', '小朋友才做選擇', '我全都要', '我就爛', '你各位啊', '是在哈囉', '歸剛欸', '哭啊', '奇怪的知識增加了', '芭比 Q 了', '太狠了', '我的超人', '計畫通', '我就靜靜看著你'],
+        examplePhrases: [
+            '真香',
+            '小朋友才做選擇',
+            '我全都要',
+            '我就爛',
+            '你各位啊',
+            '是在哈囉',
+            '歸剛欸',
+            '哭啊',
+            '奇怪的知識增加了',
+            '芭比 Q 了',
+            '太狠了',
+            '我的超人',
+            '計畫通',
+            '我就靜靜看著你',
+            '母湯喔',
+            '這不合邏輯吧',
+        ],
         specialStickers: { description: '角色露出經典的「計畫通」表情', texts: ['計畫通', '掌握全局'] }
     },
     food: {
         label: '美食饕客',
         chatContext: 'Food and dining',
-        examplePhrases: ['餓了', '想吃肉', '宵夜時間', '珍珠奶茶', '好飽', '美食萬歲', '減肥明天再說', '外送到了', '分我一口', '真好吃', '看起來很雷', '這味道...', '大受好評', '美味十足'],
+        examplePhrases: [
+            '餓了',
+            '想吃肉',
+            '宵夜時間',
+            '珍珠奶茶',
+            '好飽',
+            '美食萬歲',
+            '減肥明天再說',
+            '外送到了',
+            '分我一口',
+            '真好吃',
+            '看起來很雷',
+            '這味道...',
+            '大受好評',
+            '美味十足',
+            '再來一碗',
+            '熱量爆炸',
+        ],
         specialStickers: { description: '角色幸福地吃著大餐的樣子', texts: ['大滿足', '還要吃'] }
     }
 };

@@ -2,7 +2,6 @@ import React from 'react';
 import { Check } from '../Icons';
 import type { Translations } from '../../i18n/types';
 import type { ChromaKeyColorType, BgRemovalMethod } from '../../types';
-import type { StickerPhraseMode } from '../../utils/constants';
 import {
   THEME_PRESETS,
   STYLE_PRESETS,
@@ -50,8 +49,6 @@ export interface LineStickerSettingsConfigViewModel {
   setSelectedLanguage: React.Dispatch<React.SetStateAction<keyof typeof TEXT_PRESETS>>;
   selectedFont: keyof typeof FONT_PRESETS;
   setSelectedFont: React.Dispatch<React.SetStateAction<keyof typeof FONT_PRESETS>>;
-  selectedPhraseMode: StickerPhraseMode;
-  setSelectedPhraseMode: React.Dispatch<React.SetStateAction<StickerPhraseMode>>;
 }
 
 export interface LineStickerSettingsPanelViewModel {
@@ -318,30 +315,6 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
             </div>
           </div>
         )}
-
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerPhraseStyle}</label>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { id: 'balanced', label: t.lineStickerPhraseBalanced },
-              { id: 'emotional', label: t.lineStickerPhraseEmotional },
-              { id: 'meme', label: t.lineStickerPhraseMeme },
-              { id: 'interaction', label: t.lineStickerPhraseInteraction },
-              { id: 'theme-deep', label: t.lineStickerPhraseThemeDeep },
-            ].map((mode) => (
-              <button
-                key={mode.id}
-                onClick={() => config.setSelectedPhraseMode(mode.id as StickerPhraseMode)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${config.selectedPhraseMode === mode.id
-                  ? 'bg-green-100 text-green-700 border border-green-200'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:border-green-200'
-                  }`}
-              >
-                {mode.label}
-              </button>
-            ))}
-          </div>
-        </div>
 
         <LineStickerPhraseSection {...phraseSection} />
       </div>

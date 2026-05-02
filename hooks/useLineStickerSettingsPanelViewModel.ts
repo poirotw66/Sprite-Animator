@@ -3,7 +3,6 @@ import type React from 'react';
 import type { Translations } from '../i18n/types';
 import type { SliceSettings } from '../utils/imageUtils';
 import type { ChromaKeyColorType, BgRemovalMethod } from '../types';
-import type { StickerPhraseMode } from '../utils/constants';
 import type {
   ThemeOption,
   LineStickerStyleOption,
@@ -51,8 +50,6 @@ interface UseLineStickerSettingsPanelViewModelParams {
   setSelectedLanguage: React.Dispatch<React.SetStateAction<keyof typeof TEXT_PRESETS>>;
   selectedFont: keyof typeof FONT_PRESETS;
   setSelectedFont: React.Dispatch<React.SetStateAction<keyof typeof FONT_PRESETS>>;
-  selectedPhraseMode: StickerPhraseMode;
-  setSelectedPhraseMode: React.Dispatch<React.SetStateAction<StickerPhraseMode>>;
   currentSheetIndex: LineStickerSheetIndex;
   phraseGridList: string[];
   actionDescGridList: string[];
@@ -117,8 +114,6 @@ export const useLineStickerSettingsPanelViewModel = ({
   setSelectedLanguage,
   selectedFont,
   setSelectedFont,
-  selectedPhraseMode,
-  setSelectedPhraseMode,
   currentSheetIndex,
   phraseGridList,
   actionDescGridList,
@@ -195,8 +190,6 @@ export const useLineStickerSettingsPanelViewModel = ({
     setSelectedLanguage,
     selectedFont,
     setSelectedFont,
-    selectedPhraseMode,
-    setSelectedPhraseMode,
   }), [
     stickerSetMode,
     onStickerSetModeChange,
@@ -225,8 +218,6 @@ export const useLineStickerSettingsPanelViewModel = ({
     setSelectedLanguage,
     selectedFont,
     setSelectedFont,
-    selectedPhraseMode,
-    setSelectedPhraseMode,
   ]);
 
   const phraseSection = useMemo(() => ({
