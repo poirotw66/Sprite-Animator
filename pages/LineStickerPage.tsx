@@ -444,6 +444,21 @@ const LineStickerPage: React.FC = () => {
         sourceImage,
     ]);
 
+    const handleDownloadStylePreview = useCallback(() => {
+        if (!stylePreviewImage) return;
+        const link = document.createElement('a');
+        link.href = stylePreviewImage;
+        link.download = 'line-sticker-style-preview.png';
+        link.click();
+    }, [stylePreviewImage]);
+
+    const handleUseStylePreviewAsReference = useCallback(() => {
+        if (!stylePreviewImage) return;
+        const nextSource = stylePreviewImage;
+        resetGeneratedOutputs();
+        setSourceImage(nextSource);
+    }, [resetGeneratedOutputs, setSourceImage, stylePreviewImage]);
+
     const handleStickerSetModeChange = useCallback((nextMode: boolean) => {
         if (nextMode === stickerSetMode) {
             return;
@@ -687,6 +702,8 @@ const LineStickerPage: React.FC = () => {
         stylePreviewImage,
         isGeneratingStylePreview,
         onGenerateStylePreview: handleGenerateStylePreview,
+        onDownloadStylePreview: handleDownloadStylePreview,
+        onUseStylePreviewAsReference: handleUseStylePreviewAsReference,
         customStyleText,
         setCustomStyleText,
         selectedTheme,

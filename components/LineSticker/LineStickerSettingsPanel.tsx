@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check } from '../Icons';
+import { Check, Download, ImageIcon } from '../Icons';
 import type { Translations } from '../../i18n/types';
 import type { ChromaKeyColorType, BgRemovalMethod } from '../../types';
 import {
@@ -33,6 +33,8 @@ export interface LineStickerSettingsConfigViewModel {
   stylePreviewImage: string | null;
   isGeneratingStylePreview: boolean;
   onGenerateStylePreview: () => void;
+  onDownloadStylePreview: () => void;
+  onUseStylePreviewAsReference: () => void;
   customStyleText: string;
   setCustomStyleText: React.Dispatch<React.SetStateAction<string>>;
   selectedTheme: ThemeOption;
@@ -251,6 +253,26 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
               <div className="px-3 py-2 border-t border-slate-200 bg-white/80">
                 <p className="text-xs text-slate-600 line-clamp-3">{previewDescription}</p>
               </div>
+              {config.stylePreviewImage ? (
+                <div className="px-3 pb-3 pt-1 border-t border-slate-100 bg-white flex flex-col sm:flex-row gap-2">
+                  <button
+                    type="button"
+                    onClick={config.onDownloadStylePreview}
+                    className="flex-1 inline-flex items-center justify-center gap-2 min-h-[44px] px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
+                  >
+                    <Download className="w-4 h-4 shrink-0" aria-hidden />
+                    {t.lineStickerStylePreviewDownload}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={config.onUseStylePreviewAsReference}
+                    className="flex-1 inline-flex items-center justify-center gap-2 min-h-[44px] px-3 py-2 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
+                  >
+                    <ImageIcon className="w-4 h-4 shrink-0" aria-hidden />
+                    {t.lineStickerStylePreviewUseAsReference}
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

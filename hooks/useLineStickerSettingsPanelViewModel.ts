@@ -34,6 +34,8 @@ interface UseLineStickerSettingsPanelViewModelParams {
   stylePreviewImage: string | null;
   isGeneratingStylePreview: boolean;
   onGenerateStylePreview: () => void;
+  onDownloadStylePreview: () => void;
+  onUseStylePreviewAsReference: () => void;
   customStyleText: string;
   setCustomStyleText: React.Dispatch<React.SetStateAction<string>>;
   selectedTheme: ThemeOption;
@@ -98,6 +100,8 @@ export const useLineStickerSettingsPanelViewModel = ({
   stylePreviewImage,
   isGeneratingStylePreview,
   onGenerateStylePreview,
+  onDownloadStylePreview,
+  onUseStylePreviewAsReference,
   customStyleText,
   setCustomStyleText,
   selectedTheme,
@@ -174,6 +178,8 @@ export const useLineStickerSettingsPanelViewModel = ({
     stylePreviewImage,
     isGeneratingStylePreview,
     onGenerateStylePreview,
+    onDownloadStylePreview,
+    onUseStylePreviewAsReference,
     customStyleText,
     setCustomStyleText,
     selectedTheme,
@@ -202,6 +208,8 @@ export const useLineStickerSettingsPanelViewModel = ({
     stylePreviewImage,
     isGeneratingStylePreview,
     onGenerateStylePreview,
+    onDownloadStylePreview,
+    onUseStylePreviewAsReference,
     customStyleText,
     setCustomStyleText,
     selectedTheme,

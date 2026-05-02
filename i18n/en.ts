@@ -284,6 +284,8 @@ export const en: Translations = {
   lineStickerStyleLabel: 'Sticker Style',
   lineStickerStyleMatchUploaded: 'Match uploaded character',
   lineStickerStyleHint: 'Select drawing style for the stickers',
+  lineStickerStylePreviewDownload: 'Download preview',
+  lineStickerStylePreviewUseAsReference: 'Use as character reference',
   lineStickerStyleCustom: 'Custom',
   lineStickerStyleCustomLabel: 'Custom style description',
   lineStickerStyleCustomPlaceholder: 'e.g.: Ghibli style, thick cel-shading, low-poly 3D...',

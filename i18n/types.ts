@@ -286,6 +286,8 @@ export interface Translations {
   lineStickerStyleLabel: string;
   lineStickerStyleMatchUploaded: string;
   lineStickerStyleHint: string;
+  lineStickerStylePreviewDownload: string;
+  lineStickerStylePreviewUseAsReference: string;
   lineStickerStyleCustom: string;
   lineStickerStyleCustomLabel: string;
   lineStickerStyleCustomPlaceholder: string;
