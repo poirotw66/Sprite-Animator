@@ -94,19 +94,26 @@ const STYLE_PREVIEW_PLACEHOLDER_LABELS: Record<keyof typeof STYLE_PRESETS, strin
   lineChibi: 'LINE Chibi',
 };
 
+function resolvePublicAssetPath(assetPath: string): string {
+  const baseUrl = import.meta.env.BASE_URL ?? '/';
+  const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const normalizedAssetPath = assetPath.startsWith('/') ? assetPath.slice(1) : assetPath;
+  return `${normalizedBaseUrl}${normalizedAssetPath}`;
+}
+
 const STYLE_PREVIEW_IMAGE_MAP: Partial<Record<keyof typeof STYLE_PRESETS, string>> = {
-  chibi: '/style-previews/chibi.png',
-  pixel: '/style-previews/pixel.png',
-  minimalist: '/style-previews/minimalist.png',
-  anime: '/style-previews/anime.png',
-  cartoon: '/style-previews/cartoon.png',
-  watercolor: '/style-previews/watercolor.png',
-  yurukawa: '/style-previews/yurukawa.png',
-  pastel: '/style-previews/pastel.png',
-  flat: '/style-previews/flat.png',
-  doodle: '/style-previews/doodle.png',
-  gouache: '/style-previews/Gouache.png',
-  lineChibi: '/style-previews/lineChibi.png',
+  chibi: resolvePublicAssetPath('style-previews/chibi.png'),
+  pixel: resolvePublicAssetPath('style-previews/pixel.png'),
+  minimalist: resolvePublicAssetPath('style-previews/minimalist.png'),
+  anime: resolvePublicAssetPath('style-previews/anime.png'),
+  cartoon: resolvePublicAssetPath('style-previews/cartoon.png'),
+  watercolor: resolvePublicAssetPath('style-previews/watercolor.png'),
+  yurukawa: resolvePublicAssetPath('style-previews/yurukawa.png'),
+  pastel: resolvePublicAssetPath('style-previews/pastel.png'),
+  flat: resolvePublicAssetPath('style-previews/flat.png'),
+  doodle: resolvePublicAssetPath('style-previews/doodle.png'),
+  gouache: resolvePublicAssetPath('style-previews/Gouache.png'),
+  lineChibi: resolvePublicAssetPath('style-previews/lineChibi.png'),
 };
 
 export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> = React.memo(({
@@ -418,7 +425,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
             <div className="md:col-span-2 rounded-xl border border-slate-200 bg-white p-3 shadow-inner">
               <p className="mb-2 text-xs font-medium text-slate-600">{t.lineStickerFontPreviewCaption}</p>
               <img
-                src="/font.png"
+                src={resolvePublicAssetPath('font.png')}
                 alt=""
                 className="w-full max-h-[420px] rounded-lg border border-slate-100 object-contain bg-slate-50"
               />
