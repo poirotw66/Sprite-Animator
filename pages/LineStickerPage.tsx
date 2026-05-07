@@ -233,7 +233,11 @@ const LineStickerPage: React.FC = () => {
         selectedResolution: outputResolution,
     });
 
-    const { isGeneratingPhrases, handleGeneratePhrases } = useLineStickerPhraseGeneration({
+    const {
+        isGeneratingPhrases,
+        isBackfillingActionDescs,
+        handleGeneratePhrases,
+    } = useLineStickerPhraseGeneration({
         getEffectiveApiKey,
         setError,
         setShowSettings,
@@ -735,6 +739,7 @@ const LineStickerPage: React.FC = () => {
         updatePhraseAt,
         updateActionDescAt,
         isGeneratingPhrases,
+        isBackfillingActionDescs,
         handleGeneratePhrases,
         phraseSetFileInputRef,
         handleUploadPhraseSet,

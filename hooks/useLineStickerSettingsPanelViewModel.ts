@@ -62,6 +62,7 @@ interface UseLineStickerSettingsPanelViewModelParams {
   updatePhraseAt: (index: number, value: string) => void;
   updateActionDescAt: (index: number, value: string) => void;
   isGeneratingPhrases: boolean;
+  isBackfillingActionDescs: boolean;
   handleGeneratePhrases: () => void;
   phraseSetFileInputRef: React.RefObject<HTMLInputElement | null>;
   handleUploadPhraseSet: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -130,6 +131,7 @@ export const useLineStickerSettingsPanelViewModel = ({
   updatePhraseAt,
   updateActionDescAt,
   isGeneratingPhrases,
+  isBackfillingActionDescs,
   handleGeneratePhrases,
   phraseSetFileInputRef,
   handleUploadPhraseSet,
@@ -247,6 +249,7 @@ export const useLineStickerSettingsPanelViewModel = ({
     updatePhraseAt,
     updateActionDescAt,
     isGeneratingPhrases,
+    isBackfillingActionDescs,
     handleGeneratePhrases,
     phraseSetFileInputRef,
     handleUploadPhraseSet,
@@ -277,6 +280,7 @@ export const useLineStickerSettingsPanelViewModel = ({
     updatePhraseAt,
     updateActionDescAt,
     isGeneratingPhrases,
+    isBackfillingActionDescs,
     handleGeneratePhrases,
     phraseSetFileInputRef,
     handleUploadPhraseSet,

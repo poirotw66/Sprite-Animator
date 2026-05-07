@@ -381,6 +381,7 @@ export const zhTW: Translations = {
   lineStickerSheetIdle: '尚未生成',
   lineStickerErrorReasonLabel: '失敗原因：',
   lineStickerActionDescPlaceholder: '動作描述 (英中對照)',
+  lineStickerActionDescBackfilling: '短語已完成，動作描述補齊中...',
 
   // RM BG Tool
   rmbgTitle: '精靈圖背景移除',

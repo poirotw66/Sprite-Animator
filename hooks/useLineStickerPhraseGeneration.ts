@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { getErrorMessage } from '../types/errors';
 import { generateActionDescriptions, generateStickerPhrases } from '../services/geminiService';
 import {
@@ -52,6 +52,8 @@ export function useLineStickerPhraseGeneration({
   t,
 }: UseLineStickerPhraseGenerationParams) {
   const [isGeneratingPhrases, setIsGeneratingPhrases] = useState(false);
+  const [isBackfillingActionDescs, setIsBackfillingActionDescs] = useState(false);
+  const latestRequestIdRef = useRef(0);
 
   const buildFullContext = useCallback((): string => {
     const themeInfo =
@@ -67,6 +69,8 @@ export function useLineStickerPhraseGeneration({
   ]);
 
   const handleGeneratePhrases = useCallback(async () => {
+    const requestId = latestRequestIdRef.current + 1;
+    latestRequestIdRef.current = requestId;
     const key = getEffectiveApiKey();
     if (!key) {
       setError(t.errorApiKey);
@@ -95,22 +99,31 @@ export function useLineStickerPhraseGeneration({
       } else {
         setSinglePhrasesList(phrases);
       }
+      setIsBackfillingActionDescs(true);
 
-      try {
-        const actionDescs = await generateActionDescriptions(key, phrases, {
-          themeContext: fullContext,
-          language: langLabel,
-          nearDuplicateThreshold:
-            ACTION_DEDUPE_THRESHOLD_BY_STRENGTH[actionDedupeStrength],
-        });
-        setActionDescsList(actionDescs);
-      } catch (actionErr: unknown) {
-        logger.warn(
-          'Action descriptions fallback to getActionHint:',
-          getErrorMessage(actionErr)
-        );
-        setActionDescsList(phrases.map((phrase) => getActionHint(phrase)));
-      }
+      // Run action description generation in background so phrase generation feels immediate.
+      void (async () => {
+        try {
+          const actionDescs = await generateActionDescriptions(key, phrases, {
+            themeContext: fullContext,
+            language: langLabel,
+            nearDuplicateThreshold:
+              ACTION_DEDUPE_THRESHOLD_BY_STRENGTH[actionDedupeStrength],
+          });
+          if (latestRequestIdRef.current !== requestId) return;
+          setActionDescsList(actionDescs);
+        } catch (actionErr: unknown) {
+          if (latestRequestIdRef.current !== requestId) return;
+          logger.warn(
+            'Action descriptions fallback to getActionHint:',
+            getErrorMessage(actionErr)
+          );
+          setActionDescsList(phrases.map((phrase) => getActionHint(phrase)));
+        } finally {
+          if (latestRequestIdRef.current !== requestId) return;
+          setIsBackfillingActionDescs(false);
+        }
+      })();
     } catch (err: unknown) {
       const msg = getErrorMessage(err);
       if (msg.includes('API Key is missing')) {
@@ -141,6 +154,7 @@ export function useLineStickerPhraseGeneration({
 
   return {
     isGeneratingPhrases,
+    isBackfillingActionDescs,
     handleGeneratePhrases,
   };
 }

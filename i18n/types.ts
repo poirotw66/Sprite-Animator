@@ -383,6 +383,7 @@ export interface Translations {
   lineStickerSheetIdle: string;
   lineStickerErrorReasonLabel: string;
   lineStickerActionDescPlaceholder: string;
+  lineStickerActionDescBackfilling: string;
 
   // RM BG Tool
   rmbgTitle: string;

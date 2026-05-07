@@ -23,6 +23,7 @@ export interface LineStickerPhraseSectionProps {
   updatePhraseAt: (index: number, value: string) => void;
   updateActionDescAt: (index: number, value: string) => void;
   isGeneratingPhrases: boolean;
+  isBackfillingActionDescs: boolean;
   handleGeneratePhrases: () => void;
   phraseSetFileInputRef: React.RefObject<HTMLInputElement | null>;
   handleUploadPhraseSet: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -157,6 +158,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
   updatePhraseAt,
   updateActionDescAt,
   isGeneratingPhrases,
+  isBackfillingActionDescs,
   handleGeneratePhrases,
   phraseSetFileInputRef,
   handleUploadPhraseSet,
@@ -263,6 +265,12 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
         updatePhraseAt={updatePhraseAt}
         updateActionDescAt={updateActionDescAt}
       />
+      {isBackfillingActionDescs ? (
+        <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">
+          <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+          {t.lineStickerActionDescBackfilling}
+        </div>
+      ) : null}
     </div>
 
     <div className="space-y-3 p-4 bg-gradient-to-br from-slate-50 to-emerald-50/30 rounded-xl border border-slate-200 shadow-inner">

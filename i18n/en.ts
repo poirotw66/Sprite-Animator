@@ -381,6 +381,7 @@ export const en: Translations = {
   lineStickerSheetIdle: 'Not generated yet',
   lineStickerErrorReasonLabel: 'Failure:',
   lineStickerActionDescPlaceholder: 'Action (EN + ZH)',
+  lineStickerActionDescBackfilling: 'Phrases ready. Backfilling action descriptions...',
 
   // RM BG Tool
   rmbgTitle: 'Sprite Background Remover',
