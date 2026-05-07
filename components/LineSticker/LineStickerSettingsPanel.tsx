@@ -12,6 +12,7 @@ import {
   FONT_PRESET_ORDER,
   type ThemeOption,
   type LineStickerStyleOption,
+  type LineStickerPromptVersion,
 } from '../../utils/lineStickerPrompt';
 import {
   LineStickerUploadCard,
@@ -50,6 +51,8 @@ export interface LineStickerSettingsConfigViewModel {
   setIncludeText: React.Dispatch<React.SetStateAction<boolean>>;
   selectedLanguage: keyof typeof TEXT_PRESETS;
   setSelectedLanguage: React.Dispatch<React.SetStateAction<keyof typeof TEXT_PRESETS>>;
+  selectedPromptVersion: LineStickerPromptVersion;
+  setSelectedPromptVersion: React.Dispatch<React.SetStateAction<LineStickerPromptVersion>>;
   actionDedupeStrength: ActionDedupeStrength;
   setActionDedupeStrength: React.Dispatch<React.SetStateAction<ActionDedupeStrength>>;
   selectedFont: keyof typeof FONT_PRESETS;
@@ -412,6 +415,26 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                 className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
               >
                 {Object.keys(TEXT_PRESETS).map((key) => <option key={key} value={key}>{TEXT_PRESETS[key as keyof typeof TEXT_PRESETS].label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                {t.lineStickerPromptVersionLabel}
+              </label>
+              <p className="text-xs text-slate-500 mb-2">
+                {t.lineStickerPromptVersionHint}
+              </p>
+              <select
+                value={config.selectedPromptVersion}
+                onChange={(event) =>
+                  config.setSelectedPromptVersion(
+                    event.target.value as LineStickerPromptVersion
+                  )
+                }
+                className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
+              >
+                <option value="v1">{t.lineStickerPromptVersionV1}</option>
+                <option value="v2">{t.lineStickerPromptVersionV2}</option>
               </select>
             </div>
             <div>

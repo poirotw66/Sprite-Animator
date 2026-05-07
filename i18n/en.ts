@@ -315,6 +315,10 @@ export const en: Translations = {
   // LINE Sticker Tool - Language / Color / Font
   lineStickerTextLangLabel: 'Text Language',
   lineStickerTextLangHint: 'Select the language for sticker text',
+  lineStickerPromptVersionLabel: 'Prompt version',
+  lineStickerPromptVersionHint: 'v1 is the current full prompt; v2 is a simplified Nano Banana optimized prompt.',
+  lineStickerPromptVersionV1: 'v1 (current)',
+  lineStickerPromptVersionV2: 'v2 (simplified)',
   lineStickerActionDedupeStrengthLabel: 'Action near-duplicate strength',
   lineStickerActionDedupeStrengthHint: 'Controls how strictly similar action lines are treated as duplicates',
   lineStickerActionDedupeConservative: 'Conservative (fewer matches)',
@@ -370,6 +374,7 @@ export const en: Translations = {
   lineStickerIncludeText: 'Include Text',
   lineStickerGeneratePrompt: 'Generate Prompt',
   lineStickerPromptPreviewTitle: 'Image generation prompt preview',
+  lineStickerPromptCurrentVersion: 'Current version: {version}',
   lineStickerCopyPrompt: 'Copy prompt',
   lineStickerCopyPromptDone: 'Copied',
   lineStickerPromptConfirmHint: 'Please confirm the prompt above before clicking Generate.',

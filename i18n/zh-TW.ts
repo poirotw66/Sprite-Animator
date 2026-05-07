@@ -315,6 +315,10 @@ export const zhTW: Translations = {
   // LINE Sticker Tool - Language / Color / Font
   lineStickerTextLangLabel: '文字語言（Text Slot）',
   lineStickerTextLangHint: '選擇貼圖文字使用的語言',
+  lineStickerPromptVersionLabel: 'Prompt 版本',
+  lineStickerPromptVersionHint: 'v1 為目前完整版本；v2 為精簡版（Nano Banana 優化）',
+  lineStickerPromptVersionV1: 'v1（現行）',
+  lineStickerPromptVersionV2: 'v2（精簡優化）',
   lineStickerActionDedupeStrengthLabel: '動作近似去重強度',
   lineStickerActionDedupeStrengthHint: '控制動作描述判定為近似重複的嚴格程度',
   lineStickerActionDedupeConservative: '保守（較少判定重複）',
@@ -370,6 +374,7 @@ export const zhTW: Translations = {
   lineStickerIncludeText: '包含文字',
   lineStickerGeneratePrompt: '產生提示詞',
   lineStickerPromptPreviewTitle: '產圖提示詞預覽',
+  lineStickerPromptCurrentVersion: '目前版本：{version}',
   lineStickerCopyPrompt: '複製提示詞',
   lineStickerCopyPromptDone: '已複製',
   lineStickerPromptConfirmHint: '請確認上方提示詞後再點擊「生成精靈圖」。',

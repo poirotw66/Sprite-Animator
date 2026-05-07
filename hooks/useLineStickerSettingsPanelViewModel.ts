@@ -6,6 +6,7 @@ import type { ChromaKeyColorType, BgRemovalMethod } from '../types';
 import type {
   ThemeOption,
   LineStickerStyleOption,
+  LineStickerPromptVersion,
   TEXT_PRESETS,
   FONT_PRESETS,
 } from '../utils/lineStickerPrompt';
@@ -51,6 +52,8 @@ interface UseLineStickerSettingsPanelViewModelParams {
   setIncludeText: React.Dispatch<React.SetStateAction<boolean>>;
   selectedLanguage: keyof typeof TEXT_PRESETS;
   setSelectedLanguage: React.Dispatch<React.SetStateAction<keyof typeof TEXT_PRESETS>>;
+  selectedPromptVersion: LineStickerPromptVersion;
+  setSelectedPromptVersion: React.Dispatch<React.SetStateAction<LineStickerPromptVersion>>;
   actionDedupeStrength: ActionDedupeStrength;
   setActionDedupeStrength: React.Dispatch<React.SetStateAction<ActionDedupeStrength>>;
   selectedFont: keyof typeof FONT_PRESETS;
@@ -120,6 +123,8 @@ export const useLineStickerSettingsPanelViewModel = ({
   setIncludeText,
   selectedLanguage,
   setSelectedLanguage,
+  selectedPromptVersion,
+  setSelectedPromptVersion,
   actionDedupeStrength,
   setActionDedupeStrength,
   selectedFont,
@@ -201,6 +206,8 @@ export const useLineStickerSettingsPanelViewModel = ({
     setIncludeText,
     selectedLanguage,
     setSelectedLanguage,
+    selectedPromptVersion,
+    setSelectedPromptVersion,
     actionDedupeStrength,
     setActionDedupeStrength,
     selectedFont,
@@ -233,6 +240,8 @@ export const useLineStickerSettingsPanelViewModel = ({
     setIncludeText,
     selectedLanguage,
     setSelectedLanguage,
+    selectedPromptVersion,
+    setSelectedPromptVersion,
     actionDedupeStrength,
     setActionDedupeStrength,
     selectedFont,
@@ -257,6 +266,7 @@ export const useLineStickerSettingsPanelViewModel = ({
     setCurrentSheetIndex,
     onSelectOverviewSheet,
     previewPrompt,
+    selectedPromptVersion,
     promptCopied,
     handleGeneratePromptPreview,
     handleCopyPrompt,
@@ -288,6 +298,7 @@ export const useLineStickerSettingsPanelViewModel = ({
     setCurrentSheetIndex,
     onSelectOverviewSheet,
     previewPrompt,
+    selectedPromptVersion,
     promptCopied,
     handleGeneratePromptPreview,
     handleCopyPrompt,

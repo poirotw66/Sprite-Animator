@@ -7,6 +7,7 @@ import {
   LINE_STICKER_SHEET_INDICES,
   type LineStickerSheetIndex,
 } from '../../utils/lineStickerSetSchema';
+import type { LineStickerPromptVersion } from '../../utils/lineStickerPrompt';
 import {
   LineStickerSetOverviewPanel,
   type LineStickerSetOverviewItem,
@@ -31,6 +32,7 @@ export interface LineStickerPhraseSectionProps {
   setCurrentSheetIndex: (i: LineStickerSheetIndex) => void;
   onSelectOverviewSheet: (sheetIndex: LineStickerSheetIndex) => void;
   /** Prompt preview */
+  selectedPromptVersion: LineStickerPromptVersion;
   previewPrompt: string | null;
   promptCopied: boolean;
   handleGeneratePromptPreview: () => void;
@@ -165,6 +167,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
   handleDownloadPhraseSet,
   setCurrentSheetIndex,
   onSelectOverviewSheet,
+  selectedPromptVersion,
   previewPrompt,
   promptCopied,
   handleGeneratePromptPreview,
@@ -275,7 +278,12 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
 
     <div className="space-y-3 p-4 bg-gradient-to-br from-slate-50 to-emerald-50/30 rounded-xl border border-slate-200 shadow-inner">
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h3 className="text-sm font-semibold text-slate-800">{t.lineStickerPromptPreviewTitle}</h3>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h3 className="text-sm font-semibold text-slate-800">{t.lineStickerPromptPreviewTitle}</h3>
+          <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 border border-slate-200">
+            {t.lineStickerPromptCurrentVersion.replace('{version}', selectedPromptVersion)}
+          </span>
+        </div>
         <button
           type="button"
           onClick={handleGeneratePromptPreview}

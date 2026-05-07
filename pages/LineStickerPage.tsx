@@ -48,6 +48,7 @@ import {
     buildLineStickerStylePreviewPrompt,
     type ThemeOption,
     type LineStickerStyleOption,
+    type LineStickerPromptVersion,
 } from '../utils/lineStickerPrompt';
 import { generateSpriteSheet } from '../services/geminiService';
 import type { ActionDedupeStrength } from '../services/gemini/actionDescriptions';
@@ -137,6 +138,8 @@ const LineStickerPage: React.FC = () => {
     const [selectedTheme, setSelectedTheme] = useState<ThemeOption>('custom');
     const [customThemeContext, setCustomThemeContext] = useState<string>('');
     const [selectedLanguage, setSelectedLanguage] = useState<keyof typeof TEXT_PRESETS>('zh-TW');
+    const [selectedPromptVersion, setSelectedPromptVersion] =
+        useState<LineStickerPromptVersion>('v1');
     const [actionDedupeStrength, setActionDedupeStrength] =
         useState<ActionDedupeStrength>('balanced');
     const [selectedTextColor, setSelectedTextColor] = useState<keyof typeof TEXT_COLOR_PRESETS>('black');
@@ -230,6 +233,7 @@ const LineStickerPage: React.FC = () => {
         chromaKeyColor,
         sourceImage,
         includeText,
+        promptVersion: selectedPromptVersion,
         selectedResolution: outputResolution,
     });
 
@@ -728,6 +732,8 @@ const LineStickerPage: React.FC = () => {
         setIncludeText,
         selectedLanguage,
         setSelectedLanguage,
+        selectedPromptVersion,
+        setSelectedPromptVersion,
         actionDedupeStrength,
         setActionDedupeStrength,
         selectedFont,

@@ -9,6 +9,7 @@ import {
     buildLineStickerPrompt,
     type ThemeOption,
     type LineStickerStyleOption,
+    type LineStickerPromptVersion,
 } from '../utils/lineStickerPrompt';
 import { getErrorMessage } from '../types/errors';
 import { generateSpriteSheet } from '../services/geminiService';
@@ -35,6 +36,7 @@ interface UseLineStickerGenerationProps {
     chromaKeyColor: 'magenta' | 'green';
     sourceImage: string | null;
     includeText: boolean;
+    promptVersion: LineStickerPromptVersion;
     /** Output resolution (1K / 2K / 4K). Gemini 2.5 Flash supports 1K only. */
     selectedResolution?: ImageResolution;
 }
@@ -63,6 +65,7 @@ export const useLineStickerGeneration = ({
     chromaKeyColor,
     sourceImage,
     includeText,
+    promptVersion,
     selectedResolution,
 }: UseLineStickerGenerationProps) => {
     const { t } = useLanguage();
@@ -116,7 +119,15 @@ export const useLineStickerGeneration = ({
                 ? [...customActionDescsList, ...Array(totalFrames - customActionDescsList.length).fill('')].slice(0, totalFrames)
                 : undefined);
 
-        return buildLineStickerPrompt(slots, gridCols, gridRows, chromaKeyColor, includeText, actionDescs);
+        return buildLineStickerPrompt(
+            slots,
+            gridCols,
+            gridRows,
+            chromaKeyColor,
+            includeText,
+            actionDescs,
+            promptVersion
+        );
     }, [
         selectedStyle,
         customStyleText,
@@ -133,6 +144,7 @@ export const useLineStickerGeneration = ({
         gridRows,
         chromaKeyColor,
         includeText,
+        promptVersion,
     ]);
 
     const generateSingleSheet = useCallback(async (

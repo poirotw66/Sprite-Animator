@@ -16,6 +16,8 @@ export interface PromptSlots {
     text: TextSlot;
 }
 
+export type LineStickerPromptVersion = 'v1' | 'v2';
+
 export interface StyleSlot {
     styleType: string;
     drawingMethod: string;
@@ -188,13 +190,96 @@ export function buildLineStickerPrompt(
     rows: number,
     bgColor: 'magenta' | 'green',
     includeText: boolean = true,
-    actionDescs?: string[]
+    actionDescs?: string[],
+    promptVersion: LineStickerPromptVersion = 'v1'
 ): string {
     const totalFrames = cols * rows;
     const bgColorText = bgColor === 'magenta' ? 'Pure Magenta #FF00FF' : 'Neon Green #00FF00';
 
     const cellWidthPct = Math.round(100 / cols);
     const cellHeightPct = Math.round(100 / rows);
+    const bgHex = bgColor === 'magenta' ? '#FF00FF' : '#00FF00';
+
+    if (promptVersion === 'v2') {
+        const phrasesForFrames = expandThemePhrasesForFrames(slots.theme, totalFrames);
+        const actionForImage = (raw: string): string => {
+            const s = raw.trim();
+            const maxLen = 80;
+            const enOnly = s.replace(/\s*[（(].*$/, '').trim();
+            const use = enOnly.length > 0 ? enOnly : s;
+            return use.length > maxLen ? use.slice(0, maxLen) + '...' : use;
+        };
+        const perCellBlock = phrasesForFrames.map((phrase, index) => {
+            const row = Math.floor(index / cols) + 1;
+            const col = (index % cols) + 1;
+            const rawAction = (actionDescs && actionDescs[index]?.trim()) ? actionDescs[index].trim() : getActionHint(phrase);
+            const actionLabel = actionForImage(rawAction);
+            if (!includeText) {
+                return `Cell ${index + 1} (row ${row}, col ${col}): Action: ${actionLabel}`;
+            }
+            const textPosition = TEXT_PLACEMENTS[index % TEXT_PLACEMENTS.length];
+            return `Cell ${index + 1} (row ${row}, col ${col}): Text: "${phrase}" | ${textPosition} | ${actionLabel}`;
+        }).join('\n');
+
+        const textRules = includeText
+            ? `### [6. Text Style]
+- Language: ${slots.text.language}
+- Font style: ${slots.text.textStyle}
+- Color: ${slots.text.textColor}
+- Keep text readable and stylistically consistent across all ${totalFrames} stickers.`
+            : `### [6. Text Style]
+- NO text, letters, numbers, labels, or captions in any cell.`;
+
+        return `🎨 LINE Sticker Sprite Sheet (Nano Banana Optimized, ${promptVersion.toUpperCase()})
+
+[1. Global Layout — CRITICAL]
+- Square image (1:1), high resolution
+- ${cols}×${rows} sprite sheet (${totalFrames} stickers), evenly aligned
+- Each cell contains one independent sticker
+- No visible grid lines, borders, seams, or divider lines
+- Continuous background with no breaks
+- Must be cleanly splittable into ${totalFrames} equal parts
+- Keep each sticker inside its own area with comfortable spacing
+
+[2. Style / Art Consistency — CRITICAL]
+- Use ONLY the uploaded reference image as source of character design and visual style
+- Do not reinterpret or stylize
+- All stickers must look like the same artist drew them in one set
+- Flat shading only; no heavy lighting effects
+- Style: ${slots.style.styleType}
+- Technique: ${slots.style.drawingMethod}
+
+[3. Character Rules — CRITICAL]
+- Always draw the same character(s) from the reference image
+- If multiple characters appear in reference, include ALL in every cell
+- Do not add or remove characters
+- Keep face proportions, hairstyle, outfit, and colors consistent
+- Only vary expression, pose, gesture, and small props
+
+[4. Background — CRITICAL]
+- Use pure solid chroma key background: ${bgColorText} (${bgHex})
+- Absolutely uniform color across the entire image
+- No gradient, texture, shadows, glow, or color blending
+- Clean edges with no semi-transparent fringe
+
+[5. Grid Content — Per Cell]
+${includeText
+        ? '- Each cell must include one unique expression/action and the assigned text.'
+        : '- Each cell must include one unique expression/action.'}
+- Keep each cell visually distinct.
+${includeText ? '- Place text near the character and keep facial features unobstructed.' : '- Do not render any text in the image.'}
+
+${perCellBlock}
+
+${textRules}
+
+[7. Final Output]
+- One single square image
+- ${cols}×${rows} layout (${totalFrames} stickers)
+- No visible grid lines
+- Continuous ${bgHex} background
+- Cleanly splittable`;
+    }
 
     // 1. Global Layout (basePrompt)
     const layoutPrompt = BASE_PROMPT.replace(/{TOTAL_FRAMES}/g, totalFrames.toString())
@@ -234,7 +319,6 @@ ${outlineRule}
 `;
 
     // 4. Lighting & Background (technical parameters) — exact hex for chroma key
-    const bgHex = bgColor === 'magenta' ? '#FF00FF' : '#00FF00';
     const lightingLine = slots.style.lightingPreference === 'soft'
         ? '* **Lighting**: Minimal shadows. Soft shading only; no harsh drop shadows. Ambient occlusion disabled.'
         : '* **Lighting**: No shadows. Flat shading only. Ambient occlusion disabled.';

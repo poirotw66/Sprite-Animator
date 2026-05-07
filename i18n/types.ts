@@ -317,6 +317,10 @@ export interface Translations {
   // LINE Sticker Tool - Language / Color / Font
   lineStickerTextLangLabel: string;
   lineStickerTextLangHint: string;
+  lineStickerPromptVersionLabel: string;
+  lineStickerPromptVersionHint: string;
+  lineStickerPromptVersionV1: string;
+  lineStickerPromptVersionV2: string;
   lineStickerActionDedupeStrengthLabel: string;
   lineStickerActionDedupeStrengthHint: string;
   lineStickerActionDedupeConservative: string;
@@ -372,6 +376,7 @@ export interface Translations {
   lineStickerIncludeText: string;
   lineStickerGeneratePrompt: string;
   lineStickerPromptPreviewTitle: string;
+  lineStickerPromptCurrentVersion: string;
   lineStickerCopyPrompt: string;
   lineStickerCopyPromptDone: string;
   lineStickerPromptConfirmHint: string;
