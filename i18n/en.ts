@@ -313,6 +313,11 @@ export const en: Translations = {
   // LINE Sticker Tool - Language / Color / Font
   lineStickerTextLangLabel: 'Text Language',
   lineStickerTextLangHint: 'Select the language for sticker text',
+  lineStickerActionDedupeStrengthLabel: 'Action near-duplicate strength',
+  lineStickerActionDedupeStrengthHint: 'Controls how strictly similar action lines are treated as duplicates',
+  lineStickerActionDedupeConservative: 'Conservative (fewer matches)',
+  lineStickerActionDedupeBalanced: 'Balanced (recommended)',
+  lineStickerActionDedupeAggressive: 'Aggressive (more matches)',
   lineStickerLangZhTW: 'Traditional Chinese',
   lineStickerLangZhCN: 'Simplified Chinese',
   lineStickerLangEn: 'English',

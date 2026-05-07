@@ -2,6 +2,10 @@ import { useCallback, useState } from 'react';
 import { getErrorMessage } from '../types/errors';
 import { generateActionDescriptions, generateStickerPhrases } from '../services/geminiService';
 import {
+  ACTION_DEDUPE_THRESHOLD_BY_STRENGTH,
+  type ActionDedupeStrength,
+} from '../services/gemini/actionDescriptions';
+import {
   getActionHint,
   TEXT_PRESETS,
   THEME_PRESETS,
@@ -24,6 +28,7 @@ interface UseLineStickerPhraseGenerationParams {
   selectedTheme: ThemeOption;
   customThemeContext: string;
   selectedLanguage: keyof typeof TEXT_PRESETS;
+  actionDedupeStrength: ActionDedupeStrength;
   setSinglePhrasesList: (value: string[]) => void;
   setSetPhrasesList: (value: string[]) => void;
   setActionDescsList: (value: string[]) => void;
@@ -40,6 +45,7 @@ export function useLineStickerPhraseGeneration({
   selectedTheme,
   customThemeContext,
   selectedLanguage,
+  actionDedupeStrength,
   setSinglePhrasesList,
   setSetPhrasesList,
   setActionDescsList,
@@ -91,7 +97,12 @@ export function useLineStickerPhraseGeneration({
       }
 
       try {
-        const actionDescs = await generateActionDescriptions(key, phrases);
+        const actionDescs = await generateActionDescriptions(key, phrases, {
+          themeContext: fullContext,
+          language: langLabel,
+          nearDuplicateThreshold:
+            ACTION_DEDUPE_THRESHOLD_BY_STRENGTH[actionDedupeStrength],
+        });
         setActionDescsList(actionDescs);
       } catch (actionErr: unknown) {
         logger.warn(
@@ -122,6 +133,7 @@ export function useLineStickerPhraseGeneration({
     buildFullContext,
     selectedTheme,
     selectedLanguage,
+    actionDedupeStrength,
     setSinglePhrasesList,
     setSetPhrasesList,
     setActionDescsList,

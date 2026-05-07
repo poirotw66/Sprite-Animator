@@ -315,6 +315,11 @@ export interface Translations {
   // LINE Sticker Tool - Language / Color / Font
   lineStickerTextLangLabel: string;
   lineStickerTextLangHint: string;
+  lineStickerActionDedupeStrengthLabel: string;
+  lineStickerActionDedupeStrengthHint: string;
+  lineStickerActionDedupeConservative: string;
+  lineStickerActionDedupeBalanced: string;
+  lineStickerActionDedupeAggressive: string;
   lineStickerLangZhTW: string;
   lineStickerLangZhCN: string;
   lineStickerLangEn: string;

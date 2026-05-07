@@ -313,6 +313,11 @@ export const zhTW: Translations = {
   // LINE Sticker Tool - Language / Color / Font
   lineStickerTextLangLabel: '文字語言（Text Slot）',
   lineStickerTextLangHint: '選擇貼圖文字使用的語言',
+  lineStickerActionDedupeStrengthLabel: '動作近似去重強度',
+  lineStickerActionDedupeStrengthHint: '控制動作描述判定為近似重複的嚴格程度',
+  lineStickerActionDedupeConservative: '保守（較少判定重複）',
+  lineStickerActionDedupeBalanced: '平衡（建議）',
+  lineStickerActionDedupeAggressive: '積極（較多判定重複）',
   lineStickerLangZhTW: '繁體中文',
   lineStickerLangZhCN: '簡體中文',
   lineStickerLangEn: 'English',

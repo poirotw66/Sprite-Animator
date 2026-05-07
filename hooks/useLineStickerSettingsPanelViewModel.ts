@@ -13,6 +13,7 @@ import type { LineStickerSettingsPanelViewModel } from '../components/LineSticke
 import type { LineStickerSheetStatus } from './useLineStickerSheetGeneration';
 import type { LineStickerSheetIndex } from '../utils/lineStickerSetSchema';
 import type { LineStickerSetOverviewItem } from '../components/LineSticker/LineStickerSetOverviewPanel';
+import type { ActionDedupeStrength } from '../services/gemini/actionDescriptions';
 
 interface UseLineStickerSettingsPanelViewModelParams {
   t: Translations;
@@ -50,6 +51,8 @@ interface UseLineStickerSettingsPanelViewModelParams {
   setIncludeText: React.Dispatch<React.SetStateAction<boolean>>;
   selectedLanguage: keyof typeof TEXT_PRESETS;
   setSelectedLanguage: React.Dispatch<React.SetStateAction<keyof typeof TEXT_PRESETS>>;
+  actionDedupeStrength: ActionDedupeStrength;
+  setActionDedupeStrength: React.Dispatch<React.SetStateAction<ActionDedupeStrength>>;
   selectedFont: keyof typeof FONT_PRESETS;
   setSelectedFont: React.Dispatch<React.SetStateAction<keyof typeof FONT_PRESETS>>;
   currentSheetIndex: LineStickerSheetIndex;
@@ -116,6 +119,8 @@ export const useLineStickerSettingsPanelViewModel = ({
   setIncludeText,
   selectedLanguage,
   setSelectedLanguage,
+  actionDedupeStrength,
+  setActionDedupeStrength,
   selectedFont,
   setSelectedFont,
   currentSheetIndex,
@@ -194,6 +199,8 @@ export const useLineStickerSettingsPanelViewModel = ({
     setIncludeText,
     selectedLanguage,
     setSelectedLanguage,
+    actionDedupeStrength,
+    setActionDedupeStrength,
     selectedFont,
     setSelectedFont,
   }), [
@@ -224,6 +231,8 @@ export const useLineStickerSettingsPanelViewModel = ({
     setIncludeText,
     selectedLanguage,
     setSelectedLanguage,
+    actionDedupeStrength,
+    setActionDedupeStrength,
     selectedFont,
     setSelectedFont,
   ]);

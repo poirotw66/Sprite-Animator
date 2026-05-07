@@ -50,6 +50,7 @@ import {
     type LineStickerStyleOption,
 } from '../utils/lineStickerPrompt';
 import { generateSpriteSheet } from '../services/geminiService';
+import type { ActionDedupeStrength } from '../services/gemini/actionDescriptions';
 
 const createSetModeSliceSettingsList = () =>
     createLineStickerSheetArray(() => createLineStickerSetSliceSettings());
@@ -134,6 +135,8 @@ const LineStickerPage: React.FC = () => {
     const [selectedTheme, setSelectedTheme] = useState<ThemeOption>('custom');
     const [customThemeContext, setCustomThemeContext] = useState<string>('');
     const [selectedLanguage, setSelectedLanguage] = useState<keyof typeof TEXT_PRESETS>('zh-TW');
+    const [actionDedupeStrength, setActionDedupeStrength] =
+        useState<ActionDedupeStrength>('balanced');
     const [selectedTextColor, setSelectedTextColor] = useState<keyof typeof TEXT_COLOR_PRESETS>('black');
     const [selectedFont, setSelectedFont] = useState<keyof typeof FONT_PRESETS>('handwritten');
     const [singlePhrasesList, setSinglePhrasesList] = useState<string[]>([]);
@@ -238,6 +241,7 @@ const LineStickerPage: React.FC = () => {
         selectedTheme,
         customThemeContext,
         selectedLanguage,
+        actionDedupeStrength,
         setSinglePhrasesList,
         setSetPhrasesList,
         setActionDescsList,
@@ -718,6 +722,8 @@ const LineStickerPage: React.FC = () => {
         setIncludeText,
         selectedLanguage,
         setSelectedLanguage,
+        actionDedupeStrength,
+        setActionDedupeStrength,
         selectedFont,
         setSelectedFont,
         currentSheetIndex,

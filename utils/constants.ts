@@ -50,7 +50,7 @@ export const MODEL_RESOLUTIONS: Record<string, ImageResolution[]> = {
 };
 
 /** Model for text-only tasks (e.g. generating sticker phrases) */
-export const PHRASE_GENERATION_MODEL = 'gemini-3-flash-preview';
+export const PHRASE_GENERATION_MODEL = 'gemini-3.1-flash-lite';
 
 export const BACKGROUND_REMOVAL_THRESHOLD = 230; // For white background removal
 

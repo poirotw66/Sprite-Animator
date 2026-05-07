@@ -2,6 +2,7 @@ import React from 'react';
 import { Check, Download, ImageIcon } from '../Icons';
 import type { Translations } from '../../i18n/types';
 import type { ChromaKeyColorType, BgRemovalMethod } from '../../types';
+import type { ActionDedupeStrength } from '../../services/gemini/actionDescriptions';
 import {
   THEME_PRESETS,
   STYLE_PRESETS,
@@ -49,6 +50,8 @@ export interface LineStickerSettingsConfigViewModel {
   setIncludeText: React.Dispatch<React.SetStateAction<boolean>>;
   selectedLanguage: keyof typeof TEXT_PRESETS;
   setSelectedLanguage: React.Dispatch<React.SetStateAction<keyof typeof TEXT_PRESETS>>;
+  actionDedupeStrength: ActionDedupeStrength;
+  setActionDedupeStrength: React.Dispatch<React.SetStateAction<ActionDedupeStrength>>;
   selectedFont: keyof typeof FONT_PRESETS;
   setSelectedFont: React.Dispatch<React.SetStateAction<keyof typeof FONT_PRESETS>>;
 }
@@ -409,6 +412,31 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                 className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
               >
                 {Object.keys(TEXT_PRESETS).map((key) => <option key={key} value={key}>{TEXT_PRESETS[key as keyof typeof TEXT_PRESETS].label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                {t.lineStickerActionDedupeStrengthLabel}
+              </label>
+              <p className="text-xs text-slate-500 mb-2">
+                {t.lineStickerActionDedupeStrengthHint}
+              </p>
+              <select
+                value={config.actionDedupeStrength}
+                onChange={(event) =>
+                  config.setActionDedupeStrength(
+                    event.target.value as ActionDedupeStrength
+                  )
+                }
+                className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
+              >
+                <option value="conservative">
+                  {t.lineStickerActionDedupeConservative}
+                </option>
+                <option value="balanced">{t.lineStickerActionDedupeBalanced}</option>
+                <option value="aggressive">
+                  {t.lineStickerActionDedupeAggressive}
+                </option>
               </select>
             </div>
             <div>
