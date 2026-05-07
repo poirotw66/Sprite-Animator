@@ -198,7 +198,16 @@ export const useLineStickerGeneration = ({
             }
             onStatusChange?.('');
         }
-    }, [apiKey, selectedModel, sourceImage, buildPrompt, selectedResolution, t]);
+    }, [
+        apiKey,
+        selectedModel,
+        sourceImage,
+        buildPrompt,
+        selectedResolution,
+        chromaKeyColor,
+        includeText,
+        t,
+    ]);
 
     return {
         isGenerating,
