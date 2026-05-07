@@ -269,11 +269,13 @@ ${textRuleCell}${textPositionRule} Actions and expressions MUST be unique per ce
 ${phrasesForFrames.map((phrase, index) => {
         const row = Math.floor(index / cols) + 1;
         const col = (index % cols) + 1;
-        const textLabel = includeText ? `Text: "${phrase}"` : `Theme: "${phrase}" (NO text in image)`;
+        const textLabel = includeText ? `Text: "${phrase}"` : '';
         const rawAction = (actionDescs && actionDescs[index]?.trim()) ? actionDescs[index].trim() : getActionHint(phrase);
         const actionLabel = actionForImage(rawAction);
         const textPosition = includeText ? ` | Text position: ${TEXT_PLACEMENTS[index % TEXT_PLACEMENTS.length]}` : '';
-        return `**Cell ${index + 1} (row ${row}, col ${col})**: ${textLabel}${textPosition} | Action: ${actionLabel}`;
+        return includeText
+            ? `**Cell ${index + 1} (row ${row}, col ${col})**: ${textLabel}${textPosition} | Action: ${actionLabel}`
+            : `**Cell ${index + 1} (row ${row}, col ${col})**: Action: ${actionLabel}`;
     }).join('\n')}
 `;
 
