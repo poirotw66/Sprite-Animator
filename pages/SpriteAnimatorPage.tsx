@@ -44,6 +44,8 @@ const SpriteAnimatorPage: React.FC = () => {
     setSelectedModel,
     outputResolution,
     setOutputResolution,
+    stylePreviewResolution,
+    setStylePreviewResolution,
     showSettings,
     setShowSettings,
     saveSettings,
@@ -455,9 +457,13 @@ const SpriteAnimatorPage: React.FC = () => {
         setSelectedModel={setSelectedModel}
         outputResolution={outputResolution}
         setOutputResolution={setOutputResolution}
+        stylePreviewResolution={stylePreviewResolution}
+        setStylePreviewResolution={setStylePreviewResolution}
         showSettings={showSettings}
         onClose={() => setShowSettings(false)}
-        onSave={(key, model, token, res) => saveSettings(key, model, token, res)}
+        onSave={(key, model, token, res, previewRes) =>
+          saveSettings(key, model, token, res, previewRes)
+        }
       />
 
       <header className="sticky top-0 z-20 max-w-7xl mx-auto mb-4 md:mb-8 -mx-4 px-4 md:mx-0 md:px-0 safe-top">

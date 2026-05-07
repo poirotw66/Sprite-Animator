@@ -157,6 +157,8 @@ export interface Translations {
   modelRecommended: string;
   outputResolutionLabel: string;
   outputResolutionHint: string;
+  stylePreviewResolutionLabel: string;
+  stylePreviewResolutionHint: string;
   saveAndApply: string;
   validating: string;
   validationSuccess: string;

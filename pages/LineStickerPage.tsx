@@ -106,6 +106,8 @@ const LineStickerPage: React.FC = () => {
         setSelectedModel,
         outputResolution,
         setOutputResolution,
+        stylePreviewResolution,
+        setStylePreviewResolution,
         hfToken,
         setHfToken,
         showSettings,
@@ -130,7 +132,7 @@ const LineStickerPage: React.FC = () => {
     const [chromaKeyProgress, setChromaKeyProgress] = useState(0);
     const [isProcessingChromaKey, setIsProcessingChromaKey] = useState(false);
 
-    const [selectedStyle, setSelectedStyle] = useState<LineStickerStyleOption>('chibi');
+    const [selectedStyle, setSelectedStyle] = useState<LineStickerStyleOption>('matchUploaded');
     const [customStyleText, setCustomStyleText] = useState('');
     const [selectedTheme, setSelectedTheme] = useState<ThemeOption>('custom');
     const [customThemeContext, setCustomThemeContext] = useState<string>('');
@@ -423,7 +425,7 @@ const LineStickerPage: React.FC = () => {
                 selectedModel,
                 undefined,
                 chromaKeyColor,
-                outputResolution,
+                stylePreviewResolution,
                 false
             );
             setStylePreviewImage(preview);
@@ -440,7 +442,7 @@ const LineStickerPage: React.FC = () => {
         lineStickerT.errorApiKey,
         lineStickerT.errorGeneration,
         lineStickerT.errorNoImage,
-        outputResolution,
+        stylePreviewResolution,
         selectedModel,
         selectedStyle,
         setError,
@@ -808,9 +810,13 @@ const LineStickerPage: React.FC = () => {
                 setSelectedModel={setSelectedModel}
                 outputResolution={outputResolution}
                 setOutputResolution={setOutputResolution}
+                stylePreviewResolution={stylePreviewResolution}
+                setStylePreviewResolution={setStylePreviewResolution}
                 showSettings={showSettings}
                 onClose={() => setShowSettings(false)}
-                onSave={(key, model, token, res) => saveSettings(key, model, token, res)}
+                onSave={(key, model, token, res, previewRes) =>
+                    saveSettings(key, model, token, res, previewRes)
+                }
                 hfToken={hfToken}
                 setHfToken={setHfToken}
             />

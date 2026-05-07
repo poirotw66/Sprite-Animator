@@ -35,6 +35,8 @@ const RemoveBackgroundPage: React.FC = () => {
         setSelectedModel,
         outputResolution,
         setOutputResolution,
+        stylePreviewResolution,
+        setStylePreviewResolution,
         hfToken,
         setHfToken,
         showSettings,
@@ -139,9 +141,13 @@ const RemoveBackgroundPage: React.FC = () => {
                 setSelectedModel={setSelectedModel}
                 outputResolution={outputResolution}
                 setOutputResolution={setOutputResolution}
+                stylePreviewResolution={stylePreviewResolution}
+                setStylePreviewResolution={setStylePreviewResolution}
                 showSettings={showSettings}
                 onClose={() => setShowSettings(false)}
-                onSave={(key, model, token, res) => saveSettings(key, model, token, res)}
+                onSave={(key, model, token, res, previewRes) =>
+                    saveSettings(key, model, token, res, previewRes)
+                }
                 hfToken={hfToken}
                 setHfToken={setHfToken}
             />

@@ -6,6 +6,7 @@ const API_KEY_STORAGE_KEY = 'gemini_api_key';
 const MODEL_STORAGE_KEY = 'gemini_model';
 const HF_TOKEN_STORAGE_KEY = 'hf_token';
 const OUTPUT_RESOLUTION_STORAGE_KEY = 'gemini_output_resolution';
+const STYLE_PREVIEW_RESOLUTION_STORAGE_KEY = 'gemini_style_preview_resolution';
 
 /**
  * Custom hook for managing application settings including API key and model selection.
@@ -29,6 +30,8 @@ export const useSettings = () => {
   const [apiKey, setApiKey] = useState('');
   const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL);
   const [outputResolution, setOutputResolution] = useState<ImageResolution>('1K');
+  const [stylePreviewResolution, setStylePreviewResolution] =
+    useState<ImageResolution>('1K');
   const [hfToken, setHfToken] = useState('');
   const [showSettings, setShowSettings] = useState(false);
 
@@ -38,6 +41,9 @@ export const useSettings = () => {
     const storedModel = localStorage.getItem(MODEL_STORAGE_KEY);
     const storedHfToken = localStorage.getItem(HF_TOKEN_STORAGE_KEY);
     const storedResolution = localStorage.getItem(OUTPUT_RESOLUTION_STORAGE_KEY) as ImageResolution | null;
+    const storedStylePreviewResolution = localStorage.getItem(
+      STYLE_PREVIEW_RESOLUTION_STORAGE_KEY
+    ) as ImageResolution | null;
 
     if (storedKey) setApiKey(storedKey);
     if (storedHfToken) setHfToken(storedHfToken);
@@ -60,6 +66,21 @@ export const useSettings = () => {
       localStorage.setItem(OUTPUT_RESOLUTION_STORAGE_KEY, resolution);
     }
 
+    const stylePreviewResolution =
+      storedStylePreviewResolution && allowed.includes(storedStylePreviewResolution)
+        ? storedStylePreviewResolution
+        : ('1K' as ImageResolution);
+    setStylePreviewResolution(stylePreviewResolution);
+    if (
+      !storedStylePreviewResolution ||
+      !allowed.includes(storedStylePreviewResolution)
+    ) {
+      localStorage.setItem(
+        STYLE_PREVIEW_RESOLUTION_STORAGE_KEY,
+        stylePreviewResolution
+      );
+    }
+
     // If no key is found, show settings automatically
     const envKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (!storedKey && !envKey) {
@@ -74,17 +95,32 @@ export const useSettings = () => {
       setOutputResolution(allowed[0] as ImageResolution);
       localStorage.setItem(OUTPUT_RESOLUTION_STORAGE_KEY, allowed[0]);
     }
-  }, [selectedModel]);
+    if (!allowed.includes(stylePreviewResolution)) {
+      setStylePreviewResolution('1K');
+      localStorage.setItem(STYLE_PREVIEW_RESOLUTION_STORAGE_KEY, '1K');
+    }
+  }, [selectedModel, outputResolution, stylePreviewResolution]);
 
-  const saveSettings = (key: string, model: string, token: string = '', resolution?: ImageResolution) => {
+  const saveSettings = (
+    key: string,
+    model: string,
+    token: string = '',
+    resolution?: ImageResolution,
+    previewResolution?: ImageResolution
+  ) => {
     const trimmedKey = key.trim();
     const trimmedToken = token.trim();
     const allowed = MODEL_RESOLUTIONS[model] ?? ['1K'];
     const res = resolution != null && allowed.includes(resolution) ? resolution : (allowed[0] as ImageResolution);
+    const previewRes =
+      previewResolution != null && allowed.includes(previewResolution)
+        ? previewResolution
+        : ('1K' as ImageResolution);
 
     setApiKey(trimmedKey);
     setSelectedModel(model);
     setOutputResolution(res);
+    setStylePreviewResolution(previewRes);
     setHfToken(trimmedToken);
 
     if (trimmedKey) {
@@ -101,6 +137,7 @@ export const useSettings = () => {
 
     localStorage.setItem(MODEL_STORAGE_KEY, model);
     localStorage.setItem(OUTPUT_RESOLUTION_STORAGE_KEY, res);
+    localStorage.setItem(STYLE_PREVIEW_RESOLUTION_STORAGE_KEY, previewRes);
     setShowSettings(false);
   };
 
@@ -116,6 +153,8 @@ export const useSettings = () => {
     setSelectedModel,
     outputResolution,
     setOutputResolution,
+    stylePreviewResolution,
+    setStylePreviewResolution,
     hfToken,
     setHfToken,
     showSettings,

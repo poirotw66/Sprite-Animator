@@ -12,9 +12,17 @@ interface SettingsModalProps {
   setSelectedModel: (model: string) => void;
   outputResolution: ImageResolution;
   setOutputResolution: (value: ImageResolution) => void;
+  stylePreviewResolution: ImageResolution;
+  setStylePreviewResolution: (value: ImageResolution) => void;
   showSettings: boolean;
   onClose: () => void;
-  onSave: (key: string, model: string, hfToken: string, outputResolution: ImageResolution) => void;
+  onSave: (
+    key: string,
+    model: string,
+    hfToken: string,
+    outputResolution: ImageResolution,
+    stylePreviewResolution: ImageResolution
+  ) => void;
   hfToken?: string;
   setHfToken?: (token: string) => void;
 }
@@ -26,6 +34,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
   setSelectedModel,
   outputResolution,
   setOutputResolution,
+  stylePreviewResolution,
+  setStylePreviewResolution,
   showSettings,
   onClose,
   onSave,
@@ -96,7 +106,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
     }
 
     // Save and close (resolution is constrained by model in parent)
-    onSave(apiKey, selectedModel, hfToken, outputResolution);
+    onSave(
+      apiKey,
+      selectedModel,
+      hfToken,
+      outputResolution,
+      stylePreviewResolution
+    );
   };
 
   // Clear validation state when key changes
@@ -260,7 +276,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
               })}
             </select>
 
-            {/* Output size: 3 Pro = 1K/2K/4K; 2.5 Flash = 1K only */}
+            {/* Sprite sheet output size */}
             <div className="mt-4">
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 {t.outputResolutionLabel}
@@ -282,6 +298,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                 ))}
               </div>
               <p className="text-xs text-slate-500 mt-1.5">{t.outputResolutionHint}</p>
+            </div>
+
+            {/* Style preview output size */}
+            <div className="mt-4">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                {t.stylePreviewResolutionLabel}
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {(MODEL_RESOLUTIONS[selectedModel] ?? ['1K']).map((res) => (
+                  <button
+                    key={`preview-${res}`}
+                    type="button"
+                    onClick={() =>
+                      setStylePreviewResolution(res as ImageResolution)
+                    }
+                    className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition-colors ${
+                      stylePreviewResolution === res
+                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                    }`}
+                  >
+                    {res}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500 mt-1.5">
+                {t.stylePreviewResolutionHint}
+              </p>
             </div>
           </div>
 
