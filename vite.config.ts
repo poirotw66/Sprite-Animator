@@ -38,6 +38,7 @@ export default defineConfig(({ mode }) => {
               'vendor-react': ['react', 'react-dom'],
               'vendor-genai': ['@google/genai'],
               'vendor-ui': ['lucide-react'],
+              'vendor-transformers': ['@huggingface/transformers'],
             },
           },
         },

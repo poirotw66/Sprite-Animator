@@ -102,11 +102,13 @@ export const removeChromaKeyWithWorker = async (
 
         ctx.drawImage(img, 0, 0);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const refetchImageData = () => ctx.getImageData(0, 0, canvas.width, canvas.height);
 
         if (typeof Worker !== 'undefined') {
           try {
             const processed = await processWithWorker(
               imageData,
+              refetchImageData,
               chromaKey,
               fuzzPercent,
               onProgress,
@@ -120,8 +122,9 @@ export const removeChromaKeyWithWorker = async (
               throw workerError;
             }
             logger.warn('Web Worker processing failed, falling back to main thread', workerError);
+            const freshImageData = refetchImageData();
             const processed = await processInMainThread(
-              imageData,
+              freshImageData,
               chromaKey,
               fuzzPercent,
               onProgress,
@@ -158,10 +161,35 @@ export const removeChromaKeyWithWorker = async (
 };
 
 /**
+ * Prepare RGBA buffer for postMessage transfer. When the full backing buffer is
+ * used by the ImageData view, transfer avoids a copy; otherwise slice() keeps
+ * a valid view on the main thread for fallback paths.
+ */
+function getPixelBufferTransferSource(data: Uint8ClampedArray): {
+  buffer: ArrayBuffer;
+  byteOffset: number;
+  byteLength: number;
+  transferList: [ArrayBuffer];
+} {
+  const { buffer, byteOffset, byteLength } = data;
+  if (byteOffset === 0 && byteLength === buffer.byteLength) {
+    return { buffer, byteOffset: 0, byteLength, transferList: [buffer] };
+  }
+  const copy = data.slice();
+  return {
+    buffer: copy.buffer,
+    byteOffset: 0,
+    byteLength: copy.byteLength,
+    transferList: [copy.buffer],
+  };
+}
+
+/**
  * Process image using Web Worker
  */
 function processWithWorker(
   imageData: ImageData,
+  refetchImageData: () => ImageData,
   chromaKey: { r: number; g: number; b: number },
   fuzzPercent: number,
   onProgress?: (progress: number) => void,
@@ -184,20 +212,47 @@ function processWithWorker(
       signal?.addEventListener('abort', handleAbort, { once: true });
 
       worker.onmessage = (e: MessageEvent) => {
-        const { type, progress, data: processedData, width, height, error, id } = e.data;
+        const {
+          type,
+          progress,
+          pixelBuffer,
+          byteOffset: outByteOffset,
+          byteLength: outByteLength,
+          width,
+          height,
+          error,
+          id,
+        } = e.data as {
+          type: string;
+          progress?: number;
+          pixelBuffer?: ArrayBuffer;
+          byteOffset?: number;
+          byteLength?: number;
+          width?: number;
+          height?: number;
+          error?: string;
+          id?: string;
+        };
 
         if (id !== requestId) return;
 
         if (type === 'progress' && progress !== undefined) {
           onProgress?.(progress);
-        } else if (type === 'complete' && processedData && width && height) {
+        } else if (
+          type === 'complete' &&
+          pixelBuffer &&
+          width !== undefined &&
+          height !== undefined
+        ) {
           signal?.removeEventListener('abort', handleAbort);
           worker.terminate();
-          const result = new ImageData(
-            new Uint8ClampedArray(processedData),
-            width,
-            height
+          const bytes = outByteLength ?? width * height * 4;
+          const pixels = new Uint8ClampedArray(
+            pixelBuffer,
+            outByteOffset ?? 0,
+            bytes
           );
+          const result = new ImageData(pixels, width, height);
           resolve(result);
         } else if (type === 'error') {
           signal?.removeEventListener('abort', handleAbort);
@@ -212,17 +267,26 @@ function processWithWorker(
         reject(error);
       };
 
-      worker.postMessage({
-        type: 'process',
-        data: Array.from(imageData.data),
-        width: imageData.width,
-        height: imageData.height,
-        chromaKey,
-        fuzzPercent,
-        edgeBandRadius: options?.edgeBandRadius,
-        edgeBlend: options?.edgeBlend,
-        id: requestId,
-      });
+      const { buffer, byteOffset, byteLength, transferList } = getPixelBufferTransferSource(
+        imageData.data
+      );
+
+      worker.postMessage(
+        {
+          type: 'process',
+          pixelBuffer: buffer,
+          byteOffset,
+          byteLength,
+          width: imageData.width,
+          height: imageData.height,
+          chromaKey,
+          fuzzPercent,
+          edgeBandRadius: options?.edgeBandRadius,
+          edgeBlend: options?.edgeBlend,
+          id: requestId,
+        },
+        transferList
+      );
     } catch (error) {
       reject(error);
     }

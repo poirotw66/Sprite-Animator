@@ -120,8 +120,9 @@ export function useLineStickerPhraseGeneration({
           );
           setActionDescsList(phrases.map((phrase) => getActionHint(phrase)));
         } finally {
-          if (latestRequestIdRef.current !== requestId) return;
-          setIsBackfillingActionDescs(false);
+          if (latestRequestIdRef.current === requestId) {
+            setIsBackfillingActionDescs(false);
+          }
         }
       })();
     } catch (err: unknown) {

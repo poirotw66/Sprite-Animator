@@ -1,13 +1,19 @@
-import { pipeline, env } from '@huggingface/transformers';
 import { logger } from './logger';
 import { CHROMA_KEY_COLORS } from './constants';
 import { createAbortError, throwIfAborted } from './abort';
 
 const ENGINE_VERSION = '2026.02.11.V8.1_STABLE';
 
-// Configure environment
-(env as any).allowLocalModels = false;
-(env as any).useBrowserCache = true;
+type TransformersModule = typeof import('@huggingface/transformers');
+
+let transformersModulePromise: Promise<TransformersModule> | null = null;
+
+async function loadTransformers(): Promise<TransformersModule> {
+    if (!transformersModulePromise) {
+        transformersModulePromise = import('@huggingface/transformers');
+    }
+    return transformersModulePromise;
+}
 
 // Shared segmenter state
 let segmenter: any = null;
@@ -18,11 +24,13 @@ let lastUsedToken: string | null = null;
  * Initialize and load the AI background removal model.
  */
 export async function getSegmenter() {
-    // VERSION BANNER - If you see this, the cache is clear!
-    console.log(`%c 🚀 [AI ENGINE V8.1 - FINAL] %c STATUS: BOOTING %c VER: ${ENGINE_VERSION} `,
-        'background: #7C3AED; color: #FFF; font-weight: bold; padding: 4px; border-radius: 4px 0 0 4px;',
-        'background: #8B5CF6; color: #FFF; padding: 4px; border-radius: 0;',
-        'background: #A78BFA; color: #1E1B4B; padding: 4px; border-radius: 0 4px 4px 0;'
+    const { pipeline, env } = await loadTransformers();
+
+    (env as { allowLocalModels?: boolean }).allowLocalModels = false;
+    (env as { useBrowserCache?: boolean }).useBrowserCache = true;
+
+    logger.info(
+        `[AI background removal ${ENGINE_VERSION}] loading segmenter (Hugging Face transformers)`
     );
 
     // 1. Sanitize Token
@@ -34,17 +42,17 @@ export async function getSegmenter() {
 
     // 2. Set Token in env
     if (hfToken && hfToken.startsWith('hf_')) {
-        (env as any).token = hfToken;
-        (env as any).allowRemoteModels = true;
+        (env as { token?: string | null }).token = hfToken;
+        (env as { allowRemoteModels?: boolean }).allowRemoteModels = true;
     } else {
-        (env as any).token = null;
+        (env as { token?: string | null }).token = null;
     }
 
     // 3. Determine if reload is needed
     const needsReload = !segmenter || (currentModelId !== targetModel) || (lastUsedToken !== hfToken);
     if (!needsReload) return segmenter;
 
-    if (segmenter) segmenter = null;
+    segmenter = null;
 
     currentModelId = targetModel;
     lastUsedToken = hfToken;
@@ -66,7 +74,7 @@ export async function getSegmenter() {
                 // Force fallback to public model 1.4
                 targetModel = 'briaai/RMBG-1.4';
                 currentModelId = 'briaai/RMBG-1.4';
-                (env as any).token = null;
+                (env as { token?: string | null }).token = null;
             } else {
                 logger.info(`[HF Auth] 2.0 Access verified.`);
             }
@@ -74,23 +82,18 @@ export async function getSegmenter() {
             logger.warn(`[Auth] Permission check failed. Reverting to public model 1.4.`);
             targetModel = 'briaai/RMBG-1.4';
             currentModelId = 'briaai/RMBG-1.4';
-            (env as any).token = null;
+            (env as { token?: string | null }).token = null;
         }
     }
 
     logger.info(`Loading: ${targetModel}`);
 
     try {
-        const config: any = {
+        segmenter = await pipeline('image-segmentation', targetModel, {
             device: 'webgpu',
             dtype: 'fp32',
-        };
-
-        if (targetModel === 'briaai/RMBG-2.0' && hfToken) {
-            config.token = hfToken;
-        }
-
-        segmenter = await pipeline('image-segmentation', targetModel, config);
+            ...(targetModel === 'briaai/RMBG-2.0' && hfToken ? { token: hfToken } : {}),
+        });
         logger.info(`${targetModel} initialized.`);
         return segmenter;
     } catch (err: unknown) {
@@ -98,7 +101,10 @@ export async function getSegmenter() {
 
         try {
             // Final fallback to 1.4
-            segmenter = await pipeline('image-segmentation', 'briaai/RMBG-1.4', { device: 'webgpu', dtype: 'fp32' });
+            segmenter = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
+                device: 'webgpu',
+                dtype: 'fp32',
+            });
             currentModelId = 'briaai/RMBG-1.4';
             return segmenter;
         } catch (fatal: unknown) {
