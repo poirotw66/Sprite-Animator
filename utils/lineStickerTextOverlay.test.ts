@@ -4,6 +4,8 @@ import {
   strokeColorForFill,
   layoutFromPlacementLabel,
   resolveProgrammaticPlacementLabel,
+  resolveProgrammaticFontFamilyCss,
+  DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING,
 } from './lineStickerTextOverlay';
 
 describe('extractFillHexFromTextColorPreset', () => {
@@ -21,6 +23,27 @@ describe('strokeColorForFill', () => {
 
   it('uses white stroke on dark fills', () => {
     expect(strokeColorForFill('#000000')).toBe('#ffffff');
+  });
+});
+
+describe('resolveProgrammaticFontFamilyCss', () => {
+  it('uses custom string when source is custom and non-empty', () => {
+    const tuning = {
+      ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING,
+      fontFamilySource: 'custom' as const,
+      customFontFamily: '"Georgia", serif',
+    };
+    expect(resolveProgrammaticFontFamilyCss('handwritten', tuning)).toBe('"Georgia", serif');
+  });
+
+  it('falls back to preset stack when custom is blank', () => {
+    const tuning = {
+      ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING,
+      fontFamilySource: 'custom' as const,
+      customFontFamily: '   ',
+    };
+    const stack = resolveProgrammaticFontFamilyCss('pixelRetro', tuning);
+    expect(stack).toContain('monospace');
   });
 });
 

@@ -21,6 +21,9 @@ export type ProgrammaticTextPlacementMode =
   | 'top_center'
   | 'middle_center';
 
+/** How to resolve canvas font-family for programmatic overlay. */
+export type ProgrammaticFontFamilySource = 'preset' | 'custom';
+
 /** User-tunable overlay parameters (LINE sticker programmatic text mode). */
 export interface ProgrammaticTextOverlayTuning {
   /** Font size as percent of min(frame width, height), e.g. 8.5 => 0.085 multiplier. */
@@ -33,6 +36,13 @@ export interface ProgrammaticTextOverlayTuning {
   strokeScale: number;
   placementMode: ProgrammaticTextPlacementMode;
   fontWeight: 400 | 500 | 600 | 700;
+  /** Shift text anchor horizontally (% of frame width, negative = left). */
+  offsetXPercent: number;
+  /** Shift text anchor vertically (% of frame height, negative = up). */
+  offsetYPercent: number;
+  fontFamilySource: ProgrammaticFontFamilySource;
+  /** When fontFamilySource is custom: CSS font-family list (e.g. "Noto Sans TC", sans-serif). */
+  customFontFamily: string;
 }
 
 export const DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING: ProgrammaticTextOverlayTuning = {
@@ -42,6 +52,10 @@ export const DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING: ProgrammaticTextOverlayTu
   strokeScale: 1,
   placementMode: 'cycle',
   fontWeight: 700,
+  offsetXPercent: 0,
+  offsetYPercent: 0,
+  fontFamilySource: 'preset',
+  customFontFamily: '"Noto Sans TC", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
 };
 
 /** Resolve placement label for layout (matches v2 cycle or fixed anchors). */
@@ -117,6 +131,17 @@ export function fontCssStackForPreset(fontKey: FontPresetKey): string {
       '"Impact", "Segoe UI", "PingFang TC", "Arial Black", "Microsoft JhengHei", sans-serif',
   };
   return stacks[fontKey] ?? stacks.handwritten;
+}
+
+/** Canvas `font` family stack: preset keys or custom CSS from tuning. */
+export function resolveProgrammaticFontFamilyCss(
+  fontKey: FontPresetKey,
+  tuning: ProgrammaticTextOverlayTuning
+): string {
+  if (tuning.fontFamilySource === 'custom' && tuning.customFontFamily.trim().length > 0) {
+    return tuning.customFontFamily.trim();
+  }
+  return fontCssStackForPreset(fontKey);
 }
 
 export interface TextPlacementLayout {
@@ -279,7 +304,7 @@ export function overlayLineStickerTextOnFrame(
         ctx.drawImage(img, 0, 0);
 
         const fontSize = Math.max(10, Math.round(Math.min(w, h) * sizeRatio));
-        const fontFamily = fontCssStackForPreset(options.fontKey);
+        const fontFamily = resolveProgrammaticFontFamilyCss(options.fontKey, tuning);
         ctx.font = `${tuning.fontWeight} ${fontSize}px ${fontFamily}`;
 
         const fillHex = extractFillHexFromTextColorPreset(options.colorKey);
@@ -290,17 +315,22 @@ export function overlayLineStickerTextOnFrame(
         );
         const layout = layoutFromPlacementLabel(placementLabel, w, h, marginRatio);
 
+        const offsetX = (w * tuning.offsetXPercent) / 100;
+        const offsetY = (h * tuning.offsetYPercent) / 100;
+        const anchorX = layout.anchorX + offsetX;
+        const anchorY = layout.anchorY + offsetY;
+
         ctx.textAlign = layout.textAlign;
         ctx.textBaseline = layout.textBaseline;
         const lineHeight = fontSize * lineMult;
         const lines = wrapLines(ctx, trimmed, layout.maxWidth);
         const totalTextHeight = lines.length * lineHeight;
 
-        let startY = layout.anchorY;
+        let startY = anchorY;
         if (layout.textBaseline === 'bottom') {
-          startY = layout.anchorY - (lines.length - 1) * lineHeight;
+          startY = anchorY - (lines.length - 1) * lineHeight;
         } else if (layout.textBaseline === 'middle') {
-          startY = layout.anchorY - totalTextHeight / 2 + lineHeight / 2;
+          startY = anchorY - totalTextHeight / 2 + lineHeight / 2;
         }
 
         const strokeW = Math.max(1.5, fontSize * 0.12 * strokeMult);
@@ -311,9 +341,9 @@ export function overlayLineStickerTextOnFrame(
           const y = startY + i * lineHeight;
           ctx.strokeStyle = strokeHex;
           ctx.lineWidth = strokeW * 2;
-          ctx.strokeText(line, layout.anchorX, y);
+          ctx.strokeText(line, anchorX, y);
           ctx.fillStyle = fillHex;
-          ctx.fillText(line, layout.anchorX, y);
+          ctx.fillText(line, anchorX, y);
         });
 
         resolve(canvas.toDataURL('image/png'));

@@ -19,6 +19,7 @@ import {
 import type {
   ProgrammaticTextOverlayTuning,
   ProgrammaticTextPlacementMode,
+  ProgrammaticFontFamilySource,
 } from '../../utils/lineStickerTextOverlay';
 import {
   LineStickerUploadCard,
@@ -467,6 +468,84 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
             </div>
 
             <div>
+              <p className="text-sm font-medium text-slate-700 mb-2">{t.lineStickerProgrammaticFontSourceLabel}</p>
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
+                  <input
+                    type="radio"
+                    name="programmaticFontSource"
+                    className="text-green-600 shrink-0"
+                    checked={config.programmaticTextTuning.fontFamilySource === 'preset'}
+                    onChange={() =>
+                      config.setProgrammaticTextTuning((prev) => ({
+                        ...prev,
+                        fontFamilySource: 'preset' as ProgrammaticFontFamilySource,
+                      }))
+                    }
+                  />
+                  {t.lineStickerProgrammaticFontSourcePreset}
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
+                  <input
+                    type="radio"
+                    name="programmaticFontSource"
+                    className="text-green-600 shrink-0"
+                    checked={config.programmaticTextTuning.fontFamilySource === 'custom'}
+                    onChange={() =>
+                      config.setProgrammaticTextTuning((prev) => ({
+                        ...prev,
+                        fontFamilySource: 'custom' as ProgrammaticFontFamilySource,
+                      }))
+                    }
+                  />
+                  {t.lineStickerProgrammaticFontSourceCustom}
+                </label>
+              </div>
+            </div>
+
+            {config.programmaticTextTuning.fontFamilySource === 'preset' && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  {t.lineStickerProgrammaticFontPresetLabel}
+                </label>
+                <select
+                  value={config.selectedFont}
+                  onChange={(event) =>
+                    config.setSelectedFont(event.target.value as keyof typeof FONT_PRESETS)
+                  }
+                  className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
+                >
+                  {FONT_PRESET_ORDER.map((key) => (
+                    <option key={key} value={key}>
+                      {FONT_PRESETS[key].label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {config.programmaticTextTuning.fontFamilySource === 'custom' && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  {t.lineStickerProgrammaticFontCustomLabel}
+                </label>
+                <p className="text-xs text-slate-500 mb-2 leading-relaxed">{t.lineStickerProgrammaticFontCustomHint}</p>
+                <textarea
+                  value={config.programmaticTextTuning.customFontFamily}
+                  onChange={(event) =>
+                    config.setProgrammaticTextTuning((prev) => ({
+                      ...prev,
+                      customFontFamily: event.target.value,
+                    }))
+                  }
+                  placeholder={t.lineStickerProgrammaticFontCustomPlaceholder}
+                  rows={2}
+                  className="w-full p-3 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-green-500 outline-none resize-y bg-white"
+                />
+              </div>
+            )}
+
+            <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 {t.lineStickerProgrammaticTextColorLabel}
               </label>
@@ -611,6 +690,48 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                 className="w-full accent-emerald-600"
               />
             </div>
+
+            <div>
+              <div className="flex justify-between text-xs text-slate-600 mb-1">
+                <span>{t.lineStickerProgrammaticOffsetX}</span>
+                <span className="font-mono tabular-nums">{config.programmaticTextTuning.offsetXPercent.toFixed(1)}</span>
+              </div>
+              <input
+                type="range"
+                min={-25}
+                max={25}
+                step={0.5}
+                value={config.programmaticTextTuning.offsetXPercent}
+                onChange={(event) =>
+                  config.setProgrammaticTextTuning((prev) => ({
+                    ...prev,
+                    offsetXPercent: Number(event.target.value),
+                  }))
+                }
+                className="w-full accent-emerald-600"
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between text-xs text-slate-600 mb-1">
+                <span>{t.lineStickerProgrammaticOffsetY}</span>
+                <span className="font-mono tabular-nums">{config.programmaticTextTuning.offsetYPercent.toFixed(1)}</span>
+              </div>
+              <input
+                type="range"
+                min={-25}
+                max={25}
+                step={0.5}
+                value={config.programmaticTextTuning.offsetYPercent}
+                onChange={(event) =>
+                  config.setProgrammaticTextTuning((prev) => ({
+                    ...prev,
+                    offsetYPercent: Number(event.target.value),
+                  }))
+                }
+                className="w-full accent-emerald-600"
+              />
+            </div>
           </div>
         )}
 
@@ -672,6 +793,8 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                 </option>
               </select>
             </div>
+            {config.textRendering !== 'programmatic' && (
+            <>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerFontStyleLabel}</label>
               <p className="text-xs text-slate-500 mb-2">{t.lineStickerFontStyleHint}</p>
@@ -691,6 +814,8 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                 className="w-full max-h-[420px] rounded-lg border border-slate-100 object-contain bg-slate-50"
               />
             </div>
+            </>
+            )}
           </div>
         )}
 

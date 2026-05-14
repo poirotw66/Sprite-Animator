@@ -50,6 +50,8 @@ interface UseLineStickerSlicingParams {
   /** Single-mode phrase row (length cols*rows); used when set-mode first slice path runs. */
   phraseListSingle: string[];
   programmaticTextTuning: ProgrammaticTextOverlayTuning;
+  /** Called with sliced frames before optional programmatic overlay (for live preview). */
+  onProgrammaticRawFrames?: (rawFrames: string[], sheetIndex: LineStickerSheetIndex) => void;
 }
 
 interface SliceProcessedSheetOptions {
@@ -80,6 +82,7 @@ export function useLineStickerSlicing({
   setPhrasesList,
   phraseListSingle,
   programmaticTextTuning,
+  onProgrammaticRawFrames,
 }: UseLineStickerSlicingParams) {
   const maybeOverlay = useCallback(
     async (frames: string[], phraseSlice: string[]): Promise<string[]> => {
@@ -129,6 +132,7 @@ export function useLineStickerSlicing({
       const phraseSlice = stickerSetMode
         ? sliceLineStickerSheetFrames(setPhrasesList, sheetIdx)
         : phraseListSingle;
+      onProgrammaticRawFrames?.(raw, sheetIdx);
       return maybeOverlay(raw, phraseSlice);
     },
     [
@@ -145,6 +149,7 @@ export function useLineStickerSlicing({
       sliceSettings,
       stickerSetMode,
       programmaticTextTuning,
+      onProgrammaticRawFrames,
     ]
   );
 
@@ -171,6 +176,7 @@ export function useLineStickerSlicing({
         const phraseSlice = stickerSetMode
           ? sliceLineStickerSheetFrames(setPhrasesList, currentSheetIndex)
           : phraseListSingle;
+        onProgrammaticRawFrames?.(raw, currentSheetIndex);
         const frames = await maybeOverlay(raw, phraseSlice);
         if (!cancelled) {
           setStickerFrames(frames);
@@ -201,6 +207,7 @@ export function useLineStickerSlicing({
     currentSheetIndex,
     stickerSetMode,
     programmaticTextTuning,
+    onProgrammaticRawFrames,
   ]);
 
   useEffect(() => {
@@ -228,6 +235,7 @@ export function useLineStickerSlicing({
           pad
         );
         const phraseSlice = sliceLineStickerSheetFrames(setPhrasesList, currentSheetIndex);
+        onProgrammaticRawFrames?.(raw, currentSheetIndex);
         const frames = await maybeOverlay(raw, phraseSlice);
         if (!cancelled) {
           setSheetFrames((prev) => {
@@ -257,6 +265,7 @@ export function useLineStickerSlicing({
     maybeOverlay,
     setPhrasesList,
     programmaticTextTuning,
+    onProgrammaticRawFrames,
   ]);
 
   const handleImageLoad = useCallback(

@@ -381,6 +381,15 @@ export interface Translations {
   lineStickerProgrammaticTuningTitle: string;
   lineStickerProgrammaticTuningHint: string;
   lineStickerProgrammaticTextColorLabel: string;
+  lineStickerProgrammaticFontSourceLabel: string;
+  lineStickerProgrammaticFontSourcePreset: string;
+  lineStickerProgrammaticFontSourceCustom: string;
+  lineStickerProgrammaticFontPresetLabel: string;
+  lineStickerProgrammaticFontCustomLabel: string;
+  lineStickerProgrammaticFontCustomPlaceholder: string;
+  lineStickerProgrammaticFontCustomHint: string;
+  lineStickerProgrammaticOffsetX: string;
+  lineStickerProgrammaticOffsetY: string;
   lineStickerProgrammaticFontSize: string;
   lineStickerProgrammaticEdgeMargin: string;
   lineStickerProgrammaticLineHeight: string;

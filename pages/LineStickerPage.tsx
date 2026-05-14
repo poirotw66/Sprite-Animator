@@ -26,6 +26,7 @@ import {
     DEFAULT_LINE_STICKER_SHEET_INDEX,
     formatLineStickerSetText,
     LINE_STICKER_SHEET_INDICES,
+    LINE_STICKER_SHEET_COUNT,
     LINE_STICKER_SET_COLS,
     LINE_STICKER_SET_ROWS,
     sliceLineStickerSheetFrames,
@@ -188,14 +189,31 @@ const LineStickerPage: React.FC = () => {
         return () => window.clearTimeout(id);
     }, [programmaticTextTuning]);
 
-    const slicePipelineRevision = useMemo(() => {
-        if (textRendering !== 'programmatic' || !includeText) return 0;
-        return JSON.stringify({
-            tuning: debouncedProgrammaticTextTuning,
-            font: selectedFont,
-            color: selectedTextColor,
-        });
-    }, [textRendering, includeText, debouncedProgrammaticTextTuning, selectedFont, selectedTextColor]);
+    const programmaticRawFramesRef = useRef<string[]>([]);
+    const programmaticRawBySheetRef = useRef<(string[] | null)[]>(
+        Array.from({ length: LINE_STICKER_SHEET_COUNT }, () => null)
+    );
+    const debouncedProgrammaticOverlayRef = useRef(debouncedProgrammaticTextTuning);
+    const [programmaticRawFrameEpoch, setProgrammaticRawFrameEpoch] = useState(0);
+    const [programmaticLivePreviewFrames, setProgrammaticLivePreviewFrames] = useState<string[] | null>(null);
+
+    useEffect(() => {
+        debouncedProgrammaticOverlayRef.current = debouncedProgrammaticTextTuning;
+    }, [debouncedProgrammaticTextTuning]);
+
+    const captureProgrammaticRawFramesFromMap = useCallback((raw: string[]) => {
+        programmaticRawFramesRef.current = raw.slice();
+        programmaticRawBySheetRef.current[DEFAULT_LINE_STICKER_SHEET_INDEX] = raw.slice();
+        setProgrammaticRawFrameEpoch((n) => n + 1);
+    }, []);
+
+    const onProgrammaticRawFrames = useCallback((raw: string[], sheetIndex: LineStickerSheetIndex) => {
+        programmaticRawBySheetRef.current[sheetIndex] = raw.slice();
+        if (!stickerSetMode || sheetIndex === currentSheetIndex) {
+            programmaticRawFramesRef.current = raw.slice();
+            setProgrammaticRawFrameEpoch((n) => n + 1);
+        }
+    }, [stickerSetMode, currentSheetIndex]);
 
     const programmaticTextOverlayRef = useRef({
         textRendering: 'model' as LineStickerTextRendering,
@@ -209,6 +227,7 @@ const LineStickerPage: React.FC = () => {
     });
 
     const mapFramesAfterSlice = useCallback(async (frames: string[]) => {
+        captureProgrammaticRawFramesFromMap(frames);
         const ctx = programmaticTextOverlayRef.current;
         if (ctx.textRendering !== 'programmatic' || !ctx.includeText) {
             return frames;
@@ -219,16 +238,15 @@ const LineStickerPage: React.FC = () => {
         return overlayPhrasesOnStickerFrames(frames, phrases, {
             fontKey: ctx.selectedFont,
             colorKey: ctx.selectedTextColor,
-            tuning: ctx.programmaticTextTuning,
+            tuning: debouncedProgrammaticOverlayRef.current,
         });
-    }, []);
+    }, [captureProgrammaticRawFramesFromMap]);
 
     // Single-sheet mode: shared flow (upload ? slice ? remove bg ? frames) with PartingPage
     const singleSheetFlow = useSpriteSheetFlow({
         runChromaAutomatically: bgRemovalMethod === 'chroma',
         initialSliceSettings: { ...DEFAULT_SLICE_SETTINGS, cols: LINE_STICKER_SET_COLS, rows: LINE_STICKER_SET_ROWS } as SliceSettings,
         mapFramesAfterSlice,
-        slicePipelineRevision,
     });
     const effectiveGridCols = stickerSetMode ? LINE_STICKER_SET_COLS : singleSheetFlow.sliceSettings.cols;
     const effectiveGridRows = stickerSetMode ? LINE_STICKER_SET_ROWS : singleSheetFlow.sliceSettings.rows;
@@ -276,6 +294,15 @@ const LineStickerPage: React.FC = () => {
         selectedTextColor,
         programmaticTextTuning,
     ]);
+
+    useEffect(() => {
+        if (!stickerSetMode) return;
+        const cached = programmaticRawBySheetRef.current[currentSheetIndex];
+        if (cached && cached.length > 0) {
+            programmaticRawFramesRef.current = cached;
+            setProgrammaticRawFrameEpoch((n) => n + 1);
+        }
+    }, [stickerSetMode, currentSheetIndex]);
 
     useLineStickerThemePresetSync({
         selectedTheme,
@@ -384,10 +411,95 @@ const LineStickerPage: React.FC = () => {
         setPhrasesList,
         phraseListSingle: phrasesForHook,
         programmaticTextTuning: debouncedProgrammaticTextTuning,
+        onProgrammaticRawFrames,
     });
 
     const handleImageLoad = stickerSetMode ? slicingHandleImageLoad : singleSheetFlow.handleImageLoad;
     const sliceProcessedSheetToFrames = stickerSetMode ? slicingSliceToFrames : singleSheetFlow.sliceProcessedSheetToFrames;
+
+    useEffect(() => {
+        if (textRendering !== 'programmatic' || !includeText) {
+            setProgrammaticLivePreviewFrames(null);
+            return;
+        }
+        const raw = programmaticRawFramesRef.current;
+        if (raw.length === 0) {
+            setProgrammaticLivePreviewFrames(null);
+            return;
+        }
+        let cancelled = false;
+        const phrases = stickerSetMode
+            ? sliceLineStickerSheetFrames(phrasesForHook, currentSheetIndex)
+            : phrasesForHook.slice(0, raw.length);
+        overlayPhrasesOnStickerFrames(raw, phrases, {
+            fontKey: selectedFont,
+            colorKey: selectedTextColor,
+            tuning: programmaticTextTuning,
+        }).then((out) => {
+            if (!cancelled) {
+                setProgrammaticLivePreviewFrames(out);
+            }
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [
+        textRendering,
+        includeText,
+        programmaticTextTuning,
+        selectedFont,
+        selectedTextColor,
+        programmaticRawFrameEpoch,
+        stickerSetMode,
+        currentSheetIndex,
+        phrasesForHook,
+    ]);
+
+    useEffect(() => {
+        if (textRendering !== 'programmatic' || !includeText) {
+            return;
+        }
+        const raw = programmaticRawFramesRef.current;
+        if (raw.length === 0) {
+            return;
+        }
+        let cancelled = false;
+        const phrases = stickerSetMode
+            ? sliceLineStickerSheetFrames(phrasesForHook, currentSheetIndex)
+            : phrasesForHook.slice(0, raw.length);
+        overlayPhrasesOnStickerFrames(raw, phrases, {
+            fontKey: selectedFont,
+            colorKey: selectedTextColor,
+            tuning: debouncedProgrammaticTextTuning,
+        }).then((baked) => {
+            if (cancelled) {
+                return;
+            }
+            if (stickerSetMode) {
+                setSheetFrames((prev) => {
+                    const next = [...prev];
+                    next[currentSheetIndex] = baked;
+                    return next;
+                });
+            } else {
+                singleSheetFlow.setFrames(baked);
+            }
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [
+        textRendering,
+        includeText,
+        debouncedProgrammaticTextTuning,
+        selectedFont,
+        selectedTextColor,
+        programmaticRawFrameEpoch,
+        stickerSetMode,
+        currentSheetIndex,
+        phrasesForHook,
+        singleSheetFlow.setFrames,
+    ]);
 
     const {
         handleGenerate,
@@ -650,6 +762,19 @@ const LineStickerPage: React.FC = () => {
     const effectiveSpriteSheetImage = stickerSetMode ? (sheetImages[currentSheetIndex] ?? null) : singleSheetFlow.image;
     const effectiveProcessedSpriteSheet = stickerSetMode ? (processedSheetImages[currentSheetIndex] ?? null) : singleSheetFlow.processedImage;
     const effectiveStickerFrames = stickerSetMode ? sheetFrames[currentSheetIndex] ?? [] : singleSheetFlow.frames;
+    const viewerStickerFrames = useMemo(() => {
+        if (textRendering !== 'programmatic' || !includeText) {
+            return effectiveStickerFrames;
+        }
+        if (
+            programmaticLivePreviewFrames &&
+            programmaticLivePreviewFrames.length === effectiveStickerFrames.length &&
+            effectiveStickerFrames.length > 0
+        ) {
+            return programmaticLivePreviewFrames;
+        }
+        return effectiveStickerFrames;
+    }, [textRendering, includeText, programmaticLivePreviewFrames, effectiveStickerFrames]);
     const effectiveSelectedFrames = stickerSetMode ? (selectedFramesBySheet[currentSheetIndex] ?? []) : singleSheetFlow.frameIncluded;
     const effectiveSetSelectedFrames = stickerSetMode
         ? (val: boolean[] | ((prev: boolean[]) => boolean[])) => {
@@ -877,7 +1002,7 @@ const LineStickerPage: React.FC = () => {
         isDownloading,
         effectiveSpriteSheetImage,
         effectiveProcessedSpriteSheet,
-        effectiveStickerFrames,
+        effectiveStickerFrames: viewerStickerFrames,
         effectiveSelectedFrames,
         effectiveSetSelectedFrames,
         effectiveFrameOverrides,
