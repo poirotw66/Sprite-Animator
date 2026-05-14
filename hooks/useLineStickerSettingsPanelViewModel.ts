@@ -10,7 +10,9 @@ import type {
   LineStickerTextRendering,
   TEXT_PRESETS,
   FONT_PRESETS,
+  TEXT_COLOR_PRESETS,
 } from '../utils/lineStickerPrompt';
+import type { ProgrammaticTextOverlayTuning } from '../utils/lineStickerTextOverlay';
 import type { LineStickerSettingsPanelViewModel } from '../components/LineSticker/LineStickerSettingsPanel';
 import type { LineStickerSheetStatus } from './useLineStickerSheetGeneration';
 import type { LineStickerSheetIndex } from '../utils/lineStickerSetSchema';
@@ -61,6 +63,11 @@ interface UseLineStickerSettingsPanelViewModelParams {
   setActionDedupeStrength: React.Dispatch<React.SetStateAction<ActionDedupeStrength>>;
   selectedFont: keyof typeof FONT_PRESETS;
   setSelectedFont: React.Dispatch<React.SetStateAction<keyof typeof FONT_PRESETS>>;
+  selectedTextColor: keyof typeof TEXT_COLOR_PRESETS;
+  setSelectedTextColor: React.Dispatch<React.SetStateAction<keyof typeof TEXT_COLOR_PRESETS>>;
+  programmaticTextTuning: ProgrammaticTextOverlayTuning;
+  setProgrammaticTextTuning: React.Dispatch<React.SetStateAction<ProgrammaticTextOverlayTuning>>;
+  onResetProgrammaticTextTuning: () => void;
   currentSheetIndex: LineStickerSheetIndex;
   phraseGridList: string[];
   actionDescGridList: string[];
@@ -134,6 +141,11 @@ export const useLineStickerSettingsPanelViewModel = ({
   setActionDedupeStrength,
   selectedFont,
   setSelectedFont,
+  selectedTextColor,
+  setSelectedTextColor,
+  programmaticTextTuning,
+  setProgrammaticTextTuning,
+  onResetProgrammaticTextTuning,
   currentSheetIndex,
   phraseGridList,
   actionDescGridList,
@@ -219,6 +231,11 @@ export const useLineStickerSettingsPanelViewModel = ({
     setActionDedupeStrength,
     selectedFont,
     setSelectedFont,
+    selectedTextColor,
+    setSelectedTextColor,
+    programmaticTextTuning,
+    setProgrammaticTextTuning,
+    onResetProgrammaticTextTuning,
   }), [
     stickerSetMode,
     onStickerSetModeChange,
@@ -255,6 +272,11 @@ export const useLineStickerSettingsPanelViewModel = ({
     setActionDedupeStrength,
     selectedFont,
     setSelectedFont,
+    selectedTextColor,
+    setSelectedTextColor,
+    programmaticTextTuning,
+    setProgrammaticTextTuning,
+    onResetProgrammaticTextTuning,
   ]);
 
   const phraseSection = useMemo(() => ({

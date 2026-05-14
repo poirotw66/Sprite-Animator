@@ -3,6 +3,7 @@ import {
   extractFillHexFromTextColorPreset,
   strokeColorForFill,
   layoutFromPlacementLabel,
+  resolveProgrammaticPlacementLabel,
 } from './lineStickerTextOverlay';
 
 describe('extractFillHexFromTextColorPreset', () => {
@@ -23,7 +24,22 @@ describe('strokeColorForFill', () => {
   });
 });
 
+describe('resolveProgrammaticPlacementLabel', () => {
+  it('returns fixed anchors for non-cycle modes', () => {
+    expect(resolveProgrammaticPlacementLabel(0, 'bottom_center')).toBe('Bottom center');
+    expect(resolveProgrammaticPlacementLabel(99, 'top_center')).toBe('Top center');
+    expect(resolveProgrammaticPlacementLabel(3, 'middle_center')).toBe('Middle center');
+  });
+});
+
 describe('layoutFromPlacementLabel', () => {
+  it('places middle center at canvas center', () => {
+    const { anchorX, anchorY, textBaseline } = layoutFromPlacementLabel('Middle center', 200, 100);
+    expect(textBaseline).toBe('middle');
+    expect(anchorX).toBe(100);
+    expect(anchorY).toBe(50);
+  });
+
   it('places bottom center near bottom edge', () => {
     const { anchorY, textBaseline } = layoutFromPlacementLabel('Bottom center', 100, 200);
     expect(textBaseline).toBe('bottom');

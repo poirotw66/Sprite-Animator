@@ -14,6 +14,49 @@ type TextColorPresetKey = keyof typeof TEXT_COLOR_PRESETS;
 
 const HEX_IN_PROMPT = /#([0-9A-Fa-f]{6})\b/;
 
+/** How to pick text anchor when compositing programmatically. */
+export type ProgrammaticTextPlacementMode =
+  | 'cycle'
+  | 'bottom_center'
+  | 'top_center'
+  | 'middle_center';
+
+/** User-tunable overlay parameters (LINE sticker programmatic text mode). */
+export interface ProgrammaticTextOverlayTuning {
+  /** Font size as percent of min(frame width, height), e.g. 8.5 => 0.085 multiplier. */
+  fontSizePercent: number;
+  /** Edge inset for text box, percent of min(frame width, height). */
+  edgeMarginPercent: number;
+  /** Line height as multiple of font size. */
+  lineHeightMultiplier: number;
+  /** Multiplier for auto stroke width. */
+  strokeScale: number;
+  placementMode: ProgrammaticTextPlacementMode;
+  fontWeight: 400 | 500 | 600 | 700;
+}
+
+export const DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING: ProgrammaticTextOverlayTuning = {
+  fontSizePercent: 8.5,
+  edgeMarginPercent: 6,
+  lineHeightMultiplier: 1.25,
+  strokeScale: 1,
+  placementMode: 'cycle',
+  fontWeight: 700,
+};
+
+/** Resolve placement label for layout (matches v2 cycle or fixed anchors). */
+export function resolveProgrammaticPlacementLabel(
+  frameIndex: number,
+  mode: ProgrammaticTextPlacementMode
+): string {
+  if (mode === 'cycle') {
+    return getLineStickerTextPlacementLabel(frameIndex);
+  }
+  if (mode === 'bottom_center') return 'Bottom center';
+  if (mode === 'top_center') return 'Top center';
+  return 'Middle center';
+}
+
 /** Extract #RRGGBB from preset promptDesc (e.g. "Black #000000"). */
 export function extractFillHexFromTextColorPreset(colorKey: TextColorPresetKey): string {
   const desc = TEXT_COLOR_PRESETS[colorKey]?.promptDesc ?? '';
@@ -86,14 +129,17 @@ export interface TextPlacementLayout {
 
 /**
  * Map v2-style placement label to canvas anchor and max line width (fraction of cell).
+ * `edgeMarginRatio` is 0–0.25 (e.g. 0.06 = 6% inset on each side).
  */
 export function layoutFromPlacementLabel(
   label: string,
   width: number,
-  height: number
+  height: number,
+  edgeMarginRatio: number = 0.06
 ): TextPlacementLayout {
-  const marginX = width * 0.06;
-  const marginY = height * 0.06;
+  const margin = Math.max(0.02, Math.min(0.22, edgeMarginRatio));
+  const marginX = width * margin;
+  const marginY = height * margin;
   const maxW = width - marginX * 2;
   const lower = label.toLowerCase();
 
@@ -102,7 +148,12 @@ export function layoutFromPlacementLabel(
   let anchorX = width / 2;
   let anchorY = height - marginY;
 
-  if (lower.includes('top center')) {
+  if (lower.includes('middle center')) {
+    textAlign = 'center';
+    textBaseline = 'middle';
+    anchorX = width / 2;
+    anchorY = height / 2;
+  } else if (lower.includes('top center')) {
     textBaseline = 'top';
     anchorY = marginY;
   } else if (lower.includes('bottom center')) {
@@ -181,8 +232,9 @@ function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number
 export interface LineStickerTextOverlayOptions {
   fontKey: FontPresetKey;
   colorKey: TextColorPresetKey;
-  /** Frame index in the sheet (0-based); cycles placement like v2 prompt. */
+  /** Frame index in the sheet (0-based); cycles placement when mode is cycle. */
   frameIndex: number;
+  tuning?: ProgrammaticTextOverlayTuning;
 }
 
 /**
@@ -202,6 +254,12 @@ export function overlayLineStickerTextOnFrame(
     return Promise.resolve(frameDataUrl);
   }
 
+  const tuning = options.tuning ?? DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING;
+  const sizeRatio = Math.max(0.04, Math.min(0.2, tuning.fontSizePercent / 100));
+  const marginRatio = Math.max(0.02, Math.min(0.18, tuning.edgeMarginPercent / 100));
+  const lineMult = Math.max(1.02, Math.min(1.8, tuning.lineHeightMultiplier));
+  const strokeMult = Math.max(0.5, Math.min(2.5, tuning.strokeScale));
+
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -220,18 +278,21 @@ export function overlayLineStickerTextOnFrame(
 
         ctx.drawImage(img, 0, 0);
 
-        const fontSize = Math.max(12, Math.round(Math.min(w, h) * 0.085));
+        const fontSize = Math.max(10, Math.round(Math.min(w, h) * sizeRatio));
         const fontFamily = fontCssStackForPreset(options.fontKey);
-        ctx.font = `700 ${fontSize}px ${fontFamily}`;
+        ctx.font = `${tuning.fontWeight} ${fontSize}px ${fontFamily}`;
 
         const fillHex = extractFillHexFromTextColorPreset(options.colorKey);
         const strokeHex = strokeColorForFill(fillHex);
-        const placement = getLineStickerTextPlacementLabel(options.frameIndex);
-        const layout = layoutFromPlacementLabel(placement, w, h);
+        const placementLabel = resolveProgrammaticPlacementLabel(
+          options.frameIndex,
+          tuning.placementMode
+        );
+        const layout = layoutFromPlacementLabel(placementLabel, w, h, marginRatio);
 
         ctx.textAlign = layout.textAlign;
         ctx.textBaseline = layout.textBaseline;
-        const lineHeight = fontSize * 1.25;
+        const lineHeight = fontSize * lineMult;
         const lines = wrapLines(ctx, trimmed, layout.maxWidth);
         const totalTextHeight = lines.length * lineHeight;
 
@@ -242,7 +303,7 @@ export function overlayLineStickerTextOnFrame(
           startY = layout.anchorY - totalTextHeight / 2 + lineHeight / 2;
         }
 
-        const strokeW = Math.max(2, fontSize * 0.12);
+        const strokeW = Math.max(1.5, fontSize * 0.12 * strokeMult);
         ctx.lineJoin = 'round';
         ctx.miterLimit = 2;
 
@@ -269,14 +330,20 @@ export function overlayLineStickerTextOnFrame(
 export async function overlayPhrasesOnStickerFrames(
   frames: string[],
   phrases: string[],
-  opts: { fontKey: FontPresetKey; colorKey: TextColorPresetKey }
+  opts: {
+    fontKey: FontPresetKey;
+    colorKey: TextColorPresetKey;
+    tuning?: ProgrammaticTextOverlayTuning;
+  }
 ): Promise<string[]> {
+  const tuning = opts.tuning ?? DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING;
   const out = await Promise.all(
     frames.map((frame, i) =>
       overlayLineStickerTextOnFrame(frame, phrases[i] ?? '', {
         fontKey: opts.fontKey,
         colorKey: opts.colorKey,
         frameIndex: i,
+        tuning,
       })
     )
   );

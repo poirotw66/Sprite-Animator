@@ -30,6 +30,11 @@ export interface UseSpriteSheetFlowOptions {
   initialSliceSettings?: SliceSettings;
   /** Optional post-process after slicing (e.g. LINE programmatic text overlay). */
   mapFramesAfterSlice?: (frames: string[]) => Promise<string[]>;
+  /**
+   * When this value changes, the slice+overlay pipeline re-runs on the current processed image
+   * (e.g. LINE programmatic text tuning). Unused on PartingPage.
+   */
+  slicePipelineRevision?: string | number;
 }
 
 export interface UseSpriteSheetFlowResult {
@@ -82,6 +87,7 @@ export function useSpriteSheetFlow(
     runChromaAutomatically = true,
     initialSliceSettings = DEFAULT_SLICE_SETTINGS as SliceSettings,
     mapFramesAfterSlice,
+    slicePipelineRevision,
   } = options;
 
   const [image, setImage] = useState<string | null>(null);
@@ -219,6 +225,7 @@ export function useSpriteSheetFlow(
     chromaKeyColor,
     mapFramesAfterSlice,
     sliceSettings,
+    slicePipelineRevision,
   ]);
 
   // Sync frameIncluded length when frames change (keep selection where possible)

@@ -16,7 +16,10 @@ import {
 } from '../utils/lineStickerSetSchema';
 import type { LineStickerTextRendering } from '../utils/lineStickerPrompt';
 import { FONT_PRESETS, TEXT_COLOR_PRESETS } from '../utils/lineStickerPrompt';
-import { overlayPhrasesOnStickerFrames } from '../utils/lineStickerTextOverlay';
+import {
+  overlayPhrasesOnStickerFrames,
+  type ProgrammaticTextOverlayTuning,
+} from '../utils/lineStickerTextOverlay';
 
 type FontPresetKey = keyof typeof FONT_PRESETS;
 type TextColorPresetKey = keyof typeof TEXT_COLOR_PRESETS;
@@ -46,6 +49,7 @@ interface UseLineStickerSlicingParams {
   setPhrasesList: string[];
   /** Single-mode phrase row (length cols*rows); used when set-mode first slice path runs. */
   phraseListSingle: string[];
+  programmaticTextTuning: ProgrammaticTextOverlayTuning;
 }
 
 interface SliceProcessedSheetOptions {
@@ -75,6 +79,7 @@ export function useLineStickerSlicing({
   selectedTextColor,
   setPhrasesList,
   phraseListSingle,
+  programmaticTextTuning,
 }: UseLineStickerSlicingParams) {
   const maybeOverlay = useCallback(
     async (frames: string[], phraseSlice: string[]): Promise<string[]> => {
@@ -85,9 +90,10 @@ export function useLineStickerSlicing({
       return overlayPhrasesOnStickerFrames(frames, aligned, {
         fontKey: selectedFont,
         colorKey: selectedTextColor,
+        tuning: programmaticTextTuning,
       });
     },
-    [textRendering, includeText, selectedFont, selectedTextColor]
+    [textRendering, includeText, selectedFont, selectedTextColor, programmaticTextTuning]
   );
   const sliceProcessedSheetToFrames = useCallback(
     async (
@@ -138,6 +144,7 @@ export function useLineStickerSlicing({
       sheetSliceSettings,
       sliceSettings,
       stickerSetMode,
+      programmaticTextTuning,
     ]
   );
 
@@ -193,6 +200,7 @@ export function useLineStickerSlicing({
     setPhrasesList,
     currentSheetIndex,
     stickerSetMode,
+    programmaticTextTuning,
   ]);
 
   useEffect(() => {
@@ -248,6 +256,7 @@ export function useLineStickerSlicing({
     setSheetFrames,
     maybeOverlay,
     setPhrasesList,
+    programmaticTextTuning,
   ]);
 
   const handleImageLoad = useCallback(

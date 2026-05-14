@@ -53,7 +53,11 @@ import {
 } from '../utils/lineStickerPrompt';
 import { generateSpriteSheet } from '../services/geminiService';
 import type { ActionDedupeStrength } from '../services/gemini/actionDescriptions';
-import { overlayPhrasesOnStickerFrames } from '../utils/lineStickerTextOverlay';
+import {
+    overlayPhrasesOnStickerFrames,
+    DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING,
+    type ProgrammaticTextOverlayTuning,
+} from '../utils/lineStickerTextOverlay';
 
 const createSetModeSliceSettingsList = () =>
     createLineStickerSheetArray(() => createLineStickerSetSliceSettings());
@@ -171,6 +175,28 @@ const LineStickerPage: React.FC = () => {
     const [textRendering, setTextRendering] = useState<LineStickerTextRendering>('model');
     const [bgRemovalMethod, setBgRemovalMethod] = useState<BgRemovalMethod>('chroma');
 
+    const [programmaticTextTuning, setProgrammaticTextTuning] = useState<ProgrammaticTextOverlayTuning>(
+        () => ({ ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING })
+    );
+    const [debouncedProgrammaticTextTuning, setDebouncedProgrammaticTextTuning] =
+        useState<ProgrammaticTextOverlayTuning>(() => ({ ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING }));
+
+    useEffect(() => {
+        const id = window.setTimeout(() => {
+            setDebouncedProgrammaticTextTuning(programmaticTextTuning);
+        }, 280);
+        return () => window.clearTimeout(id);
+    }, [programmaticTextTuning]);
+
+    const slicePipelineRevision = useMemo(() => {
+        if (textRendering !== 'programmatic' || !includeText) return 0;
+        return JSON.stringify({
+            tuning: debouncedProgrammaticTextTuning,
+            font: selectedFont,
+            color: selectedTextColor,
+        });
+    }, [textRendering, includeText, debouncedProgrammaticTextTuning, selectedFont, selectedTextColor]);
+
     const programmaticTextOverlayRef = useRef({
         textRendering: 'model' as LineStickerTextRendering,
         includeText: true,
@@ -179,6 +205,7 @@ const LineStickerPage: React.FC = () => {
         phrasesForHook: [] as string[],
         selectedFont: 'handwritten' as keyof typeof FONT_PRESETS,
         selectedTextColor: 'black' as keyof typeof TEXT_COLOR_PRESETS,
+        programmaticTextTuning: { ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING },
     });
 
     const mapFramesAfterSlice = useCallback(async (frames: string[]) => {
@@ -192,6 +219,7 @@ const LineStickerPage: React.FC = () => {
         return overlayPhrasesOnStickerFrames(frames, phrases, {
             fontKey: ctx.selectedFont,
             colorKey: ctx.selectedTextColor,
+            tuning: ctx.programmaticTextTuning,
         });
     }, []);
 
@@ -200,6 +228,7 @@ const LineStickerPage: React.FC = () => {
         runChromaAutomatically: bgRemovalMethod === 'chroma',
         initialSliceSettings: { ...DEFAULT_SLICE_SETTINGS, cols: LINE_STICKER_SET_COLS, rows: LINE_STICKER_SET_ROWS } as SliceSettings,
         mapFramesAfterSlice,
+        slicePipelineRevision,
     });
     const effectiveGridCols = stickerSetMode ? LINE_STICKER_SET_COLS : singleSheetFlow.sliceSettings.cols;
     const effectiveGridRows = stickerSetMode ? LINE_STICKER_SET_ROWS : singleSheetFlow.sliceSettings.rows;
@@ -235,6 +264,7 @@ const LineStickerPage: React.FC = () => {
             phrasesForHook,
             selectedFont,
             selectedTextColor,
+            programmaticTextTuning,
         };
     }, [
         textRendering,
@@ -244,6 +274,7 @@ const LineStickerPage: React.FC = () => {
         phrasesForHook,
         selectedFont,
         selectedTextColor,
+        programmaticTextTuning,
     ]);
 
     useLineStickerThemePresetSync({
@@ -352,6 +383,7 @@ const LineStickerPage: React.FC = () => {
         selectedTextColor,
         setPhrasesList,
         phraseListSingle: phrasesForHook,
+        programmaticTextTuning: debouncedProgrammaticTextTuning,
     });
 
     const handleImageLoad = stickerSetMode ? slicingHandleImageLoad : singleSheetFlow.handleImageLoad;
@@ -751,6 +783,10 @@ const LineStickerPage: React.FC = () => {
         [handleStickerSetModeChange, lineStickerT.lineStickerPhraseSetUploadError, setActionDescsList, setError, setGridCols, setGridRows, singleSheetFlow]
     );
 
+    const handleResetProgrammaticTextTuning = useCallback(() => {
+        setProgrammaticTextTuning({ ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING });
+    }, []);
+
     const settingsPanelViewModel = useLineStickerSettingsPanelViewModel({
         t: lineStickerT,
         sourceImage,
@@ -795,6 +831,11 @@ const LineStickerPage: React.FC = () => {
         setActionDedupeStrength,
         selectedFont,
         setSelectedFont,
+        selectedTextColor,
+        setSelectedTextColor,
+        programmaticTextTuning,
+        setProgrammaticTextTuning,
+        onResetProgrammaticTextTuning: handleResetProgrammaticTextTuning,
         currentSheetIndex,
         phraseGridList,
         actionDescGridList,
