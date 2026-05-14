@@ -379,7 +379,7 @@ export const en: Translations = {
     'Programmatic mode tells the image model not to render text; phrases are composited in the browser with a consistent font and stroke. Easier to edit copy, but cannot match hand-drawn model lettering.',
   lineStickerProgrammaticTuningTitle: 'Programmatic overlay tuning',
   lineStickerProgrammaticTuningHint:
-    'The Cropped Preview on the right updates live while you adjust (including while dragging sliders). Downloads/ZIP match the result about 0.3s after you stop. For custom fonts, enter a browser-usable CSS font-family (Google Fonts work if the family is loaded on the page).',
+    'After the no-text sprite is split, tune font, color, size, and position here. Cropped Preview and downloads use the same live composited frames. For custom fonts, use a browser-usable CSS font-family (Google Fonts work if loaded on the page).',
   lineStickerProgrammaticTextColorLabel: 'Overlay text color',
   lineStickerProgrammaticFontSourceLabel: 'Overlay font source',
   lineStickerProgrammaticFontSourcePreset: 'Built-in preset (matches prompt style names)',

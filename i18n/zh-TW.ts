@@ -379,7 +379,7 @@ export const zhTW: Translations = {
     '「程式疊字」會讓產圖模型不畫字，改在瀏覽器用統一字型與描邊疊上短語；易改文案但無法完全複製模型手繪美術字。',
   lineStickerProgrammaticTuningTitle: '程式疊字微調',
   lineStickerProgrammaticTuningHint:
-    '右側「切割預覽」會即時顯示疊字效果（含拖曳滑桿時）。下載／ZIP 以滑桿停住約 0.3 秒後的結果為準。自訂字型請輸入瀏覽器可用的 CSS font-family（若已於頁面載入 Google Fonts 亦可使用其名稱）。',
+    '無字精靈圖經切圖後，在此調整字型、顏色、大小與位置；右側「切割預覽」與下載使用同一套即時疊字。自訂字型請輸入瀏覽器可用的 CSS font-family（若頁面已載入 Google Fonts 亦可使用其名稱）。',
   lineStickerProgrammaticTextColorLabel: '疊字顏色',
   lineStickerProgrammaticFontSourceLabel: '疊字字型來源',
   lineStickerProgrammaticFontSourcePreset: '內建預設（對應產圖提示詞風格）',

@@ -15,14 +15,6 @@ import {
   type LineStickerSheetIndex,
 } from '../utils/lineStickerSetSchema';
 import type { LineStickerTextRendering } from '../utils/lineStickerPrompt';
-import { FONT_PRESETS, TEXT_COLOR_PRESETS } from '../utils/lineStickerPrompt';
-import {
-  overlayPhrasesOnStickerFrames,
-  type ProgrammaticTextOverlayTuning,
-} from '../utils/lineStickerTextOverlay';
-
-type FontPresetKey = keyof typeof FONT_PRESETS;
-type TextColorPresetKey = keyof typeof TEXT_COLOR_PRESETS;
 
 interface UseLineStickerSlicingParams {
   chromaKeyColor: ChromaKeyColorType;
@@ -41,16 +33,13 @@ interface UseLineStickerSlicingParams {
   sheetFrameOverrides: FrameOverride[][];
   setSheetFrames: Dispatch<SetStateAction<string[][]>>;
   setSheetDimensions: Dispatch<SetStateAction<{ width: number; height: number }>>;
-  /** Programmatic text overlay (set mode slicing). */
+  /** Programmatic text: slice only; overlay runs in LineStickerPage. */
   textRendering: LineStickerTextRendering;
   includeText: boolean;
-  selectedFont: FontPresetKey;
-  selectedTextColor: TextColorPresetKey;
   setPhrasesList: string[];
   /** Single-mode phrase row (length cols*rows); used when set-mode first slice path runs. */
   phraseListSingle: string[];
-  programmaticTextTuning: ProgrammaticTextOverlayTuning;
-  /** Called with sliced frames before optional programmatic overlay (for live preview). */
+  /** Raw sliced frames before browser overlay (for programmatic live compositing). */
   onProgrammaticRawFrames?: (rawFrames: string[], sheetIndex: LineStickerSheetIndex) => void;
 }
 
@@ -77,27 +66,24 @@ export function useLineStickerSlicing({
   setSheetDimensions,
   textRendering,
   includeText,
-  selectedFont,
-  selectedTextColor,
   setPhrasesList,
   phraseListSingle,
-  programmaticTextTuning,
   onProgrammaticRawFrames,
 }: UseLineStickerSlicingParams) {
-  const maybeOverlay = useCallback(
-    async (frames: string[], phraseSlice: string[]): Promise<string[]> => {
-      if (textRendering !== 'programmatic' || !includeText) {
-        return frames;
+  const passThroughOrCaptureRaw = useCallback(
+    async (
+      frames: string[],
+      _phraseSlice: string[],
+      sheetIndex: LineStickerSheetIndex
+    ): Promise<string[]> => {
+      if (textRendering === 'programmatic' && includeText) {
+        onProgrammaticRawFrames?.(frames, sheetIndex);
       }
-      const aligned = frames.map((_, i) => phraseSlice[i] ?? '');
-      return overlayPhrasesOnStickerFrames(frames, aligned, {
-        fontKey: selectedFont,
-        colorKey: selectedTextColor,
-        tuning: programmaticTextTuning,
-      });
+      return frames;
     },
-    [textRendering, includeText, selectedFont, selectedTextColor, programmaticTextTuning]
+    [textRendering, includeText, onProgrammaticRawFrames]
   );
+
   const sliceProcessedSheetToFrames = useCallback(
     async (
       processedImage: string,
@@ -132,8 +118,7 @@ export function useLineStickerSlicing({
       const phraseSlice = stickerSetMode
         ? sliceLineStickerSheetFrames(setPhrasesList, sheetIdx)
         : phraseListSingle;
-      onProgrammaticRawFrames?.(raw, sheetIdx);
-      return maybeOverlay(raw, phraseSlice);
+      return passThroughOrCaptureRaw(raw, phraseSlice, sheetIdx);
     },
     [
       chromaKeyColor,
@@ -141,15 +126,13 @@ export function useLineStickerSlicing({
       frameOverrides,
       gridCols,
       gridRows,
-      maybeOverlay,
+      passThroughOrCaptureRaw,
       phraseListSingle,
       setPhrasesList,
       sheetFrameOverrides,
       sheetSliceSettings,
       sliceSettings,
       stickerSetMode,
-      programmaticTextTuning,
-      onProgrammaticRawFrames,
     ]
   );
 
@@ -176,8 +159,7 @@ export function useLineStickerSlicing({
         const phraseSlice = stickerSetMode
           ? sliceLineStickerSheetFrames(setPhrasesList, currentSheetIndex)
           : phraseListSingle;
-        onProgrammaticRawFrames?.(raw, currentSheetIndex);
-        const frames = await maybeOverlay(raw, phraseSlice);
+        const frames = await passThroughOrCaptureRaw(raw, phraseSlice, currentSheetIndex);
         if (!cancelled) {
           setStickerFrames(frames);
           setSelectedFrames(new Array(frames.length).fill(false));
@@ -201,13 +183,11 @@ export function useLineStickerSlicing({
     sheetDimensions,
     setStickerFrames,
     setSelectedFrames,
-    maybeOverlay,
+    passThroughOrCaptureRaw,
     phraseListSingle,
     setPhrasesList,
     currentSheetIndex,
     stickerSetMode,
-    programmaticTextTuning,
-    onProgrammaticRawFrames,
   ]);
 
   useEffect(() => {
@@ -235,8 +215,7 @@ export function useLineStickerSlicing({
           pad
         );
         const phraseSlice = sliceLineStickerSheetFrames(setPhrasesList, currentSheetIndex);
-        onProgrammaticRawFrames?.(raw, currentSheetIndex);
-        const frames = await maybeOverlay(raw, phraseSlice);
+        const frames = await passThroughOrCaptureRaw(raw, phraseSlice, currentSheetIndex);
         if (!cancelled) {
           setSheetFrames((prev) => {
             const next = [...prev];
@@ -262,10 +241,8 @@ export function useLineStickerSlicing({
     sheetDimensions,
     chromaKeyColor,
     setSheetFrames,
-    maybeOverlay,
+    passThroughOrCaptureRaw,
     setPhrasesList,
-    programmaticTextTuning,
-    onProgrammaticRawFrames,
   ]);
 
   const handleImageLoad = useCallback(
