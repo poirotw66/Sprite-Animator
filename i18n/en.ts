@@ -372,6 +372,11 @@ export const en: Translations = {
   lineStickerPreviewCropped: 'Cropped Preview',
   lineStickerPreviewCropHint: '(Click to select stickers)',
   lineStickerIncludeText: 'Include Text',
+  lineStickerTextRenderingModel: 'Drawn by the model in the image',
+  lineStickerTextRenderingProgrammatic: 'Overlay text after slicing',
+  lineStickerTextRenderingLabel: 'Text rendering',
+  lineStickerTextRenderingHint:
+    'Programmatic mode tells the image model not to render text; phrases are composited in the browser with a consistent font and stroke. Easier to edit copy, but cannot match hand-drawn model lettering.',
   lineStickerGeneratePrompt: 'Generate Prompt',
   lineStickerPromptPreviewTitle: 'Image generation prompt preview',
   lineStickerPromptCurrentVersion: 'Current version: {version}',

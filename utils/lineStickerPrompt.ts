@@ -18,6 +18,17 @@ export interface PromptSlots {
 
 export type LineStickerPromptVersion = 'v1' | 'v2';
 
+/** How sticker phrase text appears: drawn by the image model, or composited in the browser after slicing. */
+export type LineStickerTextRendering = 'model' | 'programmatic';
+
+/** Value passed to Gemini / prompt builders so the model omits text when we overlay it in code. */
+export function getEffectiveLineStickerIncludeText(
+    includeText: boolean,
+    textRendering: LineStickerTextRendering
+): boolean {
+    return textRendering === 'model' ? includeText : false;
+}
+
 export interface StyleSlot {
     styleType: string;
     drawingMethod: string;
@@ -179,6 +190,11 @@ const TEXT_PLACEMENTS: readonly string[] = [
     'Beside head (left)',
     'Beside head (right)',
 ];
+
+/** Cycle index for programmatic text position (matches v2 per-cell placement diversity). */
+export function getLineStickerTextPlacementLabel(frameIndex: number): string {
+    return TEXT_PLACEMENTS[frameIndex % TEXT_PLACEMENTS.length] ?? 'Bottom center';
+}
 
 /** Fallback when no action description is provided (e.g. theme preset or API failure). */
 export const getActionHint = (_phrase: string): string =>

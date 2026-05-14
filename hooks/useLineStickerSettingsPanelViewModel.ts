@@ -7,6 +7,7 @@ import type {
   ThemeOption,
   LineStickerStyleOption,
   LineStickerPromptVersion,
+  LineStickerTextRendering,
   TEXT_PRESETS,
   FONT_PRESETS,
 } from '../utils/lineStickerPrompt';
@@ -50,6 +51,8 @@ interface UseLineStickerSettingsPanelViewModelParams {
   setChromaKeyColor: React.Dispatch<React.SetStateAction<ChromaKeyColorType>>;
   includeText: boolean;
   setIncludeText: React.Dispatch<React.SetStateAction<boolean>>;
+  textRendering: LineStickerTextRendering;
+  setTextRendering: React.Dispatch<React.SetStateAction<LineStickerTextRendering>>;
   selectedLanguage: keyof typeof TEXT_PRESETS;
   setSelectedLanguage: React.Dispatch<React.SetStateAction<keyof typeof TEXT_PRESETS>>;
   selectedPromptVersion: LineStickerPromptVersion;
@@ -121,6 +124,8 @@ export const useLineStickerSettingsPanelViewModel = ({
   setChromaKeyColor,
   includeText,
   setIncludeText,
+  textRendering,
+  setTextRendering,
   selectedLanguage,
   setSelectedLanguage,
   selectedPromptVersion,
@@ -204,6 +209,8 @@ export const useLineStickerSettingsPanelViewModel = ({
     setChromaKeyColor,
     includeText,
     setIncludeText,
+    textRendering,
+    setTextRendering,
     selectedLanguage,
     setSelectedLanguage,
     selectedPromptVersion,
@@ -238,6 +245,8 @@ export const useLineStickerSettingsPanelViewModel = ({
     setChromaKeyColor,
     includeText,
     setIncludeText,
+    textRendering,
+    setTextRendering,
     selectedLanguage,
     setSelectedLanguage,
     selectedPromptVersion,

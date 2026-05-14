@@ -1,6 +1,5 @@
 import { useCallback, useEffect } from 'react';
 import type { Dispatch, SetStateAction, SyntheticEvent } from 'react';
-import { DEFAULT_SLICE_SETTINGS } from '../utils/constants';
 import {
   getEffectivePadding,
   sliceSpriteSheet,
@@ -12,8 +11,15 @@ import type { ChromaKeyColorType } from '../types';
 import { logger } from '../utils/logger';
 import {
   createLineStickerSetSliceSettings,
+  sliceLineStickerSheetFrames,
   type LineStickerSheetIndex,
 } from '../utils/lineStickerSetSchema';
+import type { LineStickerTextRendering } from '../utils/lineStickerPrompt';
+import { FONT_PRESETS, TEXT_COLOR_PRESETS } from '../utils/lineStickerPrompt';
+import { overlayPhrasesOnStickerFrames } from '../utils/lineStickerTextOverlay';
+
+type FontPresetKey = keyof typeof FONT_PRESETS;
+type TextColorPresetKey = keyof typeof TEXT_COLOR_PRESETS;
 
 interface UseLineStickerSlicingParams {
   chromaKeyColor: ChromaKeyColorType;
@@ -32,6 +38,14 @@ interface UseLineStickerSlicingParams {
   sheetFrameOverrides: FrameOverride[][];
   setSheetFrames: Dispatch<SetStateAction<string[][]>>;
   setSheetDimensions: Dispatch<SetStateAction<{ width: number; height: number }>>;
+  /** Programmatic text overlay (set mode slicing). */
+  textRendering: LineStickerTextRendering;
+  includeText: boolean;
+  selectedFont: FontPresetKey;
+  selectedTextColor: TextColorPresetKey;
+  setPhrasesList: string[];
+  /** Single-mode phrase row (length cols*rows); used when set-mode first slice path runs. */
+  phraseListSingle: string[];
 }
 
 interface SliceProcessedSheetOptions {
@@ -55,7 +69,26 @@ export function useLineStickerSlicing({
   sheetFrameOverrides,
   setSheetFrames,
   setSheetDimensions,
+  textRendering,
+  includeText,
+  selectedFont,
+  selectedTextColor,
+  setPhrasesList,
+  phraseListSingle,
 }: UseLineStickerSlicingParams) {
+  const maybeOverlay = useCallback(
+    async (frames: string[], phraseSlice: string[]): Promise<string[]> => {
+      if (textRendering !== 'programmatic' || !includeText) {
+        return frames;
+      }
+      const aligned = frames.map((_, i) => phraseSlice[i] ?? '');
+      return overlayPhrasesOnStickerFrames(frames, aligned, {
+        fontKey: selectedFont,
+        colorKey: selectedTextColor,
+      });
+    },
+    [textRendering, includeText, selectedFont, selectedTextColor]
+  );
   const sliceProcessedSheetToFrames = useCallback(
     async (
       processedImage: string,
@@ -72,7 +105,7 @@ export function useLineStickerSlicing({
       const rows = stickerSetMode ? settings.rows : gridRows;
       const pad: PaddingFour = getEffectivePadding(settings);
 
-      return sliceSpriteSheet(
+      const raw = await sliceSpriteSheet(
         processedImage,
         cols,
         rows,
@@ -86,6 +119,11 @@ export function useLineStickerSlicing({
         chromaKeyColor,
         pad
       );
+      const sheetIdx = targetSheetIndex;
+      const phraseSlice = stickerSetMode
+        ? sliceLineStickerSheetFrames(setPhrasesList, sheetIdx)
+        : phraseListSingle;
+      return maybeOverlay(raw, phraseSlice);
     },
     [
       chromaKeyColor,
@@ -93,6 +131,9 @@ export function useLineStickerSlicing({
       frameOverrides,
       gridCols,
       gridRows,
+      maybeOverlay,
+      phraseListSingle,
+      setPhrasesList,
       sheetFrameOverrides,
       sheetSliceSettings,
       sliceSettings,
@@ -106,7 +147,7 @@ export function useLineStickerSlicing({
     const run = async () => {
       try {
         const pad: PaddingFour = getEffectivePadding(sliceSettings);
-        const frames = await sliceSpriteSheet(
+        const raw = await sliceSpriteSheet(
           processedSpriteSheet,
           gridCols,
           gridRows,
@@ -120,6 +161,10 @@ export function useLineStickerSlicing({
           chromaKeyColor,
           pad
         );
+        const phraseSlice = stickerSetMode
+          ? sliceLineStickerSheetFrames(setPhrasesList, currentSheetIndex)
+          : phraseListSingle;
+        const frames = await maybeOverlay(raw, phraseSlice);
         if (!cancelled) {
           setStickerFrames(frames);
           setSelectedFrames(new Array(frames.length).fill(false));
@@ -143,6 +188,11 @@ export function useLineStickerSlicing({
     sheetDimensions,
     setStickerFrames,
     setSelectedFrames,
+    maybeOverlay,
+    phraseListSingle,
+    setPhrasesList,
+    currentSheetIndex,
+    stickerSetMode,
   ]);
 
   useEffect(() => {
@@ -155,7 +205,7 @@ export function useLineStickerSlicing({
     const pad: PaddingFour = getEffectivePadding(settings);
     const run = async () => {
       try {
-        const frames = await sliceSpriteSheet(
+        const raw = await sliceSpriteSheet(
           processed,
           settings.cols,
           settings.rows,
@@ -169,6 +219,8 @@ export function useLineStickerSlicing({
           chromaKeyColor,
           pad
         );
+        const phraseSlice = sliceLineStickerSheetFrames(setPhrasesList, currentSheetIndex);
+        const frames = await maybeOverlay(raw, phraseSlice);
         if (!cancelled) {
           setSheetFrames((prev) => {
             const next = [...prev];
@@ -194,6 +246,8 @@ export function useLineStickerSlicing({
     sheetDimensions,
     chromaKeyColor,
     setSheetFrames,
+    maybeOverlay,
+    setPhrasesList,
   ]);
 
   const handleImageLoad = useCallback(

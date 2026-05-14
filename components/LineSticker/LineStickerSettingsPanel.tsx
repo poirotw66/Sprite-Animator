@@ -13,6 +13,7 @@ import {
   type ThemeOption,
   type LineStickerStyleOption,
   type LineStickerPromptVersion,
+  type LineStickerTextRendering,
 } from '../../utils/lineStickerPrompt';
 import {
   LineStickerUploadCard,
@@ -49,6 +50,8 @@ export interface LineStickerSettingsConfigViewModel {
   setChromaKeyColor: React.Dispatch<React.SetStateAction<ChromaKeyColorType>>;
   includeText: boolean;
   setIncludeText: React.Dispatch<React.SetStateAction<boolean>>;
+  textRendering: LineStickerTextRendering;
+  setTextRendering: React.Dispatch<React.SetStateAction<LineStickerTextRendering>>;
   selectedLanguage: keyof typeof TEXT_PRESETS;
   setSelectedLanguage: React.Dispatch<React.SetStateAction<keyof typeof TEXT_PRESETS>>;
   selectedPromptVersion: LineStickerPromptVersion;
@@ -404,7 +407,34 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
           </label>
         </div>
 
-        {config.includeText && (
+        <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+          <p className="text-sm font-medium text-slate-700">{t.lineStickerTextRenderingLabel}</p>
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
+            <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
+              <input
+                type="radio"
+                name="lineStickerTextRendering"
+                className="text-green-600 shrink-0"
+                checked={config.textRendering === 'model'}
+                onChange={() => config.setTextRendering('model')}
+              />
+              {t.lineStickerTextRenderingModel}
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
+              <input
+                type="radio"
+                name="lineStickerTextRendering"
+                className="text-green-600 shrink-0"
+                checked={config.textRendering === 'programmatic'}
+                onChange={() => config.setTextRendering('programmatic')}
+              />
+              {t.lineStickerTextRenderingProgrammatic}
+            </label>
+          </div>
+          <p className="text-xs text-slate-500 leading-relaxed">{t.lineStickerTextRenderingHint}</p>
+        </div>
+
+        {(config.includeText || config.textRendering === 'programmatic') && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerTextLangLabel}</label>

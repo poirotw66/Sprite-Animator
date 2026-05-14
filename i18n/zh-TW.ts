@@ -372,6 +372,11 @@ export const zhTW: Translations = {
   lineStickerPreviewCropped: '切割預覽',
   lineStickerPreviewCropHint: '（可點擊選擇個別貼圖）',
   lineStickerIncludeText: '包含文字',
+  lineStickerTextRenderingModel: '由模型畫在圖上',
+  lineStickerTextRenderingProgrammatic: '程式切圖後疊字',
+  lineStickerTextRenderingLabel: '文字呈現方式',
+  lineStickerTextRenderingHint:
+    '「程式疊字」會讓產圖模型不畫字，改在瀏覽器用統一字型與描邊疊上短語；易改文案但無法完全複製模型手繪美術字。',
   lineStickerGeneratePrompt: '產生提示詞',
   lineStickerPromptPreviewTitle: '產圖提示詞預覽',
   lineStickerPromptCurrentVersion: '目前版本：{version}',

@@ -28,6 +28,8 @@ export interface UseSpriteSheetFlowOptions {
   /** When true (default), run chroma key on image change. When false, processedImage is only set via setProcessedImage (e.g. AI removal). */
   runChromaAutomatically?: boolean;
   initialSliceSettings?: SliceSettings;
+  /** Optional post-process after slicing (e.g. LINE programmatic text overlay). */
+  mapFramesAfterSlice?: (frames: string[]) => Promise<string[]>;
 }
 
 export interface UseSpriteSheetFlowResult {
@@ -79,6 +81,7 @@ export function useSpriteSheetFlow(
   const {
     runChromaAutomatically = true,
     initialSliceSettings = DEFAULT_SLICE_SETTINGS as SliceSettings,
+    mapFramesAfterSlice,
   } = options;
 
   const [image, setImage] = useState<string | null>(null);
@@ -154,17 +157,20 @@ export function useSpriteSheetFlow(
           sliceSettings.sliceMode === 'inferred' &&
           sliceSettings.inferredCellRects?.length
         ) {
-          const result = await sliceSpriteSheetByCellRects(
+          let result = await sliceSpriteSheetByCellRects(
             source,
             sliceSettings.inferredCellRects
           );
+          if (!cancelled && mapFramesAfterSlice) {
+            result = await mapFramesAfterSlice(result);
+          }
           if (!cancelled) {
             setFrames(result);
             setFrameIncluded(new Array(result.length).fill(true));
           }
         } else {
           const padding = getEffectivePadding(sliceSettings);
-          const result = await sliceSpriteSheet(
+          let result = await sliceSpriteSheet(
             source,
             sliceSettings.cols,
             sliceSettings.rows,
@@ -178,6 +184,9 @@ export function useSpriteSheetFlow(
             chromaKeyColor,
             padding
           );
+          if (!cancelled && mapFramesAfterSlice) {
+            result = await mapFramesAfterSlice(result);
+          }
           if (!cancelled) {
             setFrames(result);
             setFrameIncluded(new Array(result.length).fill(true));
@@ -208,6 +217,8 @@ export function useSpriteSheetFlow(
     sliceSettings.shiftY,
     frameOverrides,
     chromaKeyColor,
+    mapFramesAfterSlice,
+    sliceSettings,
   ]);
 
   // Sync frameIncluded length when frames change (keep selection where possible)
@@ -277,32 +288,38 @@ export function useSpriteSheetFlow(
 
   const sliceProcessedSheetToFrames = useCallback(
     async (processedImg: string): Promise<string[]> => {
+      let raw: string[];
       if (
         sliceSettings.sliceMode === 'inferred' &&
         sliceSettings.inferredCellRects?.length
       ) {
-        return sliceSpriteSheetByCellRects(
+        raw = await sliceSpriteSheetByCellRects(
           processedImg,
           sliceSettings.inferredCellRects
         );
+      } else {
+        const padding = getEffectivePadding(sliceSettings);
+        raw = await sliceSpriteSheet(
+          processedImg,
+          sliceSettings.cols,
+          sliceSettings.rows,
+          sliceSettings.paddingX,
+          sliceSettings.paddingY,
+          sliceSettings.shiftX,
+          sliceSettings.shiftY,
+          false,
+          BACKGROUND_REMOVAL_THRESHOLD,
+          frameOverrides,
+          chromaKeyColor,
+          padding
+        );
       }
-      const padding = getEffectivePadding(sliceSettings);
-      return sliceSpriteSheet(
-        processedImg,
-        sliceSettings.cols,
-        sliceSettings.rows,
-        sliceSettings.paddingX,
-        sliceSettings.paddingY,
-        sliceSettings.shiftX,
-        sliceSettings.shiftY,
-        false,
-        BACKGROUND_REMOVAL_THRESHOLD,
-        frameOverrides,
-        chromaKeyColor,
-        padding
-      );
+      if (mapFramesAfterSlice) {
+        return mapFramesAfterSlice(raw);
+      }
+      return raw;
     },
-    [sliceSettings, frameOverrides, chromaKeyColor]
+    [sliceSettings, frameOverrides, chromaKeyColor, mapFramesAfterSlice]
   );
 
   const optimizeSlice = useCallback(async () => {

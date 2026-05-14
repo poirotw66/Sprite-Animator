@@ -49,9 +49,11 @@ import {
     type ThemeOption,
     type LineStickerStyleOption,
     type LineStickerPromptVersion,
+    type LineStickerTextRendering,
 } from '../utils/lineStickerPrompt';
 import { generateSpriteSheet } from '../services/geminiService';
 import type { ActionDedupeStrength } from '../services/gemini/actionDescriptions';
+import { overlayPhrasesOnStickerFrames } from '../utils/lineStickerTextOverlay';
 
 const createSetModeSliceSettingsList = () =>
     createLineStickerSheetArray(() => createLineStickerSetSliceSettings());
@@ -166,12 +168,38 @@ const LineStickerPage: React.FC = () => {
     const [selectedFrames, setSelectedFrames] = useState<boolean[]>([]);
     const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('green');
     const [includeText, setIncludeText] = useState(true);
+    const [textRendering, setTextRendering] = useState<LineStickerTextRendering>('model');
     const [bgRemovalMethod, setBgRemovalMethod] = useState<BgRemovalMethod>('chroma');
+
+    const programmaticTextOverlayRef = useRef({
+        textRendering: 'model' as LineStickerTextRendering,
+        includeText: true,
+        stickerSetMode: false,
+        currentSheetIndex: DEFAULT_LINE_STICKER_SHEET_INDEX,
+        phrasesForHook: [] as string[],
+        selectedFont: 'handwritten' as keyof typeof FONT_PRESETS,
+        selectedTextColor: 'black' as keyof typeof TEXT_COLOR_PRESETS,
+    });
+
+    const mapFramesAfterSlice = useCallback(async (frames: string[]) => {
+        const ctx = programmaticTextOverlayRef.current;
+        if (ctx.textRendering !== 'programmatic' || !ctx.includeText) {
+            return frames;
+        }
+        const phrases = ctx.stickerSetMode
+            ? sliceLineStickerSheetFrames(ctx.phrasesForHook, ctx.currentSheetIndex)
+            : ctx.phrasesForHook.slice(0, frames.length);
+        return overlayPhrasesOnStickerFrames(frames, phrases, {
+            fontKey: ctx.selectedFont,
+            colorKey: ctx.selectedTextColor,
+        });
+    }, []);
 
     // Single-sheet mode: shared flow (upload ? slice ? remove bg ? frames) with PartingPage
     const singleSheetFlow = useSpriteSheetFlow({
         runChromaAutomatically: bgRemovalMethod === 'chroma',
         initialSliceSettings: { ...DEFAULT_SLICE_SETTINGS, cols: LINE_STICKER_SET_COLS, rows: LINE_STICKER_SET_ROWS } as SliceSettings,
+        mapFramesAfterSlice,
     });
     const effectiveGridCols = stickerSetMode ? LINE_STICKER_SET_COLS : singleSheetFlow.sliceSettings.cols;
     const effectiveGridRows = stickerSetMode ? LINE_STICKER_SET_ROWS : singleSheetFlow.sliceSettings.rows;
@@ -198,6 +226,26 @@ const LineStickerPage: React.FC = () => {
         gridCols: effectiveGridCols,
         gridRows: effectiveGridRows,
     });
+    useEffect(() => {
+        programmaticTextOverlayRef.current = {
+            textRendering,
+            includeText,
+            stickerSetMode,
+            currentSheetIndex,
+            phrasesForHook,
+            selectedFont,
+            selectedTextColor,
+        };
+    }, [
+        textRendering,
+        includeText,
+        stickerSetMode,
+        currentSheetIndex,
+        phrasesForHook,
+        selectedFont,
+        selectedTextColor,
+    ]);
+
     useLineStickerThemePresetSync({
         selectedTheme,
         gridCols: effectiveGridCols,
@@ -233,6 +281,7 @@ const LineStickerPage: React.FC = () => {
         chromaKeyColor,
         sourceImage,
         includeText,
+        textRendering,
         promptVersion: selectedPromptVersion,
         selectedResolution: outputResolution,
     });
@@ -297,6 +346,12 @@ const LineStickerPage: React.FC = () => {
         sheetFrameOverrides,
         setSheetFrames,
         setSheetDimensions,
+        textRendering,
+        includeText,
+        selectedFont,
+        selectedTextColor,
+        setPhrasesList,
+        phraseListSingle: phrasesForHook,
     });
 
     const handleImageLoad = stickerSetMode ? slicingHandleImageLoad : singleSheetFlow.handleImageLoad;
@@ -730,6 +785,8 @@ const LineStickerPage: React.FC = () => {
         setChromaKeyColor,
         includeText,
         setIncludeText,
+        textRendering,
+        setTextRendering,
         selectedLanguage,
         setSelectedLanguage,
         selectedPromptVersion,

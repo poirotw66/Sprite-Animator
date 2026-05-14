@@ -7,9 +7,11 @@ import {
     THEME_PRESETS,
     DEFAULT_CHARACTER_SLOT,
     buildLineStickerPrompt,
+    getEffectiveLineStickerIncludeText,
     type ThemeOption,
     type LineStickerStyleOption,
     type LineStickerPromptVersion,
+    type LineStickerTextRendering,
 } from '../utils/lineStickerPrompt';
 import { getErrorMessage } from '../types/errors';
 import { generateSpriteSheet } from '../services/geminiService';
@@ -36,6 +38,7 @@ interface UseLineStickerGenerationProps {
     chromaKeyColor: 'magenta' | 'green';
     sourceImage: string | null;
     includeText: boolean;
+    textRendering: LineStickerTextRendering;
     promptVersion: LineStickerPromptVersion;
     /** Output resolution (1K / 2K / 4K). Gemini 2.5 Flash supports 1K only. */
     selectedResolution?: ImageResolution;
@@ -65,6 +68,7 @@ export const useLineStickerGeneration = ({
     chromaKeyColor,
     sourceImage,
     includeText,
+    textRendering,
     promptVersion,
     selectedResolution,
 }: UseLineStickerGenerationProps) => {
@@ -119,12 +123,14 @@ export const useLineStickerGeneration = ({
                 ? [...customActionDescsList, ...Array(totalFrames - customActionDescsList.length).fill('')].slice(0, totalFrames)
                 : undefined);
 
+        const effectiveIncludeText = getEffectiveLineStickerIncludeText(includeText, textRendering);
+
         return buildLineStickerPrompt(
             slots,
             gridCols,
             gridRows,
             chromaKeyColor,
-            includeText,
+            effectiveIncludeText,
             actionDescs,
             promptVersion
         );
@@ -136,7 +142,6 @@ export const useLineStickerGeneration = ({
         customPhrasesList,
         customActionDescsList,
         totalFrames,
-        selectedStyle,
         selectedLanguage,
         selectedTextColor,
         selectedFont,
@@ -144,6 +149,7 @@ export const useLineStickerGeneration = ({
         gridRows,
         chromaKeyColor,
         includeText,
+        textRendering,
         promptVersion,
     ]);
 
@@ -174,6 +180,8 @@ export const useLineStickerGeneration = ({
         try {
             const prompt = buildPrompt(phraseListOverride, actionDescsOverride);
             // generateSpriteSheet(imageBase64, prompt, cols, rows, apiKey, model, onProgress, chromaKeyColor, outputResolution)
+            const effectiveIncludeText = getEffectiveLineStickerIncludeText(includeText, textRendering);
+
             const result = await generateSpriteSheet(
                 sourceImage || '',
                 prompt,
@@ -189,7 +197,7 @@ export const useLineStickerGeneration = ({
                 },
                 chromaKeyColor,
                 selectedResolution,
-                includeText,
+                effectiveIncludeText,
                 signal
             );
             return result;
@@ -218,6 +226,9 @@ export const useLineStickerGeneration = ({
         selectedResolution,
         chromaKeyColor,
         includeText,
+        textRendering,
+        gridCols,
+        gridRows,
         t,
     ]);
 

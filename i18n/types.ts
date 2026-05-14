@@ -374,6 +374,10 @@ export interface Translations {
   lineStickerPreviewCropped: string;
   lineStickerPreviewCropHint: string;
   lineStickerIncludeText: string;
+  lineStickerTextRenderingModel: string;
+  lineStickerTextRenderingProgrammatic: string;
+  lineStickerTextRenderingLabel: string;
+  lineStickerTextRenderingHint: string;
   lineStickerGeneratePrompt: string;
   lineStickerPromptPreviewTitle: string;
   lineStickerPromptCurrentVersion: string;
