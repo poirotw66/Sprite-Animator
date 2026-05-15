@@ -304,7 +304,7 @@ export const en: Translations = {
   lineStickerGeneratePhrases: 'Generate',
   lineStickerGeneratePhrases48: 'Generate {totalFrames} Phrases',
   lineStickerGeneratingPhrases: 'Generating...',
-  lineStickerPhraseGenHint: 'AI generates theme-aligned phrases from the chat theme (Theme Slot) and selected language',
+  lineStickerPhraseGenHint: 'AI phrases from theme and language; max 5 characters (3 words in English), keep them very short',
   lineStickerPhraseGenHint48: 'Generate {totalFrames} phrases for {sheetCount} sprite sheets based on theme and language',
   lineStickerPhraseActionHint: 'Character will automatically react to each phrase with fitting expressions and gestures (e.g.: success → cheer, failure → droop, check rules → read book)',
   lineStickerPhraseSetPlaceholder: 'Click "Generate {totalFrames} Phrases" first',

@@ -304,7 +304,7 @@ export const zhTW: Translations = {
   lineStickerGeneratePhrases: '產生',
   lineStickerGeneratePhrases48: '產生 {totalFrames} 句短語',
   lineStickerGeneratingPhrases: '產生中...',
-  lineStickerPhraseGenHint: '依聊天主題（Theme Slot）與語言用 AI 產生貼合語境的短語',
+  lineStickerPhraseGenHint: '依主題與語言用 AI 產生短語；每句最多 5 字（英文最多 3 個單字），以簡短為主',
   lineStickerPhraseGenHint48: '依主題與語言一次產生 {totalFrames} 句，對應 {sheetCount} 張精靈圖',
   lineStickerPhraseActionHint: '角色會根據每個短語的語意自動做出對應的表情和動作（如：成功→慶祝、失敗→沮喪、查規則→翻書等）',
   lineStickerPhraseSetPlaceholder: '先點「產生 {totalFrames} 句短語」',

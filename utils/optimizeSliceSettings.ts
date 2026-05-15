@@ -14,6 +14,26 @@ export interface OptimizedSliceResult {
   shiftY: number;
 }
 
+/** Padding/shift fields to merge into slice settings after auto-optimization. */
+export function mergeOptimizedPadding(optimized: OptimizedSliceResult) {
+  return {
+    paddingLeft: optimized.paddingLeft,
+    paddingRight: optimized.paddingRight,
+    paddingTop: optimized.paddingTop,
+    paddingBottom: optimized.paddingBottom,
+    paddingX: Math.round((optimized.paddingLeft + optimized.paddingRight) / 2),
+    paddingY: Math.round((optimized.paddingTop + optimized.paddingBottom) / 2),
+    shiftX: optimized.shiftX,
+    shiftY: optimized.shiftY,
+    autoOptimized: {
+      paddingX: true,
+      paddingY: true,
+      shiftX: true,
+      shiftY: true,
+    },
+  };
+}
+
 /**
  * Automatically optimizes slice settings by analyzing the sprite sheet image.
  * Detects content boundaries and calculates optimal padding and shift values.

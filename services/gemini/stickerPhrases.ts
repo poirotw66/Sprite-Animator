@@ -5,6 +5,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { logger } from '../../utils/logger';
 import { PHRASE_GENERATION_MODEL } from '../../utils/constants';
+import { clampStickerPhrases } from '../../utils/lineStickerPhraseLength';
 import { API_KEY_MISSING_MESSAGE } from './types';
 
 export async function generateStickerPhrases(
@@ -39,10 +40,11 @@ ${themeContext}${exampleBlock}
 ### [Language]
 Output **${language}** only.
 
-Hard limits (including punctuation inside the phrase):
-- **Chinese**: usually **2–6 characters** per phrase; occasionally one extra particle only if still sticker-readable; prefer spoken/colloquial fragments (e.g. reactive snippets typical in LINE chat).
-- **Japanese**: **short casual fragments** (often 2–8 mora-equivalent length); plain speech or light slang appropriate to LINE; avoid stiff written/formal textbook Japanese unless the theme demands it.
-- **English**: **1–4 words**, headline-style; contractions OK ("gonna", "I'm ok"); no clauses or commas chaining ideas.
+Hard limits (including punctuation inside the phrase) — **brevity is mandatory**:
+- **Chinese (Traditional/Simplified)**: **at most 5 characters** per phrase; target **2–4 characters**; ultra-short LINE chat fragments only (e.g. 好、謝、等、嗯).
+- **Japanese**: **at most 5 characters** (mora-equivalent); target **2–4**; casual spoken fragments only—never full sentences.
+- **English**: **at most 3 words**; target **1–2 words**; headline-style; contractions OK; no clauses or commas chaining ideas.
+- If a draft feels long, **shorten it**—never exceed the cap.
 
 ### [LINE sticker suitability — CRITICAL]
 - **Thumbnail-first**: wording must stay legible when scaled small beside the character—avoid dense punctuation, paired quotes, parentheses, slashes, hashtags, URLs, email-like fragments.
@@ -195,5 +197,5 @@ Generate the ${contentCount} phrases now.`;
     ')'
   );
 
-  return result;
+  return clampStickerPhrases(result, language);
 }

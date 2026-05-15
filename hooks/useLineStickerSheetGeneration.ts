@@ -5,6 +5,7 @@ import { removeBackgroundAI } from '../utils/aiBackgroundRemoval';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ } from '../utils/constants';
 import type { BgRemovalMethod, ChromaKeyColorType } from '../types';
+import type { SliceSettings } from '../utils/imageUtils';
 import { createAbortError, isAbortError } from '../utils/abort';
 import {
   createLineStickerSheetArray,
@@ -116,8 +117,13 @@ export interface UseLineStickerSheetGenerationOptions {
   setters: LineStickerGenerationSetters;
   sliceProcessedSheetToFrames: (
     processedImage: string,
-    options?: { sheetIndex?: LineStickerSheetIndex }
+    options?: { sheetIndex?: LineStickerSheetIndex; sliceSettingsOverride?: SliceSettings }
   ) => Promise<string[]>;
+  /** Set mode: optimize padding/shift on processed sheet before slicing. */
+  optimizeSheetSlice?: (
+    processedImage: string,
+    sheetIndex: LineStickerSheetIndex
+  ) => Promise<SliceSettings | undefined>;
 }
 
 export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenerationOptions) {
@@ -146,6 +152,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
       setChromaKeyProgress,
     },
     sliceProcessedSheetToFrames,
+    optimizeSheetSlice,
   } = options;
 
   const [sheetStatuses, setSheetStatuses] = useState<LineStickerSheetStatus[]>(() =>
@@ -421,7 +428,16 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
         error: null,
       });
 
-      const frames = await sliceProcessedSheetToFrames(processed, { sheetIndex });
+      let sliceSettingsOverride: SliceSettings | undefined;
+      if (optimizeSheetSlice) {
+        sliceSettingsOverride = await optimizeSheetSlice(processed, sheetIndex);
+        throwIfRequestInactive(requestId);
+      }
+
+      const frames = await sliceProcessedSheetToFrames(processed, {
+        sheetIndex,
+        sliceSettingsOverride,
+      });
       throwIfRequestInactive(requestId);
       setSheetFrames((prev) => {
         const next = [...prev];
@@ -460,6 +476,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
       setSelectedFramesBySheet,
       setSheetFrames,
       setSheetImages,
+      optimizeSheetSlice,
       sliceProcessedSheetToFrames,
       t,
       throwIfRequestInactive,

@@ -72,6 +72,7 @@ interface UseLineStickerSettingsPanelViewModelParams {
   phraseGridList: string[];
   actionDescGridList: string[];
   phraseGridCols: number;
+  phraseMaxLength: number;
   updatePhraseAt: (index: number, value: string) => void;
   updateActionDescAt: (index: number, value: string) => void;
   isGeneratingPhrases: boolean;
@@ -150,6 +151,7 @@ export const useLineStickerSettingsPanelViewModel = ({
   phraseGridList,
   actionDescGridList,
   phraseGridCols,
+  phraseMaxLength,
   updatePhraseAt,
   updateActionDescAt,
   isGeneratingPhrases,
@@ -286,6 +288,7 @@ export const useLineStickerSettingsPanelViewModel = ({
     phraseGridList,
     actionDescGridList,
     phraseGridCols,
+    phraseMaxLength,
     updatePhraseAt,
     updateActionDescAt,
     isGeneratingPhrases,
@@ -318,6 +321,7 @@ export const useLineStickerSettingsPanelViewModel = ({
     phraseGridList,
     actionDescGridList,
     phraseGridCols,
+    phraseMaxLength,
     updatePhraseAt,
     updateActionDescAt,
     isGeneratingPhrases,

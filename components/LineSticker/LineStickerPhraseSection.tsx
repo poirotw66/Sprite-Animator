@@ -21,6 +21,7 @@ export interface LineStickerPhraseSectionProps {
   phraseGridList: string[];
   actionDescGridList: string[];
   phraseGridCols: number;
+  phraseMaxLength: number;
   updatePhraseAt: (index: number, value: string) => void;
   updateActionDescAt: (index: number, value: string) => void;
   isGeneratingPhrases: boolean;
@@ -57,6 +58,7 @@ export interface LineStickerPhraseGridEditorProps {
   phraseGridList: string[];
   actionDescGridList: string[];
   phraseGridCols: number;
+  phraseMaxLength: number;
   updatePhraseAt: (index: number, value: string) => void;
   updateActionDescAt: (index: number, value: string) => void;
 }
@@ -68,6 +70,7 @@ interface LineStickerPhraseCellProps {
   index: number;
   phrase: string;
   actionDesc: string;
+  phraseMaxLength: number;
   updatePhraseAt: (index: number, value: string) => void;
   updateActionDescAt: (index: number, value: string) => void;
 }
@@ -79,6 +82,7 @@ const LineStickerPhraseCell: React.FC<LineStickerPhraseCellProps> = React.memo((
   index,
   phrase,
   actionDesc,
+  phraseMaxLength,
   updatePhraseAt,
   updateActionDescAt,
 }) => (
@@ -86,6 +90,7 @@ const LineStickerPhraseCell: React.FC<LineStickerPhraseCellProps> = React.memo((
     <input
       type="text"
       value={phrase}
+      maxLength={phraseMaxLength}
       onChange={(e) => updatePhraseAt(index, e.target.value)}
       placeholder={`${index + 1}`}
       className="w-full min-w-0 p-2 border border-slate-200 rounded-lg text-xs font-mono focus:ring-2 focus:ring-green-500 focus:border-green-400 outline-none bg-white"
@@ -119,6 +124,7 @@ export const LineStickerPhraseGridEditor: React.FC<LineStickerPhraseGridEditorPr
   phraseGridList,
   actionDescGridList,
   phraseGridCols,
+  phraseMaxLength,
   updatePhraseAt,
   updateActionDescAt,
 }) => (
@@ -140,6 +146,7 @@ export const LineStickerPhraseGridEditor: React.FC<LineStickerPhraseGridEditorPr
           index={index}
           phrase={phrase}
           actionDesc={actionDescGridList[index] ?? ''}
+          phraseMaxLength={phraseMaxLength}
           updatePhraseAt={updatePhraseAt}
           updateActionDescAt={updateActionDescAt}
         />
@@ -157,6 +164,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
   phraseGridList,
   actionDescGridList,
   phraseGridCols,
+  phraseMaxLength,
   updatePhraseAt,
   updateActionDescAt,
   isGeneratingPhrases,
@@ -265,6 +273,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
         phraseGridList={phraseGridList}
         actionDescGridList={actionDescGridList}
         phraseGridCols={phraseGridCols}
+        phraseMaxLength={phraseMaxLength}
         updatePhraseAt={updatePhraseAt}
         updateActionDescAt={updateActionDescAt}
       />

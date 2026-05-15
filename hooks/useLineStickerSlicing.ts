@@ -45,6 +45,8 @@ interface UseLineStickerSlicingParams {
 
 interface SliceProcessedSheetOptions {
   sheetIndex?: LineStickerSheetIndex;
+  /** Use when slice settings were just optimized and React state may not have flushed yet. */
+  sliceSettingsOverride?: SliceSettings;
 }
 
 export function useLineStickerSlicing({
@@ -90,9 +92,11 @@ export function useLineStickerSlicing({
       options?: SliceProcessedSheetOptions
     ): Promise<string[]> => {
       const targetSheetIndex = options?.sheetIndex ?? currentSheetIndex;
-      const settings = stickerSetMode
-        ? (sheetSliceSettings[targetSheetIndex] ?? createLineStickerSetSliceSettings())
-        : sliceSettings;
+      const settings =
+        options?.sliceSettingsOverride ??
+        (stickerSetMode
+          ? (sheetSliceSettings[targetSheetIndex] ?? createLineStickerSetSliceSettings())
+          : sliceSettings);
       const overrides = stickerSetMode
         ? (sheetFrameOverrides[targetSheetIndex] ?? [])
         : frameOverrides;

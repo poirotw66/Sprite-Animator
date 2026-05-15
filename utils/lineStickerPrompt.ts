@@ -9,6 +9,8 @@
  * - Text Slot: Language and text content
  */
 
+import { clampStickerPhrase } from './lineStickerPhraseLength';
+
 export interface PromptSlots {
     style: StyleSlot;
     character: CharacterSlot;
@@ -65,13 +67,16 @@ export function collectThemePhraseCycle(theme: Pick<ThemeSlot, 'examplePhrases' 
 /** Fill exactly totalFrames entries by cycling theme phrases (same rule as grid prompt cells). */
 export function expandThemePhrasesForFrames(
     theme: Pick<ThemeSlot, 'examplePhrases' | 'specialStickers'>,
-    totalFrames: number
+    totalFrames: number,
+    language: string = 'Traditional Chinese'
 ): string[] {
     const cycle = collectThemePhraseCycle(theme);
     if (cycle.length === 0) {
         return Array.from({ length: totalFrames }, (_, index) => `Expression ${index + 1}`);
     }
-    return Array.from({ length: totalFrames }, (_, index) => cycle[index % cycle.length]);
+    return Array.from({ length: totalFrames }, (_, index) =>
+        clampStickerPhrase(cycle[index % cycle.length] ?? '', language)
+    );
 }
 
 export interface TextSlot {
@@ -266,7 +271,11 @@ export function buildLineStickerPrompt(
     const bgHex = bgColor === 'magenta' ? '#FF00FF' : '#00FF00';
 
     if (promptVersion === 'v2') {
-        const phrasesForFrames = expandThemePhrasesForFrames(slots.theme, totalFrames);
+        const phrasesForFrames = expandThemePhrasesForFrames(
+            slots.theme,
+            totalFrames,
+            slots.text.language
+        );
         const actionForImage = (raw: string): string => {
             const s = raw.trim();
             const maxLen = 80;
@@ -409,7 +418,11 @@ ${lightingLine}
 `;
 
     // 5. Grid Content — Per cell (local details)
-    const phrasesForFrames = expandThemePhrasesForFrames(slots.theme, totalFrames);
+    const phrasesForFrames = expandThemePhrasesForFrames(
+        slots.theme,
+        totalFrames,
+        slots.text.language
+    );
     const textRuleCell = includeText ? 'Every cell MUST clearly display its assigned short phrase text.' : 'DO NOT include any text in the images; poses and expressions only.';
     const actionForImage = (raw: string): string => {
         const s = raw.trim();
@@ -542,7 +555,7 @@ export const DEFAULT_TEXT_SLOT: TextSlot = {
     language: 'Traditional Chinese',
     textStyle: FONT_PRESETS.handwritten.promptDesc,
     textColor: TEXT_COLOR_PRESETS.black.promptDesc,
-    lengthConstraints: { chinese: '建議 2～6 個字', english: '建議 1～3 個單字' }
+    lengthConstraints: { chinese: '最多 5 個字，宜 2～4 字', english: '最多 3 個單字，宜 1～2 字' }
 };
 
 // label: for UI; chatContext: English for image model; examplePhrases: sticker text (any language)
@@ -576,23 +589,23 @@ export const THEME_PRESETS: Record<string, ThemeSlot & { label: string }> = {
         chatContext: 'Internet memes and viral phrases',
         examplePhrases: [
             '真香',
-            '小朋友才做選擇',
+            '全都要',
             '我全都要',
             '我就爛',
-            '你各位啊',
+            '你各位',
             '是在哈囉',
             '歸剛欸',
             '哭啊',
-            '奇怪的知識增加了',
-            '芭比 Q 了',
+            '長知識',
+            '芭比Q',
             '太狠了',
             '我的超人',
             '計畫通',
-            '我就靜靜看著你',
+            '看戲',
             '母湯喔',
-            '這不合邏輯吧',
+            '不合理',
         ],
-        specialStickers: { description: '角色露出經典的「計畫通」表情', texts: ['計畫通', '掌握全局'] }
+        specialStickers: { description: '角色露出經典的「計畫通」表情', texts: ['計畫通', '通靈'] }
     },
     food: {
         label: '美食饕客',
@@ -600,20 +613,20 @@ export const THEME_PRESETS: Record<string, ThemeSlot & { label: string }> = {
         examplePhrases: [
             '餓了',
             '想吃肉',
-            '宵夜時間',
-            '珍珠奶茶',
+            '宵夜',
+            '珍奶',
             '好飽',
-            '美食萬歲',
-            '減肥明天再說',
+            '美食',
+            '明天再說',
             '外送到了',
             '分我一口',
             '真好吃',
-            '看起來很雷',
-            '這味道...',
+            '好雷',
+            '這味道',
             '大受好評',
-            '美味十足',
-            '再來一碗',
-            '熱量爆炸',
+            '美味',
+            '再一碗',
+            '熱量炸',
         ],
         specialStickers: { description: '角色幸福地吃著大餐的樣子', texts: ['大滿足', '還要吃'] }
     }
@@ -759,20 +772,20 @@ export const TEXT_PRESETS: Record<string, TextSlot & { label: string }> = {
         language: 'Simplified Chinese',
         textStyle: FONT_PRESETS.handwritten.promptDesc,
         textColor: TEXT_COLOR_PRESETS.black.promptDesc,
-        lengthConstraints: { chinese: '建議 2～6 個字', english: '建議 1～3 個單字' }
+        lengthConstraints: { chinese: '最多 5 個字，宜 2～4 字', english: '最多 3 個單字，宜 1～2 字' }
     },
     en: {
         label: 'English',
         language: 'English',
         textStyle: 'Hand-written style font',
         textColor: TEXT_COLOR_PRESETS.black.promptDesc,
-        lengthConstraints: { chinese: '建議 2～6 個字', english: '建議 1～3 個單字' }
+        lengthConstraints: { chinese: '最多 5 個字，宜 2～4 字', english: '最多 3 個單字，宜 1～2 字' }
     },
     ja: {
         label: '日本語',
         language: 'Japanese',
         textStyle: 'Hand-written style font',
         textColor: TEXT_COLOR_PRESETS.black.promptDesc,
-        lengthConstraints: { chinese: '建議 2～6 個字', english: '建議 1～3 個單字' }
+        lengthConstraints: { chinese: '最多 5 個字，宜 2～4 字', english: '最多 3 個單字，宜 1～2 字' }
     }
 };

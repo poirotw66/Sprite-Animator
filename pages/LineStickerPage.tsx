@@ -16,7 +16,13 @@ import { useLineStickerPromptPreview } from '../hooks/useLineStickerPromptPrevie
 import { useSpriteSheetFlow } from '../hooks/useSpriteSheetFlow';
 import { useLineStickerSettingsPanelViewModel } from '../hooks/useLineStickerSettingsPanelViewModel';
 import { useLineStickerResultPanelViewModel } from '../hooks/useLineStickerResultPanelViewModel';
-import { SliceSettings, FrameOverride } from '../utils/imageUtils';
+import {
+    SliceSettings,
+    FrameOverride,
+    mergeOptimizedPadding,
+    optimizeSliceSettings,
+} from '../utils/imageUtils';
+import { logger } from '../utils/logger';
 import { ChromaKeyColorType, BgRemovalMethod } from '../types';
 import { DEFAULT_SLICE_SETTINGS } from '../utils/constants';
 import { buildPhraseSetExport, parsePhraseSetJson } from '../utils/lineStickerPhraseSetFormat';
@@ -192,6 +198,7 @@ const LineStickerPage: React.FC = () => {
     const singleSheetFlow = useSpriteSheetFlow({
         runChromaAutomatically: bgRemovalMethod === 'chroma',
         chromaKeyColor,
+        autoOptimizeSlice: true,
         initialSliceSettings: { ...DEFAULT_SLICE_SETTINGS, cols: LINE_STICKER_SET_COLS, rows: LINE_STICKER_SET_ROWS } as SliceSettings,
         mapFramesAfterSlice: lineStickerProgrammaticOverlayCore.mapFramesAfterSlice,
     });
@@ -208,6 +215,7 @@ const LineStickerPage: React.FC = () => {
         phraseGridRows,
         updatePhraseAt,
         updateActionDescAt,
+        phraseMaxLength,
     } = useLineStickerPhraseGrid({
         stickerSetMode,
         currentSheetIndex,
@@ -219,6 +227,7 @@ const LineStickerPage: React.FC = () => {
         setActionDescsList,
         gridCols: effectiveGridCols,
         gridRows: effectiveGridRows,
+        selectedLanguage,
     });
 
     useLineStickerProgrammaticOverlayCompose(lineStickerProgrammaticOverlayCore, {
@@ -345,6 +354,35 @@ const LineStickerPage: React.FC = () => {
     const handleImageLoad = stickerSetMode ? slicingHandleImageLoad : singleSheetFlow.handleImageLoad;
     const sliceProcessedSheetToFrames = stickerSetMode ? slicingSliceToFrames : singleSheetFlow.sliceProcessedSheetToFrames;
 
+    const optimizeSheetSlice = useCallback(
+        async (
+            processedImage: string,
+            sheetIndex: LineStickerSheetIndex
+        ): Promise<SliceSettings | undefined> => {
+            try {
+                const optimized = await optimizeSliceSettings(
+                    processedImage,
+                    LINE_STICKER_SET_COLS,
+                    LINE_STICKER_SET_ROWS
+                );
+                const merged = mergeOptimizedPadding(optimized);
+                let updated: SliceSettings | undefined;
+                setSheetSliceSettings((prev) => {
+                    const next = [...prev];
+                    const current = next[sheetIndex] ?? createLineStickerSetSliceSettings();
+                    updated = { ...current, ...merged };
+                    next[sheetIndex] = updated;
+                    return next;
+                });
+                return updated;
+            } catch (e) {
+                logger.warn('Auto slice optimization failed for set sheet', sheetIndex, e);
+                return undefined;
+            }
+        },
+        []
+    );
+
     const {
         handleGenerate,
         handleGenerateAllSheets,
@@ -395,6 +433,7 @@ const LineStickerPage: React.FC = () => {
             setChromaKeyProgress: stickerSetMode ? setChromaKeyProgress : singleSheetFlow.setChromaKeyProgress,
         },
         sliceProcessedSheetToFrames,
+        optimizeSheetSlice,
     });
 
     const resetSetModeGeneratedOutputs = useCallback(() => {
@@ -668,6 +707,7 @@ const LineStickerPage: React.FC = () => {
             phraseGridList: phrasesForHook,
             actionDescGridList: actionDescsForHook,
             phraseGridCols,
+            phraseMaxLength,
             updatePhraseAt,
             updateActionDescAt,
             currentSheetIndex,
@@ -679,6 +719,7 @@ const LineStickerPage: React.FC = () => {
         phrasesForHook,
         actionDescsForHook,
         phraseGridCols,
+        phraseMaxLength,
         updatePhraseAt,
         updateActionDescAt,
         currentSheetIndex,
@@ -852,6 +893,7 @@ const LineStickerPage: React.FC = () => {
         phraseGridList,
         actionDescGridList,
         phraseGridCols,
+        phraseMaxLength,
         updatePhraseAt,
         updateActionDescAt,
         isGeneratingPhrases,

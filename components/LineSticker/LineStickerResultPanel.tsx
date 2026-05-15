@@ -43,6 +43,7 @@ export interface LineStickerResultSidePhraseEdit {
   phraseGridList: string[];
   actionDescGridList: string[];
   phraseGridCols: number;
+  phraseMaxLength: number;
   updatePhraseAt: (index: number, value: string) => void;
   updateActionDescAt: (index: number, value: string) => void;
   currentSheetIndex: LineStickerSheetIndex;
@@ -242,6 +243,7 @@ const LineStickerResultViewerSection: React.FC<LineStickerResultViewerSectionPro
               phraseGridList={viewer.resultSidePhraseEdit.phraseGridList}
               actionDescGridList={viewer.resultSidePhraseEdit.actionDescGridList}
               phraseGridCols={viewer.resultSidePhraseEdit.phraseGridCols}
+              phraseMaxLength={viewer.resultSidePhraseEdit.phraseMaxLength}
               updatePhraseAt={viewer.resultSidePhraseEdit.updatePhraseAt}
               updateActionDescAt={viewer.resultSidePhraseEdit.updateActionDescAt}
             />

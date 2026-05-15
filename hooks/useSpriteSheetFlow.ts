@@ -3,7 +3,7 @@
  * Used by PartingPage and LineStickerPage (single-sheet mode) to avoid duplicate logic.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Dispatch, SetStateAction, SyntheticEvent } from 'react';
 import {
   sliceSpriteSheet,
@@ -20,7 +20,7 @@ import {
   CHROMA_KEY_COLORS,
   CHROMA_KEY_FUZZ,
 } from '../utils/constants';
-import { optimizeSliceSettings } from '../utils/optimizeSliceSettings';
+import { mergeOptimizedPadding, optimizeSliceSettings } from '../utils/optimizeSliceSettings';
 import { logger } from '../utils/logger';
 import type { ChromaKeyColorType } from '../types';
 
@@ -37,6 +37,8 @@ export interface UseSpriteSheetFlowOptions {
    * (e.g. LINE programmatic text tuning). Unused on PartingPage.
    */
   slicePipelineRevision?: string | number;
+  /** When true, auto-run slice optimization when a new source image is set (before chroma/slice). */
+  autoOptimizeSlice?: boolean;
 }
 
 export interface UseSpriteSheetFlowResult {
@@ -91,6 +93,7 @@ export function useSpriteSheetFlow(
     initialSliceSettings = DEFAULT_SLICE_SETTINGS as SliceSettings,
     mapFramesAfterSlice,
     slicePipelineRevision,
+    autoOptimizeSlice = false,
   } = options;
 
   const [image, setImage] = useState<string | null>(null);
@@ -114,6 +117,48 @@ export function useSpriteSheetFlow(
   const [isProcessingChromaKey, setIsProcessingChromaKey] = useState(false);
 
   const activeChromaKeyColor = CHROMA_KEY_COLORS[chromaKeyColor];
+  const lastAutoOptimizedImageRef = useRef<string | null>(null);
+
+  const runAutoOptimizeForImage = useCallback(
+    async (sourceImage: string) => {
+      if (!autoOptimizeSlice || lastAutoOptimizedImageRef.current === sourceImage) {
+        return;
+      }
+      try {
+        const optimized = await optimizeSliceSettings(
+          sourceImage,
+          sliceSettings.cols,
+          sliceSettings.rows
+        );
+        lastAutoOptimizedImageRef.current = sourceImage;
+        setSliceSettings((prev) => ({ ...prev, ...mergeOptimizedPadding(optimized) }));
+      } catch (e) {
+        logger.warn('Auto slice optimization failed', e);
+      }
+    },
+    [autoOptimizeSlice, sliceSettings.cols, sliceSettings.rows]
+  );
+
+  // Auto-optimize on new image when chroma is off or handled externally (e.g. AI removal).
+  useEffect(() => {
+    if (!image) {
+      lastAutoOptimizedImageRef.current = null;
+      return;
+    }
+    if (runChromaAutomatically && removeBackground) {
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      await runAutoOptimizeForImage(image);
+      if (cancelled) {
+        return;
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [image, removeBackground, runChromaAutomatically, runAutoOptimizeForImage]);
 
   // Chroma key: when image changes and runChromaAutomatically && removeBackground
   useEffect(() => {
@@ -141,6 +186,9 @@ export function useSpriteSheetFlow(
           CHROMA_KEY_FUZZ,
           (p) => setChromaKeyProgress(p)
         );
+        if (autoOptimizeSlice) {
+          await runAutoOptimizeForImage(image);
+        }
         setProcessedImageState(result);
         setChromaKeyProgress(100);
       } catch (e) {
@@ -151,7 +199,14 @@ export function useSpriteSheetFlow(
       }
     };
     processImage();
-  }, [image, removeBackground, runChromaAutomatically, activeChromaKeyColor]);
+  }, [
+    image,
+    removeBackground,
+    runChromaAutomatically,
+    activeChromaKeyColor,
+    autoOptimizeSlice,
+    runAutoOptimizeForImage,
+  ]);
 
   // When removeBackground is turned off, processed = image
   useEffect(() => {
@@ -348,23 +403,7 @@ export function useSpriteSheetFlow(
       sliceSettings.cols,
       sliceSettings.rows
     );
-    setSliceSettings((prev) => ({
-      ...prev,
-      paddingLeft: optimized.paddingLeft,
-      paddingRight: optimized.paddingRight,
-      paddingTop: optimized.paddingTop,
-      paddingBottom: optimized.paddingBottom,
-      paddingX: Math.round((optimized.paddingLeft + optimized.paddingRight) / 2),
-      paddingY: Math.round((optimized.paddingTop + optimized.paddingBottom) / 2),
-      shiftX: optimized.shiftX,
-      shiftY: optimized.shiftY,
-      autoOptimized: {
-        paddingX: true,
-        paddingY: true,
-        shiftX: true,
-        shiftY: true,
-      },
-    }));
+    setSliceSettings((prev) => ({ ...prev, ...mergeOptimizedPadding(optimized) }));
   }, [processedImage, image, sliceSettings.cols, sliceSettings.rows]);
 
   return {

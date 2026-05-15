@@ -8,6 +8,13 @@ import {
   sliceLineStickerSheetFrames,
   type LineStickerSheetIndex,
 } from '../utils/lineStickerSetSchema';
+import {
+  LINE_STICKER_PHRASE_MAX_CHARS,
+  LINE_STICKER_PHRASE_MAX_ENGLISH_WORDS,
+  clampStickerPhrase,
+  isEnglishPhraseLanguage,
+} from '../utils/lineStickerPhraseLength';
+import { TEXT_PRESETS } from '../utils/lineStickerPrompt';
 
 interface UseLineStickerPhraseGridParams {
   stickerSetMode: boolean;
@@ -20,6 +27,7 @@ interface UseLineStickerPhraseGridParams {
   setActionDescsList: Dispatch<SetStateAction<string[]>>;
   gridCols: number;
   gridRows: number;
+  selectedLanguage: keyof typeof TEXT_PRESETS;
 }
 
 function ensureLength(values: string[], size: number): string[] {
@@ -40,7 +48,12 @@ export function useLineStickerPhraseGrid({
   setActionDescsList,
   gridCols,
   gridRows,
+  selectedLanguage,
 }: UseLineStickerPhraseGridParams) {
+  const phraseLanguage = TEXT_PRESETS[selectedLanguage]?.language ?? 'Traditional Chinese';
+  const phraseMaxLength = isEnglishPhraseLanguage(phraseLanguage)
+    ? LINE_STICKER_PHRASE_MAX_ENGLISH_WORDS * 8
+    : LINE_STICKER_PHRASE_MAX_CHARS;
   const phrasesForHook = useMemo(() => {
     if (stickerSetMode) {
       return ensureLength(setPhrasesList, LINE_STICKER_TOTAL_SET_FRAMES);
@@ -79,11 +92,12 @@ export function useLineStickerPhraseGrid({
 
   const updatePhraseAt = useCallback(
     (index: number, value: string) => {
+      const clamped = clampStickerPhrase(value, phraseLanguage);
       if (stickerSetMode) {
         const globalIndex = currentSheetIndex * LINE_STICKER_FRAMES_PER_SHEET + index;
         setSetPhrasesList((prev) => {
           const next = ensureLength(prev, LINE_STICKER_TOTAL_SET_FRAMES);
-          next[globalIndex] = value;
+          next[globalIndex] = clamped;
           return next;
         });
         return;
@@ -92,11 +106,12 @@ export function useLineStickerPhraseGrid({
       const total = gridCols * gridRows;
       setSinglePhrasesList((prev) => {
         const next = ensureLength(prev, total);
-        next[index] = value;
+        next[index] = clamped;
         return next;
       });
     },
     [
+      phraseLanguage,
       stickerSetMode,
       currentSheetIndex,
       setSetPhrasesList,
@@ -137,5 +152,6 @@ export function useLineStickerPhraseGrid({
     phraseGridRows: stickerSetMode ? LINE_STICKER_SET_ROWS : gridRows,
     updatePhraseAt,
     updateActionDescAt,
+    phraseMaxLength,
   };
 }
