@@ -339,6 +339,44 @@ function shiftPixelRect(box: PixelRect, dx: number, dy: number): PixelRect {
   };
 }
 
+function textBoxFitsFrameInset(
+  box: PixelRect,
+  width: number,
+  height: number,
+  inset: number
+): boolean {
+  return (
+    box.minX >= inset &&
+    box.minY >= inset &&
+    box.maxX <= width - inset &&
+    box.maxY <= height - inset
+  );
+}
+
+/** Shift so the text AABB lies inside the frame inset (visibility over perfect avoid). */
+export function correctionToFitTextBoxInFrame(
+  box: PixelRect,
+  width: number,
+  height: number,
+  inset: number
+): { dx: number; dy: number } {
+  let dx = 0;
+  let dy = 0;
+  if (box.minX < inset) {
+    dx += inset - box.minX;
+  }
+  if (box.maxX > width - inset) {
+    dx -= box.maxX - (width - inset);
+  }
+  if (box.minY < inset) {
+    dy += inset - box.minY;
+  }
+  if (box.maxY > height - inset) {
+    dy -= box.maxY - (height - inset);
+  }
+  return { dx, dy };
+}
+
 /** Padding around measured glyphs for stroke and descenders when scoring auto-avoid. */
 export function textOverlayAvoidancePadPx(
   fontSize: number,
@@ -600,6 +638,71 @@ export function computeSubjectBoundingBoxFromContext(
   return mapAnalyzedBBoxToFullFrame(smallBox, scanW, scanH, wSmall, hSmall);
 }
 
+/**
+ * Slide the text box away from the subject centroid until overlap clears, maxShiftPx,
+ * or the next step would push text outside the frame inset.
+ */
+export function computeAnchorNudgeToClearSubject(
+  textBox: PixelRect,
+  subject: PixelRect,
+  width: number,
+  height: number,
+  maxShiftPx: number,
+  frameInsetPx: number = 0
+): { dx: number; dy: number } {
+  if (rectangleIntersectionArea(textBox, subject) <= 0) {
+    return { dx: 0, dy: 0 };
+  }
+  const inset = Math.max(0, frameInsetPx);
+  const tcx = (textBox.minX + textBox.maxX) / 2;
+  const tcy = (textBox.minY + textBox.maxY) / 2;
+  const scx = (subject.minX + subject.maxX) / 2;
+  const scy = (subject.minY + subject.maxY) / 2;
+  let dirX = tcx - scx;
+  let dirY = tcy - scy;
+  if (Math.abs(dirX) < 0.5 && Math.abs(dirY) < 0.5) {
+    dirY = 1;
+  }
+  const len = Math.hypot(dirX, dirY) || 1;
+  dirX /= len;
+  dirY /= len;
+
+  const step = Math.max(2, Math.round(Math.min(width, height) * 0.015));
+  const maxSteps = Math.max(1, Math.ceil(maxShiftPx / step));
+  let box = textBox;
+  let dx = 0;
+  let dy = 0;
+  for (let i = 0; i < maxSteps; i++) {
+    if (rectangleIntersectionArea(box, subject) <= 0) {
+      break;
+    }
+    const next = shiftPixelRect(box, dirX * step, dirY * step);
+    if (!textBoxFitsFrameInset(next, width, height, inset)) {
+      break;
+    }
+    dx += dirX * step;
+    dy += dirY * step;
+    box = next;
+  }
+  const fitted = shiftPixelRect(textBox, dx, dy);
+  const pullBack = correctionToFitTextBoxInFrame(fitted, width, height, inset);
+  return { dx: dx + pullBack.dx, dy: dy + pullBack.dy };
+}
+
+function subjectAvoidanceRegion(
+  subject: PixelRect,
+  width: number,
+  height: number,
+  fontSize: number
+): PixelRect {
+  const bodyPad = Math.ceil(Math.min(width, height) * 0.02 + fontSize * 0.05);
+  return inflatePixelRect(subject, bodyPad, bodyPad, width, height);
+}
+
+function frameInsetPx(width: number, height: number, marginRatio: number): number {
+  return Math.max(2, Math.round(Math.min(width, height) * marginRatio));
+}
+
 function pickBestPlacementLabelAutoAvoid(
   ctx: CanvasRenderingContext2D,
   trimmed: string,
@@ -608,19 +711,23 @@ function pickBestPlacementLabelAutoAvoid(
   marginRatio: number,
   fontSize: number,
   lineHeight: number,
-  frameIndex: number
+  strokeMult: number,
+  frameIndex: number,
+  subjectRaw: PixelRect | null
 ): string {
-  const subject = computeSubjectBoundingBoxFromContext(ctx, width, height);
+  const subject =
+    subjectRaw != null ? subjectAvoidanceRegion(subjectRaw, width, height, fontSize) : null;
   if (!subject) {
     return getLineStickerTextPlacementLabel(frameIndex);
   }
+  const { padX, padY } = textOverlayAvoidancePadPx(fontSize, strokeMult);
+  const inset = frameInsetPx(width, height, marginRatio);
   let bestLabel = LINE_STICKER_TEXT_PLACEMENT_PRESETS[0] ?? 'Bottom center';
-  let bestScore = -Number.MAX_VALUE;
+  let bestOverlap = Number.POSITIVE_INFINITY;
+  let bestGap = -1;
   for (const label of LINE_STICKER_TEXT_PLACEMENT_PRESETS) {
     const layout = layoutFromPlacementLabel(label, width, height, marginRatio);
     const lines = wrapLines(ctx, trimmed, layout.maxWidth);
-    const padX = Math.ceil(fontSize * 0.18);
-    const padY = Math.ceil(fontSize * 0.1);
     const textBox = estimateTextBlockBoxFromMeasuredLines(
       ctx,
       width,
@@ -633,9 +740,18 @@ function pickBestPlacementLabelAutoAvoid(
     );
     const overlap = rectangleIntersectionArea(textBox, subject);
     const gap = rectangleMinSeparation(textBox, subject);
-    const score = gap - overlap * 12;
-    if (score > bestScore) {
-      bestScore = score;
+    const overflow =
+      Math.max(0, inset - textBox.minX) +
+      Math.max(0, inset - textBox.minY) +
+      Math.max(0, textBox.maxX - (width - inset)) +
+      Math.max(0, textBox.maxY - (height - inset));
+    const overlapScore = overlap + overflow * 8000;
+    if (
+      overlapScore < bestOverlap ||
+      (overlapScore === bestOverlap && gap > bestGap)
+    ) {
+      bestOverlap = overlapScore;
+      bestGap = gap;
       bestLabel = label;
     }
   }
@@ -718,6 +834,15 @@ export function overlayLineStickerTextOnFrame(
         const strokeHex = strokeColorForFill(fillHex);
         const lineHeight = fontSize * lineMult;
         const mode = getEffectiveProgrammaticPlacementMode(tuning, options.frameIndex);
+        const analysisSide = Math.max(256, Math.min(workW, workH));
+        const subjectRaw = computeSubjectBoundingBoxFromContext(ctx, workW, workH, {
+          maxAnalysisSide: analysisSide,
+        });
+        const subjectForAvoid =
+          subjectRaw != null
+            ? subjectAvoidanceRegion(subjectRaw, workW, workH, fontSize)
+            : null;
+
         let placementLabel: string;
         if (mode === 'auto_avoid_subject') {
           placementLabel = pickBestPlacementLabelAutoAvoid(
@@ -728,7 +853,9 @@ export function overlayLineStickerTextOnFrame(
             marginRatio,
             fontSize,
             lineHeight,
-            options.frameIndex
+            strokeMult,
+            options.frameIndex,
+            subjectRaw
           );
         } else {
           placementLabel = resolveProgrammaticPlacementLabel(options.frameIndex, tuning);
@@ -737,12 +864,43 @@ export function overlayLineStickerTextOnFrame(
 
         const offsetX = (workW * tuning.offsetXPercent) / 100;
         const offsetY = (workH * tuning.offsetYPercent) / 100;
-        const anchorX = layout.anchorX + offsetX;
-        const anchorY = layout.anchorY + offsetY;
+        let anchorX = layout.anchorX + offsetX;
+        let anchorY = layout.anchorY + offsetY;
 
         ctx.textAlign = layout.textAlign;
         ctx.textBaseline = layout.textBaseline;
         const lines = wrapLines(ctx, trimmed, layout.maxWidth);
+
+        if (mode === 'auto_avoid_subject' && subjectForAvoid) {
+          const { padX, padY } = textOverlayAvoidancePadPx(fontSize, strokeMult);
+          const inset = frameInsetPx(workW, workH, marginRatio);
+          const layoutAtAnchor: TextPlacementLayout = {
+            ...layout,
+            anchorX,
+            anchorY,
+          };
+          const textBox = estimateTextBlockBoxFromMeasuredLines(
+            ctx,
+            workW,
+            workH,
+            layoutAtAnchor,
+            lines,
+            lineHeight,
+            padX,
+            padY
+          );
+          const maxShift = Math.min(workW, workH) * 0.18;
+          const nudge = computeAnchorNudgeToClearSubject(
+            textBox,
+            subjectForAvoid,
+            workW,
+            workH,
+            maxShift,
+            inset
+          );
+          anchorX += nudge.dx;
+          anchorY += nudge.dy;
+        }
         const totalTextHeight = lines.length * lineHeight;
 
         let startY = anchorY;

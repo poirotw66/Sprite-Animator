@@ -12,6 +12,8 @@ import {
   rectangleMinSeparation,
   estimateTextBlockBox,
   estimateTextBlockBoxFromMeasuredLines,
+  inflatePixelRect,
+  computeAnchorNudgeToClearSubject,
   getEffectiveProgrammaticPlacementMode,
 } from './lineStickerTextOverlay';
 
@@ -90,6 +92,12 @@ describe('resolveProgrammaticPlacementLabel', () => {
   });
 });
 
+describe('DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING', () => {
+  it('defaults to auto_avoid_subject placement', () => {
+    expect(DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING.placementMode).toBe('auto_avoid_subject');
+  });
+});
+
 describe('getEffectiveProgrammaticPlacementMode', () => {
   it('uses per-frame override when set', () => {
     const tuning: typeof DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING = {
@@ -164,5 +172,31 @@ describe('estimateTextBlockBox and rectangle helpers', () => {
     );
     expect(tight.maxX - tight.minX).toBeLessThan(loose.maxX - loose.minX);
     expect(tight.maxX - tight.minX).toBe(16);
+  });
+
+  it('computeAnchorNudgeToClearSubject moves text away from overlapping subject', () => {
+    const subject = { minX: 40, minY: 40, maxX: 60, maxY: 60 };
+    const textBox = { minX: 45, minY: 45, maxX: 75, maxY: 55 };
+    expect(rectangleIntersectionArea(textBox, subject)).toBeGreaterThan(0);
+    const { dx, dy } = computeAnchorNudgeToClearSubject(textBox, subject, 100, 100, 40, 4);
+    const shifted = {
+      minX: textBox.minX + dx,
+      minY: textBox.minY + dy,
+      maxX: textBox.maxX + dx,
+      maxY: textBox.maxY + dy,
+    };
+    expect(rectangleIntersectionArea(shifted, subject)).toBe(0);
+    expect(Math.abs(dx) + Math.abs(dy)).toBeGreaterThan(0);
+    expect(shifted.minX).toBeGreaterThanOrEqual(4);
+    expect(shifted.maxX).toBeLessThanOrEqual(96);
+    expect(shifted.minY).toBeGreaterThanOrEqual(4);
+    expect(shifted.maxY).toBeLessThanOrEqual(96);
+  });
+
+  it('inflatePixelRect expands bounds within frame', () => {
+    const inner = { minX: 10, minY: 10, maxX: 20, maxY: 20 };
+    const outer = inflatePixelRect(inner, 5, 5, 100, 100);
+    expect(outer.minX).toBe(5);
+    expect(outer.maxX).toBe(25);
   });
 });
