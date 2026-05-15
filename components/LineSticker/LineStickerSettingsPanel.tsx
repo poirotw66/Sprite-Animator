@@ -85,14 +85,11 @@ export interface LineStickerSettingsPanelProps {
 
 function SettingsSectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-3 mt-8 mb-4 first:mt-0 pt-8 border-t border-slate-100 first:border-t-0 first:pt-0">
-      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 whitespace-nowrap">
+    <div className="mb-3 mt-6 flex items-center gap-3 border-t border-slate-100 pt-6 first:mt-0 first:border-t-0 first:pt-0">
+      <span className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
         {children}
       </span>
-      <span
-        className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent min-w-[2rem]"
-        aria-hidden
-      />
+      <span className="h-px min-w-[2rem] flex-1 bg-gradient-to-r from-slate-200/90 to-transparent" aria-hidden />
     </div>
   );
 }
@@ -155,12 +152,12 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
   const previewImageSrc = config.stylePreviewImage ?? selectedStylePreviewImage;
 
   return (
-    <div className="lg:col-span-5 lg:sticky lg:top-5 lg:z-10 lg:max-h-[calc(100vh-1.25rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1 space-y-6">
+    <div className="space-y-5 lg:sticky lg:top-5 lg:z-10 lg:col-span-5 lg:max-h-[calc(100vh-1.25rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
       <LineStickerUploadCard {...uploadCard} />
 
-      <div className="bg-white rounded-2xl shadow-md shadow-slate-200/40 ring-1 ring-slate-100 p-6 sm:p-7 space-y-1">
-        <h2 className="text-lg font-semibold text-slate-900">{t.lineStickerGridSettings}</h2>
-        <p className="text-xs text-slate-500 leading-relaxed mb-4">{t.lineStickerWorkflowBlurb}</p>
+      <div className="space-y-1 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm sm:p-7">
+        <h2 className="text-lg font-semibold tracking-tight text-slate-900">{t.lineStickerGridSettings}</h2>
+        <p className="mb-4 text-xs leading-relaxed text-slate-500">{t.lineStickerWorkflowBlurb}</p>
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2" id="line-sticker-mode-label">
@@ -404,44 +401,45 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
 
         <SettingsSectionTitle>{t.lineStickerSectionStickerText}</SettingsSectionTitle>
 
-        <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-          <input
-            type="checkbox"
-            id="includeText"
-            checked={config.includeText}
-            onChange={(event) => config.setIncludeText(event.target.checked)}
-            className="mt-0.5 w-5 h-5 shrink-0 text-green-600 border-slate-300 rounded focus:ring-green-500 cursor-pointer"
-          />
-          <label htmlFor="includeText" className="text-sm font-medium text-slate-700 cursor-pointer leading-snug">
-            {t.lineStickerIncludeText}
-          </label>
-        </div>
-
-        <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-          <p className="text-sm font-medium text-slate-700">{t.lineStickerTextRenderingLabel}</p>
-          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
-            <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-              <input
-                type="radio"
-                name="lineStickerTextRendering"
-                className="text-green-600 shrink-0"
-                checked={config.textRendering === 'model'}
-                onChange={() => config.setTextRendering('model')}
-              />
-              {t.lineStickerTextRenderingModel}
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-              <input
-                type="radio"
-                name="lineStickerTextRendering"
-                className="text-green-600 shrink-0"
-                checked={config.textRendering === 'programmatic'}
-                onChange={() => config.setTextRendering('programmatic')}
-              />
-              {t.lineStickerTextRenderingProgrammatic}
+        <div className="overflow-hidden rounded-xl border border-slate-200/90 bg-slate-50/70">
+          <div className="flex items-start gap-3 border-b border-slate-200/80 p-4">
+            <input
+              type="checkbox"
+              id="includeText"
+              checked={config.includeText}
+              onChange={(event) => config.setIncludeText(event.target.checked)}
+              className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-slate-300 text-green-600 focus:ring-green-500"
+            />
+            <label htmlFor="includeText" className="cursor-pointer text-sm font-medium leading-snug text-slate-700">
+              {t.lineStickerIncludeText}
             </label>
           </div>
-          <p className="text-xs text-slate-500 leading-relaxed">{t.lineStickerTextRenderingHint}</p>
+          <div className="space-y-3 p-4">
+            <p className="text-sm font-medium text-slate-700">{t.lineStickerTextRenderingLabel}</p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="radio"
+                  name="lineStickerTextRendering"
+                  className="shrink-0 text-green-600"
+                  checked={config.textRendering === 'model'}
+                  onChange={() => config.setTextRendering('model')}
+                />
+                {t.lineStickerTextRenderingModel}
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="radio"
+                  name="lineStickerTextRendering"
+                  className="shrink-0 text-green-600"
+                  checked={config.textRendering === 'programmatic'}
+                  onChange={() => config.setTextRendering('programmatic')}
+                />
+                {t.lineStickerTextRenderingProgrammatic}
+              </label>
+            </div>
+            <p className="text-xs leading-relaxed text-slate-500">{t.lineStickerTextRenderingHint}</p>
+          </div>
         </div>
 
         {config.textRendering === 'programmatic' && config.includeText && (

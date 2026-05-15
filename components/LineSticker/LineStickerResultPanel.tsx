@@ -150,20 +150,21 @@ const LineStickerResultViewerSection: React.FC<LineStickerResultViewerSectionPro
 
   return (
     <RenderProfiler id="LineStickerResultViewer">
-      <div className="space-y-8">
-        <div className="flex flex-wrap items-center gap-2 mb-4">
+      <div className="space-y-6">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200/90 bg-slate-50/80 p-3">
           <button
             type="button"
             onClick={() => setShowOriginalInSpriteView((prev) => !prev)}
-            className={`text-xs px-3 py-1.5 rounded-lg border-2 transition-all ${
+            className={`rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${
               showOriginalInSpriteView
-                ? 'bg-amber-50 border-amber-300 text-amber-700'
-                : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300'
+                ? 'border-amber-300 bg-amber-50 text-amber-800'
+                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
             }`}
           >
             {showOriginalInSpriteView ? t.lineStickerShowProcessed : t.lineStickerShowOriginal}
           </button>
           <button
+            type="button"
             onClick={() =>
               handleDownloadImage(
                 viewer.effectiveSpriteSheetImage,
@@ -171,11 +172,12 @@ const LineStickerResultViewerSection: React.FC<LineStickerResultViewerSectionPro
               )
             }
             disabled={!viewer.effectiveSpriteSheetImage}
-            className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {t.downloadOriginal}
           </button>
           <button
+            type="button"
             onClick={() =>
               handleDownloadImage(
                 viewer.effectiveProcessedSpriteSheet,
@@ -183,7 +185,7 @@ const LineStickerResultViewerSection: React.FC<LineStickerResultViewerSectionPro
               )
             }
             disabled={!viewer.effectiveProcessedSpriteSheet}
-            className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-green-600 hover:bg-green-50 disabled:opacity-50"
+            className="rounded-lg border border-emerald-200/80 bg-emerald-50/60 px-3 py-2 text-xs font-semibold text-emerald-800 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {t.downloadProcessed}
           </button>
@@ -191,9 +193,9 @@ const LineStickerResultViewerSection: React.FC<LineStickerResultViewerSectionPro
             type="button"
             disabled={viewer.effectiveIsProcessingChromaKey || !viewer.effectiveSpriteSheetImage}
             onClick={handleReRunCurrentChromaKey}
-            className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-teal-600 hover:bg-teal-50 disabled:opacity-50 flex items-center gap-1.5"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-teal-200/80 bg-teal-50/60 px-3 py-2 text-xs font-semibold text-teal-800 transition-colors hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {viewer.effectiveIsProcessingChromaKey ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+            {viewer.effectiveIsProcessingChromaKey ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
             {t.spriteSheetReRunChromaKey}
           </button>
         </div>
@@ -228,7 +230,7 @@ const LineStickerResultViewerSection: React.FC<LineStickerResultViewerSectionPro
         </Suspense>
 
         {viewer.resultSidePhraseEdit ? (
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4 space-y-3">
+          <div className="space-y-3 rounded-xl border border-emerald-200/70 bg-emerald-50/50 p-4">
             <div>
               <h3 className="text-sm font-semibold text-slate-800">{t.lineStickerResultProgrammaticPhrasesTitle}</h3>
               <p className="text-xs text-slate-600 mt-1 leading-relaxed">{t.lineStickerResultProgrammaticPhrasesHint}</p>
@@ -246,17 +248,18 @@ const LineStickerResultViewerSection: React.FC<LineStickerResultViewerSectionPro
           </div>
         ) : null}
 
-        <div className="border-t border-slate-100 pt-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-              {t.lineStickerPreviewCropped}
-              <span className="text-xs font-normal text-slate-500">{t.lineStickerPreviewCropHint}</span>
-            </h3>
-            <div className="flex gap-2">
-              <button onClick={downloads.selectAll} className="text-xs font-semibold text-green-600 hover:text-green-700">
+        <div className="border-t border-slate-100 pt-5">
+          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h3 className="font-semibold text-slate-900">{t.lineStickerPreviewCropped}</h3>
+              <p className="mt-0.5 text-xs text-slate-500">{t.lineStickerPreviewCropHint}</p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <button type="button" onClick={downloads.selectAll} className="text-xs font-semibold text-green-700 hover:text-green-800">
                 {t.lineStickerSelectAll}
               </button>
-              <button onClick={downloads.deselectAll} className="text-xs font-semibold text-slate-500 hover:text-slate-600">
+              <span className="hidden h-3 w-px bg-slate-200 sm:block" aria-hidden />
+              <button type="button" onClick={downloads.deselectAll} className="text-xs font-semibold text-slate-500 hover:text-slate-700">
                 {t.lineStickerDeselectAll}
               </button>
             </div>
@@ -324,20 +327,20 @@ export const LineStickerResultPanel: React.FC<LineStickerResultPanelProps> = Rea
   const spriteSheetFileInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="bg-white rounded-2xl shadow-md shadow-slate-200/50 ring-1 ring-slate-100 p-6 sm:p-7 min-h-[480px] scroll-mt-24">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <h2 className="text-lg font-semibold text-slate-900">{t.lineStickerResult}</h2>
+    <div className="min-h-[480px] scroll-mt-28 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm sm:p-7">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold tracking-tight text-slate-900">{t.lineStickerResult}</h2>
         {sheet.stickerSetMode && (
-          <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
+          <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
             {LINE_STICKER_SHEET_INDICES.map((index) => (
               <button
                 key={index}
                 type="button"
                 onClick={() => sheet.setCurrentSheetIndex(index)}
-                className={`min-h-[40px] px-4 py-2 text-xs font-bold rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${
+                className={`min-h-[40px] rounded-lg px-4 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${
                   sheet.currentSheetIndex === index
-                    ? 'bg-white text-green-600 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
+                    ? 'bg-white text-green-700 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
                 {t.lineStickerSheetN.replace('{n}', String(index + 1))}
@@ -348,20 +351,20 @@ export const LineStickerResultPanel: React.FC<LineStickerResultPanelProps> = Rea
       </div>
 
       {status.error ? (
-        <div className="mb-4 p-4 bg-red-50 text-red-700 border border-red-100 rounded-xl text-sm flex items-center gap-2 animate-in slide-in-from-top-2">
-          <Plus className="w-5 h-5 rotate-45" />
+        <div className="mb-4 flex animate-in items-center gap-2 rounded-xl border border-red-200 bg-red-50/90 p-4 text-sm text-red-800 slide-in-from-top-2">
+          <Plus className="h-5 w-5 shrink-0 rotate-45" />
           {status.error}
         </div>
       ) : null}
       {status.statusText ? (
-        <div className="mb-4 p-4 bg-green-50 text-green-700 border border-green-100 rounded-xl text-sm flex items-center gap-3">
-          <Loader2 className="w-4 h-4 animate-spin" />
+        <div className="mb-4 flex animate-in items-center gap-3 rounded-xl border border-emerald-200/80 bg-emerald-50/80 p-4 text-sm text-emerald-900 slide-in-from-top-2">
+          <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
           {status.statusText}
         </div>
       ) : null}
 
       {sheet.stickerSetMode ? (
-        <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div className="mb-5 rounded-xl border border-slate-200/90 bg-slate-50/70 p-4">
           <div className="mb-3">
             <h3 className="text-sm font-semibold text-slate-800">{t.lineStickerSetOverviewTitle}</h3>
             <p className="mt-1 text-xs text-slate-500">{t.lineStickerSetOverviewHint}</p>
@@ -379,7 +382,7 @@ export const LineStickerResultPanel: React.FC<LineStickerResultPanelProps> = Rea
       ) : null}
 
       {viewer.effectiveSpriteSheetImage ? (
-        <div className="space-y-8">
+        <div className="space-y-6">
           <LineStickerResultViewerSection
             t={t}
             sheet={sheet}

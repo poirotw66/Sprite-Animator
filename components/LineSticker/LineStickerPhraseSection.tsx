@@ -197,7 +197,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
             {t.lineStickerPhraseActionHint}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 border border-slate-100 p-2 shrink-0">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 rounded-xl border border-slate-200/90 bg-slate-50/90 p-2">
           <button
             type="button"
             onClick={handleGeneratePhrases}

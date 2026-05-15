@@ -37,61 +37,67 @@ export const LineStickerDownloadSection: React.FC<LineStickerDownloadSectionProp
   onDownloadSelectedAsZip,
   selectedIndices,
 }) => (
-  <div className="flex flex-wrap gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+  <div className="rounded-xl border border-slate-200/90 bg-slate-50/70 p-4">
     {stickerSetMode ? (
-      <div className="flex flex-wrap gap-2 w-full">
+      <div className="flex w-full flex-wrap gap-2">
         <button
+          type="button"
           onClick={onDownloadSetOneClick}
           disabled={
             isDownloading ||
             (!processedSheetImages.every((img) => !!img) && !sheetFrames.some((arr) => arr.length > 0))
           }
-          className="px-5 py-2.5 bg-green-600 text-white text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-green-700 disabled:opacity-50 transition-all shadow-md"
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <Download className="w-4 h-4" />
+          <Download className="h-4 w-4 shrink-0" />
           {t.lineStickerDownloadAllOneClick}
         </button>
         <button
+          type="button"
           onClick={onDownloadStickerSetZip}
           disabled={isDownloading || !processedSheetImages.every((img) => !!img)}
-          className="px-5 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-slate-800 disabled:opacity-50 transition-all shadow-md"
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-slate-300 bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <FileArchive className="w-4 h-4" />
+          <FileArchive className="h-4 w-4 shrink-0" />
           {t.lineStickerDownload3Zip}
         </button>
         <button
+          type="button"
           onClick={onDownloadAllSheetsFramesZip}
           disabled={isDownloading || !sheetFrames.some((arr) => arr.length > 0)}
-          className="px-5 py-2.5 bg-slate-700 text-white text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-slate-600 disabled:opacity-50 transition-all shadow-md"
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-slate-300 bg-slate-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <FileArchive className="w-4 h-4" />
+          <FileArchive className="h-4 w-4 shrink-0" />
           {t.lineStickerDownload3SheetsFramesZip}
         </button>
         <button
+          type="button"
           onClick={onDownloadCurrentSheetZip}
           disabled={isDownloading || !processedSheetImagesCurrent}
-          className="px-5 py-2.5 bg-green-500 text-white text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-green-600 disabled:opacity-50 transition-all shadow-md"
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-emerald-300/80 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <Download className="w-4 h-4" />
+          <Download className="h-4 w-4 shrink-0" />
           {t.lineStickerDownloadCurrentSheet}
         </button>
       </div>
     ) : (
-      <div className="flex flex-wrap gap-2 w-full">
+      <div className="flex w-full flex-wrap gap-2">
         <button
+          type="button"
           onClick={onDownloadAllAsZip}
           disabled={isDownloading || stickerFramesLength === 0}
-          className="px-5 py-2.5 bg-green-500 text-white text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-green-600 disabled:opacity-50 transition-all shadow-md"
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <Download className="w-4 h-4" />
+          <Download className="h-4 w-4 shrink-0" />
           {t.lineStickerDownloadAll}
         </button>
         <button
+          type="button"
           onClick={() => onDownloadSelectedAsZip(selectedIndices)}
           disabled={isDownloading || selectedCount === 0}
-          className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-slate-50 disabled:opacity-50 transition-all shadow-sm"
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <Check className="w-4 h-4" />
+          <Check className="h-4 w-4 shrink-0" />
           {t.lineStickerDownloadSelected.replace('{n}', String(selectedCount))}
         </button>
       </div>

@@ -1052,7 +1052,7 @@ const LineStickerPage: React.FC = () => {
     });
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-emerald-50/40 font-sans px-4 pb-10 md:px-6 lg:px-8 pt-4 md:pt-6">
+        <div className="min-h-screen bg-slate-50 font-sans px-4 pb-12 pt-4 md:px-6 md:pb-14 md:pt-6 lg:px-8">
             <SettingsModal
                 apiKey={apiKey}
                 setApiKey={setApiKey}
@@ -1078,10 +1078,10 @@ const LineStickerPage: React.FC = () => {
                 jumpToResultLabel={lineStickerT.lineStickerJumpToResult}
             />
 
-            <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+            <main className="mx-auto grid max-w-7xl grid-cols-1 items-start gap-8 lg:grid-cols-12 lg:gap-10">
                 <LineStickerSettingsPanel t={lineStickerT} viewModel={settingsPanelViewModel} />
 
-                <div id="line-sticker-result" className="lg:col-span-7 space-y-6 scroll-mt-24">
+                <div id="line-sticker-result" className="scroll-mt-28 space-y-5 lg:col-span-7">
                     <LineStickerResultPanel t={lineStickerT} viewModel={resultPanelViewModel} />
                 </div>
             </main>

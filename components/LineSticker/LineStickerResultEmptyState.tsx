@@ -18,9 +18,9 @@ export const LineStickerResultEmptyState: React.FC<LineStickerResultEmptyStatePr
   onFileChange,
   fileInputRef,
 }) => (
-  <div className="flex-1 min-h-[400px] flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200/80 rounded-3xl p-8 bg-gradient-to-br from-slate-50/80 via-white to-emerald-50/50">
-    <ImageIcon className="w-16 h-16 mb-5 text-slate-300" aria-hidden />
-    <p className="text-sm font-semibold text-slate-600 mb-2 text-center max-w-sm">{placeholderText}</p>
+  <div className="flex min-h-[400px] flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-gradient-to-br from-slate-50 to-white p-8 text-slate-400">
+    <ImageIcon className="mb-4 h-14 w-14 text-slate-300" aria-hidden />
+    <p className="mb-2 max-w-sm text-center text-sm font-medium text-slate-600">{placeholderText}</p>
     <input
       ref={fileInputRef}
       type="file"
@@ -32,7 +32,7 @@ export const LineStickerResultEmptyState: React.FC<LineStickerResultEmptyStatePr
     <button
       type="button"
       onClick={onUploadClick}
-      className="px-6 py-3 min-h-[48px] bg-white border-2 border-green-200 rounded-xl text-green-800 font-semibold hover:bg-green-50 hover:border-green-300 flex items-center gap-2 transition-all shadow-md shadow-green-900/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
+      className="flex min-h-[48px] items-center gap-2 rounded-xl border-2 border-green-200 bg-white px-6 py-3 font-semibold text-green-800 shadow-sm transition-colors hover:border-green-300 hover:bg-green-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
     >
       <Upload className="w-4 h-4" />
       {uploadButtonText}

@@ -18,8 +18,8 @@ export const LineStickerHeader: React.FC<LineStickerHeaderProps> = ({
   jumpToResultLabel,
   resultSectionId = 'line-sticker-result',
 }) => (
-  <header className="max-w-7xl mx-auto mb-6">
-    <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-200/80 p-4 flex flex-wrap items-center justify-between gap-3">
+  <header className="mx-auto mb-6 max-w-7xl">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm">
       <div className="flex items-center gap-3 min-w-0">
         <Link
           to="/"
