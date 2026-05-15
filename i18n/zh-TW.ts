@@ -402,7 +402,8 @@ export const zhTW: Translations = {
   lineStickerProgrammaticLineHeight: '行距倍率',
   lineStickerProgrammaticStrokeScale: '描邊強度',
   lineStickerProgrammaticPlacement: '文字位置',
-  lineStickerProgrammaticPlacementCycle: '對齊產圖留白區（與提示詞 Reserved caption band 一致）',
+  lineStickerProgrammaticPlacementCycle:
+    '對齊產圖留白區（與提示詞一致；若仍壓到角色會小幅沿帶內方向推開）',
   lineStickerProgrammaticPlacementBottom: '置中靠下',
   lineStickerProgrammaticPlacementTop: '置中靠上',
   lineStickerProgrammaticPlacementMiddle: '正中央',

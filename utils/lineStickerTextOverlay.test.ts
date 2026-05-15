@@ -134,6 +134,19 @@ describe('layoutFromPlacementLabel', () => {
     expect(anchorY).toBeGreaterThan(150);
   });
 
+  it('reserved caption band anchors sit inside the band zone', () => {
+    const plain = layoutFromPlacementLabel('Bottom center', 100, 100, 0.06);
+    const band = layoutFromPlacementLabel('Bottom center', 100, 100, 0.06, {
+      useReservedCaptionBandAnchors: true,
+    });
+    expect(band.anchorY).toBeLessThan(plain.anchorY);
+    const topBand = layoutFromPlacementLabel('Top center', 100, 100, 0.06, {
+      useReservedCaptionBandAnchors: true,
+    });
+    const topPlain = layoutFromPlacementLabel('Top center', 100, 100, 0.06);
+    expect(topBand.anchorY).toBeGreaterThan(topPlain.anchorY);
+  });
+
   it('places top left in upper-left quadrant', () => {
     const { anchorX, anchorY, textAlign, textBaseline } = layoutFromPlacementLabel('Top left', 200, 100);
     expect(textAlign).toBe('left');
@@ -195,7 +208,9 @@ describe('estimateTextBlockBox and rectangle helpers', () => {
       maxX: textBox.maxX + dx,
       maxY: textBox.maxY + dy,
     };
-    expect(rectangleIntersectionArea(shifted, subject)).toBe(0);
+    expect(rectangleIntersectionArea(shifted, subject)).toBeLessThan(
+      rectangleIntersectionArea(textBox, subject)
+    );
     expect(Math.abs(dx) + Math.abs(dy)).toBeGreaterThan(0);
     expect(shifted.minX).toBeGreaterThanOrEqual(4);
     expect(shifted.maxX).toBeLessThanOrEqual(96);

@@ -8,6 +8,7 @@ import {
   TEXT_COLOR_PRESETS,
   getLineStickerTextPlacementLabel,
   getReservedCaptionBandLabelForFrame,
+  RESERVED_CAPTION_BAND_HEIGHT_RATIO,
   LINE_STICKER_TEXT_PLACEMENT_PRESETS,
 } from './lineStickerPrompt';
 
@@ -203,6 +204,33 @@ export interface TextPlacementLayout {
   maxWidth: number;
 }
 
+export interface LayoutFromPlacementOptions {
+  /** When true, anchors sit in the same caption-band zones described in the generation prompt. */
+  useReservedCaptionBandAnchors?: boolean;
+}
+
+/**
+ * Unit direction to nudge text within a caption band when it still overlaps the subject (keeps text in-band).
+ */
+export function preferredNudgeDirectionForPlacementLabel(
+  label: string
+): { dirX: number; dirY: number } | undefined {
+  const lower = label.toLowerCase();
+  if (lower.includes('bottom')) {
+    return { dirX: 0, dirY: -1 };
+  }
+  if (lower.includes('top') && !lower.includes('beside')) {
+    return { dirX: 0, dirY: 1 };
+  }
+  if (lower.includes('beside head (left)')) {
+    return { dirX: -1, dirY: 0 };
+  }
+  if (lower.includes('beside head (right)')) {
+    return { dirX: 1, dirY: 0 };
+  }
+  return undefined;
+}
+
 /**
  * Map v2-style placement label to canvas anchor and max line width (fraction of cell).
  * `edgeMarginRatio` is 0–0.25 (e.g. 0.06 = 6% inset on each side).
@@ -211,58 +239,84 @@ export function layoutFromPlacementLabel(
   label: string,
   width: number,
   height: number,
-  edgeMarginRatio: number = 0.06
+  edgeMarginRatio: number = 0.06,
+  options?: LayoutFromPlacementOptions
 ): TextPlacementLayout {
   const margin = Math.max(0.02, Math.min(0.22, edgeMarginRatio));
   const marginX = width * margin;
   const marginY = height * margin;
   const maxW = width - marginX * 2;
   const lower = label.toLowerCase();
+  const bandH = height * RESERVED_CAPTION_BAND_HEIGHT_RATIO;
+  const useBand = options?.useReservedCaptionBandAnchors === true;
 
   let textAlign: CanvasTextAlign = 'center';
   let textBaseline: CanvasTextBaseline = 'bottom';
   let anchorX = width / 2;
   let anchorY = height - marginY;
+  let maxWidth = maxW;
 
   if (lower.includes('middle center')) {
     textAlign = 'center';
     textBaseline = 'middle';
     anchorX = width / 2;
-    anchorY = height / 2;
+    anchorY = useBand ? height / 2 : height / 2;
   } else if (lower.includes('top center')) {
     textBaseline = 'top';
-    anchorY = marginY;
+    anchorY = useBand ? marginY + bandH * 0.12 : marginY;
   } else if (lower.includes('bottom center')) {
     textBaseline = 'bottom';
-    anchorY = height - marginY;
+    anchorY = useBand ? height - marginY - bandH * 0.06 : height - marginY;
   } else if (lower.includes('top left')) {
     textAlign = 'left';
     textBaseline = 'top';
     anchorX = marginX;
-    anchorY = marginY;
+    anchorY = useBand ? marginY + bandH * 0.12 : marginY;
+    maxWidth = useBand ? width * 0.55 : maxW;
   } else if (lower.includes('top right')) {
     textAlign = 'right';
     textBaseline = 'top';
     anchorX = width - marginX;
-    anchorY = marginY;
+    anchorY = useBand ? marginY + bandH * 0.12 : marginY;
+    maxWidth = useBand ? width * 0.55 : maxW;
   } else if (lower.includes('bottom left')) {
     textAlign = 'left';
     textBaseline = 'bottom';
     anchorX = marginX;
-    anchorY = height - marginY;
+    anchorY = useBand ? height - marginY - bandH * 0.06 : height - marginY;
+    maxWidth = useBand ? width * 0.55 : maxW;
   } else if (lower.includes('bottom right')) {
     textAlign = 'right';
     textBaseline = 'bottom';
     anchorX = width - marginX;
-    anchorY = height - marginY;
-  } else if (lower.includes('diagonal') || lower.includes('beside head')) {
+    anchorY = useBand ? height - marginY - bandH * 0.06 : height - marginY;
+    maxWidth = useBand ? width * 0.55 : maxW;
+  } else if (lower.includes('beside head (left)')) {
+    textAlign = 'left';
+    textBaseline = 'middle';
+    anchorX = useBand ? width * 0.14 : width * 0.2;
+    anchorY = height * 0.42;
+    maxWidth = useBand ? width * 0.36 : maxW * 0.45;
+  } else if (lower.includes('beside head (right)')) {
+    textAlign = 'right';
+    textBaseline = 'middle';
+    anchorX = useBand ? width * 0.86 : width * 0.8;
+    anchorY = height * 0.42;
+    maxWidth = useBand ? width * 0.36 : maxW * 0.45;
+  } else if (lower.includes('diagonal')) {
+    textAlign = 'center';
+    textBaseline = 'middle';
+    anchorX = useBand ? width * 0.62 : width / 2;
+    anchorY = useBand ? height * 0.76 : height * 0.72;
+    maxWidth = useBand ? width * 0.5 : maxW;
+  } else if (lower.includes('beside head')) {
     textAlign = 'center';
     textBaseline = 'middle';
     anchorX = width / 2;
     anchorY = height * 0.72;
   }
 
-  return { anchorX, anchorY, textAlign, textBaseline, maxWidth: maxW };
+  return { anchorX, anchorY, textAlign, textBaseline, maxWidth };
 }
 
 function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
@@ -650,32 +704,46 @@ export function computeAnchorNudgeToClearSubject(
   width: number,
   height: number,
   maxShiftPx: number,
-  frameInsetPx: number = 0
+  frameInsetPx: number = 0,
+  preferredDirection?: { dirX: number; dirY: number }
 ): { dx: number; dy: number } {
-  if (rectangleIntersectionArea(textBox, subject) <= 0) {
+  const startOverlap = rectangleIntersectionArea(textBox, subject);
+  if (startOverlap <= 0) {
     return { dx: 0, dy: 0 };
   }
   const inset = Math.max(0, frameInsetPx);
-  const tcx = (textBox.minX + textBox.maxX) / 2;
-  const tcy = (textBox.minY + textBox.maxY) / 2;
-  const scx = (subject.minX + subject.maxX) / 2;
-  const scy = (subject.minY + subject.maxY) / 2;
-  let dirX = tcx - scx;
-  let dirY = tcy - scy;
-  if (Math.abs(dirX) < 0.5 && Math.abs(dirY) < 0.5) {
-    dirY = 1;
+  let dirX: number;
+  let dirY: number;
+  if (preferredDirection) {
+    dirX = preferredDirection.dirX;
+    dirY = preferredDirection.dirY;
+    const len = Math.hypot(dirX, dirY) || 1;
+    dirX /= len;
+    dirY /= len;
+  } else {
+    const tcx = (textBox.minX + textBox.maxX) / 2;
+    const tcy = (textBox.minY + textBox.maxY) / 2;
+    const scx = (subject.minX + subject.maxX) / 2;
+    const scy = (subject.minY + subject.maxY) / 2;
+    dirX = tcx - scx;
+    dirY = tcy - scy;
+    if (Math.abs(dirX) < 0.5 && Math.abs(dirY) < 0.5) {
+      dirY = 1;
+    }
+    const len = Math.hypot(dirX, dirY) || 1;
+    dirX /= len;
+    dirY /= len;
   }
-  const len = Math.hypot(dirX, dirY) || 1;
-  dirX /= len;
-  dirY /= len;
 
   const step = Math.max(2, Math.round(Math.min(width, height) * 0.015));
   const maxSteps = Math.max(1, Math.ceil(maxShiftPx / step));
+  const overlapTarget = Math.max(0, startOverlap * 0.12);
   let box = textBox;
   let dx = 0;
   let dy = 0;
   for (let i = 0; i < maxSteps; i++) {
-    if (rectangleIntersectionArea(box, subject) <= 0) {
+    const overlap = rectangleIntersectionArea(box, subject);
+    if (overlap <= overlapTarget) {
       break;
     }
     const next = shiftPixelRect(box, dirX * step, dirY * step);
@@ -728,7 +796,9 @@ function pickBestPlacementLabelAutoAvoid(
   let bestOverlap = Number.POSITIVE_INFINITY;
   let bestGap = -1;
   for (const label of LINE_STICKER_TEXT_PLACEMENT_PRESETS) {
-    const layout = layoutFromPlacementLabel(label, width, height, marginRatio);
+    const layout = layoutFromPlacementLabel(label, width, height, marginRatio, {
+      useReservedCaptionBandAnchors: true,
+    });
     const lines = wrapLines(ctx, trimmed, layout.maxWidth);
     const textBox = estimateTextBlockBoxFromMeasuredLines(
       ctx,
@@ -864,7 +934,9 @@ export function overlayLineStickerTextOnFrame(
         } else {
           placementLabel = resolveProgrammaticPlacementLabel(options.frameIndex, tuning);
         }
-        const layout = layoutFromPlacementLabel(placementLabel, workW, workH, marginRatio);
+        const layout = layoutFromPlacementLabel(placementLabel, workW, workH, marginRatio, {
+          useReservedCaptionBandAnchors: true,
+        });
 
         const offsetX = (workW * tuning.offsetXPercent) / 100;
         const offsetY = (workH * tuning.offsetYPercent) / 100;
@@ -875,7 +947,10 @@ export function overlayLineStickerTextOnFrame(
         ctx.textBaseline = layout.textBaseline;
         const lines = wrapLines(ctx, trimmed, layout.maxWidth);
 
-        if (mode === 'auto_avoid_subject' && subjectForAvoid) {
+        const shouldNudgeForOverlap =
+          subjectForAvoid != null &&
+          (mode === 'auto_avoid_subject' || mode === 'cycle');
+        if (shouldNudgeForOverlap) {
           const { padX, padY } = textOverlayAvoidancePadPx(fontSize, strokeMult);
           const inset = frameInsetPx(workW, workH, marginRatio);
           const layoutAtAnchor: TextPlacementLayout = {
@@ -893,14 +968,22 @@ export function overlayLineStickerTextOnFrame(
             padX,
             padY
           );
-          const maxShift = Math.min(workW, workH) * 0.18;
+          const maxShift =
+            mode === 'auto_avoid_subject'
+              ? Math.min(workW, workH) * 0.18
+              : Math.min(workW, workH) * 0.1;
+          const preferredDir =
+            mode === 'cycle'
+              ? preferredNudgeDirectionForPlacementLabel(placementLabel)
+              : undefined;
           const nudge = computeAnchorNudgeToClearSubject(
             textBox,
             subjectForAvoid,
             workW,
             workH,
             maxShift,
-            inset
+            inset,
+            preferredDir
           );
           anchorX += nudge.dx;
           anchorY += nudge.dy;

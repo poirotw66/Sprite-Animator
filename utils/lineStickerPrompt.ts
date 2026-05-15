@@ -207,10 +207,39 @@ export function getReservedCaptionBandLabelForFrame(frameIndex: number): string 
     return getLineStickerTextPlacementLabel(frameIndex);
 }
 
+/** Fraction of cell height used as reserved caption band (shared with overlay layout). */
+export const RESERVED_CAPTION_BAND_HEIGHT_RATIO = 0.28;
+
+/** Short geometry hint appended in the generation prompt so the model clears the same zone the overlay uses. */
+export function reservedCaptionBandGeometryHint(placementLabel: string): string {
+    const lower = placementLabel.toLowerCase();
+    const pct = Math.round(RESERVED_CAPTION_BAND_HEIGHT_RATIO * 100);
+    if (lower.includes('bottom')) {
+        return ` (keep lowest ~${pct}% of cell height clear, full width minus margins)`;
+    }
+    if (lower.includes('top') && !lower.includes('beside')) {
+        return ` (keep top ~${pct}% of cell height clear, full width minus margins)`;
+    }
+    if (lower.includes('beside head (left)')) {
+        return ' (keep left ~22% width strip clear along mid-height)';
+    }
+    if (lower.includes('beside head (right)')) {
+        return ' (keep right ~22% width strip clear along mid-height)';
+    }
+    if (lower.includes('diagonal')) {
+        return ' (keep lower-right caption corner clear)';
+    }
+    if (lower.includes('middle center')) {
+        return ` (keep horizontal middle ~${pct}% band clear)`;
+    }
+    return '';
+}
+
 function buildProgrammaticOverlayCompositionBullets(bgHex: string): string {
+    const pct = Math.round(RESERVED_CAPTION_BAND_HEIGHT_RATIO * 100);
     return `* **Programmatic captions**: A browser step will draw each cell's chat phrase **after** generation. **Do not** render letters, numbers, watermarks, logos, or any typography in the image.
-* Each cell line includes **Reserved caption band** with a position name (e.g. Bottom center, Top left). That named band must stay **empty solid chroma (${bgHex})** only—no hair, limbs, props, shadows, or subject pixels inside it.
-* The position name is the exact anchor the overlay uses; compose the character **outside** that band for that cell. Shrink or shift the subject if needed so the band stays clear.
+* Each cell line includes **Reserved caption band** with a position name and a geometry hint (e.g. lowest ~${pct}% of the cell). That zone must be **empty solid chroma (${bgHex})** only—no hair, limbs, props, shadows, or subject pixels inside it.
+* The position name and band geometry match the overlay anchors; compose the character **outside** that zone. Shrink or shift the subject if needed.
 * Vary framing across cells; do not reuse identical subject framing in two consecutive cells.`;
 }
 
@@ -251,8 +280,9 @@ export function buildLineStickerPrompt(
             const rawAction = (actionDescs && actionDescs[index]?.trim()) ? actionDescs[index].trim() : getActionHint(phrase);
             const actionLabel = actionForImage(rawAction);
             if (!includeText) {
+                const bandLabel = getReservedCaptionBandLabelForFrame(index);
                 const captionHint = reserveForProgrammaticOverlay
-                    ? ` | Reserved caption band (empty chroma only; overlay will draw text here): ${getReservedCaptionBandLabelForFrame(index)}`
+                    ? ` | Reserved caption band (empty chroma; overlay draws text here): ${bandLabel}${reservedCaptionBandGeometryHint(bandLabel)}`
                     : '';
                 return `Cell ${index + 1} (row ${row}, col ${col}): Action: ${actionLabel}${captionHint}`;
             }
@@ -410,9 +440,10 @@ ${phrasesForFrames.map((phrase, index) => {
                   LINE_STICKER_TEXT_PLACEMENT_PRESETS[index % LINE_STICKER_TEXT_PLACEMENT_PRESETS.length]
               }`
             : '';
+        const bandLabelV1 = getReservedCaptionBandLabelForFrame(index);
         const captionBandHint =
             !includeText && reserveForProgrammaticOverlay
-                ? ` | Reserved caption band (empty chroma only; overlay will draw text here): ${getReservedCaptionBandLabelForFrame(index)}`
+                ? ` | Reserved caption band (empty chroma; overlay draws text here): ${bandLabelV1}${reservedCaptionBandGeometryHint(bandLabelV1)}`
                 : '';
         return includeText
             ? `**Cell ${index + 1} (row ${row}, col ${col})**: ${textLabel}${textPosition} | Action: ${actionLabel}`
