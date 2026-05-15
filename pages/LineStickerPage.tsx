@@ -152,7 +152,7 @@ const LineStickerPage: React.FC = () => {
     const [actionDedupeStrength, setActionDedupeStrength] =
         useState<ActionDedupeStrength>('balanced');
     const [selectedTextColor, setSelectedTextColor] = useState<keyof typeof TEXT_COLOR_PRESETS>('black');
-    const [selectedFont, setSelectedFont] = useState<keyof typeof FONT_PRESETS>('handwritten');
+    const [selectedFont, setSelectedFont] = useState<keyof typeof FONT_PRESETS>('round');
     const [singlePhrasesList, setSinglePhrasesList] = useState<string[]>([]);
     const [stylePreviewImage, setStylePreviewImage] = useState<string | null>(null);
     const [isGeneratingStylePreview, setIsGeneratingStylePreview] = useState(false);
@@ -210,7 +210,7 @@ const LineStickerPage: React.FC = () => {
         stickerSetMode: false,
         currentSheetIndex: DEFAULT_LINE_STICKER_SHEET_INDEX,
         phrasesForHook: [] as string[],
-        selectedFont: 'handwritten' as keyof typeof FONT_PRESETS,
+        selectedFont: 'round' as keyof typeof FONT_PRESETS,
         selectedTextColor: 'black' as keyof typeof TEXT_COLOR_PRESETS,
         programmaticTextTuning: { ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING },
     });

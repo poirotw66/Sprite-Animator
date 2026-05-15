@@ -25,7 +25,7 @@ function buildPhrasesFromMultiline(text: string, frameCount: number): string[] {
 export function useSheetSliceProgrammaticOverlay() {
   const [overlayEnabled, setOverlayEnabled] = useState(false);
   const [overlayLinesText, setOverlayLinesText] = useState('');
-  const [overlayFontKey, setOverlayFontKey] = useState<SheetSliceOverlayFontKey>('handwritten');
+  const [overlayFontKey, setOverlayFontKey] = useState<SheetSliceOverlayFontKey>('round');
   const [overlayColorKey, setOverlayColorKey] = useState<SheetSliceOverlayColorKey>('black');
   const [overlayTuning, setOverlayTuning] = useState<ProgrammaticTextOverlayTuning>(() => ({
     ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING,

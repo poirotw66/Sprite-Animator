@@ -29,7 +29,7 @@ export type ProgrammaticFontFamilySource = 'preset' | 'custom';
 
 /** User-tunable overlay parameters (LINE sticker programmatic text mode). */
 export interface ProgrammaticTextOverlayTuning {
-  /** Font size as percent of min(frame width, height), e.g. 8.5 => 0.085 multiplier. */
+  /** Font size as percent of min(frame width, height), e.g. 11 => 0.11 multiplier. */
   fontSizePercent: number;
   /** Edge inset for text box, percent of min(frame width, height). */
   edgeMarginPercent: number;
@@ -53,7 +53,7 @@ export interface ProgrammaticTextOverlayTuning {
 }
 
 export const DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING: ProgrammaticTextOverlayTuning = {
-  fontSizePercent: 8.5,
+  fontSizePercent: 11,
   edgeMarginPercent: 6,
   lineHeightMultiplier: 1.25,
   strokeScale: 1,
