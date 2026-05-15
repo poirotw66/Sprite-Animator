@@ -11,6 +11,7 @@ import {
   rectangleIntersectionArea,
   rectangleMinSeparation,
   estimateTextBlockBox,
+  estimateTextBlockBoxFromMeasuredLines,
   getEffectiveProgrammaticPlacementMode,
 } from './lineStickerTextOverlay';
 
@@ -143,5 +144,25 @@ describe('estimateTextBlockBox and rectangle helpers', () => {
     const box = estimateTextBlockBox(100, 100, layout, 1, 14);
     expect(box.maxY).toBeLessThanOrEqual(100);
     expect(box.minY).toBeLessThan(box.maxY);
+  });
+
+  it('measured-line box is narrower than max-width band for short centered text', () => {
+    const layout = layoutFromPlacementLabel('Bottom center', 200, 200, 0.06);
+    const mockCtx = {
+      measureText: (s: string) => ({ width: (s.length || 1) * 8 }),
+    } as unknown as CanvasRenderingContext2D;
+    const loose = estimateTextBlockBox(200, 200, layout, 1, 14);
+    const tight = estimateTextBlockBoxFromMeasuredLines(
+      mockCtx,
+      200,
+      200,
+      layout,
+      ['OK'],
+      14,
+      0,
+      0
+    );
+    expect(tight.maxX - tight.minX).toBeLessThan(loose.maxX - loose.minX);
+    expect(tight.maxX - tight.minX).toBe(16);
   });
 });

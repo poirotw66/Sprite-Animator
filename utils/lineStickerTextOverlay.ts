@@ -325,6 +325,8 @@ export function rectangleMinSeparation(a: PixelRect, b: PixelRect): number {
 
 /**
  * Rough bounding box for multi-line sticker text from anchor, alignment, and line metrics.
+ * Uses layout max width (full caption band); prefer {@link estimateTextBlockBoxFromMeasuredLines}
+ * for auto-avoid scoring where tighter boxes improve placement.
  */
 export function estimateTextBlockBox(
   width: number,
@@ -370,6 +372,64 @@ export function estimateTextBlockBox(
   };
 }
 
+/**
+ * Tighter text AABB from measured line widths and {@link TextPlacementLayout} alignment.
+ * Optional pads approximate stroke / descenders so auto-avoid does not hug glyph edges.
+ */
+export function estimateTextBlockBoxFromMeasuredLines(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  layout: TextPlacementLayout,
+  lines: string[],
+  lineHeight: number,
+  horizontalPadPx: number = 0,
+  verticalPadPx: number = 0
+): PixelRect {
+  const rows = lines.length > 0 ? lines : [''];
+  const lineWidths = rows.map((line) => ctx.measureText(line.length > 0 ? line : ' ').width);
+  const maxLineW = Math.max(...lineWidths, 1);
+  const lineCount = rows.length;
+  const totalH = Math.max(lineHeight, lineCount * lineHeight);
+
+  let top = layout.anchorY;
+  let bottom = layout.anchorY;
+  if (layout.textBaseline === 'bottom') {
+    bottom = layout.anchorY;
+    top = layout.anchorY - totalH;
+  } else if (layout.textBaseline === 'top') {
+    top = layout.anchorY;
+    bottom = layout.anchorY + totalH;
+  } else {
+    top = layout.anchorY - totalH / 2;
+    bottom = layout.anchorY + totalH / 2;
+  }
+
+  const ax = layout.anchorX;
+  let left: number;
+  let right: number;
+  if (layout.textAlign === 'left') {
+    left = ax;
+    right = ax + maxLineW;
+  } else if (layout.textAlign === 'right') {
+    left = ax - maxLineW;
+    right = ax;
+  } else {
+    left = ax - maxLineW / 2;
+    right = ax + maxLineW / 2;
+  }
+
+  const padX = horizontalPadPx;
+  const padY = verticalPadPx;
+  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+  return {
+    minX: clamp(left - padX, 0, width),
+    minY: clamp(top - padY, 0, height),
+    maxX: clamp(right + padX, 0, width),
+    maxY: clamp(bottom + padY, 0, height),
+  };
+}
+
 function isChromaLikePixel(r: number, g: number, b: number, a: number): boolean {
   if (a < 12) return true;
   const magentaScore = Math.abs(r - 255) + Math.abs(g) + Math.abs(b - 255);
@@ -382,25 +442,34 @@ function isForegroundPixel(r: number, g: number, b: number, a: number): boolean 
   return !isChromaLikePixel(r, g, b, a);
 }
 
-/**
- * Bounding box of opaque / non-chroma pixels (downsampled). Returns null if no foreground found.
- */
-export function computeSubjectBoundingBoxFromContext(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  sampleStep = 2
+/** Options for {@link computeSubjectBoundingBoxFromContext}. */
+export interface SubjectBoundingBoxScanOptions {
+  /** Horizontal and vertical pixel step when reading pixels (>= 1). Default 2. */
+  sampleStep?: number;
+  /**
+   * Longest frame side (px) used for analysis. Frames larger than this are downscaled
+   * for scanning, then the bbox is mapped back to full resolution (faster, slightly coarser).
+   * Default 256. Set very high to always scan at full resolution.
+   */
+  maxAnalysisSide?: number;
+}
+
+function scanForegroundBoundingBoxPixels(
+  readCtx: CanvasRenderingContext2D,
+  scanWidth: number,
+  scanHeight: number,
+  step: number
 ): PixelRect | null {
-  let minX = width;
-  let minY = height;
+  let minX = scanWidth;
+  let minY = scanHeight;
   let maxX = 0;
   let maxY = 0;
   let found = false;
-  const step = Math.max(1, Math.min(sampleStep, Math.floor(Math.min(width, height) / 64) || 1));
-  for (let y = 0; y < height; y += step) {
-    const row = ctx.getImageData(0, y, width, 1);
+  const s = Math.max(1, step);
+  for (let y = 0; y < scanHeight; y += s) {
+    const row = readCtx.getImageData(0, y, scanWidth, 1);
     const d = row.data;
-    for (let x = 0; x < width; x += step) {
+    for (let x = 0; x < scanWidth; x += s) {
       const i = x * 4;
       const r = d[i];
       const g = d[i + 1];
@@ -419,6 +488,77 @@ export function computeSubjectBoundingBoxFromContext(
     return null;
   }
   return { minX, minY, maxX, maxY };
+}
+
+function mapAnalyzedBBoxToFullFrame(
+  box: PixelRect,
+  fullWidth: number,
+  fullHeight: number,
+  analyzedWidth: number,
+  analyzedHeight: number
+): PixelRect {
+  const sx = fullWidth / analyzedWidth;
+  const sy = fullHeight / analyzedHeight;
+  return {
+    minX: Math.max(0, Math.floor(box.minX * sx)),
+    minY: Math.max(0, Math.floor(box.minY * sy)),
+    maxX: Math.min(fullWidth - 1, Math.ceil((box.maxX + 1) * sx) - 1),
+    maxY: Math.min(fullHeight - 1, Math.ceil((box.maxY + 1) * sy) - 1),
+  };
+}
+
+/**
+ * Bounding box of opaque / non-chroma pixels (downsampled scan). Returns null if no foreground found.
+ */
+export function computeSubjectBoundingBoxFromContext(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  options: SubjectBoundingBoxScanOptions = {}
+): PixelRect | null {
+  const sampleStep = Math.max(1, options.sampleStep ?? 2);
+  const maxAnalysisSide = Math.max(48, options.maxAnalysisSide ?? 256);
+  const cw = ctx.canvas?.width ?? width;
+  const ch = ctx.canvas?.height ?? height;
+  const scanW = Math.min(width, cw);
+  const scanH = Math.min(height, ch);
+  if (scanW < 1 || scanH < 1) {
+    return null;
+  }
+
+  const maxDim = Math.max(scanW, scanH);
+  const scaleDown = maxDim > maxAnalysisSide ? maxAnalysisSide / maxDim : 1;
+
+  const effectiveStepOnFull = Math.max(
+    1,
+    Math.min(sampleStep, Math.floor(Math.min(scanW, scanH) / 64) || 1)
+  );
+
+  if (scaleDown >= 1 || typeof document === 'undefined' || !ctx.canvas) {
+    return scanForegroundBoundingBoxPixels(ctx, scanW, scanH, effectiveStepOnFull);
+  }
+
+  const wSmall = Math.max(1, Math.floor(scanW * scaleDown));
+  const hSmall = Math.max(1, Math.floor(scanH * scaleDown));
+  const buf = document.createElement('canvas');
+  buf.width = wSmall;
+  buf.height = hSmall;
+  const sctx = buf.getContext('2d', { willReadFrequently: true });
+  if (!sctx) {
+    return scanForegroundBoundingBoxPixels(ctx, scanW, scanH, effectiveStepOnFull);
+  }
+  sctx.imageSmoothingEnabled = false;
+  sctx.drawImage(ctx.canvas, 0, 0, scanW, scanH, 0, 0, wSmall, hSmall);
+
+  const smallStep = Math.max(
+    1,
+    Math.min(sampleStep, Math.floor(Math.min(wSmall, hSmall) / 48) || 1)
+  );
+  const smallBox = scanForegroundBoundingBoxPixels(sctx, wSmall, hSmall, smallStep);
+  if (!smallBox) {
+    return null;
+  }
+  return mapAnalyzedBBoxToFullFrame(smallBox, scanW, scanH, wSmall, hSmall);
 }
 
 function pickBestPlacementLabelAutoAvoid(
@@ -440,8 +580,18 @@ function pickBestPlacementLabelAutoAvoid(
   for (const label of LINE_STICKER_TEXT_PLACEMENT_PRESETS) {
     const layout = layoutFromPlacementLabel(label, width, height, marginRatio);
     const lines = wrapLines(ctx, trimmed, layout.maxWidth);
-    const lineCount = Math.max(1, lines.length);
-    const textBox = estimateTextBlockBox(width, height, layout, lineCount, lineHeight);
+    const padX = Math.ceil(fontSize * 0.18);
+    const padY = Math.ceil(fontSize * 0.1);
+    const textBox = estimateTextBlockBoxFromMeasuredLines(
+      ctx,
+      width,
+      height,
+      layout,
+      lines,
+      lineHeight,
+      padX,
+      padY
+    );
     const overlap = rectangleIntersectionArea(textBox, subject);
     const gap = rectangleMinSeparation(textBox, subject);
     const score = gap - overlap * 12;
