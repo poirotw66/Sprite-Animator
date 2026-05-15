@@ -58,6 +58,7 @@ export interface LineStickerResultPanelViewerViewModel {
   onApplyReprocessedImage: (dataUrl: string) => void;
   onReRunChromaKey: (image: string) => Promise<string>;
   onSpriteSheetUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  useFrameImageForSingleCanvas: boolean;
 }
 
 export interface LineStickerResultPanelDownloadViewModel {
@@ -241,6 +242,7 @@ const LineStickerResultViewerSection: React.FC<LineStickerResultViewerSectionPro
               processedSpriteSheet={viewer.effectiveProcessedSpriteSheet}
               sliceSettings={viewer.effectiveSliceSettingsForView}
               sheetDimensions={viewer.effectiveSheetDimensions}
+              useFrameImageForSingleCanvas={viewer.useFrameImageForSingleCanvas}
             />
           </Suspense>
         </div>

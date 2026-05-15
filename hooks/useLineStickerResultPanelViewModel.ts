@@ -48,6 +48,8 @@ interface UseLineStickerResultPanelViewModelParams {
   setSingleSheetProcessedImage: React.Dispatch<React.SetStateAction<string | null>>;
   reRunSetSheetChromaKey: (image: string) => Promise<string>;
   reRunSingleSheetChromaKey: (image: string) => Promise<string>;
+  /** Per-frame crop canvas uses sticker frame URLs (programmatic overlay) instead of the processed sheet bitmap. */
+  useFrameImageForSingleCanvas: boolean;
 }
 
 export const useLineStickerResultPanelViewModel = ({
@@ -93,6 +95,7 @@ export const useLineStickerResultPanelViewModel = ({
   setSingleSheetProcessedImage,
   reRunSetSheetChromaKey,
   reRunSingleSheetChromaKey,
+  useFrameImageForSingleCanvas,
 }: UseLineStickerResultPanelViewModelParams): LineStickerResultPanelViewModel => {
   const onReplaceOriginalImage = useCallback((dataUrl: string) => {
     if (stickerSetMode) {
@@ -200,6 +203,7 @@ export const useLineStickerResultPanelViewModel = ({
     onApplyReprocessedImage,
     onReRunChromaKey,
     onSpriteSheetUpload,
+    useFrameImageForSingleCanvas,
   }), [
     effectiveSpriteSheetImage,
     effectiveProcessedSpriteSheet,
@@ -220,6 +224,7 @@ export const useLineStickerResultPanelViewModel = ({
     onApplyReprocessedImage,
     onReRunChromaKey,
     onSpriteSheetUpload,
+    useFrameImageForSingleCanvas,
   ]);
 
   const downloads = useMemo(() => ({

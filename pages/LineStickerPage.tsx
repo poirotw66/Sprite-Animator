@@ -991,6 +991,7 @@ const LineStickerPage: React.FC = () => {
         setSingleSheetProcessedImage: singleSheetFlow.setProcessedImage,
         reRunSetSheetChromaKey: reRunChromaKey,
         reRunSingleSheetChromaKey: singleSheetFlow.reRunChromaKey,
+        useFrameImageForSingleCanvas: textRendering === 'programmatic' && includeText,
     });
 
     return (

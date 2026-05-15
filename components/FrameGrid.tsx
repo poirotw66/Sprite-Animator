@@ -16,16 +16,42 @@ interface FrameGridProps {
   frameOverrides?: FrameOverride[];
   setFrameOverrides?: React.Dispatch<React.SetStateAction<FrameOverride[]>>;
   enablePerFrameEdit?: boolean;
-  /** Required for draggable crop box on single-frame canvas (when enablePerFrameEdit) */
+  /** Sheet bitmap for single-frame crop canvas; optional when `useFrameImageForSingleCanvas` and frame URLs are used. */
   processedSpriteSheet?: string | null;
   sliceSettings?: SliceSettings;
   sheetDimensions?: { width: number; height: number };
   /** Per-frame include in animation/export; unchecked = exclude from playback and export */
   frameIncluded?: boolean[];
   setFrameIncluded?: React.Dispatch<React.SetStateAction<boolean[]>>;
+  /**
+   * When true, single-frame crop canvas draws from `frames[editing]` (e.g. programmatic text overlay)
+   * instead of `processedSpriteSheet`, so preview matches thumbnails. Auto-align stays sheet-based and is hidden.
+   */
+  useFrameImageForSingleCanvas?: boolean;
 }
 
 const CANVAS_SIZE = 400;
+
+/** Sheet crop window → sub-rectangle in the per-frame image (matches sliceSpriteSheet dst math, scaled to natural size). */
+function frameImageSubRectFromSheetCrop(
+  imgW: number,
+  imgH: number,
+  sx: number,
+  sy: number,
+  cropW: number,
+  cropH: number,
+  srcLeft: number,
+  srcTop: number,
+  srcW: number,
+  srcH: number,
+): { fx: number; fy: number; fw: number; fh: number } {
+  return {
+    fx: ((srcLeft - sx) / cropW) * imgW,
+    fy: ((srcTop - sy) / cropH) * imgH,
+    fw: (srcW / cropW) * imgW,
+    fh: (srcH / cropH) * imgH,
+  };
+}
 
 export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
   frames,
@@ -39,6 +65,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
   sheetDimensions = { width: 0, height: 0 },
   frameIncluded = [],
   setFrameIncluded,
+  useFrameImageForSingleCanvas = false,
 }) => {
   const { t } = useLanguage();
   const [editingFrameIndex, setEditingFrameIndex] = useState<number | null>(null);
@@ -84,17 +111,19 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
     setDragOffset(null);
   }, [editingFrameIndex]);
 
-  // Draw single-frame canvas with crop box when sheet data is available
-  const hasSheetData = !!(
-    processedSpriteSheet &&
+  const frameImageForCanvas =
+    useFrameImageForSingleCanvas && editingFrameIndex != null ? frames[editingFrameIndex] : null;
+  const hasCropCanvasData = !!(
     sliceSettings &&
-    sheetDimensions &&
     sheetDimensions.width > 0 &&
     sheetDimensions.height > 0 &&
-    editingFrameIndex != null
+    editingFrameIndex != null &&
+    (processedSpriteSheet || frameImageForCanvas)
   );
+
+  // Draw single-frame canvas with crop box when sheet geometry + source image are available
   useEffect(() => {
-    if (!hasSheetData || !canvasRef.current) return;
+    if (!hasCropCanvasData || !canvasRef.current) return;
     const padding = getEffectivePadding(sliceSettings!);
     const cellRect = getCellRectForFrame(
       sheetDimensions.width,
@@ -117,8 +146,8 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
     const cropH = cellRect.height * scale;
     const sx = cellRect.x + (cellRect.width - cropW) / 2 + offX;
     const sy = cellRect.y + (cellRect.height - cropH) / 2 + offY;
-    const totalW = sheetDimensions!.width;
-    const totalH = sheetDimensions!.height;
+    const totalW = sheetDimensions.width;
+    const totalH = sheetDimensions.height;
     const srcLeft = Math.max(0, sx);
     const srcTop = Math.max(0, sy);
     const srcRight = Math.min(totalW, sx + cropW);
@@ -128,6 +157,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
     const displayScale = Math.min(CANVAS_SIZE / cropW, CANVAS_SIZE / cropH);
     const ox = (CANVAS_SIZE - cropW * displayScale) / 2;
     const oy = (CANVAS_SIZE - cropH * displayScale) / 2;
+    const drawFromFrameImage = !!frameImageForCanvas;
     const img = new Image();
     img.onload = () => {
       const canvas = canvasRef.current;
@@ -141,7 +171,25 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
         const dstY = oy + (srcTop - sy) * displayScale;
         const dstW = srcW * displayScale;
         const dstH = srcH * displayScale;
-        ctx.drawImage(img, srcLeft, srcTop, srcW, srcH, dstX, dstY, dstW, dstH);
+        if (drawFromFrameImage) {
+          const { fx, fy, fw, fh } = frameImageSubRectFromSheetCrop(
+            img.naturalWidth,
+            img.naturalHeight,
+            sx,
+            sy,
+            cropW,
+            cropH,
+            srcLeft,
+            srcTop,
+            srcW,
+            srcH
+          );
+          if (fw > 0 && fh > 0) {
+            ctx.drawImage(img, fx, fy, fw, fh, dstX, dstY, dstW, dstH);
+          }
+        } else {
+          ctx.drawImage(img, srcLeft, srcTop, srcW, srcH, dstX, dstY, dstW, dstH);
+        }
       }
       const drawCropAndGrid = () => {
         const cw = cropW * displayScale;
@@ -179,12 +227,25 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
       }
     };
     img.crossOrigin = 'anonymous';
-    img.src = processedSpriteSheet!;
-  }, [hasSheetData, processedSpriteSheet, sliceSettings, sheetDimensions, editingFrameIndex, frameOverrides, dragOffset, usePrevAsRef, prevRefOpacity, frames]);
+    img.src = drawFromFrameImage ? frameImageForCanvas! : processedSpriteSheet!;
+  }, [
+    hasCropCanvasData,
+    processedSpriteSheet,
+    frameImageForCanvas,
+    useFrameImageForSingleCanvas,
+    sliceSettings,
+    sheetDimensions,
+    editingFrameIndex,
+    frameOverrides,
+    dragOffset,
+    usePrevAsRef,
+    prevRefOpacity,
+    frames,
+  ]);
 
   const startCropDrag = useCallback((clientX: number, clientY: number) => {
-    if (!processedSpriteSheet || !sliceSettings || !setFrameOverrides || editingFrameIndex == null ||
-        !sheetDimensions || sheetDimensions.width <= 0 || sheetDimensions.height <= 0 || !canvasRef.current) return;
+    if (!sliceSettings || !setFrameOverrides || editingFrameIndex == null ||
+        sheetDimensions.width <= 0 || sheetDimensions.height <= 0 || !canvasRef.current) return;
     const padding = getEffectivePadding(sliceSettings);
     const cellRect = getCellRectForFrame(
       sheetDimensions.width,
@@ -255,7 +316,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
     window.addEventListener('touchmove', onMoveTouch, { passive: false, capture: true });
     window.addEventListener('touchend', onUp);
     window.addEventListener('touchcancel', onUp);
-  }, [processedSpriteSheet, sliceSettings, sheetDimensions, editingFrameIndex, frameOverrides, dragOffset, updateOverride]);
+  }, [sliceSettings, sheetDimensions, editingFrameIndex, frameOverrides, dragOffset, updateOverride]);
 
   const handleCropCanvasMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (e.button !== 0) return;
@@ -355,7 +416,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
               <X className="w-4 h-4" />
             </button>
           </div>
-          {hasSheetData && (
+          {hasCropCanvasData && (
             <div className="mb-4">
               <label className="block text-xs font-medium text-slate-600 mb-1.5">拖拉剪輯框 (Drag crop box)</label>
               <canvas
@@ -476,6 +537,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                   </button>
                 )}
                 {processedSpriteSheet &&
+                 !useFrameImageForSingleCanvas &&
                  sliceSettings &&
                  sheetDimensions &&
                  sheetDimensions.width > 0 &&
