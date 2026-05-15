@@ -663,17 +663,26 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
         }
 
         setSpriteSheetImage(generated);
-        setStatusText(t.statusProcessing);
-        setIsProcessingChromaKey(true);
-        const processed = await removeBackground(generated, activeAbortControllerRef.current?.signal, (progress) => {
-          if (!isRequestActive(requestId)) {
-            return;
-          }
-          setChromaKeyProgress(progress);
-        });
-        throwIfRequestInactive(requestId);
-        setIsProcessingChromaKey(false);
-        setProcessedSpriteSheet(processed);
+        if (bgRemovalMethod === 'ai') {
+          setStatusText(t.statusProcessing);
+          setIsProcessingChromaKey(true);
+          const processed = await removeBackground(
+            generated,
+            activeAbortControllerRef.current?.signal,
+            (progress) => {
+              if (!isRequestActive(requestId)) {
+                return;
+              }
+              setChromaKeyProgress(progress);
+            }
+          );
+          throwIfRequestInactive(requestId);
+          setIsProcessingChromaKey(false);
+          setProcessedSpriteSheet(processed);
+        } else {
+          // Chroma: useSpriteSheetFlow runs removeChromaKey on image change (avoid double pass).
+          setStatusText(t.statusProcessing);
+        }
         setStatusText('');
       }
     } catch (err: unknown) {
@@ -689,6 +698,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
       finishRequest(requestId);
     }
   }, [
+    bgRemovalMethod,
     finishRequest,
     getEffectiveApiKey,
     setError,

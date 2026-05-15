@@ -27,6 +27,8 @@ import type { ChromaKeyColorType } from '../types';
 export interface UseSpriteSheetFlowOptions {
   /** When true (default), run chroma key on image change. When false, processedImage is only set via setProcessedImage (e.g. AI removal). */
   runChromaAutomatically?: boolean;
+  /** When set, keeps flow chroma color in sync with page settings (e.g. LineStickerPage). */
+  chromaKeyColor?: ChromaKeyColorType;
   initialSliceSettings?: SliceSettings;
   /** Optional post-process after slicing (e.g. LINE programmatic text overlay). */
   mapFramesAfterSlice?: (frames: string[]) => Promise<string[]>;
@@ -85,6 +87,7 @@ export function useSpriteSheetFlow(
 ): UseSpriteSheetFlowResult {
   const {
     runChromaAutomatically = true,
+    chromaKeyColor: chromaKeyColorOption,
     initialSliceSettings = DEFAULT_SLICE_SETTINGS as SliceSettings,
     mapFramesAfterSlice,
     slicePipelineRevision,
@@ -94,7 +97,15 @@ export function useSpriteSheetFlow(
   const [processedImage, setProcessedImageState] = useState<string | null>(null);
   const [sliceSettings, setSliceSettings] = useState<SliceSettings>(initialSliceSettings);
   const [removeBackground, setRemoveBackground] = useState(true);
-  const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('green');
+  const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>(
+    chromaKeyColorOption ?? 'green'
+  );
+
+  useEffect(() => {
+    if (chromaKeyColorOption !== undefined) {
+      setChromaKeyColor(chromaKeyColorOption);
+    }
+  }, [chromaKeyColorOption]);
   const [frames, setFrames] = useState<string[]>([]);
   const [frameOverrides, setFrameOverrides] = useState<FrameOverride[]>([]);
   const [frameIncluded, setFrameIncluded] = useState<boolean[]>([]);

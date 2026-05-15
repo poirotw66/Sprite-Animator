@@ -191,6 +191,7 @@ const LineStickerPage: React.FC = () => {
     // Single-sheet mode: shared flow (upload ? slice ? remove bg ? frames) with PartingPage
     const singleSheetFlow = useSpriteSheetFlow({
         runChromaAutomatically: bgRemovalMethod === 'chroma',
+        chromaKeyColor,
         initialSliceSettings: { ...DEFAULT_SLICE_SETTINGS, cols: LINE_STICKER_SET_COLS, rows: LINE_STICKER_SET_ROWS } as SliceSettings,
         mapFramesAfterSlice: lineStickerProgrammaticOverlayCore.mapFramesAfterSlice,
     });
