@@ -28,6 +28,8 @@ interface FrameGridProps {
    * instead of `processedSpriteSheet`, so preview matches thumbnails. Auto-align stays sheet-based and is hidden.
    */
   useFrameImageForSingleCanvas?: boolean;
+  /** Optional block below the crop canvas (e.g. LINE programmatic font controls). */
+  perFrameEditExtra?: React.ReactNode;
 }
 
 const CANVAS_SIZE = 400;
@@ -66,6 +68,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
   frameIncluded = [],
   setFrameIncluded,
   useFrameImageForSingleCanvas = false,
+  perFrameEditExtra,
 }) => {
   const { t } = useLanguage();
   const [editingFrameIndex, setEditingFrameIndex] = useState<number | null>(null);
@@ -337,10 +340,19 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
     const start = { clientX, clientY, left: rect.left, top: rect.top };
     panelDragPosRef.current = { x: rect.left, y: rect.top };
     const applyMove = (nextX: number, nextY: number) => {
+      const panel = editPanelRef.current;
+      if (!panel) return;
+      const w = panel.offsetWidth;
+      const h = panel.offsetHeight;
+      const margin = 8;
+      const vw = window.visualViewport?.width ?? window.innerWidth;
+      const vh = window.visualViewport?.height ?? window.innerHeight;
+      const vx = window.visualViewport?.offsetLeft ?? 0;
+      const vy = window.visualViewport?.offsetTop ?? 0;
       let x = start.left + (nextX - start.clientX);
       let y = start.top + (nextY - start.clientY);
-      x = Math.max(8, Math.min(window.innerWidth - 100, x));
-      y = Math.max(8, Math.min(window.innerHeight - 100, y));
+      x = Math.max(vx + margin, Math.min(vx + vw - w - margin, x));
+      y = Math.max(vy + margin, Math.min(vy + vh - h - margin, y));
       panelDragPosRef.current = { x, y };
       setPanelPosition({ x, y });
     };
@@ -389,13 +401,13 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
       {enablePerFrameEdit && editingFrameIndex != null && setFrameOverrides && createPortal(
         <div
           ref={editPanelRef}
-          className="fixed z-50 p-4 bg-slate-50 rounded-xl border border-slate-200 shadow-lg min-w-[280px] max-w-[90vw]"
+          className="fixed z-50 flex flex-col max-h-[min(92dvh,920px)] w-[min(100vw-1rem,28rem)] max-w-[90vw] min-w-[280px] overflow-hidden bg-slate-50 rounded-xl border border-slate-200 shadow-lg"
           style={panelPosition != null
             ? { left: panelPosition.x, top: panelPosition.y, transform: 'none' }
             : { left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
         >
           <div
-            className="flex items-center justify-between gap-2 py-2 -mx-1 -mt-1 px-2 mb-3 rounded-t cursor-move select-none border-b border-slate-200/60 bg-slate-100/50 touch-manipulation"
+            className="flex shrink-0 items-center justify-between gap-2 py-2.5 px-3 cursor-move select-none border-b border-slate-200/60 bg-slate-100/50 touch-manipulation"
             style={{ touchAction: 'none' }}
             onMouseDown={handleEditPanelMouseDown}
             onTouchStart={handleEditPanelTouchStart}
@@ -416,8 +428,9 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
               <X className="w-4 h-4" />
             </button>
           </div>
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4 pt-3">
           {hasCropCanvasData && (
-            <div className="mb-4">
+            <div className="mb-4 shrink-0">
               <label className="block text-xs font-medium text-slate-600 mb-1.5">拖拉剪輯框 (Drag crop box)</label>
               <canvas
                 ref={canvasRef}
@@ -461,7 +474,12 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
               )}
             </div>
           )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+          {perFrameEditExtra ? (
+            <div className="mb-4 shrink-0">
+              {perFrameEditExtra}
+            </div>
+          ) : null}
+          <div className="grid shrink-0 grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1.5">切割位子 (Position)</label>
               <div className="flex gap-3">
@@ -507,7 +525,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
               <p className="text-[10px] text-slate-400 mt-1">25% ~ 100%</p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 mt-3">
+          <div className="mt-3 flex shrink-0 flex-wrap gap-2">
             <button
               type="button"
               onClick={resetOverride}
@@ -650,6 +668,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                 )}
               </>
             )}
+          </div>
           </div>
         </div>
       , document.body)}

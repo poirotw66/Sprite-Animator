@@ -14,6 +14,7 @@ import {
   LINE_STICKER_SHEET_INDICES,
   type LineStickerSheetIndex,
 } from '../../utils/lineStickerSetSchema';
+import { LineStickerPhraseGridEditor } from './LineStickerPhraseSection';
 
 const FrameGrid = lazyWithRetry(() =>
   import('../FrameGrid').then((module) => ({ default: module.FrameGrid }))
@@ -38,6 +39,15 @@ export interface LineStickerResultPanelStatusViewModel {
   isDownloading: boolean;
 }
 
+export interface LineStickerResultSidePhraseEdit {
+  phraseGridList: string[];
+  actionDescGridList: string[];
+  phraseGridCols: number;
+  updatePhraseAt: (index: number, value: string) => void;
+  updateActionDescAt: (index: number, value: string) => void;
+  currentSheetIndex: LineStickerSheetIndex;
+}
+
 export interface LineStickerResultPanelViewerViewModel {
   effectiveSpriteSheetImage: string | null;
   effectiveProcessedSpriteSheet: string | null;
@@ -59,6 +69,9 @@ export interface LineStickerResultPanelViewerViewModel {
   onReRunChromaKey: (image: string) => Promise<string>;
   onSpriteSheetUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   useFrameImageForSingleCanvas: boolean;
+  /** Single-sheet programmatic: font/style controls inside the per-frame crop edit portal. */
+  frameEditProgrammaticStyleSlot: React.ReactNode | null;
+  resultSidePhraseEdit: LineStickerResultSidePhraseEdit | null;
 }
 
 export interface LineStickerResultPanelDownloadViewModel {
@@ -214,6 +227,25 @@ const LineStickerResultViewerSection: React.FC<LineStickerResultViewerSectionPro
           />
         </Suspense>
 
+        {viewer.resultSidePhraseEdit ? (
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4 space-y-3">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-800">{t.lineStickerResultProgrammaticPhrasesTitle}</h3>
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed">{t.lineStickerResultProgrammaticPhrasesHint}</p>
+            </div>
+            <LineStickerPhraseGridEditor
+              t={t}
+              stickerSetMode={sheet.stickerSetMode}
+              currentSheetIndex={viewer.resultSidePhraseEdit.currentSheetIndex}
+              phraseGridList={viewer.resultSidePhraseEdit.phraseGridList}
+              actionDescGridList={viewer.resultSidePhraseEdit.actionDescGridList}
+              phraseGridCols={viewer.resultSidePhraseEdit.phraseGridCols}
+              updatePhraseAt={viewer.resultSidePhraseEdit.updatePhraseAt}
+              updateActionDescAt={viewer.resultSidePhraseEdit.updateActionDescAt}
+            />
+          </div>
+        ) : null}
+
         <div className="border-t border-slate-100 pt-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-slate-900 flex items-center gap-2">
@@ -243,6 +275,7 @@ const LineStickerResultViewerSection: React.FC<LineStickerResultViewerSectionPro
               sliceSettings={viewer.effectiveSliceSettingsForView}
               sheetDimensions={viewer.effectiveSheetDimensions}
               useFrameImageForSingleCanvas={viewer.useFrameImageForSingleCanvas}
+              perFrameEditExtra={viewer.frameEditProgrammaticStyleSlot}
             />
           </Suspense>
         </div>

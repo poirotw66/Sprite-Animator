@@ -18,8 +18,6 @@ import {
 } from '../../utils/lineStickerPrompt';
 import type {
   ProgrammaticTextOverlayTuning,
-  ProgrammaticTextPlacementMode,
-  ProgrammaticFontFamilySource,
 } from '../../utils/lineStickerTextOverlay';
 import {
   LineStickerUploadCard,
@@ -29,6 +27,7 @@ import {
   LineStickerPhraseSection,
   type LineStickerPhraseSectionProps,
 } from './LineStickerPhraseSection';
+import { LineStickerProgrammaticStyleControls } from './LineStickerProgrammaticStyleControls';
 
 export interface LineStickerSettingsConfigViewModel {
   stickerSetMode: boolean;
@@ -142,12 +141,6 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
 }) => {
   const { uploadCard, config, phraseSection } = viewModel;
   const isPresetStyle = config.selectedStyle !== 'custom';
-  const programmaticPlacementOptions: { value: ProgrammaticTextPlacementMode; label: string }[] = [
-    { value: 'cycle', label: t.lineStickerProgrammaticPlacementCycle },
-    { value: 'bottom_center', label: t.lineStickerProgrammaticPlacementBottom },
-    { value: 'top_center', label: t.lineStickerProgrammaticPlacementTop },
-    { value: 'middle_center', label: t.lineStickerProgrammaticPlacementMiddle },
-  ];
   const previewTitle = isPresetStyle
     ? STYLE_PRESET_ORDER.includes(config.selectedStyle as keyof typeof STYLE_PRESETS)
       ? STYLE_PREVIEW_PLACEHOLDER_LABELS[config.selectedStyle as keyof typeof STYLE_PRESETS]
@@ -452,287 +445,16 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
         </div>
 
         {config.textRendering === 'programmatic' && config.includeText && (
-          <div className="space-y-4 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100 animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-              <div>
-                <p className="text-sm font-semibold text-slate-800">{t.lineStickerProgrammaticTuningTitle}</p>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed">{t.lineStickerProgrammaticTuningHint}</p>
-              </div>
-              <button
-                type="button"
-                onClick={config.onResetProgrammaticTextTuning}
-                className="shrink-0 min-h-[40px] px-3 py-2 rounded-lg text-xs font-semibold text-emerald-800 bg-white border border-emerald-200 hover:bg-emerald-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
-              >
-                {t.lineStickerProgrammaticResetTuning}
-              </button>
-            </div>
-
-            <div>
-              <p className="text-sm font-medium text-slate-700 mb-2">{t.lineStickerProgrammaticFontSourceLabel}</p>
-              <div className="flex flex-col gap-2">
-                <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-                  <input
-                    type="radio"
-                    name="programmaticFontSource"
-                    className="text-green-600 shrink-0"
-                    checked={config.programmaticTextTuning.fontFamilySource === 'preset'}
-                    onChange={() =>
-                      config.setProgrammaticTextTuning((prev) => ({
-                        ...prev,
-                        fontFamilySource: 'preset' as ProgrammaticFontFamilySource,
-                      }))
-                    }
-                  />
-                  {t.lineStickerProgrammaticFontSourcePreset}
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
-                  <input
-                    type="radio"
-                    name="programmaticFontSource"
-                    className="text-green-600 shrink-0"
-                    checked={config.programmaticTextTuning.fontFamilySource === 'custom'}
-                    onChange={() =>
-                      config.setProgrammaticTextTuning((prev) => ({
-                        ...prev,
-                        fontFamilySource: 'custom' as ProgrammaticFontFamilySource,
-                      }))
-                    }
-                  />
-                  {t.lineStickerProgrammaticFontSourceCustom}
-                </label>
-              </div>
-            </div>
-
-            {config.programmaticTextTuning.fontFamilySource === 'preset' && (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  {t.lineStickerProgrammaticFontPresetLabel}
-                </label>
-                <select
-                  value={config.selectedFont}
-                  onChange={(event) =>
-                    config.setSelectedFont(event.target.value as keyof typeof FONT_PRESETS)
-                  }
-                  className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
-                >
-                  {FONT_PRESET_ORDER.map((key) => (
-                    <option key={key} value={key}>
-                      {FONT_PRESETS[key].label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {config.programmaticTextTuning.fontFamilySource === 'custom' && (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  {t.lineStickerProgrammaticFontCustomLabel}
-                </label>
-                <p className="text-xs text-slate-500 mb-2 leading-relaxed">{t.lineStickerProgrammaticFontCustomHint}</p>
-                <textarea
-                  value={config.programmaticTextTuning.customFontFamily}
-                  onChange={(event) =>
-                    config.setProgrammaticTextTuning((prev) => ({
-                      ...prev,
-                      customFontFamily: event.target.value,
-                    }))
-                  }
-                  placeholder={t.lineStickerProgrammaticFontCustomPlaceholder}
-                  rows={2}
-                  className="w-full p-3 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-green-500 outline-none resize-y bg-white"
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                {t.lineStickerProgrammaticTextColorLabel}
-              </label>
-              <select
-                value={config.selectedTextColor}
-                onChange={(event) =>
-                  config.setSelectedTextColor(event.target.value as keyof typeof TEXT_COLOR_PRESETS)
-                }
-                className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
-              >
-                {Object.keys(TEXT_COLOR_PRESETS).map((key) => (
-                  <option key={key} value={key}>
-                    {TEXT_COLOR_PRESETS[key as keyof typeof TEXT_COLOR_PRESETS].label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                {t.lineStickerProgrammaticPlacement}
-              </label>
-              <select
-                value={config.programmaticTextTuning.placementMode}
-                onChange={(event) =>
-                  config.setProgrammaticTextTuning((prev) => ({
-                    ...prev,
-                    placementMode: event.target.value as ProgrammaticTextPlacementMode,
-                  }))
-                }
-                className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
-              >
-                {programmaticPlacementOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                {t.lineStickerProgrammaticFontWeight}
-              </label>
-              <select
-                value={config.programmaticTextTuning.fontWeight}
-                onChange={(event) =>
-                  config.setProgrammaticTextTuning((prev) => ({
-                    ...prev,
-                    fontWeight: Number(event.target.value) as ProgrammaticTextOverlayTuning['fontWeight'],
-                  }))
-                }
-                className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
-              >
-                <option value={400}>400</option>
-                <option value={500}>500</option>
-                <option value={600}>600</option>
-                <option value={700}>700</option>
-              </select>
-            </div>
-
-            <div>
-              <div className="flex justify-between text-xs text-slate-600 mb-1">
-                <span>{t.lineStickerProgrammaticFontSize}</span>
-                <span className="font-mono tabular-nums">{config.programmaticTextTuning.fontSizePercent.toFixed(1)}</span>
-              </div>
-              <input
-                type="range"
-                min={4}
-                max={20}
-                step={0.5}
-                value={config.programmaticTextTuning.fontSizePercent}
-                onChange={(event) =>
-                  config.setProgrammaticTextTuning((prev) => ({
-                    ...prev,
-                    fontSizePercent: Number(event.target.value),
-                  }))
-                }
-                className="w-full accent-emerald-600"
-              />
-            </div>
-
-            <div>
-              <div className="flex justify-between text-xs text-slate-600 mb-1">
-                <span>{t.lineStickerProgrammaticEdgeMargin}</span>
-                <span className="font-mono tabular-nums">{config.programmaticTextTuning.edgeMarginPercent.toFixed(1)}</span>
-              </div>
-              <input
-                type="range"
-                min={2}
-                max={18}
-                step={0.5}
-                value={config.programmaticTextTuning.edgeMarginPercent}
-                onChange={(event) =>
-                  config.setProgrammaticTextTuning((prev) => ({
-                    ...prev,
-                    edgeMarginPercent: Number(event.target.value),
-                  }))
-                }
-                className="w-full accent-emerald-600"
-              />
-            </div>
-
-            <div>
-              <div className="flex justify-between text-xs text-slate-600 mb-1">
-                <span>{t.lineStickerProgrammaticLineHeight}</span>
-                <span className="font-mono tabular-nums">{config.programmaticTextTuning.lineHeightMultiplier.toFixed(2)}</span>
-              </div>
-              <input
-                type="range"
-                min={1}
-                max={2}
-                step={0.05}
-                value={config.programmaticTextTuning.lineHeightMultiplier}
-                onChange={(event) =>
-                  config.setProgrammaticTextTuning((prev) => ({
-                    ...prev,
-                    lineHeightMultiplier: Number(event.target.value),
-                  }))
-                }
-                className="w-full accent-emerald-600"
-              />
-            </div>
-
-            <div>
-              <div className="flex justify-between text-xs text-slate-600 mb-1">
-                <span>{t.lineStickerProgrammaticStrokeScale}</span>
-                <span className="font-mono tabular-nums">{config.programmaticTextTuning.strokeScale.toFixed(2)}</span>
-              </div>
-              <input
-                type="range"
-                min={0.5}
-                max={2.5}
-                step={0.05}
-                value={config.programmaticTextTuning.strokeScale}
-                onChange={(event) =>
-                  config.setProgrammaticTextTuning((prev) => ({
-                    ...prev,
-                    strokeScale: Number(event.target.value),
-                  }))
-                }
-                className="w-full accent-emerald-600"
-              />
-            </div>
-
-            <div>
-              <div className="flex justify-between text-xs text-slate-600 mb-1">
-                <span>{t.lineStickerProgrammaticOffsetX}</span>
-                <span className="font-mono tabular-nums">{config.programmaticTextTuning.offsetXPercent.toFixed(1)}</span>
-              </div>
-              <input
-                type="range"
-                min={-25}
-                max={25}
-                step={0.5}
-                value={config.programmaticTextTuning.offsetXPercent}
-                onChange={(event) =>
-                  config.setProgrammaticTextTuning((prev) => ({
-                    ...prev,
-                    offsetXPercent: Number(event.target.value),
-                  }))
-                }
-                className="w-full accent-emerald-600"
-              />
-            </div>
-
-            <div>
-              <div className="flex justify-between text-xs text-slate-600 mb-1">
-                <span>{t.lineStickerProgrammaticOffsetY}</span>
-                <span className="font-mono tabular-nums">{config.programmaticTextTuning.offsetYPercent.toFixed(1)}</span>
-              </div>
-              <input
-                type="range"
-                min={-25}
-                max={25}
-                step={0.5}
-                value={config.programmaticTextTuning.offsetYPercent}
-                onChange={(event) =>
-                  config.setProgrammaticTextTuning((prev) => ({
-                    ...prev,
-                    offsetYPercent: Number(event.target.value),
-                  }))
-                }
-                className="w-full accent-emerald-600"
-              />
-            </div>
-          </div>
+          <LineStickerProgrammaticStyleControls
+            t={t}
+            selectedFont={config.selectedFont}
+            setSelectedFont={config.setSelectedFont}
+            selectedTextColor={config.selectedTextColor}
+            setSelectedTextColor={config.setSelectedTextColor}
+            programmaticTextTuning={config.programmaticTextTuning}
+            setProgrammaticTextTuning={config.setProgrammaticTextTuning}
+            onResetProgrammaticTextTuning={config.onResetProgrammaticTextTuning}
+          />
         )}
 
         {(config.includeText || config.textRendering === 'programmatic') && (

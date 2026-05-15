@@ -373,6 +373,11 @@ export interface Translations {
   lineStickerDownloadSelected: string;
   lineStickerPreviewCropped: string;
   lineStickerPreviewCropHint: string;
+  /** Single-sheet result column: edit phrases for programmatic overlay after upload. */
+  lineStickerResultProgrammaticPhrasesTitle: string;
+  lineStickerResultProgrammaticPhrasesHint: string;
+  /** Shown inside the floating frame-edit panel when programmatic text is on. */
+  lineStickerFrameEditProgrammaticStyleSubtitle: string;
   lineStickerIncludeText: string;
   lineStickerTextRenderingModel: string;
   lineStickerTextRenderingProgrammatic: string;

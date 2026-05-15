@@ -39,6 +39,8 @@ import {
     LineStickerSettingsPanel,
     LineStickerResultPanel,
 } from '../components/LineSticker';
+import type { LineStickerResultSidePhraseEdit } from '../components/LineSticker/LineStickerResultPanel';
+import { LineStickerProgrammaticStyleControls } from '../components/LineSticker/LineStickerProgrammaticStyleControls';
 
 import {
     TEXT_PRESETS,
@@ -186,10 +188,12 @@ const LineStickerPage: React.FC = () => {
     );
     const [programmaticRawFrameEpoch, setProgrammaticRawFrameEpoch] = useState(0);
 
-    const captureProgrammaticRawFramesFromMap = useCallback((raw: string[]) => {
+    const captureProgrammaticRawFramesFromMap = useCallback((raw: string[], bumpEpoch: boolean) => {
         programmaticRawFramesRef.current = raw.slice();
         programmaticRawBySheetRef.current[DEFAULT_LINE_STICKER_SHEET_INDEX] = raw.slice();
-        setProgrammaticRawFrameEpoch((n) => n + 1);
+        if (bumpEpoch) {
+            setProgrammaticRawFrameEpoch((n) => n + 1);
+        }
     }, []);
 
     const onProgrammaticRawFrames = useCallback((raw: string[], sheetIndex: LineStickerSheetIndex) => {
@@ -213,10 +217,8 @@ const LineStickerPage: React.FC = () => {
 
     const mapFramesAfterSlice = useCallback(async (frames: string[]) => {
         const ctx = programmaticTextOverlayRef.current;
-        if (ctx.textRendering === 'programmatic' && ctx.includeText) {
-            captureProgrammaticRawFramesFromMap(frames);
-            return frames;
-        }
+        const bumpEpoch = ctx.textRendering === 'programmatic' && ctx.includeText;
+        captureProgrammaticRawFramesFromMap(frames, bumpEpoch);
         return frames;
     }, [captureProgrammaticRawFramesFromMap]);
 
@@ -787,6 +789,30 @@ const LineStickerPage: React.FC = () => {
         }
         : singleSheetFlow.setSliceSettings;
 
+    const lineStickerResultSidePhraseEdit = useMemo((): LineStickerResultSidePhraseEdit | null => {
+        if (stickerSetMode || textRendering !== 'programmatic' || !includeText) {
+            return null;
+        }
+        return {
+            phraseGridList: phrasesForHook,
+            actionDescGridList: actionDescsForHook,
+            phraseGridCols,
+            updatePhraseAt,
+            updateActionDescAt,
+            currentSheetIndex,
+        };
+    }, [
+        stickerSetMode,
+        textRendering,
+        includeText,
+        phrasesForHook,
+        actionDescsForHook,
+        phraseGridCols,
+        updatePhraseAt,
+        updateActionDescAt,
+        currentSheetIndex,
+    ]);
+
     const handleSpriteSheetUpload = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
             const file = e.target.files?.[0];
@@ -869,6 +895,35 @@ const LineStickerPage: React.FC = () => {
     const handleResetProgrammaticTextTuning = useCallback(() => {
         setProgrammaticTextTuning({ ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING });
     }, []);
+
+    const lineStickerFrameEditProgrammaticStyleSlot = useMemo(() => {
+        if (stickerSetMode || textRendering !== 'programmatic' || !includeText) {
+            return null;
+        }
+        return (
+            <LineStickerProgrammaticStyleControls
+                t={lineStickerT}
+                radioNameSuffix="_frameEditPortal"
+                frameEditSubtitle={lineStickerT.lineStickerFrameEditProgrammaticStyleSubtitle}
+                selectedFont={selectedFont}
+                setSelectedFont={setSelectedFont}
+                selectedTextColor={selectedTextColor}
+                setSelectedTextColor={setSelectedTextColor}
+                programmaticTextTuning={programmaticTextTuning}
+                setProgrammaticTextTuning={setProgrammaticTextTuning}
+                onResetProgrammaticTextTuning={handleResetProgrammaticTextTuning}
+            />
+        );
+    }, [
+        stickerSetMode,
+        textRendering,
+        includeText,
+        lineStickerT,
+        selectedFont,
+        selectedTextColor,
+        programmaticTextTuning,
+        handleResetProgrammaticTextTuning,
+    ]);
 
     const settingsPanelViewModel = useLineStickerSettingsPanelViewModel({
         t: lineStickerT,
@@ -992,6 +1047,8 @@ const LineStickerPage: React.FC = () => {
         reRunSetSheetChromaKey: reRunChromaKey,
         reRunSingleSheetChromaKey: singleSheetFlow.reRunChromaKey,
         useFrameImageForSingleCanvas: textRendering === 'programmatic' && includeText,
+        frameEditProgrammaticStyleSlot: lineStickerFrameEditProgrammaticStyleSlot,
+        resultSidePhraseEdit: lineStickerResultSidePhraseEdit,
     });
 
     return (

@@ -371,6 +371,10 @@ export const en: Translations = {
   lineStickerDownloadSelected: 'Download Selected ({n})',
   lineStickerPreviewCropped: 'Cropped Preview',
   lineStickerPreviewCropHint: '(Click to select stickers)',
+  lineStickerResultProgrammaticPhrasesTitle: 'Per-cell text (programmatic overlay)',
+  lineStickerResultProgrammaticPhrasesHint:
+    'Same data as “Phrases & prompt” on the left. Edits here update the crop preview and downloads immediately. After uploading a sprite sheet, you can edit text here.',
+  lineStickerFrameEditProgrammaticStyleSubtitle: 'Changes re-render the crop preview and downloads (kept in sync with the left programmatic text panel).',
   lineStickerIncludeText: 'Include Text',
   lineStickerTextRenderingModel: 'Drawn by the model in the image',
   lineStickerTextRenderingProgrammatic: 'Overlay text after slicing',

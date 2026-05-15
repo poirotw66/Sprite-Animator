@@ -26,5 +26,6 @@ export type {
 	LineStickerResultPanelSheetViewModel,
 	LineStickerResultPanelStatusViewModel,
 	LineStickerResultPanelViewerViewModel,
+	LineStickerResultSidePhraseEdit,
 	LineStickerResultPanelDownloadViewModel,
 } from './LineStickerResultPanel';

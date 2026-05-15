@@ -371,6 +371,10 @@ export const zhTW: Translations = {
   lineStickerDownloadSelected: '下載已選 ({n})',
   lineStickerPreviewCropped: '切割預覽',
   lineStickerPreviewCropHint: '（可點擊選擇個別貼圖）',
+  lineStickerResultProgrammaticPhrasesTitle: '每格顯示文字（程式化疊字）',
+  lineStickerResultProgrammaticPhrasesHint:
+    '與左欄「短語與提示詞」同一組資料；在此修改後，下方切割預覽與下載會即時套用。上傳精靈圖後可直接在右側編輯。',
+  lineStickerFrameEditProgrammaticStyleSubtitle: '調整後會即時重繪切割預覽與下載用圖（與左欄程式化文字設定同步）。',
   lineStickerIncludeText: '包含文字',
   lineStickerTextRenderingModel: '由模型畫在圖上',
   lineStickerTextRenderingProgrammatic: '程式切圖後疊字',

@@ -50,7 +50,7 @@ export interface LineStickerPhraseSectionProps {
   onRetrySheet: (sheetIndex: LineStickerSheetIndex) => void;
 }
 
-interface LineStickerPhraseGridEditorProps {
+export interface LineStickerPhraseGridEditorProps {
   t: Translations;
   stickerSetMode: boolean;
   currentSheetIndex: LineStickerSheetIndex;
@@ -112,7 +112,7 @@ const LineStickerPhraseCell: React.FC<LineStickerPhraseCellProps> = React.memo((
 
 LineStickerPhraseCell.displayName = 'LineStickerPhraseCell';
 
-const LineStickerPhraseGridEditor: React.FC<LineStickerPhraseGridEditorProps> = React.memo(({
+export const LineStickerPhraseGridEditor: React.FC<LineStickerPhraseGridEditorProps> = React.memo(({
   t,
   stickerSetMode,
   currentSheetIndex,
