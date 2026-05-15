@@ -401,131 +401,132 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
       {enablePerFrameEdit && editingFrameIndex != null && setFrameOverrides && createPortal(
         <div
           ref={editPanelRef}
-          className="fixed z-50 flex flex-col max-h-[min(92dvh,920px)] w-[min(100vw-1rem,28rem)] max-w-[90vw] min-w-[280px] overflow-hidden bg-slate-50 rounded-xl border border-slate-200 shadow-lg"
+          className="fixed z-50 flex max-h-[min(92dvh,920px)] w-[min(100vw-0.75rem,56rem)] max-w-[min(96vw,56rem)] min-w-[280px] flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-lg"
           style={panelPosition != null
             ? { left: panelPosition.x, top: panelPosition.y, transform: 'none' }
             : { left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
         >
           <div
-            className="flex shrink-0 items-center justify-between gap-2 py-2.5 px-3 cursor-move select-none border-b border-slate-200/60 bg-slate-100/50 touch-manipulation"
+            className="flex shrink-0 cursor-move touch-manipulation select-none items-center justify-between gap-2 border-b border-slate-200/60 bg-slate-100/50 px-3 py-2.5"
             style={{ touchAction: 'none' }}
             onMouseDown={handleEditPanelMouseDown}
             onTouchStart={handleEditPanelTouchStart}
             aria-label="拖曳此列以移動編輯框"
           >
-            <div className="flex items-center gap-2 min-w-0">
-              <GripVertical className="w-4 h-4 text-slate-400 shrink-0" aria-hidden />
-              <span className="text-sm font-semibold text-slate-700 truncate">編輯第 {editingFrameIndex + 1} 幀</span>
+            <div className="flex min-w-0 items-center gap-2">
+              <GripVertical className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+              <span className="truncate text-sm font-semibold text-slate-700">編輯第 {editingFrameIndex + 1} 幀</span>
             </div>
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); setEditingFrameIndex(null); setDragOffset(null); setPanelPosition(null); }}
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
-              className="min-w-[44px] min-h-[44px] p-1 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors shrink-0 flex items-center justify-center"
+              className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg p-1 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
               aria-label="關閉"
             >
-              <X className="w-4 h-4" />
+              <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4 pt-3">
-          {hasCropCanvasData && (
-            <div className="mb-4 shrink-0">
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">拖拉剪輯框 (Drag crop box)</label>
-              <canvas
-                ref={canvasRef}
-                width={CANVAS_SIZE}
-                height={CANVAS_SIZE}
-                onMouseDown={handleCropCanvasMouseDown}
-                onTouchStart={handleCropCanvasTouchStart}
-                className="block w-full max-w-[400px] aspect-square border border-slate-200 rounded-lg bg-slate-100 cursor-grab active:cursor-grabbing touch-none"
-                style={{ imageRendering: 'pixelated', touchAction: 'none' }}
-                aria-label="單張幀剪輯預覽，可拖動橙色虛線框調整切割範圍"
-              />
-              <p className="text-[10px] text-slate-400 mt-1">在框內按住拖動可調整切割位子（手機亦可觸控拖動），放開後套用</p>
-              {editingFrameIndex > 0 && (
-                <div className="mt-2 space-y-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={usePrevAsRef}
-                      onChange={(e) => setUsePrevAsRef(e.target.checked)}
-                      className="rounded border-slate-300 text-orange-500 focus:ring-orange-500/30"
-                    />
-                    <span className="text-xs text-slate-600">上一幀作為參考圖（虛影疊在編輯畫面上）</span>
-                  </label>
-                  {usePrevAsRef && (
-                    <div className="pl-6">
-                      <label className="block text-xs font-medium text-slate-600 mb-1">上一幀不透明度</label>
-                      <div className="flex items-center gap-2">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
+            {hasCropCanvasData ? (
+              <div className="flex shrink-0 flex-col border-b border-slate-200 bg-slate-100/40 px-4 py-3 md:max-w-[min(440px,46%)] md:flex-[0_0_auto] md:border-b-0 md:border-r md:py-4">
+                <div className="mx-auto w-full max-w-[400px] md:mx-0">
+                  <label className="mb-1.5 block text-xs font-medium text-slate-600">拖拉剪輯框 (Drag crop box)</label>
+                  <canvas
+                    ref={canvasRef}
+                    width={CANVAS_SIZE}
+                    height={CANVAS_SIZE}
+                    onMouseDown={handleCropCanvasMouseDown}
+                    onTouchStart={handleCropCanvasTouchStart}
+                    className="aspect-square w-full max-w-[400px] cursor-grab touch-none rounded-lg border border-slate-200 bg-slate-100 active:cursor-grabbing"
+                    style={{ imageRendering: 'pixelated', touchAction: 'none' }}
+                    aria-label="單張幀剪輯預覽，可拖動橙色虛線框調整切割範圍"
+                  />
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    在框內按住拖動可調整切割位子（手機亦可觸控拖動），放開後套用
+                  </p>
+                  {editingFrameIndex > 0 && (
+                    <div className="mt-2 space-y-2">
+                      <label className="flex cursor-pointer items-center gap-2">
                         <input
-                          type="range"
-                          min={5}
-                          max={95}
-                          value={prevRefOpacity}
-                          onChange={(e) => setPrevRefOpacity(Number(e.target.value))}
-                          className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                          type="checkbox"
+                          checked={usePrevAsRef}
+                          onChange={(e) => setUsePrevAsRef(e.target.checked)}
+                          className="rounded border-slate-300 text-orange-500 focus:ring-orange-500/30"
                         />
-                        <span className="text-xs font-medium text-slate-700 w-8">{prevRefOpacity}%</span>
-                      </div>
+                        <span className="text-xs text-slate-600">上一幀作為參考圖（虛影疊在編輯畫面上）</span>
+                      </label>
+                      {usePrevAsRef && (
+                        <div className="pl-6">
+                          <label className="mb-1 block text-xs font-medium text-slate-600">上一幀不透明度</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min={5}
+                              max={95}
+                              value={prevRefOpacity}
+                              onChange={(e) => setPrevRefOpacity(Number(e.target.value))}
+                              className="h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-slate-200"
+                            />
+                            <span className="w-8 text-xs font-medium text-slate-700">{prevRefOpacity}%</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          )}
-          {perFrameEditExtra ? (
-            <div className="mb-4 shrink-0">
-              {perFrameEditExtra}
-            </div>
-          ) : null}
-          <div className="grid shrink-0 grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">切割位子 (Position)</label>
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <span className="text-[10px] text-slate-400">X</span>
-                  <input
-                    type="number"
-                    min={OFFSET_MIN}
-                    max={OFFSET_MAX}
-                    value={offsetX}
-                    onChange={(e) => updateOverride({ offsetX: Math.max(OFFSET_MIN, Math.min(OFFSET_MAX, Number(e.target.value))) })}
-                    className="w-full mt-0.5 px-2 py-1.5 text-sm rounded-lg border border-slate-200 focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 outline-none"
-                  />
+              </div>
+            ) : null}
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4 pt-3 md:pt-4">
+              {perFrameEditExtra ? <div className="mb-4 shrink-0">{perFrameEditExtra}</div> : null}
+              <div className="grid shrink-0 grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-slate-600">切割位子 (Position)</label>
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <span className="text-[10px] text-slate-400">X</span>
+                      <input
+                        type="number"
+                        min={OFFSET_MIN}
+                        max={OFFSET_MAX}
+                        value={offsetX}
+                        onChange={(e) => updateOverride({ offsetX: Math.max(OFFSET_MIN, Math.min(OFFSET_MAX, Number(e.target.value))) })}
+                        className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-[10px] text-slate-400">Y</span>
+                      <input
+                        type="number"
+                        min={OFFSET_MIN}
+                        max={OFFSET_MAX}
+                        value={offsetY}
+                        onChange={(e) => updateOverride({ offsetY: Math.max(OFFSET_MIN, Math.min(OFFSET_MAX, Number(e.target.value))) })}
+                        className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30"
+                      />
+                    </div>
+                  </div>
+                  <p className="mt-1 text-[10px] text-slate-400">像素偏移 {OFFSET_MIN} ~ {OFFSET_MAX}</p>
                 </div>
-                <div className="flex-1">
-                  <span className="text-[10px] text-slate-400">Y</span>
-                  <input
-                    type="number"
-                    min={OFFSET_MIN}
-                    max={OFFSET_MAX}
-                    value={offsetY}
-                    onChange={(e) => updateOverride({ offsetY: Math.max(OFFSET_MIN, Math.min(OFFSET_MAX, Number(e.target.value))) })}
-                    className="w-full mt-0.5 px-2 py-1.5 text-sm rounded-lg border border-slate-200 focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 outline-none"
-                  />
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-slate-600">框型大小 (Scale, 比例固定)</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range"
+                      min={SCALE_MIN}
+                      max={SCALE_MAX}
+                      step={0.05}
+                      value={scale}
+                      onChange={(e) => updateOverride({ scale: Number(e.target.value) })}
+                      className="h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-slate-200"
+                    />
+                    <span className="w-12 text-sm font-semibold text-slate-700">{(scale * 100).toFixed(0)}%</span>
+                  </div>
+                  <p className="mt-1 text-[10px] text-slate-400">25% ~ 100%</p>
                 </div>
               </div>
-              <p className="text-[10px] text-slate-400 mt-1">像素偏移 {OFFSET_MIN} ~ {OFFSET_MAX}</p>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">框型大小 (Scale, 比例固定)</label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min={SCALE_MIN}
-                  max={SCALE_MAX}
-                  step={0.05}
-                  value={scale}
-                  onChange={(e) => updateOverride({ scale: Number(e.target.value) })}
-                  className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-                />
-                <span className="text-sm font-semibold text-slate-700 w-12">{(scale * 100).toFixed(0)}%</span>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-1">25% ~ 100%</p>
-            </div>
-          </div>
-          <div className="mt-3 flex shrink-0 flex-wrap gap-2">
+              <div className="mt-3 flex shrink-0 flex-wrap gap-2">
             <button
               type="button"
               onClick={resetOverride}
@@ -669,6 +670,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
               </>
             )}
           </div>
+            </div>
           </div>
         </div>
       , document.body)}
