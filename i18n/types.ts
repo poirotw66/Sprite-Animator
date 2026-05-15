@@ -423,6 +423,16 @@ export interface Translations {
   partingTitle: string;
   partingDesc: string;
   partingOptimizeButton: string;
+
+  /** After slicing: draw text on each cell in the browser (upload / split tools + sprite sheet mode). */
+  sheetSliceProgrammaticOverlayTitle: string;
+  sheetSliceProgrammaticOverlayEnable: string;
+  sheetSliceProgrammaticOverlayHint: string;
+  sheetSliceProgrammaticOverlayLabels: string;
+  sheetSliceProgrammaticOverlayPlaceholder: string;
+  sheetSliceProgrammaticOverlayFontSource: string;
+  sheetSliceProgrammaticOverlayFont: string;
+  sheetSliceProgrammaticOverlayColor: string;
   rmbgUploadTitle: string;
   rmbgUploadHint: string;
   rmbgProcessButton: string;

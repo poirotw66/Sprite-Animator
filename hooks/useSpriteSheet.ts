@@ -5,15 +5,22 @@ import { BACKGROUND_REMOVAL_THRESHOLD, DEBOUNCE_DELAY, CHROMA_KEY_COLORS, CHROMA
 import { logger } from '../utils/logger';
 import type { ChromaKeyColorType } from '../types';
 
+export interface UseSpriteSheetSlicePipelineOptions {
+  mapFramesAfterSlice?: (frames: string[]) => Promise<string[]>;
+  /** Bumps the slice effect when overlay inputs change without changing `mapFramesAfterSlice` identity. */
+  slicePipelineRevision?: string | number;
+}
+
 /**
  * Custom hook for managing sprite sheet slicing and frame generation.
  * Automatically re-slices the sprite sheet when settings change.
- * 
+ *
  * @param spriteSheetImage - Base64 encoded sprite sheet image
  * @param sliceSettings - Configuration for slicing (cols, rows, padding, shift)
  * @param removeBackground - Whether to remove white/light backgrounds
  * @param mode - Current generation mode ('frame' or 'sheet')
  * @param chromaKeyColor - Which chroma key color to use ('magenta' or 'green')
+ * @param slicePipeline - Optional post-process after each slice (e.g. programmatic text on cells)
  * @returns Object containing generated frames, sheet dimensions, and image load handler
  * 
  * @example
@@ -27,7 +34,8 @@ import type { ChromaKeyColorType } from '../types';
  *   sliceSettings,
  *   removeBackground,
  *   config.mode,
- *   config.chromaKeyColor
+ *   config.chromaKeyColor,
+ *   { mapFramesAfterSlice, slicePipelineRevision }
  * );
  * ```
  */
@@ -36,7 +44,8 @@ export const useSpriteSheet = (
   sliceSettings: SliceSettings,
   removeBackground: boolean,
   mode: 'frame' | 'sheet',
-  chromaKeyColor: ChromaKeyColorType = 'green'
+  chromaKeyColor: ChromaKeyColorType = 'green',
+  slicePipeline?: UseSpriteSheetSlicePipelineOptions | null
 ) => {
   const [generatedFrames, setGeneratedFrames] = useState<string[]>([]);
   const [sheetDimensions, setSheetDimensions] = useState({ width: 0, height: 0 });
@@ -92,15 +101,19 @@ export const useSpriteSheet = (
     if (processedSpriteSheet && mode === 'sheet') {
       const reSlice = async () => {
         try {
+          const mapFrames = slicePipeline?.mapFramesAfterSlice;
           if (sliceSettings.sliceMode === 'inferred' && sliceSettings.inferredCellRects?.length) {
-            const frames = await sliceSpriteSheetByCellRects(
+            let frames = await sliceSpriteSheetByCellRects(
               processedSpriteSheet,
               sliceSettings.inferredCellRects
             );
+            if (mapFrames) {
+              frames = await mapFrames(frames);
+            }
             setGeneratedFrames(frames);
           } else {
             const padding = getEffectivePadding(sliceSettings);
-            const frames = await sliceSpriteSheet(
+            let frames = await sliceSpriteSheet(
               processedSpriteSheet,
               sliceSettings.cols,
               sliceSettings.rows,
@@ -114,6 +127,9 @@ export const useSpriteSheet = (
               chromaKeyColor,
               padding
             );
+            if (mapFrames) {
+              frames = await mapFrames(frames);
+            }
             setGeneratedFrames(frames);
           }
         } catch (e) {
@@ -145,6 +161,9 @@ export const useSpriteSheet = (
     sliceSettings.inferredCellRects,
     frameOverrides,
     mode,
+    chromaKeyColor,
+    slicePipeline?.mapFramesAfterSlice,
+    slicePipeline?.slicePipelineRevision,
   ]);
 
   // Reset per-frame overrides when image or grid dimensions change

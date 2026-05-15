@@ -9,6 +9,8 @@ import { useSettings } from '../hooks/useSettings';
 import { ImageUpload } from '../components/ImageUpload';
 import { useSpriteSheetFlow } from '../hooks/useSpriteSheetFlow';
 import { useLineStickerDownload } from '../hooks/useLineStickerDownload';
+import { useSheetSliceProgrammaticOverlay } from '../hooks/useSheetSliceProgrammaticOverlay';
+import { SheetSliceProgrammaticOverlayPanel } from '../components/SheetSliceProgrammaticOverlayPanel';
 
 const SpriteSheetViewer = lazyWithRetry(() =>
   import('../components/SpriteSheetViewer').then((m) => ({ default: m.SpriteSheetViewer }))
@@ -37,7 +39,12 @@ const PartingPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [optimizeStatus, setOptimizeStatus] = useState<string | null>(null);
 
-  const flow = useSpriteSheetFlow({ runChromaAutomatically: true });
+  const sheetSliceOverlay = useSheetSliceProgrammaticOverlay();
+  const flow = useSpriteSheetFlow({
+    runChromaAutomatically: true,
+    mapFramesAfterSlice: sheetSliceOverlay.mapFramesAfterSlice,
+    slicePipelineRevision: sheetSliceOverlay.slicePipelineRevision,
+  });
   const { setImage } = flow;
 
   const {
@@ -266,6 +273,24 @@ const PartingPage: React.FC = () => {
                   </button>
                 </div>
               )}
+
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">{t.sheetSliceProgrammaticOverlayTitle}</h3>
+                <SheetSliceProgrammaticOverlayPanel
+                  t={t}
+                  accent="teal"
+                  enabled={sheetSliceOverlay.overlayEnabled}
+                  onEnabledChange={sheetSliceOverlay.setOverlayEnabled}
+                  linesText={sheetSliceOverlay.overlayLinesText}
+                  onLinesTextChange={sheetSliceOverlay.setOverlayLinesText}
+                  fontKey={sheetSliceOverlay.overlayFontKey}
+                  onFontKeyChange={sheetSliceOverlay.setOverlayFontKey}
+                  colorKey={sheetSliceOverlay.overlayColorKey}
+                  onColorKeyChange={sheetSliceOverlay.setOverlayColorKey}
+                  tuning={sheetSliceOverlay.overlayTuning}
+                  onTuningChange={sheetSliceOverlay.setOverlayTuning}
+                />
+              </div>
             </>
           )}
         </div>
@@ -308,6 +333,7 @@ const PartingPage: React.FC = () => {
                     sheetDimensions={flow.sheetDimensions}
                     frameIncluded={flow.frameIncluded}
                     setFrameIncluded={flow.setFrameIncluded}
+                    useFrameImageForSingleCanvas={sheetSliceOverlay.useFrameImageForSingleCanvas}
                   />
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button

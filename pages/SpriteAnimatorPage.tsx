@@ -5,6 +5,7 @@ import { RefreshCw, Settings, Zap, Loader2, Save, ArrowLeft } from '../component
 import { SettingsModal } from '../components/SettingsModal';
 import { ImageUpload } from '../components/ImageUpload';
 import { AnimationConfigPanel } from '../components/AnimationConfig';
+import { SheetSliceProgrammaticOverlayPanel } from '../components/SheetSliceProgrammaticOverlayPanel';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useLanguage } from '../hooks/useLanguage';
 
@@ -25,6 +26,7 @@ import { useAnimation } from '../hooks/useAnimation';
 import { useSpriteSheet } from '../hooks/useSpriteSheet';
 import { useExport } from '../hooks/useExport';
 import { useProjectHistory } from '../hooks/useProjectHistory';
+import { useSheetSliceProgrammaticOverlay } from '../hooks/useSheetSliceProgrammaticOverlay';
 import { ProjectHistory } from '../components/ProjectHistory';
 import { getErrorMessage, isQuotaError } from '../types/errors';
 import { DEFAULT_CONFIG, DEFAULT_SLICE_SETTINGS } from '../utils/constants';
@@ -75,6 +77,22 @@ const SpriteAnimatorPage: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(true);
 
   // Sprite sheet hook
+  const sheetSliceOverlay = useSheetSliceProgrammaticOverlay();
+  const spriteSheetSlicePipeline = useMemo(
+    () =>
+      config.mode === 'sheet'
+        ? {
+            mapFramesAfterSlice: sheetSliceOverlay.mapFramesAfterSlice,
+            slicePipelineRevision: sheetSliceOverlay.slicePipelineRevision,
+          }
+        : null,
+    [
+      config.mode,
+      sheetSliceOverlay.mapFramesAfterSlice,
+      sheetSliceOverlay.slicePipelineRevision,
+    ]
+  );
+
   const {
     generatedFrames: spriteSheetFrames,
     setGeneratedFrames: setSpriteSheetFrames,
@@ -86,7 +104,14 @@ const SpriteAnimatorPage: React.FC = () => {
     isProcessingChromaKey, // Whether chroma key removal is in progress
     frameOverrides,
     setFrameOverrides,
-  } = useSpriteSheet(spriteSheetImage, sliceSettings, removeBackground, config.mode, config.chromaKeyColor);
+  } = useSpriteSheet(
+    spriteSheetImage,
+    sliceSettings,
+    removeBackground,
+    config.mode,
+    config.chromaKeyColor,
+    spriteSheetSlicePipeline
+  );
 
   // Frame-by-frame mode frames
   const [frameModeFrames, setFrameModeFrames] = useState<string[]>([]);
@@ -543,6 +568,26 @@ const SpriteAnimatorPage: React.FC = () => {
             selectedResolution={outputResolution}
             setSelectedResolution={setOutputResolution}
           />
+
+          {config.mode === 'sheet' && (
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5">
+              <h3 className="text-sm font-semibold text-slate-800 mb-3">{t.sheetSliceProgrammaticOverlayTitle}</h3>
+              <SheetSliceProgrammaticOverlayPanel
+                t={t}
+                accent="orange"
+                enabled={sheetSliceOverlay.overlayEnabled}
+                onEnabledChange={sheetSliceOverlay.setOverlayEnabled}
+                linesText={sheetSliceOverlay.overlayLinesText}
+                onLinesTextChange={sheetSliceOverlay.setOverlayLinesText}
+                fontKey={sheetSliceOverlay.overlayFontKey}
+                onFontKeyChange={sheetSliceOverlay.setOverlayFontKey}
+                colorKey={sheetSliceOverlay.overlayColorKey}
+                onColorKeyChange={sheetSliceOverlay.setOverlayColorKey}
+                tuning={sheetSliceOverlay.overlayTuning}
+                onTuningChange={sheetSliceOverlay.setOverlayTuning}
+              />
+            </div>
+          )}
         </div>
 
         <div className="lg:col-span-7 flex flex-col gap-4 sm:gap-5 md:gap-6 min-w-0">
@@ -617,6 +662,9 @@ const SpriteAnimatorPage: React.FC = () => {
                     sheetDimensions={config.mode === 'sheet' ? sheetDimensions : undefined}
                     frameIncluded={frameIncluded}
                     setFrameIncluded={setFrameIncluded}
+                    useFrameImageForSingleCanvas={
+                      config.mode === 'sheet' && sheetSliceOverlay.useFrameImageForSingleCanvas
+                    }
                   />
                   <div className="mt-4 space-y-2">
                     {saveError && (
