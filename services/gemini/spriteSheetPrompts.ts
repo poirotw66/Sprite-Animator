@@ -191,7 +191,7 @@ Common mistakes to avoid: Do not make each cell a "key pose"; make tiny incremen
 
 ### [6. Final Goal]
 
-Output a single image: ${cols}×${rows} grid, ${totalFrames} equal rectangles. Splittable at exactly ${cellWidthPct}% width and ${cellHeightPct}% height per cell. Obey [1. Global Layout] — NO VISIBLE DIVIDERS. One pose per cell with minimal change between cells.
+Output a single image: ${cols}×${rows} grid, ${totalFrames} equal rectangles. slottable at exactly ${cellWidthPct}% width and ${cellHeightPct}% height per cell. Obey [1. Global Layout] — NO VISIBLE DIVIDERS. One pose per cell with minimal change between cells.
 
 ### [7. Forbidden]
 
