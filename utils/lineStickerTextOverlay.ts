@@ -57,7 +57,7 @@ export const DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING: ProgrammaticTextOverlayTu
   edgeMarginPercent: 6,
   lineHeightMultiplier: 1.25,
   strokeScale: 1,
-  placementMode: 'cycle',
+  placementMode: 'auto_avoid_subject',
   fontWeight: 700,
   offsetXPercent: 0,
   offsetYPercent: 0,
@@ -311,6 +311,45 @@ export function rectangleIntersectionArea(a: PixelRect, b: PixelRect): number {
   const ih = Math.min(a.maxY, b.maxY) - Math.max(a.minY, b.minY);
   if (iw <= 0 || ih <= 0) return 0;
   return iw * ih;
+}
+
+/** Expand a rectangle inward from frame edges, clamped to the canvas. */
+export function inflatePixelRect(
+  box: PixelRect,
+  padX: number,
+  padY: number,
+  width: number,
+  height: number
+): PixelRect {
+  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+  return {
+    minX: clamp(box.minX - padX, 0, width - 1),
+    minY: clamp(box.minY - padY, 0, height - 1),
+    maxX: clamp(box.maxX + padX, 0, width - 1),
+    maxY: clamp(box.maxY + padY, 0, height - 1),
+  };
+}
+
+function shiftPixelRect(box: PixelRect, dx: number, dy: number): PixelRect {
+  return {
+    minX: box.minX + dx,
+    minY: box.minY + dy,
+    maxX: box.maxX + dx,
+    maxY: box.maxY + dy,
+  };
+}
+
+/** Padding around measured glyphs for stroke and descenders when scoring auto-avoid. */
+export function textOverlayAvoidancePadPx(
+  fontSize: number,
+  strokeMult: number
+): { padX: number; padY: number } {
+  const strokeW = Math.max(1.5, fontSize * 0.12 * strokeMult);
+  const strokeExtent = strokeW * 2;
+  return {
+    padX: Math.ceil(strokeExtent + fontSize * 0.12),
+    padY: Math.ceil(strokeExtent + fontSize * 0.16),
+  };
 }
 
 /** Minimum gap between two non-overlapping axis-aligned rectangles (0 if overlapping). */
@@ -609,6 +648,11 @@ export interface LineStickerTextOverlayOptions {
   /** Frame index in the sheet (0-based); cycles placement when mode is cycle. */
   frameIndex: number;
   tuning?: ProgrammaticTextOverlayTuning;
+  /**
+   * When set and the frame is larger, rasterize and draw text on a downscaled canvas,
+   * then upscale to the original pixel size (faster preview; slightly softer text).
+   */
+  previewMaxLongestSide?: number;
 }
 
 /**
@@ -641,18 +685,31 @@ export function overlayLineStickerTextOnFrame(
       try {
         const w = img.naturalWidth;
         const h = img.naturalHeight;
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
+        const previewCap = options.previewMaxLongestSide;
+        const longest = Math.max(w, h);
+        const usePreviewDownscale =
+          previewCap != null && previewCap > 0 && longest > previewCap;
+        const workW = usePreviewDownscale
+          ? Math.max(1, Math.round((w * previewCap!) / longest))
+          : w;
+        const workH = usePreviewDownscale
+          ? Math.max(1, Math.round((h * previewCap!) / longest))
+          : h;
+
+        const workCanvas = document.createElement('canvas');
+        workCanvas.width = workW;
+        workCanvas.height = workH;
+        const ctx = workCanvas.getContext('2d');
         if (!ctx) {
           resolve(frameDataUrl);
           return;
         }
 
-        ctx.drawImage(img, 0, 0);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, w, h, 0, 0, workW, workH);
 
-        const fontSize = Math.max(10, Math.round(Math.min(w, h) * sizeRatio));
+        const fontSize = Math.max(10, Math.round(Math.min(workW, workH) * sizeRatio));
         const fontFamily = resolveProgrammaticFontFamilyCss(options.fontKey, tuning);
         const numericWeight = resolveCanvasFontNumericWeight(options.fontKey, tuning);
         ctx.font = `${numericWeight} ${fontSize}px ${fontFamily}`;
@@ -666,8 +723,8 @@ export function overlayLineStickerTextOnFrame(
           placementLabel = pickBestPlacementLabelAutoAvoid(
             ctx,
             trimmed,
-            w,
-            h,
+            workW,
+            workH,
             marginRatio,
             fontSize,
             lineHeight,
@@ -676,10 +733,10 @@ export function overlayLineStickerTextOnFrame(
         } else {
           placementLabel = resolveProgrammaticPlacementLabel(options.frameIndex, tuning);
         }
-        const layout = layoutFromPlacementLabel(placementLabel, w, h, marginRatio);
+        const layout = layoutFromPlacementLabel(placementLabel, workW, workH, marginRatio);
 
-        const offsetX = (w * tuning.offsetXPercent) / 100;
-        const offsetY = (h * tuning.offsetYPercent) / 100;
+        const offsetX = (workW * tuning.offsetXPercent) / 100;
+        const offsetY = (workH * tuning.offsetYPercent) / 100;
         const anchorX = layout.anchorX + offsetX;
         const anchorY = layout.anchorY + offsetY;
 
@@ -708,7 +765,23 @@ export function overlayLineStickerTextOnFrame(
           ctx.fillText(line, anchorX, y);
         });
 
-        resolve(canvas.toDataURL('image/png'));
+        if (!usePreviewDownscale) {
+          resolve(workCanvas.toDataURL('image/png'));
+          return;
+        }
+
+        const outCanvas = document.createElement('canvas');
+        outCanvas.width = w;
+        outCanvas.height = h;
+        const outCtx = outCanvas.getContext('2d');
+        if (!outCtx) {
+          resolve(workCanvas.toDataURL('image/png'));
+          return;
+        }
+        outCtx.imageSmoothingEnabled = true;
+        outCtx.imageSmoothingQuality = 'high';
+        outCtx.drawImage(workCanvas, 0, 0, workW, workH, 0, 0, w, h);
+        resolve(outCanvas.toDataURL('image/png'));
       } catch {
         resolve(frameDataUrl);
       }
@@ -726,9 +799,11 @@ export async function overlayPhrasesOnStickerFrames(
     fontKey: FontPresetKey;
     colorKey: TextColorPresetKey;
     tuning?: ProgrammaticTextOverlayTuning;
+    previewMaxLongestSide?: number;
   }
 ): Promise<string[]> {
   const tuning = opts.tuning ?? DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING;
+  const previewMaxLongestSide = opts.previewMaxLongestSide;
   const out = await Promise.all(
     frames.map((frame, i) =>
       overlayLineStickerTextOnFrame(frame, phrases[i] ?? '', {
@@ -736,6 +811,7 @@ export async function overlayPhrasesOnStickerFrames(
         colorKey: opts.colorKey,
         frameIndex: i,
         tuning,
+        previewMaxLongestSide,
       })
     )
   );
