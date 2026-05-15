@@ -402,13 +402,13 @@ export const en: Translations = {
   lineStickerProgrammaticLineHeight: 'Line height multiplier',
   lineStickerProgrammaticStrokeScale: 'Stroke strength',
   lineStickerProgrammaticPlacement: 'Text placement',
-  lineStickerProgrammaticPlacementCycle: 'Cycle by cell (matches v2 prompt)',
+  lineStickerProgrammaticPlacementCycle: 'Match prompt reserved band (per-cell caption area)',
   lineStickerProgrammaticPlacementBottom: 'Bottom center',
   lineStickerProgrammaticPlacementTop: 'Top center',
   lineStickerProgrammaticPlacementMiddle: 'Middle center',
   lineStickerProgrammaticPlacementAutoAvoidSubject: 'Auto (avoid subject)',
   lineStickerProgrammaticPlacementAutoAvoidSubjectHint:
-    'Analyzes opaque pixels after slicing and picks a preset corner/edge with the least overlap with the character.',
+    'After slicing, estimates the character bbox and picks a preset anchor with minimal overlap; still prefers the prompt reserved band when scores are close.',
   lineStickerProgrammaticPerFramePlacementTitle: 'Per-frame placement (optional)',
   lineStickerProgrammaticPerFramePlacementHint:
     'Override the global mode for specific cells. Empty = use global setting.',

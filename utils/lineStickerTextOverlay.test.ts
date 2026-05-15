@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { getReservedCaptionBandLabelForFrame } from './lineStickerPrompt';
 import {
   extractFillHexFromTextColorPreset,
   strokeColorForFill,
@@ -78,6 +79,15 @@ describe('resolveCanvasFontNumericWeight', () => {
   });
 });
 
+describe('reserved caption band alignment', () => {
+  it('cycle overlay placement matches prompt band label for frame index', () => {
+    const tuning = { ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING, placementMode: 'cycle' as const };
+    expect(resolveProgrammaticPlacementLabel(3, tuning)).toBe(
+      getReservedCaptionBandLabelForFrame(3)
+    );
+  });
+});
+
 describe('resolveProgrammaticPlacementLabel', () => {
   it('returns fixed anchors for non-cycle modes', () => {
     const tuningBottom = {
@@ -93,8 +103,8 @@ describe('resolveProgrammaticPlacementLabel', () => {
 });
 
 describe('DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING', () => {
-  it('defaults to auto_avoid_subject placement', () => {
-    expect(DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING.placementMode).toBe('auto_avoid_subject');
+  it('defaults to cycle placement (matches prompt reserved caption bands)', () => {
+    expect(DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING.placementMode).toBe('cycle');
   });
 });
 

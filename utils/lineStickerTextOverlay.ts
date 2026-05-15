@@ -7,6 +7,7 @@ import {
   FONT_PRESETS,
   TEXT_COLOR_PRESETS,
   getLineStickerTextPlacementLabel,
+  getReservedCaptionBandLabelForFrame,
   LINE_STICKER_TEXT_PLACEMENT_PRESETS,
 } from './lineStickerPrompt';
 
@@ -57,7 +58,8 @@ export const DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING: ProgrammaticTextOverlayTu
   edgeMarginPercent: 6,
   lineHeightMultiplier: 1.25,
   strokeScale: 1,
-  placementMode: 'auto_avoid_subject',
+  /** Aligns with per-cell Reserved caption band in the generation prompt. */
+  placementMode: 'cycle',
   fontWeight: 700,
   offsetXPercent: 0,
   offsetYPercent: 0,
@@ -84,7 +86,7 @@ export function resolveProgrammaticPlacementLabel(
 ): string {
   const mode = getEffectiveProgrammaticPlacementMode(tuning, frameIndex);
   if (mode === 'cycle') {
-    return getLineStickerTextPlacementLabel(frameIndex);
+    return getReservedCaptionBandLabelForFrame(frameIndex);
   }
   if (mode === 'auto_avoid_subject') {
     return 'Bottom center';
@@ -745,7 +747,9 @@ function pickBestPlacementLabelAutoAvoid(
       Math.max(0, inset - textBox.minY) +
       Math.max(0, textBox.maxX - (width - inset)) +
       Math.max(0, textBox.maxY - (height - inset));
-    const overlapScore = overlap + overflow * 8000;
+    const promptBandLabel = getReservedCaptionBandLabelForFrame(frameIndex);
+    const promptBandBias = label === promptBandLabel ? 40 : 0;
+    const overlapScore = overlap + overflow * 8000 - promptBandBias;
     if (
       overlapScore < bestOverlap ||
       (overlapScore === bestOverlap && gap > bestGap)

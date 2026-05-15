@@ -199,10 +199,18 @@ export function getLineStickerTextPlacementLabel(frameIndex: number): string {
     );
 }
 
+/**
+ * Reserved caption band for a cell (0-based). Same label is written into the image
+ * generation prompt and used as the anchor when compositing programmatic overlay text.
+ */
+export function getReservedCaptionBandLabelForFrame(frameIndex: number): string {
+    return getLineStickerTextPlacementLabel(frameIndex);
+}
+
 function buildProgrammaticOverlayCompositionBullets(bgHex: string): string {
-    return `* A client pipeline will draw short caption text on each cell **after** generation. **Do not** render letters, numbers, watermarks, logos, or any typography in the image.
-* In **every** cell, keep the **Reserved caption band** listed in that cell's line as clean solid chroma (${bgHex})—no hair, outline, limbs, or props intruding into that band.
-* Compose the subject so face, eyes, mouth, and hands stay **outside** the reserved band for that cell; shrink or shift the subject if needed.
+    return `* **Programmatic captions**: A browser step will draw each cell's chat phrase **after** generation. **Do not** render letters, numbers, watermarks, logos, or any typography in the image.
+* Each cell line includes **Reserved caption band** with a position name (e.g. Bottom center, Top left). That named band must stay **empty solid chroma (${bgHex})** only—no hair, limbs, props, shadows, or subject pixels inside it.
+* The position name is the exact anchor the overlay uses; compose the character **outside** that band for that cell. Shrink or shift the subject if needed so the band stays clear.
 * Vary framing across cells; do not reuse identical subject framing in two consecutive cells.`;
 }
 
@@ -244,7 +252,7 @@ export function buildLineStickerPrompt(
             const actionLabel = actionForImage(rawAction);
             if (!includeText) {
                 const captionHint = reserveForProgrammaticOverlay
-                    ? ` | Reserved caption band (keep clear chroma only; do not draw text): ${getLineStickerTextPlacementLabel(index)}`
+                    ? ` | Reserved caption band (empty chroma only; overlay will draw text here): ${getReservedCaptionBandLabelForFrame(index)}`
                     : '';
                 return `Cell ${index + 1} (row ${row}, col ${col}): Action: ${actionLabel}${captionHint}`;
             }
@@ -404,7 +412,7 @@ ${phrasesForFrames.map((phrase, index) => {
             : '';
         const captionBandHint =
             !includeText && reserveForProgrammaticOverlay
-                ? ` | Reserved caption band (clear chroma only; no text drawn): ${getLineStickerTextPlacementLabel(index)}`
+                ? ` | Reserved caption band (empty chroma only; overlay will draw text here): ${getReservedCaptionBandLabelForFrame(index)}`
                 : '';
         return includeText
             ? `**Cell ${index + 1} (row ${row}, col ${col})**: ${textLabel}${textPosition} | Action: ${actionLabel}`
