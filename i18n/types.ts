@@ -390,6 +390,7 @@ export interface Translations {
   lineStickerProgrammaticFontSourcePreset: string;
   lineStickerProgrammaticFontSourceCustom: string;
   lineStickerProgrammaticFontPresetLabel: string;
+  lineStickerProgrammaticFontPresetCanvasNote: string;
   lineStickerProgrammaticFontCustomLabel: string;
   lineStickerProgrammaticFontCustomPlaceholder: string;
   lineStickerProgrammaticFontCustomHint: string;
@@ -404,6 +405,11 @@ export interface Translations {
   lineStickerProgrammaticPlacementBottom: string;
   lineStickerProgrammaticPlacementTop: string;
   lineStickerProgrammaticPlacementMiddle: string;
+  lineStickerProgrammaticPlacementAutoAvoidSubject: string;
+  lineStickerProgrammaticPlacementAutoAvoidSubjectHint: string;
+  lineStickerProgrammaticPerFramePlacementTitle: string;
+  lineStickerProgrammaticPerFramePlacementHint: string;
+  lineStickerProgrammaticPerFrameInheritGlobal: string;
   lineStickerProgrammaticFontWeight: string;
   lineStickerProgrammaticResetTuning: string;
   lineStickerGeneratePrompt: string;

@@ -7,6 +7,7 @@ import {
   FONT_PRESETS,
   TEXT_COLOR_PRESETS,
   getLineStickerTextPlacementLabel,
+  LINE_STICKER_TEXT_PLACEMENT_PRESETS,
 } from './lineStickerPrompt';
 
 type FontPresetKey = keyof typeof FONT_PRESETS;
@@ -19,7 +20,9 @@ export type ProgrammaticTextPlacementMode =
   | 'cycle'
   | 'bottom_center'
   | 'top_center'
-  | 'middle_center';
+  | 'middle_center'
+  /** Pick a preset corner/edge from raster so caption avoids opaque subject bbox. */
+  | 'auto_avoid_subject';
 
 /** How to resolve canvas font-family for programmatic overlay. */
 export type ProgrammaticFontFamilySource = 'preset' | 'custom';
@@ -43,6 +46,10 @@ export interface ProgrammaticTextOverlayTuning {
   fontFamilySource: ProgrammaticFontFamilySource;
   /** When fontFamilySource is custom: CSS font-family list (e.g. "Noto Sans TC", sans-serif). */
   customFontFamily: string;
+  /**
+   * Optional per-frame placement mode. Index matches sticker frame; null/undefined = use placementMode.
+   */
+  placementModeOverrides?: (ProgrammaticTextPlacementMode | null)[];
 }
 
 export const DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING: ProgrammaticTextOverlayTuning = {
@@ -58,13 +65,29 @@ export const DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING: ProgrammaticTextOverlayTu
   customFontFamily: '"Noto Sans TC", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
 };
 
-/** Resolve placement label for layout (matches v2 cycle or fixed anchors). */
+/** Effective placement mode for a frame (global mode or per-frame override). */
+export function getEffectiveProgrammaticPlacementMode(
+  tuning: ProgrammaticTextOverlayTuning,
+  frameIndex: number
+): ProgrammaticTextPlacementMode {
+  const override = tuning.placementModeOverrides?.[frameIndex];
+  return override ?? tuning.placementMode;
+}
+
+/**
+ * Resolve placement label for layout (cycle, fixed anchors). Does not handle auto_avoid_subject;
+ * that mode is resolved in overlayLineStickerTextOnFrame after raster analysis.
+ */
 export function resolveProgrammaticPlacementLabel(
   frameIndex: number,
-  mode: ProgrammaticTextPlacementMode
+  tuning: ProgrammaticTextOverlayTuning
 ): string {
+  const mode = getEffectiveProgrammaticPlacementMode(tuning, frameIndex);
   if (mode === 'cycle') {
     return getLineStickerTextPlacementLabel(frameIndex);
+  }
+  if (mode === 'auto_avoid_subject') {
+    return 'Bottom center';
   }
   if (mode === 'bottom_center') return 'Bottom center';
   if (mode === 'top_center') return 'Top center';
@@ -92,45 +115,71 @@ export function strokeColorForFill(fillHex: string): string {
   return luminance(fillHex) > 0.55 ? '#1a1a1a' : '#ffffff';
 }
 
-/** Approximate system stacks for canvas (cannot match model-only decorative fonts). */
+/**
+ * System font stacks for canvas. The browser uses the first installed family.
+ * Stacks are chosen to approximate each FONT_PRESETS prompt (not decorative
+ * model-only effects). Several "rounded bubble" styles share the same nearest
+ * system round sans; they stay honest to that limit rather than forcing odd faces.
+ */
 export function fontCssStackForPreset(fontKey: FontPresetKey): string {
   const stacks: Record<FontPresetKey, string> = {
     handwritten:
-      '"Segoe UI", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", "Noto Sans TC", sans-serif',
-    round: '"Segoe UI", "PingFang TC", "Hiragino Maru Gothic ProN", "Microsoft JhengHei", sans-serif',
-    bold: '"Segoe UI", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", "Noto Sans TC", sans-serif',
-    cute: '"Segoe UI", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
-    pop: '"Segoe UI", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
+      '"Kaiti TC", "DFKai-SB", "BiauKai", "Bradley Hand ITC", "Microsoft JhengHei", sans-serif',
+    round:
+      '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "Yu Gothic UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif',
+    bold:
+      '"Heiti TC", "STHeiti", "PingFang TC", "Microsoft JhengHei", "Hiragino Sans", "Noto Sans TC", sans-serif',
+    cute:
+      '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "Chalkboard SE", "Microsoft JhengHei", "PingFang TC", sans-serif',
+    pop:
+      '"PingFang TC", "Hiragino Sans", "Microsoft JhengHei", "Helvetica Neue", "Segoe UI", sans-serif',
     pinkBubble:
-      '"Segoe UI", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
+      '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "Yu Gothic UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif',
     thinHandwritten:
-      '"Segoe UI", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
-    catEar: '"Segoe UI", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
-    crayon: '"Segoe UI", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
-    stitched: '"Consolas", "Segoe UI", "PingFang TC", monospace',
+      '"Bradley Hand ITC", "Snell Roundhand", "Kaiti TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
+    catEar:
+      '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "PingFang TC", "Microsoft JhengHei", sans-serif',
+    crayon:
+      '"Marker Felt", "Chalkduster", "Kaiti TC", "DFKai-SB", "PingFang TC", fantasy',
+    stitched: '"Consolas", "Menlo", "Monaco", "Courier New", monospace',
     puffyCloud:
-      '"Segoe UI", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
+      '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "Yu Gothic UI", "Microsoft JhengHei", sans-serif',
     cherryBlossom:
-      '"Segoe UI", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", serif',
+      '"Hiragino Mincho ProN", "Songti TC", "Yu Mincho", "PMingLiU", "Georgia", serif',
     animalPartners:
-      '"Segoe UI", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
+      '"Chalkboard SE", "Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "PingFang TC", sans-serif',
     pastel3d:
-      '"Segoe UI", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
+      '"Arial Rounded MT Bold", "Hiragino Maru Gothic ProN", "Yu Gothic UI", "Microsoft JhengHei", sans-serif',
     bobaPearl:
-      '"Segoe UI", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
+      '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "Yu Gothic UI", "Microsoft JhengHei", sans-serif',
     neonGlow:
-      '"Segoe UI", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
+      '"Impact", "Arial Black", "Bahnschrift", "PingFang TC", "Microsoft JhengHei", sans-serif',
     marshmallowCloud:
-      '"Segoe UI", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
-    pixelRetro: '"Consolas", "Courier New", monospace',
+      '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "Yu Gothic UI", "Microsoft JhengHei", sans-serif',
+    pixelRetro: '"Courier New", "Consolas", "Monaco", "Menlo", monospace',
     rainbowConfetti:
-      '"Segoe UI", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
+      '"Arial Black", "Impact", "Hiragino Maru Gothic ProN", "Microsoft JhengHei", sans-serif',
     chalkboard:
-      '"Segoe UI", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
+      '"Chalkduster", "Marker Felt", "Kaiti TC", "DFKai-SB", "PingFang TC", fantasy',
     comicBook:
-      '"Impact", "Segoe UI", "PingFang TC", "Arial Black", "Microsoft JhengHei", sans-serif',
+      '"Impact", "Arial Black", "Helvetica Neue", "PingFang TC", "Microsoft JhengHei", fantasy',
   };
   return stacks[fontKey] ?? stacks.handwritten;
+}
+
+/**
+ * Numeric weight for canvas `font`. Some presets bias lighter so the glyph matches
+ * the prompt (e.g. thin hand-drawn) without ignoring the user's weight control.
+ */
+export function resolveCanvasFontNumericWeight(
+  fontKey: FontPresetKey,
+  tuning: ProgrammaticTextOverlayTuning
+): number {
+  const w = tuning.fontWeight;
+  if (fontKey === 'thinHandwritten') {
+    return Math.min(w, 600);
+  }
+  return w;
 }
 
 /** Canvas `font` family stack: preset keys or custom CSS from tuning. */
@@ -254,6 +303,156 @@ function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number
   return lines;
 }
 
+/** Axis-aligned rectangle in pixel space. */
+export type PixelRect = { minX: number; minY: number; maxX: number; maxY: number };
+
+export function rectangleIntersectionArea(a: PixelRect, b: PixelRect): number {
+  const iw = Math.min(a.maxX, b.maxX) - Math.max(a.minX, b.minX);
+  const ih = Math.min(a.maxY, b.maxY) - Math.max(a.minY, b.minY);
+  if (iw <= 0 || ih <= 0) return 0;
+  return iw * ih;
+}
+
+/** Minimum gap between two non-overlapping axis-aligned rectangles (0 if overlapping). */
+export function rectangleMinSeparation(a: PixelRect, b: PixelRect): number {
+  const dx = Math.max(0, Math.max(a.minX - b.maxX, b.minX - a.maxX));
+  const dy = Math.max(0, Math.max(a.minY - b.maxY, b.minY - a.maxY));
+  if (dx === 0 && dy === 0) return 0;
+  if (dx === 0) return dy;
+  if (dy === 0) return dx;
+  return Math.hypot(dx, dy);
+}
+
+/**
+ * Rough bounding box for multi-line sticker text from anchor, alignment, and line metrics.
+ */
+export function estimateTextBlockBox(
+  width: number,
+  height: number,
+  layout: TextPlacementLayout,
+  lineCount: number,
+  lineHeight: number
+): PixelRect {
+  const totalH = Math.max(lineHeight, lineCount * lineHeight);
+  let top = layout.anchorY;
+  let bottom = layout.anchorY;
+  if (layout.textBaseline === 'bottom') {
+    bottom = layout.anchorY;
+    top = layout.anchorY - totalH;
+  } else if (layout.textBaseline === 'top') {
+    top = layout.anchorY;
+    bottom = layout.anchorY + totalH;
+  } else {
+    top = layout.anchorY - totalH / 2;
+    bottom = layout.anchorY + totalH / 2;
+  }
+
+  let left = layout.anchorX;
+  let right = layout.anchorX;
+  const mw = layout.maxWidth;
+  if (layout.textAlign === 'left') {
+    left = layout.anchorX;
+    right = layout.anchorX + mw;
+  } else if (layout.textAlign === 'right') {
+    left = layout.anchorX - mw;
+    right = layout.anchorX;
+  } else {
+    left = layout.anchorX - mw / 2;
+    right = layout.anchorX + mw / 2;
+  }
+
+  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+  return {
+    minX: clamp(left, 0, width),
+    minY: clamp(top, 0, height),
+    maxX: clamp(right, 0, width),
+    maxY: clamp(bottom, 0, height),
+  };
+}
+
+function isChromaLikePixel(r: number, g: number, b: number, a: number): boolean {
+  if (a < 12) return true;
+  const magentaScore = Math.abs(r - 255) + Math.abs(g) + Math.abs(b - 255);
+  const greenScore = Math.abs(r) + Math.abs(g - 255) + Math.abs(b);
+  return magentaScore < 72 || greenScore < 72;
+}
+
+function isForegroundPixel(r: number, g: number, b: number, a: number): boolean {
+  if (a < 18) return false;
+  return !isChromaLikePixel(r, g, b, a);
+}
+
+/**
+ * Bounding box of opaque / non-chroma pixels (downsampled). Returns null if no foreground found.
+ */
+export function computeSubjectBoundingBoxFromContext(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  sampleStep = 2
+): PixelRect | null {
+  let minX = width;
+  let minY = height;
+  let maxX = 0;
+  let maxY = 0;
+  let found = false;
+  const step = Math.max(1, Math.min(sampleStep, Math.floor(Math.min(width, height) / 64) || 1));
+  for (let y = 0; y < height; y += step) {
+    const row = ctx.getImageData(0, y, width, 1);
+    const d = row.data;
+    for (let x = 0; x < width; x += step) {
+      const i = x * 4;
+      const r = d[i];
+      const g = d[i + 1];
+      const b = d[i + 2];
+      const a = d[i + 3];
+      if (isForegroundPixel(r, g, b, a)) {
+        found = true;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+  }
+  if (!found || maxX < minX || maxY < minY) {
+    return null;
+  }
+  return { minX, minY, maxX, maxY };
+}
+
+function pickBestPlacementLabelAutoAvoid(
+  ctx: CanvasRenderingContext2D,
+  trimmed: string,
+  width: number,
+  height: number,
+  marginRatio: number,
+  fontSize: number,
+  lineHeight: number,
+  frameIndex: number
+): string {
+  const subject = computeSubjectBoundingBoxFromContext(ctx, width, height);
+  if (!subject) {
+    return getLineStickerTextPlacementLabel(frameIndex);
+  }
+  let bestLabel = LINE_STICKER_TEXT_PLACEMENT_PRESETS[0] ?? 'Bottom center';
+  let bestScore = -Number.MAX_VALUE;
+  for (const label of LINE_STICKER_TEXT_PLACEMENT_PRESETS) {
+    const layout = layoutFromPlacementLabel(label, width, height, marginRatio);
+    const lines = wrapLines(ctx, trimmed, layout.maxWidth);
+    const lineCount = Math.max(1, lines.length);
+    const textBox = estimateTextBlockBox(width, height, layout, lineCount, lineHeight);
+    const overlap = rectangleIntersectionArea(textBox, subject);
+    const gap = rectangleMinSeparation(textBox, subject);
+    const score = gap - overlap * 12;
+    if (score > bestScore) {
+      bestScore = score;
+      bestLabel = label;
+    }
+  }
+  return bestLabel;
+}
+
 export interface LineStickerTextOverlayOptions {
   fontKey: FontPresetKey;
   colorKey: TextColorPresetKey;
@@ -305,14 +504,28 @@ export function overlayLineStickerTextOnFrame(
 
         const fontSize = Math.max(10, Math.round(Math.min(w, h) * sizeRatio));
         const fontFamily = resolveProgrammaticFontFamilyCss(options.fontKey, tuning);
-        ctx.font = `${tuning.fontWeight} ${fontSize}px ${fontFamily}`;
+        const numericWeight = resolveCanvasFontNumericWeight(options.fontKey, tuning);
+        ctx.font = `${numericWeight} ${fontSize}px ${fontFamily}`;
 
         const fillHex = extractFillHexFromTextColorPreset(options.colorKey);
         const strokeHex = strokeColorForFill(fillHex);
-        const placementLabel = resolveProgrammaticPlacementLabel(
-          options.frameIndex,
-          tuning.placementMode
-        );
+        const lineHeight = fontSize * lineMult;
+        const mode = getEffectiveProgrammaticPlacementMode(tuning, options.frameIndex);
+        let placementLabel: string;
+        if (mode === 'auto_avoid_subject') {
+          placementLabel = pickBestPlacementLabelAutoAvoid(
+            ctx,
+            trimmed,
+            w,
+            h,
+            marginRatio,
+            fontSize,
+            lineHeight,
+            options.frameIndex
+          );
+        } else {
+          placementLabel = resolveProgrammaticPlacementLabel(options.frameIndex, tuning);
+        }
         const layout = layoutFromPlacementLabel(placementLabel, w, h, marginRatio);
 
         const offsetX = (w * tuning.offsetXPercent) / 100;
@@ -322,7 +535,6 @@ export function overlayLineStickerTextOnFrame(
 
         ctx.textAlign = layout.textAlign;
         ctx.textBaseline = layout.textBaseline;
-        const lineHeight = fontSize * lineMult;
         const lines = wrapLines(ctx, trimmed, layout.maxWidth);
         const totalTextHeight = lines.length * lineHeight;
 

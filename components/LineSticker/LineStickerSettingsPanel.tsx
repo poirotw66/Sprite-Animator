@@ -16,6 +16,7 @@ import {
   type LineStickerPromptVersion,
   type LineStickerTextRendering,
 } from '../../utils/lineStickerPrompt';
+import { LINE_STICKER_FRAMES_PER_SHEET } from '../../utils/lineStickerSetSchema';
 import type {
   ProgrammaticTextOverlayTuning,
 } from '../../utils/lineStickerTextOverlay';
@@ -137,6 +138,9 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
   viewModel,
 }) => {
   const { uploadCard, config, phraseSection } = viewModel;
+  const programmaticStickerCellCount = config.stickerSetMode
+    ? LINE_STICKER_FRAMES_PER_SHEET
+    : config.gridCols * config.gridRows;
   const isPresetStyle = config.selectedStyle !== 'custom';
   const previewTitle = isPresetStyle
     ? STYLE_PRESET_ORDER.includes(config.selectedStyle as keyof typeof STYLE_PRESETS)
@@ -445,6 +449,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
         {config.textRendering === 'programmatic' && config.includeText && (
           <LineStickerProgrammaticStyleControls
             t={t}
+            stickerCellCount={programmaticStickerCellCount}
             selectedFont={config.selectedFont}
             setSelectedFont={config.setSelectedFont}
             selectedTextColor={config.selectedTextColor}

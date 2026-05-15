@@ -124,6 +124,7 @@ export const useLineStickerGeneration = ({
                 : undefined);
 
         const effectiveIncludeText = getEffectiveLineStickerIncludeText(includeText, textRendering);
+        const reserveForProgrammaticOverlay = includeText && textRendering === 'programmatic';
 
         return buildLineStickerPrompt(
             slots,
@@ -132,7 +133,8 @@ export const useLineStickerGeneration = ({
             chromaKeyColor,
             effectiveIncludeText,
             actionDescs,
-            promptVersion
+            promptVersion,
+            reserveForProgrammaticOverlay
         );
     }, [
         selectedStyle,

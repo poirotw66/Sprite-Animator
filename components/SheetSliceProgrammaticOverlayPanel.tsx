@@ -194,6 +194,7 @@ export const SheetSliceProgrammaticOverlayPanel: React.FC<SheetSliceProgrammatic
               <option value="bottom_center">{t.lineStickerProgrammaticPlacementBottom}</option>
               <option value="top_center">{t.lineStickerProgrammaticPlacementTop}</option>
               <option value="middle_center">{t.lineStickerProgrammaticPlacementMiddle}</option>
+              <option value="auto_avoid_subject">{t.lineStickerProgrammaticPlacementAutoAvoidSubject}</option>
             </select>
           </div>
         </div>

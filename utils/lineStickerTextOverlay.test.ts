@@ -5,7 +5,13 @@ import {
   layoutFromPlacementLabel,
   resolveProgrammaticPlacementLabel,
   resolveProgrammaticFontFamilyCss,
+  fontCssStackForPreset,
+  resolveCanvasFontNumericWeight,
   DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING,
+  rectangleIntersectionArea,
+  rectangleMinSeparation,
+  estimateTextBlockBox,
+  getEffectiveProgrammaticPlacementMode,
 } from './lineStickerTextOverlay';
 
 describe('extractFillHexFromTextColorPreset', () => {
@@ -47,11 +53,51 @@ describe('resolveProgrammaticFontFamilyCss', () => {
   });
 });
 
+describe('fontCssStackForPreset', () => {
+  it('matches broad style families (hand / round / gothic / poster / mono)', () => {
+    expect(fontCssStackForPreset('handwritten')).toMatch(/Kaiti TC/);
+    expect(fontCssStackForPreset('round')).toMatch(/Hiragino Maru Gothic ProN/);
+    expect(fontCssStackForPreset('bold')).toMatch(/Heiti TC/);
+    expect(fontCssStackForPreset('pop')).toMatch(/^"PingFang TC"/);
+    expect(fontCssStackForPreset('thinHandwritten')).toMatch(/Bradley Hand ITC/);
+    expect(fontCssStackForPreset('neonGlow')).toMatch(/^"Impact"/);
+    expect(fontCssStackForPreset('comicBook')).toMatch(/^"Impact"/);
+    expect(fontCssStackForPreset('pixelRetro')).toMatch(/monospace/);
+    expect(fontCssStackForPreset('cherryBlossom')).toMatch(/Mincho/);
+  });
+});
+
+describe('resolveCanvasFontNumericWeight', () => {
+  it('caps thinHandwritten so bold slider does not defeat the light style', () => {
+    const tuning = { ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING, fontWeight: 700 as const };
+    expect(resolveCanvasFontNumericWeight('thinHandwritten', tuning)).toBe(600);
+    expect(resolveCanvasFontNumericWeight('bold', tuning)).toBe(700);
+  });
+});
+
 describe('resolveProgrammaticPlacementLabel', () => {
   it('returns fixed anchors for non-cycle modes', () => {
-    expect(resolveProgrammaticPlacementLabel(0, 'bottom_center')).toBe('Bottom center');
-    expect(resolveProgrammaticPlacementLabel(99, 'top_center')).toBe('Top center');
-    expect(resolveProgrammaticPlacementLabel(3, 'middle_center')).toBe('Middle center');
+    const tuningBottom = {
+      ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING,
+      placementMode: 'bottom_center' as const,
+    };
+    expect(resolveProgrammaticPlacementLabel(0, tuningBottom)).toBe('Bottom center');
+    const tuningTop = { ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING, placementMode: 'top_center' as const };
+    expect(resolveProgrammaticPlacementLabel(99, tuningTop)).toBe('Top center');
+    const tuningMid = { ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING, placementMode: 'middle_center' as const };
+    expect(resolveProgrammaticPlacementLabel(3, tuningMid)).toBe('Middle center');
+  });
+});
+
+describe('getEffectiveProgrammaticPlacementMode', () => {
+  it('uses per-frame override when set', () => {
+    const tuning: typeof DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING = {
+      ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING,
+      placementMode: 'cycle',
+      placementModeOverrides: ['top_center', null],
+    };
+    expect(getEffectiveProgrammaticPlacementMode(tuning, 0)).toBe('top_center');
+    expect(getEffectiveProgrammaticPlacementMode(tuning, 1)).toBe('cycle');
   });
 });
 
@@ -75,5 +121,27 @@ describe('layoutFromPlacementLabel', () => {
     expect(textBaseline).toBe('top');
     expect(anchorX).toBeLessThan(50);
     expect(anchorY).toBeLessThan(20);
+  });
+});
+
+describe('estimateTextBlockBox and rectangle helpers', () => {
+  it('reports zero separation when rectangles overlap', () => {
+    const a = { minX: 0, minY: 0, maxX: 10, maxY: 10 };
+    const b = { minX: 5, minY: 5, maxX: 15, maxY: 15 };
+    expect(rectangleIntersectionArea(a, b)).toBeGreaterThan(0);
+    expect(rectangleMinSeparation(a, b)).toBe(0);
+  });
+
+  it('reports positive separation when disjoint', () => {
+    const a = { minX: 0, minY: 0, maxX: 10, maxY: 10 };
+    const b = { minX: 20, minY: 0, maxX: 30, maxY: 10 };
+    expect(rectangleMinSeparation(a, b)).toBe(10);
+  });
+
+  it('estimates text box below anchor for bottom baseline', () => {
+    const layout = layoutFromPlacementLabel('Bottom center', 100, 100, 0.06);
+    const box = estimateTextBlockBox(100, 100, layout, 1, 14);
+    expect(box.maxY).toBeLessThanOrEqual(100);
+    expect(box.minY).toBeLessThan(box.maxY);
   });
 });

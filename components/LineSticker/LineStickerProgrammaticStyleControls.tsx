@@ -17,6 +17,8 @@ export interface LineStickerProgrammaticStyleControlsProps {
   radioNameSuffix?: string;
   /** Optional line under the main tuning title (frame-edit only). */
   frameEditSubtitle?: string;
+  /** Total sticker cells; enables per-frame placement UI when set and <= 24. */
+  stickerCellCount?: number;
   selectedFont: keyof typeof FONT_PRESETS;
   setSelectedFont: React.Dispatch<React.SetStateAction<keyof typeof FONT_PRESETS>>;
   selectedTextColor: keyof typeof TEXT_COLOR_PRESETS;
@@ -30,6 +32,7 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
   t,
   radioNameSuffix = '',
   frameEditSubtitle,
+  stickerCellCount,
   selectedFont,
   setSelectedFont,
   selectedTextColor,
@@ -46,8 +49,15 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
         { value: 'bottom_center' as const, label: t.lineStickerProgrammaticPlacementBottom },
         { value: 'top_center' as const, label: t.lineStickerProgrammaticPlacementTop },
         { value: 'middle_center' as const, label: t.lineStickerProgrammaticPlacementMiddle },
+        { value: 'auto_avoid_subject' as const, label: t.lineStickerProgrammaticPlacementAutoAvoidSubject },
       ] satisfies { value: ProgrammaticTextPlacementMode; label: string }[],
     [t]
+  );
+
+  const perFramePlacementChoices = useMemo(
+    () =>
+      [{ value: '' as const, label: t.lineStickerProgrammaticPerFrameInheritGlobal }, ...placementOptions] as const,
+    [placementOptions, t.lineStickerProgrammaticPerFrameInheritGlobal]
   );
 
   return (
@@ -121,6 +131,7 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
               </option>
             ))}
           </select>
+          <p className="text-xs text-slate-500 mt-2 leading-relaxed">{t.lineStickerProgrammaticFontPresetCanvasNote}</p>
         </div>
       )}
 
@@ -184,7 +195,52 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
             </option>
           ))}
         </select>
+        <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
+          {t.lineStickerProgrammaticPlacementAutoAvoidSubjectHint}
+        </p>
       </div>
+
+      {stickerCellCount != null && stickerCellCount > 0 && stickerCellCount <= 24 ? (
+        <div className="rounded-xl border border-emerald-200/80 bg-white/60 p-3 space-y-2">
+          <p className="text-xs font-semibold text-slate-800">{t.lineStickerProgrammaticPerFramePlacementTitle}</p>
+          <p className="text-[11px] text-slate-600 leading-relaxed">{t.lineStickerProgrammaticPerFramePlacementHint}</p>
+          <div className="max-h-52 space-y-2 overflow-y-auto pr-1">
+            {Array.from({ length: stickerCellCount }, (_, cellIndex) => (
+              <div key={cellIndex} className="flex flex-wrap items-center gap-2">
+                <span className="w-14 shrink-0 text-[11px] font-medium text-slate-600">#{cellIndex + 1}</span>
+                <select
+                  value={programmaticTextTuning.placementModeOverrides?.[cellIndex] ?? ''}
+                  onChange={(event) => {
+                    const raw = event.target.value;
+                    setProgrammaticTextTuning((prev) => {
+                      const nextOverrides = [...(prev.placementModeOverrides ?? [])];
+                      while (nextOverrides.length < stickerCellCount) {
+                        nextOverrides.push(null);
+                      }
+                      nextOverrides[cellIndex] =
+                        raw === '' ? null : (raw as ProgrammaticTextPlacementMode);
+                      while (nextOverrides.length > 0 && nextOverrides[nextOverrides.length - 1] == null) {
+                        nextOverrides.pop();
+                      }
+                      return {
+                        ...prev,
+                        placementModeOverrides: nextOverrides.length > 0 ? nextOverrides : undefined,
+                      };
+                    });
+                  }}
+                  className="min-w-0 flex-1 min-h-[40px] rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-green-500/30"
+                >
+                  {perFramePlacementChoices.map((opt) => (
+                    <option key={opt.value === '' ? 'inherit' : opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">

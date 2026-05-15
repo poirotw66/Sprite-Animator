@@ -389,6 +389,8 @@ export const zhTW: Translations = {
   lineStickerProgrammaticFontSourcePreset: '內建預設（對應產圖提示詞風格）',
   lineStickerProgrammaticFontSourceCustom: '自訂 CSS font-family',
   lineStickerProgrammaticFontPresetLabel: '預設字型',
+  lineStickerProgrammaticFontPresetCanvasNote:
+    '程式疊字只能用系統字型近似各預設的風格（無法重現模型專用美術字、雙描邊、立體等）。多個「圓潤／萌系／雲朵」類預設會優先同一類圓體；要固定外觀請用「自訂 CSS font-family」。',
   lineStickerProgrammaticFontCustomLabel: '自訂字型（CSS）',
   lineStickerProgrammaticFontCustomPlaceholder: '例："Noto Sans TC", "Microsoft JhengHei", sans-serif',
   lineStickerProgrammaticFontCustomHint:
@@ -404,6 +406,12 @@ export const zhTW: Translations = {
   lineStickerProgrammaticPlacementBottom: '置中靠下',
   lineStickerProgrammaticPlacementTop: '置中靠上',
   lineStickerProgrammaticPlacementMiddle: '正中央',
+  lineStickerProgrammaticPlacementAutoAvoidSubject: '自動（避開角色）',
+  lineStickerProgrammaticPlacementAutoAvoidSubjectHint:
+    '在切片後依不透明像素估算主體範圍，從預設方位中選與角色重疊最少者。',
+  lineStickerProgrammaticPerFramePlacementTitle: '逐格位置（選用）',
+  lineStickerProgrammaticPerFramePlacementHint: '可為特定格覆寫整體模式；選「與整體相同」則沿用上方設定。',
+  lineStickerProgrammaticPerFrameInheritGlobal: '與整體相同',
   lineStickerProgrammaticFontWeight: '字重',
   lineStickerProgrammaticResetTuning: '重設為預設',
   lineStickerGeneratePrompt: '產生提示詞',

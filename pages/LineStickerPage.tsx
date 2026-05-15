@@ -905,6 +905,7 @@ const LineStickerPage: React.FC = () => {
                 t={lineStickerT}
                 radioNameSuffix="_frameEditPortal"
                 frameEditSubtitle={lineStickerT.lineStickerFrameEditProgrammaticStyleSubtitle}
+                stickerCellCount={effectiveGridCols * effectiveGridRows}
                 selectedFont={selectedFont}
                 setSelectedFont={setSelectedFont}
                 selectedTextColor={selectedTextColor}
@@ -919,6 +920,8 @@ const LineStickerPage: React.FC = () => {
         textRendering,
         includeText,
         lineStickerT,
+        effectiveGridCols,
+        effectiveGridRows,
         selectedFont,
         selectedTextColor,
         programmaticTextTuning,

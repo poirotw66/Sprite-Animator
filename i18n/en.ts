@@ -389,6 +389,8 @@ export const en: Translations = {
   lineStickerProgrammaticFontSourcePreset: 'Built-in preset (matches prompt style names)',
   lineStickerProgrammaticFontSourceCustom: 'Custom CSS font-family',
   lineStickerProgrammaticFontPresetLabel: 'Preset font',
+  lineStickerProgrammaticFontPresetCanvasNote:
+    'Programmatic overlay can only approximate each preset with installed system fonts (no model-only lettering, double stroke, or 3D). Several rounded/cute presets map to the same round-gothic class; use Custom CSS font-family for an exact look.',
   lineStickerProgrammaticFontCustomLabel: 'Custom font (CSS)',
   lineStickerProgrammaticFontCustomPlaceholder: 'e.g. "Noto Sans TC", "Segoe UI", sans-serif',
   lineStickerProgrammaticFontCustomHint:
@@ -404,6 +406,13 @@ export const en: Translations = {
   lineStickerProgrammaticPlacementBottom: 'Bottom center',
   lineStickerProgrammaticPlacementTop: 'Top center',
   lineStickerProgrammaticPlacementMiddle: 'Middle center',
+  lineStickerProgrammaticPlacementAutoAvoidSubject: 'Auto (avoid subject)',
+  lineStickerProgrammaticPlacementAutoAvoidSubjectHint:
+    'Analyzes opaque pixels after slicing and picks a preset corner/edge with the least overlap with the character.',
+  lineStickerProgrammaticPerFramePlacementTitle: 'Per-frame placement (optional)',
+  lineStickerProgrammaticPerFramePlacementHint:
+    'Override the global mode for specific cells. Empty = use global setting.',
+  lineStickerProgrammaticPerFrameInheritGlobal: 'Same as global',
   lineStickerProgrammaticFontWeight: 'Font weight',
   lineStickerProgrammaticResetTuning: 'Reset to defaults',
   lineStickerGeneratePrompt: 'Generate Prompt',

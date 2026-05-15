@@ -178,8 +178,8 @@ const LAYOUT_PROTECTION_RULES = `
 * Text must always remain **fully inside** its cell boundaries (no clipping at edges).
 `;
 
-/** Text placement options for per-cell assignment. Cycle through these so each cell has an explicit, diverse position. */
-const TEXT_PLACEMENTS: readonly string[] = [
+/** Text placement options for per-cell assignment (model-drawn text or programmatic overlay cycle). */
+export const LINE_STICKER_TEXT_PLACEMENT_PRESETS: readonly string[] = [
     'Top center',
     'Bottom center',
     'Top left',
@@ -193,7 +193,17 @@ const TEXT_PLACEMENTS: readonly string[] = [
 
 /** Cycle index for programmatic text position (matches v2 per-cell placement diversity). */
 export function getLineStickerTextPlacementLabel(frameIndex: number): string {
-    return TEXT_PLACEMENTS[frameIndex % TEXT_PLACEMENTS.length] ?? 'Bottom center';
+    return (
+        LINE_STICKER_TEXT_PLACEMENT_PRESETS[frameIndex % LINE_STICKER_TEXT_PLACEMENT_PRESETS.length] ??
+        'Bottom center'
+    );
+}
+
+function buildProgrammaticOverlayCompositionBullets(bgHex: string): string {
+    return `* A client pipeline will draw short caption text on each cell **after** generation. **Do not** render letters, numbers, watermarks, logos, or any typography in the image.
+* In **every** cell, keep the **Reserved caption band** listed in that cell's line as clean solid chroma (${bgHex})—no hair, outline, limbs, or props intruding into that band.
+* Compose the subject so face, eyes, mouth, and hands stay **outside** the reserved band for that cell; shrink or shift the subject if needed.
+* Vary framing across cells; do not reuse identical subject framing in two consecutive cells.`;
 }
 
 /** Fallback when no action description is provided (e.g. theme preset or API failure). */
@@ -207,7 +217,9 @@ export function buildLineStickerPrompt(
     bgColor: 'magenta' | 'green',
     includeText: boolean = true,
     actionDescs?: string[],
-    promptVersion: LineStickerPromptVersion = 'v1'
+    promptVersion: LineStickerPromptVersion = 'v1',
+    /** When true with includeText false: add composition-only instructions for browser-side caption overlay. */
+    reserveForProgrammaticOverlay = false
 ): string {
     const totalFrames = cols * rows;
     const bgColorText = bgColor === 'magenta' ? 'Pure Magenta #FF00FF' : 'Neon Green #00FF00';
@@ -231,9 +243,13 @@ export function buildLineStickerPrompt(
             const rawAction = (actionDescs && actionDescs[index]?.trim()) ? actionDescs[index].trim() : getActionHint(phrase);
             const actionLabel = actionForImage(rawAction);
             if (!includeText) {
-                return `Cell ${index + 1} (row ${row}, col ${col}): Action: ${actionLabel}`;
+                const captionHint = reserveForProgrammaticOverlay
+                    ? ` | Reserved caption band (keep clear chroma only; do not draw text): ${getLineStickerTextPlacementLabel(index)}`
+                    : '';
+                return `Cell ${index + 1} (row ${row}, col ${col}): Action: ${actionLabel}${captionHint}`;
             }
-            const textPosition = TEXT_PLACEMENTS[index % TEXT_PLACEMENTS.length];
+            const textPosition =
+                LINE_STICKER_TEXT_PLACEMENT_PRESETS[index % LINE_STICKER_TEXT_PLACEMENT_PRESETS.length];
             return `Cell ${index + 1} (row ${row}, col ${col}): Text: "${phrase}" | ${textPosition} | ${actionLabel}`;
         }).join('\n');
 
@@ -245,6 +261,15 @@ export function buildLineStickerPrompt(
 - Keep text readable and stylistically consistent across all ${totalFrames} stickers.`
             : `### [6. Text Style]
 - NO text, letters, numbers, labels, or captions in any cell.`;
+
+        const v2CompositionSection =
+            !includeText && reserveForProgrammaticOverlay
+                ? `
+
+[5b. Composition for post-render captions]
+${buildProgrammaticOverlayCompositionBullets(bgHex)}
+`
+                : '';
 
         return `🎨 LINE Sticker Sprite Sheet (Nano Banana Optimized, ${promptVersion.toUpperCase()})
 
@@ -286,7 +311,7 @@ ${includeText
 ${includeText ? '- Place text near the character and keep facial features unobstructed.' : '- Do not render any text in the image.'}
 
 ${perCellBlock}
-
+${v2CompositionSection}
 ${textRules}
 
 [7. Final Output]
@@ -372,10 +397,18 @@ ${phrasesForFrames.map((phrase, index) => {
         const textLabel = includeText ? `Text: "${phrase}"` : '';
         const rawAction = (actionDescs && actionDescs[index]?.trim()) ? actionDescs[index].trim() : getActionHint(phrase);
         const actionLabel = actionForImage(rawAction);
-        const textPosition = includeText ? ` | Text position: ${TEXT_PLACEMENTS[index % TEXT_PLACEMENTS.length]}` : '';
+        const textPosition = includeText
+            ? ` | Text position: ${
+                  LINE_STICKER_TEXT_PLACEMENT_PRESETS[index % LINE_STICKER_TEXT_PLACEMENT_PRESETS.length]
+              }`
+            : '';
+        const captionBandHint =
+            !includeText && reserveForProgrammaticOverlay
+                ? ` | Reserved caption band (clear chroma only; no text drawn): ${getLineStickerTextPlacementLabel(index)}`
+                : '';
         return includeText
             ? `**Cell ${index + 1} (row ${row}, col ${col})**: ${textLabel}${textPosition} | Action: ${actionLabel}`
-            : `**Cell ${index + 1} (row ${row}, col ${col})**: Action: ${actionLabel}`;
+            : `**Cell ${index + 1} (row ${row}, col ${col})**: Action: ${actionLabel}${captionBandHint}`;
     }).join('\n')}
 `;
 
@@ -396,6 +429,15 @@ ${phrasesForFrames.map((phrase, index) => {
 `;
     }
 
+    const programmaticCompositionSection =
+        !includeText && reserveForProgrammaticOverlay
+            ? `### [5b. Composition for post-render captions]
+
+${buildProgrammaticOverlayCompositionBullets(bgHex)}
+
+`
+            : '';
+
     // 7. Final Goal
     const finalSection = `
 ### [7. Final Goal]
@@ -413,7 +455,7 @@ ${styleSection}
 ${characterSection}
 ${lightingSection}
 ${themeSection}
-${textSection}
+${programmaticCompositionSection}${textSection}
 ${finalSection}`;
 }
 
