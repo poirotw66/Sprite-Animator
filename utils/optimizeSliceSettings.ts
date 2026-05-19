@@ -1,8 +1,9 @@
 /**
  * Auto-optimize slice parameters by analyzing sprite sheet content boundaries.
- * Detects content edges and computes four-edge padding and shift.
+ * Detects outer margins and computes four-edge padding (conservative: no grid shift).
  */
 
+import { isSliceBackgroundPixel } from './imageContentAnalysis';
 import { logger } from './logger';
 
 export interface OptimizedSliceResult {
@@ -12,6 +13,14 @@ export interface OptimizedSliceResult {
   paddingBottom: number;
   shiftX: number;
   shiftY: number;
+}
+
+export interface OptimizeSliceOptions {
+  /**
+   * When true (default), only trim uniform outer margins and keep shift at 0.
+   * Shifting the grid to center content often clips characters at sheet edges.
+   */
+  conservative?: boolean;
 }
 
 /** Padding/shift fields to merge into slice settings after auto-optimization. */
@@ -34,19 +43,152 @@ export function mergeOptimizedPadding(optimized: OptimizedSliceResult) {
   };
 }
 
+export interface ContentMargins {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
+function rowHasContent(
+  data: Uint8ClampedArray,
+  width: number,
+  y: number
+): boolean {
+  for (let x = 0; x < width; x++) {
+    const idx = (y * width + x) * 4;
+    if (!isSliceBackgroundPixel(data[idx]!, data[idx + 1]!, data[idx + 2]!, data[idx + 3]!)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function columnHasContent(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  x: number
+): boolean {
+  for (let y = 0; y < height; y++) {
+    const idx = (y * width + x) * 4;
+    if (!isSliceBackgroundPixel(data[idx]!, data[idx + 1]!, data[idx + 2]!, data[idx + 3]!)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Scan image pixels and return distance from each edge to the nearest non-background pixel. */
+export function measureContentMargins(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number
+): ContentMargins {
+  let top = 0;
+  for (let y = 0; y < height; y++) {
+    if (rowHasContent(data, width, y)) {
+      top = y;
+      break;
+    }
+  }
+
+  let bottom = 0;
+  for (let y = height - 1; y >= 0; y--) {
+    if (rowHasContent(data, width, y)) {
+      bottom = height - 1 - y;
+      break;
+    }
+  }
+
+  let left = 0;
+  for (let x = 0; x < width; x++) {
+    if (columnHasContent(data, width, height, x)) {
+      left = x;
+      break;
+    }
+  }
+
+  let right = 0;
+  for (let x = width - 1; x >= 0; x--) {
+    if (columnHasContent(data, width, height, x)) {
+      right = width - 1 - x;
+      break;
+    }
+  }
+
+  return { left, right, top, bottom };
+}
+
+/**
+ * Convert measured outer margins into slice padding/shift.
+ * Uses conservative caps and a per-cell safety inset so auto-trim does not clip sticker art.
+ */
+export function computeOptimizedSliceFromMargins(
+  width: number,
+  height: number,
+  cols: number,
+  rows: number,
+  margins: ContentMargins,
+  options: OptimizeSliceOptions = {}
+): OptimizedSliceResult {
+  const conservative = options.conservative !== false;
+  const cellWidth = width / cols;
+  const cellHeight = height / rows;
+
+  const paddingCapX = Math.floor(width * 0.12);
+  const paddingCapY = Math.floor(height * 0.12);
+  const safetyX = Math.max(3, Math.floor(cellWidth * 0.05));
+  const safetyY = Math.max(3, Math.floor(cellHeight * 0.05));
+
+  const trimLeft = (value: number, cap: number, safety: number) =>
+    Math.max(0, Math.min(value, cap) - safety);
+  const trimRight = trimLeft;
+
+  const paddingLeft = trimLeft(margins.left, paddingCapX, safetyX);
+  const paddingRight = trimRight(margins.right, paddingCapX, safetyX);
+  const paddingTop = trimLeft(margins.top, paddingCapY, safetyY);
+  const paddingBottom = trimRight(margins.bottom, paddingCapY, safetyY);
+
+  if (conservative) {
+    return {
+      paddingLeft,
+      paddingRight,
+      paddingTop,
+      paddingBottom,
+      shiftX: 0,
+      shiftY: 0,
+    };
+  }
+
+  const effectiveWidth = width - paddingLeft - paddingRight;
+  const effectiveHeight = height - paddingTop - paddingBottom;
+  const gridCenterX = paddingLeft + effectiveWidth / 2;
+  const gridCenterY = paddingTop + effectiveHeight / 2;
+  const optimalShiftX = Math.round(width / 2 - gridCenterX);
+  const optimalShiftY = Math.round(height / 2 - gridCenterY);
+  const shiftCapX = Math.max(4, Math.floor(cellWidth * 0.04));
+  const shiftCapY = Math.max(4, Math.floor(cellHeight * 0.04));
+
+  return {
+    paddingLeft,
+    paddingRight,
+    paddingTop,
+    paddingBottom,
+    shiftX: Math.max(-shiftCapX, Math.min(shiftCapX, optimalShiftX)),
+    shiftY: Math.max(-shiftCapY, Math.min(shiftCapY, optimalShiftY)),
+  };
+}
+
 /**
  * Automatically optimizes slice settings by analyzing the sprite sheet image.
- * Detects content boundaries and calculates optimal padding and shift values.
- *
- * @param base64Image - Base64 encoded sprite sheet image
- * @param cols - Number of columns in the grid
- * @param rows - Number of rows in the grid
- * @returns Promise resolving to optimized slice settings
+ * Prefer a chroma-key-removed image when available for more stable margins.
  */
 export const optimizeSliceSettings = async (
   base64Image: string,
   cols: number,
-  rows: number
+  rows: number,
+  options: OptimizeSliceOptions = {}
 ): Promise<OptimizedSliceResult> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -64,128 +206,23 @@ export const optimizeSliceSettings = async (
 
         ctx.drawImage(img, 0, 0);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-        const width = canvas.width;
-        const height = canvas.height;
-
-        const isTransparent = (r: number, g: number, b: number, a: number) => {
-          if (a < 10) return true;
-          if (r > 180 && g < 100 && b > 100) return true;
-          if (r < 30 && g < 30 && b < 30) return true;
-          return false;
-        };
-
-        let topPadding = 0;
-        for (let y = 0; y < height; y++) {
-          let hasContent = false;
-          for (let x = 0; x < width; x++) {
-            const idx = (y * width + x) * 4;
-            const r = data[idx];
-            const g = data[idx + 1];
-            const b = data[idx + 2];
-            const a = data[idx + 3];
-            if (!isTransparent(r, g, b, a)) {
-              hasContent = true;
-              break;
-            }
-          }
-          if (hasContent) {
-            topPadding = y;
-            break;
-          }
-        }
-
-        let bottomPadding = 0;
-        for (let y = height - 1; y >= 0; y--) {
-          let hasContent = false;
-          for (let x = 0; x < width; x++) {
-            const idx = (y * width + x) * 4;
-            const r = data[idx];
-            const g = data[idx + 1];
-            const b = data[idx + 2];
-            const a = data[idx + 3];
-            if (!isTransparent(r, g, b, a)) {
-              hasContent = true;
-              break;
-            }
-          }
-          if (hasContent) {
-            bottomPadding = height - 1 - y;
-            break;
-          }
-        }
-
-        let leftPadding = 0;
-        for (let x = 0; x < width; x++) {
-          let hasContent = false;
-          for (let y = 0; y < height; y++) {
-            const idx = (y * width + x) * 4;
-            const r = data[idx];
-            const g = data[idx + 1];
-            const b = data[idx + 2];
-            const a = data[idx + 3];
-            if (!isTransparent(r, g, b, a)) {
-              hasContent = true;
-              break;
-            }
-          }
-          if (hasContent) {
-            leftPadding = x;
-            break;
-          }
-        }
-
-        let rightPadding = 0;
-        for (let x = width - 1; x >= 0; x--) {
-          let hasContent = false;
-          for (let y = 0; y < height; y++) {
-            const idx = (y * width + x) * 4;
-            const r = data[idx];
-            const g = data[idx + 1];
-            const b = data[idx + 2];
-            const a = data[idx + 3];
-            if (!isTransparent(r, g, b, a)) {
-              hasContent = true;
-              break;
-            }
-          }
-          if (hasContent) {
-            rightPadding = width - 1 - x;
-            break;
-          }
-        }
-
-        const paddingCapX = Math.floor(width * 0.2);
-        const paddingCapY = Math.floor(height * 0.2);
-        const paddingLeft = Math.max(0, Math.min(leftPadding, paddingCapX));
-        const paddingRight = Math.max(0, Math.min(rightPadding, paddingCapX));
-        const paddingTop = Math.max(0, Math.min(topPadding, paddingCapY));
-        const paddingBottom = Math.max(0, Math.min(bottomPadding, paddingCapY));
-
-        const effectiveWidth = width - paddingLeft - paddingRight;
-        const effectiveHeight = height - paddingTop - paddingBottom;
-        const gridCenterX = paddingLeft + effectiveWidth / 2;
-        const gridCenterY = paddingTop + effectiveHeight / 2;
-        const centerX = width / 2;
-        const centerY = height / 2;
-        const optimalShiftX = Math.round(centerX - gridCenterX);
-        const optimalShiftY = Math.round(centerY - gridCenterY);
-
-        const shiftCap = Math.max(100, Math.min(width, height) * 0.15);
-        const shiftX = Math.max(-shiftCap, Math.min(shiftCap, optimalShiftX));
-        const shiftY = Math.max(-shiftCap, Math.min(shiftCap, optimalShiftY));
+        const margins = measureContentMargins(imageData.data, canvas.width, canvas.height);
+        const result = computeOptimizedSliceFromMargins(
+          canvas.width,
+          canvas.height,
+          cols,
+          rows,
+          margins,
+          options
+        );
 
         logger.debug('Auto-optimized slice settings (four-edge)', {
-          paddingLeft,
-          paddingRight,
-          paddingTop,
-          paddingBottom,
-          shiftX,
-          shiftY,
-          original: { left: leftPadding, right: rightPadding, top: topPadding, bottom: bottomPadding },
+          ...result,
+          measuredMargins: margins,
+          conservative: options.conservative !== false,
         });
 
-        resolve({ paddingLeft, paddingRight, paddingTop, paddingBottom, shiftX, shiftY });
+        resolve(result);
       } catch (error) {
         logger.error('Auto-optimization failed', error);
         resolve({

@@ -363,7 +363,8 @@ const LineStickerPage: React.FC = () => {
                 const optimized = await optimizeSliceSettings(
                     processedImage,
                     LINE_STICKER_SET_COLS,
-                    LINE_STICKER_SET_ROWS
+                    LINE_STICKER_SET_ROWS,
+                    { conservative: true }
                 );
                 const merged = mergeOptimizedPadding(optimized);
                 let updated: SliceSettings | undefined;

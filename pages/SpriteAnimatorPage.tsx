@@ -273,7 +273,8 @@ const SpriteAnimatorPage: React.FC = () => {
           const optimized = await optimizeSliceSettings(
             sheetImage,
             config.gridCols,
-            config.gridRows
+            config.gridRows,
+            { conservative: true }
           );
           setSliceSettings((prev) => ({
             ...prev,

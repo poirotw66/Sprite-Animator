@@ -26,7 +26,7 @@ export type { InterpolationSettings } from './imageInterpolation';
 
 export { sliceSpriteSheet, getCellRectForFrame } from './sliceSpriteSheet';
 export { optimizeSliceSettings } from './optimizeSliceSettings';
-export type { OptimizedSliceResult } from './optimizeSliceSettings';
+export type { OptimizedSliceResult, OptimizeSliceOptions } from './optimizeSliceSettings';
 export { mergeOptimizedPadding } from './optimizeSliceSettings';
 export { sliceSpriteSheetByCellRects } from './sliceByCellRects';
 export {

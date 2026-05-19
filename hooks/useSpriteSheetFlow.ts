@@ -120,17 +120,18 @@ export function useSpriteSheetFlow(
   const lastAutoOptimizedImageRef = useRef<string | null>(null);
 
   const runAutoOptimizeForImage = useCallback(
-    async (sourceImage: string) => {
-      if (!autoOptimizeSlice || lastAutoOptimizedImageRef.current === sourceImage) {
+    async (analysisImage: string, dedupeKey: string) => {
+      if (!autoOptimizeSlice || lastAutoOptimizedImageRef.current === dedupeKey) {
         return;
       }
       try {
         const optimized = await optimizeSliceSettings(
-          sourceImage,
+          analysisImage,
           sliceSettings.cols,
-          sliceSettings.rows
+          sliceSettings.rows,
+          { conservative: true }
         );
-        lastAutoOptimizedImageRef.current = sourceImage;
+        lastAutoOptimizedImageRef.current = dedupeKey;
         setSliceSettings((prev) => ({ ...prev, ...mergeOptimizedPadding(optimized) }));
       } catch (e) {
         logger.warn('Auto slice optimization failed', e);
@@ -150,7 +151,7 @@ export function useSpriteSheetFlow(
     }
     let cancelled = false;
     void (async () => {
-      await runAutoOptimizeForImage(image);
+      await runAutoOptimizeForImage(image, image);
       if (cancelled) {
         return;
       }
@@ -187,7 +188,7 @@ export function useSpriteSheetFlow(
           (p) => setChromaKeyProgress(p)
         );
         if (autoOptimizeSlice) {
-          await runAutoOptimizeForImage(image);
+          await runAutoOptimizeForImage(result, image);
         }
         setProcessedImageState(result);
         setChromaKeyProgress(100);
@@ -401,7 +402,8 @@ export function useSpriteSheetFlow(
     const optimized = await optimizeSliceSettings(
       source,
       sliceSettings.cols,
-      sliceSettings.rows
+      sliceSettings.rows,
+      { conservative: true }
     );
     setSliceSettings((prev) => ({ ...prev, ...mergeOptimizedPadding(optimized) }));
   }, [processedImage, image, sliceSettings.cols, sliceSettings.rows]);

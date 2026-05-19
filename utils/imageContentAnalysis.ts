@@ -12,10 +12,10 @@ const CENTROID_OFFSET_CLAMP = 500;
 const MAX_DELTA_PER_FRAME = 10;
 
 /**
- * Check if a pixel is likely chroma key background.
- * For content analysis only; actual chroma key removal is in chromaKeyWorker.
+ * Check if a pixel is likely chroma key / empty background (for slice optimization & alignment).
+ * Actual chroma key removal runs in chromaKeyWorker.
  */
-const isChromaKeyPixel = (r: number, g: number, b: number, a: number): boolean => {
+export const isSliceBackgroundPixel = (r: number, g: number, b: number, a: number): boolean => {
   if (a <= 20) return true;
   const isPureMagenta = r > 240 && g < 30 && b > 240 && Math.abs(r - b) < 20;
   const isPureGreen = g > 240 && r < 30 && b < 30;
@@ -85,7 +85,7 @@ export const analyzeFrameContent = async (
             const g = data[idx + 1];
             const b = data[idx + 2];
             const a = data[idx + 3];
-            if (isChromaKeyPixel(r, g, b, a)) continue;
+            if (isSliceBackgroundPixel(r, g, b, a)) continue;
             const cellX = dx;
             const cellY = dy;
             minX = Math.min(minX, cellX);
@@ -122,7 +122,7 @@ export const analyzeFrameContent = async (
             const g = data[idx + 1];
             const b = data[idx + 2];
             const a = data[idx + 3];
-            if (isChromaKeyPixel(r, g, b, a)) continue;
+            if (isSliceBackgroundPixel(r, g, b, a)) continue;
             trunkXs.push(dx);
             trunkYs.push(dy);
           }
@@ -181,7 +181,7 @@ export const analyzeFrameContent = async (
               const g = data[idx + 1];
               const b = data[idx + 2];
               const a = data[idx + 3];
-              if (isChromaKeyPixel(r, g, b, a)) continue;
+              if (isSliceBackgroundPixel(r, g, b, a)) continue;
               coreSumX += dx;
               coreSumY += dy;
               coreCount++;
