@@ -140,34 +140,10 @@ export function fontCssStackForPreset(fontKey: FontPresetKey): string {
       '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "Yu Gothic UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif',
     thinHandwritten:
       '"Bradley Hand ITC", "Snell Roundhand", "Kaiti TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
-    catEar:
-      '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "PingFang TC", "Microsoft JhengHei", sans-serif',
-    crayon:
-      '"Marker Felt", "Chalkduster", "Kaiti TC", "DFKai-SB", "PingFang TC", fantasy',
-    stitched: '"Consolas", "Menlo", "Monaco", "Courier New", monospace',
-    puffyCloud:
-      '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "Yu Gothic UI", "Microsoft JhengHei", sans-serif',
-    cherryBlossom:
-      '"Hiragino Mincho ProN", "Songti TC", "Yu Mincho", "PMingLiU", "Georgia", serif',
-    animalPartners:
-      '"Chalkboard SE", "Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "PingFang TC", sans-serif',
-    pastel3d:
-      '"Arial Rounded MT Bold", "Hiragino Maru Gothic ProN", "Yu Gothic UI", "Microsoft JhengHei", sans-serif',
-    bobaPearl:
-      '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "Yu Gothic UI", "Microsoft JhengHei", sans-serif',
-    neonGlow:
-      '"Impact", "Arial Black", "Bahnschrift", "PingFang TC", "Microsoft JhengHei", sans-serif',
-    marshmallowCloud:
-      '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "Yu Gothic UI", "Microsoft JhengHei", sans-serif',
-    pixelRetro: '"Courier New", "Consolas", "Monaco", "Menlo", monospace',
-    rainbowConfetti:
-      '"Arial Black", "Impact", "Hiragino Maru Gothic ProN", "Microsoft JhengHei", sans-serif',
-    chalkboard:
-      '"Chalkduster", "Marker Felt", "Kaiti TC", "DFKai-SB", "PingFang TC", fantasy',
-    comicBook:
-      '"Impact", "Arial Black", "Helvetica Neue", "PingFang TC", "Microsoft JhengHei", fantasy',
+    custom:
+      '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "Yu Gothic UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif',
   };
-  return stacks[fontKey] ?? stacks.handwritten;
+  return stacks[fontKey] ?? stacks.round;
 }
 
 /**

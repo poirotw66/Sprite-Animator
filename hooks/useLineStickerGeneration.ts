@@ -8,6 +8,7 @@ import {
     DEFAULT_CHARACTER_SLOT,
     buildLineStickerPrompt,
     getEffectiveLineStickerIncludeText,
+    resolveFontStylePromptDesc,
     type ThemeOption,
     type LineStickerStyleOption,
     type LineStickerPromptVersion,
@@ -33,6 +34,8 @@ interface UseLineStickerGenerationProps {
     selectedLanguage: keyof typeof TEXT_PRESETS;
     selectedTextColor: keyof typeof TEXT_COLOR_PRESETS;
     selectedFont: keyof typeof FONT_PRESETS;
+    /** Used when selectedFont === 'custom'. */
+    customFontText?: string;
     gridCols: number;
     gridRows: number;
     chromaKeyColor: 'magenta' | 'green';
@@ -63,6 +66,7 @@ export const useLineStickerGeneration = ({
     selectedLanguage,
     selectedTextColor,
     selectedFont,
+    customFontText = '',
     gridCols,
     gridRows,
     chromaKeyColor,
@@ -113,7 +117,7 @@ export const useLineStickerGeneration = ({
             text: {
                 ...TEXT_PRESETS[selectedLanguage],
                 textColor: TEXT_COLOR_PRESETS[selectedTextColor].promptDesc,
-                textStyle: FONT_PRESETS[selectedFont].promptDesc,
+                textStyle: resolveFontStylePromptDesc(selectedFont, customFontText),
             },
         };
 
@@ -147,6 +151,7 @@ export const useLineStickerGeneration = ({
         selectedLanguage,
         selectedTextColor,
         selectedFont,
+        customFontText,
         gridCols,
         gridRows,
         chromaKeyColor,

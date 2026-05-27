@@ -334,6 +334,8 @@ export interface Translations {
   lineStickerTextColorHint: string;
   lineStickerFontStyleLabel: string;
   lineStickerFontStyleHint: string;
+  lineStickerFontCustomLabel: string;
+  lineStickerFontCustomPlaceholder: string;
 
   // LINE Sticker Tool - Sheet selector / Resolution
   lineStickerSheetSelector: string;

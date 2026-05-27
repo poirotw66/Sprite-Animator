@@ -107,23 +107,10 @@ export const FONT_PRESETS: Record<string, { label: string; promptDesc: string }>
     pop: { label: '流行體', promptDesc: 'Pop trendy sticker font, bold rhythm, strong stroke contrast, subtle accent only, no busy effects' },
     pinkBubble: { label: '粉嫩泡泡風', promptDesc: 'Pink bubble sticker font, thick white and dark outer stroke, soft highlights only, keep glyphs crisp' },
     thinHandwritten: { label: '簡約手繪風', promptDesc: 'Clean minimal hand-drawn sticker font, slightly thin but reinforced with clear outer stroke for readability' },
-    catEar: { label: '貓耳裝飾體', promptDesc: 'Rounded black sticker font with subtle cat-ear accents, compact forms, strong outline, legible at small scale' },
-    crayon: { label: '蠟筆筆觸風', promptDesc: 'Wax-crayon texture, solid heavy strokes, clean thick border, high contrast, minimal texture noise' },
-    stitched: { label: '虛線縫紉體', promptDesc: 'Block font with heavy dashed border, thick white outline, clean shapes, minimal internal texture' },
-    puffyCloud: { label: '雲朵蓬蓬體', promptDesc: 'Puffy cloud sticker font, thick rounded body with strong dark outline, no background scenery, keep text legible' },
-    cherryBlossom: { label: '櫻花點綴體', promptDesc: 'Bold elegant font, dark brown fill, single tiny blossom accent on corner, thick white border, clean silhouette' },
-    animalPartners: { label: '動物夥伴風', promptDesc: 'Cute mascot-inspired sticker font, rounded thick strokes, simple icon accents only, keep character shapes clear' },
-    pastel3d: { label: '粉彩漸層 3D', promptDesc: 'Soft 3D block font, minimal gradient, thick crisp edges, shallow depth, high readability, no blur' },
-    bobaPearl: { label: '珍奶珍珠體', promptDesc: 'Bubble-tea themed sticker font, bold rounded letters, pearl motifs kept subtle, preserve strong readability' },
-    neonGlow: { label: '霓虹放光體', promptDesc: 'Bold thick sans-serif, vibrant neon core, tight glow radius, solid black outer stroke for contrast' },
-    marshmallowCloud: { label: '棉花糖雲朵', promptDesc: 'Marshmallow-style sticker font, fluffy rounded forms, clear outer stroke, gentle gradient with strong readability' },
-    pixelRetro: { label: '復古像素風', promptDesc: '8-bit heavy pixel font, clean blocky edges, thick border, no anti-aliasing, vibrant retro palette' },
-    rainbowConfetti: { label: '彩虹碎片體', promptDesc: 'Rainbow celebratory sticker font, bold base shape, confetti accents minimal and away from glyph edges' },
-    chalkboard: { label: '黑板粉筆風', promptDesc: 'Chalk texture sticker font, thicker chalk strokes, reduced dust noise, clean silhouette for small-size reading' },
-    comicBook: { label: '美式漫畫風', promptDesc: 'Comic-style sticker font, bold dynamic shapes, thick outline, high contrast, action feel without clutter' },
+    custom: { label: '自訂字體', promptDesc: '' },
 };
 
-/** Display order for font dropdown: classic first, then themed styles. */
+/** Display order for font dropdown: classic presets first, then custom. */
 export const FONT_PRESET_ORDER: (keyof typeof FONT_PRESETS)[] = [
     'handwritten',
     'round',
@@ -132,21 +119,28 @@ export const FONT_PRESET_ORDER: (keyof typeof FONT_PRESETS)[] = [
     'pop',
     'pinkBubble',
     'thinHandwritten',
-    'catEar',
-    'crayon',
-    'stitched',
-    'puffyCloud',
-    'cherryBlossom',
-    'animalPartners',
-    'pastel3d',
-    'bobaPearl',
-    'neonGlow',
-    'marshmallowCloud',
-    'pixelRetro',
-    'rainbowConfetti',
-    'chalkboard',
-    'comicBook',
+    'custom',
 ];
+
+/** Preset keys for programmatic canvas font (excludes custom — use CSS font-family instead). */
+export const FONT_PRESET_CANVAS_ORDER = FONT_PRESET_ORDER.filter((key) => key !== 'custom');
+
+export type LineStickerFontKey = keyof typeof FONT_PRESETS;
+
+/** Resolve font style text for image-generation prompts (model-drawn sticker text). */
+export function resolveFontStylePromptDesc(
+    fontKey: LineStickerFontKey,
+    customFontText: string
+): string {
+    if (fontKey === 'custom') {
+        const trimmed = customFontText.trim();
+        if (!trimmed) {
+            return 'Custom sticker font style (user did not specify). Use a clear readable font with thick outline and high contrast for tiny chat stickers.';
+        }
+        return `${trimmed}. Render as sticker text with thick outline, high contrast, and legibility at small chat preview size.`;
+    }
+    return FONT_PRESETS[fontKey].promptDesc;
+}
 
 // Global-to-local order: Layout → Style → Subject → Lighting/Background → Per-cell → Text → Final
 export const BASE_PROMPT = `🎨 LINE Sticker Sprite Sheet Generation
@@ -259,7 +253,7 @@ export function buildLineStickerPrompt(
     bgColor: 'magenta' | 'green',
     includeText: boolean = true,
     actionDescs?: string[],
-    promptVersion: LineStickerPromptVersion = 'v1',
+    promptVersion: LineStickerPromptVersion = 'v2',
     /** When true with includeText false: add composition-only instructions for browser-side caption overlay. */
     reserveForProgrammaticOverlay = false
 ): string {

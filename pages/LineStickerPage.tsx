@@ -149,11 +149,12 @@ const LineStickerPage: React.FC = () => {
 
     const [selectedStyle, setSelectedStyle] = useState<LineStickerStyleOption>('matchUploaded');
     const [customStyleText, setCustomStyleText] = useState('');
+    const [customFontText, setCustomFontText] = useState('');
     const [selectedTheme, setSelectedTheme] = useState<ThemeOption>('custom');
     const [customThemeContext, setCustomThemeContext] = useState<string>('');
     const [selectedLanguage, setSelectedLanguage] = useState<keyof typeof TEXT_PRESETS>('zh-TW');
     const [selectedPromptVersion, setSelectedPromptVersion] =
-        useState<LineStickerPromptVersion>('v1');
+        useState<LineStickerPromptVersion>('v2');
     const [actionDedupeStrength, setActionDedupeStrength] =
         useState<ActionDedupeStrength>('balanced');
     const [selectedTextColor, setSelectedTextColor] = useState<keyof typeof TEXT_COLOR_PRESETS>('black');
@@ -274,6 +275,7 @@ const LineStickerPage: React.FC = () => {
         selectedLanguage,
         selectedTextColor,
         selectedFont,
+        customFontText,
         gridCols: effectiveGridCols,
         gridRows: effectiveGridRows,
         chromaKeyColor,
@@ -885,6 +887,8 @@ const LineStickerPage: React.FC = () => {
         setActionDedupeStrength,
         selectedFont,
         setSelectedFont,
+        customFontText,
+        setCustomFontText,
         selectedTextColor,
         setSelectedTextColor,
         programmaticTextTuning,

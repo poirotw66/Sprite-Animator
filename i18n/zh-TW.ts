@@ -331,7 +331,9 @@ export const zhTW: Translations = {
   lineStickerTextColorLabel: '文字顏色',
   lineStickerTextColorHint: '預設為黑色',
   lineStickerFontStyleLabel: '字體風格',
-  lineStickerFontStyleHint: '貼圖上短語的字體風格',
+  lineStickerFontStyleHint: '貼圖上短語的字體風格（模型繪字模式）',
+  lineStickerFontCustomLabel: '自訂字體風格描述',
+  lineStickerFontCustomPlaceholder: '例如：粗黑體白描邊、像素復古、霓虹發光、蠟筆質感...',
 
   // LINE Sticker Tool - Sheet selector / Resolution
   lineStickerSheetSelector: '選擇要產生／預覽的張次',

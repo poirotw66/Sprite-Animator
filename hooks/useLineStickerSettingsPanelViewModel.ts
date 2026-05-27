@@ -63,6 +63,8 @@ interface UseLineStickerSettingsPanelViewModelParams {
   setActionDedupeStrength: React.Dispatch<React.SetStateAction<ActionDedupeStrength>>;
   selectedFont: keyof typeof FONT_PRESETS;
   setSelectedFont: React.Dispatch<React.SetStateAction<keyof typeof FONT_PRESETS>>;
+  customFontText: string;
+  setCustomFontText: React.Dispatch<React.SetStateAction<string>>;
   selectedTextColor: keyof typeof TEXT_COLOR_PRESETS;
   setSelectedTextColor: React.Dispatch<React.SetStateAction<keyof typeof TEXT_COLOR_PRESETS>>;
   programmaticTextTuning: ProgrammaticTextOverlayTuning;
@@ -142,6 +144,8 @@ export const useLineStickerSettingsPanelViewModel = ({
   setActionDedupeStrength,
   selectedFont,
   setSelectedFont,
+  customFontText,
+  setCustomFontText,
   selectedTextColor,
   setSelectedTextColor,
   programmaticTextTuning,
@@ -233,6 +237,8 @@ export const useLineStickerSettingsPanelViewModel = ({
     setActionDedupeStrength,
     selectedFont,
     setSelectedFont,
+    customFontText,
+    setCustomFontText,
     selectedTextColor,
     setSelectedTextColor,
     programmaticTextTuning,
@@ -274,6 +280,8 @@ export const useLineStickerSettingsPanelViewModel = ({
     setActionDedupeStrength,
     selectedFont,
     setSelectedFont,
+    customFontText,
+    setCustomFontText,
     selectedTextColor,
     setSelectedTextColor,
     programmaticTextTuning,

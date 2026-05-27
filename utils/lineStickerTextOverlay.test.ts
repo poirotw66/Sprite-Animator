@@ -52,22 +52,19 @@ describe('resolveProgrammaticFontFamilyCss', () => {
       fontFamilySource: 'custom' as const,
       customFontFamily: '   ',
     };
-    const stack = resolveProgrammaticFontFamilyCss('pixelRetro', tuning);
-    expect(stack).toContain('monospace');
+    const stack = resolveProgrammaticFontFamilyCss('bold', tuning);
+    expect(stack).toContain('Heiti TC');
   });
 });
 
 describe('fontCssStackForPreset', () => {
-  it('matches broad style families (hand / round / gothic / poster / mono)', () => {
+  it('matches broad style families (hand / round / gothic / poster)', () => {
     expect(fontCssStackForPreset('handwritten')).toMatch(/Kaiti TC/);
     expect(fontCssStackForPreset('round')).toMatch(/Hiragino Maru Gothic ProN/);
     expect(fontCssStackForPreset('bold')).toMatch(/Heiti TC/);
     expect(fontCssStackForPreset('pop')).toMatch(/^"PingFang TC"/);
     expect(fontCssStackForPreset('thinHandwritten')).toMatch(/Bradley Hand ITC/);
-    expect(fontCssStackForPreset('neonGlow')).toMatch(/^"Impact"/);
-    expect(fontCssStackForPreset('comicBook')).toMatch(/^"Impact"/);
-    expect(fontCssStackForPreset('pixelRetro')).toMatch(/monospace/);
-    expect(fontCssStackForPreset('cherryBlossom')).toMatch(/Mincho/);
+    expect(fontCssStackForPreset('custom')).toMatch(/Hiragino Maru Gothic ProN/);
   });
 });
 

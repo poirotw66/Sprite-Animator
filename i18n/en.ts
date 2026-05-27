@@ -331,7 +331,9 @@ export const en: Translations = {
   lineStickerTextColorLabel: 'Text Color',
   lineStickerTextColorHint: 'Default: Black',
   lineStickerFontStyleLabel: 'Font Style',
-  lineStickerFontStyleHint: 'Font style for phrase text on stickers',
+  lineStickerFontStyleHint: 'Font style for on-sticker phrases (model-drawn text mode)',
+  lineStickerFontCustomLabel: 'Custom font style description',
+  lineStickerFontCustomPlaceholder: 'e.g. bold black with white outline, pixel retro, neon glow, crayon texture...',
 
   // LINE Sticker Tool - Sheet selector / Resolution
   lineStickerSheetSelector: 'Select Sheet to Generate / Preview',

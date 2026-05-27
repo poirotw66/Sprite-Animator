@@ -66,6 +66,8 @@ export interface LineStickerSettingsConfigViewModel {
   setActionDedupeStrength: React.Dispatch<React.SetStateAction<ActionDedupeStrength>>;
   selectedFont: keyof typeof FONT_PRESETS;
   setSelectedFont: React.Dispatch<React.SetStateAction<keyof typeof FONT_PRESETS>>;
+  customFontText: string;
+  setCustomFontText: React.Dispatch<React.SetStateAction<string>>;
   selectedTextColor: keyof typeof TEXT_COLOR_PRESETS;
   setSelectedTextColor: React.Dispatch<React.SetStateAction<keyof typeof TEXT_COLOR_PRESETS>>;
   programmaticTextTuning: ProgrammaticTextOverlayTuning;
@@ -531,6 +533,17 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                 {FONT_PRESET_ORDER.map((key) => <option key={key} value={key}>{FONT_PRESETS[key].label}</option>)}
               </select>
             </div>
+            {config.selectedFont === 'custom' && (
+              <div className="md:col-span-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <label className="block text-sm font-medium text-slate-700 mb-2">{t.lineStickerFontCustomLabel}</label>
+                <textarea
+                  value={config.customFontText}
+                  onChange={(event) => config.setCustomFontText(event.target.value)}
+                  placeholder={t.lineStickerFontCustomPlaceholder}
+                  className="w-full h-24 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none resize-none"
+                />
+              </div>
+            )}
             <div className="md:col-span-2 rounded-xl border border-slate-200 bg-white p-3 shadow-inner">
               <p className="mb-2 text-xs font-medium text-slate-600">{t.lineStickerFontPreviewCaption}</p>
               <img

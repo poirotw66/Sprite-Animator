@@ -1,5 +1,5 @@
 import React from 'react';
-import { FONT_PRESETS, FONT_PRESET_ORDER, TEXT_COLOR_PRESETS } from '../utils/lineStickerPrompt';
+import { FONT_PRESETS, FONT_PRESET_CANVAS_ORDER, TEXT_COLOR_PRESETS } from '../utils/lineStickerPrompt';
 import type { ProgrammaticFontFamilySource, ProgrammaticTextOverlayTuning } from '../utils/lineStickerTextOverlay';
 import { DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING } from '../utils/lineStickerTextOverlay';
 import type { Translations } from '../i18n/types';
@@ -116,7 +116,7 @@ export const SheetSliceProgrammaticOverlayPanel: React.FC<SheetSliceProgrammatic
                 onChange={(e) => onFontKeyChange(e.target.value as SheetSliceOverlayFontKey)}
                 className={`w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm bg-white outline-none ${ring}`}
               >
-                {FONT_PRESET_ORDER.map((key) => (
+                {FONT_PRESET_CANVAS_ORDER.map((key) => (
                   <option key={key} value={key}>
                     {FONT_PRESETS[key].label}
                   </option>
