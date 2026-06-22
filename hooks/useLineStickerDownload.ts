@@ -45,6 +45,7 @@ interface UseLineStickerDownloadProps {
     processedSheetImages: (string | null)[];
     sheetImages: (string | null)[];
     setError: (msg: string | null) => void;
+    prepareDownload?: () => Promise<string[][] | void>;
 }
 
 export const useLineStickerDownload = ({
@@ -55,6 +56,7 @@ export const useLineStickerDownload = ({
     processedSheetImages,
     sheetImages,
     setError,
+    prepareDownload,
 }: UseLineStickerDownloadProps) => {
     const { t } = useLanguage();
     const [isDownloading, setIsDownloading] = useState(false);
@@ -118,6 +120,18 @@ export const useLineStickerDownload = ({
         return conversionPromise;
     }, [getCacheKey]);
 
+    const runPreparedDownload = useCallback(
+        async (downloadTask: (sheetFramesOverride?: string[][]) => Promise<void>) => {
+            const preparedFrames = prepareDownload ? await prepareDownload() : undefined;
+            await downloadTask(
+                Array.isArray(preparedFrames) && preparedFrames.length > 0
+                    ? preparedFrames
+                    : undefined
+            );
+        },
+        [prepareDownload]
+    );
+
     const appendProcessedSheetsToZip = useCallback((zip: JSZip, rootFolderName?: string) => {
         const root = rootFolderName ? zip.folder(rootFolderName) : zip;
         if (!root) {
@@ -144,6 +158,7 @@ export const useLineStickerDownload = ({
         options?: {
             rootFolderName?: string;
             format?: DownloadFormat;
+            framesSource?: string[][];
         }
     ) => {
         const format = options?.format ?? downloadFormat;
@@ -152,7 +167,8 @@ export const useLineStickerDownload = ({
             return 0;
         }
 
-        const tasks = sheetFrames.flatMap((frames, sheetIndex) =>
+        const framesSource = options?.framesSource ?? sheetFrames;
+        const tasks = framesSource.flatMap((frames, sheetIndex) =>
             frames.map((frame, frameIndex) => ({ frame, frameIndex, sheetIndex }))
         );
 
@@ -182,8 +198,10 @@ export const useLineStickerDownload = ({
         return addedCount;
     }, [sheetFrames, downloadFormat, convertToFormat]);
 
-    const downloadSingle = useCallback(async (index: number) => {
-        const frames = stickerSetMode ? sheetFrames[currentSheetIndex] : stickerFrames;
+    const downloadSingle = useCallback(async (index: number, sheetFramesOverride?: string[][]) => {
+        const frames = stickerSetMode
+            ? (sheetFramesOverride?.[currentSheetIndex] ?? sheetFrames[currentSheetIndex] ?? [])
+            : stickerFrames;
         const frame = frames[index];
         if (!frame) return;
 
@@ -198,44 +216,50 @@ export const useLineStickerDownload = ({
         }
 
         if (selectedIndices.length === 1) {
-            await downloadSingle(selectedIndices[0]);
+            await runPreparedDownload((sheetFramesOverride) =>
+                downloadSingle(selectedIndices[0]!, sheetFramesOverride)
+            );
             return;
         }
 
-        setIsDownloading(true);
-        try {
-            const zip = new JSZip();
-            const frames = stickerSetMode ? sheetFrames[currentSheetIndex] : stickerFrames;
+        await runPreparedDownload(async (sheetFramesOverride) => {
+            setIsDownloading(true);
+            try {
+                const frames = stickerSetMode
+                    ? (sheetFramesOverride?.[currentSheetIndex] ?? sheetFrames[currentSheetIndex] ?? [])
+                    : stickerFrames;
 
-            const files = await mapWithConcurrency(selectedIndices, DOWNLOAD_CONCURRENCY, async (index) => {
-                const frame = frames[index];
-                if (!frame) {
-                    return null;
-                }
+                const files = await mapWithConcurrency(selectedIndices, DOWNLOAD_CONCURRENCY, async (index) => {
+                    const frame = frames[index];
+                    if (!frame) {
+                        return null;
+                    }
 
-                const blob = await convertToFormat(frame, downloadFormat);
-                return {
-                    fileName: `sticker_${String(index + 1).padStart(2, '0')}.${downloadFormat}`,
-                    blob,
-                };
-            });
+                    const blob = await convertToFormat(frame, downloadFormat);
+                    return {
+                        fileName: `sticker_${String(index + 1).padStart(2, '0')}.${downloadFormat}`,
+                        blob,
+                    };
+                });
 
-            files.forEach((file) => {
-                if (!file) {
-                    return;
-                }
-                zip.file(file.fileName, file.blob);
-            });
+                const zip = new JSZip();
+                files.forEach((file) => {
+                    if (!file) {
+                        return;
+                    }
+                    zip.file(file.fileName, file.blob);
+                });
 
-            const zipBlob = await zip.generateAsync({ type: 'blob' });
-            triggerBlobDownload(zipBlob, `line_stickers_${Date.now()}.zip`);
-        } catch (err) {
-            logger.error('Failed to export ZIP:', err);
-            setError(t.errorExportZip);
-        } finally {
-            setIsDownloading(false);
-        }
-    }, [stickerSetMode, sheetFrames, currentSheetIndex, stickerFrames, downloadFormat, convertToFormat, t, setError, downloadSingle, triggerBlobDownload]);
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                triggerBlobDownload(zipBlob, `line_stickers_${Date.now()}.zip`);
+            } catch (err) {
+                logger.error('Failed to export ZIP:', err);
+                setError(t.errorExportZip);
+            } finally {
+                setIsDownloading(false);
+            }
+        });
+    }, [stickerSetMode, sheetFrames, currentSheetIndex, stickerFrames, downloadFormat, convertToFormat, t, setError, downloadSingle, triggerBlobDownload, runPreparedDownload]);
 
     const downloadAllAsZip = useCallback(async () => {
         const frames = stickerSetMode ? sheetFrames[currentSheetIndex] : stickerFrames;
@@ -277,23 +301,28 @@ export const useLineStickerDownload = ({
     const downloadAllSheetsFramesZip = useCallback(async () => {
         const hasAny = sheetFrames.some((arr) => arr.length > 0);
         if (!hasAny) return;
-        setIsDownloading(true);
-        try {
-            const zip = new JSZip();
-            const addedCount = await appendSheetFramesToZip(zip);
-            if (addedCount === 0) {
-                return;
-            }
 
-            const zipBlob = await zip.generateAsync({ type: 'blob' });
-            triggerBlobDownload(zipBlob, `line_stickers_3_sheets_frames_${Date.now()}.zip`);
-        } catch (err) {
-            logger.error('Failed to export 3 sheets frames ZIP:', err);
-            setError(t.errorExportZip);
-        } finally {
-            setIsDownloading(false);
-        }
-    }, [sheetFrames, appendSheetFramesToZip, setError, t, triggerBlobDownload]);
+        await runPreparedDownload(async (sheetFramesOverride) => {
+            setIsDownloading(true);
+            try {
+                const zip = new JSZip();
+                const addedCount = await appendSheetFramesToZip(zip, {
+                    framesSource: sheetFramesOverride,
+                });
+                if (addedCount === 0) {
+                    return;
+                }
+
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                triggerBlobDownload(zipBlob, `line_stickers_3_sheets_frames_${Date.now()}.zip`);
+            } catch (err) {
+                logger.error('Failed to export 3 sheets frames ZIP:', err);
+                setError(t.errorExportZip);
+            } finally {
+                setIsDownloading(false);
+            }
+        });
+    }, [sheetFrames, appendSheetFramesToZip, setError, t, triggerBlobDownload, runPreparedDownload]);
 
     /** One-click: download a single ZIP containing processed sheets and sliced frame folders. */
     const downloadSetOneClick = useCallback(async () => {
@@ -301,32 +330,37 @@ export const useLineStickerDownload = ({
         const hasFrames = sheetFrames.some((arr) => arr.length > 0);
         if (!hasSheets && !hasFrames) return;
 
-        setIsDownloading(true);
-        try {
-            const zip = new JSZip();
-            let addedCount = 0;
+        await runPreparedDownload(async (sheetFramesOverride) => {
+            setIsDownloading(true);
+            try {
+                const zip = new JSZip();
+                let addedCount = 0;
 
-            if (hasSheets) {
-                addedCount += appendProcessedSheetsToZip(zip, 'sprite_sheets');
+                if (hasSheets) {
+                    addedCount += appendProcessedSheetsToZip(zip, 'sprite_sheets');
+                }
+
+                if (hasFrames) {
+                    addedCount += await appendSheetFramesToZip(zip, {
+                        rootFolderName: 'frames',
+                        framesSource: sheetFramesOverride,
+                    });
+                }
+
+                if (addedCount === 0) {
+                    return;
+                }
+
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                triggerBlobDownload(zipBlob, `line_stickers_bundle_${Date.now()}.zip`);
+            } catch (err) {
+                logger.error('Failed to export combined sticker set ZIP:', err);
+                setError(t.errorExportZip);
+            } finally {
+                setIsDownloading(false);
             }
-
-            if (hasFrames) {
-                addedCount += await appendSheetFramesToZip(zip, { rootFolderName: 'frames' });
-            }
-
-            if (addedCount === 0) {
-                return;
-            }
-
-            const zipBlob = await zip.generateAsync({ type: 'blob' });
-            triggerBlobDownload(zipBlob, `line_stickers_bundle_${Date.now()}.zip`);
-        } catch (err) {
-            logger.error('Failed to export combined sticker set ZIP:', err);
-            setError(t.errorExportZip);
-        } finally {
-            setIsDownloading(false);
-        }
-    }, [processedSheetImages, sheetFrames, appendProcessedSheetsToZip, appendSheetFramesToZip, setError, t, triggerBlobDownload]);
+        });
+    }, [processedSheetImages, sheetFrames, appendProcessedSheetsToZip, appendSheetFramesToZip, setError, t, triggerBlobDownload, runPreparedDownload]);
 
     return {
         isDownloading,

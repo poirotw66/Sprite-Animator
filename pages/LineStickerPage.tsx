@@ -231,7 +231,9 @@ const LineStickerPage: React.FC = () => {
         selectedLanguage,
     });
 
-    useLineStickerProgrammaticOverlayCompose(lineStickerProgrammaticOverlayCore, {
+    const { ensureProgrammaticOverlayFullRes } = useLineStickerProgrammaticOverlayCompose(
+        lineStickerProgrammaticOverlayCore,
+        {
         textRendering,
         includeText,
         stickerSetMode,
@@ -243,7 +245,15 @@ const LineStickerPage: React.FC = () => {
         singleSheetSetFrames: singleSheetFlow.setFrames,
         setSheetFrames,
         setStickerFrames,
-    });
+        }
+    );
+
+    const prepareProgrammaticDownload = useCallback(async () => {
+        if (textRendering === 'programmatic' && includeText && stickerSetMode) {
+            return ensureProgrammaticOverlayFullRes(sheetFrames);
+        }
+        return undefined;
+    }, [textRendering, includeText, stickerSetMode, ensureProgrammaticOverlayFullRes, sheetFrames]);
 
     useLineStickerThemePresetSync({
         selectedTheme,
@@ -327,6 +337,7 @@ const LineStickerPage: React.FC = () => {
         processedSheetImages,
         sheetImages,
         setError,
+        prepareDownload: prepareProgrammaticDownload,
     });
 
     const { handleImageLoad: slicingHandleImageLoad, sliceProcessedSheetToFrames: slicingSliceToFrames } = useLineStickerSlicing({
@@ -471,11 +482,12 @@ const LineStickerPage: React.FC = () => {
         cancelActiveGeneration();
         resetSingleModeGeneratedOutputs();
         resetSetModeGeneratedOutputs();
+        lineStickerProgrammaticOverlayCore.resetOverlayState();
         setStylePreviewImage(null);
         setStatusText('');
         setError(null);
         setIsGenerating(false);
-    }, [cancelActiveGeneration, resetSetModeGeneratedOutputs, resetSingleModeGeneratedOutputs, setError, setIsGenerating, setStatusText]);
+    }, [cancelActiveGeneration, resetSetModeGeneratedOutputs, resetSingleModeGeneratedOutputs, lineStickerProgrammaticOverlayCore, setError, setIsGenerating, setStatusText]);
 
     useEffect(() => {
         setStylePreviewImage(null);
