@@ -367,6 +367,7 @@ export interface Translations {
   lineStickerSheetFailedN: string;
   lineStickerRetryFailed: string;
   lineStickerRetrySheetN: string;
+  lineStickerRegenerateSheetN: string;
   lineStickerErrorSomeSheetsFailed: string;
   lineStickerSheetProgressTitle: string;
   lineStickerPhrasePlaceholder: string;

@@ -365,6 +365,7 @@ export const en: Translations = {
   lineStickerSheetFailedN: 'Sheet {n} failed',
   lineStickerRetryFailed: 'Retry failed sheets',
   lineStickerRetrySheetN: 'Retry sheet {n}',
+  lineStickerRegenerateSheetN: 'Regenerate sheet {n}',
   lineStickerErrorSomeSheetsFailed: 'Some sheets failed. Retry only the failed ones.',
   lineStickerSheetProgressTitle: '{sheetCount}-sheet progress',
   lineStickerPhrasePlaceholder: 'One phrase per line, e.g.:\nCheck rulebook...\nDice success!\nRolling secretly...',

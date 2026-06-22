@@ -365,6 +365,7 @@ export const zhTW: Translations = {
   lineStickerSheetFailedN: '第 {n} 張失敗',
   lineStickerRetryFailed: '重試失敗張次',
   lineStickerRetrySheetN: '重試第 {n} 張',
+  lineStickerRegenerateSheetN: '重新產生第 {n} 張',
   lineStickerErrorSomeSheetsFailed: '部分張次生成失敗，可直接重試失敗的張次。',
   lineStickerSheetProgressTitle: '{sheetCount} 張生成進度',
   lineStickerPhrasePlaceholder: '每行一句短語，例如：\n查規則書...\n骰子成功！\n暗骰中...',

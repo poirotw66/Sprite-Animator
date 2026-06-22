@@ -101,7 +101,7 @@ export const LineStickerSetOverviewPanel: React.FC<LineStickerSetOverviewPanelPr
             />
           </div>
 
-          {isFailed ? (
+          {!isActive ? (
             <div className="mt-3 flex justify-end">
               <button
                 type="button"
@@ -110,10 +110,12 @@ export const LineStickerSetOverviewPanel: React.FC<LineStickerSetOverviewPanelPr
                   onRetrySheet(item.sheetIndex);
                 }}
                 disabled={isGenerating}
-                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                {t.lineStickerRetrySheetN.replace('{n}', String(item.sheetIndex + 1))}
+                {(item.stage === 'completed' || item.stage === 'failed')
+                  ? t.lineStickerRegenerateSheetN.replace('{n}', String(item.sheetIndex + 1))
+                  : t.lineStickerGenerateSheetN.replace('{n}', String(item.sheetIndex + 1))}
               </button>
             </div>
           ) : null}
