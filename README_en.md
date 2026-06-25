@@ -269,9 +269,10 @@ Issues and Pull Requests are welcome!
 
 ## 📚 Related Documentation
 
-- [Sprite Slicing Analysis](./SPRITE_SLICING_ANALYSIS.md) - Slicing feature optimization details
-- [Chroma Key Improvement](./CHROMA_KEY_IMPROVEMENT.md) - Background removal technical details
-- [Project Optimization Roadmap](./PROJECT_OPTIMIZATION_ROADMAP.md) - Future optimization plans
+- [Slice & Align Flow](./md/SLICE_AND_ALIGN_FLOW.md) - Slicing feature technical details
+- [Chroma Key Improvements](./md/CHROMA_KEY.md) - Background removal technical details
+- [Background Color Normalization](./md/BACKGROUND_COLOR_NORMALIZATION.md) - Background color unification
+- [Project Optimization Roadmap](./md/PROJECT_OPTIMIZATION_ROADMAP.md) - Future optimization plans
 
 ---
 

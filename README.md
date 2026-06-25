@@ -283,9 +283,10 @@ npm run preview
 
 ## 📚 相關文檔
 
-- [精靈圖切分分析](./SPRITE_SLICING_ANALYSIS.md) - 切分功能優化詳情
-- [去背改進說明](./CHROMA_KEY_IMPROVEMENT.md) - 去背功能技術細節
-- [專案優化路線圖](./PROJECT_OPTIMIZATION_ROADMAP.md) - 未來優化計劃
+- [切分與對齊流程](./md/SLICE_AND_ALIGN_FLOW.md) - 切分功能技術細節
+- [去背改進說明](./md/CHROMA_KEY.md) - 去背功能技術細節
+- [背景顏色標準化](./md/BACKGROUND_COLOR_NORMALIZATION.md) - 背景色統一處理
+- [專案優化路線圖](./md/PROJECT_OPTIMIZATION_ROADMAP.md) - 未來優化計劃
 
 ---
 

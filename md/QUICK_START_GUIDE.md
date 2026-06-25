@@ -62,7 +62,7 @@
 **A**: 可以!進度條會顯示「正在標準化背景顏色...」。
 
 ### Q4: 如果去背還是失敗怎麼辦?
-**A**: 請查看 [TEST_COLOR_NORMALIZATION.md](./TEST_COLOR_NORMALIZATION.md) 中的故障排除指南。
+**A**: 請參閱 [Chroma Key 改進紀錄](./CHROMA_KEY.md) 的「已知限制」與調整建議。
 
 ### Q5: 支援其他顏色嗎?
 **A**: 目前僅支援洋紅色和綠幕,未來會加入更多顏色選項。
@@ -152,17 +152,15 @@ open test-color-normalization.html
 - ✅ 綠幕變體測試
 - ✅ 視覺比較工具
 
-詳細說明請參閱 [TEST_COLOR_NORMALIZATION.md](./TEST_COLOR_NORMALIZATION.md)
+詳細說明請參閱 [Chroma Key 改進紀錄](./CHROMA_KEY.md)
 
 ## 📚 進階資源 (Advanced Resources)
 
 想了解更多技術細節?
 
-- [**技術文檔**](./BACKGROUND_COLOR_NORMALIZATION.md) - 完整的技術實作說明
-- [**變更日誌**](./CHANGELOG_COLOR_NORMALIZATION.md) - 詳細的修改記錄
-- [**流程圖**](./COLOR_NORMALIZATION_DIAGRAM.md) - 視覺化的處理流程
-- [**測試指南**](./TEST_COLOR_NORMALIZATION.md) - 完整的測試說明
-- [**解決方案總結**](./SOLUTION_SUMMARY.md) - 整體解決方案概述
+- [**背景顏色標準化**](./BACKGROUND_COLOR_NORMALIZATION.md) - 完整的技術實作說明與變更日誌
+- [**Chroma Key 改進紀錄**](./CHROMA_KEY.md) - 去背算法、邊緣清理與測試建議
+- [**切分與對齊流程**](./SLICE_AND_ALIGN_FLOW.md) - 切分功能技術細節
 
 ## 🎯 最佳實踐 (Best Practices)
 
@@ -187,7 +185,7 @@ open test-color-normalization.html
 3. 有沒有殘留的色邊?
 
 如果發現問題:
-→ 查看 [故障排除指南](./TEST_COLOR_NORMALIZATION.md#故障排除-troubleshooting)
+→ 查看本文的 [常見問題 FAQ](#-常見問題-faq) 或 [Chroma Key 改進紀錄](./CHROMA_KEY.md)
 ```
 
 ### 3. 優化生成品質
@@ -205,8 +203,8 @@ open test-color-normalization.html
 如果遇到問題:
 
 1. **首先**: 查看 [FAQ](#-常見問題-faq) 章節
-2. **然後**: 使用 [測試工具](./test-color-normalization.html) 驗證
-3. **最後**: 查閱 [故障排除指南](./TEST_COLOR_NORMALIZATION.md#故障排除-troubleshooting)
+2. **然後**: 使用 [測試工具](../test-color-normalization.html) 驗證
+3. **最後**: 查閱 [Chroma Key 改進紀錄](./CHROMA_KEY.md) 的已知限制
 
 ## 🎉 總結 (Summary)
 

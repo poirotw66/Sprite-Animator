@@ -138,8 +138,27 @@ To verify the normalization is working:
 - [ ] Support custom chroma key colors beyond magenta/green
 - [ ] Implement GPU-accelerated normalization for large images
 
+## Changelog (變更日誌)
+
+### v1.2.0 (2026-01-30)
+
+新增 `normalizeBackgroundColor()`,在 AI 生成圖片後自動將「類似」目標色的像素統一為精確目標色,
+解決 AI 生成的綠幕/洋紅色變體無法去背的問題。
+
+**修改的檔案**
+- `services/geminiService.ts` — 新增 `normalizeBackgroundColor()`,於 `generateSpriteSheet()` 套用,並強化提示詞的顏色規格
+- `README.md` / `README_en.md` — 加入「智能顏色標準化」功能說明
+
+**不影響的部分**
+- 去背算法本身（`workers/chromaKeyWorker.ts`）維持不變
+- 使用者介面無需修改
+
+**效能影響**
+- 處理時間約 100–500ms（取決於圖片大小）；使用臨時 Canvas,處理完即釋放;無額外 API 請求
+- 完全向下相容,無破壞性變更,無新增依賴
+
+> 後續的去背邊緣清理與綠幕修復見 [Chroma Key 改進紀錄](./CHROMA_KEY.md)。
+
 ---
 
-**Version**: v1.2.0  
-**Date**: 2026-01-30  
 **Author**: Sprite Animator Team
