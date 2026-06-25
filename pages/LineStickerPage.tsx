@@ -28,7 +28,6 @@ import { DEFAULT_SLICE_SETTINGS } from '../utils/constants';
 import { buildPhraseSetExport, parsePhraseSetJson } from '../utils/lineStickerPhraseSetFormat';
 import {
     createLineStickerSetSliceSettings,
-    createLineStickerSheetArray,
     DEFAULT_LINE_STICKER_SHEET_INDEX,
     formatLineStickerSetText,
     LINE_STICKER_SHEET_INDICES,
@@ -37,6 +36,15 @@ import {
     sliceLineStickerSheetFrames,
     type LineStickerSheetIndex,
 } from '../utils/lineStickerSetSchema';
+import {
+    createSetModeSliceSettingsList,
+    createEmptySetModeImageList,
+    createEmptySetModeFrameList,
+    createEmptySetModeOverrideList,
+    createEmptySetModeSelectionList,
+    summarizeSheetPrompt,
+} from '../utils/lineStickerSetModeFactories';
+import { deriveLineStickerActiveSheetState } from '../utils/lineStickerActiveSheetState';
 import type { LineStickerSetOverviewItem } from '../components/LineSticker/LineStickerSetOverviewPanel';
 
 import {
@@ -66,32 +74,6 @@ import {
     useLineStickerProgrammaticOverlayCompose,
     useLineStickerProgrammaticOverlayCore,
 } from '../hooks/useLineStickerProgrammaticOverlay';
-
-const createSetModeSliceSettingsList = () =>
-    createLineStickerSheetArray(() => createLineStickerSetSliceSettings());
-
-const createEmptySetModeImageList = (): (string | null)[] =>
-    createLineStickerSheetArray(() => null);
-
-const createEmptySetModeFrameList = (): string[][] =>
-    createLineStickerSheetArray(() => []);
-
-const createEmptySetModeOverrideList = (): FrameOverride[][] =>
-    createLineStickerSheetArray(() => []);
-
-const createEmptySetModeSelectionList = (): boolean[][] =>
-    createLineStickerSheetArray(() => []);
-
-function summarizeSheetPrompt(prompt: string): string {
-    const cellLines = prompt
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter((line) => line.startsWith('**Cell '))
-        .slice(0, 2);
-    const source = cellLines.length > 0 ? cellLines.join(' ') : prompt;
-    const compact = source.replace(/\*\*/g, '').replace(/\s+/g, ' ').trim();
-    return compact.length > 180 ? `${compact.slice(0, 177)}...` : compact;
-}
 
 const LineStickerPage: React.FC = () => {
     const { t } = useLanguage();
@@ -657,62 +639,37 @@ const LineStickerPage: React.FC = () => {
     const hasCustomKey = !!apiKey.trim();
 
     // Effective values: single-sheet mode uses shared flow; set mode uses local state
-    const effectiveSpriteSheetImage = stickerSetMode ? (sheetImages[currentSheetIndex] ?? null) : singleSheetFlow.image;
-    const effectiveProcessedSpriteSheet = stickerSetMode ? (processedSheetImages[currentSheetIndex] ?? null) : singleSheetFlow.processedImage;
-    const effectiveStickerFrames = stickerSetMode ? sheetFrames[currentSheetIndex] ?? [] : singleSheetFlow.frames;
-    const effectiveSelectedFrames = stickerSetMode ? (selectedFramesBySheet[currentSheetIndex] ?? []) : singleSheetFlow.frameIncluded;
-    const effectiveSetSelectedFrames = stickerSetMode
-        ? (val: boolean[] | ((prev: boolean[]) => boolean[])) => {
-            setSelectedFramesBySheet((prev) => {
-                const next = prev.map((a) => [...a]);
-                const s = typeof val === 'function' ? val(next[currentSheetIndex] ?? []) : val;
-                next[currentSheetIndex] = s;
-                return next;
-            });
-        }
-        : singleSheetFlow.setFrameIncluded;
-    const effectiveFrameOverrides = stickerSetMode ? (sheetFrameOverrides[currentSheetIndex] ?? []) : singleSheetFlow.frameOverrides;
-    const effectiveSetFrameOverrides = stickerSetMode
-        ? (val: FrameOverride[] | ((prev: FrameOverride[]) => FrameOverride[])) => {
-            setSheetFrameOverrides((prev) => {
-                const next = prev.map((a) => [...a]);
-                const s = typeof val === 'function' ? val(next[currentSheetIndex] ?? []) : val;
-                next[currentSheetIndex] = s;
-                return next;
-            });
-        }
-        : singleSheetFlow.setFrameOverrides;
-    const effectiveSheetDimensions = stickerSetMode ? sheetDimensions : singleSheetFlow.sheetDimensions;
-    const effectiveChromaKeyProgress = stickerSetMode ? chromaKeyProgress : singleSheetFlow.chromaKeyProgress;
-    const effectiveIsProcessingChromaKey = stickerSetMode ? isProcessingChromaKey : singleSheetFlow.isProcessingChromaKey;
-    const effectiveSliceSettingsForView = stickerSetMode ? currentSetSliceSettings : singleSheetFlow.sliceSettings;
-    const effectiveSetSliceSettingsForView = stickerSetMode
-        ? (val: SliceSettings | ((prev: SliceSettings) => SliceSettings)) => {
-            const currentSettings = sheetSliceSettings[currentSheetIndex] ?? createLineStickerSetSliceSettings();
-            if (typeof val === 'function') {
-                const next = val(currentSettings);
-                setSheetSliceSettings((prev) => {
-                    const updated = prev.map((entry) => ({ ...entry }));
-                    updated[currentSheetIndex] = {
-                        ...next,
-                        cols: LINE_STICKER_SET_COLS,
-                        rows: LINE_STICKER_SET_ROWS,
-                    };
-                    return updated;
-                });
-            } else {
-                setSheetSliceSettings((prev) => {
-                    const updated = prev.map((entry) => ({ ...entry }));
-                    updated[currentSheetIndex] = {
-                        ...val,
-                        cols: LINE_STICKER_SET_COLS,
-                        rows: LINE_STICKER_SET_ROWS,
-                    };
-                    return updated;
-                });
-            }
-        }
-        : singleSheetFlow.setSliceSettings;
+    const {
+        effectiveSpriteSheetImage,
+        effectiveProcessedSpriteSheet,
+        effectiveStickerFrames,
+        effectiveSelectedFrames,
+        effectiveSetSelectedFrames,
+        effectiveFrameOverrides,
+        effectiveSetFrameOverrides,
+        effectiveSheetDimensions,
+        effectiveChromaKeyProgress,
+        effectiveIsProcessingChromaKey,
+        effectiveSliceSettingsForView,
+        effectiveSetSliceSettingsForView,
+    } = deriveLineStickerActiveSheetState({
+        stickerSetMode,
+        currentSheetIndex,
+        singleSheetFlow,
+        sheetImages,
+        processedSheetImages,
+        sheetFrames,
+        selectedFramesBySheet,
+        setSelectedFramesBySheet,
+        sheetFrameOverrides,
+        setSheetFrameOverrides,
+        sheetDimensions,
+        chromaKeyProgress,
+        isProcessingChromaKey,
+        currentSetSliceSettings,
+        sheetSliceSettings,
+        setSheetSliceSettings,
+    });
 
     const lineStickerResultSidePhraseEdit = useMemo((): LineStickerResultSidePhraseEdit | null => {
         if (stickerSetMode || textRendering !== 'programmatic' || !includeText) {
