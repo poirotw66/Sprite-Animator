@@ -1,15 +1,17 @@
 /**
  * Browser-only: draw LINE sticker phrase text onto a sliced frame (data URL PNG).
  * Used when textRendering is programmatic so the image model omits text.
+ *
+ * This module is the entry point: it owns font/color resolution and the canvas
+ * rendering pipeline, and re-exports the geometry + subject-detection helpers
+ * (split into sibling modules) so existing importers of './lineStickerTextOverlay'
+ * keep working unchanged.
  */
 
 import {
   FONT_PRESETS,
   TEXT_COLOR_PRESETS,
-  getLineStickerTextPlacementLabel,
   getReservedCaptionBandLabelForFrame,
-  RESERVED_CAPTION_BAND_HEIGHT_RATIO,
-  LINE_STICKER_TEXT_PLACEMENT_PRESETS,
 } from './lineStickerPrompt';
 
 import type {
@@ -19,6 +21,33 @@ import type {
 } from './lineStickerTextOverlayTypes';
 import { DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING } from './lineStickerTextOverlayTypes';
 
+import {
+  layoutFromPlacementLabel,
+  wrapLines,
+  textOverlayAvoidancePadPx,
+  estimateTextBlockBoxFromMeasuredLines,
+  preferredNudgeDirectionForPlacementLabel,
+  rectangleIntersectionArea,
+  inflatePixelRect,
+  correctionToFitTextBoxInFrame,
+  rectangleMinSeparation,
+  estimateTextBlockBox,
+} from './lineStickerTextOverlayGeometry';
+import type {
+  TextPlacementLayout,
+  LayoutFromPlacementOptions,
+  PixelRect,
+} from './lineStickerTextOverlayGeometry';
+
+import {
+  computeSubjectBoundingBoxFromContext,
+  computeAnchorNudgeToClearSubject,
+  subjectAvoidanceRegion,
+  pickBestPlacementLabelAutoAvoid,
+  frameInsetPx,
+} from './lineStickerTextOverlaySubject';
+import type { SubjectBoundingBoxScanOptions } from './lineStickerTextOverlaySubject';
+
 // Re-export so existing importers of './lineStickerTextOverlay' keep working.
 export type {
   ProgrammaticTextPlacementMode,
@@ -26,6 +55,20 @@ export type {
   ProgrammaticTextOverlayTuning,
 };
 export { DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING };
+export {
+  layoutFromPlacementLabel,
+  textOverlayAvoidancePadPx,
+  estimateTextBlockBoxFromMeasuredLines,
+  preferredNudgeDirectionForPlacementLabel,
+  rectangleIntersectionArea,
+  inflatePixelRect,
+  correctionToFitTextBoxInFrame,
+  rectangleMinSeparation,
+  estimateTextBlockBox,
+};
+export type { TextPlacementLayout, LayoutFromPlacementOptions, PixelRect };
+export { computeSubjectBoundingBoxFromContext, computeAnchorNudgeToClearSubject };
+export type { SubjectBoundingBoxScanOptions };
 
 type FontPresetKey = keyof typeof FONT_PRESETS;
 type TextColorPresetKey = keyof typeof TEXT_COLOR_PRESETS;
@@ -134,642 +177,6 @@ export function resolveProgrammaticFontFamilyCss(
     return tuning.customFontFamily.trim();
   }
   return fontCssStackForPreset(fontKey);
-}
-
-export interface TextPlacementLayout {
-  anchorX: number;
-  anchorY: number;
-  textAlign: CanvasTextAlign;
-  textBaseline: CanvasTextBaseline;
-  maxWidth: number;
-}
-
-export interface LayoutFromPlacementOptions {
-  /** When true, anchors sit in the same caption-band zones described in the generation prompt. */
-  useReservedCaptionBandAnchors?: boolean;
-}
-
-/**
- * Unit direction to nudge text within a caption band when it still overlaps the subject (keeps text in-band).
- */
-export function preferredNudgeDirectionForPlacementLabel(
-  label: string
-): { dirX: number; dirY: number } | undefined {
-  const lower = label.toLowerCase();
-  if (lower.includes('bottom')) {
-    return { dirX: 0, dirY: -1 };
-  }
-  if (lower.includes('top') && !lower.includes('beside')) {
-    return { dirX: 0, dirY: 1 };
-  }
-  if (lower.includes('beside head (left)')) {
-    return { dirX: -1, dirY: 0 };
-  }
-  if (lower.includes('beside head (right)')) {
-    return { dirX: 1, dirY: 0 };
-  }
-  return undefined;
-}
-
-/**
- * Map v2-style placement label to canvas anchor and max line width (fraction of cell).
- * `edgeMarginRatio` is 0–0.25 (e.g. 0.06 = 6% inset on each side).
- */
-export function layoutFromPlacementLabel(
-  label: string,
-  width: number,
-  height: number,
-  edgeMarginRatio: number = 0.06,
-  options?: LayoutFromPlacementOptions
-): TextPlacementLayout {
-  const margin = Math.max(0.02, Math.min(0.22, edgeMarginRatio));
-  const marginX = width * margin;
-  const marginY = height * margin;
-  const maxW = width - marginX * 2;
-  const lower = label.toLowerCase();
-  const bandH = height * RESERVED_CAPTION_BAND_HEIGHT_RATIO;
-  const useBand = options?.useReservedCaptionBandAnchors === true;
-
-  let textAlign: CanvasTextAlign = 'center';
-  let textBaseline: CanvasTextBaseline = 'bottom';
-  let anchorX = width / 2;
-  let anchorY = height - marginY;
-  let maxWidth = maxW;
-
-  if (lower.includes('middle center')) {
-    textAlign = 'center';
-    textBaseline = 'middle';
-    anchorX = width / 2;
-    anchorY = useBand ? height / 2 : height / 2;
-  } else if (lower.includes('top center')) {
-    textBaseline = 'top';
-    anchorY = useBand ? marginY + bandH * 0.12 : marginY;
-  } else if (lower.includes('bottom center')) {
-    textBaseline = 'bottom';
-    anchorY = useBand ? height - marginY - bandH * 0.06 : height - marginY;
-  } else if (lower.includes('top left')) {
-    textAlign = 'left';
-    textBaseline = 'top';
-    anchorX = marginX;
-    anchorY = useBand ? marginY + bandH * 0.12 : marginY;
-    maxWidth = useBand ? width * 0.55 : maxW;
-  } else if (lower.includes('top right')) {
-    textAlign = 'right';
-    textBaseline = 'top';
-    anchorX = width - marginX;
-    anchorY = useBand ? marginY + bandH * 0.12 : marginY;
-    maxWidth = useBand ? width * 0.55 : maxW;
-  } else if (lower.includes('bottom left')) {
-    textAlign = 'left';
-    textBaseline = 'bottom';
-    anchorX = marginX;
-    anchorY = useBand ? height - marginY - bandH * 0.06 : height - marginY;
-    maxWidth = useBand ? width * 0.55 : maxW;
-  } else if (lower.includes('bottom right')) {
-    textAlign = 'right';
-    textBaseline = 'bottom';
-    anchorX = width - marginX;
-    anchorY = useBand ? height - marginY - bandH * 0.06 : height - marginY;
-    maxWidth = useBand ? width * 0.55 : maxW;
-  } else if (lower.includes('beside head (left)')) {
-    textAlign = 'left';
-    textBaseline = 'middle';
-    anchorX = useBand ? width * 0.14 : width * 0.2;
-    anchorY = height * 0.42;
-    maxWidth = useBand ? width * 0.36 : maxW * 0.45;
-  } else if (lower.includes('beside head (right)')) {
-    textAlign = 'right';
-    textBaseline = 'middle';
-    anchorX = useBand ? width * 0.86 : width * 0.8;
-    anchorY = height * 0.42;
-    maxWidth = useBand ? width * 0.36 : maxW * 0.45;
-  } else if (lower.includes('diagonal')) {
-    textAlign = 'center';
-    textBaseline = 'middle';
-    anchorX = useBand ? width * 0.62 : width / 2;
-    anchorY = useBand ? height * 0.76 : height * 0.72;
-    maxWidth = useBand ? width * 0.5 : maxW;
-  } else if (lower.includes('beside head')) {
-    textAlign = 'center';
-    textBaseline = 'middle';
-    anchorX = width / 2;
-    anchorY = height * 0.72;
-  }
-
-  return { anchorX, anchorY, textAlign, textBaseline, maxWidth };
-}
-
-function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
-  const trimmed = text.trim();
-  if (!trimmed) return [];
-  const words = trimmed.split(/\s+/);
-  const lines: string[] = [];
-  let line = '';
-
-  const pushWord = (word: string) => {
-    const trial = line ? `${line} ${word}` : word;
-    if (ctx.measureText(trial).width <= maxWidth) {
-      line = trial;
-      return;
-    }
-    if (line) lines.push(line);
-    if (ctx.measureText(word).width <= maxWidth) {
-      line = word;
-      return;
-    }
-    let chunk = '';
-    for (const ch of word) {
-      const next = chunk + ch;
-      if (ctx.measureText(next).width > maxWidth && chunk) {
-        lines.push(chunk);
-        chunk = ch;
-      } else {
-        chunk = next;
-      }
-    }
-    line = chunk;
-  };
-
-  for (const w of words) {
-    pushWord(w);
-  }
-  if (line) lines.push(line);
-
-  if (lines.length === 0) return [trimmed];
-  return lines;
-}
-
-/** Axis-aligned rectangle in pixel space. */
-export type PixelRect = { minX: number; minY: number; maxX: number; maxY: number };
-
-export function rectangleIntersectionArea(a: PixelRect, b: PixelRect): number {
-  const iw = Math.min(a.maxX, b.maxX) - Math.max(a.minX, b.minX);
-  const ih = Math.min(a.maxY, b.maxY) - Math.max(a.minY, b.minY);
-  if (iw <= 0 || ih <= 0) return 0;
-  return iw * ih;
-}
-
-/** Expand a rectangle inward from frame edges, clamped to the canvas. */
-export function inflatePixelRect(
-  box: PixelRect,
-  padX: number,
-  padY: number,
-  width: number,
-  height: number
-): PixelRect {
-  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-  return {
-    minX: clamp(box.minX - padX, 0, width - 1),
-    minY: clamp(box.minY - padY, 0, height - 1),
-    maxX: clamp(box.maxX + padX, 0, width - 1),
-    maxY: clamp(box.maxY + padY, 0, height - 1),
-  };
-}
-
-function shiftPixelRect(box: PixelRect, dx: number, dy: number): PixelRect {
-  return {
-    minX: box.minX + dx,
-    minY: box.minY + dy,
-    maxX: box.maxX + dx,
-    maxY: box.maxY + dy,
-  };
-}
-
-function textBoxFitsFrameInset(
-  box: PixelRect,
-  width: number,
-  height: number,
-  inset: number
-): boolean {
-  return (
-    box.minX >= inset &&
-    box.minY >= inset &&
-    box.maxX <= width - inset &&
-    box.maxY <= height - inset
-  );
-}
-
-/** Shift so the text AABB lies inside the frame inset (visibility over perfect avoid). */
-export function correctionToFitTextBoxInFrame(
-  box: PixelRect,
-  width: number,
-  height: number,
-  inset: number
-): { dx: number; dy: number } {
-  let dx = 0;
-  let dy = 0;
-  if (box.minX < inset) {
-    dx += inset - box.minX;
-  }
-  if (box.maxX > width - inset) {
-    dx -= box.maxX - (width - inset);
-  }
-  if (box.minY < inset) {
-    dy += inset - box.minY;
-  }
-  if (box.maxY > height - inset) {
-    dy -= box.maxY - (height - inset);
-  }
-  return { dx, dy };
-}
-
-/** Padding around measured glyphs for stroke and descenders when scoring auto-avoid. */
-export function textOverlayAvoidancePadPx(
-  fontSize: number,
-  strokeMult: number
-): { padX: number; padY: number } {
-  const strokeW = Math.max(1.5, fontSize * 0.12 * strokeMult);
-  const strokeExtent = strokeW * 2;
-  return {
-    padX: Math.ceil(strokeExtent + fontSize * 0.12),
-    padY: Math.ceil(strokeExtent + fontSize * 0.16),
-  };
-}
-
-/** Minimum gap between two non-overlapping axis-aligned rectangles (0 if overlapping). */
-export function rectangleMinSeparation(a: PixelRect, b: PixelRect): number {
-  const dx = Math.max(0, Math.max(a.minX - b.maxX, b.minX - a.maxX));
-  const dy = Math.max(0, Math.max(a.minY - b.maxY, b.minY - a.maxY));
-  if (dx === 0 && dy === 0) return 0;
-  if (dx === 0) return dy;
-  if (dy === 0) return dx;
-  return Math.hypot(dx, dy);
-}
-
-/**
- * Rough bounding box for multi-line sticker text from anchor, alignment, and line metrics.
- * Uses layout max width (full caption band); prefer {@link estimateTextBlockBoxFromMeasuredLines}
- * for auto-avoid scoring where tighter boxes improve placement.
- */
-export function estimateTextBlockBox(
-  width: number,
-  height: number,
-  layout: TextPlacementLayout,
-  lineCount: number,
-  lineHeight: number
-): PixelRect {
-  const totalH = Math.max(lineHeight, lineCount * lineHeight);
-  let top = layout.anchorY;
-  let bottom = layout.anchorY;
-  if (layout.textBaseline === 'bottom') {
-    bottom = layout.anchorY;
-    top = layout.anchorY - totalH;
-  } else if (layout.textBaseline === 'top') {
-    top = layout.anchorY;
-    bottom = layout.anchorY + totalH;
-  } else {
-    top = layout.anchorY - totalH / 2;
-    bottom = layout.anchorY + totalH / 2;
-  }
-
-  let left = layout.anchorX;
-  let right = layout.anchorX;
-  const mw = layout.maxWidth;
-  if (layout.textAlign === 'left') {
-    left = layout.anchorX;
-    right = layout.anchorX + mw;
-  } else if (layout.textAlign === 'right') {
-    left = layout.anchorX - mw;
-    right = layout.anchorX;
-  } else {
-    left = layout.anchorX - mw / 2;
-    right = layout.anchorX + mw / 2;
-  }
-
-  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-  return {
-    minX: clamp(left, 0, width),
-    minY: clamp(top, 0, height),
-    maxX: clamp(right, 0, width),
-    maxY: clamp(bottom, 0, height),
-  };
-}
-
-/**
- * Tighter text AABB from measured line widths and {@link TextPlacementLayout} alignment.
- * Optional pads approximate stroke / descenders so auto-avoid does not hug glyph edges.
- */
-export function estimateTextBlockBoxFromMeasuredLines(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  layout: TextPlacementLayout,
-  lines: string[],
-  lineHeight: number,
-  horizontalPadPx: number = 0,
-  verticalPadPx: number = 0
-): PixelRect {
-  const rows = lines.length > 0 ? lines : [''];
-  const lineWidths = rows.map((line) => ctx.measureText(line.length > 0 ? line : ' ').width);
-  const maxLineW = Math.max(...lineWidths, 1);
-  const lineCount = rows.length;
-  const totalH = Math.max(lineHeight, lineCount * lineHeight);
-
-  let top = layout.anchorY;
-  let bottom = layout.anchorY;
-  if (layout.textBaseline === 'bottom') {
-    bottom = layout.anchorY;
-    top = layout.anchorY - totalH;
-  } else if (layout.textBaseline === 'top') {
-    top = layout.anchorY;
-    bottom = layout.anchorY + totalH;
-  } else {
-    top = layout.anchorY - totalH / 2;
-    bottom = layout.anchorY + totalH / 2;
-  }
-
-  const ax = layout.anchorX;
-  let left: number;
-  let right: number;
-  if (layout.textAlign === 'left') {
-    left = ax;
-    right = ax + maxLineW;
-  } else if (layout.textAlign === 'right') {
-    left = ax - maxLineW;
-    right = ax;
-  } else {
-    left = ax - maxLineW / 2;
-    right = ax + maxLineW / 2;
-  }
-
-  const padX = horizontalPadPx;
-  const padY = verticalPadPx;
-  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-  return {
-    minX: clamp(left - padX, 0, width),
-    minY: clamp(top - padY, 0, height),
-    maxX: clamp(right + padX, 0, width),
-    maxY: clamp(bottom + padY, 0, height),
-  };
-}
-
-function isChromaLikePixel(r: number, g: number, b: number, a: number): boolean {
-  if (a < 12) return true;
-  const magentaScore = Math.abs(r - 255) + Math.abs(g) + Math.abs(b - 255);
-  const greenScore = Math.abs(r) + Math.abs(g - 255) + Math.abs(b);
-  return magentaScore < 72 || greenScore < 72;
-}
-
-function isForegroundPixel(r: number, g: number, b: number, a: number): boolean {
-  if (a < 18) return false;
-  return !isChromaLikePixel(r, g, b, a);
-}
-
-/** Options for {@link computeSubjectBoundingBoxFromContext}. */
-export interface SubjectBoundingBoxScanOptions {
-  /** Horizontal and vertical pixel step when reading pixels (>= 1). Default 2. */
-  sampleStep?: number;
-  /**
-   * Longest frame side (px) used for analysis. Frames larger than this are downscaled
-   * for scanning, then the bbox is mapped back to full resolution (faster, slightly coarser).
-   * Default 256. Set very high to always scan at full resolution.
-   */
-  maxAnalysisSide?: number;
-}
-
-function scanForegroundBoundingBoxPixels(
-  readCtx: CanvasRenderingContext2D,
-  scanWidth: number,
-  scanHeight: number,
-  step: number
-): PixelRect | null {
-  let minX = scanWidth;
-  let minY = scanHeight;
-  let maxX = 0;
-  let maxY = 0;
-  let found = false;
-  const s = Math.max(1, step);
-  for (let y = 0; y < scanHeight; y += s) {
-    const row = readCtx.getImageData(0, y, scanWidth, 1);
-    const d = row.data;
-    for (let x = 0; x < scanWidth; x += s) {
-      const i = x * 4;
-      const r = d[i];
-      const g = d[i + 1];
-      const b = d[i + 2];
-      const a = d[i + 3];
-      if (isForegroundPixel(r, g, b, a)) {
-        found = true;
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x);
-        maxY = Math.max(maxY, y);
-      }
-    }
-  }
-  if (!found || maxX < minX || maxY < minY) {
-    return null;
-  }
-  return { minX, minY, maxX, maxY };
-}
-
-function mapAnalyzedBBoxToFullFrame(
-  box: PixelRect,
-  fullWidth: number,
-  fullHeight: number,
-  analyzedWidth: number,
-  analyzedHeight: number
-): PixelRect {
-  const sx = fullWidth / analyzedWidth;
-  const sy = fullHeight / analyzedHeight;
-  return {
-    minX: Math.max(0, Math.floor(box.minX * sx)),
-    minY: Math.max(0, Math.floor(box.minY * sy)),
-    maxX: Math.min(fullWidth - 1, Math.ceil((box.maxX + 1) * sx) - 1),
-    maxY: Math.min(fullHeight - 1, Math.ceil((box.maxY + 1) * sy) - 1),
-  };
-}
-
-/**
- * Bounding box of opaque / non-chroma pixels (downsampled scan). Returns null if no foreground found.
- */
-export function computeSubjectBoundingBoxFromContext(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  options: SubjectBoundingBoxScanOptions = {}
-): PixelRect | null {
-  const sampleStep = Math.max(1, options.sampleStep ?? 2);
-  const maxAnalysisSide = Math.max(48, options.maxAnalysisSide ?? 256);
-  const cw = ctx.canvas?.width ?? width;
-  const ch = ctx.canvas?.height ?? height;
-  const scanW = Math.min(width, cw);
-  const scanH = Math.min(height, ch);
-  if (scanW < 1 || scanH < 1) {
-    return null;
-  }
-
-  const maxDim = Math.max(scanW, scanH);
-  const scaleDown = maxDim > maxAnalysisSide ? maxAnalysisSide / maxDim : 1;
-
-  const effectiveStepOnFull = Math.max(
-    1,
-    Math.min(sampleStep, Math.floor(Math.min(scanW, scanH) / 64) || 1)
-  );
-
-  if (scaleDown >= 1 || typeof document === 'undefined' || !ctx.canvas) {
-    return scanForegroundBoundingBoxPixels(ctx, scanW, scanH, effectiveStepOnFull);
-  }
-
-  const wSmall = Math.max(1, Math.floor(scanW * scaleDown));
-  const hSmall = Math.max(1, Math.floor(scanH * scaleDown));
-  const buf = document.createElement('canvas');
-  buf.width = wSmall;
-  buf.height = hSmall;
-  const sctx = buf.getContext('2d', { willReadFrequently: true });
-  if (!sctx) {
-    return scanForegroundBoundingBoxPixels(ctx, scanW, scanH, effectiveStepOnFull);
-  }
-  sctx.imageSmoothingEnabled = false;
-  sctx.drawImage(ctx.canvas, 0, 0, scanW, scanH, 0, 0, wSmall, hSmall);
-
-  const smallStep = Math.max(
-    1,
-    Math.min(sampleStep, Math.floor(Math.min(wSmall, hSmall) / 48) || 1)
-  );
-  const smallBox = scanForegroundBoundingBoxPixels(sctx, wSmall, hSmall, smallStep);
-  if (!smallBox) {
-    return null;
-  }
-  return mapAnalyzedBBoxToFullFrame(smallBox, scanW, scanH, wSmall, hSmall);
-}
-
-/**
- * Slide the text box away from the subject centroid until overlap clears, maxShiftPx,
- * or the next step would push text outside the frame inset.
- */
-export function computeAnchorNudgeToClearSubject(
-  textBox: PixelRect,
-  subject: PixelRect,
-  width: number,
-  height: number,
-  maxShiftPx: number,
-  frameInsetPx: number = 0,
-  preferredDirection?: { dirX: number; dirY: number }
-): { dx: number; dy: number } {
-  const startOverlap = rectangleIntersectionArea(textBox, subject);
-  if (startOverlap <= 0) {
-    return { dx: 0, dy: 0 };
-  }
-  const inset = Math.max(0, frameInsetPx);
-  let dirX: number;
-  let dirY: number;
-  if (preferredDirection) {
-    dirX = preferredDirection.dirX;
-    dirY = preferredDirection.dirY;
-    const len = Math.hypot(dirX, dirY) || 1;
-    dirX /= len;
-    dirY /= len;
-  } else {
-    const tcx = (textBox.minX + textBox.maxX) / 2;
-    const tcy = (textBox.minY + textBox.maxY) / 2;
-    const scx = (subject.minX + subject.maxX) / 2;
-    const scy = (subject.minY + subject.maxY) / 2;
-    dirX = tcx - scx;
-    dirY = tcy - scy;
-    if (Math.abs(dirX) < 0.5 && Math.abs(dirY) < 0.5) {
-      dirY = 1;
-    }
-    const len = Math.hypot(dirX, dirY) || 1;
-    dirX /= len;
-    dirY /= len;
-  }
-
-  const step = Math.max(2, Math.round(Math.min(width, height) * 0.015));
-  const maxSteps = Math.max(1, Math.ceil(maxShiftPx / step));
-  const overlapTarget = Math.max(0, startOverlap * 0.12);
-  let box = textBox;
-  let dx = 0;
-  let dy = 0;
-  for (let i = 0; i < maxSteps; i++) {
-    const overlap = rectangleIntersectionArea(box, subject);
-    if (overlap <= overlapTarget) {
-      break;
-    }
-    const next = shiftPixelRect(box, dirX * step, dirY * step);
-    if (!textBoxFitsFrameInset(next, width, height, inset)) {
-      break;
-    }
-    dx += dirX * step;
-    dy += dirY * step;
-    box = next;
-  }
-  const fitted = shiftPixelRect(textBox, dx, dy);
-  const pullBack = correctionToFitTextBoxInFrame(fitted, width, height, inset);
-  return { dx: dx + pullBack.dx, dy: dy + pullBack.dy };
-}
-
-function subjectAvoidanceRegion(
-  subject: PixelRect,
-  width: number,
-  height: number,
-  fontSize: number
-): PixelRect {
-  const bodyPad = Math.ceil(Math.min(width, height) * 0.02 + fontSize * 0.05);
-  return inflatePixelRect(subject, bodyPad, bodyPad, width, height);
-}
-
-function frameInsetPx(width: number, height: number, marginRatio: number): number {
-  return Math.max(2, Math.round(Math.min(width, height) * marginRatio));
-}
-
-function pickBestPlacementLabelAutoAvoid(
-  ctx: CanvasRenderingContext2D,
-  trimmed: string,
-  width: number,
-  height: number,
-  marginRatio: number,
-  fontSize: number,
-  lineHeight: number,
-  strokeMult: number,
-  frameIndex: number,
-  subjectRaw: PixelRect | null
-): string {
-  const subject =
-    subjectRaw != null ? subjectAvoidanceRegion(subjectRaw, width, height, fontSize) : null;
-  if (!subject) {
-    return getLineStickerTextPlacementLabel(frameIndex);
-  }
-  const { padX, padY } = textOverlayAvoidancePadPx(fontSize, strokeMult);
-  const inset = frameInsetPx(width, height, marginRatio);
-  let bestLabel = LINE_STICKER_TEXT_PLACEMENT_PRESETS[0] ?? 'Bottom center';
-  let bestOverlap = Number.POSITIVE_INFINITY;
-  let bestGap = -1;
-  for (const label of LINE_STICKER_TEXT_PLACEMENT_PRESETS) {
-    const layout = layoutFromPlacementLabel(label, width, height, marginRatio, {
-      useReservedCaptionBandAnchors: true,
-    });
-    const lines = wrapLines(ctx, trimmed, layout.maxWidth);
-    const textBox = estimateTextBlockBoxFromMeasuredLines(
-      ctx,
-      width,
-      height,
-      layout,
-      lines,
-      lineHeight,
-      padX,
-      padY
-    );
-    const overlap = rectangleIntersectionArea(textBox, subject);
-    const gap = rectangleMinSeparation(textBox, subject);
-    const overflow =
-      Math.max(0, inset - textBox.minX) +
-      Math.max(0, inset - textBox.minY) +
-      Math.max(0, textBox.maxX - (width - inset)) +
-      Math.max(0, textBox.maxY - (height - inset));
-    const promptBandLabel = getReservedCaptionBandLabelForFrame(frameIndex);
-    const promptBandBias = label === promptBandLabel ? 40 : 0;
-    const overlapScore = overlap + overflow * 8000 - promptBandBias;
-    if (
-      overlapScore < bestOverlap ||
-      (overlapScore === bestOverlap && gap > bestGap)
-    ) {
-      bestOverlap = overlapScore;
-      bestGap = gap;
-      bestLabel = label;
-    }
-  }
-  return bestLabel;
 }
 
 export interface LineStickerTextOverlayOptions {
