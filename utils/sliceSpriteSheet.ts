@@ -7,6 +7,7 @@ import {
   type FrameOverride,
   type PaddingFour,
 } from './spriteSlicing';
+import { clearEdgeConnectedResidue } from './frameEdgeCleanup';
 
 /**
  * Slices a sprite sheet image into multiple individual frame images with integer coordinates.
@@ -160,6 +161,15 @@ export const sliceSpriteSheet = async (
                 }
               }
               ctx.putImageData(imageData, 0, 0);
+            }
+
+            // Safety net (companion to cellInsetRatio): erase any residual
+            // cell-boundary line fragments still touching the frame edge.
+            if (cellInsetRatio > 0) {
+              const edgeData = ctx.getImageData(0, 0, frameWidth, frameHeight);
+              const maxDepthPx = Math.max(2, Math.round(Math.min(frameWidth, frameHeight) * 0.02));
+              clearEdgeConnectedResidue(edgeData.data, frameWidth, frameHeight, { maxDepthPx });
+              ctx.putImageData(edgeData, 0, 0);
             }
 
             frames.push(canvas.toDataURL('image/png'));
