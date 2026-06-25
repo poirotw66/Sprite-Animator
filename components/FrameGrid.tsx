@@ -319,7 +319,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
     window.addEventListener('touchmove', onMoveTouch, { passive: false, capture: true });
     window.addEventListener('touchend', onUp);
     window.addEventListener('touchcancel', onUp);
-  }, [sliceSettings, sheetDimensions, editingFrameIndex, frameOverrides, dragOffset, updateOverride]);
+  }, [sliceSettings, sheetDimensions, editingFrameIndex, frameOverrides, dragOffset, updateOverride, setFrameOverrides]);
 
   const handleCropCanvasMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (e.button !== 0) return;

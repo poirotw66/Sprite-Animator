@@ -422,7 +422,7 @@ const SpriteAnimatorPage: React.FC = () => {
       frameOverrides: project.frameOverrides,
       frameIncluded: project.frameIncluded,
     };
-  }, []);
+  }, [setCurrentFrameIndex]);
 
   const canSaveProject = generatedFrames.length > 0;
 
@@ -441,7 +441,7 @@ const SpriteAnimatorPage: React.FC = () => {
     } catch (err) {
       handleExportError(new Error(getErrorMessage(err)));
     }
-  }, [handleDownloadApng, handleExportError, t]);
+  }, [handleDownloadApng, handleExportError]);
 
   const wrappedDownloadGif = useCallback(async () => {
     try {
@@ -449,7 +449,7 @@ const SpriteAnimatorPage: React.FC = () => {
     } catch (err) {
       handleExportError(new Error(getErrorMessage(err)));
     }
-  }, [handleDownloadGif, handleExportError, t]);
+  }, [handleDownloadGif, handleExportError]);
 
   const wrappedDownloadZip = useCallback(async () => {
     try {
@@ -457,7 +457,7 @@ const SpriteAnimatorPage: React.FC = () => {
     } catch (err) {
       handleExportError(new Error(getErrorMessage(err)));
     }
-  }, [handleDownloadZip, handleExportError, t]);
+  }, [handleDownloadZip, handleExportError]);
 
   const wrappedDownloadSpriteSheet = useCallback(() => {
     // Download the processed (chroma-key-removed) version if available

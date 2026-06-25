@@ -740,6 +740,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
     startRequest,
     throwIfRequestInactive,
     toUserError,
+    setPhrasesList.length,
   ]);
 
   const handleGenerateAllSheets = useCallback(async () => {

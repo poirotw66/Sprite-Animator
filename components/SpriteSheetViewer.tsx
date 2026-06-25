@@ -331,7 +331,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
       // This is complex - for now, we'll skip this and let users use the input fields
       // Future enhancement: calculate new cols/rows based on grid line position
     }
-  }, [isDragging, dragType, dragStart, dragStartSettings, gridPositions, setSliceSettings]);
+  }, [isDragging, dragType, dragStart, dragStartSettings, gridPositions, setSliceSettings, sheetDimensions.width, sheetDimensions.height]);
 
   // Handle mouse up to end dragging
   const handleMouseUp = useCallback(() => {
