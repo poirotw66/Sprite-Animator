@@ -24,7 +24,7 @@ import {
 } from '../utils/imageUtils';
 import { logger } from '../utils/logger';
 import { ChromaKeyColorType, BgRemovalMethod } from '../types';
-import { DEFAULT_SLICE_SETTINGS } from '../utils/constants';
+import { DEFAULT_SLICE_SETTINGS, LINE_STICKER_CELL_INSET_RATIO } from '../utils/constants';
 import { buildPhraseSetExport, parsePhraseSetJson } from '../utils/lineStickerPhraseSetFormat';
 import {
     createLineStickerSetSliceSettings,
@@ -136,7 +136,7 @@ const LineStickerPage: React.FC = () => {
     const [customThemeContext, setCustomThemeContext] = useState<string>('');
     const [selectedLanguage, setSelectedLanguage] = useState<keyof typeof TEXT_PRESETS>('zh-TW');
     const [selectedPromptVersion, setSelectedPromptVersion] =
-        useState<LineStickerPromptVersion>('v2');
+        useState<LineStickerPromptVersion>('v3');
     const [actionDedupeStrength, setActionDedupeStrength] =
         useState<ActionDedupeStrength>('balanced');
     const [selectedTextColor, setSelectedTextColor] = useState<keyof typeof TEXT_COLOR_PRESETS>('black');
@@ -184,6 +184,7 @@ const LineStickerPage: React.FC = () => {
         autoOptimizeSlice: true,
         initialSliceSettings: { ...DEFAULT_SLICE_SETTINGS, cols: LINE_STICKER_SET_COLS, rows: LINE_STICKER_SET_ROWS } as SliceSettings,
         mapFramesAfterSlice: lineStickerProgrammaticOverlayCore.mapFramesAfterSlice,
+        cellInsetRatio: LINE_STICKER_CELL_INSET_RATIO,
     });
     const effectiveGridCols = stickerSetMode ? LINE_STICKER_SET_COLS : singleSheetFlow.sliceSettings.cols;
     const effectiveGridRows = stickerSetMode ? LINE_STICKER_SET_ROWS : singleSheetFlow.sliceSettings.rows;

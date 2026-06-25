@@ -23,6 +23,8 @@ import {
  * @param frameOverrides - Per-frame offset/scale overrides
  * @param chromaKeyColor - Chroma key color type (unused here; chroma key is applied before slicing)
  * @param paddingFour - Optional four-edge padding
+ * @param cellInsetRatio - Per-cell safety inset (0–0.2) cropped inward from each cell edge
+ *   before extraction, so residual boundary seams/divider lines are excluded. Default 0.
  * @returns Promise resolving to an array of base64 encoded frame images
  */
 export const sliceSpriteSheet = async (
@@ -37,7 +39,8 @@ export const sliceSpriteSheet = async (
   threshold: number = 230,
   frameOverrides?: FrameOverride[],
   _chromaKeyColor: ChromaKeyColorType = 'green',
-  paddingFour?: PaddingFour
+  paddingFour?: PaddingFour,
+  cellInsetRatio: number = 0
 ): Promise<string[]> => {
   const left = paddingFour?.left ?? paddingX;
   const right = paddingFour?.right ?? paddingX;
@@ -110,7 +113,11 @@ export const sliceSpriteSheet = async (
             const frameIndex = r * cols + c;
             const override = frameOverrides?.[frameIndex];
 
-            const scale = Math.max(0.25, Math.min(1, override?.scale ?? 1));
+            // Per-cell safety inset zooms the crop slightly inward so any boundary
+            // seam/divider line is dropped; combined with the user's scale override.
+            const insetFactor = 1 - 2 * Math.max(0, Math.min(0.2, cellInsetRatio));
+            const userScale = Math.max(0.25, Math.min(1, override?.scale ?? 1));
+            const scale = userScale * insetFactor;
             const cropW = cellWidth * scale;
             const cropH = cellHeight * scale;
             const offX = override?.offsetX ?? 0;

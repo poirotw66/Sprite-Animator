@@ -29,6 +29,14 @@ export const DEFAULT_SLICE_SETTINGS = {
   shiftY: 0,
 };
 
+/**
+ * Per-cell safety inset (fraction of each side) applied when slicing LINE sticker
+ * sheets. Crops slightly inward so any residual cell-boundary seam / divider line
+ * the model drew is excluded from the frame. Subjects occupy ~70–85% of the cell
+ * with internal padding, so a small inset is lossless for the artwork.
+ */
+export const LINE_STICKER_CELL_INSET_RATIO = 0.03;
+
 export const SUPPORTED_MODELS = [
   'gemini-2.5-flash-image',
   'gemini-3-pro-image-preview',

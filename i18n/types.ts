@@ -321,6 +321,7 @@ export interface Translations {
   lineStickerPromptVersionHint: string;
   lineStickerPromptVersionV1: string;
   lineStickerPromptVersionV2: string;
+  lineStickerPromptVersionV3: string;
   lineStickerActionDedupeStrengthLabel: string;
   lineStickerActionDedupeStrengthHint: string;
   lineStickerActionDedupeConservative: string;

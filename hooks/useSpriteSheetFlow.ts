@@ -39,6 +39,8 @@ export interface UseSpriteSheetFlowOptions {
   slicePipelineRevision?: string | number;
   /** When true, auto-run slice optimization when a new source image is set (before chroma/slice). */
   autoOptimizeSlice?: boolean;
+  /** Per-cell safety inset (fraction per side) cropped inward when slicing. Default 0. */
+  cellInsetRatio?: number;
 }
 
 export interface UseSpriteSheetFlowResult {
@@ -94,6 +96,7 @@ export function useSpriteSheetFlow(
     mapFramesAfterSlice,
     slicePipelineRevision,
     autoOptimizeSlice = false,
+    cellInsetRatio = 0,
   } = options;
 
   const [image, setImage] = useState<string | null>(null);
@@ -255,7 +258,8 @@ export function useSpriteSheetFlow(
             BACKGROUND_REMOVAL_THRESHOLD,
             frameOverrides,
             chromaKeyColor,
-            padding
+            padding,
+            cellInsetRatio
           );
           if (!cancelled && mapFramesAfterSlice) {
             result = await mapFramesAfterSlice(result);
@@ -293,6 +297,7 @@ export function useSpriteSheetFlow(
     mapFramesAfterSlice,
     sliceSettings,
     slicePipelineRevision,
+    cellInsetRatio,
   ]);
 
   // Sync frameIncluded length when frames change (keep selection where possible)
@@ -385,7 +390,8 @@ export function useSpriteSheetFlow(
           BACKGROUND_REMOVAL_THRESHOLD,
           frameOverrides,
           chromaKeyColor,
-          padding
+          padding,
+          cellInsetRatio
         );
       }
       if (mapFramesAfterSlice) {
@@ -393,7 +399,7 @@ export function useSpriteSheetFlow(
       }
       return raw;
     },
-    [sliceSettings, frameOverrides, chromaKeyColor, mapFramesAfterSlice]
+    [sliceSettings, frameOverrides, chromaKeyColor, mapFramesAfterSlice, cellInsetRatio]
   );
 
   const optimizeSlice = useCallback(async () => {

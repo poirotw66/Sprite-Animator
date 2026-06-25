@@ -491,8 +491,9 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                 }
                 className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
               >
-                <option value="v1">{t.lineStickerPromptVersionV1}</option>
+                <option value="v3">{t.lineStickerPromptVersionV3}</option>
                 <option value="v2">{t.lineStickerPromptVersionV2}</option>
+                <option value="v1">{t.lineStickerPromptVersionV1}</option>
               </select>
             </div>
             <div>

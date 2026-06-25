@@ -9,6 +9,7 @@ import {
 } from '../utils/imageUtils';
 import type { ChromaKeyColorType } from '../types';
 import { logger } from '../utils/logger';
+import { LINE_STICKER_CELL_INSET_RATIO } from '../utils/constants';
 import {
   createLineStickerSetSliceSettings,
   sliceLineStickerSheetFrames,
@@ -116,7 +117,8 @@ export function useLineStickerSlicing({
         230,
         overrides,
         chromaKeyColor,
-        pad
+        pad,
+        LINE_STICKER_CELL_INSET_RATIO
       );
       const sheetIdx = targetSheetIndex;
       const phraseSlice = stickerSetMode
@@ -158,7 +160,8 @@ export function useLineStickerSlicing({
           230,
           frameOverrides,
           chromaKeyColor,
-          pad
+          pad,
+          LINE_STICKER_CELL_INSET_RATIO
         );
         const phraseSlice = stickerSetMode
           ? sliceLineStickerSheetFrames(setPhrasesList, currentSheetIndex)
@@ -216,7 +219,8 @@ export function useLineStickerSlicing({
           230,
           overrides,
           chromaKeyColor,
-          pad
+          pad,
+          LINE_STICKER_CELL_INSET_RATIO
         );
         const phraseSlice = sliceLineStickerSheetFrames(setPhrasesList, currentSheetIndex);
         const frames = await passThroughOrCaptureRaw(raw, phraseSlice, currentSheetIndex);

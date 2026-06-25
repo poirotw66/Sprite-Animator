@@ -18,7 +18,7 @@ export interface PromptSlots {
     text: TextSlot;
 }
 
-export type LineStickerPromptVersion = 'v1' | 'v2';
+export type LineStickerPromptVersion = 'v1' | 'v2' | 'v3';
 
 /** How sticker phrase text appears: drawn by the image model, or composited in the browser after slicing. */
 export type LineStickerTextRendering = 'model' | 'programmatic';
@@ -253,7 +253,7 @@ export function buildLineStickerPrompt(
     bgColor: 'magenta' | 'green',
     includeText: boolean = true,
     actionDescs?: string[],
-    promptVersion: LineStickerPromptVersion = 'v2',
+    promptVersion: LineStickerPromptVersion = 'v3',
     /** When true with includeText false: add composition-only instructions for browser-side caption overlay. */
     reserveForProgrammaticOverlay = false
 ): string {
@@ -264,7 +264,8 @@ export function buildLineStickerPrompt(
     const cellHeightPct = Math.round(100 / rows);
     const bgHex = bgColor === 'magenta' ? '#FF00FF' : '#00FF00';
 
-    if (promptVersion === 'v2') {
+    if (promptVersion === 'v2' || promptVersion === 'v3') {
+        const hardenedLayout = promptVersion === 'v3';
         const phrasesForFrames = expandThemePhrasesForFrames(
             slots.theme,
             totalFrames,
@@ -312,16 +313,28 @@ ${buildProgrammaticOverlayCompositionBullets(bgHex)}
 `
                 : '';
 
-        return `🎨 LINE Sticker Sprite Sheet (Nano Banana Optimized, ${promptVersion.toUpperCase()})
-
-[1. Global Layout — CRITICAL]
+        const globalLayoutBlock = hardenedLayout
+            ? `[1. Global Layout — CRITICAL]
+- Square image (1:1), high resolution
+- ${cols}×${rows} sprite sheet (${totalFrames} stickers) on a perfectly even grid; each cell exactly ${cellWidthPct}% of width × ${cellHeightPct}% of height
+- Image edges = grid edges. No outer margin or padding on any side.
+- NO VISIBLE DIVIDERS (ABSOLUTE, NON-NEGOTIABLE): do NOT draw grid lines, frame lines, borders, boxes, separators, cell outlines, or white/colored strips anywhere between or around cells. The grid is LOGICAL ONLY (used to split the image later).
+- Where two cells meet, the background MUST be ONE continuous flat color with ZERO visible seam, line, or gap. Cell boundaries must be completely invisible.
+- The white sticker outline goes ONLY around each character silhouette — NEVER along cell edges or image edges.
+- Each sticker sits well inside its own cell with an even internal margin; no sticker touches or crosses a cell boundary.
+- The image MUST be perfectly splittable into ${totalFrames} equal rectangles.`
+            : `[1. Global Layout — CRITICAL]
 - Square image (1:1), high resolution
 - ${cols}×${rows} sprite sheet (${totalFrames} stickers), evenly aligned
 - Each cell contains one independent sticker
 - No visible grid lines, borders, seams, or divider lines
 - Continuous background with no breaks
 - Must be cleanly splittable into ${totalFrames} equal parts
-- Keep each sticker inside its own area with comfortable spacing
+- Keep each sticker inside its own area with comfortable spacing`;
+
+        return `🎨 LINE Sticker Sprite Sheet (Nano Banana Optimized, ${promptVersion.toUpperCase()})
+
+${globalLayoutBlock}
 
 [2. Style / Art Consistency — CRITICAL]
 - Use ONLY the uploaded reference image as source of character design and visual style
@@ -358,9 +371,9 @@ ${textRules}
 [7. Final Output]
 - One single square image
 - ${cols}×${rows} layout (${totalFrames} stickers)
-- No visible grid lines
-- Continuous ${bgHex} background
-- Cleanly splittable`;
+- No visible grid lines${hardenedLayout ? ', borders, seams, or divider lines of any color — cell boundaries fully invisible' : ''}
+- Continuous ${bgHex} background${hardenedLayout ? ' that bleeds uniformly across every cell boundary' : ''}
+- Cleanly splittable into ${totalFrames} equal rectangles`;
     }
 
     // 1. Global Layout (basePrompt)
