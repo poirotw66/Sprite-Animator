@@ -1,0 +1,15 @@
+# Normalize all text files to LF in the repository and working tree.
+# Prevents CRLF/LF churn in WSL/Windows mixed environments.
+* text=auto eol=lf
+
+# Explicitly mark binary assets so git never tries to normalize them.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary

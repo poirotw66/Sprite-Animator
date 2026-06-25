@@ -27,3 +27,6 @@ dist-ssr
 .md/
 test/
 .worktrees/
+
+# Windows mark-of-the-web NTFS metadata (leaks into WSL)
+*:Zone.Identifier
