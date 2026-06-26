@@ -1,0 +1,15 @@
+{
+  "referenceImage": "example/chae.jpg",
+  "characterDescription": "",
+  "style": "matchUploaded",
+  "theme": "daily",
+  "customPhrases": [],
+  "language": "zh-TW",
+  "chromaKeyColor": "green",
+  "includeText": true,
+  "scope": "set",
+  "cols": 4,
+  "rows": 6,
+  "model": "gemini-3.1-flash-image-preview",
+  "resolution": "1K"
+}

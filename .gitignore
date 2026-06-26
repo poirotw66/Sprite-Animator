@@ -30,3 +30,10 @@ test/
 
 # Windows mark-of-the-web NTFS metadata (leaks into WSL)
 *:Zone.Identifier
+
+# Generated LINE sticker output (line-sticker-maker skill)
+line-stickers-out/
+
+# Local secrets & machine-local config (never commit)
+.env
+.claude/settings.local.json
