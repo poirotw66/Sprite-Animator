@@ -138,27 +138,4 @@ export async function normalizeBackgroundColor(
   });
 }
 
-/**
- * Returns the closest supported Gemini aspect ratio for a cols×rows grid.
- */
-export function getBestAspectRatio(cols: number, rows: number): string {
-  const targetRatio = cols / rows;
-
-  const supported = [
-    { str: '1:1', val: 1.0 },
-    { str: '3:4', val: 0.75 },
-    { str: '4:3', val: 1.333 },
-    { str: '9:16', val: 0.5625 },
-    { str: '16:9', val: 1.778 },
-    { str: '1:4', val: 0.25 },
-    { str: '4:1', val: 4.0 },
-    { str: '1:8', val: 0.125 },
-    { str: '8:1', val: 8.0 },
-  ];
-
-  return supported.reduce((prev, curr) =>
-    Math.abs(curr.val - targetRatio) < Math.abs(prev.val - targetRatio)
-      ? curr
-      : prev
-  ).str;
-}
+export { getBestAspectRatio } from '../../utils/lineStickerSheetAspect';

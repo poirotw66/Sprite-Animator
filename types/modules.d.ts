@@ -15,16 +15,20 @@ declare module 'upng-js' {
     data: Uint8Array;
   }
 
-  export function encode(
-    imgs: ArrayBuffer[],
-    w: number,
-    h: number,
-    cnum: number,
-    dels?: number[]
-  ): ArrayBuffer;
+  interface UpngJs {
+    encode(
+      imgs: ArrayBuffer[],
+      w: number,
+      h: number,
+      cnum: number,
+      dels?: number[]
+    ): ArrayBuffer;
+    decode(buffer: ArrayBuffer): APNGImage;
+    toRGBA8(img: APNGImage): ArrayBuffer[];
+  }
 
-  export function decode(buffer: ArrayBuffer): APNGImage;
-  export function toRGBA8(img: APNGImage): ArrayBuffer[];
+  const UPNG: UpngJs;
+  export default UPNG;
 }
 
 declare module 'gifenc' {
