@@ -11,6 +11,8 @@ import { getBestAspectRatio, getLineStickerSpriteSheetAspectRatio, normalizeBack
 import {
   isLineStickerPrompt,
   isStylePreviewPrompt,
+  buildGridLayoutAnchorBlock,
+  buildGridLayoutReminderBlock,
   buildLineStickerPromptSuffix,
   buildAnimationSpriteSheetPrompt,
 } from './spriteSheetPrompts';
@@ -66,7 +68,9 @@ export async function generateSpriteSheet(
   const fullPrompt = stylePreview
     ? prompt
     : isLineStickerPrompt(prompt)
-      ? buildLineStickerPromptSuffix(prompt, promptOpts)
+      ? buildGridLayoutAnchorBlock(cols, rows) +
+        buildLineStickerPromptSuffix(prompt, promptOpts) +
+        buildGridLayoutReminderBlock(cols, rows)
       : buildAnimationSpriteSheetPrompt(prompt, promptOpts);
 
   if (stylePreview) {

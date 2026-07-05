@@ -73,5 +73,26 @@ describe('computeOptimizedSliceFromMargins', () => {
       { conservative: true }
     );
     expect(result.paddingLeft).toBeLessThan(30);
+    expect(result.paddingLeft).toBe(result.paddingRight);
+    expect(result.paddingTop).toBe(result.paddingBottom);
+  });
+
+  it('skips padding when outer margins are asymmetric', () => {
+    const result = computeOptimizedSliceFromMargins(
+      1024,
+      1024,
+      4,
+      5,
+      { left: 37, right: 16, top: 18, bottom: 14 },
+      { conservative: true }
+    );
+    expect(result).toEqual({
+      paddingLeft: 0,
+      paddingRight: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
+      shiftX: 0,
+      shiftY: 0,
+    });
   });
 });

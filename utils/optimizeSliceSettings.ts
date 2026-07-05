@@ -151,11 +151,31 @@ export function computeOptimizedSliceFromMargins(
   const paddingBottom = trimRight(margins.bottom, paddingCapY, safetyY);
 
   if (conservative) {
+    const asymX = Math.abs(margins.left - margins.right);
+    const asymY = Math.abs(margins.top - margins.bottom);
+    const asymThresholdX = cellWidth * 0.08;
+    const asymThresholdY = cellHeight * 0.08;
+
+    // Uneven outer margins usually mean stickers fill the canvas edge-to-edge;
+    // trimming one side shifts the grid and clips characters.
+    if (asymX > asymThresholdX || asymY > asymThresholdY) {
+      return {
+        paddingLeft: 0,
+        paddingRight: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+        shiftX: 0,
+        shiftY: 0,
+      };
+    }
+
+    const symmetricPadX = Math.min(paddingLeft, paddingRight);
+    const symmetricPadY = Math.min(paddingTop, paddingBottom);
     return {
-      paddingLeft,
-      paddingRight,
-      paddingTop,
-      paddingBottom,
+      paddingLeft: symmetricPadX,
+      paddingRight: symmetricPadX,
+      paddingTop: symmetricPadY,
+      paddingBottom: symmetricPadY,
       shiftX: 0,
       shiftY: 0,
     };

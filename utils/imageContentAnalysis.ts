@@ -17,6 +17,8 @@ const MAX_DELTA_PER_FRAME = 10;
  */
 export const isSliceBackgroundPixel = (r: number, g: number, b: number, a: number): boolean => {
   if (a <= 20) return true;
+  // Letterboxing / padding the model sometimes leaves as near-black on square canvases.
+  if (r < 28 && g < 28 && b < 28) return true;
   const isPureMagenta = r > 240 && g < 30 && b > 240 && Math.abs(r - b) < 20;
   const isPureGreen = g > 240 && r < 30 && b < 30;
   const isStandardGreen = g > 150 && g < 200 && r < 30 && b < 100 && (g - r) > 120 && (g - b) > 50;

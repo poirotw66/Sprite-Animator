@@ -20,6 +20,77 @@ export function isLineStickerPrompt(prompt: string): boolean {
 }
 
 /**
+ * High-priority grid anchor placed at the START (and optionally END) of the full prompt.
+ * Models often drift to square grids (e.g. 5×5 instead of 4×5) when cell content dominates
+ * the prompt — this block must appear before per-cell instructions.
+ */
+export function buildGridLayoutAnchorBlock(cols: number, rows: number): string {
+  const totalFrames = cols * rows;
+  const cellWidthPct = (100 / cols).toFixed(1);
+  const cellHeightPct = (100 / rows).toFixed(1);
+  const wrongLayouts = [
+    `${cols + 1}×${rows}`,
+    `${cols}×${rows + 1}`,
+    `${cols + 1}×${rows + 1}`,
+    `${cols + 1}×${cols + 1}`,
+    `${rows}×${cols}`,
+  ]
+    .filter((layout) => {
+      const [c, r] = layout.split('×').map(Number);
+      return c * r !== totalFrames;
+    })
+    .filter((layout, i, arr) => arr.indexOf(layout) === i)
+    .slice(0, 6);
+
+  const rowTemplate = Array.from({ length: rows }, (_, r) => {
+    const start = r * cols + 1;
+    const end = start + cols - 1;
+    return `Row ${r + 1}: cells ${start}–${end} (${cols} stickers across — NOT ${cols + 1})`;
+  }).join('\n');
+
+  const wrongList =
+    wrongLayouts.length > 0
+      ? wrongLayouts.map((l) => `• ${l}`).join('\n')
+      : '• any layout other than the specified column × row count';
+
+  return `### [0. GRID LAYOUT — READ FIRST, HIGHEST PRIORITY]
+
+**OUTPUT GEOMETRY (non-negotiable):**
+- Canvas = **${cols} columns × ${rows} rows** = **${totalFrames} cells** total.
+- Each column = **${cellWidthPct}%** of image width. Each row = **${cellHeightPct}%** of image height.
+- Image edges are the outer grid boundary. **No letterboxing, no outer margin, no extra blank strip.**
+- Reading order: left→right, top→bottom (row 1 all ${cols} cells, then row 2, …).
+
+**ROW TEMPLATE (count stickers per row before finishing):**
+${rowTemplate}
+
+**FORBIDDEN WRONG LAYOUTS — output is INVALID if you use any of these:**
+${wrongList}
+- A square ${cols + 1}×${cols + 1} grid (${(cols + 1) * (cols + 1)} cells) — **NEVER**.
+- ${cols + 1} columns or ${rows + 1} rows anywhere on the canvas.
+
+**SELF-CHECK before output:** I drew exactly **${cols}** stickers on each of **${rows}** rows = **${totalFrames}** total. Not ${totalFrames + 1}, not ${totalFrames - 1}, not ${(cols + 1) * (cols + 1)}.
+
+---
+`;
+}
+
+/**
+ * Short closing reminder — repeat grid geometry after long per-cell lists.
+ */
+export function buildGridLayoutReminderBlock(cols: number, rows: number): string {
+  const totalFrames = cols * rows;
+  return `
+
+---
+
+### [FINAL GRID REMINDER — verify before output]
+- Exactly **${cols} columns × ${rows} rows** = **${totalFrames} cells**. NOT ${cols + 1}×${rows}, NOT ${cols + 1}×${cols + 1}.
+- ${cols} equal columns edge-to-edge; ${rows} equal rows edge-to-edge; full canvas filled.
+- Each row has **${cols}** stickers only. Count them.`;
+}
+
+/**
  * Builds background color + layout suffix for LINE sticker mode.
  * When includeText is false, layout wording avoids "text" and a strict no-text block is appended.
  */
@@ -78,9 +149,9 @@ Every background pixel MUST be EXACTLY ${bgColorHex}.
 
 ### [Output Format — MUST FOLLOW]
 
-1. **Grid**: The image must be exactly divisible into **${cols} columns × ${rows} rows**, **${totalFrames} cells** total. Left to right, top to bottom; equal size per cell. No outer margins. Obey [1. Global Layout] — NO VISIBLE DIVIDERS (no lines of any kind between cells; one continuous background only).
+1. **Grid (re-confirm [0. GRID LAYOUT])**: Exactly **${cols} columns × ${rows} rows** = **${totalFrames} cells**. NOT ${cols + 1} columns. NOT ${rows + 1} rows. NOT a ${cols + 1}×${cols + 1} square. Left→right, top→bottom; equal cell size; no outer margins. NO VISIBLE DIVIDERS (logical grid only; one continuous background).
 ${fillBullet}
-3. **Consistency**: All cells must have the same size and alignment so the image can be split into ${cols}×${rows} independent stickers at fixed ratios.
+3. **Consistency**: All ${totalFrames} cells same size so the image splits into ${cols}×${rows} independent stickers at ${Math.round(100 / cols)}%×${Math.round(100 / rows)}% each.
 `;
 
   const noTextBlock =

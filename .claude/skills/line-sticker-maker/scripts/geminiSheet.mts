@@ -9,7 +9,11 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
-import { buildLineStickerPromptSuffix } from '../../../../services/gemini/spriteSheetPrompts.ts';
+import {
+  buildGridLayoutAnchorBlock,
+  buildGridLayoutReminderBlock,
+  buildLineStickerPromptSuffix,
+} from '../../../../services/gemini/spriteSheetPrompts.ts';
 import { getLineStickerSpriteSheetAspectRatio } from '../../../../utils/lineStickerSheetAspect.ts';
 import { CHROMA_KEY_COLORS } from '../../../../utils/constants.ts';
 import type { ChromaKeyColorType } from '../../../../types.ts';
@@ -34,17 +38,21 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * never clips hair / raised hands / body. Kept here (not in the shared prompt
  * builder) so the web app's framing is unchanged.
  */
-const SAFE_FRAMING_INSTRUCTION = `
+function buildSafeFramingInstruction(cols: number, rows: number): string {
+  const cellWidthPct = (100 / cols).toFixed(1);
+  const cellHeightPct = (100 / rows).toFixed(1);
+  return `
 
 ---
 
-### [Edge Safety — CRITICAL, overrides any earlier size guidance]
+### [Edge Safety — CRITICAL]
 
-* Every subject (including hair, raised arms, hands, and props) MUST sit COMPLETELY INSIDE its own cell.
-* Leave a clear empty background margin of at least **15% of the cell on ALL four sides**. Nothing may touch or cross a cell boundary.
-* Make each subject **smaller** if needed so the whole silhouette fits with that margin. The subject should occupy roughly the central **60–70%** of the cell, not fill it edge-to-edge.
-* Prefer a head-to-chest **bust** that ends ABOVE the bottom cell edge — do NOT let the body fill down to the bottom border.
-* Center each subject with even breathing room; no part may bleed into a neighbouring cell.`;
+* Re-confirm [0. GRID LAYOUT]: **${cols}×${rows}** only — never drift to ${cols + 1} columns or a ${cols + 1}×${cols + 1} square.
+* Each cell = **${cellWidthPct}%** width × **${cellHeightPct}%** height; image edges = grid edges.
+* Every subject (hair, arms, hands, props) stays COMPLETELY inside its own cell — never crosses a boundary.
+* Keep ~**10–15%** chroma margin on all four sides inside each cell. Subject occupies central **~65–75%** of the cell.
+* Prefer head-to-chest **bust**; shrink the subject rather than letting it bleed into neighbours.`;
+}
 
 export interface GenerateSheetParams {
   /** Base64 of the reference character image (no data: prefix). */
@@ -60,6 +68,8 @@ export interface GenerateSheetParams {
   includeText: boolean;
   /** Output resolution (e.g. '1K'); dropped automatically if the model rejects it. */
   outputResolution?: string;
+  /** Appended when a prior attempt failed grid validation (auto-retry). */
+  gridRetrySuffix?: string;
   onStatus?: (msg: string) => void;
 }
 
@@ -78,6 +88,7 @@ export async function generateSheetImage(
     chromaKeyColor,
     includeText,
     outputResolution,
+    gridRetrySuffix = '',
     onStatus,
   } = params;
 
@@ -88,7 +99,10 @@ export async function generateSheetImage(
   const totalFrames = cols * rows;
   const aspectRatio = getLineStickerSpriteSheetAspectRatio();
 
+  const gridAnchor = buildGridLayoutAnchorBlock(cols, rows);
+  const gridReminder = buildGridLayoutReminderBlock(cols, rows);
   const fullPrompt =
+    gridAnchor +
     buildLineStickerPromptSuffix(prompt, {
       cols,
       rows,
@@ -97,7 +111,10 @@ export async function generateSheetImage(
       bgColorRGB: `RGB(${bg.r}, ${bg.g}, ${bg.b})`,
       chromaKeyColor,
       includeText,
-    }) + SAFE_FRAMING_INSTRUCTION;
+    }) +
+    buildSafeFramingInstruction(cols, rows) +
+    gridReminder +
+    gridRetrySuffix;
 
   const request = (includeImageSize: boolean) =>
     ai.models.generateContent({

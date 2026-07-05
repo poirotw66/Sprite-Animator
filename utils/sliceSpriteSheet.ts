@@ -167,7 +167,7 @@ export const sliceSpriteSheet = async (
             // cell-boundary line fragments still touching the frame edge.
             if (cellInsetRatio > 0) {
               const edgeData = ctx.getImageData(0, 0, frameWidth, frameHeight);
-              const maxDepthPx = Math.max(2, Math.round(Math.min(frameWidth, frameHeight) * 0.02));
+              const maxDepthPx = Math.max(1, Math.round(Math.min(frameWidth, frameHeight) * 0.01));
               clearEdgeConnectedResidue(edgeData.data, frameWidth, frameHeight, { maxDepthPx });
               ctx.putImageData(edgeData, 0, 0);
             }

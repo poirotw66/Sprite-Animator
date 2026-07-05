@@ -314,12 +314,13 @@ ${buildProgrammaticOverlayCompositionBullets(bgHex)}
         const globalLayoutBlock = hardenedLayout
             ? `[1. Global Layout — CRITICAL]
 - ${canvasAspect}, high resolution
-- ${cols}×${rows} sprite sheet (${totalFrames} stickers) on a perfectly even grid; each cell exactly ${cellWidthPct}% of width × ${cellHeightPct}% of height
+- EXACTLY ${cols}×${rows} sprite sheet (${totalFrames} stickers) — NOT ${cols + 1}×${rows}, NOT ${cols + 1}×${cols + 1}; each cell ${cellWidthPct}% of width × ${cellHeightPct}% of height
+- Each horizontal row contains exactly ${cols} stickers (never ${cols + 1})
 - Image edges = grid edges. No outer margin or padding on any side.
 - NO VISIBLE DIVIDERS (ABSOLUTE, NON-NEGOTIABLE): do NOT draw grid lines, frame lines, borders, boxes, separators, cell outlines, or white/colored strips anywhere between or around cells. The grid is LOGICAL ONLY (used to split the image later).
 - Where two cells meet, the background MUST be ONE continuous flat color with ZERO visible seam, line, or gap. Cell boundaries must be completely invisible.
 - The white sticker outline goes ONLY around each character silhouette — NEVER along cell edges or image edges.
-- Each sticker sits well inside its own cell with an even internal margin; no sticker touches or crosses a cell boundary.
+- Each sticker sits inside its own cell with ~10–15% internal chroma margin; no sticker touches or crosses a cell boundary.
 - The image MUST be perfectly splittable into ${totalFrames} equal rectangles.`
             : `[1. Global Layout — CRITICAL]
 - ${canvasAspect}, high resolution

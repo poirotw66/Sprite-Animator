@@ -1,7 +1,7 @@
 /**
  * LINE sticker generator — headless entry point for the skill.
  *
- *   npx tsx generate.mts --config <config.json> --out <dir> [--dry-run]
+ *   npx tsx generate.mts --config <config.json> --out <dir> [--sheet sheet-1] [--sheet-dir sheet-1-flash] [--model gemini-3.1-flash-image] [--dry-run]
  *
  * Pipeline per sheet:
  *   config -> buildLineStickerPrompt (reused) -> Gemini sheet image
@@ -30,8 +30,13 @@ import {
 import type { ChromaKeyColorType } from '../../../../types.ts';
 
 import { generateSheetImage } from './geminiSheet.mts';
-import { decodeImage, encodePng, extForBytes, removeChromaKey, sliceSheet, type RgbaImage } from './nodeImage.mts';
+import { decodeImage, decodePng, encodePng, extForBytes, removeChromaKey, sliceSheet, type RgbaImage } from './nodeImage.mts';
 import { writeLineUploadPack } from './lineUploadPack.mts';
+import {
+  buildGridCandidates,
+  buildGridRetryPromptSuffix,
+  validateSheetGrid,
+} from '../../../../utils/sheetGridValidation.ts';
 import {
   DEFAULT_LINE_STICKER_SET_COUNT,
   resolveSetLayout,
@@ -47,6 +52,9 @@ interface StickerConfig {
   style?: string; // STYLE_PRESETS key (default: matchUploaded)
   theme?: string; // THEME_PRESETS key (default: daily)
   customPhrases?: string[]; // overrides theme phrases when non-empty
+  customActionDescs?: string[];
+  /** Load phrases/actionDescs from a line-sticker-phrase-set JSON export. */
+  phraseSetFile?: string;
   language?: string; // TEXT_PRESETS key (default: zh-TW)
   chromaKeyColor?: ChromaKeyColorType; // default: green
   includeText?: boolean; // default: true (model draws text)
@@ -64,6 +72,10 @@ interface StickerConfig {
   tabStickerIndex?: number;
   /** LINE upload sticker count override (8/16/24/32/40). Default: produced count or 40. */
   lineUploadStickerCount?: number;
+  /** Max Gemini retries when grid validation fails (default 3). */
+  maxSheetRetries?: number;
+  /** Minimum grid alignment score 0–1 to accept a sheet (default 0.72). */
+  minGridAlignmentScore?: number;
 }
 
 function parseArgs(argv: string[]) {
@@ -151,6 +163,14 @@ function buildSlots(config: StickerConfig, phrases: string[]): PromptSlots {
 
 /** Build the full phrase list for the whole job (cycled / clamped per language). */
 function buildPhraseList(config: StickerConfig, count: number): string[] {
+  if (config.customPhrases && config.customPhrases.length > 0) {
+    const list = config.customPhrases.slice(0, count);
+    while (list.length < count) {
+      list.push('');
+    }
+    return list.slice(0, count);
+  }
+
   const themeKey = config.theme ?? 'daily';
   const themePreset = THEME_PRESETS[themeKey] ?? THEME_PRESETS.daily;
   const langKey = config.language ?? 'zh-TW';
@@ -162,20 +182,80 @@ function buildPhraseList(config: StickerConfig, count: number): string[] {
   return expandThemePhrasesForFrames(source, count, language);
 }
 
+function buildActionDescList(config: StickerConfig, count: number): string[] | undefined {
+  if (!config.customActionDescs || config.customActionDescs.length === 0) {
+    return undefined;
+  }
+  const list = config.customActionDescs.slice(0, count);
+  while (list.length < count) {
+    list.push('');
+  }
+  return list.slice(0, count);
+}
+
+interface PhraseSetFile {
+  format?: string;
+  mode?: string;
+  gridCols?: number;
+  gridRows?: number;
+  phrases?: string[];
+  actionDescs?: string[];
+}
+
+async function applyPhraseSetFile(config: StickerConfig, configDir: string): Promise<void> {
+  if (!config.phraseSetFile) {
+    return;
+  }
+  const phraseSetPath = resolve(configDir, config.phraseSetFile);
+  const raw = JSON.parse(await readFile(phraseSetPath, 'utf8')) as PhraseSetFile;
+  if (!Array.isArray(raw.phrases) || raw.phrases.length === 0) {
+    throw new Error(`phraseSetFile has no phrases: ${config.phraseSetFile}`);
+  }
+  config.customPhrases = raw.phrases;
+  if (Array.isArray(raw.actionDescs) && raw.actionDescs.length > 0) {
+    config.customActionDescs = raw.actionDescs;
+  }
+}
+
 interface SheetPlan {
   label: string;
   cols: number;
   rows: number;
   phrases: string[];
+  actionDescs?: string[];
+}
+
+function sliceActionDescsForSheet(
+  actionDescs: string[] | undefined,
+  offset: number,
+  count: number
+): string[] | undefined {
+  if (!actionDescs) {
+    return undefined;
+  }
+  return actionDescs.slice(offset, offset + count);
 }
 
 function planSheets(config: StickerConfig): SheetPlan[] {
   const scope = config.scope ?? 'set';
+  const allActionDescs = buildActionDescList(
+    config,
+    scope === 'single'
+      ? (config.cols ?? 4) * (config.rows ?? 6)
+      : (config.stickerCount ?? DEFAULT_LINE_STICKER_SET_COUNT)
+  );
+
   if (scope === 'single') {
     const cols = config.cols ?? 4;
     const rows = config.rows ?? 6;
     const phrases = buildPhraseList(config, cols * rows);
-    return [{ label: 'sheet-1', cols, rows, phrases }];
+    return [{
+      label: 'sheet-1',
+      cols,
+      rows,
+      phrases,
+      actionDescs: sliceActionDescsForSheet(allActionDescs, 0, cols * rows),
+    }];
   }
 
   const stickerCount = config.stickerCount ?? DEFAULT_LINE_STICKER_SET_COUNT;
@@ -183,12 +263,19 @@ function planSheets(config: StickerConfig): SheetPlan[] {
   const all = buildPhraseList(config, stickerCount);
   const phraseSlices = splitPhrasesAcrossSheets(all, layouts);
 
-  return layouts.map((layout, sheetIndex) => ({
-    label: `sheet-${sheetIndex + 1}`,
-    cols: layout.cols,
-    rows: layout.rows,
-    phrases: phraseSlices[sheetIndex] ?? [],
-  }));
+  let actionOffset = 0;
+  return layouts.map((layout, sheetIndex) => {
+    const frameCount = layout.cols * layout.rows;
+    const plan: SheetPlan = {
+      label: `sheet-${sheetIndex + 1}`,
+      cols: layout.cols,
+      rows: layout.rows,
+      phrases: phraseSlices[sheetIndex] ?? [],
+      actionDescs: sliceActionDescsForSheet(allActionDescs, actionOffset, frameCount),
+    };
+    actionOffset += frameCount;
+    return plan;
+  });
 }
 
 function pad(n: number): string {
@@ -206,26 +293,50 @@ async function main() {
   const configPath = resolve(process.cwd(), configArg);
   const configDir = dirname(configPath);
   const config: StickerConfig = JSON.parse(await readFile(configPath, 'utf8'));
+  await applyPhraseSetFile(config, configDir);
 
   const outDir = resolve(process.cwd(), (args.out as string) ?? 'line-stickers-out');
+  const sheetDirOverride = typeof args['sheet-dir'] === 'string' ? args['sheet-dir'] : undefined;
   const includeText = config.includeText ?? true;
   const chromaKeyColor: ChromaKeyColorType = config.chromaKeyColor ?? 'green';
-  const model = config.model ?? 'gemini-3.1-flash-lite-image';
+  const model =
+    (typeof args.model === 'string' ? args.model : undefined) ??
+    config.model ??
+    'gemini-3.1-flash-lite-image';
   const resolution = config.resolution ?? '1K';
+  const maxSheetRetries = Math.max(1, config.maxSheetRetries ?? 3);
+  const minGridAlignmentScore = config.minGridAlignmentScore ?? 0.72;
 
   const sheets = planSheets(config);
+  const sheetFilter = typeof args.sheet === 'string' ? args.sheet : undefined;
+  const sheetsToGenerate = sheetFilter
+    ? sheets.filter((sheet) => sheet.label === sheetFilter)
+    : sheets;
+  if (sheetFilter && sheetsToGenerate.length === 0) {
+    throw new Error(
+      `Unknown --sheet "${sheetFilter}". Expected one of: ${sheets.map((sheet) => sheet.label).join(', ')}`
+    );
+  }
+  const isolatedSheetRun = Boolean(sheetFilter && sheetDirOverride);
+  if (sheetDirOverride && !sheetFilter) {
+    throw new Error('--sheet-dir requires --sheet (e.g. --sheet sheet-1 --sheet-dir sheet-1-flash)');
+  }
+  const iterationSheets = isolatedSheetRun ? sheetsToGenerate : sheets;
   const stickerTotal = sheets.reduce((sum, sheet) => sum + sheet.cols * sheet.rows, 0);
 
   console.log(
-    `▶ LINE sticker job: scope=${config.scope ?? 'set'}, stickers=${stickerTotal}, sheets=${sheets.length}, ` +
-      `chroma=${chromaKeyColor}, text=${includeText ? 'model-drawn' : 'none'}, model=${model}, resolution=${resolution}`
+    `▶ LINE sticker job: scope=${config.scope ?? 'set'}, stickers=${stickerTotal}, sheets=${sheets.length}` +
+      (sheetFilter ? `, regenerating=${sheetFilter}` : '') +
+      (sheetDirOverride ? `, outputDir=${sheetDirOverride}` : '') +
+      (isolatedSheetRun ? ', isolated=true' : '') +
+      `, chroma=${chromaKeyColor}, text=${includeText ? 'model-drawn' : 'none'}, model=${model}, resolution=${resolution}`
   );
 
   if (dryRun) {
     for (const sheet of sheets) {
       const slots = buildSlots(config, sheet.phrases);
       const prompt = buildLineStickerPrompt(
-        slots, sheet.cols, sheet.rows, chromaKeyColor, includeText, undefined, 'v3'
+        slots, sheet.cols, sheet.rows, chromaKeyColor, includeText, sheet.actionDescs, 'v3'
       );
       console.log(`\n===== ${sheet.label} (${sheet.cols}x${sheet.rows}) prompt preview =====`);
       console.log(prompt.slice(0, 1200) + (prompt.length > 1200 ? '\n... [truncated]' : ''));
@@ -250,37 +361,124 @@ async function main() {
   let globalIndex = 0;
   const nativeFrames: RgbaImage[] = [];
 
-  for (const sheet of sheets) {
+  for (const sheet of iterationSheets) {
+    const shouldGenerate = sheetsToGenerate.some((candidate) => candidate.label === sheet.label);
+    const sheetFolder = isolatedSheetRun ? sheetDirOverride! : sheet.label;
+    const sheetDir = resolve(outDir, sheetFolder);
+
+    if (!shouldGenerate) {
+      console.log(`\n▶ ${sheet.label}: keeping existing stickers...`);
+      const frameCount = sheet.cols * sheet.rows;
+      for (let i = 0; i < frameCount; i++) {
+        globalIndex++;
+        const name = `sticker-${pad(i + 1)}.png`;
+        const stickerPath = resolve(sheetDir, name);
+        if (!existsSync(stickerPath)) {
+          throw new Error(`Missing ${stickerPath} (required when using --sheet partial regeneration)`);
+        }
+        const frame = decodePng(new Uint8Array(await readFile(stickerPath)));
+        nativeFrames.push(frame);
+        const globalName = `sticker-${pad(globalIndex)}.png`;
+        manifest.push({
+          globalIndex,
+          sheet: sheet.label,
+          index: i + 1,
+          file: `${sheet.label}/${name}`,
+          uploadFile: `stickers/${globalName}`,
+          phrase: sheet.phrases[i] ?? '',
+          width: frame.width,
+          height: frame.height,
+        });
+      }
+      continue;
+    }
+
     const slots = buildSlots(config, sheet.phrases);
     const prompt = buildLineStickerPrompt(
-      slots, sheet.cols, sheet.rows, chromaKeyColor, includeText, undefined, 'v3'
+      slots, sheet.cols, sheet.rows, chromaKeyColor, includeText, sheet.actionDescs, 'v3'
     );
 
-    console.log(`\n▶ ${sheet.label}: generating ${sheet.cols}x${sheet.rows} sheet...`);
-    const rawPng = await generateSheetImage({
-      referenceBase64,
-      referenceMimeType,
-      prompt,
-      cols: sheet.cols,
-      rows: sheet.rows,
-      apiKey,
-      model,
-      chromaKeyColor,
-      includeText,
-      outputResolution: resolution,
-      onStatus: (m) => console.log(`   · ${m}`),
-    });
+    console.log(`\n▶ ${sheetFolder}: generating ${sheet.cols}x${sheet.rows} sheet...`);
 
-    const sheetDir = resolve(outDir, sheet.label);
+    const gridCandidates = buildGridCandidates(sheet.cols, sheet.rows);
+    let rawPng: Uint8Array | null = null;
+    let image: RgbaImage | null = null;
+    let gridValidation: ReturnType<typeof validateSheetGrid> | null = null;
+
+    for (let attempt = 1; attempt <= maxSheetRetries; attempt++) {
+      if (attempt > 1) {
+        console.log(`   · grid retry ${attempt}/${maxSheetRetries}...`);
+      }
+      const gridRetrySuffix =
+        attempt > 1 && gridValidation
+          ? buildGridRetryPromptSuffix(sheet.cols, sheet.rows, gridValidation)
+          : '';
+
+      rawPng = await generateSheetImage({
+        referenceBase64,
+        referenceMimeType,
+        prompt,
+        cols: sheet.cols,
+        rows: sheet.rows,
+        apiKey,
+        model,
+        chromaKeyColor,
+        includeText,
+        outputResolution: resolution,
+        gridRetrySuffix,
+        onStatus: (m) => console.log(`   · ${m}`),
+      });
+
+      image = decodeImage(rawPng);
+      removeChromaKey(image, chromaKeyColor);
+      gridValidation = validateSheetGrid(
+        image.data,
+        image.width,
+        image.height,
+        sheet.cols,
+        sheet.rows,
+        { minScore: minGridAlignmentScore, ...gridCandidates }
+      );
+
+      if (gridValidation.ok) {
+        if (attempt > 1) {
+          console.log(
+            `   ✓ grid aligned on attempt ${attempt} (score ${gridValidation.expected.score.toFixed(2)})`
+          );
+        }
+        break;
+      }
+
+      const detail = gridValidation.reason ?? 'grid misaligned';
+      if (attempt < maxSheetRetries) {
+        console.warn(`   ⚠ ${detail} — retrying...`);
+      } else {
+        console.warn(`   ⚠ ${detail} — using best-effort slice after ${maxSheetRetries} attempts.`);
+        if (model.includes('lite')) {
+          console.warn(
+            '   · tip: gemini-3.1-flash-image is usually more stable for 4×5 sheets than flash-lite.'
+          );
+        }
+      }
+    }
+
+    if (!rawPng || !image) {
+      throw new Error(`Failed to generate ${sheet.label}`);
+    }
+
     await mkdir(sheetDir, { recursive: true });
     await writeFile(resolve(sheetDir, `_raw-sheet.${extForBytes(rawPng)}`), rawPng);
 
-    console.log(`   · removing chroma background...`);
-    const image = decodeImage(rawPng);
-    removeChromaKey(image, chromaKeyColor);
     await writeFile(resolve(sheetDir, '_processed-sheet.png'), encodePng(image));
 
-    console.log(`   · slicing into ${sheet.cols * sheet.rows} stickers (native ${Math.floor(image.width / sheet.cols)}x${Math.floor(image.height / sheet.rows)} px)...`);
+    if (gridValidation && !gridValidation.ok) {
+      console.warn(
+        `   ⚠ Final grid: expected ${sheet.cols}×${sheet.rows} (${gridValidation.expected.score.toFixed(2)}), ` +
+          `detected ${gridValidation.detected.cols}×${gridValidation.detected.rows} (${gridValidation.detected.score.toFixed(2)})`
+      );
+    }
+
+    console.log(`   · slicing into ${sheet.cols * sheet.rows} stickers (native ${Math.round(image.width / sheet.cols)}x${Math.round(image.height / sheet.rows)} px)...`);
     const frames = sliceSheet(image, sheet.cols, sheet.rows);
     for (let i = 0; i < frames.length; i++) {
       globalIndex++;
@@ -289,28 +487,33 @@ async function main() {
       const globalName = `sticker-${pad(globalIndex)}.png`;
       const png = encodePng(frames[i]);
       await writeFile(resolve(sheetDir, name), png);
-      await writeFile(resolve(stickersDir, globalName), png);
+      if (!isolatedSheetRun) {
+        await writeFile(resolve(stickersDir, globalName), png);
+      }
       manifest.push({
         globalIndex,
-        sheet: sheet.label,
+        sheet: sheetFolder,
         index: i + 1,
-        file: `${sheet.label}/${name}`,
-        uploadFile: `stickers/${globalName}`,
+        file: `${sheetFolder}/${name}`,
+        uploadFile: isolatedSheetRun ? `${sheetFolder}/${name}` : `stickers/${globalName}`,
         phrase: sheet.phrases[i] ?? '',
         width: frames[i].width,
         height: frames[i].height,
       });
     }
-    console.log(`   ✓ ${sheet.label} done -> ${sheetDir}`);
+    console.log(`   ✓ ${sheetFolder} done -> ${sheetDir}`);
   }
 
-  await writeFile(
-    resolve(outDir, 'manifest.json'),
-    JSON.stringify({ config, stickers: manifest }, null, 2)
-  );
+  const manifestPath = isolatedSheetRun
+    ? resolve(outDir, sheetDirOverride!, 'manifest.json')
+    : resolve(outDir, 'manifest.json');
+  await writeFile(manifestPath, JSON.stringify({ config: { ...config, model }, stickers: manifest }, null, 2));
 
   const shouldBuildLineUpload =
-    config.lineUpload !== false && (config.scope ?? 'set') === 'set' && nativeFrames.length > 0;
+    !isolatedSheetRun &&
+    config.lineUpload !== false &&
+    (config.scope ?? 'set') === 'set' &&
+    nativeFrames.length > 0;
   if (shouldBuildLineUpload) {
     console.log('\n▶ Building LINE Creators Market upload pack...');
     const toZeroBased = (oneBased: number | undefined, fallback: number) =>
@@ -327,8 +530,10 @@ async function main() {
   }
 
   console.log(`\n✓ All done. ${manifest.length} stickers in ${outDir}`);
-  console.log(`  upload folder: ${stickersDir}`);
-  console.log(`  manifest: ${resolve(outDir, 'manifest.json')}`);
+  if (!isolatedSheetRun) {
+    console.log(`  upload folder: ${stickersDir}`);
+  }
+  console.log(`  manifest: ${manifestPath}`);
 }
 
 main().catch((err) => {

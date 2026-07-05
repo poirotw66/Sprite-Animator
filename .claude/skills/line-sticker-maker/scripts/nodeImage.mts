@@ -21,6 +21,18 @@ import {
   LINE_STICKER_CELL_INSET_RATIO,
 } from '../../../../utils/constants.ts';
 import {
+  computeOptimizedSliceFromMargins,
+  measureContentMargins,
+  type OptimizedSliceResult,
+} from '../../../../utils/optimizeSliceSettings.ts';
+import { clearEdgeConnectedResidue } from '../../../../utils/frameEdgeCleanup.ts';
+import { detectSheetGridBoundaries } from '../../../../utils/sheetBoundaryDetection.ts';
+import {
+  detectBestGridLayoutFromRgba,
+  scoreGridLayoutFromRgba,
+  type GridLayoutScore,
+} from '../../../../utils/sheetGridValidation.ts';
+import {
   LINE_STICKER_UPLOAD,
   computeFitDimensions,
   toEvenDimension,
@@ -115,46 +127,184 @@ export function removeChromaKey(
   return image;
 }
 
-/** Crop a sub-rectangle out of an RGBA image at native resolution (no scaling). */
-function cropRect(
-  src: RgbaImage,
+/**
+ * Extract one cell using the same geometry as `sliceSpriteSheet` in the web app:
+ * padding/shift grid, centered per-cell inset, and edge-clipped source mapping.
+ */
+function extractCellFrame(
+  sheet: RgbaImage,
   sx: number,
   sy: number,
-  sw: number,
-  sh: number
+  cropW: number,
+  cropH: number,
+  frameWidth: number,
+  frameHeight: number
 ): RgbaImage {
-  const out = new Uint8ClampedArray(sw * sh * 4);
-  for (let y = 0; y < sh; y++) {
-    const srcStart = ((sy + y) * src.width + sx) * 4;
-    const dstStart = y * sw * 4;
-    out.set(src.data.subarray(srcStart, srcStart + sw * 4), dstStart);
+  const totalWidth = sheet.width;
+  const totalHeight = sheet.height;
+  const srcLeft = Math.max(0, sx);
+  const srcTop = Math.max(0, sy);
+  const srcRight = Math.min(totalWidth, sx + cropW);
+  const srcBottom = Math.min(totalHeight, sy + cropH);
+  const srcW = srcRight - srcLeft;
+  const srcH = srcBottom - srcTop;
+  const data = new Uint8ClampedArray(frameWidth * frameHeight * 4);
+
+  if (srcW <= 0 || srcH <= 0) {
+    return { data, width: frameWidth, height: frameHeight };
   }
-  return { data: out, width: sw, height: sh };
+
+  const dstX = ((srcLeft - sx) / cropW) * frameWidth;
+  const dstY = ((srcTop - sy) / cropH) * frameHeight;
+  const dstW = (srcW / cropW) * frameWidth;
+  const dstH = (srcH / cropH) * frameHeight;
+
+  for (let dy = 0; dy < frameHeight; dy++) {
+    for (let dx = 0; dx < frameWidth; dx++) {
+      const dstOffset = (dy * frameWidth + dx) * 4;
+      if (dx < dstX || dx >= dstX + dstW || dy < dstY || dy >= dstY + dstH) {
+        continue;
+      }
+      const u = (dx - dstX) / dstW;
+      const v = (dy - dstY) / dstH;
+      const srcX = Math.min(totalWidth - 1, Math.max(0, Math.floor(srcLeft + u * srcW)));
+      const srcY = Math.min(totalHeight - 1, Math.max(0, Math.floor(srcTop + v * srcH)));
+      const srcOffset = (srcY * totalWidth + srcX) * 4;
+      data[dstOffset] = sheet.data[srcOffset]!;
+      data[dstOffset + 1] = sheet.data[srcOffset + 1]!;
+      data[dstOffset + 2] = sheet.data[srcOffset + 2]!;
+      data[dstOffset + 3] = sheet.data[srcOffset + 3]!;
+    }
+  }
+
+  return { data, width: frameWidth, height: frameHeight };
+}
+
+export interface SliceSheetOptions {
+  insetRatio?: number;
+  padding?: OptimizedSliceResult;
+  optimize?: boolean;
+  /** Detect uneven row/column seams instead of equal division (default true). */
+  detectBoundaries?: boolean;
+}
+
+/** Auto-trim outer margins on a chroma-keyed sheet (same core as the web app). */
+export function optimizeSliceForImage(
+  image: RgbaImage,
+  cols: number,
+  rows: number
+): OptimizedSliceResult {
+  const margins = measureContentMargins(image.data, image.width, image.height);
+  return computeOptimizedSliceFromMargins(
+    image.width,
+    image.height,
+    cols,
+    rows,
+    margins,
+    { conservative: true }
+  );
+}
+
+export type { GridLayoutScore } from '../../../../utils/sheetGridValidation.ts';
+
+/** Score how well a cols×rows grid aligns with background seams on a processed sheet. */
+export function scoreGridLayout(image: RgbaImage, cols: number, rows: number): number {
+  return scoreGridLayoutFromRgba(image.data, image.width, image.height, cols, rows);
+}
+
+/** Pick the best-scoring grid among candidates (used to detect model layout drift). */
+export function detectBestGridLayout(
+  image: RgbaImage,
+  colCandidates: number[],
+  rowCandidates: number[]
+): GridLayoutScore {
+  return detectBestGridLayoutFromRgba(
+    image.data,
+    image.width,
+    image.height,
+    colCandidates,
+    rowCandidates
+  );
 }
 
 /**
- * Slice a sprite sheet into `cols * rows` equal cells at native resolution.
- * Applies the same small per-cell safety inset the app uses, so any residual
- * cell-boundary seam the model drew is cropped out. No resampling.
+ * Slice a sprite sheet into `cols * rows` cells at native resolution.
+ * Matches the web app's `sliceSpriteSheet`: auto margin trim, centered per-cell
+ * inset, and edge-connected residue cleanup. No resampling.
  */
 export function sliceSheet(
   sheet: RgbaImage,
   cols: number,
   rows: number,
-  insetRatio: number = LINE_STICKER_CELL_INSET_RATIO
+  options: SliceSheetOptions = {}
 ): RgbaImage[] {
-  const cellW = Math.floor(sheet.width / cols);
-  const cellH = Math.floor(sheet.height / rows);
-  const insetX = Math.round(cellW * insetRatio);
-  const insetY = Math.round(cellH * insetRatio);
+  const insetRatio = options.insetRatio ?? LINE_STICKER_CELL_INSET_RATIO;
+  const detectBoundaries = options.detectBoundaries !== false;
+  const totalWidth = sheet.width;
+  const totalHeight = sheet.height;
+
+  let xBounds: number[];
+  let yBounds: number[];
+
+  if (detectBoundaries) {
+    const detected = detectSheetGridBoundaries(sheet.data, totalWidth, totalHeight, cols, rows);
+    xBounds = detected.xBounds;
+    yBounds = detected.yBounds;
+  } else {
+    const padding =
+      options.padding ??
+      (options.optimize === false
+        ? { paddingLeft: 0, paddingRight: 0, paddingTop: 0, paddingBottom: 0, shiftX: 0, shiftY: 0 }
+        : optimizeSliceForImage(sheet, cols, rows));
+
+    const left = padding.paddingLeft;
+    const right = padding.paddingRight;
+    const top = padding.paddingTop;
+    const bottom = padding.paddingBottom;
+    let startX = Math.round(left + padding.shiftX);
+    let startY = Math.round(top + padding.shiftY);
+    startX = Math.max(0, Math.min(startX, totalWidth - 1));
+    startY = Math.max(0, Math.min(startY, totalHeight - 1));
+    const effectiveWidth = totalWidth - left - right;
+    const effectiveHeight = totalHeight - top - bottom;
+    if (effectiveWidth <= 0 || effectiveHeight <= 0) {
+      throw new Error(`Invalid effective slice area: ${effectiveWidth}x${effectiveHeight}`);
+    }
+
+    xBounds = Array.from({ length: cols + 1 }, (_, c) =>
+      c === 0 ? startX : c === cols ? startX + effectiveWidth : startX + (c * effectiveWidth) / cols
+    );
+    yBounds = Array.from({ length: rows + 1 }, (_, r) =>
+      r === 0 ? startY : r === rows ? startY + effectiveHeight : startY + (r * effectiveHeight) / rows
+    );
+  }
+
+  const insetFactor = 1 - 2 * Math.max(0, Math.min(0.2, insetRatio));
   const frames: RgbaImage[] = [];
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < cols; col++) {
-      const sx = col * cellW + insetX;
-      const sy = row * cellH + insetY;
-      const sw = Math.max(1, cellW - insetX * 2);
-      const sh = Math.max(1, cellH - insetY * 2);
-      frames.push(cropRect(sheet, sx, sy, sw, sh));
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x0 = xBounds[c]!;
+      const x1 = xBounds[c + 1]!;
+      const y0 = yBounds[r]!;
+      const y1 = yBounds[r + 1]!;
+      const cellWidth = x1 - x0;
+      const cellHeight = y1 - y0;
+      const frameWidth = Math.max(1, Math.round(cellWidth));
+      const frameHeight = Math.max(1, Math.round(cellHeight));
+
+      const cropW = cellWidth * insetFactor;
+      const cropH = cellHeight * insetFactor;
+      const sx = x0 + (cellWidth - cropW) / 2;
+      const sy = y0 + (cellHeight - cropH) / 2;
+      const frame = extractCellFrame(sheet, sx, sy, cropW, cropH, frameWidth, frameHeight);
+
+      if (insetRatio > 0) {
+        const maxDepthPx = Math.max(1, Math.round(Math.min(frameWidth, frameHeight) * 0.01));
+        clearEdgeConnectedResidue(frame.data, frameWidth, frameHeight, { maxDepthPx });
+      }
+
+      frames.push(frame);
     }
   }
   return frames;
