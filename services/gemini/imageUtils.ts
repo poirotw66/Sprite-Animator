@@ -138,4 +138,8 @@ export async function normalizeBackgroundColor(
   });
 }
 
-export { getBestAspectRatio } from '../../utils/lineStickerSheetAspect';
+export {
+  getBestAspectRatio,
+  getLineStickerSpriteSheetAspectRatio,
+  LINE_STICKER_SPRITE_SHEET_SIZE_PX,
+} from '../../utils/lineStickerSheetAspect';

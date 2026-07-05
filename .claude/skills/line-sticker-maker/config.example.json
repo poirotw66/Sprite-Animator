@@ -12,5 +12,8 @@
   "cols": 4,
   "rows": 6,
   "model": "gemini-3.1-flash-lite-image",
-  "resolution": "1K"
+  "resolution": "1K",
+  "lineUpload": true,
+  "mainStickerIndex": 1,
+  "tabStickerIndex": 1
 }

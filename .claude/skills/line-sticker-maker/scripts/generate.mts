@@ -30,7 +30,8 @@ import {
 import type { ChromaKeyColorType } from '../../../../types.ts';
 
 import { generateSheetImage } from './geminiSheet.mts';
-import { decodeImage, encodePng, extForBytes, removeChromaKey, sliceSheet } from './nodeImage.mts';
+import { decodeImage, encodePng, extForBytes, removeChromaKey, sliceSheet, type RgbaImage } from './nodeImage.mts';
+import { writeLineUploadPack } from './lineUploadPack.mts';
 import {
   DEFAULT_LINE_STICKER_SET_COUNT,
   resolveSetLayout,
@@ -55,6 +56,14 @@ interface StickerConfig {
   rows?: number; // single mode only (default 6)
   model?: string; // default: gemini-3.1-flash-lite-image
   resolution?: string; // output resolution, default: 1K (model-dependent)
+  /** When true (default for set scope), emit LINE Creators Market upload pack + ZIP. */
+  lineUpload?: boolean;
+  /** 1-based sticker index used for main.png (default: 1). */
+  mainStickerIndex?: number;
+  /** 1-based sticker index used for tab.png (default: 1). */
+  tabStickerIndex?: number;
+  /** LINE upload sticker count override (8/16/24/32/40). Default: produced count or 40. */
+  lineUploadStickerCount?: number;
 }
 
 function parseArgs(argv: string[]) {
@@ -239,6 +248,7 @@ async function main() {
   await mkdir(stickersDir, { recursive: true });
   const manifest: Array<Record<string, unknown>> = [];
   let globalIndex = 0;
+  const nativeFrames: RgbaImage[] = [];
 
   for (const sheet of sheets) {
     const slots = buildSlots(config, sheet.phrases);
@@ -274,6 +284,7 @@ async function main() {
     const frames = sliceSheet(image, sheet.cols, sheet.rows);
     for (let i = 0; i < frames.length; i++) {
       globalIndex++;
+      nativeFrames.push(frames[i]!);
       const name = `sticker-${pad(i + 1)}.png`;
       const globalName = `sticker-${pad(globalIndex)}.png`;
       const png = encodePng(frames[i]);
@@ -297,6 +308,24 @@ async function main() {
     resolve(outDir, 'manifest.json'),
     JSON.stringify({ config, stickers: manifest }, null, 2)
   );
+
+  const shouldBuildLineUpload =
+    config.lineUpload !== false && (config.scope ?? 'set') === 'set' && nativeFrames.length > 0;
+  if (shouldBuildLineUpload) {
+    console.log('\n▶ Building LINE Creators Market upload pack...');
+    const toZeroBased = (oneBased: number | undefined, fallback: number) =>
+      Math.max(0, (oneBased ?? fallback) - 1);
+    const uploadPack = await writeLineUploadPack(outDir, nativeFrames, {
+      mainStickerIndex: toZeroBased(config.mainStickerIndex, 1),
+      tabStickerIndex: toZeroBased(config.tabStickerIndex, 1),
+      stickerCount: config.lineUploadStickerCount,
+    });
+    uploadPack.warnings.forEach((warning) => console.warn(`   ! ${warning}`));
+    console.log(
+      `   ✓ line-upload/ (${uploadPack.stickerCount + 2} PNGs) + line-upload.zip ready for ZIP upload`
+    );
+  }
+
   console.log(`\n✓ All done. ${manifest.length} stickers in ${outDir}`);
   console.log(`  upload folder: ${stickersDir}`);
   console.log(`  manifest: ${resolve(outDir, 'manifest.json')}`);

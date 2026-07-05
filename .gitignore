@@ -37,3 +37,5 @@ line-stickers-out/
 # Local secrets & machine-local config (never commit)
 .env
 .claude/settings.local.json
+.claude/skills/line-sticker-maker/example
+

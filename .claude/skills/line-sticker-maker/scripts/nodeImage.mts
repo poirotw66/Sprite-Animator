@@ -20,6 +20,11 @@ import {
   CHROMA_KEY_EDGE_BLEND,
   LINE_STICKER_CELL_INSET_RATIO,
 } from '../../../../utils/constants.ts';
+import {
+  LINE_STICKER_UPLOAD,
+  computeFitDimensions,
+  toEvenDimension,
+} from '../../../../utils/lineStickerUploadSpec.ts';
 import type { ChromaKeyColorType } from '../../../../types.ts';
 
 export interface RgbaImage {
@@ -153,4 +158,138 @@ export function sliceSheet(
     }
   }
   return frames;
+}
+
+function sampleBilinear(src: RgbaImage, x: number, y: number): [number, number, number, number] {
+  const clampedX = Math.min(Math.max(x, 0), src.width - 1);
+  const clampedY = Math.min(Math.max(y, 0), src.height - 1);
+  const x0 = Math.floor(clampedX);
+  const y0 = Math.floor(clampedY);
+  const x1 = Math.min(x0 + 1, src.width - 1);
+  const y1 = Math.min(y0 + 1, src.height - 1);
+  const tx = clampedX - x0;
+  const ty = clampedY - y0;
+
+  const idx = (px: number, py: number) => (py * src.width + px) * 4;
+  const sample = (px: number, py: number) => {
+    const offset = idx(px, py);
+    return [
+      src.data[offset]!,
+      src.data[offset + 1]!,
+      src.data[offset + 2]!,
+      src.data[offset + 3]!,
+    ] as const;
+  };
+
+  const c00 = sample(x0, y0);
+  const c10 = sample(x1, y0);
+  const c01 = sample(x0, y1);
+  const c11 = sample(x1, y1);
+  const channel = (index: number) =>
+    Math.round(
+      c00[index]! * (1 - tx) * (1 - ty) +
+        c10[index]! * tx * (1 - ty) +
+        c01[index]! * (1 - tx) * ty +
+        c11[index]! * tx * ty
+    );
+
+  return [channel(0), channel(1), channel(2), channel(3)];
+}
+
+/** Resize RGBA image with bilinear sampling (used for LINE upload sizing only). */
+export function resampleRgba(src: RgbaImage, dstW: number, dstH: number): RgbaImage {
+  const width = toEvenDimension(dstW);
+  const height = toEvenDimension(dstH);
+  const data = new Uint8ClampedArray(width * height * 4);
+  for (let y = 0; y < height; y += 1) {
+    const srcY = ((y + 0.5) / height) * src.height - 0.5;
+    for (let x = 0; x < width; x += 1) {
+      const srcX = ((x + 0.5) / width) * src.width - 0.5;
+      const [r, g, b, a] = sampleBilinear(src, srcX, srcY);
+      const offset = (y * width + x) * 4;
+      data[offset] = r;
+      data[offset + 1] = g;
+      data[offset + 2] = b;
+      data[offset + 3] = a;
+    }
+  }
+  return { data, width, height };
+}
+
+function blitOntoCanvas(
+  canvas: Uint8ClampedArray,
+  canvasWidth: number,
+  canvasHeight: number,
+  image: RgbaImage,
+  offsetX: number,
+  offsetY: number
+): void {
+  for (let y = 0; y < image.height; y += 1) {
+    for (let x = 0; x < image.width; x += 1) {
+      const srcOffset = (y * image.width + x) * 4;
+      const alpha = image.data[srcOffset + 3]! / 255;
+      if (alpha <= 0) {
+        continue;
+      }
+      const dstX = offsetX + x;
+      const dstY = offsetY + y;
+      if (dstX < 0 || dstY < 0 || dstX >= canvasWidth || dstY >= canvasHeight) {
+        continue;
+      }
+      const dstOffset = (dstY * canvasWidth + dstX) * 4;
+      const invAlpha = 1 - alpha;
+      canvas[dstOffset] = Math.round(image.data[srcOffset]! * alpha + canvas[dstOffset]! * invAlpha);
+      canvas[dstOffset + 1] = Math.round(
+        image.data[srcOffset + 1]! * alpha + canvas[dstOffset + 1]! * invAlpha
+      );
+      canvas[dstOffset + 2] = Math.round(
+        image.data[srcOffset + 2]! * alpha + canvas[dstOffset + 2]! * invAlpha
+      );
+      canvas[dstOffset + 3] = Math.round(255 * alpha + canvas[dstOffset + 3]! * invAlpha);
+    }
+  }
+}
+
+function resizeToFitWithin(src: RgbaImage, maxWidth: number, maxHeight: number): RgbaImage {
+  const target = computeFitDimensions(src.width, src.height, maxWidth, maxHeight);
+  if (target.width === src.width && target.height === src.height) {
+    return src;
+  }
+  return resampleRgba(src, target.width, target.height);
+}
+
+function composeCenteredOnCanvas(
+  src: RgbaImage,
+  canvasWidth: number,
+  canvasHeight: number
+): RgbaImage {
+  const fitted = resizeToFitWithin(src, canvasWidth, canvasHeight);
+  const data = new Uint8ClampedArray(canvasWidth * canvasHeight * 4);
+  const offsetX = Math.floor((canvasWidth - fitted.width) / 2);
+  const offsetY = Math.floor((canvasHeight - fitted.height) / 2);
+  blitOntoCanvas(data, canvasWidth, canvasHeight, fitted, offsetX, offsetY);
+  return { data, width: canvasWidth, height: canvasHeight };
+}
+
+/** Fit one sticker frame to LINE Creators Market sticker image limits. */
+export function prepareLineStickerFrame(frame: RgbaImage): RgbaImage {
+  return resizeToFitWithin(
+    frame,
+    LINE_STICKER_UPLOAD.stickerMaxWidth,
+    LINE_STICKER_UPLOAD.stickerMaxHeight
+  );
+}
+
+/** Build LINE main image (240×240). */
+export function prepareLineMainImage(frame: RgbaImage): RgbaImage {
+  return composeCenteredOnCanvas(frame, LINE_STICKER_UPLOAD.mainSize, LINE_STICKER_UPLOAD.mainSize);
+}
+
+/** Build LINE chat tab image (96×74). */
+export function prepareLineTabImage(frame: RgbaImage): RgbaImage {
+  return composeCenteredOnCanvas(
+    frame,
+    LINE_STICKER_UPLOAD.tabWidth,
+    LINE_STICKER_UPLOAD.tabHeight
+  );
 }

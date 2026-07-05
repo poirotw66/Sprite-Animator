@@ -7,7 +7,7 @@ import { getErrorMessage } from '../../types/errors';
 import { CHROMA_KEY_COLORS, type ImageResolution } from '../../utils/constants';
 import type { ChromaKeyColorType } from '../../types';
 import { retryOperation } from './retry';
-import { getBestAspectRatio, normalizeBackgroundColor } from './imageUtils';
+import { getBestAspectRatio, getLineStickerSpriteSheetAspectRatio, normalizeBackgroundColor } from './imageUtils';
 import {
   isLineStickerPrompt,
   isStylePreviewPrompt,
@@ -44,7 +44,10 @@ export async function generateSpriteSheet(
     ''
   );
 
-  const targetAspectRatio = getBestAspectRatio(cols, rows);
+  const isLineSticker = isLineStickerPrompt(prompt);
+  const targetAspectRatio = isLineSticker
+    ? getLineStickerSpriteSheetAspectRatio()
+    : getBestAspectRatio(cols, rows);
   const totalFrames = cols * rows;
 
   const promptOpts = {

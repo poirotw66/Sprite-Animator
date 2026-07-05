@@ -10,7 +10,7 @@
 
 import { GoogleGenAI } from '@google/genai';
 import { buildLineStickerPromptSuffix } from '../../../../services/gemini/spriteSheetPrompts.ts';
-import { getBestAspectRatio } from '../../../../utils/lineStickerSheetAspect.ts';
+import { getLineStickerSpriteSheetAspectRatio } from '../../../../utils/lineStickerSheetAspect.ts';
 import { CHROMA_KEY_COLORS } from '../../../../utils/constants.ts';
 import type { ChromaKeyColorType } from '../../../../types.ts';
 
@@ -86,7 +86,7 @@ export async function generateSheetImage(
   const ai = new GoogleGenAI({ apiKey });
   const bg = CHROMA_KEY_COLORS[chromaKeyColor];
   const totalFrames = cols * rows;
-  const aspectRatio = getBestAspectRatio(cols, rows);
+  const aspectRatio = getLineStickerSpriteSheetAspectRatio();
 
   const fullPrompt =
     buildLineStickerPromptSuffix(prompt, {

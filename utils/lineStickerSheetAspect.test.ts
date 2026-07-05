@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   getBestAspectRatio,
   getLineStickerCanvasAspectPrompt,
+  getLineStickerCellPixelSize,
+  getLineStickerSpriteSheetAspectRatio,
+  LINE_STICKER_SPRITE_SHEET_SIZE_PX,
 } from './lineStickerSheetAspect';
 import { buildLineStickerPrompt, DEFAULT_CHARACTER_SLOT, DEFAULT_TEXT_SLOT, THEME_PRESETS, STYLE_PRESETS } from './lineStickerPrompt';
 
@@ -10,25 +13,28 @@ describe('getBestAspectRatio', () => {
     expect(getBestAspectRatio(4, 4)).toBe('1:1');
   });
 
-  it('returns 3:4 for 4x5 grids', () => {
+  it('returns 3:4 for 4x5 grids (animation / non-LINE)', () => {
     expect(getBestAspectRatio(4, 5)).toBe('3:4');
   });
 });
 
-describe('getLineStickerCanvasAspectPrompt', () => {
-  it('describes square canvas for 4x4', () => {
-    expect(getLineStickerCanvasAspectPrompt(4, 4)).toBe('Square image (1:1 aspect ratio)');
+describe('LINE sticker sprite sheet aspect', () => {
+  it('always uses 1:1 for LINE sticker generation', () => {
+    expect(getLineStickerSpriteSheetAspectRatio()).toBe('1:1');
+    expect(getLineStickerCanvasAspectPrompt(4, 5)).toBe('Square image (1:1 aspect ratio)');
   });
 
-  it('describes portrait canvas for 4x5', () => {
-    expect(getLineStickerCanvasAspectPrompt(4, 5)).toBe(
-      'Portrait image (3:4 aspect ratio, width:height)'
-    );
+  it('computes 4x5 cell size on 1024px canvas', () => {
+    expect(getLineStickerCellPixelSize(4, 5)).toEqual({
+      cellWidth: 256,
+      cellHeight: 204,
+    });
+    expect(LINE_STICKER_SPRITE_SHEET_SIZE_PX).toBe(1024);
   });
 });
 
 describe('buildLineStickerPrompt layout aspect', () => {
-  it('uses portrait aspect for 4x5 v3 prompts instead of square', () => {
+  it('uses square 1024 canvas wording for 4x5 v3 prompts', () => {
     const prompt = buildLineStickerPrompt(
       {
         style: STYLE_PRESETS.matchUploaded,
@@ -44,7 +50,7 @@ describe('buildLineStickerPrompt layout aspect', () => {
       'v3'
     );
 
-    expect(prompt).toContain('Portrait image (3:4 aspect ratio, width:height)');
-    expect(prompt).not.toContain('Square image (1:1');
+    expect(prompt).toContain('Square image (1:1 aspect ratio)');
+    expect(prompt).not.toContain('Portrait image (3:4');
   });
 });

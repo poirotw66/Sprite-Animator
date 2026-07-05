@@ -23,7 +23,11 @@ const CANVAS_ASPECT_LABELS: Record<string, string> = {
   '8:1': 'Wide image (8:1 aspect ratio, width:height)',
 };
 
-/** Pick the Gemini aspect ratio closest to cols/rows (equal square cells when matched). */
+/** LINE sticker sprite sheets always use 1:1 @ 1K → 1024×1024 px from Gemini. */
+export const LINE_STICKER_SPRITE_SHEET_ASPECT_RATIO = '1:1' as const;
+export const LINE_STICKER_SPRITE_SHEET_SIZE_PX = 1024;
+
+/** Pick the Gemini aspect ratio closest to cols/rows (animation / non-LINE sheets). */
 export function getBestAspectRatio(cols: number, rows: number): string {
   const targetRatio = cols / rows;
   return SUPPORTED_ASPECT_RATIOS.reduce((prev, curr) =>
@@ -31,8 +35,23 @@ export function getBestAspectRatio(cols: number, rows: number): string {
   ).str;
 }
 
+/** Gemini imageConfig aspect ratio for LINE sticker sprite sheets (fixed 1:1). */
+export function getLineStickerSpriteSheetAspectRatio(): typeof LINE_STICKER_SPRITE_SHEET_ASPECT_RATIO {
+  return LINE_STICKER_SPRITE_SHEET_ASPECT_RATIO;
+}
+
 /** Human-readable canvas aspect line for LINE sticker prompts (matches Gemini imageConfig). */
-export function getLineStickerCanvasAspectPrompt(cols: number, rows: number): string {
-  const ratio = getBestAspectRatio(cols, rows);
-  return CANVAS_ASPECT_LABELS[ratio] ?? `Canvas (${ratio} aspect ratio, width:height)`;
+export function getLineStickerCanvasAspectPrompt(_cols: number, _rows: number): string {
+  return CANVAS_ASPECT_LABELS[LINE_STICKER_SPRITE_SHEET_ASPECT_RATIO]!;
+}
+
+/** Approximate per-cell pixel size after integer slice on a 1024×1024 sheet. */
+export function getLineStickerCellPixelSize(
+  cols: number,
+  rows: number
+): { cellWidth: number; cellHeight: number } {
+  return {
+    cellWidth: Math.floor(LINE_STICKER_SPRITE_SHEET_SIZE_PX / cols),
+    cellHeight: Math.floor(LINE_STICKER_SPRITE_SHEET_SIZE_PX / rows),
+  };
 }

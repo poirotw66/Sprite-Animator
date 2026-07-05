@@ -1,19 +1,21 @@
 ---
 name: line-sticker-maker
-description: Generate a complete LINE sticker set from a single character reference image, fully headless (no browser). Reuses the app's prompt builder + shared chroma-key core to produce a sprite sheet via Gemini, remove the chroma background, and slice it into individual transparent sticker PNGs at native resolution. Use when the user wants to "make LINE stickers", "produce a sticker set", "生成貼圖 / 做一套貼圖" from a reference image.
+description: Generate a complete LINE sticker set from a single character reference image, fully headless (no browser). Reuses the app's prompt builder + shared chroma-key core to produce a sprite sheet via Gemini, remove the chroma background, slice it into individual transparent sticker PNGs, and package a LINE Creators Market upload ZIP. Use when the user wants to "make LINE stickers", "produce a sticker set", "生成貼圖 / 做一套貼圖" from a reference image.
 ---
 
 # LINE Sticker Maker
 
 Headless version of this project's LINE sticker workflow. Given one character
 reference image, it generates a sprite sheet with Gemini, removes the chroma-key
-background, and slices it into individual transparent sticker PNGs — all from the
-command line, no browser/UI.
+background, slices it into individual transparent sticker PNGs, and (in set mode)
+builds a **LINE Creators Market upload ZIP** — all from the command line, no
+browser/UI.
 
 It **reuses the app's own modules** (`utils/lineStickerPrompt.ts`,
-`utils/lineStickerSetSchema.ts`, `utils/chromaKeyCore.ts`) so output matches the
-web app. Only the browser Canvas layer is replaced with `upng-js`. Stickers keep
-their **native resolution** (integer slicing, no resampling).
+`utils/lineStickerSetSchema.ts`, `utils/chromaKeyCore.ts`,
+`utils/lineStickerUploadSpec.ts`) so output matches the web app. Only the browser
+Canvas layer is replaced with `upng-js`. Native-resolution slices are kept for
+debug; upload assets are resized to LINE specs.
 
 ## How to run
 
@@ -39,6 +41,8 @@ npx tsx .claude/skills/line-sticker-maker/scripts/generate.mts \
 2. **Write a `config.json`** (copy `config.example.json` as a starting point).
 3. **Dry-run first** to verify prompt + phrases look right.
 4. **Run for real**, then **Read a few output PNGs** to show the user results.
+5. Point the user to **`line-upload.zip`** for LINE Creators Market → Stickers →
+   **ZIP file upload**.
 
 ## config.json fields
 
@@ -57,32 +61,54 @@ npx tsx .claude/skills/line-sticker-maker/scripts/generate.mts \
 | `cols` / `rows` | `4` / `6` | **single mode only** grid size |
 | `model` | `gemini-3.1-flash-lite-image` | image model id |
 | `resolution` | `1K` | output resolution; `0.5K`/`1K`/`2K`/`4K` for 3.1-flash, `1K` for 3.1-flash-lite / 2.5-flash. Auto-dropped if the model rejects it. |
+| `lineUpload` | `true` in set mode | when `true`, emit `line-upload/` + `line-upload.zip` for LINE Creators Market |
+| `mainStickerIndex` | `1` | 1-based index for `main.png` (240×240) |
+| `tabStickerIndex` | `1` | 1-based index for `tab.png` (96×74) |
+| `lineUploadStickerCount` | auto | override upload count (`8`/`16`/`24`/`32`/`40`); default `40` when 48 stickers are produced |
 
 ## Output
 
 ```
 <out>/
   manifest.json                 # all stickers + phrases + pixel sizes
+  line-upload.zip               # ★ upload this to LINE Creators Market
+  line-upload/
+    main.png                    # 240×240
+    tab.png                     # 96×74
+    01.png ... 40.png           # each ≤370×320, even dimensions, transparent PNG
   stickers/
-    sticker-01.png ...          # flat folder for LINE upload (global 1–40)
+    sticker-01.png ...          # flat folder (native resolution)
   sheet-1/
     _raw-sheet.png              # raw Gemini sheet (debug)
     _processed-sheet.png        # after chroma removal (debug)
-    sticker-01.png ...          # per-sheet slices (same art, local index)
+    sticker-01.png ...          # per-sheet slices (native resolution)
   sheet-2/ ...                  # (40-sticker set = 2 sheets)
 ```
 
+### LINE upload ZIP contents
+
+File names must match LINE's bulk-upload convention:
+
+| File | Size | Role |
+|---|---|---|
+| `main.png` | 240×240 | Shop main image |
+| `tab.png` | 96×74 | Chat sticker tab icon |
+| `01.png`–`40.png` | max 370×320 (even px) | Sticker images |
+
+Upload at [LINE Creators Market](https://creator.line.me/) → Stickers → edit images →
+**ZIP file upload**. Select sticker count (40) to match before uploading.
+
 ## Notes / limits
 
-- **Native resolution**: stickers are cropped at full pixel resolution. LINE's
-  store spec (≤370×320) is **not** applied. Add a resize step later if needed.
+- **Sprite sheet size**: LINE sticker generation always requests **1:1 @ 1K → 1024×1024 px**
+  (4×5 grid → ~256×204 px per cell before inset; 4×4 → ~256×256).
+- **Upload sizing**: `line-upload/` assets are scaled to fit LINE limits while
+  keeping aspect ratio and transparent backgrounds. `stickers/` keeps native
+  resolution for inspection.
 - **No normalization step**: the shared chroma core auto-detects the dominant
-  background, so the app's canvas-based `normalizeBackgroundColor` is skipped.
-  If a sheet shows colour residue, regenerate or tune `CHROMA_KEY_FUZZ`.
-- Each sheet = one Gemini image call. A **40-sticker set = 2 calls** (4×5 × 2); legacy 48 = 3 calls. Expect retries on
-  rate limits (429/503) with exponential backoff.
-- Gemini image models may return **JPEG** (e.g. 3.1-flash returns JPEG); the
-  pipeline decodes PNG/JPEG by magic bytes (jpeg-js) and always writes the
-  sliced stickers as transparent **PNG**.
-- Verified end-to-end: 3.1-flash @1K returns a 1024×1024 sheet → 4×4 → stickers
-  ~240×240 px, transparent background, 0% residual chroma.
+  background. If a sheet shows colour residue, regenerate or tune `CHROMA_KEY_FUZZ`.
+- Each sheet = one Gemini image call. A **40-sticker set = 2 calls**; legacy 48 = 3 calls.
+- **48-sticker jobs**: upload pack uses the first **40** stickers by default (LINE standard).
+- Gemini image models may return **JPEG**; the pipeline decodes PNG/JPEG and writes PNG.
+- Each PNG should be ≤1 MB; ZIP ≤20 MB. Warnings are printed if limits are exceeded.
+- **Not included**: title/description/price, creator account setup, or LINE review approval.
