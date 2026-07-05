@@ -10,7 +10,7 @@
  * Everything here is headless: no DOM, no canvas, no React.
  */
 
-import UPNG from 'upng-js';
+import { decode as upngDecode, encode as upngEncode, toRGBA8 } from 'upng-js';
 import jpeg from 'jpeg-js';
 import { processChromaKey } from '../../../../utils/chromaKeyCore.ts';
 import {
@@ -68,10 +68,10 @@ export function decodePng(bytes: Uint8Array): RgbaImage {
   const ab = bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength
     ? bytes.buffer
     : bytes.slice().buffer;
-  const img = (UPNG as any).decode(ab);
-  const frames = (UPNG as any).toRGBA8(img) as ArrayBuffer[];
+  const img = upngDecode(ab as ArrayBuffer);
+  const frames = toRGBA8(img);
   return {
-    data: new Uint8ClampedArray(frames[0]),
+    data: new Uint8ClampedArray(frames[0] ?? new ArrayBuffer(0)),
     width: img.width,
     height: img.height,
   };
@@ -79,12 +79,12 @@ export function decodePng(bytes: Uint8Array): RgbaImage {
 
 /** Encode an RGBA buffer to lossless PNG bytes (cnum=0 = full colour, no quantization). */
 export function encodePng(image: RgbaImage): Uint8Array {
-  const ab = (UPNG as any).encode(
-    [image.data.buffer],
+  const ab = upngEncode(
+    [image.data.buffer as ArrayBuffer],
     image.width,
     image.height,
     0
-  ) as ArrayBuffer;
+  );
   return new Uint8Array(ab);
 }
 
