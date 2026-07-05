@@ -10,6 +10,7 @@
  */
 
 import { clampStickerPhrase } from './lineStickerPhraseLength';
+import { getLineStickerCanvasAspectPrompt } from './lineStickerSheetAspect';
 import {
     TEXT_COLOR_PRESETS,
     FONT_PRESETS,
@@ -143,7 +144,7 @@ export const BASE_PROMPT = `🎨 LINE Sticker Sprite Sheet Generation
 
 ### [1. Global Layout] CRITICAL
 
-* **Canvas**: Perfect square (1:1 aspect ratio). High resolution output.
+* **Canvas**: {CANVAS_ASPECT}. High resolution output.
 * **Grid**: {COLS}×{ROWS} = {TOTAL_FRAMES} cells. Each cell exactly **{CELL_WIDTH_PCT}% of image width** and **{CELL_HEIGHT_PCT}% of image height**.
 * **Margins**: None. Image edges = grid boundaries. No empty space at left, right, top, or bottom.
 * **NO VISIBLE DIVIDERS — ABSOLUTE, NON-NEGOTIABLE**: You MUST NOT draw ANY of the following anywhere on the image: grid lines, frame lines, borders, dividers, separator lines, cell outlines, boxes around or between cells, white lines, white strips, white borders, or any visible line of any color between or around cells. The grid is LOGICAL ONLY (for splitting later). Where one cell meets the next, both sides MUST be the EXACT SAME background color with ZERO visible gap, rule, or edge. The boundary between any two cells must be COMPLETELY INVISIBLE. One continuous background only—no lines of any kind. Drawing any visible line between cells makes the output invalid.
@@ -258,6 +259,7 @@ export function buildLineStickerPrompt(
 
     const cellWidthPct = Math.round(100 / cols);
     const cellHeightPct = Math.round(100 / rows);
+    const canvasAspect = getLineStickerCanvasAspectPrompt(cols, rows);
     const bgHex = bgColor === 'magenta' ? '#FF00FF' : '#00FF00';
 
     if (promptVersion === 'v2' || promptVersion === 'v3') {
@@ -311,7 +313,7 @@ ${buildProgrammaticOverlayCompositionBullets(bgHex)}
 
         const globalLayoutBlock = hardenedLayout
             ? `[1. Global Layout — CRITICAL]
-- Square image (1:1), high resolution
+- ${canvasAspect}, high resolution
 - ${cols}×${rows} sprite sheet (${totalFrames} stickers) on a perfectly even grid; each cell exactly ${cellWidthPct}% of width × ${cellHeightPct}% of height
 - Image edges = grid edges. No outer margin or padding on any side.
 - NO VISIBLE DIVIDERS (ABSOLUTE, NON-NEGOTIABLE): do NOT draw grid lines, frame lines, borders, boxes, separators, cell outlines, or white/colored strips anywhere between or around cells. The grid is LOGICAL ONLY (used to split the image later).
@@ -320,7 +322,7 @@ ${buildProgrammaticOverlayCompositionBullets(bgHex)}
 - Each sticker sits well inside its own cell with an even internal margin; no sticker touches or crosses a cell boundary.
 - The image MUST be perfectly splittable into ${totalFrames} equal rectangles.`
             : `[1. Global Layout — CRITICAL]
-- Square image (1:1), high resolution
+- ${canvasAspect}, high resolution
 - ${cols}×${rows} sprite sheet (${totalFrames} stickers), evenly aligned
 - Each cell contains one independent sticker
 - No visible grid lines, borders, seams, or divider lines
@@ -365,7 +367,7 @@ ${v2CompositionSection}
 ${textRules}
 
 [7. Final Output]
-- One single square image
+- One single image: ${canvasAspect.toLowerCase()}
 - ${cols}×${rows} layout (${totalFrames} stickers)
 - No visible grid lines${hardenedLayout ? ', borders, seams, or divider lines of any color — cell boundaries fully invisible' : ''}
 - Continuous ${bgHex} background${hardenedLayout ? ' that bleeds uniformly across every cell boundary' : ''}
@@ -378,6 +380,7 @@ ${textRules}
         .replace(/{ROWS}/g, rows.toString())
         .replace(/{CELL_WIDTH_PCT}/g, cellWidthPct.toString())
         .replace(/{CELL_HEIGHT_PCT}/g, cellHeightPct.toString())
+        .replace(/{CANVAS_ASPECT}/g, canvasAspect)
         .replace(/{AND_TEXT}/g, includeText ? 'and text' : '')
         .replace(/{AND_CLOSE_TEXT}/g, includeText ? 'Subject(s) from reference (e.g. bust/head or group) filling the cell, with text placed clearly.' : 'Subject(s) from reference (e.g. bust/head or group) filling the cell.');
 
@@ -497,7 +500,7 @@ ${buildProgrammaticOverlayCompositionBullets(bgHex)}
     const finalSection = `
 ### [7. Final Goal]
 
-Output a single image: perfect square, {TOTAL_FRAMES} equal rectangles ({COLS}×{ROWS}). Each rectangle = one LINE sticker. Splittable at exactly {CELL_WIDTH_PCT}% width and {CELL_HEIGHT_PCT}% height per cell. Obey [1. Global Layout] — NO VISIBLE DIVIDERS (one continuous background only).
+Output a single image: ${canvasAspect.toLowerCase()}, {TOTAL_FRAMES} equal rectangles ({COLS}×{ROWS}). Each rectangle = one LINE sticker. Splittable at exactly {CELL_WIDTH_PCT}% width and {CELL_HEIGHT_PCT}% height per cell. Obey [1. Global Layout] — NO VISIBLE DIVIDERS (one continuous background only).
 `.replace(/{TOTAL_FRAMES}/g, totalFrames.toString())
         .replace(/{COLS}/g, cols.toString())
         .replace(/{ROWS}/g, rows.toString())

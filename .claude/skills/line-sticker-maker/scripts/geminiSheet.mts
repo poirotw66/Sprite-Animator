@@ -10,27 +10,9 @@
 
 import { GoogleGenAI } from '@google/genai';
 import { buildLineStickerPromptSuffix } from '../../../../services/gemini/spriteSheetPrompts.ts';
+import { getBestAspectRatio } from '../../../../utils/lineStickerSheetAspect.ts';
 import { CHROMA_KEY_COLORS } from '../../../../utils/constants.ts';
 import type { ChromaKeyColorType } from '../../../../types.ts';
-
-/** Gemini's supported aspect ratios; pick the closest to cols/rows. */
-function getBestAspectRatio(cols: number, rows: number): string {
-  const target = cols / rows;
-  const supported = [
-    { str: '1:1', val: 1.0 },
-    { str: '3:4', val: 0.75 },
-    { str: '4:3', val: 1.333 },
-    { str: '9:16', val: 0.5625 },
-    { str: '16:9', val: 1.778 },
-    { str: '1:4', val: 0.25 },
-    { str: '4:1', val: 4.0 },
-    { str: '1:8', val: 0.125 },
-    { str: '8:1', val: 8.0 },
-  ];
-  return supported.reduce((prev, curr) =>
-    Math.abs(curr.val - target) < Math.abs(prev.val - target) ? curr : prev
-  ).str;
-}
 
 function isRetryable(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err);
