@@ -147,6 +147,7 @@ export const useSpriteSheet = (
   }, [
     removeBackground,
     processedSpriteSheet,
+    sliceSettings,
     sliceSettings.cols,
     sliceSettings.rows,
     sliceSettings.paddingX,
@@ -239,6 +240,7 @@ export const useSpriteSheet = (
     generatedFrames.length,
     sheetDimensions.width,
     sheetDimensions.height,
+    sliceSettings,
     sliceSettings.cols,
     sliceSettings.rows,
     sliceSettings.paddingX,

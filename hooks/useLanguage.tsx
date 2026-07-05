@@ -90,6 +90,8 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
  * );
  * ```
  */
+// Hook export alongside LanguageProvider — intentional; fast-refresh only applies to component exports.
+// eslint-disable-next-line react-refresh/only-export-components
 export const useLanguage = (): LanguageContextType => {
   const context = useContext(LanguageContext);
   if (context === undefined) {

@@ -37,7 +37,7 @@ import {
 import type { ChromaKeyColorType } from '../../../../types.ts';
 
 import { generateSheetImage } from './geminiSheet.mts';
-import { decodeImage, encodePng, extForBytes, removeChromaKey, sliceSheet } from './nodeImage.mts';
+import { decodeImage, encodePng, extForBytes, removeChromaKey, thinWhiteBorder, sliceSheet } from './nodeImage.mts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = resolve(SCRIPT_DIR, '../../../..');
@@ -56,6 +56,7 @@ interface StickerConfig {
   rows?: number; // single mode only (default 6)
   model?: string; // default: gemini-3.1-flash-image-preview
   resolution?: string; // output resolution, default: 1K (model-dependent)
+  whiteBorderTrimPx?: number; // erode the white die-cut border by N px (default 3; 0 = off)
 }
 
 function parseArgs(argv: string[]) {
@@ -200,6 +201,7 @@ async function main() {
   const chromaKeyColor: ChromaKeyColorType = config.chromaKeyColor ?? 'green';
   const model = config.model ?? 'gemini-3.1-flash-image-preview';
   const resolution = config.resolution ?? '1K';
+  const whiteBorderTrimPx = config.whiteBorderTrimPx ?? 3;
 
   const sheets = planSheets(config);
 
@@ -259,6 +261,10 @@ async function main() {
     console.log(`   · removing chroma background...`);
     const image = decodeImage(rawPng);
     removeChromaKey(image, chromaKeyColor);
+    if (whiteBorderTrimPx > 0) {
+      console.log(`   · thinning white border (-${whiteBorderTrimPx}px)...`);
+      thinWhiteBorder(image, whiteBorderTrimPx);
+    }
     await writeFile(resolve(sheetDir, '_processed-sheet.png'), encodePng(image));
 
     console.log(`   · slicing into ${sheet.cols * sheet.rows} stickers (native ${Math.floor(image.width / sheet.cols)}x${Math.floor(image.height / sheet.rows)} px)...`);

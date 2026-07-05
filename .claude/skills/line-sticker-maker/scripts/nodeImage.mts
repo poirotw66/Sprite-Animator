@@ -68,8 +68,8 @@ export function decodePng(bytes: Uint8Array): RgbaImage {
   const ab = bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength
     ? bytes.buffer
     : bytes.slice().buffer;
-  const img = (UPNG as any).decode(ab);
-  const frames = (UPNG as any).toRGBA8(img) as ArrayBuffer[];
+  const img = UPNG.decode(ab);
+  const frames = UPNG.toRGBA8(img);
   return {
     data: new Uint8ClampedArray(frames[0]),
     width: img.width,
@@ -79,12 +79,12 @@ export function decodePng(bytes: Uint8Array): RgbaImage {
 
 /** Encode an RGBA buffer to lossless PNG bytes (cnum=0 = full colour, no quantization). */
 export function encodePng(image: RgbaImage): Uint8Array {
-  const ab = (UPNG as any).encode(
+  const ab = UPNG.encode(
     [image.data.buffer],
     image.width,
     image.height,
     0
-  ) as ArrayBuffer;
+  );
   return new Uint8Array(ab);
 }
 
@@ -107,6 +107,61 @@ export function removeChromaKey(
     CHROMA_KEY_EDGE_BAND_RADIUS,
     CHROMA_KEY_EDGE_BLEND
   );
+  return image;
+}
+
+/**
+ * Thin the model-drawn white die-cut border by eroding the silhouette inward
+ * by `erodePx`, with a soft `feather` ramp so the new cut edge stays smooth.
+ *
+ * The white border is the outermost ring of the subject after chroma removal,
+ * so eroding the alpha by a few px trims white from the outside without touching
+ * the (inner) coloured artwork — as long as `erodePx` < border thickness.
+ * Uses a 4-neighbour BFS distance-to-background; mutates `image`.
+ */
+export function thinWhiteBorder(
+  image: RgbaImage,
+  erodePx: number,
+  feather: number = 1.5,
+  alphaThreshold: number = 128
+): RgbaImage {
+  const { data, width: w, height: h } = image;
+  const N = w * h;
+  if (erodePx <= 0) return image;
+
+  // Multi-source BFS: distance from each opaque px to the nearest background px.
+  const dist = new Int32Array(N).fill(-1);
+  const queue = new Int32Array(N);
+  let head = 0;
+  let tail = 0;
+  for (let i = 0; i < N; i++) {
+    if (data[i * 4 + 3] < alphaThreshold) {
+      dist[i] = 0;
+      queue[tail++] = i;
+    }
+  }
+  while (head < tail) {
+    const c = queue[head++];
+    const x = c % w;
+    const y = (c / w) | 0;
+    const nd = dist[c] + 1;
+    if (x > 0 && dist[c - 1] < 0) { dist[c - 1] = nd; queue[tail++] = c - 1; }
+    if (x < w - 1 && dist[c + 1] < 0) { dist[c + 1] = nd; queue[tail++] = c + 1; }
+    if (y > 0 && dist[c - w] < 0) { dist[c - w] = nd; queue[tail++] = c - w; }
+    if (y < h - 1 && dist[c + w] < 0) { dist[c + w] = nd; queue[tail++] = c + w; }
+  }
+
+  for (let i = 0; i < N; i++) {
+    const a0 = data[i * 4 + 3];
+    if (a0 === 0) continue;
+    const d = dist[i];
+    if (d <= erodePx) {
+      data[i * 4 + 3] = 0;
+    } else if (d < erodePx + feather) {
+      data[i * 4 + 3] = Math.round((a0 * (d - erodePx)) / feather);
+    }
+    // d >= erodePx + feather: keep original (already soft) alpha
+  }
   return image;
 }
 
