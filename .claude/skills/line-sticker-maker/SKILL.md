@@ -55,8 +55,8 @@ npx tsx .claude/skills/line-sticker-maker/scripts/generate.mts \
 | `scope` | `set` | `set` = full LINE set; `single` = one sheet |
 | `stickerCount` | `40` | **set mode only**. `40` = 2 sheets × 4×5 (LINE 上架標準); `48` = 3 sheets × 4×4 (legacy) |
 | `cols` / `rows` | `4` / `6` | **single mode only** grid size |
-| `model` | `gemini-3.1-flash-image-preview` | image model id |
-| `resolution` | `1K` | output resolution; `0.5K`/`1K`/`2K`/`4K` for 3.1-flash, `1K` for 2.5-flash. Auto-dropped if the model rejects it. |
+| `model` | `gemini-3.1-flash-lite-image` | image model id |
+| `resolution` | `1K` | output resolution; `0.5K`/`1K`/`2K`/`4K` for 3.1-flash, `1K` for 3.1-flash-lite / 2.5-flash. Auto-dropped if the model rejects it. |
 
 ## Output
 

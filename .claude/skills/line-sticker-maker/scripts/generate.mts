@@ -53,7 +53,7 @@ interface StickerConfig {
   stickerCount?: number; // set mode only: 40 (LINE default) or 48 (legacy)
   cols?: number; // single mode only (default 4)
   rows?: number; // single mode only (default 6)
-  model?: string; // default: gemini-3.1-flash-image-preview
+  model?: string; // default: gemini-3.1-flash-lite-image
   resolution?: string; // output resolution, default: 1K (model-dependent)
 }
 
@@ -201,7 +201,7 @@ async function main() {
   const outDir = resolve(process.cwd(), (args.out as string) ?? 'line-stickers-out');
   const includeText = config.includeText ?? true;
   const chromaKeyColor: ChromaKeyColorType = config.chromaKeyColor ?? 'green';
-  const model = config.model ?? 'gemini-3.1-flash-image-preview';
+  const model = config.model ?? 'gemini-3.1-flash-lite-image';
   const resolution = config.resolution ?? '1K';
 
   const sheets = planSheets(config);

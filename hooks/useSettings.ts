@@ -8,6 +8,23 @@ const HF_TOKEN_STORAGE_KEY = 'hf_token';
 const OUTPUT_RESOLUTION_STORAGE_KEY = 'gemini_output_resolution';
 const STYLE_PREVIEW_RESOLUTION_STORAGE_KEY = 'gemini_style_preview_resolution';
 
+/** Map retired preview model ids to stable API names. */
+const LEGACY_MODEL_IDS: Record<string, string> = {
+  'gemini-3-pro-image-preview': 'gemini-3-pro-image',
+  'gemini-3.1-flash-image-preview': 'gemini-3.1-flash-image',
+};
+
+function resolveStoredModel(storedModel: string | null): string {
+  if (!storedModel) {
+    return DEFAULT_MODEL;
+  }
+  const migrated = LEGACY_MODEL_IDS[storedModel] ?? storedModel;
+  if ((SUPPORTED_MODELS as readonly string[]).includes(migrated)) {
+    return migrated;
+  }
+  return DEFAULT_MODEL;
+}
+
 /**
  * Custom hook for managing application settings including API key and model selection.
  * Handles localStorage persistence and environment variable fallback.
@@ -49,13 +66,10 @@ export const useSettings = () => {
     if (storedHfToken) setHfToken(storedHfToken);
 
     // Validate stored model or force update to the recommended one
-    let model = DEFAULT_MODEL;
-    if (storedModel && (SUPPORTED_MODELS as readonly string[]).includes(storedModel)) {
-      model = storedModel;
-      setSelectedModel(storedModel);
-    } else {
-      setSelectedModel(DEFAULT_MODEL);
-      localStorage.setItem(MODEL_STORAGE_KEY, DEFAULT_MODEL);
+    const model = resolveStoredModel(storedModel);
+    setSelectedModel(model);
+    if (!storedModel || model !== storedModel) {
+      localStorage.setItem(MODEL_STORAGE_KEY, model);
     }
 
     // Output resolution: must be allowed for current model (2.5 Flash = 1K only; 3 Pro = 1K/2K/4K)
