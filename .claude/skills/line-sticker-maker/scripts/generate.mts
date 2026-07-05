@@ -27,17 +27,15 @@ import {
   type StyleSlot,
   type ThemeSlot,
 } from '../../../../utils/lineStickerPrompt.ts';
-import {
-  LINE_STICKER_SHEET_INDICES,
-  LINE_STICKER_SET_COLS,
-  LINE_STICKER_SET_ROWS,
-  LINE_STICKER_TOTAL_SET_FRAMES,
-  sliceLineStickerSheetFrames,
-} from '../../../../utils/lineStickerSetSchema.ts';
 import type { ChromaKeyColorType } from '../../../../types.ts';
 
 import { generateSheetImage } from './geminiSheet.mts';
 import { decodeImage, encodePng, extForBytes, removeChromaKey, sliceSheet } from './nodeImage.mts';
+import {
+  DEFAULT_LINE_STICKER_SET_COUNT,
+  resolveSetLayout,
+  splitPhrasesAcrossSheets,
+} from './sheetPlan.ts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = resolve(SCRIPT_DIR, '../../../..');
@@ -52,6 +50,7 @@ interface StickerConfig {
   chromaKeyColor?: ChromaKeyColorType; // default: green
   includeText?: boolean; // default: true (model draws text)
   scope?: 'set' | 'single'; // default: set
+  stickerCount?: number; // set mode only: 40 (LINE default) or 48 (legacy)
   cols?: number; // single mode only (default 4)
   rows?: number; // single mode only (default 6)
   model?: string; // default: gemini-3.1-flash-image-preview
@@ -169,13 +168,17 @@ function planSheets(config: StickerConfig): SheetPlan[] {
     const phrases = buildPhraseList(config, cols * rows);
     return [{ label: 'sheet-1', cols, rows, phrases }];
   }
-  // set: 3 sheets x 4x4, phrases sliced per sheet from the full 48-list
-  const all = buildPhraseList(config, LINE_STICKER_TOTAL_SET_FRAMES);
-  return LINE_STICKER_SHEET_INDICES.map((sheetIndex) => ({
+
+  const stickerCount = config.stickerCount ?? DEFAULT_LINE_STICKER_SET_COUNT;
+  const layouts = resolveSetLayout(stickerCount);
+  const all = buildPhraseList(config, stickerCount);
+  const phraseSlices = splitPhrasesAcrossSheets(all, layouts);
+
+  return layouts.map((layout, sheetIndex) => ({
     label: `sheet-${sheetIndex + 1}`,
-    cols: LINE_STICKER_SET_COLS,
-    rows: LINE_STICKER_SET_ROWS,
-    phrases: sliceLineStickerSheetFrames(all, sheetIndex),
+    cols: layout.cols,
+    rows: layout.rows,
+    phrases: phraseSlices[sheetIndex] ?? [],
   }));
 }
 
@@ -202,9 +205,12 @@ async function main() {
   const resolution = config.resolution ?? '1K';
 
   const sheets = planSheets(config);
+  const stickerTotal = sheets.reduce((sum, sheet) => sum + sheet.cols * sheet.rows, 0);
 
-  console.log(`▶ LINE sticker job: scope=${config.scope ?? 'set'}, sheets=${sheets.length}, ` +
-    `chroma=${chromaKeyColor}, text=${includeText ? 'model-drawn' : 'none'}, model=${model}, resolution=${resolution}`);
+  console.log(
+    `▶ LINE sticker job: scope=${config.scope ?? 'set'}, stickers=${stickerTotal}, sheets=${sheets.length}, ` +
+      `chroma=${chromaKeyColor}, text=${includeText ? 'model-drawn' : 'none'}, model=${model}, resolution=${resolution}`
+  );
 
   if (dryRun) {
     for (const sheet of sheets) {
@@ -229,7 +235,10 @@ async function main() {
   console.log(`▶ reference: ${basename(imgPath)} (${referenceMimeType})`);
 
   await mkdir(outDir, { recursive: true });
+  const stickersDir = resolve(outDir, 'stickers');
+  await mkdir(stickersDir, { recursive: true });
   const manifest: Array<Record<string, unknown>> = [];
+  let globalIndex = 0;
 
   for (const sheet of sheets) {
     const slots = buildSlots(config, sheet.phrases);
@@ -264,12 +273,18 @@ async function main() {
     console.log(`   · slicing into ${sheet.cols * sheet.rows} stickers (native ${Math.floor(image.width / sheet.cols)}x${Math.floor(image.height / sheet.rows)} px)...`);
     const frames = sliceSheet(image, sheet.cols, sheet.rows);
     for (let i = 0; i < frames.length; i++) {
+      globalIndex++;
       const name = `sticker-${pad(i + 1)}.png`;
-      await writeFile(resolve(sheetDir, name), encodePng(frames[i]));
+      const globalName = `sticker-${pad(globalIndex)}.png`;
+      const png = encodePng(frames[i]);
+      await writeFile(resolve(sheetDir, name), png);
+      await writeFile(resolve(stickersDir, globalName), png);
       manifest.push({
+        globalIndex,
         sheet: sheet.label,
         index: i + 1,
         file: `${sheet.label}/${name}`,
+        uploadFile: `stickers/${globalName}`,
         phrase: sheet.phrases[i] ?? '',
         width: frames[i].width,
         height: frames[i].height,
@@ -283,6 +298,7 @@ async function main() {
     JSON.stringify({ config, stickers: manifest }, null, 2)
   );
   console.log(`\n✓ All done. ${manifest.length} stickers in ${outDir}`);
+  console.log(`  upload folder: ${stickersDir}`);
   console.log(`  manifest: ${resolve(outDir, 'manifest.json')}`);
 }
 

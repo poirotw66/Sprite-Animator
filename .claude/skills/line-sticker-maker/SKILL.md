@@ -52,7 +52,8 @@ npx tsx .claude/skills/line-sticker-maker/scripts/generate.mts \
 | `language` | `zh-TW` | `zh-TW`, `zh-CN`, `en`, `ja` |
 | `chromaKeyColor` | `green` | `magenta` or `green` (background to key out) |
 | `includeText` | `true` | `true` = Gemini draws the phrase text; `false` = art only |
-| `scope` | `set` | `set` = 3 sheets × 4×4 = 48 stickers; `single` = one sheet |
+| `scope` | `set` | `set` = full LINE set; `single` = one sheet |
+| `stickerCount` | `40` | **set mode only**. `40` = 2 sheets × 4×5 (LINE 上架標準); `48` = 3 sheets × 4×4 (legacy) |
 | `cols` / `rows` | `4` / `6` | **single mode only** grid size |
 | `model` | `gemini-3.1-flash-image-preview` | image model id |
 | `resolution` | `1K` | output resolution; `0.5K`/`1K`/`2K`/`4K` for 3.1-flash, `1K` for 2.5-flash. Auto-dropped if the model rejects it. |
@@ -61,12 +62,14 @@ npx tsx .claude/skills/line-sticker-maker/scripts/generate.mts \
 
 ```
 <out>/
-  manifest.json                 # all stickers + their phrases + pixel sizes
+  manifest.json                 # all stickers + phrases + pixel sizes
+  stickers/
+    sticker-01.png ...          # flat folder for LINE upload (global 1–40)
   sheet-1/
     _raw-sheet.png              # raw Gemini sheet (debug)
     _processed-sheet.png        # after chroma removal (debug)
-    sticker-01.png ...          # individual transparent stickers (native res)
-  sheet-2/ ...                  # (set mode)
+    sticker-01.png ...          # per-sheet slices (same art, local index)
+  sheet-2/ ...                  # (40-sticker set = 2 sheets)
 ```
 
 ## Notes / limits
@@ -76,7 +79,7 @@ npx tsx .claude/skills/line-sticker-maker/scripts/generate.mts \
 - **No normalization step**: the shared chroma core auto-detects the dominant
   background, so the app's canvas-based `normalizeBackgroundColor` is skipped.
   If a sheet shows colour residue, regenerate or tune `CHROMA_KEY_FUZZ`.
-- Each sheet = one Gemini image call. A full set = 3 calls; expect retries on
+- Each sheet = one Gemini image call. A **40-sticker set = 2 calls** (4×5 × 2); legacy 48 = 3 calls. Expect retries on
   rate limits (429/503) with exponential backoff.
 - Gemini image models may return **JPEG** (e.g. 3.1-flash returns JPEG); the
   pipeline decodes PNG/JPEG by magic bytes (jpeg-js) and always writes the
