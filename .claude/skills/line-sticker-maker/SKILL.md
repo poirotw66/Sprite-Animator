@@ -75,12 +75,11 @@ git submodule update --init line-s
 ```
 
 After `generate.mts` / `finalize.mts`, if `lineS.syncToLineS: true` (default when
-`line-s/` exists), the pack is copied to `line-s/input/706/{Set Name}/` and
-`line-s/.env.batch/{Set_Name}.env` is written.
+`line-s/` exists), the pack is copied to `line-s/input/706/{Set Name}/` and writes `<out>/.env.batch/{Set_Name}.env`.
 
 ```bash
 npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts \
-  --env line-s/.env.batch/Cozy_Cream_Cat_Daily_Chat.env
+  --env .claude/skills/line-sticker-maker/example/output/p4/.env.batch/Cozy_Cream_Cat_Daily_Chat.env
 ```
 
 See **`.claude/skills/line-sticker-upload/SKILL.md`** for Drive / Playwright setup.
@@ -141,7 +140,7 @@ and optionally syncs to **`line-s/input/706/{Set Name}/`**:
 
 line-s/input/706/Cozy Cream Cat Daily Chat/   ← auto-sync when syncToLineS
   (same zip, md, sprite_sheets)
-line-s/.env.batch/Cozy_Cream_Cat_Daily_Chat.env
+  .env.batch/Cozy_Cream_Cat_Daily_Chat.env    ← upload env (stays in --out, not in submodule)
 ```
 
 Without `lineS`, legacy output is `<out>/line-upload/` + `line-upload.zip`.

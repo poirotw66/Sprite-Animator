@@ -101,7 +101,8 @@ UPLOAD_ZIP=${relBase}/${lineS.setName}.zip
 SPRITE_SHEETS_DIR=${relBase}/sprite_sheets
 `;
 
-  const envBatchDir = resolve(uploadRoot, '.env.batch');
+  // Keep .env.batch under job --out (not inside line-s submodule) to avoid dirty submodule status.
+  const envBatchDir = resolve(sourceDir, '.env.batch');
   const envFilePath = resolve(envBatchDir, `${envFileBaseName(lineS.setName)}.env`);
   await mkdir(envBatchDir, { recursive: true });
   await writeFile(envFilePath, envContent, 'utf8');

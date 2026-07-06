@@ -1,3 +1,4 @@
 [submodule "line-s"]
 	path = line-s
 	url = https://github.com/poirotw66/line-stickers-upload-skill.git
+	ignore = untracked

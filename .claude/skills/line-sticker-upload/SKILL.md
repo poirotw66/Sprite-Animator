@@ -34,7 +34,7 @@ line-sticker-maker (generate.mts)
   → example/output/pX/          ← local pack (zip, md, sprite_sheets)
   → sync-to-line-s (auto if lineS.syncToLineS)
   → line-s/input/706/{Set Name}/
-  → line-s/.env.batch/{Set_Name}.env
+  → example/output/pX/.env.batch/{Set_Name}.env
   → run-line-upload.mts         ← Drive + LINE Creators Market
 ```
 
@@ -61,16 +61,16 @@ npx tsx .claude/skills/line-sticker-maker/scripts/sync-to-line-s.mts \
 
 ```bash
 npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts \
-  --env line-s/.env.batch/Cozy_Cream_Cat_Daily_Chat.env
+  --env .claude/skills/line-sticker-maker/example/output/p4/.env.batch/Cozy_Cream_Cat_Daily_Chat.env
 ```
 
 Single step:
 
 ```bash
-npx tsx .../run-line-upload.mts --env line-s/.env.batch/Set_Name.env --step gdrive
-npx tsx .../run-line-upload.mts --env line-s/.env.batch/Set_Name.env --step provision
-npx tsx .../run-line-upload.mts --env line-s/.env.batch/Set_Name.env --step zip
-npx tsx .../run-line-upload.mts --env line-s/.env.batch/Set_Name.env --step submit
+npx tsx .../run-line-upload.mts --env example/output/pX/.env.batch/Set_Name.env --step gdrive
+npx tsx .../run-line-upload.mts --env example/output/pX/.env.batch/Set_Name.env --step provision
+npx tsx .../run-line-upload.mts --env example/output/pX/.env.batch/Set_Name.env --step zip
+npx tsx .../run-line-upload.mts --env example/output/pX/.env.batch/Set_Name.env --step submit
 ```
 
 ## Pipeline order (do not skip)
@@ -92,14 +92,13 @@ line-s/
     {Set Name}.zip
     {Set Name}.md
     sprite_sheets/
-  .env.batch/{Set_Name}.env
-  .env                    ← copied from .env.batch before upload
+  .env.batch/{Set_Name}.env   ← under job --out, not inside line-s submodule
 ```
 
 ## Secrets (never commit)
 
 - `line-s/.env`
-- `line-s/.env.batch/` (local batch configs)
+- `example/output/*/.env.batch/` (local batch configs)
 - `line-s/.cursor/skills/line-sticker-upload/scripts/playwright_line_state.json`
 - `line-s/.cursor/skills/line-sticker-upload/scripts/gdrive_token.json`
 
