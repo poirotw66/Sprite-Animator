@@ -26,7 +26,6 @@ import {
 } from '../../../../utils/lineStickerTextOverlaySubject.ts';
 import {
   extractFillHexFromTextColorPreset,
-  fontCssStackForPreset,
   getEffectiveProgrammaticPlacementMode,
   resolveCanvasFontNumericWeight,
   resolveProgrammaticFontFamilyCss,
