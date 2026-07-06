@@ -1,21 +1,19 @@
 ---
 name: line-sticker-maker
-description: Generate a complete LINE sticker set from a single character reference image, fully headless (no browser). Reuses the app's prompt builder + shared chroma-key core to produce a sprite sheet via Gemini, remove the chroma background, slice it into individual transparent sticker PNGs, and package a LINE Creators Market upload ZIP. Use when the user wants to "make LINE stickers", "produce a sticker set", "生成貼圖 / 做一套貼圖" from a reference image.
+description: Generate a complete LINE sticker set from a single character reference image, fully headless (no browser). Produces sprite sheets via Gemini, slices stickers, and packages output for the line-s upload script (or legacy line-upload.zip). Use when the user wants to "make LINE stickers", "produce a sticker set", "生成貼圖 / 做一套貼圖" from a reference image.
 ---
 
 # LINE Sticker Maker
 
 Headless version of this project's LINE sticker workflow. Given one character
-reference image, it generates a sprite sheet with Gemini, removes the chroma-key
-background, slices it into individual transparent sticker PNGs, and (in set mode)
-builds a **LINE Creators Market upload ZIP** — all from the command line, no
-browser/UI.
+reference image, it generates sprite sheets with Gemini, removes the chroma-key
+background, slices individual transparent sticker PNGs, and packages the result
+for **line-s upload** (preferred) or legacy LINE Creators Market ZIP — all from
+the command line, no browser/UI.
 
 It **reuses the app's own modules** (`utils/lineStickerPrompt.ts`,
 `utils/lineStickerSetSchema.ts`, `utils/chromaKeyCore.ts`,
-`utils/lineStickerUploadSpec.ts`) so output matches the web app. Only the browser
-Canvas layer is replaced with `upng-js`. Native-resolution slices are kept for
-debug; upload assets are resized to LINE specs.
+`utils/lineStickerUploadSpec.ts`) so output matches the web app.
 
 ## How to run
 
@@ -25,90 +23,132 @@ npx tsx .claude/skills/line-sticker-maker/scripts/generate.mts \
   --out <output-dir>
 ```
 
-- `--dry-run` prints the assembled prompt + phrase list per sheet and writes
-  nothing / calls no API. Use it to sanity-check a config first.
-- The Gemini API key is read from `GEMINI_API_KEY` (env var), else the repo's
-  `.env`, else `.env.local`. No flag needed.
-- Run from the repo root. `node` is nvm-managed; if `node`/`npx` are not found,
-  `source ~/.nvm/nvm.sh` first.
+When `lineS` is present, the upload pack is written **into the job `--out` folder**
+(under `.claude/skills/line-sticker-maker/example/output/pX/`). No `root` needed.
+
+```bash
+npx tsx .../generate.mts \
+  --config example/p4-job.config.json \
+  --out .claude/skills/line-sticker-maker/example/output/p4
+```
+- `--dry-run` prints the assembled prompt + phrase list per sheet (no API, no files).
+- Gemini API key: `GEMINI_API_KEY` env var, else repo `.env` / `.env.local`.
+- Run from the repo root.
+
+### Regenerate one sheet (isolated)
+
+```bash
+npx tsx .../generate.mts --config job.json --out output/p3 \
+  --sheet sheet-1 --sheet-dir sheet-1-v2
+```
+
+Then merge and repack (updates `activeSheets` in manifest):
+
+```bash
+npx tsx .../finalize.mts --out output/p3 --config job.json \
+  --sheets sheet-1-v2,sheet-2
+```
+
+`--sheets` accepts comma **or** semicolon (Windows-safe). Omit `--sheets` to
+use `manifest.json` → `activeSheets`, or fall back to `sheet-1`, `sheet-2`.
 
 ## Agent workflow
 
-1. **Gather inputs** from the user (ask only for what's missing):
-   - reference character image path (required)
-   - sticker theme or a custom phrase list
-   - language, art style, single sheet vs full set
-2. **Write a `config.json`** (copy `config.example.json` as a starting point).
-3. **Dry-run first** to verify prompt + phrases look right.
-4. **Run for real**, then **Read a few output PNGs** to show the user results.
-5. Point the user to **`line-upload.zip`** for LINE Creators Market → Stickers →
-   **ZIP file upload**.
+1. **Gather inputs** (ask only for what's missing):
+   - reference image path
+   - `phraseSetFile` or custom phrases
+   - `lineS.setName` + zh/en titles & descriptions
+2. **Write `config.json`** from `config.example.json`.
+3. **`--dry-run`** to verify prompt + phrases.
+4. **Run for real** → one command produces debug output + line-s upload folder.
+5. **Spot-check** a few `stickers/sticker-NN.png` and `manifest.json` grid scores.
+6. Tell the user the **`--out` folder** (upload ZIP + `.env.batch` live there). Copy
+   to `line-s/input/706/` only when ready to upload.
 
 ## config.json fields
 
 | field | default | notes |
 |---|---|---|
-| `referenceImage` | — | path to the character reference (png/jpg/webp). Resolved relative to the config file, cwd, or repo root. |
-| `characterDescription` | `""` | optional extra notes appended to the character rules |
-| `style` | `matchUploaded` | `matchUploaded`, `chibi`, `pixel`, `minimalist`, `anime`, `cartoon`, `watercolor`, `yurukawa`, `pastel`, `flat`, `doodle` |
-| `theme` | `daily` | `daily`, `social`, `workplace`, `emotion`, `meme` |
-| `customPhrases` | `[]` | when non-empty, overrides the theme's phrases (one sticker per phrase, cycled to fill) |
+| `referenceImage` | — | character reference (png/jpg/webp). Resolved relative to config file, cwd, or repo root. |
+| `phraseSetFile` | — | load phrases + actionDescs from a phrase-set JSON (recommended). |
+| `characterDescription` | `""` | optional extra notes for character rules |
+| `style` | `matchUploaded` | preset key: `chibi`, `pixel`, `watercolor`, etc. |
+| `theme` | `daily` | used when `customPhrases` is empty |
+| `customPhrases` | `[]` | overrides theme phrases when non-empty |
 | `language` | `zh-TW` | `zh-TW`, `zh-CN`, `en`, `ja` |
-| `chromaKeyColor` | `green` | `magenta` or `green` (background to key out) |
-| `includeText` | `true` | `true` = Gemini draws the phrase text; `false` = art only |
+| `chromaKeyColor` | `green` | `magenta` or `green` |
+| `includeText` | `true` | Gemini draws phrase text in each cell |
 | `scope` | `set` | `set` = full LINE set; `single` = one sheet |
-| `stickerCount` | `40` | **set mode only**. `40` = 2 sheets × 4×5 (LINE 上架標準); `48` = 3 sheets × 4×4 (legacy) |
-| `cols` / `rows` | `4` / `6` | **single mode only** grid size |
-| `model` | `gemini-3.1-flash-lite-image` | image model id |
-| `resolution` | `1K` | output resolution; `0.5K`/`1K`/`2K`/`4K` for 3.1-flash, `1K` for 3.1-flash-lite / 2.5-flash. Auto-dropped if the model rejects it. |
-| `lineUpload` | `true` in set mode | when `true`, emit `line-upload/` + `line-upload.zip` for LINE Creators Market |
-| `mainStickerIndex` | `1` | 1-based index for `main.png` (240×240) |
-| `tabStickerIndex` | `1` | 1-based index for `tab.png` (96×74) |
-| `lineUploadStickerCount` | auto | override upload count (`8`/`16`/`24`/`32`/`40`); default `40` when 48 stickers are produced |
+| `stickerCount` | `40` | 40 = 2×4×5 (LINE standard); 48 = legacy 3×4×4 |
+| `model` | `gemini-3.1-flash-image` | use flash-image for stable 4×5 grids |
+| `resolution` | `1K` | `0.5K`/`1K`/`2K`/`4K` (model-dependent) |
+| `maxSheetRetries` | `3` | Gemini retries when grid validation fails |
+| `minGridAlignmentScore` | `0.72` | 0–1; reject sheet below this score |
+| `lineUpload` | `true` | build upload ZIP at end of full run |
+| `mainStickerIndex` / `tabStickerIndex` | `1` | 1-based indices for shop images |
+| **`lineS`** | — | **line-s upload layout (recommended)** |
 
-## Output
+### `lineS` block
+
+| field | notes |
+|---|---|
+| `enabled` | default `true` when block is present |
+| `root` | **optional** — external line-s repo. Omit to pack into `--out` (recommended). |
+| `creatorId` | used in `.env.batch` paths (default `706`) |
+| `setName` | English ZIP / MD base name, e.g. `Cozy Cream Cat Daily Chat` |
+| `titleZh` / `descZh` | Traditional Chinese shop listing |
+| `titleEn` / `descEn` | English shop listing |
+| `writeEnvBatch` | default `true`; writes `<out>/.env.batch/{Set_Name}.env` |
+
+When `lineS` is enabled (default), **`generate.mts` writes the upload pack into `--out`**:
 
 ```
-<out>/
-  manifest.json                 # all stickers + phrases + pixel sizes
-  line-upload.zip               # ★ upload this to LINE Creators Market
-  line-upload/
-    main.png                    # 240×240
-    tab.png                     # 96×74
-    01.png ... 40.png           # each ≤370×320, even dimensions, transparent PNG
-  stickers/
-    sticker-01.png ...          # flat folder (native resolution)
-  sheet-1/
-    _raw-sheet.png              # raw Gemini sheet (debug)
-    _processed-sheet.png        # after chroma removal (debug)
-    sticker-01.png ...          # per-sheet slices (native resolution)
-  sheet-2/ ...                  # (40-sticker set = 2 sheets)
+.claude/skills/line-sticker-maker/example/output/p4/
+  sheet-1/                          ← debug slices
+  sheet-2/
+  stickers/                         ← flat 40 PNGs
+  manifest.json                     ← activeSheets, gridScores
+  Cozy Cream Cat Daily Chat.zip     ← ★ LINE upload ZIP (42 PNGs)
+  Cozy Cream Cat Daily Chat.md
+  sprite_sheets/
+    sprite_sheet_1_transparent.png
+    sprite_sheet_2_transparent.png
+  .env.batch/
+    Cozy_Cream_Cat_Daily_Chat.env   ← copy to line-s repo when uploading
 ```
 
-### LINE upload ZIP contents
+To publish: copy the set folder contents to `line-s/input/706/{Set Name}/`, or set
+`lineS.root` to your line-s repo path for direct output there.
 
-File names must match LINE's bulk-upload convention:
+Without `lineS`, legacy output is `<out>/line-upload/` + `line-upload.zip`.
 
-| File | Size | Role |
-|---|---|---|
-| `main.png` | 240×240 | Shop main image |
-| `tab.png` | 96×74 | Chat sticker tab icon |
-| `01.png`–`40.png` | max 370×320 (even px) | Sticker images |
+## Scripts
 
-Upload at [LINE Creators Market](https://creator.line.me/) → Stickers → edit images →
-**ZIP file upload**. Select sticker count (40) to match before uploading.
+| script | purpose |
+|---|---|
+| `generate.mts` | full pipeline: Gemini → slice → finalize → line-s |
+| `finalize.mts` | merge `activeSheets` → stickers + upload pack (after sheet regen) |
+| `reslice-sheet.mts` | re-slice existing `_processed-sheet.png` (no Gemini) |
+| `organize-line-s-input.mts` | standalone pack from legacy `line-upload.zip` (fallback) |
+| `rebuild-line-upload.mts` | legacy only; prefer `finalize.mts` |
+
+## manifest.json
+
+After a full run or `finalize.mts`:
+
+```json
+{
+  "activeSheets": ["sheet-1", "sheet-2"],
+  "gridScores": { "sheet-1": 0.85, "sheet-2": 0.84 },
+  "lineSDest": ".../example/output/p4",
+  "stickers": [ ... ]
+}
+```
 
 ## Notes / limits
 
-- **Sprite sheet size**: LINE sticker generation always requests **1:1 @ 1K → 1024×1024 px**
-  (4×5 grid → ~256×204 px per cell before inset; 4×4 → ~256×256).
-- **Upload sizing**: `line-upload/` assets are scaled to fit LINE limits while
-  keeping aspect ratio and transparent backgrounds. `stickers/` keeps native
-  resolution for inspection.
-- **No normalization step**: the shared chroma core auto-detects the dominant
-  background. If a sheet shows colour residue, regenerate or tune `CHROMA_KEY_FUZZ`.
-- Each sheet = one Gemini image call. A **40-sticker set = 2 calls**; legacy 48 = 3 calls.
-- **48-sticker jobs**: upload pack uses the first **40** stickers by default (LINE standard).
-- Gemini image models may return **JPEG**; the pipeline decodes PNG/JPEG and writes PNG.
-- Each PNG should be ≤1 MB; ZIP ≤20 MB. Warnings are printed if limits are exceeded.
-- **Not included**: title/description/price, creator account setup, or LINE review approval.
+- Sprite sheets: **1:1 @ 1K → 1024×1024 px** (4×5 → ~256×204 px per cell).
+- Upload PNGs are scaled to LINE limits; `stickers/` keeps native resolution.
+- 40-sticker set = **2 Gemini calls** (one per sheet).
+- Grid prompt includes `[0. GRID LAYOUT]` anchor to reduce 5×5 drift.
+- Not included: LINE account setup, review, or pricing.

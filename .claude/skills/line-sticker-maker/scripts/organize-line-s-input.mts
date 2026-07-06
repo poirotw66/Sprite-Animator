@@ -2,23 +2,50 @@
  * Package Sprite-Animator LINE output into line-s upload input layout.
  *
  *   npx tsx organize-line-s-input.mts \
- *     --source .claude/skills/line-sticker-maker/example/output/p1 \
- *     --dest "C:/Users/sora0/Desktop/line-s/input/706/Cute Otter Daily Chat" \
- *     --name "Cute Otter Daily Chat"
+ *     --source example/output/p4 \
+ *     --dest "C:/Users/sora0/Desktop/line-s/input/706/Cozy Cream Cat Daily Chat" \
+ *     --name "Cozy Cream Cat Daily Chat" \
+ *     --title-zh "..." --title-en "..."
  */
 
-import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { copyFile, mkdir, writeFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-interface PackOptions {
-  sourceDir: string;
-  destDir: string;
+/** Default skill output root (example/output). Used in docs and config examples. */
+export const DEFAULT_SKILL_OUTPUT_ROOT = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '..',
+  'example',
+  'output'
+);
+
+export interface LineSConfig {
+  /** When false, skip line-s packaging (legacy line-upload only). Default: true when lineS block is present. */
+  enabled?: boolean;
+  /**
+   * External line-s repo root (contains input/ and .env.batch/).
+   * Omit to pack upload files directly into the job `--out` folder (under example/output/pX/).
+   */
+  root?: string;
+  /** Creator folder under input/ when using external root (default: 706). */
+  creatorId?: string;
+  /** English folder / ZIP base name, e.g. "Cozy Cream Cat Daily Chat". */
   setName: string;
   titleZh: string;
   descZh: string;
   titleEn: string;
   descEn: string;
+  /** Write .env.batch snippet (default: true). */
+  writeEnvBatch?: boolean;
+}
+
+export interface PackLineSOptions {
+  sourceDir: string;
+  lineS: LineSConfig;
   sheetDirs: string[];
+  /** Pre-built upload ZIP bytes (42 PNGs). */
+  zipBytes: Uint8Array;
 }
 
 function parseArgs(argv: string[]): Record<string, string> {
@@ -36,16 +63,57 @@ function parseArgs(argv: string[]): Record<string, string> {
   return args;
 }
 
-function buildMarkdown(options: PackOptions): string {
+export function isLineSEnabled(lineS: LineSConfig | undefined): boolean {
+  if (!lineS) return false;
+  return lineS.enabled !== false;
+}
+
+/**
+ * Upload pack destination:
+ * - no lineS.root → job `--out` dir (e.g. example/output/p4/)
+ * - lineS.root set → external line-s repo (root/input/706/setName/)
+ */
+export function resolveLineSDestDir(lineS: LineSConfig, jobOutDir: string): string {
+  if (!lineS.root?.trim()) {
+    return resolve(jobOutDir);
+  }
+  const creatorId = lineS.creatorId?.trim() || '706';
+  return resolve(lineS.root, 'input', creatorId, lineS.setName);
+}
+
+function resolveEnvBatchDir(lineS: LineSConfig, jobOutDir: string): string {
+  if (lineS.root?.trim()) {
+    return resolve(lineS.root, '.env.batch');
+  }
+  return resolve(jobOutDir, '.env.batch');
+}
+
+export function validateLineSConfig(lineS: LineSConfig): void {
+  const missing: string[] = [];
+  if (!lineS.setName?.trim()) missing.push('lineS.setName');
+  if (!lineS.titleZh?.trim()) missing.push('lineS.titleZh');
+  if (!lineS.descZh?.trim()) missing.push('lineS.descZh');
+  if (!lineS.titleEn?.trim()) missing.push('lineS.titleEn');
+  if (!lineS.descEn?.trim()) missing.push('lineS.descEn');
+  if (missing.length > 0) {
+    throw new Error(`lineS config incomplete — set: ${missing.join(', ')}`);
+  }
+}
+
+function envFileBaseName(setName: string): string {
+  return setName.replace(/[^\w]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+}
+
+function buildMarkdown(lineS: LineSConfig): string {
   return `# Traditional Chinese (Taiwan)
 
 ## Title
 
-${options.titleZh}
+${lineS.titleZh}
 
 ## Description
 
-${options.descZh}
+${lineS.descZh}
 
 ---
 
@@ -53,18 +121,18 @@ ${options.descZh}
 
 ## Title
 
-${options.titleEn}
+${lineS.titleEn}
 
 ## Description
 
-${options.descEn}
+${lineS.descEn}
 `;
 }
 
-function buildEnvBatch(options: PackOptions): string {
-  const envName = options.setName.replace(/[^\w]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
-  const relBase = `input/706/${options.setName}`;
-  return `# LINE Creators Market — ${options.setName}
+function buildEnvBatch(lineS: LineSConfig, creatorId: string): string {
+  const envName = envFileBaseName(lineS.setName);
+  const relBase = `input/${creatorId}/${lineS.setName}`;
+  return `# LINE Creators Market — ${lineS.setName}
 LINE_EMAIL=
 LINE_PASSWORD=
 LINE_CREATOR_ID=
@@ -73,15 +141,15 @@ LINE_STICKER_ID=
 GOOGLE_EMAIL=
 GOOGLE_PASSWORD=
 GDRIVE_PARENT_FOLDER=LINE-sticker
-GDRIVE_SET_FOLDER=${options.setName}
+GDRIVE_SET_FOLDER=${lineS.setName}
 GDRIVE_STICKER_SUBFOLDER=sticker-pack
 GDRIVE_FOLDER_ID=
 GDRIVE_SHARE_URL=
 
-STICKER_TITLE_ZH=${options.titleZh}
-STICKER_DESC_ZH=${options.descZh}
-STICKER_TITLE_EN=${options.titleEn}
-STICKER_DESC_EN=${options.descEn}
+STICKER_TITLE_ZH=${lineS.titleZh}
+STICKER_DESC_ZH=${lineS.descZh}
+STICKER_TITLE_EN=${lineS.titleEn}
+STICKER_DESC_EN=${lineS.descEn}
 
 COPYRIGHT=Copyright (c) Blo0m
 USE_AI=true
@@ -90,73 +158,118 @@ STICKER_COUNT=40
 SALE_REGION=all
 JOIN_CAMPAIGNS=false
 
-SOURCE_ZIP=${relBase}/${options.setName}.zip
-UPLOAD_ZIP=${relBase}/${options.setName}.zip
+SOURCE_ZIP=${relBase}/${lineS.setName}.zip
+UPLOAD_ZIP=${relBase}/${lineS.setName}.zip
 SPRITE_SHEETS_DIR=${relBase}/sprite_sheets
 `;
 }
 
-export async function organizeLineSInput(options: PackOptions): Promise<void> {
-  const sourceDir = resolve(options.sourceDir);
-  const destDir = resolve(options.destDir);
+/** Write line-s folder layout: Set Name.zip, Set Name.md, sprite_sheets/, optional .env.batch */
+export async function packLineSOutput(options: PackLineSOptions): Promise<{
+  destDir: string;
+  envFilePath?: string;
+}> {
+  const { sourceDir, lineS, sheetDirs, zipBytes } = options;
+  validateLineSConfig(lineS);
+
+  const destDir = resolveLineSDestDir(lineS, sourceDir);
   const spriteDir = resolve(destDir, 'sprite_sheets');
   await mkdir(spriteDir, { recursive: true });
 
-  const uploadZip = resolve(sourceDir, 'line-upload.zip');
-  const destZip = resolve(destDir, `${options.setName}.zip`);
-  await copyFile(uploadZip, destZip);
+  await writeFile(resolve(destDir, `${lineS.setName}.zip`), zipBytes);
 
-  for (let i = 0; i < options.sheetDirs.length; i++) {
-    const sheetDir = options.sheetDirs[i]!;
+  for (let i = 0; i < sheetDirs.length; i++) {
+    const sheetDir = sheetDirs[i]!;
     const processed = resolve(sourceDir, sheetDir, '_processed-sheet.png');
     const destSprite = resolve(spriteDir, `sprite_sheet_${i + 1}_transparent.png`);
     await copyFile(processed, destSprite);
   }
 
-  await writeFile(resolve(destDir, `${options.setName}.md`), buildMarkdown(options), 'utf8');
+  await writeFile(resolve(destDir, `${lineS.setName}.md`), buildMarkdown(lineS), 'utf8');
 
-  const lineSRoot = resolve(destDir, '..', '..', '..');
-  const envBatchDir = resolve(lineSRoot, '.env.batch');
-  const envFileName = `${options.setName.replace(/[^\w]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')}.env`;
+  if (lineS.writeEnvBatch === false) {
+    return { destDir };
+  }
+
+  const creatorId = lineS.creatorId?.trim() || '706';
+  const envBatchDir = resolveEnvBatchDir(lineS, sourceDir);
+  const envFileName = `${envFileBaseName(lineS.setName)}.env`;
+  const envFilePath = resolve(envBatchDir, envFileName);
   await mkdir(envBatchDir, { recursive: true });
-  await writeFile(resolve(envBatchDir, envFileName), buildEnvBatch(options), 'utf8');
+  await writeFile(envFilePath, buildEnvBatch(lineS, creatorId), 'utf8');
+
+  return { destDir, envFilePath };
 }
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const sourceDir = args.source ?? '';
-  const destDir = args.dest ?? '';
+  const destDirArg = args.dest ?? '';
   const setName = args.name ?? '';
-  if (!sourceDir || !destDir || !setName) {
+  if (!sourceDir || !destDirArg || !setName) {
     throw new Error(
-      'Usage: organize-line-s-input.mts --source <p1-out> --dest <line-s/input/706/Set Name> --name "Set Name"'
+      'Usage: organize-line-s-input.mts --source <out> --dest <line-s/input/706/Set Name> --name "Set Name" ' +
+        '--title-zh "..." --desc-zh "..." --title-en "..." --desc-en "..." [--sheets sheet-1,sheet-2]'
     );
   }
 
-  const sheetDirs = (args.sheets ?? 'sheet-1-flash,sheet-2').split(',').map((s) => s.trim());
-  const options: PackOptions = {
-    sourceDir,
-    destDir,
+  const titleZh = args['title-zh'] ?? '';
+  const descZh = args['desc-zh'] ?? '';
+  const titleEn = args['title-en'] ?? '';
+  const descEn = args['desc-en'] ?? '';
+  if (!titleZh || !descZh || !titleEn || !descEn) {
+    throw new Error('organize-line-s-input requires --title-zh, --desc-zh, --title-en, --desc-en');
+  }
+
+  const sheetDirs = (args.sheets ?? 'sheet-1,sheet-2').split(',').map((s) => s.trim()).filter(Boolean);
+  const lineSRoot = resolve(destDirArg, '..', '..', '..');
+  const lineS: LineSConfig = {
+    root: lineSRoot,
+    creatorId: '706',
     setName,
-    titleZh: args['title-zh'] ?? '呆萌水獺：日常聊天篇',
-    descZh:
-      args['desc-zh'] ??
-      '軟萌水獺陪你聊日常！從讚美加油、吃什麼到累爆哭哭，用超療癒表情回應每一句對話。',
-    titleEn: args['title-en'] ?? 'Cute Otter: Daily Chat',
-    descEn:
-      args['desc-en'] ??
-      'Cute Otter Daily Chat Sticker set. A fluffy otter buddy for everyday chats — cheers, snacks, meltdowns and silly moods in one adorable pack!',
-    sheetDirs,
+    titleZh,
+    descZh,
+    titleEn,
+    descEn,
   };
 
-  await organizeLineSInput(options);
-  console.log(`✓ Packed → ${resolve(destDir)}`);
+  const { readFile } = await import('node:fs/promises');
+  const zipPath = resolve(sourceDir, 'line-upload.zip');
+  let zipBytes: Uint8Array;
+  try {
+    zipBytes = new Uint8Array(await readFile(zipPath));
+  } catch {
+    throw new Error(
+      `Missing ${zipPath}. Run finalize.mts or generate.mts first, or pass a job with lineS enabled.`
+    );
+  }
+
+  const { destDir, envFilePath } = await packLineSOutput({
+    sourceDir: resolve(sourceDir),
+    lineS: {
+      root: lineSRoot,
+      creatorId: '706',
+      setName,
+      titleZh,
+      descZh,
+      titleEn,
+      descEn,
+    },
+    sheetDirs,
+    zipBytes,
+  });
+
+  console.log(`✓ Packed → ${destDir}`);
   console.log(`  ${setName}.md`);
   console.log(`  ${setName}.zip`);
   console.log(`  sprite_sheets/ (${sheetDirs.length} sheets)`);
+  if (envFilePath) console.log(`  ${envFilePath}`);
 }
 
-main().catch((err) => {
-  console.error('✗', err instanceof Error ? err.message : err);
-  process.exit(1);
-});
+const isCli = process.argv[1]?.includes('organize-line-s-input');
+if (isCli) {
+  main().catch((err) => {
+    console.error('✗', err instanceof Error ? err.message : err);
+    process.exit(1);
+  });
+}

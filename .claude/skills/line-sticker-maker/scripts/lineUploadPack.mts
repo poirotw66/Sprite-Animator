@@ -92,19 +92,7 @@ export function buildLineUploadPack(
   return { stickerCount, files, warnings };
 }
 
-export async function writeLineUploadPack(
-  outDir: string,
-  frames: RgbaImage[],
-  options: LineUploadPackOptions = {}
-): Promise<LineUploadPackResult> {
-  const pack = buildLineUploadPack(frames, options);
-  const uploadDir = resolve(outDir, 'line-upload');
-  await mkdir(uploadDir, { recursive: true });
-
-  for (const file of pack.files) {
-    await writeFile(resolve(uploadDir, file.name), file.bytes);
-  }
-
+async function encodeUploadZip(pack: LineUploadPackResult): Promise<Uint8Array> {
   const zip = new JSZip();
   for (const file of pack.files) {
     zip.file(file.name, file.bytes);
@@ -116,8 +104,46 @@ export async function writeLineUploadPack(
   });
   if (zipBytes.byteLength > LINE_STICKER_UPLOAD.maxZipBytes) {
     pack.warnings.push(
-      `line-upload.zip is ${Math.round(zipBytes.byteLength / 1024)} KB (> ${LINE_STICKER_UPLOAD.maxZipBytes / 1024} KB LINE limit).`
+      `Upload ZIP is ${Math.round(zipBytes.byteLength / 1024)} KB (> ${LINE_STICKER_UPLOAD.maxZipBytes / 1024} KB LINE limit).`
     );
+  }
+  return zipBytes;
+}
+
+/** Build upload pack metadata and ZIP bytes (no filesystem writes). */
+export async function buildLineUploadZipBytes(
+  frames: RgbaImage[],
+  options: LineUploadPackOptions = {}
+): Promise<{ pack: LineUploadPackResult; zipBytes: Uint8Array }> {
+  const pack = buildLineUploadPack(frames, options);
+  const zipBytes = await encodeUploadZip(pack);
+  return { pack, zipBytes };
+}
+
+/** Write upload ZIP to an explicit path (line-s layout or custom destination). */
+export async function writeLineUploadZip(
+  zipPath: string,
+  frames: RgbaImage[],
+  options: LineUploadPackOptions = {}
+): Promise<LineUploadPackResult> {
+  const { pack, zipBytes } = await buildLineUploadZipBytes(frames, options);
+  await mkdir(resolve(zipPath, '..'), { recursive: true });
+  await writeFile(zipPath, zipBytes);
+  return pack;
+}
+
+/** Legacy layout: `<outDir>/line-upload/` + `<outDir>/line-upload.zip`. */
+export async function writeLineUploadPack(
+  outDir: string,
+  frames: RgbaImage[],
+  options: LineUploadPackOptions = {}
+): Promise<LineUploadPackResult> {
+  const { pack, zipBytes } = await buildLineUploadZipBytes(frames, options);
+  const uploadDir = resolve(outDir, 'line-upload');
+  await mkdir(uploadDir, { recursive: true });
+
+  for (const file of pack.files) {
+    await writeFile(resolve(uploadDir, file.name), file.bytes);
   }
   await writeFile(resolve(outDir, 'line-upload.zip'), zipBytes);
 

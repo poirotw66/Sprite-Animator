@@ -31,7 +31,8 @@ import type { ChromaKeyColorType } from '../../../../types.ts';
 
 import { generateSheetImage } from './geminiSheet.mts';
 import { decodeImage, decodePng, encodePng, extForBytes, removeChromaKey, sliceSheet, type RgbaImage } from './nodeImage.mts';
-import { writeLineUploadPack } from './lineUploadPack.mts';
+import { finalizeStickerJob } from './finalizeJob.mts';
+import type { LineSConfig } from './organize-line-s-input.mts';
 import {
   buildGridCandidates,
   buildGridRetryPromptSuffix,
@@ -62,8 +63,10 @@ interface StickerConfig {
   stickerCount?: number; // set mode only: 40 (LINE default) or 48 (legacy)
   cols?: number; // single mode only (default 4)
   rows?: number; // single mode only (default 6)
-  model?: string; // default: gemini-3.1-flash-lite-image
+  model?: string; // default: gemini-3.1-flash-image
   resolution?: string; // output resolution, default: 1K (model-dependent)
+  /** line-s upload repo layout (replaces legacy line-upload/ when enabled). */
+  lineS?: LineSConfig;
   /** When true (default for set scope), emit LINE Creators Market upload pack + ZIP. */
   lineUpload?: boolean;
   /** 1-based sticker index used for main.png (default: 1). */
@@ -302,7 +305,7 @@ async function main() {
   const model =
     (typeof args.model === 'string' ? args.model : undefined) ??
     config.model ??
-    'gemini-3.1-flash-lite-image';
+    'gemini-3.1-flash-image';
   const resolution = config.resolution ?? '1K';
   const maxSheetRetries = Math.max(1, config.maxSheetRetries ?? 3);
   const minGridAlignmentScore = config.minGridAlignmentScore ?? 0.72;
@@ -360,6 +363,8 @@ async function main() {
   const manifest: Array<Record<string, unknown>> = [];
   let globalIndex = 0;
   const nativeFrames: RgbaImage[] = [];
+  const usedSheetFolders: string[] = [];
+  const gridScores: Record<string, number> = {};
 
   for (const sheet of iterationSheets) {
     const shouldGenerate = sheetsToGenerate.some((candidate) => candidate.label === sheet.label);
@@ -368,6 +373,7 @@ async function main() {
 
     if (!shouldGenerate) {
       console.log(`\n▶ ${sheet.label}: keeping existing stickers...`);
+      usedSheetFolders.push(sheetFolder);
       const frameCount = sheet.cols * sheet.rows;
       for (let i = 0; i < frameCount; i++) {
         globalIndex++;
@@ -399,6 +405,7 @@ async function main() {
     );
 
     console.log(`\n▶ ${sheetFolder}: generating ${sheet.cols}x${sheet.rows} sheet...`);
+    usedSheetFolders.push(sheetFolder);
 
     const gridCandidates = buildGridCandidates(sheet.cols, sheet.rows);
     let rawPng: Uint8Array | null = null;
@@ -446,6 +453,7 @@ async function main() {
             `   ✓ grid aligned on attempt ${attempt} (score ${gridValidation.expected.score.toFixed(2)})`
           );
         }
+        gridScores[sheetFolder] = gridValidation.expected.score;
         break;
       }
 
@@ -472,6 +480,7 @@ async function main() {
     await writeFile(resolve(sheetDir, '_processed-sheet.png'), encodePng(image));
 
     if (gridValidation && !gridValidation.ok) {
+      gridScores[sheetFolder] = gridValidation.expected.score;
       console.warn(
         `   ⚠ Final grid: expected ${sheet.cols}×${sheet.rows} (${gridValidation.expected.score.toFixed(2)}), ` +
           `detected ${gridValidation.detected.cols}×${gridValidation.detected.rows} (${gridValidation.detected.score.toFixed(2)})`
@@ -504,36 +513,64 @@ async function main() {
     console.log(`   ✓ ${sheetFolder} done -> ${sheetDir}`);
   }
 
+  const jobConfig = { ...config, model };
   const manifestPath = isolatedSheetRun
     ? resolve(outDir, sheetDirOverride!, 'manifest.json')
     : resolve(outDir, 'manifest.json');
-  await writeFile(manifestPath, JSON.stringify({ config: { ...config, model }, stickers: manifest }, null, 2));
 
-  const shouldBuildLineUpload =
-    !isolatedSheetRun &&
+  if (isolatedSheetRun) {
+    const isolatedManifest = {
+      config: jobConfig,
+      sheet: sheetDirOverride,
+      gridScores,
+      stickers: manifest,
+    };
+    await writeFile(manifestPath, JSON.stringify(isolatedManifest, null, 2));
+    console.log(`\n✓ Sheet regen done. ${manifest.length} stickers in ${sheetDirOverride}`);
+    console.log(`  manifest: ${manifestPath}`);
+    console.log('\n▶ Next: merge sheets and repack to line-s:');
+    console.log(
+      `  npx tsx .claude/skills/line-sticker-maker/scripts/finalize.mts --out "${outDir}" --config "${configArg}"` +
+        (sheetDirOverride ? ` --sheets <sheet-1>,${sheetDirOverride}` : '')
+    );
+    return;
+  }
+
+  const shouldFinalize =
     config.lineUpload !== false &&
     (config.scope ?? 'set') === 'set' &&
-    nativeFrames.length > 0;
-  if (shouldBuildLineUpload) {
-    console.log('\n▶ Building LINE Creators Market upload pack...');
-    const toZeroBased = (oneBased: number | undefined, fallback: number) =>
-      Math.max(0, (oneBased ?? fallback) - 1);
-    const uploadPack = await writeLineUploadPack(outDir, nativeFrames, {
-      mainStickerIndex: toZeroBased(config.mainStickerIndex, 1),
-      tabStickerIndex: toZeroBased(config.tabStickerIndex, 1),
-      stickerCount: config.lineUploadStickerCount,
+    usedSheetFolders.length > 0;
+
+  if (shouldFinalize) {
+    const finalizeResult = await finalizeStickerJob({
+      outDir,
+      sheetDirs: usedSheetFolders,
+      config: jobConfig,
     });
-    uploadPack.warnings.forEach((warning) => console.warn(`   ! ${warning}`));
-    console.log(
-      `   ✓ line-upload/ (${uploadPack.stickerCount + 2} PNGs) + line-upload.zip ready for ZIP upload`
-    );
+    console.log(`\n✓ All done. ${finalizeResult.stickerCount} stickers in ${outDir}`);
+    console.log(`  activeSheets: ${finalizeResult.activeSheets.join(', ')}`);
+    console.log(`  manifest: ${resolve(outDir, 'manifest.json')}`);
+    if (finalizeResult.lineSDest) {
+      console.log(`  line-s upload: ${finalizeResult.lineSDest}`);
+    } else {
+      console.log(`  upload: ${resolve(outDir, 'line-upload.zip')}`);
+    }
+    return;
   }
 
+  const manifestPathFallback = resolve(outDir, 'manifest.json');
+  await writeFile(
+    manifestPathFallback,
+    JSON.stringify(
+      { config: jobConfig, activeSheets: usedSheetFolders, gridScores, stickers: manifest },
+      null,
+      2
+    )
+  );
+
   console.log(`\n✓ All done. ${manifest.length} stickers in ${outDir}`);
-  if (!isolatedSheetRun) {
-    console.log(`  upload folder: ${stickersDir}`);
-  }
-  console.log(`  manifest: ${manifestPath}`);
+  console.log(`  stickers: ${stickersDir}`);
+  console.log(`  manifest: ${manifestPathFallback}`);
 }
 
 main().catch((err) => {

@@ -1,19 +1,26 @@
 {
-  "referenceImage": "example/chae.jpg",
+  "referenceImage": "example/p4.png",
+  "phraseSetFile": "p1_line-sticker-phrase-set.json",
   "characterDescription": "",
   "style": "matchUploaded",
-  "theme": "daily",
-  "customPhrases": [],
   "language": "zh-TW",
   "chromaKeyColor": "green",
   "includeText": true,
   "scope": "set",
   "stickerCount": 40,
-  "cols": 4,
-  "rows": 6,
-  "model": "gemini-3.1-flash-lite-image",
+  "model": "gemini-3.1-flash-image",
   "resolution": "1K",
   "lineUpload": true,
   "mainStickerIndex": 1,
-  "tabStickerIndex": 1
+  "tabStickerIndex": 1,
+  "maxSheetRetries": 3,
+  "minGridAlignmentScore": 0.72,
+  "lineS": {
+    "creatorId": "706",
+    "setName": "Cozy Cream Cat Daily Chat",
+    "titleZh": "奶油貓咪：日常聊天篇",
+    "descZh": "奶油貓咪陪你聊日常！從撒嬌蹭蹭、加油打氣到累爆睡覺，用軟萌手繪風回應每一句對話。",
+    "titleEn": "Cozy Cream Cat: Daily Chat",
+    "descEn": "Cozy Cream Cat Daily Chat Sticker set. A fluffy cream kitty for everyday chats — purrs, cheers, naps and sweet moods in one adorable pack!"
+  }
 }
