@@ -4,7 +4,8 @@
  */
 
 import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { resolve, relative, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { decodePng, encodePng, type RgbaImage } from './nodeImage.mts';
 import {
   buildLineUploadZipBytes,
@@ -16,8 +17,14 @@ import {
   packLineSOutput,
   type LineSConfig,
 } from './organize-line-s-input.mts';
+import { shouldSyncToLineS, syncPackToLineS } from './sync-to-line-s.mts';
 import { resolveSetLayout, DEFAULT_LINE_STICKER_SET_COUNT } from './sheetPlan.ts';
 import { validateSheetGrid, buildGridCandidates } from '../../../../utils/sheetGridValidation.ts';
+
+const FINALIZE_PROJECT_ROOT = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '../../../..'
+);
 
 export interface JobManifest {
   config?: JobConfig;
@@ -50,6 +57,8 @@ export interface FinalizeJobResult {
   activeSheets: string[];
   gridScores: Record<string, number>;
   lineSDest?: string;
+  lineSSyncDest?: string;
+  lineSEnvFile?: string;
   uploadPack: LineUploadPackResult;
   usedLineS: boolean;
 }
@@ -179,6 +188,8 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
     (mergedConfig.scope ?? 'set') === 'set';
 
   let lineSDest: string | undefined;
+  let lineSSyncDest: string | undefined;
+  let lineSEnvFile: string | undefined;
   if (usedLineS && mergedConfig.lineS) {
     const { destDir, envFilePath } = await packLineSOutput({
       sourceDir: outDir,
@@ -191,6 +202,22 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
     console.log(`     ${mergedConfig.lineS.setName}.zip (${uploadPack.stickerCount + 2} PNGs)`);
     console.log(`     sprite_sheets/ (${sheetDirs.length} sheets)`);
     if (envFilePath) console.log(`     ${envFilePath}`);
+
+    if (shouldSyncToLineS(mergedConfig.lineS)) {
+      console.log('\n▶ Syncing to line-s submodule...');
+      const sync = await syncPackToLineS({
+        sourceDir: outDir,
+        lineS: mergedConfig.lineS,
+      });
+      lineSSyncDest = sync.destDir;
+      lineSEnvFile = sync.envFilePath;
+      console.log(`   ✓ line-s/input → ${sync.destDir}`);
+      console.log(`   ✓ ${sync.envFilePath}`);
+      const envRel = relative(FINALIZE_PROJECT_ROOT, sync.envFilePath).replace(/\\/g, '/');
+      console.log(
+        `   · upload: npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts --env ${envRel}`
+      );
+    }
   } else {
     await writeLineUploadPack(outDir, nativeFrames, {
       mainStickerIndex: toZeroBased(mergedConfig.mainStickerIndex, 1),
@@ -210,6 +237,8 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
           activeSheets: sheetDirs,
           gridScores,
           lineSDest,
+          lineSSyncDest,
+          lineSEnvFile,
           stickers: manifestStickers,
         },
         null,
@@ -223,6 +252,8 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
     activeSheets: sheetDirs,
     gridScores,
     lineSDest,
+    lineSSyncDest,
+    lineSEnvFile,
     uploadPack,
     usedLineS,
   };

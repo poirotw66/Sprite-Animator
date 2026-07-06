@@ -62,8 +62,28 @@ use `manifest.json` → `activeSheets`, or fall back to `sheet-1`, `sheet-2`.
 3. **`--dry-run`** to verify prompt + phrases.
 4. **Run for real** → one command produces debug output + line-s upload folder.
 5. **Spot-check** a few `stickers/sticker-NN.png` and `manifest.json` grid scores.
-6. Tell the user the **`--out` folder** (upload ZIP + `.env.batch` live there). Copy
-   to `line-s/input/706/` only when ready to upload.
+6. Tell the user the **`--out` folder** and, when `syncToLineS` is on, the synced
+   **`line-s/input/706/{Set Name}/`** path + upload command.
+
+## Upload to LINE Creators Market
+
+The upload skill is vendored as **`line-s/`** git submodule
+([poirotw66/line-stickers-upload-skill](https://github.com/poirotw66/line-stickers-upload-skill)).
+
+```bash
+git submodule update --init line-s
+```
+
+After `generate.mts` / `finalize.mts`, if `lineS.syncToLineS: true` (default when
+`line-s/` exists), the pack is copied to `line-s/input/706/{Set Name}/` and
+`line-s/.env.batch/{Set_Name}.env` is written.
+
+```bash
+npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts \
+  --env line-s/.env.batch/Cozy_Cream_Cat_Daily_Chat.env
+```
+
+See **`.claude/skills/line-sticker-upload/SKILL.md`** for Drive / Playwright setup.
 
 ## config.json fields
 
@@ -99,8 +119,11 @@ use `manifest.json` → `activeSheets`, or fall back to `sheet-1`, `sheet-2`.
 | `titleZh` / `descZh` | Traditional Chinese shop listing |
 | `titleEn` / `descEn` | English shop listing |
 | `writeEnvBatch` | default `true`; writes `<out>/.env.batch/{Set_Name}.env` |
+| `syncToLineS` | default `true` when `line-s/` submodule exists; copies pack to submodule |
+| `uploadRoot` | submodule path (default `line-s`) |
 
-When `lineS` is enabled (default), **`generate.mts` writes the upload pack into `--out`**:
+When `lineS` is enabled (default), **`generate.mts` writes the upload pack into `--out`**
+and optionally syncs to **`line-s/input/706/{Set Name}/`**:
 
 ```
 .claude/skills/line-sticker-maker/example/output/p4/
@@ -114,11 +137,12 @@ When `lineS` is enabled (default), **`generate.mts` writes the upload pack into 
     sprite_sheet_1_transparent.png
     sprite_sheet_2_transparent.png
   .env.batch/
-    Cozy_Cream_Cat_Daily_Chat.env   ← copy to line-s repo when uploading
-```
+    Cozy_Cream_Cat_Daily_Chat.env
 
-To publish: copy the set folder contents to `line-s/input/706/{Set Name}/`, or set
-`lineS.root` to your line-s repo path for direct output there.
+line-s/input/706/Cozy Cream Cat Daily Chat/   ← auto-sync when syncToLineS
+  (same zip, md, sprite_sheets)
+line-s/.env.batch/Cozy_Cream_Cat_Daily_Chat.env
+```
 
 Without `lineS`, legacy output is `<out>/line-upload/` + `line-upload.zip`.
 
@@ -126,8 +150,10 @@ Without `lineS`, legacy output is `<out>/line-upload/` + `line-upload.zip`.
 
 | script | purpose |
 |---|---|
-| `generate.mts` | full pipeline: Gemini → slice → finalize → line-s |
-| `finalize.mts` | merge `activeSheets` → stickers + upload pack (after sheet regen) |
+| `generate.mts` | full pipeline: Gemini → slice → finalize → sync line-s |
+| `finalize.mts` | merge `activeSheets` → stickers + upload pack + sync |
+| `sync-to-line-s.mts` | copy local pack → `line-s/input/706/` |
+| `run-line-upload.mts` | run Drive + Playwright upload pipeline |
 | `reslice-sheet.mts` | re-slice existing `_processed-sheet.png` (no Gemini) |
 | `organize-line-s-input.mts` | standalone pack from legacy `line-upload.zip` (fallback) |
 | `rebuild-line-upload.mts` | legacy only; prefer `finalize.mts` |

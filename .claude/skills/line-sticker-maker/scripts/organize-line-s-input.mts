@@ -38,6 +38,10 @@ export interface LineSConfig {
   descEn: string;
   /** Write .env.batch snippet (default: true). */
   writeEnvBatch?: boolean;
+  /** Copy pack to line-s submodule after local finalize (default: true when ./line-s exists). */
+  syncToLineS?: boolean;
+  /** line-s submodule path relative to repo root (default: line-s). */
+  uploadRoot?: string;
 }
 
 export interface PackLineSOptions {

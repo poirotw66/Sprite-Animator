@@ -34,6 +34,12 @@ test/
 # Generated LINE sticker output (line-sticker-maker skill)
 line-stickers-out/
 
+# line-s submodule (upload skill) — secrets & generated input
+line-s/.env
+line-s/.env.batch/
+line-s/input/
+line-s/*.log
+
 # Local secrets & machine-local config (never commit)
 .env
 .claude/settings.local.json

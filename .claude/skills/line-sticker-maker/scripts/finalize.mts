@@ -5,7 +5,7 @@
  *   npx tsx finalize.mts --out example/output/p3 --sheets sheet-1-v2,sheet-2-v3
  */
 
-import { resolve } from 'node:path';
+import { resolve, relative } from 'node:path';
 import { finalizeFromJob } from './finalizeJob.mts';
 
 function parseArgs(argv: string[]): Record<string, string> {
@@ -46,7 +46,12 @@ const result = await finalizeFromJob({
 console.log(`\n✓ Finalized ${result.stickerCount} stickers`);
 console.log(`  activeSheets: ${result.activeSheets.join(', ')}`);
 if (result.lineSDest) {
-  console.log(`  line-s: ${result.lineSDest}`);
-} else {
-  console.log(`  legacy: line-upload.zip in output dir`);
+  console.log(`  local pack: ${result.lineSDest}`);
+}
+if (result.lineSSyncDest) {
+  console.log(`  line-s sync: ${result.lineSSyncDest}`);
+}
+if (result.lineSEnvFile) {
+  const envRel = relative(resolve(process.cwd()), result.lineSEnvFile).replace(/\\/g, '/');
+  console.log(`  upload env: ${envRel}`);
 }

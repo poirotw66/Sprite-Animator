@@ -16,6 +16,7 @@
   "maxSheetRetries": 3,
   "minGridAlignmentScore": 0.72,
   "lineS": {
+    "syncToLineS": true,
     "creatorId": "706",
     "setName": "Cozy Cream Cat Daily Chat",
     "titleZh": "奶油貓咪：日常聊天篇",
