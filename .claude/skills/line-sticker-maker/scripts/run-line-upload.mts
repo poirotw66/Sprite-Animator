@@ -6,7 +6,7 @@
  *   npx tsx run-line-upload.mts --env ... --step provision|zip|submit
  */
 
-import { copyFile, readFile } from 'node:fs/promises';
+import { copyFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

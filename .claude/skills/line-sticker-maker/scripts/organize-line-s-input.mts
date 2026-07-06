@@ -134,7 +134,6 @@ ${lineS.descEn}
 }
 
 function buildEnvBatch(lineS: LineSConfig, creatorId: string): string {
-  const envName = envFileBaseName(lineS.setName);
   const relBase = `input/${creatorId}/${lineS.setName}`;
   return `# LINE Creators Market — ${lineS.setName}
 LINE_EMAIL=
@@ -250,15 +249,7 @@ async function main() {
 
   const { destDir, envFilePath } = await packLineSOutput({
     sourceDir: resolve(sourceDir),
-    lineS: {
-      root: lineSRoot,
-      creatorId: '706',
-      setName,
-      titleZh,
-      descZh,
-      titleEn,
-      descEn,
-    },
+    lineS,
     sheetDirs,
     zipBytes,
   });
