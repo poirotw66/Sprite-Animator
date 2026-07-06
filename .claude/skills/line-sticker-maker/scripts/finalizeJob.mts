@@ -21,6 +21,12 @@ import {
 import { shouldSyncToLineS, syncPackToLineS } from './sync-to-line-s.mts';
 import { resolveSetLayout, DEFAULT_LINE_STICKER_SET_COUNT } from './sheetPlan.ts';
 import { validateSheetGrid, buildGridCandidates } from '../../../../utils/sheetGridValidation.ts';
+import {
+  assertGridScoresPass,
+  DEFAULT_MIN_GRID_ALIGNMENT_SCORE,
+  findGridScoreFailures,
+  formatGridGateMessage,
+} from '../../../../utils/gridScoreGate.ts';
 
 const FINALIZE_PROJECT_ROOT = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -47,6 +53,7 @@ export interface JobConfig {
   includeText?: boolean;
   textRendering?: 'model' | 'programmatic';
   qaEnabled?: boolean;
+  minGridAlignmentScore?: number;
 }
 
 export interface FinalizeJobOptions {
@@ -179,6 +186,16 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
     }
   }
 
+  const minGridScore = mergedConfig.minGridAlignmentScore ?? DEFAULT_MIN_GRID_ALIGNMENT_SCORE;
+  const gridFailures = findGridScoreFailures(gridScores, minGridScore);
+  if (gridFailures.length > 0) {
+    console.warn('\n▶ Grid gate: failing sheet(s) detected');
+    for (const message of formatGridGateMessage(gridFailures, minGridScore)) {
+      console.warn(`   ✗ ${message}`);
+    }
+    assertGridScoresPass(gridScores, minGridScore);
+  }
+
   const qaEnabled = mergedConfig.qaEnabled !== false;
   let qaReport: StickerQaReport | undefined;
   if (qaEnabled && nativeFrames.length > 0) {
@@ -206,6 +223,12 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
     );
     for (const warning of qaReport.summaryWarnings) {
       console.warn(`   QA ⚠ ${warning}`);
+    }
+    if (gridFailures.length > 0) {
+      qaReport.pass = false;
+      qaReport.summaryWarnings.push(
+        ...formatGridGateMessage(gridFailures, minGridScore)
+      );
     }
   }
 
@@ -276,6 +299,9 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
                 overallScore: qaReport.overallScore,
                 pass: qaReport.pass,
                 summaryWarnings: qaReport.summaryWarnings,
+                gridPass: gridFailures.length === 0,
+                gridMinScore: minGridScore,
+                gridFailures,
               }
             : undefined,
           lineSDest,

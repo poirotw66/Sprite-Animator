@@ -326,6 +326,7 @@ async function main() {
     'gemini-3.1-flash-image';
   const resolution = config.resolution ?? '1K';
   const maxSheetRetries = Math.max(1, config.maxSheetRetries ?? 3);
+  const extraSheetRegenAttempts = config.extraSheetRegenAttempts ?? 3;
   const minGridAlignmentScore = config.minGridAlignmentScore ?? 0.72;
   const promptVersion = config.promptVersion ?? 'v3compact';
   const styleAnchorFromPriorSheet = config.styleAnchorFromPriorSheet === true;
@@ -451,6 +452,7 @@ async function main() {
       textColorKey,
       maxSheetRetries,
       minGridAlignmentScore,
+      extraSheetRegenAttempts,
       isolatedSheetRun,
       globalIndexStart: indexStart,
       promptVersion,

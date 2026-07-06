@@ -73,6 +73,8 @@ export interface GenerateOneSheetParams {
   textColorKey?: keyof typeof TEXT_COLOR_PRESETS;
   maxSheetRetries: number;
   minGridAlignmentScore: number;
+  /** Extra Gemini attempts when grid score stays below minGridAlignmentScore. Default 3. */
+  extraSheetRegenAttempts?: number;
   isolatedSheetRun: boolean;
   globalIndexStart: number;
   promptVersion?: LineStickerPromptVersion;
@@ -110,9 +112,13 @@ function warn(prefix: string, msg: string): void {
 function tryAcceptViaReslice(
   validation: GridValidationResult,
   cols: number,
-  rows: number
+  rows: number,
+  minScore: number
 ): boolean {
   if (!validation.resliceCandidate) {
+    return false;
+  }
+  if (validation.expected.score < minScore) {
     return false;
   }
   const layoutMatches = validation.detected.cols === cols && validation.detected.rows === rows;
@@ -150,6 +156,7 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     textColorKey = 'black',
     maxSheetRetries,
     minGridAlignmentScore,
+    extraSheetRegenAttempts = 3,
     isolatedSheetRun,
     globalIndexStart,
     promptVersion = 'v3compact',
@@ -182,17 +189,18 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
   log(logPrefix, `generating ${sheet.cols}x${sheet.rows} sheet...`);
 
   const gridCandidates = buildGridCandidates(sheet.cols, sheet.rows);
-  let bestAttempt: AttemptState | null = null;
+  const hardMaxAttempts = maxSheetRetries + Math.max(0, extraSheetRegenAttempts);
   let finalAttempt: AttemptState | null = null;
+  let lastValidation: GridValidationResult | undefined;
 
-  for (let attempt = 1; attempt <= maxSheetRetries; attempt++) {
+  for (let attempt = 1; attempt <= hardMaxAttempts; attempt++) {
     if (attempt > 1) {
-      log(logPrefix, `grid retry ${attempt}/${maxSheetRetries}...`);
+      log(logPrefix, `grid retry ${attempt}/${hardMaxAttempts}...`);
     }
 
     const gridRetrySuffix =
-      attempt > 1 && bestAttempt
-        ? buildGridRetryPromptSuffix(sheet.cols, sheet.rows, bestAttempt.validation)
+      attempt > 1 && lastValidation
+        ? buildGridRetryPromptSuffix(sheet.cols, sheet.rows, lastValidation)
         : '';
 
     const rawPng = await generateSheetImage({
@@ -222,18 +230,14 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
       { minScore: minGridAlignmentScore, ...gridCandidates }
     );
 
-    const rank = rankSheetAttempt(validation, sheet.cols, sheet.rows);
     const attemptState: AttemptState = {
       rawPng,
       image,
       validation,
-      rank,
+      rank: rankSheetAttempt(validation, sheet.cols, sheet.rows),
       acceptedViaReslice: false,
     };
-
-    if (!bestAttempt || rank > bestAttempt.rank) {
-      bestAttempt = attemptState;
-    }
+    lastValidation = validation;
 
     if (validation.ok) {
       if (attempt > 1) {
@@ -246,10 +250,10 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
       break;
     }
 
-    if (tryAcceptViaReslice(validation, sheet.cols, sheet.rows)) {
+    if (tryAcceptViaReslice(validation, sheet.cols, sheet.rows, minGridAlignmentScore)) {
       warn(
         logPrefix,
-        `${validation.reason ?? 'marginal grid'} — accepting via reslice-before-regenerate (score ${validation.expected.score.toFixed(2)})`
+        `${validation.reason ?? 'marginal grid'} — accepting via reslice (score ${validation.expected.score.toFixed(2)})`
       );
       attemptState.acceptedViaReslice = true;
       finalAttempt = attemptState;
@@ -257,30 +261,24 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     }
 
     const detail = validation.reason ?? 'grid misaligned';
-    if (attempt < maxSheetRetries) {
+    if (attempt < hardMaxAttempts) {
       warn(logPrefix, `${detail} — retrying...`);
-    } else {
-      warn(logPrefix, `${detail} — using best attempt after ${maxSheetRetries} tries.`);
-      if (model.includes('lite')) {
-        warn(
-          logPrefix,
-          'tip: gemini-3.1-flash-image is usually more stable for 4×5 sheets than flash-lite.'
-        );
-      }
+    } else if (model.includes('lite')) {
+      warn(
+        logPrefix,
+        'tip: gemini-3.1-flash-image is usually more stable for 4×5 sheets than flash-lite.'
+      );
     }
   }
 
-  const chosen = finalAttempt ?? bestAttempt;
-  if (!chosen) {
-    throw new Error(`Failed to generate ${sheet.label}`);
-  }
-
-  if (!finalAttempt && bestAttempt) {
-    warn(
-      logPrefix,
-      `using best attempt (rank ${bestAttempt.rank.toFixed(3)}, score ${bestAttempt.validation.expected.score.toFixed(2)})`
+  if (!finalAttempt || finalAttempt.validation.expected.score < minGridAlignmentScore) {
+    const score = finalAttempt?.validation.expected.score ?? 0;
+    throw new Error(
+      `${sheet.label}: grid score ${score.toFixed(3)} below minimum ${minGridAlignmentScore.toFixed(2)} after ${hardMaxAttempts} attempts`
     );
   }
+
+  const chosen = finalAttempt;
 
   const { rawPng, image, validation, acceptedViaReslice } = chosen;
   const sheetDir = resolve(outDir, sheetFolder);

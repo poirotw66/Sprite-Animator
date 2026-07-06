@@ -11,6 +11,7 @@ import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { assertOutDirGridGate } from './manifestGridGate.mts';
 
 const SKILL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PROJECT_ROOT = resolve(SKILL_ROOT, '../../..');
@@ -66,6 +67,7 @@ function runPython(script: string, extraArgs: string[] = []): void {
 const args = parseArgs(process.argv.slice(2));
 const envFile = args.env ?? '';
 const step = (args.step ?? 'all') as UploadStep;
+const skipGridGate = args['skip-grid-gate'] === 'true';
 
 if (!envFile) {
   console.error(
@@ -86,6 +88,15 @@ if (!existsSync(envSrc)) {
   process.exit(1);
 }
 
+if (!skipGridGate) {
+  const jobOutDir = resolve(envSrc, '..', '..');
+  const manifestPath = resolve(jobOutDir, 'manifest.json');
+  if (existsSync(manifestPath)) {
+    console.log('▶ Grid gate: checking manifest.json...');
+    await assertOutDirGridGate(jobOutDir);
+  }
+}
+
 await copyFile(envSrc, envDest);
 console.log(`▶ Using ${envSrc} → line-s/.env`);
 
@@ -99,6 +110,8 @@ for (const name of steps) {
     extra.push('--headless');
   }
   runPython(STEP_SCRIPTS[name], extra);
+  // Python scripts update line-s/.env; sync back so batch env keeps IDs across steps.
+  await copyFile(envDest, envSrc);
 }
 
 console.log('\n✓ Upload pipeline step(s) complete.');

@@ -37,6 +37,7 @@ line-stickers-out/
 # line-s submodule (upload skill) — secrets & generated input
 line-s/.env
 line-s/.env.batch/
+.claude/skills/line-sticker-maker/credentials.env
 line-s/input/
 line-s/*.log
 
