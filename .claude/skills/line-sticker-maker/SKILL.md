@@ -96,13 +96,18 @@ See **`.claude/skills/line-sticker-upload/SKILL.md`** for Drive / Playwright set
 | `customPhrases` | `[]` | overrides theme phrases when non-empty |
 | `language` | `zh-TW` | `zh-TW`, `zh-CN`, `en`, `ja` |
 | `chromaKeyColor` | `green` | `magenta` or `green` |
-| `includeText` | `true` | Gemini draws phrase text in each cell |
+| `includeText` | `true` | when `textRendering` is `model`, Gemini draws phrase text |
+| `textRendering` | `model` | `model` = Gemini draws text; **`programmatic`** = overlay after slice (more stable for zh-TW) |
+| `fontKey` / `textColorKey` | `round` / `black` | programmatic overlay presets (same as web app) |
 | `scope` | `set` | `set` = full LINE set; `single` = one sheet |
 | `stickerCount` | `40` | 40 = 2×4×5 (LINE standard); 48 = legacy 3×4×4 |
 | `model` | `gemini-3.1-flash-image` | use flash-image for stable 4×5 grids |
 | `resolution` | `1K` | `0.5K`/`1K`/`2K`/`4K` (model-dependent) |
 | `maxSheetRetries` | `3` | Gemini retries when grid validation fails |
 | `minGridAlignmentScore` | `0.72` | 0–1; reject sheet below this score |
+| `promptVersion` | `v3compact` | `v3compact` = shorter per-cell lines; `v3` = verbose legacy |
+| `styleAnchorFromPriorSheet` | `false` | opt-in: attach sheet-1 `_processed-sheet.png` for sheet-2+ (forces sequential) |
+| `qaEnabled` | `true` | write `qa-report.json` at finalize (warn-only) |
 | `lineUpload` | `true` | build upload ZIP at end of full run |
 | `mainStickerIndex` / `tabStickerIndex` | `1` | 1-based indices for shop images |
 | **`lineS`** | — | **line-s upload layout (recommended)** |
@@ -154,6 +159,7 @@ Without `lineS`, legacy output is `<out>/line-upload/` + `line-upload.zip`.
 | `sync-to-line-s.mts` | copy local pack → `line-s/input/706/` |
 | `run-line-upload.mts` | run Drive + Playwright upload pipeline |
 | `reslice-sheet.mts` | re-slice existing `_processed-sheet.png` (no Gemini) |
+| `stickerQa` (via finalize) | auto `qa-report.json` — foreground, size, text, LINE limits |
 | `organize-line-s-input.mts` | standalone pack from legacy `line-upload.zip` (fallback) |
 | `rebuild-line-upload.mts` | legacy only; prefer `finalize.mts` |
 
@@ -165,6 +171,7 @@ After a full run or `finalize.mts`:
 {
   "activeSheets": ["sheet-1", "sheet-2"],
   "gridScores": { "sheet-1": 0.85, "sheet-2": 0.84 },
+  "qaReport": { "overallScore": 0.91, "pass": true, "summaryWarnings": [] },
   "lineSDest": ".../example/output/p4",
   "stickers": [ ... ]
 }
@@ -174,6 +181,10 @@ After a full run or `finalize.mts`:
 
 - Sprite sheets: **1:1 @ 1K → 1024×1024 px** (4×5 → ~256×204 px per cell).
 - Upload PNGs are scaled to LINE limits; `stickers/` keeps native resolution.
-- 40-sticker set = **2 Gemini calls** (one per sheet).
+- 40-sticker set = **2 Gemini calls in parallel** (both sheets use the same character reference image only).
+- **v3compact** prompts: `N|"phrase"|action` per cell (~25% shorter than v3).
+- Grid validation **hard-rejects** wrong layout (e.g. 5×5 instead of 4×5) and uneven column widths.
+- **Best attempt** kept across retries; **reslice-before-regenerate** accepts marginal scores (0.68–0.72) without a new API call when layout matches.
+- Gemini **empty-image response** is retried up to 3 times before failing.
 - Grid prompt includes `[0. GRID LAYOUT]` anchor to reduce 5×5 drift.
 - Not included: LINE account setup, review, or pricing.

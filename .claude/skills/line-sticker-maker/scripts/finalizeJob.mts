@@ -6,7 +6,8 @@
 import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
 import { resolve, relative, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { decodePng, encodePng, type RgbaImage } from './nodeImage.mts';
+import { decodePng, encodePng, prepareLineStickerFrame, type RgbaImage } from './nodeImage.mts';
+import { auditStickerFrames, type StickerQaReport } from '../../../../utils/stickerFrameQa.ts';
 import {
   buildLineUploadZipBytes,
   writeLineUploadPack,
@@ -43,6 +44,9 @@ export interface JobConfig {
   lineS?: LineSConfig;
   lineUpload?: boolean;
   scope?: string;
+  includeText?: boolean;
+  textRendering?: 'model' | 'programmatic';
+  qaEnabled?: boolean;
 }
 
 export interface FinalizeJobOptions {
@@ -56,6 +60,7 @@ export interface FinalizeJobResult {
   stickerCount: number;
   activeSheets: string[];
   gridScores: Record<string, number>;
+  qaReport?: StickerQaReport;
   lineSDest?: string;
   lineSSyncDest?: string;
   lineSEnvFile?: string;
@@ -174,6 +179,36 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
     }
   }
 
+  const qaEnabled = mergedConfig.qaEnabled !== false;
+  let qaReport: StickerQaReport | undefined;
+  if (qaEnabled && nativeFrames.length > 0) {
+    console.log('\n▶ Running sticker QA...');
+    const checkModelText =
+      mergedConfig.textRendering !== 'programmatic' && mergedConfig.includeText !== false;
+    qaReport = auditStickerFrames(
+      nativeFrames.map((frame, i) => {
+        const entry = manifestStickers[i]!;
+        const uploadFrame = prepareLineStickerFrame(frame);
+        return {
+          globalIndex: (entry.globalIndex as number) ?? i + 1,
+          sheet: entry.sheet as string | undefined,
+          index: entry.index as number | undefined,
+          phrase: (entry.phrase as string) ?? '',
+          frame,
+          pngBytes: encodePng(uploadFrame).byteLength,
+        };
+      }),
+      { checkModelText }
+    );
+    await writeFile(resolve(outDir, 'qa-report.json'), JSON.stringify(qaReport, null, 2));
+    console.log(
+      `   · QA score ${qaReport.overallScore.toFixed(3)} (${qaReport.pass ? 'pass' : 'warnings'}) → qa-report.json`
+    );
+    for (const warning of qaReport.summaryWarnings) {
+      console.warn(`   QA ⚠ ${warning}`);
+    }
+  }
+
   console.log('\n▶ Building LINE upload pack...');
   const { pack: uploadPack, zipBytes } = await buildLineUploadZipBytes(nativeFrames, {
     mainStickerIndex: toZeroBased(mergedConfig.mainStickerIndex, 1),
@@ -236,6 +271,13 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
           config: mergedConfig,
           activeSheets: sheetDirs,
           gridScores,
+          qaReport: qaReport
+            ? {
+                overallScore: qaReport.overallScore,
+                pass: qaReport.pass,
+                summaryWarnings: qaReport.summaryWarnings,
+              }
+            : undefined,
           lineSDest,
           lineSSyncDest,
           lineSEnvFile,
@@ -251,6 +293,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
     stickerCount: nativeFrames.length,
     activeSheets: sheetDirs,
     gridScores,
+    qaReport,
     lineSDest,
     lineSSyncDest,
     lineSEnvFile,

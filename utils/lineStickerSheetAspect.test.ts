@@ -34,23 +34,26 @@ describe('LINE sticker sprite sheet aspect', () => {
 });
 
 describe('buildLineStickerPrompt layout aspect', () => {
+  const slots = {
+    style: STYLE_PRESETS.matchUploaded,
+    character: DEFAULT_CHARACTER_SLOT,
+    theme: THEME_PRESETS.daily,
+    text: DEFAULT_TEXT_SLOT,
+  };
+  const actions = Array.from({ length: 20 }, (_, i) => `waving hello (${i + 1})`);
+
   it('uses square 1024 canvas wording for 4x5 v3 prompts', () => {
-    const prompt = buildLineStickerPrompt(
-      {
-        style: STYLE_PRESETS.matchUploaded,
-        character: DEFAULT_CHARACTER_SLOT,
-        theme: THEME_PRESETS.daily,
-        text: DEFAULT_TEXT_SLOT,
-      },
-      4,
-      5,
-      'green',
-      true,
-      undefined,
-      'v3'
-    );
+    const prompt = buildLineStickerPrompt(slots, 4, 5, 'green', true, undefined, 'v3');
 
     expect(prompt).toContain('Square image (1:1 aspect ratio)');
     expect(prompt).not.toContain('Portrait image (3:4');
+  });
+
+  it('v3compact is shorter than v3 for the same 4x5 sheet', () => {
+    const v3 = buildLineStickerPrompt(slots, 4, 5, 'green', true, actions, 'v3');
+    const compact = buildLineStickerPrompt(slots, 4, 5, 'green', true, actions, 'v3compact');
+    expect(compact.length).toBeLessThan(v3.length * 0.75);
+    expect(compact).toContain('1|"');
+    expect(compact).not.toContain('Cell 1 (row 1, col 1)');
   });
 });

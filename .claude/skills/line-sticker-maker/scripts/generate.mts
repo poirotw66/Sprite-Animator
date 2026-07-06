@@ -19,25 +19,25 @@ import { fileURLToPath } from 'node:url';
 import {
   buildLineStickerPrompt,
   expandThemePhrasesForFrames,
+  getEffectiveLineStickerIncludeText,
   THEME_PRESETS,
   TEXT_PRESETS,
   STYLE_PRESETS,
   DEFAULT_CHARACTER_SLOT,
+  FONT_PRESETS,
+  TEXT_COLOR_PRESETS,
   type PromptSlots,
   type StyleSlot,
   type ThemeSlot,
+  type LineStickerTextRendering,
+  type LineStickerPromptVersion,
 } from '../../../../utils/lineStickerPrompt.ts';
 import type { ChromaKeyColorType } from '../../../../types.ts';
 
-import { generateSheetImage } from './geminiSheet.mts';
-import { decodeImage, decodePng, encodePng, extForBytes, removeChromaKey, sliceSheet, type RgbaImage } from './nodeImage.mts';
 import { finalizeStickerJob } from './finalizeJob.mts';
 import type { LineSConfig } from './organize-line-s-input.mts';
-import {
-  buildGridCandidates,
-  buildGridRetryPromptSuffix,
-  validateSheetGrid,
-} from '../../../../utils/sheetGridValidation.ts';
+import { generateOneSheet, type SheetPlan } from './sheetGeneration.mts';
+import { decodePng, type RgbaImage } from './nodeImage.mts';
 import {
   DEFAULT_LINE_STICKER_SET_COUNT,
   resolveSetLayout,
@@ -59,6 +59,10 @@ interface StickerConfig {
   language?: string; // TEXT_PRESETS key (default: zh-TW)
   chromaKeyColor?: ChromaKeyColorType; // default: green
   includeText?: boolean; // default: true (model draws text)
+  /** 'model' = Gemini draws text; 'programmatic' = overlay after slice (more stable). */
+  textRendering?: LineStickerTextRendering;
+  fontKey?: keyof typeof FONT_PRESETS;
+  textColorKey?: keyof typeof TEXT_COLOR_PRESETS;
   scope?: 'set' | 'single'; // default: set
   stickerCount?: number; // set mode only: 40 (LINE default) or 48 (legacy)
   cols?: number; // single mode only (default 4)
@@ -79,6 +83,10 @@ interface StickerConfig {
   maxSheetRetries?: number;
   /** Minimum grid alignment score 0–1 to accept a sheet (default 0.72). */
   minGridAlignmentScore?: number;
+  /** Prompt builder version (default v3compact — shorter per-cell lines). */
+  promptVersion?: LineStickerPromptVersion;
+  /** When true, sheet-2+ also attaches sheet-1 _processed-sheet.png (disables parallel). Default false. */
+  styleAnchorFromPriorSheet?: boolean;
 }
 
 function parseArgs(argv: string[]) {
@@ -220,14 +228,6 @@ async function applyPhraseSetFile(config: StickerConfig, configDir: string): Pro
   }
 }
 
-interface SheetPlan {
-  label: string;
-  cols: number;
-  rows: number;
-  phrases: string[];
-  actionDescs?: string[];
-}
-
 function sliceActionDescsForSheet(
   actionDescs: string[] | undefined,
   offset: number,
@@ -285,6 +285,22 @@ function pad(n: number): string {
   return String(n).padStart(2, '0');
 }
 
+function resolvePriorSheetFolder(
+  sheetLabel: string,
+  sheetIndexInJob: number,
+  iterationSheets: SheetPlan[],
+  isolatedSheetRun: boolean
+): string | undefined {
+  const match = sheetLabel.match(/^sheet-(\d+)$/);
+  if (!match) return undefined;
+  const sheetNum = Number.parseInt(match[1]!, 10);
+  if (sheetNum <= 1) return undefined;
+  if (isolatedSheetRun) {
+    return `sheet-${sheetNum - 1}`;
+  }
+  return sheetIndexInJob > 0 ? iterationSheets[sheetIndexInJob - 1]!.label : undefined;
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const configArg = args.config as string;
@@ -301,6 +317,8 @@ async function main() {
   const outDir = resolve(process.cwd(), (args.out as string) ?? 'line-stickers-out');
   const sheetDirOverride = typeof args['sheet-dir'] === 'string' ? args['sheet-dir'] : undefined;
   const includeText = config.includeText ?? true;
+  const textRendering: LineStickerTextRendering = config.textRendering ?? 'model';
+  const effectiveIncludeText = getEffectiveLineStickerIncludeText(includeText, textRendering);
   const chromaKeyColor: ChromaKeyColorType = config.chromaKeyColor ?? 'green';
   const model =
     (typeof args.model === 'string' ? args.model : undefined) ??
@@ -309,6 +327,8 @@ async function main() {
   const resolution = config.resolution ?? '1K';
   const maxSheetRetries = Math.max(1, config.maxSheetRetries ?? 3);
   const minGridAlignmentScore = config.minGridAlignmentScore ?? 0.72;
+  const promptVersion = config.promptVersion ?? 'v3compact';
+  const styleAnchorFromPriorSheet = config.styleAnchorFromPriorSheet === true;
 
   const sheets = planSheets(config);
   const sheetFilter = typeof args.sheet === 'string' ? args.sheet : undefined;
@@ -332,14 +352,22 @@ async function main() {
       (sheetFilter ? `, regenerating=${sheetFilter}` : '') +
       (sheetDirOverride ? `, outputDir=${sheetDirOverride}` : '') +
       (isolatedSheetRun ? ', isolated=true' : '') +
-      `, chroma=${chromaKeyColor}, text=${includeText ? 'model-drawn' : 'none'}, model=${model}, resolution=${resolution}`
+      `, chroma=${chromaKeyColor}, text=${textRendering === 'programmatic' ? 'programmatic' : effectiveIncludeText ? 'model-drawn' : 'none'}, model=${model}, resolution=${resolution}`
   );
 
   if (dryRun) {
     for (const sheet of sheets) {
       const slots = buildSlots(config, sheet.phrases);
+      const reserveForProgrammaticOverlay = includeText && textRendering === 'programmatic';
       const prompt = buildLineStickerPrompt(
-        slots, sheet.cols, sheet.rows, chromaKeyColor, includeText, sheet.actionDescs, 'v3'
+        slots,
+        sheet.cols,
+        sheet.rows,
+        chromaKeyColor,
+        effectiveIncludeText,
+        sheet.actionDescs,
+        promptVersion,
+        reserveForProgrammaticOverlay
       );
       console.log(`\n===== ${sheet.label} (${sheet.cols}x${sheet.rows}) prompt preview =====`);
       console.log(prompt.slice(0, 1200) + (prompt.length > 1200 ? '\n... [truncated]' : ''));
@@ -366,154 +394,167 @@ async function main() {
   const usedSheetFolders: string[] = [];
   const gridScores: Record<string, number> = {};
 
-  for (const sheet of iterationSheets) {
-    const shouldGenerate = sheetsToGenerate.some((candidate) => candidate.label === sheet.label);
-    const sheetFolder = isolatedSheetRun ? sheetDirOverride! : sheet.label;
+  const fontKey = config.fontKey ?? 'round';
+  const textColorKey = config.textColorKey ?? 'black';
+
+  async function loadExistingSheet(sheet: SheetPlan, sheetFolder: string): Promise<void> {
+    console.log(`\n▶ ${sheet.label}: keeping existing stickers...`);
     const sheetDir = resolve(outDir, sheetFolder);
-
-    if (!shouldGenerate) {
-      console.log(`\n▶ ${sheet.label}: keeping existing stickers...`);
-      usedSheetFolders.push(sheetFolder);
-      const frameCount = sheet.cols * sheet.rows;
-      for (let i = 0; i < frameCount; i++) {
-        globalIndex++;
-        const name = `sticker-${pad(i + 1)}.png`;
-        const stickerPath = resolve(sheetDir, name);
-        if (!existsSync(stickerPath)) {
-          throw new Error(`Missing ${stickerPath} (required when using --sheet partial regeneration)`);
-        }
-        const frame = decodePng(new Uint8Array(await readFile(stickerPath)));
-        nativeFrames.push(frame);
-        const globalName = `sticker-${pad(globalIndex)}.png`;
-        manifest.push({
-          globalIndex,
-          sheet: sheet.label,
-          index: i + 1,
-          file: `${sheet.label}/${name}`,
-          uploadFile: `stickers/${globalName}`,
-          phrase: sheet.phrases[i] ?? '',
-          width: frame.width,
-          height: frame.height,
-        });
-      }
-      continue;
-    }
-
-    const slots = buildSlots(config, sheet.phrases);
-    const prompt = buildLineStickerPrompt(
-      slots, sheet.cols, sheet.rows, chromaKeyColor, includeText, sheet.actionDescs, 'v3'
-    );
-
-    console.log(`\n▶ ${sheetFolder}: generating ${sheet.cols}x${sheet.rows} sheet...`);
-    usedSheetFolders.push(sheetFolder);
-
-    const gridCandidates = buildGridCandidates(sheet.cols, sheet.rows);
-    let rawPng: Uint8Array | null = null;
-    let image: RgbaImage | null = null;
-    let gridValidation: ReturnType<typeof validateSheetGrid> | null = null;
-
-    for (let attempt = 1; attempt <= maxSheetRetries; attempt++) {
-      if (attempt > 1) {
-        console.log(`   · grid retry ${attempt}/${maxSheetRetries}...`);
-      }
-      const gridRetrySuffix =
-        attempt > 1 && gridValidation
-          ? buildGridRetryPromptSuffix(sheet.cols, sheet.rows, gridValidation)
-          : '';
-
-      rawPng = await generateSheetImage({
-        referenceBase64,
-        referenceMimeType,
-        prompt,
-        cols: sheet.cols,
-        rows: sheet.rows,
-        apiKey,
-        model,
-        chromaKeyColor,
-        includeText,
-        outputResolution: resolution,
-        gridRetrySuffix,
-        onStatus: (m) => console.log(`   · ${m}`),
-      });
-
-      image = decodeImage(rawPng);
-      removeChromaKey(image, chromaKeyColor);
-      gridValidation = validateSheetGrid(
-        image.data,
-        image.width,
-        image.height,
-        sheet.cols,
-        sheet.rows,
-        { minScore: minGridAlignmentScore, ...gridCandidates }
-      );
-
-      if (gridValidation.ok) {
-        if (attempt > 1) {
-          console.log(
-            `   ✓ grid aligned on attempt ${attempt} (score ${gridValidation.expected.score.toFixed(2)})`
-          );
-        }
-        gridScores[sheetFolder] = gridValidation.expected.score;
-        break;
-      }
-
-      const detail = gridValidation.reason ?? 'grid misaligned';
-      if (attempt < maxSheetRetries) {
-        console.warn(`   ⚠ ${detail} — retrying...`);
-      } else {
-        console.warn(`   ⚠ ${detail} — using best-effort slice after ${maxSheetRetries} attempts.`);
-        if (model.includes('lite')) {
-          console.warn(
-            '   · tip: gemini-3.1-flash-image is usually more stable for 4×5 sheets than flash-lite.'
-          );
-        }
-      }
-    }
-
-    if (!rawPng || !image) {
-      throw new Error(`Failed to generate ${sheet.label}`);
-    }
-
-    await mkdir(sheetDir, { recursive: true });
-    await writeFile(resolve(sheetDir, `_raw-sheet.${extForBytes(rawPng)}`), rawPng);
-
-    await writeFile(resolve(sheetDir, '_processed-sheet.png'), encodePng(image));
-
-    if (gridValidation && !gridValidation.ok) {
-      gridScores[sheetFolder] = gridValidation.expected.score;
-      console.warn(
-        `   ⚠ Final grid: expected ${sheet.cols}×${sheet.rows} (${gridValidation.expected.score.toFixed(2)}), ` +
-          `detected ${gridValidation.detected.cols}×${gridValidation.detected.rows} (${gridValidation.detected.score.toFixed(2)})`
-      );
-    }
-
-    console.log(`   · slicing into ${sheet.cols * sheet.rows} stickers (native ${Math.round(image.width / sheet.cols)}x${Math.round(image.height / sheet.rows)} px)...`);
-    const frames = sliceSheet(image, sheet.cols, sheet.rows);
-    for (let i = 0; i < frames.length; i++) {
+    const frameCount = sheet.cols * sheet.rows;
+    for (let i = 0; i < frameCount; i++) {
       globalIndex++;
-      nativeFrames.push(frames[i]!);
       const name = `sticker-${pad(i + 1)}.png`;
-      const globalName = `sticker-${pad(globalIndex)}.png`;
-      const png = encodePng(frames[i]);
-      await writeFile(resolve(sheetDir, name), png);
-      if (!isolatedSheetRun) {
-        await writeFile(resolve(stickersDir, globalName), png);
+      const stickerPath = resolve(sheetDir, name);
+      if (!existsSync(stickerPath)) {
+        throw new Error(`Missing ${stickerPath} (required when using --sheet partial regeneration)`);
       }
+      const frame = decodePng(new Uint8Array(await readFile(stickerPath)));
+      nativeFrames.push(frame);
+      const globalName = `sticker-${pad(globalIndex)}.png`;
       manifest.push({
         globalIndex,
-        sheet: sheetFolder,
+        sheet: sheet.label,
         index: i + 1,
-        file: `${sheetFolder}/${name}`,
-        uploadFile: isolatedSheetRun ? `${sheetFolder}/${name}` : `stickers/${globalName}`,
+        file: `${sheet.label}/${name}`,
+        uploadFile: `stickers/${globalName}`,
         phrase: sheet.phrases[i] ?? '',
-        width: frames[i].width,
-        height: frames[i].height,
+        width: frame.width,
+        height: frame.height,
       });
     }
-    console.log(`   ✓ ${sheetFolder} done -> ${sheetDir}`);
   }
 
-  const jobConfig = { ...config, model };
+  async function runGenerateOneSheet(
+    sheet: SheetPlan,
+    sheetFolder: string,
+    indexStart: number,
+    sheetIndexInJob: number,
+    priorSheetFolder?: string
+  ): Promise<{ folder: string; entries: Array<Record<string, unknown>>; frames: RgbaImage[]; score: number }> {
+    console.log(`\n▶ ${sheetFolder}:`);
+    const slots = buildSlots(config, sheet.phrases);
+    const result = await generateOneSheet({
+      sheet,
+      sheetFolder,
+      outDir,
+      stickersDir,
+      slots,
+      referenceBase64,
+      referenceMimeType,
+      apiKey,
+      model,
+      resolution,
+      chromaKeyColor,
+      includeText,
+      textRendering,
+      fontKey,
+      textColorKey,
+      maxSheetRetries,
+      minGridAlignmentScore,
+      isolatedSheetRun,
+      globalIndexStart: indexStart,
+      promptVersion,
+      styleAnchorFromPriorSheet,
+      priorSheetFolder,
+      logPrefix: '   · ',
+    });
+    gridScores[sheetFolder] = result.gridScore;
+    return {
+      folder: sheetFolder,
+      entries: result.manifestEntries,
+      frames: result.frames,
+      score: result.gridScore,
+    };
+  }
+
+  const sheetsNeedingGeneration = iterationSheets.filter((sheet) =>
+    sheetsToGenerate.some((candidate) => candidate.label === sheet.label)
+  );
+  const canParallelize =
+    !isolatedSheetRun &&
+    !styleAnchorFromPriorSheet &&
+    sheetsNeedingGeneration.length > 1 &&
+    iterationSheets.length > 1;
+
+  if (canParallelize) {
+    console.log(`\n▶ parallel sheet generation (${sheetsNeedingGeneration.length} sheets)...`);
+
+    const indexByLabel = new Map<string, number>();
+    let nextStart = 0;
+    for (const sheet of iterationSheets) {
+      indexByLabel.set(sheet.label, nextStart);
+      nextStart += sheet.cols * sheet.rows;
+    }
+
+    const parallelResults = await Promise.all(
+      sheetsNeedingGeneration.map((sheet) => {
+        const sheetIdx = iterationSheets.findIndex((s) => s.label === sheet.label);
+        return runGenerateOneSheet(
+          sheet,
+          sheet.label,
+          indexByLabel.get(sheet.label) ?? 0,
+          sheetIdx,
+          undefined
+        );
+      })
+    );
+    const resultByLabel = new Map(parallelResults.map((r) => [r.folder, r]));
+
+    for (const sheet of iterationSheets) {
+      const shouldGenerate = sheetsToGenerate.some((c) => c.label === sheet.label);
+      if (!shouldGenerate) {
+        await loadExistingSheet(sheet, sheet.label);
+        continue;
+      }
+      const result = resultByLabel.get(sheet.label);
+      if (!result) {
+        throw new Error(`Missing generation result for ${sheet.label}`);
+      }
+      for (const entry of result.entries) {
+        nativeFrames.push(result.frames[entry.index - 1]!);
+        manifest.push(entry);
+        globalIndex = entry.globalIndex as number;
+      }
+    }
+  } else {
+    for (let si = 0; si < iterationSheets.length; si++) {
+      const sheet = iterationSheets[si]!;
+      const shouldGenerate = sheetsToGenerate.some((candidate) => candidate.label === sheet.label);
+      const sheetFolder = isolatedSheetRun ? sheetDirOverride! : sheet.label;
+      const priorSheetFolder = styleAnchorFromPriorSheet
+        ? resolvePriorSheetFolder(sheet.label, si, iterationSheets, isolatedSheetRun)
+        : undefined;
+
+      if (!shouldGenerate) {
+        await loadExistingSheet(sheet, sheetFolder);
+        continue;
+      }
+
+      const result = await runGenerateOneSheet(
+        sheet,
+        sheetFolder,
+        globalIndex,
+        si,
+        priorSheetFolder
+      );
+      for (const entry of result.entries) {
+        nativeFrames.push(result.frames[entry.index - 1]!);
+        manifest.push(entry);
+        globalIndex = entry.globalIndex as number;
+      }
+    }
+  }
+
+  usedSheetFolders.length = 0;
+  for (const sheet of iterationSheets) {
+    const folder =
+      isolatedSheetRun && sheetsToGenerate.some((c) => c.label === sheet.label)
+        ? sheetDirOverride!
+        : sheet.label;
+    usedSheetFolders.push(folder);
+  }
+
+  const jobConfig = { ...config, model, textRendering, promptVersion };
   const manifestPath = isolatedSheetRun
     ? resolve(outDir, sheetDirOverride!, 'manifest.json')
     : resolve(outDir, 'manifest.json');

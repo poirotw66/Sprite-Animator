@@ -6,6 +6,7 @@
   "language": "zh-TW",
   "chromaKeyColor": "green",
   "includeText": true,
+  "textRendering": "programmatic",
   "scope": "set",
   "stickerCount": 40,
   "model": "gemini-3.1-flash-image",
@@ -15,6 +16,7 @@
   "tabStickerIndex": 1,
   "maxSheetRetries": 3,
   "minGridAlignmentScore": 0.72,
+  "promptVersion": "v3compact",
   "lineS": {
     "syncToLineS": true,
     "creatorId": "706",

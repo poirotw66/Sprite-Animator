@@ -54,10 +54,17 @@ function buildSafeFramingInstruction(cols: number, rows: number): string {
 * Prefer head-to-chest **bust**; shrink the subject rather than letting it bleed into neighbours.`;
 }
 
+export interface StyleAnchorImage {
+  base64: string;
+  mimeType: string;
+}
+
 export interface GenerateSheetParams {
   /** Base64 of the reference character image (no data: prefix). */
   referenceBase64: string;
   referenceMimeType: string;
+  /** Optional processed prior sheet for style continuity (sheet-2+). */
+  styleAnchor?: StyleAnchorImage;
   /** Prompt body from `buildLineStickerPrompt` (chroma suffix added here). */
   prompt: string;
   cols: number;
@@ -80,6 +87,7 @@ export async function generateSheetImage(
   const {
     referenceBase64,
     referenceMimeType,
+    styleAnchor,
     prompt,
     cols,
     rows,
@@ -101,6 +109,17 @@ export async function generateSheetImage(
 
   const gridAnchor = buildGridLayoutAnchorBlock(cols, rows);
   const gridReminder = buildGridLayoutReminderBlock(cols, rows);
+  const styleAnchorBlock = styleAnchor
+    ? `
+
+---
+
+### [Style continuity — sheet 2+]
+
+The second attached image is the **processed sheet from the previous batch** in this set.
+Match its character design, line weight, palette, proportions, and sticker framing exactly.
+Same artist, same set — only new poses/phrases for this batch.`
+    : '';
   const fullPrompt =
     gridAnchor +
     buildLineStickerPromptSuffix(prompt, {
@@ -113,20 +132,24 @@ export async function generateSheetImage(
       includeText,
     }) +
     buildSafeFramingInstruction(cols, rows) +
+    styleAnchorBlock +
     gridReminder +
     gridRetrySuffix;
+
+  const contentParts: Array<{ inlineData?: { mimeType: string; data: string }; text?: string }> = [
+    { inlineData: { mimeType: referenceMimeType, data: referenceBase64 } },
+  ];
+  if (styleAnchor) {
+    contentParts.push({
+      inlineData: { mimeType: styleAnchor.mimeType, data: styleAnchor.base64 },
+    });
+  }
+  contentParts.push({ text: fullPrompt });
 
   const request = (includeImageSize: boolean) =>
     ai.models.generateContent({
       model,
-      contents: {
-        parts: [
-          {
-            inlineData: { mimeType: referenceMimeType, data: referenceBase64 },
-          },
-          { text: fullPrompt },
-        ],
-      },
+      contents: { parts: contentParts },
       config: {
         imageConfig: {
           aspectRatio,
@@ -164,13 +187,37 @@ export async function generateSheetImage(
   }
   if (!response) throw lastErr ?? new Error('No response from Gemini');
 
-  const parts = response.candidates?.[0]?.content?.parts;
-  if (parts) {
-    for (const part of parts) {
-      if (part.inlineData?.data) {
-        return Uint8Array.from(Buffer.from(part.inlineData.data, 'base64'));
+  const maxEmptyImageRetries = 3;
+  for (let emptyAttempt = 0; emptyAttempt < maxEmptyImageRetries; emptyAttempt++) {
+    const parts = response.candidates?.[0]?.content?.parts;
+    if (parts) {
+      for (const part of parts) {
+        if (part.inlineData?.data) {
+          return Uint8Array.from(Buffer.from(part.inlineData.data, 'base64'));
+        }
       }
     }
+
+    if (emptyAttempt >= maxEmptyImageRetries - 1) {
+      break;
+    }
+
+    const delay = 2500 + Math.random() * 1500;
+    onStatus?.(
+      `no image in Gemini response; retrying in ${Math.round(delay / 1000)}s (${emptyAttempt + 2}/${maxEmptyImageRetries})`
+    );
+    await wait(delay);
+
+    try {
+      response = await request(includeImageSize);
+    } catch (err) {
+      lastErr = err;
+      if (!isRetryable(err)) throw err;
+      onStatus?.('API busy during empty-image retry; backing off…');
+      await wait(4000);
+      response = await request(includeImageSize);
+    }
   }
+
   throw new Error('No image data received from Gemini for sprite sheet');
 }

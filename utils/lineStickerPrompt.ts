@@ -55,7 +55,7 @@ export interface PromptSlots {
     text: TextSlot;
 }
 
-export type LineStickerPromptVersion = 'v1' | 'v2' | 'v3';
+export type LineStickerPromptVersion = 'v1' | 'v2' | 'v3' | 'v3compact';
 
 /** How sticker phrase text appears: drawn by the image model, or composited in the browser after slicing. */
 export type LineStickerTextRendering = 'model' | 'programmatic';
@@ -243,6 +243,33 @@ function buildProgrammaticOverlayCompositionBullets(bgHex: string): string {
 export const getActionHint = (_phrase: string): string =>
     'natural action and expression matching the text meaning';
 
+/** One-line English action for image prompts (strips CJK parentheticals). */
+export function compactEnglishAction(raw: string, maxLen = 55): string {
+    const s = raw.trim();
+    const enOnly = s
+        .replace(/\s*[（(【\[][^)）\]】]*[)）\]】]?/g, '')
+        .replace(/[^\x20-\x7E]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const use = enOnly.length > 0 ? enOnly : s.replace(/\s+/g, ' ');
+    return use.length > maxLen ? `${use.slice(0, maxLen).trim()}…` : use;
+}
+
+/** Short band tag for compact programmatic prompts. */
+export function compactCaptionBandTag(frameIndex: number): string {
+    const label = getReservedCaptionBandLabelForFrame(frameIndex).toLowerCase();
+    if (label.includes('bottom') && label.includes('left')) return 'bottom-l';
+    if (label.includes('bottom') && label.includes('right')) return 'bottom-r';
+    if (label.includes('bottom')) return 'bottom';
+    if (label.includes('top') && label.includes('left')) return 'top-l';
+    if (label.includes('top') && label.includes('right')) return 'top-r';
+    if (label.includes('top')) return 'top';
+    if (label.includes('beside') && label.includes('left')) return 'side-l';
+    if (label.includes('beside') && label.includes('right')) return 'side-r';
+    if (label.includes('diagonal')) return 'diag';
+    return 'bottom';
+}
+
 export function buildLineStickerPrompt(
     slots: PromptSlots,
     cols: number,
@@ -261,6 +288,54 @@ export function buildLineStickerPrompt(
     const cellHeightPct = Math.round(100 / rows);
     const canvasAspect = getLineStickerCanvasAspectPrompt(cols, rows);
     const bgHex = bgColor === 'magenta' ? '#FF00FF' : '#00FF00';
+
+    if (promptVersion === 'v3compact') {
+        const phrasesForFrames = expandThemePhrasesForFrames(
+            slots.theme,
+            totalFrames,
+            slots.text.language
+        );
+        const perCellLines = phrasesForFrames.map((phrase, index) => {
+            const n = index + 1;
+            const rawAction =
+                actionDescs && actionDescs[index]?.trim()
+                    ? actionDescs[index].trim()
+                    : getActionHint(phrase);
+            const action = compactEnglishAction(rawAction);
+            if (!includeText) {
+                const band = reserveForProgrammaticOverlay
+                    ? ` [band:${compactCaptionBandTag(index)}]`
+                    : '';
+                return `${n}|${action}${band}`;
+            }
+            return `${n}|"${phrase}"|${action}`;
+        });
+
+        const programmaticNote =
+            !includeText && reserveForProgrammaticOverlay
+                ? `\n[5b. Caption bands]\nKeep tagged bands empty (chroma only); text is added after slicing.\n`
+                : '';
+
+        return `🎨 LINE Sticker Sheet (${cols}×${rows}, compact)
+
+[1. Layout] ${canvasAspect}, ${totalFrames} equal cells (${cellWidthPct}%×${cellHeightPct}%). Logical grid only — NO visible dividers. Continuous ${bgHex}. One subject per cell, ~10% chroma margin.
+
+[2. Style] Match uploaded reference only. ${slots.style.styleType}. ${slots.style.drawingMethod}. Flat shading; same artist across all cells.
+
+[3. Character] Same character(s) as reference in every cell. Consistent face, hair, outfit. Vary pose/expression only.
+
+[4. Background] Solid ${bgColorText} (${bgHex}), uniform, no gradient or texture.
+
+[5. Cells] Row-major. Format: N|"text"|action OR N|action [band:tag]
+${perCellLines.join('\n')}${programmaticNote}
+[6. Text] ${
+            includeText
+                ? `${slots.text.language}, ${slots.text.textStyle}, ${slots.text.textColor}. Cycle placement; readable; do not repeat same placement >2× in a row.`
+                : 'NO text in image.'
+        }
+
+[7. Output] One ${canvasAspect.toLowerCase()} image, ${cols}×${rows}, splittable into ${totalFrames} equal rectangles.`;
+    }
 
     if (promptVersion === 'v2' || promptVersion === 'v3') {
         const hardenedLayout = promptVersion === 'v3';
