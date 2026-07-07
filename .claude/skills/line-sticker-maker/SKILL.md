@@ -79,19 +79,32 @@ use `manifest.json` → `activeSheets`, or fall back to `sheet-1`, `sheet-2`.
 
 ## Upload to LINE Creators Market
 
-The upload skill now runs entirely from this repo under
-`.claude/skills/line-sticker-upload/`.
+Upload scripts live under `.claude/skills/line-sticker-upload/`.
+See **`.claude/skills/line-sticker-upload/SKILL.md`** for Drive / Playwright setup.
 
-After `generate.mts` / `finalize.mts`, if `lineS.syncToLineS` is not disabled,
-the pack is copied to `.line-upload/input/706/{Set Name}/` and writes
-`<out>/.env.batch/{Set_Name}.env`.
+### Environment files (two layers)
+
+| File | Purpose | When |
+|------|---------|------|
+| `.claude/skills/line-sticker-maker/credentials.env` | Shared account secrets (`LINE_EMAIL`, `LINE_PASSWORD`, `LINE_CREATOR_ID`, Google Drive parent) | **Once** — copy from `credentials.env.example` |
+| `<out>/.env.batch/{Set_Name}.env` | Per-set titles, paths, runtime IDs (`LINE_STICKER_ID`, `GDRIVE_*`) | **Auto** — written by `generate` / `finalize` / `sync-upload-input` |
+| Repo `.env` / `.env.local` | `GEMINI_API_KEY` only (image generation) | Optional |
+
+`run-line-upload.mts` **merges `credentials.env` into the batch file** before each step.
+You do not copy secrets into `.env.batch` by hand.
 
 ```bash
+cp .claude/skills/line-sticker-maker/credentials.env.example \
+   .claude/skills/line-sticker-maker/credentials.env
+# fill LINE_EMAIL, LINE_PASSWORD, LINE_CREATOR_ID, GOOGLE_*
+
 npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts \
-  --env .claude/skills/line-sticker-maker/example/output/p4/.env.batch/Cozy_Cream_Cat_Daily_Chat.env
+  --env output/my-set/.env.batch/My_Set_Name.env
 ```
 
-See **`.claude/skills/line-sticker-upload/SKILL.md`** for Drive / Playwright setup.
+After `generate.mts` / `finalize.mts`, if `lineS.syncToLineS` is not disabled,
+the pack is copied to `.line-upload/input/706/{Set Name}/` and the batch env stays
+under `<out>/.env.batch/`.
 
 ## config.json fields
 
@@ -153,8 +166,7 @@ and optionally syncs to **`.line-upload/input/706/{Set Name}/`**:
     Cozy_Cream_Cat_Daily_Chat.env
 
 .line-upload/input/706/Cozy Cream Cat Daily Chat/   ← auto-sync when syncToLineS
-  (same zip, md, sprite_sheets)
-  .env.batch/Cozy_Cream_Cat_Daily_Chat.env    ← upload env (stays in --out, not in submodule)
+  (zip, md, sprite_sheets only — batch env stays in --out)
 ```
 
 Without `lineS`, legacy output is `<out>/line-upload/` + `line-upload.zip`.

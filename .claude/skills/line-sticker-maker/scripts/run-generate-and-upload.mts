@@ -18,7 +18,7 @@ import { spawnSync } from 'node:child_process';
 
 
 
-import { mergeCredentialsIntoBatch, parseEnv } from './uploadCredentials.mts';
+import { ensureBatchEnvReady, parseEnv } from './uploadCredentials.mts';
 import { assertOutDirGridGate } from './manifestGridGate.mts';
 
 
@@ -111,7 +111,7 @@ await assertOutDirGridGate(outDir);
 
 
 
-await mergeCredentialsIntoBatch(batchPath, job.lineS.setName);
+await ensureBatchEnvReady(batchPath);
 
 
 

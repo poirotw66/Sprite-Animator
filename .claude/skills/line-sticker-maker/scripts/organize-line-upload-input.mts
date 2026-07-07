@@ -9,6 +9,7 @@
  */
 
 import { copyFile, mkdir, writeFile } from 'node:fs/promises';
+import { buildBatchEnvContent } from './uploadCredentials.mts';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -135,42 +136,12 @@ ${lineS.descEn}
 `;
 }
 
-function buildEnvBatch(lineS: LineSConfig, creatorId: string): string {
-  const relBase = lineS.root?.trim()
+function batchRelBase(lineS: LineSConfig, creatorId: string): string {
+  return lineS.root?.trim()
     ? resolve(lineS.root, 'input', creatorId, lineS.setName)
         .replace(`${PROJECT_ROOT}/`, '')
         .replace(/\\/g, '/')
     : lineS.setName;
-  return `# LINE Creators Market — ${lineS.setName}
-LINE_EMAIL=
-LINE_PASSWORD=
-LINE_CREATOR_ID=
-LINE_STICKER_ID=
-
-GOOGLE_EMAIL=
-GOOGLE_PASSWORD=
-GDRIVE_PARENT_FOLDER=LINE-sticker
-GDRIVE_SET_FOLDER=${lineS.setName}
-GDRIVE_STICKER_SUBFOLDER=sticker-pack
-GDRIVE_FOLDER_ID=
-GDRIVE_SHARE_URL=
-
-STICKER_TITLE_ZH=${lineS.titleZh}
-STICKER_DESC_ZH=${lineS.descZh}
-STICKER_TITLE_EN=${lineS.titleEn}
-STICKER_DESC_EN=${lineS.descEn}
-
-COPYRIGHT=Copyright (c) Blo0m
-USE_AI=true
-SALE_START=auto
-STICKER_COUNT=40
-SALE_REGION=all
-JOIN_CAMPAIGNS=false
-
-SOURCE_ZIP=${relBase}/${lineS.setName}.zip
-UPLOAD_ZIP=${relBase}/${lineS.setName}.zip
-SPRITE_SHEETS_DIR=${relBase}/sprite_sheets
-`;
 }
 
 /** Write upload layout: Set Name.zip, Set Name.md, sprite_sheets/, optional .env.batch */
@@ -205,7 +176,20 @@ export async function packLineSOutput(options: PackLineSOptions): Promise<{
   const envFileName = `${envFileBaseName(lineS.setName)}.env`;
   const envFilePath = resolve(envBatchDir, envFileName);
   await mkdir(envBatchDir, { recursive: true });
-  await writeFile(envFilePath, buildEnvBatch(lineS, creatorId), 'utf8');
+  await writeFile(
+    envFilePath,
+    buildBatchEnvContent(
+      {
+        setName: lineS.setName,
+        titleZh: lineS.titleZh,
+        descZh: lineS.descZh,
+        titleEn: lineS.titleEn,
+        descEn: lineS.descEn,
+      },
+      batchRelBase(lineS, creatorId)
+    ),
+    'utf8'
+  );
 
   return { destDir, envFilePath };
 }

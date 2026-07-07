@@ -13,6 +13,7 @@ import {
   validateLineSConfig,
   isLineSEnabled,
 } from './organize-line-upload-input.mts';
+import { buildBatchEnvContent } from './uploadCredentials.mts';
 
 const SKILL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PROJECT_ROOT = resolve(SKILL_ROOT, '../../..');
@@ -64,36 +65,16 @@ export async function syncPackToLineS(options: SyncToLineSOptions): Promise<{
   await cp(spritesSrc, spriteDest, { recursive: true });
 
   const relBase = relative(PROJECT_ROOT, destDir).replace(/\\/g, '/');
-  const envContent = `# LINE Creators Market — ${lineS.setName}
-LINE_EMAIL=
-LINE_PASSWORD=
-LINE_CREATOR_ID=
-LINE_STICKER_ID=
-
-GOOGLE_EMAIL=
-GOOGLE_PASSWORD=
-GDRIVE_PARENT_FOLDER=LINE-sticker
-GDRIVE_SET_FOLDER=${lineS.setName}
-GDRIVE_STICKER_SUBFOLDER=sticker-pack
-GDRIVE_FOLDER_ID=
-GDRIVE_SHARE_URL=
-
-STICKER_TITLE_ZH=${lineS.titleZh}
-STICKER_DESC_ZH=${lineS.descZh}
-STICKER_TITLE_EN=${lineS.titleEn}
-STICKER_DESC_EN=${lineS.descEn}
-
-COPYRIGHT=Copyright (c) Blo0m
-USE_AI=true
-SALE_START=auto
-STICKER_COUNT=40
-SALE_REGION=all
-JOIN_CAMPAIGNS=false
-
-SOURCE_ZIP=${relBase}/${lineS.setName}.zip
-UPLOAD_ZIP=${relBase}/${lineS.setName}.zip
-SPRITE_SHEETS_DIR=${relBase}/sprite_sheets
-`;
+  const envContent = buildBatchEnvContent(
+    {
+      setName: lineS.setName,
+      titleZh: lineS.titleZh,
+      descZh: lineS.descZh,
+      titleEn: lineS.titleEn,
+      descEn: lineS.descEn,
+    },
+    relBase
+  );
 
   // Keep .env.batch under job --out so generated IDs remain beside the pack output.
   const envBatchDir = resolve(sourceDir, '.env.batch');

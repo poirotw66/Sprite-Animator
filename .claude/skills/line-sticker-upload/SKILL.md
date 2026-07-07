@@ -11,25 +11,53 @@ description: >-
 Google Drive and Playwright scripts live at:
 `.claude/skills/line-sticker-upload/scripts/`
 
+## Environment files
+
+Three files, three roles — do not mix secrets into the batch env by hand.
+
+| File | Contains | Created by |
+|------|----------|------------|
+| `line-sticker-maker/credentials.env` | `LINE_EMAIL`, `LINE_PASSWORD`, `LINE_CREATOR_ID`, `GOOGLE_*`, `GDRIVE_PARENT_FOLDER` | You (once) — `credentials.env.example` |
+| `<out>/.env.batch/{Set_Name}.env` | Shop titles, ZIP/sprite paths, runtime `LINE_STICKER_ID`, `GDRIVE_FOLDER_ID`, `GDRIVE_SHARE_URL` | `generate` / `finalize` / `sync-upload-input` |
+| `line-sticker-upload/.env` | **Legacy** — all-in-one file for manual Python runs | Optional fallback if `credentials.env` missing |
+
+**Normal flow:** fill `credentials.env` → run `run-line-upload.mts --env <batch>`.
+The wrapper merges credentials into the batch file automatically.
+
+`LINE_CREATOR_ID` is your Creators Market account ID from the URL:
+`https://creator.line.me/my/{LINE_CREATOR_ID}/...`
+
+`LINE_STICKER_ID` is written by `provision_line_sticker.py` into the batch env (not `credentials.env`).
+
+OAuth / session artifacts (never commit):
+
+- `scripts/gdrive_credentials.json` — Google Desktop OAuth client
+- `scripts/gdrive_token.json` — Drive API token (auto-refreshed)
+- `scripts/playwright_line_state.json` — LINE login session (auto-created)
+
 ## Setup (once)
 
 ```bash
 pip install -r .claude/skills/line-sticker-upload/scripts/requirements-gdrive.txt
 pip install -r .claude/skills/line-sticker-upload/scripts/requirements-playwright.txt
 playwright install chromium
-cp .claude/skills/line-sticker-upload/.env.example .claude/skills/line-sticker-upload/.env
-# Or fill .claude/skills/line-sticker-maker/credentials.env for shared creds
+
+cp .claude/skills/line-sticker-maker/credentials.env.example \
+   .claude/skills/line-sticker-maker/credentials.env
+# fill LINE_EMAIL, LINE_PASSWORD, LINE_CREATOR_ID, GOOGLE_*
 ```
+
+Place `gdrive_credentials.json` in `scripts/` (Google Cloud Console → Desktop OAuth).
 
 ## Workflow with line-sticker-maker
 
 ```text
 line-sticker-maker (generate.mts)
-  → example/output/pX/                  ← local pack (zip, md, sprite_sheets)
-  → sync-line-upload-input (auto by default)
+  → <out>/                         ← local pack (zip, md, sprite_sheets)
+  → sync-upload-input (auto by default)
   → .line-upload/input/706/{Set Name}/
-  → example/output/pX/.env.batch/{Set_Name}.env
-  → run-line-upload.mts                 ← Drive + LINE Creators Market
+  → <out>/.env.batch/{Set_Name}.env
+  → run-line-upload.mts            ← merges credentials.env → batch → Python steps
 ```
 
 ### 1. Generate stickers
@@ -43,7 +71,7 @@ npx tsx .claude/skills/line-sticker-maker/scripts/generate.mts \
 ### 2. Manual sync (if needed)
 
 ```bash
-npx tsx .claude/skills/line-sticker-maker/scripts/sync-line-upload-input.mts \
+npx tsx .claude/skills/line-sticker-maker/scripts/sync-upload-input.mts \
   --source .claude/skills/line-sticker-maker/example/output/p4 \
   --config .claude/skills/line-sticker-maker/example/p4-job.config.json
 ```
@@ -52,7 +80,7 @@ npx tsx .claude/skills/line-sticker-maker/scripts/sync-line-upload-input.mts \
 
 ```bash
 npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts \
-  --env .claude/skills/line-sticker-maker/example/output/p4/.env.batch/Cozy_Cream_Cat_Daily_Chat.env
+  --env output/my-set/.env.batch/Set_Name.env
 ```
 
 Visible browser is the default. For automation, add `--headless true`.
@@ -60,10 +88,10 @@ Visible browser is the default. For automation, add `--headless true`.
 Single step:
 
 ```bash
-npx tsx .../run-line-upload.mts --env example/output/pX/.env.batch/Set_Name.env --step gdrive
-npx tsx .../run-line-upload.mts --env example/output/pX/.env.batch/Set_Name.env --step provision
-npx tsx .../run-line-upload.mts --env example/output/pX/.env.batch/Set_Name.env --step zip
-npx tsx .../run-line-upload.mts --env example/output/pX/.env.batch/Set_Name.env --step submit
+npx tsx .../run-line-upload.mts --env <out>/.env.batch/Set_Name.env --step gdrive
+npx tsx .../run-line-upload.mts --env <out>/.env.batch/Set_Name.env --step provision
+npx tsx .../run-line-upload.mts --env <out>/.env.batch/Set_Name.env --step zip
+npx tsx .../run-line-upload.mts --env <out>/.env.batch/Set_Name.env --step submit
 ```
 
 ## Pipeline order (do not skip)
@@ -75,7 +103,7 @@ npx tsx .../run-line-upload.mts --env example/output/pX/.env.batch/Set_Name.env 
 | 3 | `upload_line_zip.py` | Upload 42-PNG ZIP on image edit page |
 | 4 | `submit_line_review.py` | Submit for review → prints `PROJECT_URL=` |
 
-All Python scripts can be run directly with `--env <batch env path>`.
+All Python scripts accept `--env <batch env path>` (credentials merged if you use `run-line-upload.mts`).
 
 ## Upload root layout
 
@@ -89,9 +117,7 @@ All Python scripts can be run directly with `--env <batch env path>`.
 
 ## Secrets (never commit)
 
-- `.claude/skills/line-sticker-upload/.env`
 - `.claude/skills/line-sticker-maker/credentials.env`
-- `example/output/*/.env.batch/`
-- `.claude/skills/line-sticker-upload/scripts/playwright_line_state.json`
-- `.claude/skills/line-sticker-upload/scripts/gdrive_token.json`
-- `.claude/skills/line-sticker-upload/scripts/gdrive_credentials.json`
+- `.claude/skills/line-sticker-upload/.env` (legacy)
+- `<out>/.env.batch/*.env` (may contain runtime IDs after provision)
+- `scripts/playwright_line_state.json`, `gdrive_token.json`, `gdrive_credentials.json`

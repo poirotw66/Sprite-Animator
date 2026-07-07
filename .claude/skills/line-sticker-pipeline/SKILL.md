@@ -79,7 +79,8 @@ Copy this checklist and track progress:
 ```
 Pipeline:
 - [ ] 1. Confirm image path + phrase-set JSON (or job config)
-- [ ] 2. Ensure GEMINI_API_KEY (.env / .env.local / env var)
+- [ ] 2. Ensure GEMINI_API_KEY (repo `.env` / `.env.local` / env var)
+- [ ] 2b. (Upload) Fill `line-sticker-maker/credentials.env` once
 - [ ] 3. Dry-run: run-from-inputs.mts --dry-run
 - [ ] 4. Generate for real
 - [ ] 5. Spot-check stickers/ + manifest.json gridScores
@@ -145,7 +146,10 @@ Spot-check 2–3 stickers and `manifest.json` → `gridScores` (target ≥ 0.8).
 
 ### Step 6 — Upload (optional)
 
-See **`.claude/skills/line-sticker-upload/SKILL.md`**.
+1. Copy and fill **`.claude/skills/line-sticker-maker/credentials.env`** (see `credentials.env.example`).
+2. Run upload — credentials are merged into `<out>/.env.batch/*.env` automatically.
+
+See **`.claude/skills/line-sticker-upload/SKILL.md`** for Drive / Playwright setup.
 
 ```bash
 npx tsx .claude/skills/line-sticker-maker/scripts/run-from-inputs.mts \

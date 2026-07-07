@@ -11,6 +11,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { assertOutDirGridGate } from './manifestGridGate.mts';
+import { ensureBatchEnvReady } from './uploadCredentials.mts';
 
 const SKILL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PROJECT_ROOT = resolve(SKILL_ROOT, '../../..');
@@ -91,6 +92,7 @@ if (!skipGridGate) {
   }
 }
 console.log(`▶ Using ${envSrc}`);
+await ensureBatchEnvReady(envSrc);
 
 const steps: Exclude<UploadStep, 'all'>[] =
   step === 'all' ? ['gdrive', 'provision', 'zip', 'submit'] : [step];
