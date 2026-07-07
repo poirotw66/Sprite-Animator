@@ -13,7 +13,7 @@ export interface GridLayoutScore {
 }
 
 export interface GridValidationOptions {
-  /** Minimum boundary-alignment score for the expected grid (0–1). Default 0.72. */
+  /** Minimum boundary-alignment score for the expected grid (0–1). Default 0.80. */
   minScore?: number;
   /** When another grid ties within this margin, prefer the expected cols×rows. Default 0.03. */
   scoreTieMargin?: number;
@@ -165,7 +165,7 @@ export function validateSheetGrid(
   rows: number,
   options: GridValidationOptions = {}
 ): GridValidationResult {
-  const minScore = options.minScore ?? 0.72;
+  const minScore = options.minScore ?? 0.8;
   const scoreTieMargin = options.scoreTieMargin ?? 0.03;
   const requireExactLayout = options.requireExactLayout !== false;
   const maxColumnWidthCv = options.maxColumnWidthCv ?? 0.12;

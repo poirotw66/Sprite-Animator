@@ -15,7 +15,7 @@
   "mainStickerIndex": 1,
   "tabStickerIndex": 1,
   "maxSheetRetries": 3,
-  "minGridAlignmentScore": 0.72,
+  "minGridAlignmentScore": 0.8,
   "promptVersion": "v3compact",
   "lineS": {
     "syncToLineS": true,

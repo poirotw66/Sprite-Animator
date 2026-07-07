@@ -81,7 +81,7 @@ interface StickerConfig {
   lineUploadStickerCount?: number;
   /** Max Gemini retries when grid validation fails (default 3). */
   maxSheetRetries?: number;
-  /** Minimum grid alignment score 0–1 to accept a sheet (default 0.72). */
+  /** Minimum grid alignment score 0–1 to accept a sheet (default 0.80). */
   minGridAlignmentScore?: number;
   /** Prompt builder version (default v3compact — shorter per-cell lines). */
   promptVersion?: LineStickerPromptVersion;
@@ -327,7 +327,7 @@ async function main() {
   const resolution = config.resolution ?? '1K';
   const maxSheetRetries = Math.max(1, config.maxSheetRetries ?? 3);
   const extraSheetRegenAttempts = config.extraSheetRegenAttempts ?? 3;
-  const minGridAlignmentScore = config.minGridAlignmentScore ?? 0.72;
+  const minGridAlignmentScore = config.minGridAlignmentScore ?? 0.8;
   const promptVersion = config.promptVersion ?? 'v3compact';
   const styleAnchorFromPriorSheet = config.styleAnchorFromPriorSheet === true;
 

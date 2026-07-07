@@ -2,7 +2,7 @@
  * Grid alignment gate for LINE sticker sheets — blocks finalize/upload when scores are too low.
  */
 
-export const DEFAULT_MIN_GRID_ALIGNMENT_SCORE = 0.72;
+export const DEFAULT_MIN_GRID_ALIGNMENT_SCORE = 0.8;
 
 export interface GridScoreFailure {
   sheet: string;
