@@ -18,7 +18,6 @@ import { spawnSync } from 'node:child_process';
 
 import {
   parsePhraseSetJson,
-  type LineStickerPhraseSetJson,
 } from '../../../../utils/lineStickerPhraseSetFormat.ts';
 import { DEFAULT_SKILL_STICKER_MODEL } from '../../../../utils/constants.ts';
 import {

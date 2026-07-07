@@ -20,7 +20,6 @@ import { dirname, resolve } from 'node:path';
 
 import { generateActionDescriptions } from '../../../../services/gemini/actionDescriptions.ts';
 import { generateStickerPhrases } from '../../../../services/gemini/stickerPhrases.ts';
-import { clampStickerPhrase } from '../../../../utils/lineStickerPhraseLength.ts';
 import {
   auditStickerPhrases,
   polishStickerPhrases,
