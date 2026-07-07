@@ -86,7 +86,7 @@ npx tsx .../generate-character-ref.mts \
 
 ## Layout reference
 
-`reference/model-sheet-layout.png` defines **panel arrangement** (like [p1 水獺設定圖](file:.claude/skills/line-sticker-character-ref/reference/model-sheet-layout.png)):
+`reference/model-sheet-layout.png` defines **panel arrangement** (水獺設定圖範例 — turnaround, expressions, detail panels):
 
 - Full-body **front / side / back** turnaround
 - **4 expression** headshots

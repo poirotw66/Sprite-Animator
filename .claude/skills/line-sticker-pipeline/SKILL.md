@@ -43,7 +43,7 @@ Design phrase-set first: **`.claude/skills/line-sticker-phrase-design/SKILL.md`*
   "mode": "set",
   "phrases": ["早安", "晚安"],
   "actionDescs": ["wave hand", "sleepy expression"],
-  "name": "My Cat Daily"
+  "name": "奶油貓日常"
 }
 ```
 
@@ -63,8 +63,8 @@ Options:
 | flag | purpose |
 |---|---|
 | `--dry-run` | print prompts only (no Gemini, no files beyond `job.config.json`) |
-| `--set-name` | English set name for ZIP / line-s (default: phrase-set `name`) |
-| `--title-zh` / `--desc-zh` | Traditional Chinese shop listing |
+| `--set-name` | English ZIP / line-s folder name (default: derived from Chinese title) |
+| `--title-zh` / `--desc-zh` | LINE 商店標題與說明（預設取自 phrase-set `name`） |
 | `--title-en` / `--desc-en` | English shop listing |
 | `--job path/to/job.config.json` | skip auto-config; use existing job file |
 | `--upload` | after generate, run LINE upload (needs `line-s/` setup) |
@@ -122,9 +122,9 @@ npx tsx .claude/skills/line-sticker-maker/scripts/run-from-inputs.mts \
   --image <image> \
   --phrase-set <phrases.json> \
   --out <out> \
-  --set-name "My Set Name" \
-  --title-zh "我的貼圖" \
-  --title-en "My Stickers"
+  --set-name "Cream Cat Daily Chat" \
+  --title-zh "奶油貓日常" \
+  --title-en "Cream Cat Daily"
 ```
 
 ### Step 5 — Verify output

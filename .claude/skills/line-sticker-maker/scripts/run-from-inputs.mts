@@ -20,6 +20,11 @@ import {
   parsePhraseSetJson,
   type LineStickerPhraseSetJson,
 } from '../../../../utils/lineStickerPhraseSetFormat.ts';
+import {
+  defaultTitleZhFromPhraseSet,
+  suggestDescZh,
+  suggestSetNameEn,
+} from '../../../../utils/lineStickerSetNaming.ts';
 import { DEFAULT_LINE_STICKER_SET_COUNT } from './sheetPlan.ts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
@@ -55,14 +60,6 @@ function run(cmd: string, cmdArgs: string[]): void {
 
 function slugSetName(name: string): string {
   return name.replace(/[^\w]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
-}
-
-function defaultSetName(phraseSet: LineStickerPhraseSetJson): string {
-  if (phraseSet.name?.trim()) {
-    return phraseSet.name.trim();
-  }
-  const first = phraseSet.phrases.find((p) => p.trim().length > 0)?.trim();
-  return first ? `${first} Sticker Set` : 'LINE Sticker Set';
 }
 
 async function main(): Promise<void> {
@@ -115,14 +112,18 @@ async function main(): Promise<void> {
     const imageOut = resolve(outDir, `reference-image${imageExt}`);
     await copyFile(imagePath, imageOut);
 
-    const setName =
-      typeof args['set-name'] === 'string' && args['set-name'].trim()
-        ? args['set-name'].trim()
-        : defaultSetName(phraseSet);
     const titleZh =
       typeof args['title-zh'] === 'string' && args['title-zh'].trim()
         ? args['title-zh'].trim()
-        : setName;
+        : defaultTitleZhFromPhraseSet(phraseSet.name, phraseSet.phrases);
+    const setName =
+      typeof args['set-name'] === 'string' && args['set-name'].trim()
+        ? args['set-name'].trim()
+        : suggestSetNameEn({
+            titleZh,
+            themeKey: 'daily',
+            voiceKey: 'nishimura',
+          });
     const titleEn =
       typeof args['title-en'] === 'string' && args['title-en'].trim()
         ? args['title-en'].trim()
@@ -130,7 +131,7 @@ async function main(): Promise<void> {
     const descZh =
       typeof args['desc-zh'] === 'string'
         ? args['desc-zh']
-        : `${titleZh} 貼圖組`;
+        : suggestDescZh(titleZh);
     const descEn =
       typeof args['desc-en'] === 'string'
         ? args['desc-en']
@@ -186,6 +187,7 @@ async function main(): Promise<void> {
     console.log(`  image: ${basename(imagePath)}`);
     console.log(`  phrases: ${phraseSet.phrases.length} (${phraseSet.mode})`);
     console.log(`  set: ${setName}`);
+    console.log(`  titleZh: ${titleZh}`);
   }
 
   const configRel = relative(ROOT, configPath);

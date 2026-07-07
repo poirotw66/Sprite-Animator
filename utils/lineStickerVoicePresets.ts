@@ -1,6 +1,7 @@
 /**
  * On-sticker caption voice presets (tone / personality for phrase generation).
  * Add new entries here; select with --voice in design-phrase-set.mts.
+ * Chinese aliases (企鵝、咖波、戲謔…) live in lineStickerSetNaming.ts.
  */
 
 export interface StickerVoicePreset {

@@ -40,13 +40,15 @@ import {
   type ThemeOption,
 } from '../../../../utils/lineStickerPrompt.ts';
 import {
-  listStickerVoiceKeys,
-  resolveStickerVoice,
-} from '../../../../utils/lineStickerVoicePresets.ts';
+  listVoiceChoicesZh,
+  resolveThemeKey,
+  resolveVoiceKey,
+  suggestPhraseSetNameZh,
+} from '../../../../utils/lineStickerSetNaming.ts';
+import { resolveStickerVoice } from '../../../../utils/lineStickerVoicePresets.ts';
 import { loadApiKey, ROOT_DIR } from './apiKey.mts';
 
 const THEME_KEYS = Object.keys(THEME_PRESETS);
-const VOICE_KEYS = listStickerVoiceKeys();
 
 function parseArgs(argv: string[]): Record<string, string | boolean> {
   const args: Record<string, string | boolean> = {};
@@ -74,11 +76,14 @@ function buildThemeContext(themeKey: string | undefined, themeContext: string | 
   if (themeContext?.trim()) {
     return themeContext.trim();
   }
-  if (themeKey && themeKey in THEME_PRESETS) {
-    const theme = THEME_PRESETS[themeKey as ThemeOption];
+  const resolvedKey = resolveThemeKey(themeKey);
+  if (resolvedKey && resolvedKey in THEME_PRESETS) {
+    const theme = THEME_PRESETS[resolvedKey as ThemeOption];
     return `${theme.label} (${theme.chatContext})`;
   }
-  throw new Error(`Provide --theme <${THEME_KEYS.join('|')}> or --theme-context "..."`);
+  throw new Error(
+    `Provide --theme <${THEME_KEYS.join('|')}> or Chinese alias (日常、美食…), or --theme-context "..."`
+  );
 }
 
 function countNonEmpty(phrases: string[]): number {
@@ -179,15 +184,27 @@ async function designPhraseSet(args: Record<string, string | boolean>): Promise<
     throw new Error('Invalid --count or --cols/--rows');
   }
 
-  const themeKey = typeof args.theme === 'string' ? args.theme : undefined;
+  const themeKeyInput = typeof args.theme === 'string' ? args.theme : undefined;
+  const themeKey = resolveThemeKey(themeKeyInput);
   const themeContext = typeof args['theme-context'] === 'string' ? args['theme-context'] : undefined;
   const fullContext = buildThemeContext(themeKey, themeContext);
   const presetOnly = Boolean(args['preset-only']);
   const skipActions = Boolean(args['no-actions']);
-  const name = typeof args.name === 'string' ? args.name.trim() : undefined;
-  const voiceKey = typeof args.voice === 'string' ? args.voice : undefined;
+  const characterName = typeof args.character === 'string' ? args.character.trim() : undefined;
+  const voiceKeyInput = typeof args.voice === 'string' ? args.voice : undefined;
   const voiceContext = typeof args['voice-context'] === 'string' ? args['voice-context'] : undefined;
-  const voice = resolveStickerVoice(voiceKey, voiceContext);
+  const resolvedVoiceKey = voiceKeyInput ? resolveVoiceKey(voiceKeyInput) : undefined;
+  const voice = resolveStickerVoice(resolvedVoiceKey, voiceContext);
+  const name =
+    typeof args.name === 'string' && args.name.trim()
+      ? args.name.trim()
+      : suggestPhraseSetNameZh({
+          themeKey,
+          themeContext,
+          voiceKey: voice.key,
+          voice,
+          characterName,
+        });
 
   let phrases: string[];
   if (presetOnly) {
@@ -333,8 +350,22 @@ async function actionsOnly(args: Record<string, string | boolean>): Promise<void
   await validatePhraseSetFile(outPath);
 }
 
+function printVoiceChoices(): void {
+  console.log('貼圖組語氣風格（--voice 可填英文 key 或中文名稱）：\n');
+  console.log('| 中文名稱 | --voice |');
+  console.log('|---|---|');
+  for (const row of listVoiceChoicesZh()) {
+    console.log(`| ${row.zhName} | \`${row.key}\` 或 \`${row.zhAlias}\` |`);
+  }
+}
+
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
+
+  if (args['list-voices']) {
+    printVoiceChoices();
+    return;
+  }
 
   if (args.validate) {
     const path = typeof args.validate === 'string' ? args.validate : '';

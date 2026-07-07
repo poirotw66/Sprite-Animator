@@ -38,29 +38,47 @@ Example: `example/daily-set-40.json`
 
 ## Voice presets (`--voice`)
 
-Default: **`nishimura`**（西村戲謔風，[參考作者](https://store.line.me/stickershop/author/2897044/zh-Hant)）
+Default: **`nishimura`**（西村戲謔風）
 
-| key | 語氣 |
-|---|---|
-| `nishimura` | 戲謔、會心一笑、感同身受（預設） |
-| `minimal` | 極短反應字（好、謝、嗯） |
-| `meme` | 迷因梗圖、荒謬有梗 |
-| `sweet` | 撒嬌軟萌 |
-| `workplace` | 職場冷幽默、社畜感 |
-| `dramatic` | 情緒爆發、誇張大表情 |
-| `penguin` | [企鵝家族心情日常](https://store.line.me/stickershop/product/37301/zh-Hant) — 療癒可愛、心情標籤 |
-| `capoo` | [咖波](https://store.line.me/search/zh-Hant?q=%E5%92%96%E6%B3%A2) — 廢萌、吃貨、躺平 |
-| `kana` | [卡娜](https://store.line.me/search/zh-Hant?q=%E5%8D%A1%E5%A8%9C) — 活潑撒嬌、少女元氣 |
+**不必記英文 key** — 可直接用中文：
+
+```bash
+npx tsx .../design-phrase-set.mts --theme 日常 --voice 企鵝 --out output/企鵝日常/phrases.json
+npx tsx .../design-phrase-set.mts --theme 美食 --voice 咖波 --out output/咖波吃貨/phrases.json
+```
+
+列出全部風格：`npx tsx .../design-phrase-set.mts --list-voices`
+
+| 貼圖組風格（中文） | `--voice` 可填 | 參考 |
+|---|---|---|
+| 戲謔風（預設） | `nishimura` / `戲謔` / `西村` | [NishimuraYuji](https://store.line.me/stickershop/author/2897044/zh-Hant) |
+| 極簡反應 | `minimal` / `極簡` | 單字快捷回覆 |
+| 迷因梗圖 | `meme` / `迷因` / `梗圖` | 台灣網路梗 |
+| 撒嬌軟萌 | `sweet` / `撒嬌` | 討抱抱語氣 |
+| 職場冷幽默 | `workplace` / `職場幽默` / `社畜` | 社畜感 |
+| 情緒爆發 | `dramatic` / `爆發` | 誇張大表情 |
+| 企鵝療癒風 | `penguin` / `企鵝` | [企鵝家族心情日常](https://store.line.me/stickershop/product/37301/zh-Hant) |
+| 咖波風 | `capoo` / `咖波` | [咖波](https://store.line.me/search/zh-Hant?q=%E5%92%96%E6%B3%A2) |
+| 卡娜風 | `kana` / `卡娜` | [卡娜](https://store.line.me/search/zh-Hant?q=%E5%8D%A1%E5%A8%9C) |
+
+### 貼圖組中文名稱（`name` / 商店標題）
+
+未指定 `--name` 時，腳本會自動產生，例如：
+
+- `日常聊天·企鵝療癒風`
+- `奶油獺·日常聊天`（加 `--character 奶油獺`）
+
+此名稱寫入 phrase-set 的 `name`，並在 pipeline 中作為 **`titleZh`**（LINE 商店標題）。
 
 ```bash
 # 企鵝家族心情日常風
-npx tsx .../design-phrase-set.mts --theme daily --voice penguin --out output/penguin/phrases.json
+npx tsx .../design-phrase-set.mts --theme 日常 --voice 企鵝 --out output/企鵝日常/phrases.json
 
 # 咖波風
-npx tsx .../design-phrase-set.mts --theme food --voice capoo --out output/capoo/phrases.json
+npx tsx .../design-phrase-set.mts --theme 美食 --voice 咖波 --out output/咖波吃貨/phrases.json
 
-# 卡娜風
-npx tsx .../design-phrase-set.mts --theme daily --voice kana --out output/kana/phrases.json
+# 卡娜風 + 角色名
+npx tsx .../design-phrase-set.mts --theme 日常 --voice 卡娜 --character 小狐 --out output/小狐日常/phrases.json
 
 # 撒嬌風 + 戀愛主題
 npx tsx .../design-phrase-set.mts \
@@ -178,7 +196,8 @@ Design:
 - **Theme**: preset key or free-text (`--theme-context`)
 - **Language**: `zh-TW` (default), `zh-CN`, `en`, `ja`
 - **Size**: `set` + `--count 40` (LINE standard) or `single` grid
-- **Set name** (`--name`): Traditional Chinese title is fine
+- **Set name** (`--name`): Traditional Chinese title; omit to auto-generate e.g. `日常聊天·戲謔風`
+- **Character name** (`--character`): optional; prefixes set name e.g. `奶油獺·日常聊天`
 
 ### Step 2 — Design
 
@@ -234,7 +253,8 @@ See **`.claude/skills/line-sticker-pipeline/SKILL.md`**.
 | `--count` | `40` | set mode phrase count (32 / 40 / 48) |
 | `--cols` / `--rows` | `4` / `5` | single mode grid |
 | `--language` | `zh-TW` | `zh-TW`, `zh-CN`, `en`, `ja` |
-| `--voice` | `nishimura` | voice preset key (see table above) |
+| `--voice` | `nishimura` | voice key **or** 中文（企鵝、咖波、戲謔…）；`--list-voices` 查表 |
+| `--character` | — | 角色名，用於自動 `--name` |
 | `--voice-context` | — | custom voice text (overrides preset) |
 | `--preset-only` | off | cycle preset examples, no phrase AI |
 | `--no-actions` | off | skip actionDescs generation |
