@@ -44,8 +44,8 @@ npx tsx .claude/skills/line-sticker-character-ref/scripts/generate-character-ref
 | `--name` | — | Character name for prompt title |
 | `--layout-ref` | `reference/model-sheet-layout.png` | Panel layout reference (structure only) |
 | `--identity-ref` | — | Optional sketch — lock species/palette |
-| `--model` | `gemini-3.1-flash-image` | Gemini image model |
-| `--resolution` | `2K` | `0.5K` / `1K` / `2K` / `4K` (model-dependent) |
+| `--model` | `gemini-3.1-flash-lite-image` | Gemini image model (flash-lite default; 1K only) |
+| `--resolution` | `1K` | `1K` for flash-lite; `gemini-3.1-flash-image` supports up to `4K` |
 | `--dry-run` | off | Print prompt only |
 | `--list-styles` | — | Print all style keys |
 

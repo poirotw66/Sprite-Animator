@@ -15,6 +15,7 @@ import { basename, dirname, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { STYLE_PRESETS } from '../../../../utils/lineStickerPresets.ts';
+import { DEFAULT_MODEL } from '../../../../utils/constants.ts';
 import { buildCharacterRefPrompt, listStyleKeys } from './characterRefPrompt.ts';
 import { generateCharacterRefImage } from './geminiCharacterRef.mts';
 
@@ -105,8 +106,8 @@ async function main(): Promise<void> {
   const characterName = typeof args.name === 'string' ? args.name : undefined;
   const layoutRefArg = typeof args['layout-ref'] === 'string' ? args['layout-ref'] : DEFAULT_LAYOUT_REF;
   const identityRefArg = typeof args['identity-ref'] === 'string' ? args['identity-ref'] : undefined;
-  const model = typeof args.model === 'string' ? args.model : 'gemini-3.1-flash-image';
-  const resolution = typeof args.resolution === 'string' ? args.resolution : '2K';
+  const model = typeof args.model === 'string' ? args.model : DEFAULT_MODEL;
+  const resolution = typeof args.resolution === 'string' ? args.resolution : '1K';
 
   const layoutPath = resolveImagePath(layoutRefArg);
   const prompt = buildCharacterRefPrompt({

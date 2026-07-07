@@ -53,16 +53,13 @@ export function buildGridCandidates(expectedCols: number, expectedRows: number):
 }
 
 /** Score how well internal grid boundaries align with empty/chroma background seams. */
-export function scoreGridLayoutFromRgba(
+function scoreGridBounds(
   data: Uint8ClampedArray,
   width: number,
   height: number,
-  cols: number,
-  rows: number
+  xBounds: number[],
+  yBounds: number[]
 ): number {
-  if (width <= 0 || height <= 0 || cols < 1 || rows < 1) return 0;
-  if (cols < 2 && rows < 2) return 0;
-
   const isBg = (offset: number) =>
     isSliceBackgroundPixel(
       data[offset]!,
@@ -73,11 +70,9 @@ export function scoreGridLayoutFromRgba(
 
   let total = 0;
   let count = 0;
-  const cellW = width / cols;
-  const cellH = height / rows;
 
-  for (let c = 1; c < cols; c++) {
-    const x = Math.round(c * cellW);
+  for (let i = 1; i < xBounds.length - 1; i++) {
+    const x = xBounds[i]!;
     let empty = 0;
     for (let y = 0; y < height; y++) {
       if (isBg((y * width + x) * 4)) empty++;
@@ -85,8 +80,9 @@ export function scoreGridLayoutFromRgba(
     total += empty / height;
     count++;
   }
-  for (let r = 1; r < rows; r++) {
-    const y = Math.round(r * cellH);
+
+  for (let i = 1; i < yBounds.length - 1; i++) {
+    const y = yBounds[i]!;
     let empty = 0;
     for (let x = 0; x < width; x++) {
       if (isBg((y * width + x) * 4)) empty++;
@@ -94,7 +90,21 @@ export function scoreGridLayoutFromRgba(
     total += empty / width;
     count++;
   }
+
   return count > 0 ? total / count : 0;
+}
+
+export function scoreGridLayoutFromRgba(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  cols: number,
+  rows: number
+): number {
+  if (width <= 0 || height <= 0 || cols < 1 || rows < 1) return 0;
+  if (cols < 2 && rows < 2) return 0;
+  const { xBounds, yBounds } = detectSheetGridBoundaries(data, width, height, cols, rows);
+  return scoreGridBounds(data, width, height, xBounds, yBounds);
 }
 
 export function detectBestGridLayoutFromRgba(

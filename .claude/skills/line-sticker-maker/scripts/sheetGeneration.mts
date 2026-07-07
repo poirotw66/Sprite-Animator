@@ -63,6 +63,8 @@ export interface GenerateOneSheetParams {
   slots: PromptSlots;
   referenceBase64: string;
   referenceMimeType: string;
+  companionReferenceBase64?: string;
+  companionReferenceMimeType?: string;
   apiKey: string;
   model: string;
   resolution: string;
@@ -109,6 +111,37 @@ function warn(prefix: string, msg: string): void {
   console.warn(`${prefix}${msg}`);
 }
 
+async function archiveGridAttempt(
+  outDir: string,
+  sheetFolder: string,
+  attempt: number,
+  attemptState: AttemptState
+): Promise<void> {
+  const attemptsDir = resolve(outDir, sheetFolder, 'attempts');
+  await mkdir(attemptsDir, { recursive: true });
+  const { rawPng, image, validation } = attemptState;
+  const label = String(attempt).padStart(2, '0');
+  await writeFile(resolve(attemptsDir, `attempt-${label}-raw.${extForBytes(rawPng)}`), rawPng);
+  await writeFile(resolve(attemptsDir, `attempt-${label}-processed.png`), encodePng(image));
+  await writeFile(
+    resolve(attemptsDir, `attempt-${label}.json`),
+    `${JSON.stringify(
+      {
+        attempt,
+        ok: validation.ok,
+        reason: validation.reason,
+        expected: validation.expected,
+        detected: validation.detected,
+        columnWidthCv: validation.columnWidthCv,
+        resliceCandidate: validation.resliceCandidate,
+      },
+      null,
+      2
+    )}\n`,
+    'utf8'
+  );
+}
+
 function tryAcceptViaReslice(
   validation: GridValidationResult,
   cols: number,
@@ -146,6 +179,8 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     slots,
     referenceBase64,
     referenceMimeType,
+    companionReferenceBase64,
+    companionReferenceMimeType,
     apiKey,
     model,
     resolution,
@@ -191,6 +226,7 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
   const gridCandidates = buildGridCandidates(sheet.cols, sheet.rows);
   const hardMaxAttempts = maxSheetRetries + Math.max(0, extraSheetRegenAttempts);
   let finalAttempt: AttemptState | null = null;
+  let bestAttempt: AttemptState | null = null;
   let lastValidation: GridValidationResult | undefined;
 
   for (let attempt = 1; attempt <= hardMaxAttempts; attempt++) {
@@ -206,6 +242,10 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     const rawPng = await generateSheetImage({
       referenceBase64,
       referenceMimeType,
+      companionReference:
+        companionReferenceBase64 && companionReferenceMimeType
+          ? { base64: companionReferenceBase64, mimeType: companionReferenceMimeType }
+          : undefined,
       styleAnchor,
       prompt,
       cols: sheet.cols,
@@ -239,6 +279,16 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     };
     lastValidation = validation;
 
+    await archiveGridAttempt(outDir, sheetFolder, attempt, attemptState);
+    log(
+      logPrefix,
+      `saved attempt ${attempt} -> ${sheetFolder}/attempts/ (score ${validation.expected.score.toFixed(2)}, detected ${validation.detected.cols}×${validation.detected.rows})`
+    );
+
+    if (!bestAttempt || attemptState.rank > bestAttempt.rank) {
+      bestAttempt = attemptState;
+    }
+
     if (validation.ok) {
       if (attempt > 1) {
         log(
@@ -266,13 +316,36 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     } else if (model.includes('lite')) {
       warn(
         logPrefix,
-        'tip: gemini-3.1-flash-image is usually more stable for 4×5 sheets than flash-lite.'
+        'tip: if grid alignment fails, retry with --model gemini-3.1-flash-image (often more stable for 4×5 sheets).'
       );
     }
   }
 
   if (!finalAttempt || finalAttempt.validation.expected.score < minGridAlignmentScore) {
-    const score = finalAttempt?.validation.expected.score ?? 0;
+    const score = finalAttempt?.validation.expected.score ?? bestAttempt?.validation.expected.score ?? 0;
+    if (bestAttempt) {
+      const attemptsDir = resolve(outDir, sheetFolder, 'attempts');
+      await mkdir(attemptsDir, { recursive: true });
+      await writeFile(resolve(attemptsDir, 'best-raw.png'), bestAttempt.rawPng);
+      await writeFile(resolve(attemptsDir, 'best-processed.png'), encodePng(bestAttempt.image));
+      await writeFile(
+        resolve(attemptsDir, 'summary.json'),
+        `${JSON.stringify(
+          {
+            failed: true,
+            minGridAlignmentScore,
+            attempts: hardMaxAttempts,
+            bestScore: bestAttempt.validation.expected.score,
+            bestDetected: bestAttempt.validation.detected,
+            bestReason: bestAttempt.validation.reason,
+          },
+          null,
+          2
+        )}\n`,
+        'utf8'
+      );
+      warn(logPrefix, `all attempts failed — review ${sheetFolder}/attempts/`);
+    }
     throw new Error(
       `${sheet.label}: grid score ${score.toFixed(3)} below minimum ${minGridAlignmentScore.toFixed(2)} after ${hardMaxAttempts} attempts`
     );

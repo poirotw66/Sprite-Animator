@@ -4,6 +4,8 @@
 
 import { GoogleGenAI } from '@google/genai';
 
+import { DEFAULT_MODEL } from '../../../../utils/constants.ts';
+
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function isRetryable(err: unknown): boolean {
@@ -39,8 +41,8 @@ export async function generateCharacterRefImage(
     layoutRefMimeType,
     identityRefBase64,
     identityRefMimeType,
-    model = 'gemini-3.1-flash-image',
-    resolution = '2K',
+    model = DEFAULT_MODEL,
+    resolution = '1K',
     aspectRatio = '1:1',
     onStatus,
   } = params;

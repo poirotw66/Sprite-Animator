@@ -32,6 +32,7 @@ import {
   type LineStickerTextRendering,
   type LineStickerPromptVersion,
 } from '../../../../utils/lineStickerPrompt.ts';
+import { DEFAULT_SKILL_STICKER_MODEL } from '../../../../utils/constants.ts';
 import type { ChromaKeyColorType } from '../../../../types.ts';
 
 import { finalizeStickerJob } from './finalizeJob.mts';
@@ -49,6 +50,8 @@ const ROOT_DIR = resolve(SCRIPT_DIR, '../../../..');
 
 interface StickerConfig {
   referenceImage: string;
+  /** Optional second character reference image (duo sets). */
+  referenceImage2?: string;
   characterDescription?: string;
   style?: string; // STYLE_PRESETS key (default: matchUploaded)
   theme?: string; // THEME_PRESETS key (default: daily)
@@ -67,7 +70,7 @@ interface StickerConfig {
   stickerCount?: number; // set mode only: 40 (LINE default) or 48 (legacy)
   cols?: number; // single mode only (default 4)
   rows?: number; // single mode only (default 6)
-  model?: string; // default: gemini-3.1-flash-image
+  model?: string; // default: gemini-3.1-flash-image (DEFAULT_SKILL_STICKER_MODEL)
   resolution?: string; // output resolution, default: 1K (model-dependent)
   /** line-s upload repo layout (replaces legacy line-upload/ when enabled). */
   lineS?: LineSConfig;
@@ -323,7 +326,7 @@ async function main() {
   const model =
     (typeof args.model === 'string' ? args.model : undefined) ??
     config.model ??
-    'gemini-3.1-flash-image';
+    DEFAULT_SKILL_STICKER_MODEL;
   const resolution = config.resolution ?? '1K';
   const maxSheetRetries = Math.max(1, config.maxSheetRetries ?? 3);
   const extraSheetRegenAttempts = config.extraSheetRegenAttempts ?? 3;
@@ -386,6 +389,15 @@ async function main() {
   const referenceMimeType = mimeFromPath(imgPath);
   console.log(`▶ reference: ${basename(imgPath)} (${referenceMimeType})`);
 
+  let companionReferenceBase64: string | undefined;
+  let companionReferenceMimeType: string | undefined;
+  if (config.referenceImage2) {
+    const img2Path = resolveImagePath(config.referenceImage2, configDir);
+    companionReferenceBase64 = (await readFile(img2Path)).toString('base64');
+    companionReferenceMimeType = mimeFromPath(img2Path);
+    console.log(`▶ reference2: ${basename(img2Path)} (${companionReferenceMimeType})`);
+  }
+
   await mkdir(outDir, { recursive: true });
   const stickersDir = resolve(outDir, 'stickers');
   await mkdir(stickersDir, { recursive: true });
@@ -442,6 +454,8 @@ async function main() {
       slots,
       referenceBase64,
       referenceMimeType,
+      companionReferenceBase64,
+      companionReferenceMimeType,
       apiKey,
       model,
       resolution,

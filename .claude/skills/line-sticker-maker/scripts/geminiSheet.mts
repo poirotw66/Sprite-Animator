@@ -63,6 +63,8 @@ export interface GenerateSheetParams {
   /** Base64 of the reference character image (no data: prefix). */
   referenceBase64: string;
   referenceMimeType: string;
+  /** Optional second character reference (e.g. duo sticker set). */
+  companionReference?: StyleAnchorImage;
   /** Optional processed prior sheet for style continuity (sheet-2+). */
   styleAnchor?: StyleAnchorImage;
   /** Prompt body from `buildLineStickerPrompt` (chroma suffix added here). */
@@ -87,6 +89,7 @@ export async function generateSheetImage(
   const {
     referenceBase64,
     referenceMimeType,
+    companionReference,
     styleAnchor,
     prompt,
     cols,
@@ -120,8 +123,20 @@ The second attached image is the **processed sheet from the previous batch** in 
 Match its character design, line weight, palette, proportions, and sticker framing exactly.
 Same artist, same set — only new poses/phrases for this batch.`
     : '';
+  const companionBlock = companionReference
+    ? `
+
+---
+
+### [Dual character references]
+
+The **first** attached image is character A (primary). The **second** is character B (companion).
+Match each cell's action description — draw A, B, or both together as specified.
+Keep both designs consistent with their reference sheets (species, colors, lazy yurukawa style).`
+    : '';
   const fullPrompt =
     gridAnchor +
+    companionBlock +
     buildLineStickerPromptSuffix(prompt, {
       cols,
       rows,
@@ -139,6 +154,11 @@ Same artist, same set — only new poses/phrases for this batch.`
   const contentParts: Array<{ inlineData?: { mimeType: string; data: string }; text?: string }> = [
     { inlineData: { mimeType: referenceMimeType, data: referenceBase64 } },
   ];
+  if (companionReference) {
+    contentParts.push({
+      inlineData: { mimeType: companionReference.mimeType, data: companionReference.base64 },
+    });
+  }
   if (styleAnchor) {
     contentParts.push({
       inlineData: { mimeType: styleAnchor.mimeType, data: styleAnchor.base64 },

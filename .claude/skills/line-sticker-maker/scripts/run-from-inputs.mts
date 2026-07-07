@@ -20,6 +20,7 @@ import {
   parsePhraseSetJson,
   type LineStickerPhraseSetJson,
 } from '../../../../utils/lineStickerPhraseSetFormat.ts';
+import { DEFAULT_SKILL_STICKER_MODEL } from '../../../../utils/constants.ts';
 import {
   defaultTitleZhFromPhraseSet,
   suggestDescZh,
@@ -65,6 +66,7 @@ function slugSetName(name: string): string {
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   const imageArg = args.image;
+  const image2Arg = args.image2;
   const phraseSetArg = args['phrase-set'];
   const outArg = args.out;
   const jobArg = args.job;
@@ -112,6 +114,18 @@ async function main(): Promise<void> {
     const imageOut = resolve(outDir, `reference-image${imageExt}`);
     await copyFile(imagePath, imageOut);
 
+    let referenceImage2: string | undefined;
+    if (image2Arg && typeof image2Arg === 'string') {
+      const image2Path = resolve(ROOT, image2Arg);
+      if (!existsSync(image2Path)) {
+        throw new Error(`Second reference image not found: ${image2Arg}`);
+      }
+      const image2Ext = image2Path.match(/\.(png|jpe?g|webp)$/i)?.[0] ?? '.png';
+      const image2Out = resolve(outDir, `reference-image-2${image2Ext}`);
+      await copyFile(image2Path, image2Out);
+      referenceImage2 = basename(image2Out);
+    }
+
     const titleZh =
       typeof args['title-zh'] === 'string' && args['title-zh'].trim()
         ? args['title-zh'].trim()
@@ -150,18 +164,25 @@ async function main(): Promise<void> {
 
     const job = {
       referenceImage: basename(imageOut),
+      ...(referenceImage2 ? { referenceImage2 } : {}),
+      ...(referenceImage2
+        ? {
+            characterDescription:
+              '雙角色情侶貼圖。第一張參考圖為慵懶柴犬，第二張為慵懶哈士奇。依各格 action description 決定出現哪一隻或兩隻同框。',
+          }
+        : {}),
       phraseSetFile: 'phrase-set.json',
       style: 'matchUploaded',
       language: 'zh-TW',
       chromaKeyColor: 'green',
       includeText: true,
-      textRendering: 'programmatic',
+      textRendering: 'model',
       scope,
       ...(scope === 'set' ? { stickerCount } : {}),
       ...(scope === 'single'
         ? { cols: phraseSet.gridCols ?? 4, rows: phraseSet.gridRows ?? 5 }
         : {}),
-      model: 'gemini-3.1-flash-image',
+      model: DEFAULT_SKILL_STICKER_MODEL,
       resolution: '1K',
       lineUpload: scope === 'set',
       mainStickerIndex: 1,
@@ -185,6 +206,9 @@ async function main(): Promise<void> {
     await writeFile(configPath, `${JSON.stringify(job, null, 2)}\n`, 'utf8');
     console.log(`Wrote ${relative(ROOT, configPath)}`);
     console.log(`  image: ${basename(imagePath)}`);
+    if (referenceImage2) {
+      console.log(`  image2: ${referenceImage2}`);
+    }
     console.log(`  phrases: ${phraseSet.phrases.length} (${phraseSet.mode})`);
     console.log(`  set: ${setName}`);
     console.log(`  titleZh: ${titleZh}`);

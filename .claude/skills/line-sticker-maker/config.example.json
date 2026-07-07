@@ -6,7 +6,7 @@
   "language": "zh-TW",
   "chromaKeyColor": "green",
   "includeText": true,
-  "textRendering": "programmatic",
+  "textRendering": "model",
   "scope": "set",
   "stickerCount": 40,
   "model": "gemini-3.1-flash-image",

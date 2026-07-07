@@ -181,5 +181,6 @@ Details: `.claude/skills/line-sticker-maker/SKILL.md`
 ## Limits
 
 - Set mode: 40 stickers = 2× 4×5 sheets (parallel by default).
-- `textRendering: programmatic` (stable zh-TW text overlay).
+- Default: `textRendering: model` (Gemini draws captions); `programmatic` optional for stable zh-TW overlay.
+- Default image model: `gemini-3.1-flash-image` (not flash-lite — better 4×5 grid alignment).
 - Upload needs `git submodule update --init line-s` + Python deps.

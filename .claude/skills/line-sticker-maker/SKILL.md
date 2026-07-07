@@ -109,11 +109,11 @@ See **`.claude/skills/line-sticker-upload/SKILL.md`** for Drive / Playwright set
 | `language` | `zh-TW` | `zh-TW`, `zh-CN`, `en`, `ja` |
 | `chromaKeyColor` | `green` | `magenta` or `green` |
 | `includeText` | `true` | when `textRendering` is `model`, Gemini draws phrase text |
-| `textRendering` | `model` | `model` = Gemini draws text; **`programmatic`** = overlay after slice (more stable for zh-TW) |
-| `fontKey` / `textColorKey` | `round` / `black` | programmatic overlay presets (same as web app) |
+| `textRendering` | `model` | **`model`** = Gemini draws text on stickers (skill default); `programmatic` = canvas overlay after slice (more stable zh-TW) |
+| `fontKey` / `textColorKey` | `round` / `black` | used when `textRendering` is `programmatic` |
 | `scope` | `set` | `set` = full LINE set; `single` = one sheet |
 | `stickerCount` | `40` | 40 = 2×4×5 (LINE standard); 48 = legacy 3×4×4 |
-| `model` | `gemini-3.1-flash-image` | use flash-image for stable 4×5 grids |
+| `model` | `gemini-3.1-flash-image` | skill default (`DEFAULT_SKILL_STICKER_MODEL`); character-ref still uses flash-lite |
 | `resolution` | `1K` | `0.5K`/`1K`/`2K`/`4K` (model-dependent) |
 | `maxSheetRetries` | `3` | Gemini retries when grid validation fails |
 | `minGridAlignmentScore` | `0.72` | 0–1; reject sheet below this score |
