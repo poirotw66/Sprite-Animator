@@ -5,6 +5,7 @@
  *   - decode/encode PNG via upng-js (already a project dependency, no native build)
  *   - chroma-key removal via the SHARED `processChromaKey` core (same algorithm
  *     the app's Web Worker + main-thread fallback use — imported, not copied)
+ *   - background color normalization before chroma key (same rules as the web app)
  *   - slicing by integer buffer cropping at NATIVE resolution (no resampling)
  *
  * Everything here is headless: no DOM, no canvas, no React.
@@ -13,6 +14,7 @@
 import UPNG from 'upng-js';
 import jpeg from 'jpeg-js';
 import { processChromaKey } from '../../../../utils/chromaKeyCore.ts';
+import { normalizeChromaBackgroundInPlace } from '../../../../utils/normalizeChromaBackground.ts';
 import {
   CHROMA_KEY_COLORS,
   CHROMA_KEY_FUZZ,
@@ -103,6 +105,30 @@ export function encodePng(image: RgbaImage): Uint8Array {
     0
   );
   return new Uint8Array(ab);
+}
+
+/**
+ * Snap AI green/magenta variants to the exact chroma target (web app parity).
+ * Mutates and returns the same RGBA image.
+ */
+export function normalizeChromaBackground(
+  image: RgbaImage,
+  chromaKeyColor: ChromaKeyColorType
+): RgbaImage {
+  const c = CHROMA_KEY_COLORS[chromaKeyColor];
+  normalizeChromaBackgroundInPlace(image.data, chromaKeyColor, { r: c.r, g: c.g, b: c.b });
+  return image;
+}
+
+/**
+ * Normalize background color, then run chroma-key removal (matches web sprite sheet flow).
+ */
+export function processSheetChromaKey(
+  image: RgbaImage,
+  chromaKeyColor: ChromaKeyColorType
+): RgbaImage {
+  normalizeChromaBackground(image, chromaKeyColor);
+  return removeChromaKey(image, chromaKeyColor);
 }
 
 /**

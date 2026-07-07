@@ -30,7 +30,7 @@ import {
   decodeImage,
   encodePng,
   extForBytes,
-  removeChromaKey,
+  processSheetChromaKey,
   sliceSheet,
   type RgbaImage,
 } from './nodeImage.mts';
@@ -260,7 +260,7 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     });
 
     const image = decodeImage(rawPng);
-    removeChromaKey(image, chromaKeyColor);
+    processSheetChromaKey(image, chromaKeyColor);
     const validation = validateSheetGrid(
       image.data,
       image.width,

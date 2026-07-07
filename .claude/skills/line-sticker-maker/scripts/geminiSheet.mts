@@ -2,9 +2,9 @@
  * Headless Gemini sprite-sheet generation for the LINE sticker skill.
  *
  * A thin, Node-friendly version of `services/gemini/spriteSheet.ts` with the
- * browser/React glue removed (no AbortController plumbing, no canvas-based
- * `normalizeBackgroundColor` — chroma-key auto-detects the dominant background,
- * so normalization is skipped per the skill's design). The chroma-key + layout
+ * browser/React glue removed (no AbortController plumbing). Background color
+ * normalization runs in `nodeImage.processSheetChromaKey` before the shared
+ * chroma-key core — same rules as the web app's `normalizeBackgroundColor`.
  * prompt SUFFIX is reused as-is from the app so wording stays in sync.
  */
 
