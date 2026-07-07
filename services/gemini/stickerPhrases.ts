@@ -6,6 +6,13 @@ import { GoogleGenAI } from '@google/genai';
 import { logger } from '../../utils/logger';
 import { PHRASE_GENERATION_MODEL } from '../../utils/constants';
 import { clampStickerPhrases } from '../../utils/lineStickerPhraseLength';
+import { polishStickerPhrases } from '../../utils/lineStickerPhraseQuality';
+import {
+  buildStickerVoicePromptBlock,
+  DEFAULT_STICKER_LENGTH_HINT,
+  DEFAULT_STICKER_VOICE_KEY,
+  resolveStickerVoice,
+} from '../../utils/lineStickerVoicePresets';
 import { API_KEY_MISSING_MESSAGE } from './types';
 
 export async function generateStickerPhrases(
@@ -14,7 +21,9 @@ export async function generateStickerPhrases(
   language: string,
   totalFrames: number,
   model: string = PHRASE_GENERATION_MODEL,
-  examplePhrases: string[] = []
+  examplePhrases: string[] = [],
+  voiceKey: string = DEFAULT_STICKER_VOICE_KEY,
+  customVoiceContext?: string
 ): Promise<string[]> {
   if (!apiKey) throw new Error(API_KEY_MISSING_MESSAGE);
 
@@ -27,12 +36,17 @@ export async function generateStickerPhrases(
       ? `\n### [Reference Example Phrases] (same theme, same language tone)\nUse only as vibe reference; invent **new** phrases in the same spirit. Do not copy or lightly tweak.\n${examplePhrases.slice(0, 16).map((p) => `- ${p}`).join('\n')}\n`
       : '';
 
-  const prompt = `You are an expert LINE (Japan/Korea/Taiwan-style chat app) sticker copywriter. Each phrase will be printed ON the sticker image next to or near the character—design for tiny thumbnails in chat bubbles.
+  const voice = resolveStickerVoice(voiceKey, customVoiceContext);
+  const voiceBlock = buildStickerVoicePromptBlock(voice);
+  const lengthHint = voice.lengthHint ?? DEFAULT_STICKER_LENGTH_HINT;
+
+  const prompt = `You are an expert LINE sticker copywriter. ${voice.intro} Each phrase is printed **ON the sticker** as a bold caption beside the character—still legible at thumbnail size (~15–20% cell height).
 
 ### [Objective]
 - Produce exactly **${contentCount}** phrases for one coherent sticker pack matching the Theme below.
 - Every phrase must **earn a tap**: reader thinks "I'll send this instead of typing."
-- Someone using that chat theme daily should recognize every line as useful there.
+- **Character voice first** — match the Voice section; NOT neutral utility text unless Voice says so.
+- Spread **distinct moods** across the pack.
 
 ### [Theme]
 ${themeContext}${exampleBlock}
@@ -40,27 +54,24 @@ ${themeContext}${exampleBlock}
 ### [Language]
 Output **${language}** only.
 
-Hard limits (including punctuation inside the phrase) — **brevity is mandatory**:
-- **Chinese (Traditional/Simplified)**: **at most 5 characters** per phrase; target **2–4 characters**; ultra-short LINE chat fragments only (e.g. 好、謝、等、嗯).
-- **Japanese**: **at most 5 characters** (mora-equivalent); target **2–4**; casual spoken fragments only—never full sentences.
-- **English**: **at most 3 words**; target **1–2 words**; headline-style; contractions OK; no clauses or commas chaining ideas.
-- If a draft feels long, **shorten it**—never exceed the cap.
+${voiceBlock}
 
-### [LINE sticker suitability — CRITICAL]
-- **Thumbnail-first**: wording must stay legible when scaled small beside the character—avoid dense punctuation, paired quotes, parentheses, slashes, hashtags, URLs, email-like fragments.
-- **Reaction-ready**: phrases cover distinct chat beats within the theme—thanks, OK/wait, surprise, sympathy, teasing, hype, apology-ish, refusal, confusion—without labeling sections; spread moods naturally.
-- **One punch per sticker**: each line is **one** beat (not two sentences joined); interjections and ellipsis sparingly ("..." only if essential).
-- **Pack cohesion**: same vibe as official LINE sticker tone—warm, casual, slightly expressive—not corporate slogans, not literature quotes, not lecture tone.
-- **Pairable with art**: illustrator will draw pose/expression from this text—avoid abstract metaphors no face/body can show.
+### [Length — still fits ON the sticker]
+${lengthHint}
+
+### [On-sticker legibility]
+- Thumbnail-first: avoid dense punctuation, quotes, parentheses, slashes, hashtags, URLs.
+- **Pairable with art**: illustrator draws pose/expression from the line—concrete reactions beat abstract metaphors.
+- Cover varied chat beats within the theme—but each with the chosen **Voice**.
 
 ### [Theme alignment]
-- Do **not** use category headers or buckets in output.
-- Stay strictly inside the Theme; no generic filler that ignores context.
+- No category headers in output.
+- Stay inside the Theme; no generic filler.
 
 ### [Quality bar]
-- Natural spoken rhythm; omit subjects where normal in chat ("算了", "來").
-- No duplicate or near-synonym meanings across the ${contentCount} lines.
-- Each phrase understandable alone—no "see previous message" dependency.
+- Natural spoken rhythm; Taiwanese/Japanese LINE chat flavor for zh/ja when applicable.
+- No duplicate or near-synonym meanings across ${contentCount} lines.
+- Each phrase works alone without context from other stickers.
 
 ### [Output format — STRICT]
 Exactly **${contentCount}** lines, flat list only.
@@ -70,7 +81,7 @@ Exactly **${contentCount}** lines, flat list only.
 ### [Forbidden]
 - Emojis, explanations, meta commentary
 - Labels ("Sticker 1/48"), numbering prefixes on phrases
-- Multi-clause sentences, semicolon chains, bullet nests inside a phrase
+- Multi-clause sentences, semicolon chains
 
 Generate the ${contentCount} phrases now.`;
 
@@ -197,5 +208,5 @@ Generate the ${contentCount} phrases now.`;
     ')'
   );
 
-  return clampStickerPhrases(result, language);
+  return polishStickerPhrases(clampStickerPhrases(result, language), language);
 }

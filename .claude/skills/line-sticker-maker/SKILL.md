@@ -17,6 +17,18 @@ It **reuses the app's own modules** (`utils/lineStickerPrompt.ts`,
 
 ## How to run
 
+**Simplest (image + phrase-set JSON):** use the pipeline wrapper — see
+**`.claude/skills/line-sticker-pipeline/SKILL.md`**.
+
+```bash
+npx tsx .claude/skills/line-sticker-maker/scripts/run-from-inputs.mts \
+  --image path/to/character.png \
+  --phrase-set path/to/phrases.json \
+  --out output/my-set
+```
+
+**Full control (job config):**
+
 ```bash
 npx tsx .claude/skills/line-sticker-maker/scripts/generate.mts \
   --config <path/to/config.json> \

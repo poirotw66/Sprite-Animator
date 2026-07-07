@@ -1,0 +1,25 @@
+{
+  "format": "line-sticker-phrase-set",
+  "version": 1,
+  "mode": "set",
+  "name": "日常聊天範例（戲謔版）",
+  "phrases": [
+    "又遲到", "晚安啦", "算你狠", "別客氣", "辛苦啦", "加油啊", "好累喔", "開心欸",
+    "笑死", "嗚嗚", "蛤？", "嗯哼", "好啊", "才不要", "等等啦", "想你了",
+    "收到", "懂了", "OK", "再說", "拜啦", "來了", "到了", "馬上",
+    "抱歉啦", "沒事", "真的", "假的", "太扯", "佩服", "感動", "撒嬌",
+    "生氣", "委屈", "無語", "震驚", "期待", "害羞", "得意", "崩潰"
+  ],
+  "actionDescs": [
+    "checking watch annoyed", "sleepy yawn wave", "impressed reluctant thumbs up", "dismissive humble wave",
+    "wiping sweat tired grin", "fist pump hyped", "slumped exhausted sigh", "jumping with joy",
+    "laughing until tears", "crying dramatically", "confused head tilt", "smug knowing nod",
+    "enthusiastic thumbs up", "arms crossed pouting", "running hurry pose", "hugging self shyly",
+    "salute attentive", "nodding seriously", "OK hand gesture", "shrug casual",
+    "waving goodbye", "pointing forward arriving", "checking watch arrived", "speed lines rushing",
+    "apologetic bow", "gentle reassuring smile", "wide eyed sincere", "skeptical raised eyebrow",
+    "shocked disbelief", "admiring sparkle eyes", "touched teary smile", "cute begging pose",
+    "angry puffed cheeks", "teary pout sulking", "flat deadpan stare", "shocked jaw drop",
+    "eyes sparkling hopeful", "blushing hiding face", "smug confident pose", "meltdown dramatic collapse"
+  ]
+}
