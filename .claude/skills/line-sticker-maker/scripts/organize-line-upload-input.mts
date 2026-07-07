@@ -8,15 +8,12 @@
  *     --title-zh "..." --title-en "..."
  */
 
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import {
   packUploadOutput,
   type UploadConfig,
   validateUploadConfig,
 } from './uploadConfig.mts';
-
-const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 
 export type { UploadConfig } from './uploadConfig.mts';
 export {

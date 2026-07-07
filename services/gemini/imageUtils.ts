@@ -5,6 +5,10 @@
 import { logger } from '../../utils/logger';
 import type { ChromaKeyColorType } from '../../types';
 import { createAbortError, throwIfAborted } from '../../utils/abort';
+import {
+  CHROMA_BACKGROUND_NORMALIZE_TOLERANCE,
+  normalizeChromaBackgroundInPlace,
+} from '../../utils/normalizeChromaBackground';
 
 /**
  * Normalizes background color in AI-generated images to exact chroma key color.
@@ -50,75 +54,12 @@ export async function normalizeBackgroundColor(
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
 
-      const tolerance = 100;
-      let normalizedCount = 0;
-
-      for (let i = 0; i < data.length; i += 4) {
-        if (signal?.aborted) {
-          reject(createAbortError());
-          return;
-        }
-        const r = data[i]!;
-        const g = data[i + 1]!;
-        const b = data[i + 2]!;
-        const a = data[i + 3]!;
-
-        if (a === 0) continue;
-
-        let isBackgroundColor = false;
-
-        if (colorType === 'magenta') {
-          const isPureMagenta = r > 200 && g < 60 && b > 200 && r + b > g * 3;
-          const isMagentaScreen =
-            r > 180 && g < 80 && b > 180 && r - g > 120 && b - g > 120;
-          const isBrightMagentaScreen =
-            r > 220 && g < 100 && b > 220 && r + b > g * 4;
-          const isNeonMagenta = r > 230 && g < 80 && b > 230;
-
-          const distance = Math.sqrt(
-            Math.pow(r - targetColor.r, 2) +
-              Math.pow(g - targetColor.g, 2) +
-              Math.pow(b - targetColor.b, 2)
-          );
-
-          isBackgroundColor =
-            isPureMagenta ||
-            isMagentaScreen ||
-            isBrightMagentaScreen ||
-            isNeonMagenta ||
-            distance < tolerance;
-        } else if (colorType === 'green') {
-          const isPureGreen = g > 150 && r < 100 && b < 100;
-          const isStandardGreenScreen =
-            g > 100 && r < 130 && b < 130 && g > r * 1.2 && g > b * 1.2;
-          const isBrightGreenScreen =
-            g > 140 && r < 120 && b < 120 && g > r + 40 && g > b + 40;
-          const isNeonGreen = g > 180 && r < 100 && b < 100;
-          const isGreenVariant =
-            g > 80 && g > r * 1.3 && g > b * 1.3 && r < 150 && b < 150;
-
-          const distance = Math.sqrt(
-            Math.pow(r - targetColor.r, 2) +
-              Math.pow(g - targetColor.g, 2) +
-              Math.pow(b - targetColor.b, 2)
-          );
-
-          isBackgroundColor =
-            isPureGreen ||
-            isStandardGreenScreen ||
-            isBrightGreenScreen ||
-            isNeonGreen ||
-            isGreenVariant ||
-            distance < tolerance;
-        }
-
-        if (isBackgroundColor) {
-          data[i] = targetColor.r;
-          data[i + 1] = targetColor.g;
-          data[i + 2] = targetColor.b;
-          normalizedCount++;
-        }
-      }
+      const normalizedCount = normalizeChromaBackgroundInPlace(
+        data,
+        colorType,
+        targetColor,
+        CHROMA_BACKGROUND_NORMALIZE_TOLERANCE
+      );
 
       logger.debug('Color normalization completed', {
         totalPixels: data.length / 4,

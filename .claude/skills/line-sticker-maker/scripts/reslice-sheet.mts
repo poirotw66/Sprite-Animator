@@ -8,7 +8,7 @@ import { resolve } from 'node:path';
 import {
   decodeImage,
   encodePng,
-  removeChromaKey,
+  processSheetChromaKey,
   sliceSheet,
 } from './nodeImage.mts';
 import {
@@ -37,7 +37,7 @@ async function findRawSheet(): Promise<string> {
 const rawPath = await findRawSheet();
 const rawBytes = new Uint8Array(await readFile(rawPath));
 const image = decodeImage(rawBytes);
-removeChromaKey(image, chromaKeyColor);
+processSheetChromaKey(image, chromaKeyColor);
 await writeFile(resolve(sheetDir, '_processed-sheet.png'), encodePng(image));
 
 const expected = validateSheetGrid(image.data, image.width, image.height, cols, rows, {

@@ -201,6 +201,7 @@ After a full run or `finalize.mts`:
 
 ## Notes / limits
 
+- Background normalization + chroma key use the **same shared rules** as the web app (`normalizeChromaBackground` → `processChromaKey`).
 - Sprite sheets: **1:1 @ 1K → 1024×1024 px** (4×5 → ~256×204 px per cell).
 - Upload PNGs are scaled to LINE limits; `stickers/` keeps native resolution.
 - 40-sticker set = **2 Gemini calls in parallel** (both sheets use the same character reference image only).
