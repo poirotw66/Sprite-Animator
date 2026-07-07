@@ -24,6 +24,8 @@ import {
   validateSheetGrid,
   type GridValidationResult,
 } from '../../../../utils/sheetGridValidation.ts';
+import { buildGridSheetTemplate, type GridTemplateMode } from '../../../../utils/gridSheetTemplate.ts';
+import { detectWhiteDividerGrid, shouldUseWhiteDividerSlice } from '../../../../utils/sheetWhiteDividerDetection.ts';
 
 import { generateSheetImage, type StyleAnchorImage } from './geminiSheet.mts';
 import {
@@ -83,6 +85,8 @@ export interface GenerateOneSheetParams {
   styleAnchorFromPriorSheet?: boolean;
   priorSheetFolder?: string;
   logPrefix?: string;
+  /** `true`/`solid` = blank chroma canvas (plan A). `guided` = visible layout ref (plan B). */
+  gridTemplate?: boolean | 'guided';
 }
 
 export interface GenerateOneSheetResult {
@@ -115,7 +119,8 @@ async function archiveGridAttempt(
   outDir: string,
   sheetFolder: string,
   attempt: number,
-  attemptState: AttemptState
+  attemptState: AttemptState,
+  sliceMeta: { sliceMode: 'template' | 'detect' | 'divider'; templateBounds?: { xBounds: number[]; yBounds: number[] } }
 ): Promise<void> {
   const attemptsDir = resolve(outDir, sheetFolder, 'attempts');
   await mkdir(attemptsDir, { recursive: true });
@@ -134,6 +139,8 @@ async function archiveGridAttempt(
         detected: validation.detected,
         columnWidthCv: validation.columnWidthCv,
         resliceCandidate: validation.resliceCandidate,
+        sliceMode: sliceMeta.sliceMode,
+        templateBounds: sliceMeta.templateBounds,
       },
       null,
       2
@@ -170,6 +177,14 @@ async function loadPriorSheetStyleAnchor(
   return { base64: bytes.toString('base64'), mimeType: 'image/png' };
 }
 
+function resolveGridTemplateMode(
+  gridTemplate: boolean | 'guided' | undefined
+): GridTemplateMode | false {
+  if (gridTemplate === 'guided') return 'guided';
+  if (gridTemplate === true) return 'solid';
+  return false;
+}
+
 export async function generateOneSheet(params: GenerateOneSheetParams): Promise<GenerateOneSheetResult> {
   const {
     sheet,
@@ -198,6 +213,7 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     styleAnchorFromPriorSheet = false,
     priorSheetFolder,
     logPrefix = '',
+    gridTemplate = false,
   } = params;
 
   const effectiveIncludeText = getEffectiveLineStickerIncludeText(includeText, textRendering);
@@ -222,6 +238,49 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
   }
 
   log(logPrefix, `generating ${sheet.cols}x${sheet.rows} sheet...`);
+
+  const templateMode = resolveGridTemplateMode(gridTemplate);
+  const sheetTemplate = templateMode
+    ? buildGridSheetTemplate(sheet.cols, sheet.rows, { chromaKeyColor, mode: templateMode })
+    : null;
+  if (sheetTemplate) {
+    const sheetDirEarly = resolve(outDir, sheetFolder);
+    await mkdir(sheetDirEarly, { recursive: true });
+    const templateName =
+      sheetTemplate.mode === 'guided' ? '_grid-template-guided.png' : '_grid-template.png';
+    await writeFile(
+      resolve(sheetDirEarly, templateName),
+      encodePng({
+        data: sheetTemplate.data,
+        width: sheetTemplate.width,
+        height: sheetTemplate.height,
+      })
+    );
+    await writeFile(resolve(sheetDirEarly, '_grid-template.png'), encodePng({
+      data: sheetTemplate.data,
+      width: sheetTemplate.width,
+      height: sheetTemplate.height,
+    }));
+    log(
+      logPrefix,
+      sheetTemplate.mode === 'guided'
+        ? 'using guided grid layout reference (paint on template)'
+        : 'using chroma grid template (fixed equal-split slice)'
+    );
+  }
+
+  const gridTemplateImage = sheetTemplate
+    ? {
+        base64: Buffer.from(
+          encodePng({
+            data: sheetTemplate.data,
+            width: sheetTemplate.width,
+            height: sheetTemplate.height,
+          })
+        ).toString('base64'),
+        mimeType: 'image/png' as const,
+      }
+    : undefined;
 
   const gridCandidates = buildGridCandidates(sheet.cols, sheet.rows);
   const hardMaxAttempts = maxSheetRetries + Math.max(0, extraSheetRegenAttempts);
@@ -257,6 +316,8 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
       outputResolution: resolution,
       gridRetrySuffix,
       onStatus: (m) => log(logPrefix, m),
+      gridTemplate: gridTemplateImage,
+      gridTemplateMode: sheetTemplate?.mode ?? 'solid',
     });
 
     const image = decodeImage(rawPng);
@@ -279,7 +340,12 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     };
     lastValidation = validation;
 
-    await archiveGridAttempt(outDir, sheetFolder, attempt, attemptState);
+    await archiveGridAttempt(outDir, sheetFolder, attempt, attemptState, {
+      sliceMode: 'divider',
+      templateBounds: sheetTemplate
+        ? { xBounds: sheetTemplate.xBounds, yBounds: sheetTemplate.yBounds }
+        : undefined,
+    });
     log(
       logPrefix,
       `saved attempt ${attempt} -> ${sheetFolder}/attempts/ (score ${validation.expected.score.toFixed(2)}, detected ${validation.detected.cols}×${validation.detected.rows})`
@@ -367,12 +433,26 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     );
   }
 
-  log(
-    logPrefix,
-    `slicing into ${sheet.cols * sheet.rows} stickers (native ${Math.round(image.width / sheet.cols)}x${Math.round(image.height / sheet.rows)} px)...`
+  log(logPrefix, `slicing into ${sheet.cols * sheet.rows} stickers (white-divider mode)...`);
+
+  const rawForDivide = decodeImage(rawPng);
+  const dividerGridFromRaw = detectWhiteDividerGrid(
+    rawForDivide.data,
+    rawForDivide.width,
+    rawForDivide.height,
+    sheet.cols,
+    sheet.rows
   );
 
-  let frames = sliceSheet(image, sheet.cols, sheet.rows);
+  let frames = sliceSheet(image, sheet.cols, sheet.rows, {
+    sliceMode: 'divider',
+    dividerGrid: shouldUseWhiteDividerSlice(dividerGridFromRaw, sheet.cols, sheet.rows)
+      ? dividerGridFromRaw
+      : undefined,
+    templateBounds: sheetTemplate
+      ? { xBounds: sheetTemplate.xBounds, yBounds: sheetTemplate.yBounds }
+      : undefined,
+  });
 
   if (textRendering === 'programmatic' && includeText) {
     log(logPrefix, 'applying programmatic text overlay...');

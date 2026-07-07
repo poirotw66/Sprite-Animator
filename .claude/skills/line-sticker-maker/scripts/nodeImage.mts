@@ -30,6 +30,14 @@ import {
 import { clearEdgeConnectedResidue } from '../../../../utils/frameEdgeCleanup.ts';
 import { detectSheetGridBoundaries } from '../../../../utils/sheetBoundaryDetection.ts';
 import {
+  computeDividerCellRect,
+  clearNearWhiteEdgeArtifacts,
+  detectWhiteDividerGrid,
+  shouldUseWhiteDividerSlice,
+  type WhiteDividerGrid,
+} from '../../../../utils/sheetWhiteDividerDetection.ts';
+import { computeCellCropRect } from '../../../../utils/sheetCellCrop.ts';
+import {
   detectBestGridLayoutFromRgba,
   scoreGridLayoutFromRgba,
   type GridLayoutScore,
@@ -206,12 +214,24 @@ function extractCellFrame(
   return { data, width: frameWidth, height: frameHeight };
 }
 
+export type SliceMode = 'detect' | 'template' | 'divider';
+
+export interface TemplateGridBounds {
+  xBounds: number[];
+  yBounds: number[];
+}
+
 export interface SliceSheetOptions {
   insetRatio?: number;
   padding?: OptimizedSliceResult;
   optimize?: boolean;
   /** Detect uneven row/column seams instead of equal division (default true). */
   detectBoundaries?: boolean;
+  /** `divider` splits on visible white grid lines (excludes them); `template` uses fixed bounds; `detect` runs seam heuristics. */
+  sliceMode?: SliceMode;
+  templateBounds?: TemplateGridBounds;
+  /** Pre-detected divider grid (e.g. from raw sheet before chroma key). */
+  dividerGrid?: WhiteDividerGrid;
 }
 
 /** Auto-trim outer margins on a chroma-keyed sheet (same core as the web app). */
@@ -255,8 +275,8 @@ export function detectBestGridLayout(
 
 /**
  * Slice a sprite sheet into `cols * rows` cells at native resolution.
- * Matches the web app's `sliceSpriteSheet`: auto margin trim, centered per-cell
- * inset, and edge-connected residue cleanup. No resampling.
+ * Each frame keeps the aspect ratio of its crop region (no forced grid cell size).
+ * Matches the web app's per-cell inset and edge-connected residue cleanup. No resampling.
  */
 export function sliceSheet(
   sheet: RgbaImage,
@@ -265,17 +285,60 @@ export function sliceSheet(
   options: SliceSheetOptions = {}
 ): RgbaImage[] {
   const insetRatio = options.insetRatio ?? LINE_STICKER_CELL_INSET_RATIO;
-  const detectBoundaries = options.detectBoundaries !== false;
+  const sliceMode = options.sliceMode ?? 'detect';
   const totalWidth = sheet.width;
   const totalHeight = sheet.height;
 
+  const scaleBounds = (bounds: number[], maxEdge: number): number[] => {
+    const refMax = bounds[bounds.length - 1]!;
+    if (refMax <= 0 || refMax === maxEdge) {
+      const out = [...bounds];
+      out[0] = 0;
+      out[out.length - 1] = maxEdge;
+      return out;
+    }
+    const scaled = bounds.map((value) => Math.round((value * maxEdge) / refMax));
+    scaled[0] = 0;
+    scaled[scaled.length - 1] = maxEdge;
+    return scaled;
+  };
+
   let xBounds: number[];
   let yBounds: number[];
+  let yBoundsPerColumn: number[][] | undefined;
+  let whiteDividerGrid: WhiteDividerGrid | undefined;
+  const useDetectCrop = sliceMode === 'detect';
 
-  if (detectBoundaries) {
+  if (sliceMode === 'divider') {
+    if (options.dividerGrid && shouldUseWhiteDividerSlice(options.dividerGrid, cols, rows)) {
+      whiteDividerGrid = options.dividerGrid;
+    } else {
+      whiteDividerGrid = detectWhiteDividerGrid(sheet.data, totalWidth, totalHeight, cols, rows);
+      if (!shouldUseWhiteDividerSlice(whiteDividerGrid, cols, rows)) {
+        whiteDividerGrid = undefined;
+      }
+    }
+  }
+
+  if (sliceMode === 'divider' && whiteDividerGrid) {
+    xBounds = Array.from({ length: cols + 1 }, (_, i) => Math.round((i * totalWidth) / cols));
+    yBounds = Array.from({ length: rows + 1 }, (_, i) => Math.round((i * totalHeight) / rows));
+  } else if (
+    sliceMode === 'template' ||
+    (sliceMode === 'divider' && options.templateBounds)
+  ) {
+    const fallback = {
+      xBounds: Array.from({ length: cols + 1 }, (_, i) => Math.round((i * totalWidth) / cols)),
+      yBounds: Array.from({ length: rows + 1 }, (_, i) => Math.round((i * totalHeight) / rows)),
+    };
+    const source = options.templateBounds ?? fallback;
+    xBounds = scaleBounds(source.xBounds, totalWidth);
+    yBounds = scaleBounds(source.yBounds, totalHeight);
+  } else if (options.detectBoundaries !== false) {
     const detected = detectSheetGridBoundaries(sheet.data, totalWidth, totalHeight, cols, rows);
-    xBounds = detected.xBounds;
+    xBounds = Array.from({ length: cols + 1 }, (_, i) => Math.round((i * totalWidth) / cols));
     yBounds = detected.yBounds;
+    yBoundsPerColumn = detected.yBoundsPerColumn;
   } else {
     const padding =
       options.padding ??
@@ -305,27 +368,56 @@ export function sliceSheet(
     );
   }
 
-  const insetFactor = 1 - 2 * Math.max(0, Math.min(0.2, insetRatio));
+  const insetFactor = whiteDividerGrid
+    ? 1
+    : 1 - 2 * Math.max(0, Math.min(0.2, insetRatio));
   const frames: RgbaImage[] = [];
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const x0 = xBounds[c]!;
-      const x1 = xBounds[c + 1]!;
-      const y0 = yBounds[r]!;
-      const y1 = yBounds[r + 1]!;
-      const cellWidth = x1 - x0;
-      const cellHeight = y1 - y0;
-      const frameWidth = Math.max(1, Math.round(cellWidth));
-      const frameHeight = Math.max(1, Math.round(cellHeight));
+      const cropRect =
+        whiteDividerGrid
+          ? computeDividerCellRect(
+              totalWidth,
+              totalHeight,
+              cols,
+              rows,
+              r,
+              c,
+              whiteDividerGrid
+            )
+          : yBoundsPerColumn && useDetectCrop
+          ? computeCellCropRect(
+              sheet.data,
+              totalWidth,
+              totalHeight,
+              cols,
+              r,
+              c,
+              xBounds,
+              yBoundsPerColumn
+            )
+          : {
+              x0: xBounds[c]!,
+              y0: yBounds[r]!,
+              x1: xBounds[c + 1]!,
+              y1: yBounds[r + 1]!,
+            };
 
+      const cellWidth = cropRect.x1 - cropRect.x0;
+      const cellHeight = cropRect.y1 - cropRect.y0;
       const cropW = cellWidth * insetFactor;
       const cropH = cellHeight * insetFactor;
-      const sx = x0 + (cellWidth - cropW) / 2;
-      const sy = y0 + (cellHeight - cropH) / 2;
+      const sx = cropRect.x0 + (cellWidth - cropW) / 2;
+      const sy = cropRect.y0 + (cellHeight - cropH) / 2;
+      const frameWidth = Math.max(1, Math.round(cropW));
+      const frameHeight = Math.max(1, Math.round(cropH));
       const frame = extractCellFrame(sheet, sx, sy, cropW, cropH, frameWidth, frameHeight);
 
-      if (insetRatio > 0) {
+      if (whiteDividerGrid) {
+        const maxDepthPx = Math.max(6, Math.round(Math.min(frameWidth, frameHeight) * 0.05));
+        clearNearWhiteEdgeArtifacts(frame.data, frameWidth, frameHeight, maxDepthPx);
+      } else if (insetRatio > 0) {
         const maxDepthPx = Math.max(1, Math.round(Math.min(frameWidth, frameHeight) * 0.01));
         clearEdgeConnectedResidue(frame.data, frameWidth, frameHeight, { maxDepthPx });
       }

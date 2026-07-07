@@ -44,6 +44,8 @@ export interface PackUploadOptions {
   upload: UploadConfig;
   sheetDirs: string[];
   zipBytes: Uint8Array;
+  /** When false, batch env sets LINE_UPLOAD_SUBMIT=false (skip review submit). Default true. */
+  submitForReview?: boolean;
 }
 
 export function resolveUploadConfig(job: UploadJobFields): UploadConfig | undefined {
@@ -130,7 +132,7 @@ export async function packUploadOutput(options: PackUploadOptions): Promise<{
   destDir: string;
   envFilePath?: string;
 }> {
-  const { sourceDir, upload, sheetDirs, zipBytes } = options;
+  const { sourceDir, upload, sheetDirs, zipBytes, submitForReview } = options;
   validateUploadConfig(upload);
 
   const destDir = resolveUploadPackDir(upload, sourceDir);
@@ -166,6 +168,7 @@ export async function packUploadOutput(options: PackUploadOptions): Promise<{
         descZh: upload.descZh,
         titleEn: upload.titleEn,
         descEn: upload.descEn,
+        submitForReview,
       },
       batchRelBase(upload, creatorId)
     ),

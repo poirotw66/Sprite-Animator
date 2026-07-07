@@ -122,12 +122,13 @@ Legacy job configs with `lineS` / `syncToLineS` are still accepted when reading.
 | `fontKey` / `textColorKey` | `round` / `black` | used when `textRendering` is `programmatic` |
 | `scope` | `set` | `set` = full LINE set; `single` = one sheet |
 | `stickerCount` | `40` | 40 = 2×4×5 (LINE standard); 48 = legacy 3×4×4 |
-| `model` | `gemini-3.1-flash-image` | skill default (`DEFAULT_SKILL_STICKER_MODEL`); character-ref still uses flash-lite |
+| `model` | `gemini-3.1-flash-lite-image` | skill default (`DEFAULT_SKILL_STICKER_MODEL`); 1K only — use `gemini-3.1-flash-image` if grid alignment struggles |
 | `resolution` | `1K` | `0.5K`/`1K`/`2K`/`4K` (model-dependent) |
 | `maxSheetRetries` | `3` | Gemini retries when grid validation fails |
 | `minGridAlignmentScore` | `0.72` | 0–1; reject sheet below this score |
 | `promptVersion` | `v3compact` | `v3compact` = shorter per-cell lines; `v3` = verbose legacy |
-| `styleAnchorFromPriorSheet` | `false` | opt-in: attach sheet-1 `_processed-sheet.png` for sheet-2+ (forces sequential) |
+| `styleAnchorFromPriorSheet` | `false` | opt-in: attach sheet-1 `_processed-sheet.png` for sheet-2+ (disables parallel) |
+| `gridTemplate` | `false` | `true` = plan A blank chroma canvas; `"guided"` = plan B visible grid layout ref (paint on template) + fixed equal-split slice |
 | `qaEnabled` | `true` | write `qa-report.json` at finalize (warn-only) |
 | `lineUpload` | `true` | build upload ZIP at end of full run |
 | `mainStickerIndex` / `tabStickerIndex` | `1` | 1-based indices for shop images |

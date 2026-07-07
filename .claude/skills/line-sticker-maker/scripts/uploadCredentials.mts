@@ -49,6 +49,7 @@ const ENV_KEY_ORDER = [
   'STICKER_COUNT',
   'SALE_REGION',
   'JOIN_CAMPAIGNS',
+  'LINE_UPLOAD_SUBMIT',
   'SOURCE_ZIP',
   'UPLOAD_ZIP',
   'SPRITE_SHEETS_DIR',
@@ -60,6 +61,8 @@ export interface BatchEnvFields {
   descZh: string;
   titleEn: string;
   descEn: string;
+  /** When false, upload pipeline skips the final submit-for-review step. Default true. */
+  submitForReview?: boolean;
 }
 
 export function parseEnv(text: string): Record<string, string> {
@@ -113,6 +116,7 @@ SALE_START=auto
 STICKER_COUNT=40
 SALE_REGION=all
 JOIN_CAMPAIGNS=false
+LINE_UPLOAD_SUBMIT=${fields.submitForReview === false ? 'false' : 'true'}
 
 SOURCE_ZIP=${rel}/${fields.setName}.zip
 UPLOAD_ZIP=${rel}/${fields.setName}.zip

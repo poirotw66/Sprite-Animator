@@ -23,6 +23,7 @@ export interface SyncUploadOptions {
   upload: UploadConfig;
   /** Upload root (default: <repo>/.line-upload). */
   uploadRoot?: string;
+  submitForReview?: boolean;
 }
 
 function envFileBaseName(setName: string): string {
@@ -45,7 +46,7 @@ export async function syncPackToUploadRoot(options: SyncUploadOptions): Promise<
   envFilePath: string;
   uploadRoot: string;
 }> {
-  const { sourceDir, upload } = options;
+  const { sourceDir, upload, submitForReview } = options;
   validateUploadConfig(upload);
 
   const uploadRoot = resolveUploadRoot(options.uploadRoot ?? upload.uploadRoot);
@@ -71,6 +72,7 @@ export async function syncPackToUploadRoot(options: SyncUploadOptions): Promise<
       descZh: upload.descZh,
       titleEn: upload.titleEn,
       descEn: upload.descEn,
+      submitForReview,
     },
     relBase
   );
@@ -116,6 +118,7 @@ export async function main() {
   const config = JSON.parse(await readFile(resolve(PROJECT_ROOT, configPath), 'utf8')) as {
     upload?: UploadConfig;
     lineS?: UploadConfig;
+    lineUploadSubmit?: boolean;
   };
   const upload = resolveUploadConfig(config);
   if (!upload) throw new Error('config.upload is required');
@@ -123,6 +126,7 @@ export async function main() {
   const result = await syncPackToUploadRoot({
     sourceDir: resolve(PROJECT_ROOT, sourceDir),
     upload,
+    submitForReview: config.lineUploadSubmit !== false,
   });
 
   console.log(`✓ Synced → ${result.destDir}`);

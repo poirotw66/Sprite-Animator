@@ -46,8 +46,8 @@ export const SUPPORTED_MODELS = [
 
 export const DEFAULT_MODEL = 'gemini-3.1-flash-lite-image';
 
-/** Headless sticker skill: sprite sheets (stable 4×5 grids, model-drawn text). */
-export const DEFAULT_SKILL_STICKER_MODEL = 'gemini-3.1-flash-image';
+/** Headless sticker skill: sprite sheets (4×5 grids, model-drawn text). */
+export const DEFAULT_SKILL_STICKER_MODEL = DEFAULT_MODEL;
 
 /** Output resolution for image generation. 2.5-flash / 3.1-flash-lite = 1K only; 3-pro = 1K/2K/4K; 3.1-flash = 0.5K/1K/2K/4K */
 export type ImageResolution = '0.5K' | '1K' | '2K' | '4K';

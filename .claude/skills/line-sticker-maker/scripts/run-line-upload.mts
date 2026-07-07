@@ -1,26 +1,33 @@
 /**
- * Run the repo-local upload pipeline (Drive → provision → ZIP → submit).
+ * Run the repo-local upload pipeline (Drive → provision → ZIP → optional submit).
  *
  *   npx tsx run-line-upload.mts --env output/p4/.env.batch/Cozy_Cream_Cat_Daily_Chat.env
  *   npx tsx run-line-upload.mts --env ... --step gdrive
- *   npx tsx run-line-upload.mts --env ... --step provision|zip|submit
+ *   npx tsx run-line-upload.mts --env ... --step provision|zip|submit|all
+ *   npx tsx run-line-upload.mts --env ... --auto true
+ *   npx tsx run-line-upload.mts --env ... --submit false
  */
 
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { assertOutDirGridGate } from './manifestGridGate.mts';
-import { ensureBatchEnvReady } from './uploadCredentials.mts';
+import { ensureBatchEnvReady, parseEnv } from './uploadCredentials.mts';
+import {
+  resolvePipelineSteps,
+  resolveSubmitEnabled,
+  type UploadStepName,
+} from './uploadPipeline.mts';
 
 const SKILL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PROJECT_ROOT = resolve(SKILL_ROOT, '../../..');
 const UPLOAD_SKILL_ROOT = resolve(PROJECT_ROOT, '.claude/skills/line-sticker-upload');
 const UPLOAD_SCRIPTS = resolve(UPLOAD_SKILL_ROOT, 'scripts');
 
-type UploadStep = 'gdrive' | 'provision' | 'zip' | 'submit' | 'all';
+type UploadStep = UploadStepName | 'all';
 
-const STEP_SCRIPTS: Record<Exclude<UploadStep, 'all'>, string> = {
+const STEP_SCRIPTS: Record<UploadStepName, string> = {
   gdrive: 'upload_gdrive.py',
   provision: 'provision_line_sticker.py',
   zip: 'upload_line_zip.py',
@@ -72,7 +79,7 @@ const skipGridGate = args['skip-grid-gate'] === 'true';
 
 if (!envFile) {
   console.error(
-    'Usage: run-line-upload.mts --env output/pX/.env.batch/Set_Name.env [--step gdrive|provision|zip|submit|all] [--headless true]'
+    'Usage: run-line-upload.mts --env output/pX/.env.batch/Set_Name.env [--step gdrive|provision|zip|submit|all] [--submit true|false] [--headless true] [--auto true]'
   );
   process.exit(1);
 }
@@ -94,15 +101,31 @@ if (!skipGridGate) {
 console.log(`▶ Using ${envSrc}`);
 await ensureBatchEnvReady(envSrc);
 
-const steps: Exclude<UploadStep, 'all'>[] =
-  step === 'all' ? ['gdrive', 'provision', 'zip', 'submit'] : [step];
-const runHeadless = args.headless === 'true';
+const batchEnv = parseEnv(readFileSync(envSrc, 'utf8'));
+const submitEnabled = resolveSubmitEnabled({
+  step,
+  cliSubmit: args.submit,
+  envSubmit: batchEnv.LINE_UPLOAD_SUBMIT,
+});
+const steps = resolvePipelineSteps(step, submitEnabled);
+const runHeadless = args.headless === 'true' || args.auto === 'true';
+const runAuto = args.auto === 'true';
+
+if (step === 'all' && !submitEnabled) {
+  console.log('▶ Submit skipped (--submit false / LINE_UPLOAD_SUBMIT=false)');
+}
 
 for (const name of steps) {
   console.log(`\n▶ ${name}: ${STEP_SCRIPTS[name]}`);
   const extra = name === 'gdrive' ? ['--stage'] : [];
   if (runHeadless && (name === 'provision' || name === 'submit')) {
     extra.push('--headless');
+  }
+  if (runAuto && name === 'provision') {
+    extra.push('--no-pause-before-save');
+  }
+  if (runAuto && name === 'zip') {
+    extra.push('--post-upload-pause', '0');
   }
   runPython(STEP_SCRIPTS[name], envSrc, extra);
 }

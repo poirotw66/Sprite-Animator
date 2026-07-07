@@ -4,6 +4,7 @@
  */
 
 import { readFile, writeFile, readdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   decodeImage,
@@ -16,6 +17,7 @@ import {
   detectBestGridLayoutFromRgba,
   validateSheetGrid,
 } from '../../../../utils/sheetGridValidation.ts';
+import { buildEqualGridBounds } from '../../../../utils/gridSheetTemplate.ts';
 
 const sheetDir = resolve(process.argv[2] ?? '');
 const cols = Number(process.argv[3] ?? 4);
@@ -60,7 +62,14 @@ if (!expected.ok) {
   );
 }
 
-const frames = sliceSheet(image, cols, rows);
+const useTemplateSlice = existsSync(resolve(sheetDir, '_grid-template.png'));
+const templateBounds = buildEqualGridBounds(image.width, cols, rows);
+console.log('Slice mode: divider (white grid lines excluded when detected)');
+
+const frames = sliceSheet(image, cols, rows, {
+  sliceMode: 'divider',
+  templateBounds: useTemplateSlice ? templateBounds : undefined,
+});
 for (let i = 0; i < frames.length; i++) {
   const name = `sticker-${String(i + 1).padStart(2, '0')}.png`;
   await writeFile(resolve(sheetDir, name), encodePng(frames[i]!));

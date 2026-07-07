@@ -65,8 +65,18 @@ await assertOutDirGridGate(outDir);
 await ensureBatchEnvReady(batchPath);
 
 const envRel = `${out.replace(/\\/g, '/')}/.env.batch/${envBase}.env`;
-console.log('\n▶ upload (gdrive → provision → zip → submit)...');
-run('npx', ['tsx', '.claude/skills/line-sticker-maker/scripts/run-line-upload.mts', '--env', envRel]);
+const submitArg = job.lineUploadSubmit === false ? 'false' : 'true';
+const autoArg = args.auto === 'true' ? ['--auto', 'true'] : [];
+console.log('\n▶ upload (gdrive → provision → zip → optional submit)...');
+run('npx', [
+  'tsx',
+  '.claude/skills/line-sticker-maker/scripts/run-line-upload.mts',
+  '--env',
+  envRel,
+  '--submit',
+  submitArg,
+  ...autoArg,
+]);
 
 const final = parseEnv(await readFile(batchPath, 'utf8'));
 console.log(`\n✓ Done: ${upload.setName}`);

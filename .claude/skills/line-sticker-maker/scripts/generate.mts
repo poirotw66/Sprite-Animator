@@ -1,7 +1,7 @@
 /**
  * LINE sticker generator — headless entry point for the skill.
  *
- *   npx tsx generate.mts --config <config.json> --out <dir> [--sheet sheet-1] [--sheet-dir sheet-1-flash] [--model gemini-3.1-flash-image] [--dry-run]
+ *   npx tsx generate.mts --config <config.json> --out <dir> [--sheet sheet-1] [--sheet-dir sheet-1-flash] [--model gemini-3.1-flash-lite-image] [--dry-run]
  *
  * Pipeline per sheet:
  *   config -> buildLineStickerPrompt (reused) -> Gemini sheet image
@@ -71,13 +71,15 @@ interface StickerConfig {
   stickerCount?: number; // set mode only: 40 (LINE default) or 48 (legacy)
   cols?: number; // single mode only (default 4)
   rows?: number; // single mode only (default 6)
-  model?: string; // default: gemini-3.1-flash-image (DEFAULT_SKILL_STICKER_MODEL)
+  model?: string; // default: gemini-3.1-flash-lite-image (DEFAULT_SKILL_STICKER_MODEL)
   resolution?: string; // output resolution, default: 1K (model-dependent)
   /** Repo-local upload layout (replaces legacy line-upload/ when enabled). */
   upload?: UploadConfig;
   lineS?: UploadConfig & { syncToLineS?: boolean };
   /** When true (default for set scope), emit LINE Creators Market upload pack + ZIP. */
   lineUpload?: boolean;
+  /** When false, upload pipeline skips submit-for-review (default true). */
+  lineUploadSubmit?: boolean;
   /** 1-based sticker index used for main.png (default: 1). */
   mainStickerIndex?: number;
   /** 1-based sticker index used for tab.png (default: 1). */
@@ -92,6 +94,8 @@ interface StickerConfig {
   promptVersion?: LineStickerPromptVersion;
   /** When true, sheet-2+ also attaches sheet-1 _processed-sheet.png (disables parallel). Default false. */
   styleAnchorFromPriorSheet?: boolean;
+  /** `true` = plan A solid chroma. `"guided"` = plan B visible layout ref. Default false. */
+  gridTemplate?: boolean | 'guided';
 }
 
 function parseArgs(argv: string[]) {
@@ -457,6 +461,7 @@ async function main() {
       styleAnchorFromPriorSheet,
       priorSheetFolder,
       logPrefix: '   · ',
+      gridTemplate: config.gridTemplate === 'guided' ? 'guided' : config.gridTemplate === true,
     });
     gridScores[sheetFolder] = result.gridScore;
     return {

@@ -186,6 +186,7 @@ async function main(): Promise<void> {
       model: DEFAULT_SKILL_STICKER_MODEL,
       resolution: '1K',
       lineUpload: scope === 'set',
+      lineUploadSubmit: true,
       mainStickerIndex: 1,
       tabStickerIndex: 1,
       maxSheetRetries: 3,
@@ -237,6 +238,7 @@ async function main(): Promise<void> {
     const job = JSON.parse(await readFile(configPath, 'utf8')) as {
       upload?: { setName?: string };
       lineS?: { setName?: string };
+      lineUploadSubmit?: boolean;
     };
     const uploadConfig = resolveUploadConfig(job);
     const setName = uploadConfig?.setName;
@@ -245,12 +247,15 @@ async function main(): Promise<void> {
     }
     const envBase = slugSetName(setName);
     const envRel = `${outRel.replace(/\\/g, '/')}/.env.batch/${envBase}.env`;
+    const submitArg = job.lineUploadSubmit === false ? 'false' : 'true';
     console.log('\n▶ upload...');
     run('npx', [
       'tsx',
       '.claude/skills/line-sticker-maker/scripts/run-line-upload.mts',
       '--env',
       envRel,
+      '--submit',
+      submitArg,
     ]);
   }
 

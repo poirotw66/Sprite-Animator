@@ -9,7 +9,7 @@
   "textRendering": "model",
   "scope": "set",
   "stickerCount": 40,
-  "model": "gemini-3.1-flash-image",
+  "model": "gemini-3.1-flash-lite-image",
   "resolution": "1K",
   "lineUpload": true,
   "mainStickerIndex": 1,
