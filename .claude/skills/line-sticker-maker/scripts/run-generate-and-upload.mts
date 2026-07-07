@@ -129,7 +129,9 @@ console.log(`\n✓ Done: ${job.lineS.setName}`);
 
 console.log(`  LINE_STICKER_ID=${final.LINE_STICKER_ID}`);
 
-console.log(`  PROJECT_URL=https://creator.line.me/my/${final.LINE_CREATOR_ID}/sticker/${final.LINE_STICKER_ID}`);
+if (final.LINE_CREATOR_ID && final.LINE_STICKER_ID) {
+  console.log(`  PROJECT_URL=https://creator.line.me/my/${final.LINE_CREATOR_ID}/sticker/${final.LINE_STICKER_ID}`);
+}
 
 if (final.GDRIVE_SHARE_URL) console.log(`  DRIVE=${final.GDRIVE_SHARE_URL}`);
 

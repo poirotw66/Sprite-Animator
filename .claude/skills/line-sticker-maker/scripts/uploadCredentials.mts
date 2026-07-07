@@ -52,7 +52,8 @@ const ENV_KEY_ORDER = [
 
 export function parseEnv(text: string): Record<string, string> {
   const out: Record<string, string> = {};
-  for (const line of text.split('\n')) {
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
     const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
     if (m) out[m[1]!] = m[2]!.trim();
   }
@@ -71,19 +72,23 @@ export function envHeader(setName: string): string {
   return `# LINE Creators Market — ${setName}`;
 }
 
-export function resolveCredentialsPath(): string {
-  if (existsSync(CREDENTIALS_ENV)) return CREDENTIALS_ENV;
-  if (existsSync(LINE_S_ENV)) return LINE_S_ENV;
-  throw new Error(
-    `No credentials file found. Create ${CREDENTIALS_ENV} or ${LINE_S_ENV}`
-  );
-}
-
 export async function loadCredentials(): Promise<Record<string, string>> {
-  const credPath = resolveCredentialsPath();
-  const cred = parseEnv(await readFile(credPath, 'utf8'));
-  console.log(`▶ credentials: ${credPath}`);
-  return cred;
+  const candidates: string[] = [];
+  if (existsSync(CREDENTIALS_ENV)) candidates.push(CREDENTIALS_ENV);
+  if (existsSync(LINE_S_ENV)) candidates.push(LINE_S_ENV);
+
+  for (const credPath of candidates) {
+    const cred = parseEnv(await readFile(credPath, 'utf8'));
+    if (cred.LINE_EMAIL?.trim() && cred.LINE_CREATOR_ID?.trim()) {
+      console.log(`▶ credentials: ${credPath}`);
+      return cred;
+    }
+  }
+
+  throw new Error(
+    `No valid credentials (LINE_EMAIL + LINE_CREATOR_ID). ` +
+      `Create ${CREDENTIALS_ENV} or restore ${LINE_S_ENV}`
+  );
 }
 
 /** Merge shared credentials into a per-job batch env (clears per-set upload IDs). */
