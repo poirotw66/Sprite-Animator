@@ -48,3 +48,6 @@ line-stickers-out/
 .claude/skills/line-sticker-maker/example
 output/
 
+
+# Python bytecode cache
+__pycache__/
