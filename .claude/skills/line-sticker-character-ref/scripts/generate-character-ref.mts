@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 import { STYLE_PRESETS } from '../../../../utils/lineStickerPresets.ts';
 import { DEFAULT_MODEL } from '../../../../utils/constants.ts';
+import { loadGeminiApiKey } from '../../shared/loadGeminiApiKey.mts';
 import { buildCharacterRefPrompt, listStyleKeys } from './characterRefPrompt.ts';
 import { generateCharacterRefImage } from './geminiCharacterRef.mts';
 
@@ -41,23 +42,8 @@ function parseArgs(argv: string[]): Record<string, string | boolean> {
   return args;
 }
 
-function readKeyFromFile(path: string): string {
-  if (!existsSync(path)) return '';
-  for (const line of readFileSync(path, 'utf8').split('\n')) {
-    const m = line.match(/^\s*GEMINI_API_KEY\s*=\s*(.+?)\s*$/);
-    if (m) return m[1]!.replace(/^["']|["']$/g, '');
-  }
-  return '';
-}
-
-function loadApiKey(): string {
-  if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY;
-  return (
-    readKeyFromFile(resolve(ROOT_DIR, '.env')) ||
-    readKeyFromFile(resolve(ROOT_DIR, '.env.local'))
-  );
-}
-
+  const apiKey = loadGeminiApiKey();
+  if (!apiKey) throw new Error('GEMINI_API_KEY not found (env or .env.local).');
 function mimeFromPath(path: string): string {
   const ext = extname(path).toLowerCase();
   if (ext === '.png') return 'image/png';
@@ -126,7 +112,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  const apiKey = loadApiKey();
+  const apiKey = loadGeminiApiKey();
   if (!apiKey) throw new Error('GEMINI_API_KEY not found (env or .env.local).');
 
   const layoutBase64 = readFileSync(layoutPath).toString('base64');

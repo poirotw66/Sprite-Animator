@@ -12,7 +12,7 @@
  */
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { dirname, resolve, basename, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -36,7 +36,8 @@ import { DEFAULT_SKILL_STICKER_MODEL } from '../../../../utils/constants.ts';
 import type { ChromaKeyColorType } from '../../../../types.ts';
 
 import { finalizeStickerJob } from './finalizeJob.mts';
-import type { LineSConfig } from './organize-line-upload-input.mts';
+import type { UploadConfig } from './uploadConfig.mts';
+import { loadGeminiApiKey } from '../../shared/loadGeminiApiKey.mts';
 import { generateOneSheet, type SheetPlan } from './sheetGeneration.mts';
 import { decodePng, type RgbaImage } from './nodeImage.mts';
 import {
@@ -73,7 +74,8 @@ interface StickerConfig {
   model?: string; // default: gemini-3.1-flash-image (DEFAULT_SKILL_STICKER_MODEL)
   resolution?: string; // output resolution, default: 1K (model-dependent)
   /** Repo-local upload layout (replaces legacy line-upload/ when enabled). */
-  lineS?: LineSConfig;
+  upload?: UploadConfig;
+  lineS?: UploadConfig & { syncToLineS?: boolean };
   /** When true (default for set scope), emit LINE Creators Market upload pack + ZIP. */
   lineUpload?: boolean;
   /** 1-based sticker index used for main.png (default: 1). */
@@ -108,24 +110,6 @@ function parseArgs(argv: string[]) {
     }
   }
   return args;
-}
-
-function readKeyFromFile(path: string): string {
-  if (!existsSync(path)) return '';
-  for (const line of readFileSync(path, 'utf8').split('\n')) {
-    const m = line.match(/^\s*GEMINI_API_KEY\s*=\s*(.+?)\s*$/);
-    if (m) return m[1].replace(/^["']|["']$/g, '');
-  }
-  return '';
-}
-
-/** Key source precedence: env var > .env > .env.local. */
-function loadApiKey(): string {
-  if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY;
-  return (
-    readKeyFromFile(resolve(ROOT_DIR, '.env')) ||
-    readKeyFromFile(resolve(ROOT_DIR, '.env.local'))
-  );
 }
 
 function resolveImagePath(p: string, configDir: string): string {
@@ -381,7 +365,7 @@ async function main() {
     return;
   }
 
-  const apiKey = loadApiKey();
+  const apiKey = loadGeminiApiKey();
   if (!apiKey) throw new Error('GEMINI_API_KEY not found (env or .env.local).');
 
   const imgPath = resolveImagePath(config.referenceImage, configDir);
@@ -607,8 +591,8 @@ async function main() {
     console.log(`\n✓ All done. ${finalizeResult.stickerCount} stickers in ${outDir}`);
     console.log(`  activeSheets: ${finalizeResult.activeSheets.join(', ')}`);
     console.log(`  manifest: ${resolve(outDir, 'manifest.json')}`);
-    if (finalizeResult.lineSDest) {
-      console.log(`  upload root: ${finalizeResult.lineSDest}`);
+    if (finalizeResult.uploadPackPath) {
+      console.log(`  upload pack: ${finalizeResult.uploadPackPath}`);
     } else {
       console.log(`  upload: ${resolve(outDir, 'line-upload.zip')}`);
     }

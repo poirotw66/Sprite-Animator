@@ -2,58 +2,30 @@
  * Package Sprite-Animator LINE output into the upload-root input layout.
  *
  *   npx tsx organize-line-upload-input.mts \
- *     --source example/output/p4 \
- *     --dest "C:/repo/.line-upload/input/706/Cozy Cream Cat Daily Chat" \
+ *     --source output/my-set \
+ *     --dest ".line-upload/input/706/Cozy Cream Cat Daily Chat" \
  *     --name "Cozy Cream Cat Daily Chat" \
  *     --title-zh "..." --title-en "..."
  */
 
-import { copyFile, mkdir, writeFile } from 'node:fs/promises';
-import { buildBatchEnvContent } from './uploadCredentials.mts';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  packUploadOutput,
+  type UploadConfig,
+  validateUploadConfig,
+} from './uploadConfig.mts';
 
 const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 
-/** Default skill output root (example/output). Used in docs and config examples. */
-export const DEFAULT_SKILL_OUTPUT_ROOT = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  '..',
-  'example',
-  'output'
-);
-
-export interface LineSConfig {
-  /** When false, skip upload-root packaging (legacy line-upload only). Default: true when lineS block is present. */
-  enabled?: boolean;
-  /**
-   * Optional upload root (contains input/{creator}/setName).
-   * Omit to pack upload files directly into the job `--out` folder.
-   */
-  root?: string;
-  /** Creator folder under input/ when using external root (default: 706). */
-  creatorId?: string;
-  /** English folder / ZIP base name, e.g. "Cozy Cream Cat Daily Chat". */
-  setName: string;
-  titleZh: string;
-  descZh: string;
-  titleEn: string;
-  descEn: string;
-  /** Write .env.batch snippet (default: true). */
-  writeEnvBatch?: boolean;
-  /** Copy pack to the upload root after local finalize. */
-  syncToLineS?: boolean;
-  /** Upload root path relative to repo root. */
-  uploadRoot?: string;
-}
-
-export interface PackLineSOptions {
-  sourceDir: string;
-  lineS: LineSConfig;
-  sheetDirs: string[];
-  /** Pre-built upload ZIP bytes (42 PNGs). */
-  zipBytes: Uint8Array;
-}
+export type { UploadConfig } from './uploadConfig.mts';
+export {
+  isUploadEnabled,
+  packUploadOutput,
+  resolveUploadConfig,
+  resolveUploadPackDir,
+  validateUploadConfig,
+} from './uploadConfig.mts';
 
 function parseArgs(argv: string[]): Record<string, string> {
   const args: Record<string, string> = {};
@@ -68,130 +40,6 @@ function parseArgs(argv: string[]): Record<string, string> {
     }
   }
   return args;
-}
-
-export function isLineSEnabled(lineS: LineSConfig | undefined): boolean {
-  if (!lineS) return false;
-  return lineS.enabled !== false;
-}
-
-/**
- * Upload pack destination:
- * - no lineS.root → job `--out` dir
- * - lineS.root set → upload root (root/input/706/setName/)
- */
-export function resolveLineSDestDir(lineS: LineSConfig, jobOutDir: string): string {
-  if (!lineS.root?.trim()) {
-    return resolve(jobOutDir);
-  }
-  const creatorId = lineS.creatorId?.trim() || '706';
-  return resolve(lineS.root, 'input', creatorId, lineS.setName);
-}
-
-function resolveEnvBatchDir(lineS: LineSConfig, jobOutDir: string): string {
-  if (lineS.root?.trim()) {
-    return resolve(lineS.root, '.env.batch');
-  }
-  return resolve(jobOutDir, '.env.batch');
-}
-
-export function validateLineSConfig(lineS: LineSConfig): void {
-  const missing: string[] = [];
-  if (!lineS.setName?.trim()) missing.push('lineS.setName');
-  if (!lineS.titleZh?.trim()) missing.push('lineS.titleZh');
-  if (!lineS.descZh?.trim()) missing.push('lineS.descZh');
-  if (!lineS.titleEn?.trim()) missing.push('lineS.titleEn');
-  if (!lineS.descEn?.trim()) missing.push('lineS.descEn');
-  if (missing.length > 0) {
-    throw new Error(`lineS config incomplete — set: ${missing.join(', ')}`);
-  }
-}
-
-function envFileBaseName(setName: string): string {
-  return setName.replace(/[^\w]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
-}
-
-function buildMarkdown(lineS: LineSConfig): string {
-  return `# Traditional Chinese (Taiwan)
-
-## Title
-
-${lineS.titleZh}
-
-## Description
-
-${lineS.descZh}
-
----
-
-# English
-
-## Title
-
-${lineS.titleEn}
-
-## Description
-
-${lineS.descEn}
-`;
-}
-
-function batchRelBase(lineS: LineSConfig, creatorId: string): string {
-  return lineS.root?.trim()
-    ? resolve(lineS.root, 'input', creatorId, lineS.setName)
-        .replace(`${PROJECT_ROOT}/`, '')
-        .replace(/\\/g, '/')
-    : lineS.setName;
-}
-
-/** Write upload layout: Set Name.zip, Set Name.md, sprite_sheets/, optional .env.batch */
-export async function packLineSOutput(options: PackLineSOptions): Promise<{
-  destDir: string;
-  envFilePath?: string;
-}> {
-  const { sourceDir, lineS, sheetDirs, zipBytes } = options;
-  validateLineSConfig(lineS);
-
-  const destDir = resolveLineSDestDir(lineS, sourceDir);
-  const spriteDir = resolve(destDir, 'sprite_sheets');
-  await mkdir(spriteDir, { recursive: true });
-
-  await writeFile(resolve(destDir, `${lineS.setName}.zip`), zipBytes);
-
-  for (let i = 0; i < sheetDirs.length; i++) {
-    const sheetDir = sheetDirs[i]!;
-    const processed = resolve(sourceDir, sheetDir, '_processed-sheet.png');
-    const destSprite = resolve(spriteDir, `sprite_sheet_${i + 1}_transparent.png`);
-    await copyFile(processed, destSprite);
-  }
-
-  await writeFile(resolve(destDir, `${lineS.setName}.md`), buildMarkdown(lineS), 'utf8');
-
-  if (lineS.writeEnvBatch === false) {
-    return { destDir };
-  }
-
-  const creatorId = lineS.creatorId?.trim() || '706';
-  const envBatchDir = resolveEnvBatchDir(lineS, sourceDir);
-  const envFileName = `${envFileBaseName(lineS.setName)}.env`;
-  const envFilePath = resolve(envBatchDir, envFileName);
-  await mkdir(envBatchDir, { recursive: true });
-  await writeFile(
-    envFilePath,
-    buildBatchEnvContent(
-      {
-        setName: lineS.setName,
-        titleZh: lineS.titleZh,
-        descZh: lineS.descZh,
-        titleEn: lineS.titleEn,
-        descEn: lineS.descEn,
-      },
-      batchRelBase(lineS, creatorId)
-    ),
-    'utf8'
-  );
-
-  return { destDir, envFilePath };
 }
 
 export async function main() {
@@ -215,9 +63,9 @@ export async function main() {
   }
 
   const sheetDirs = (args.sheets ?? 'sheet-1,sheet-2').split(',').map((s) => s.trim()).filter(Boolean);
-  const lineSRoot = resolve(destDirArg, '..', '..', '..');
-  const lineS: LineSConfig = {
-    root: lineSRoot,
+  const uploadRoot = resolve(destDirArg, '..', '..', '..');
+  const upload: UploadConfig = {
+    root: uploadRoot,
     creatorId: '706',
     setName,
     titleZh,
@@ -225,6 +73,7 @@ export async function main() {
     titleEn,
     descEn,
   };
+  validateUploadConfig(upload);
 
   const { readFile } = await import('node:fs/promises');
   const zipPath = resolve(sourceDir, 'line-upload.zip');
@@ -233,13 +82,13 @@ export async function main() {
     zipBytes = new Uint8Array(await readFile(zipPath));
   } catch {
     throw new Error(
-      `Missing ${zipPath}. Run finalize.mts or generate.mts first, or pass a job with lineS enabled.`
+      `Missing ${zipPath}. Run finalize.mts or generate.mts first, or pass a job with upload enabled.`
     );
   }
 
-  const { destDir, envFilePath } = await packLineSOutput({
+  const { destDir, envFilePath } = await packUploadOutput({
     sourceDir: resolve(sourceDir),
-    lineS,
+    upload,
     sheetDirs,
     zipBytes,
   });

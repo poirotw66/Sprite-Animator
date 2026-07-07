@@ -1,8 +1,8 @@
 /**
  * Rebuild upload pack from active sheet folders and pack to the repo-local upload root.
  *
- *   npx tsx finalize.mts --out example/output/p3 [--config example/p3-job.config.json]
- *   npx tsx finalize.mts --out example/output/p3 --sheets sheet-1-v2,sheet-2-v3
+ *   npx tsx finalize.mts --out output/my-set [--config examples/demo-job.config.json]
+ *   npx tsx finalize.mts --out output/my-set --sheets sheet-1-v2,sheet-2-v3
  */
 
 import { resolve, relative } from 'node:path';
@@ -45,13 +45,13 @@ const result = await finalizeFromJob({
 
 console.log(`\n✓ Finalized ${result.stickerCount} stickers`);
 console.log(`  activeSheets: ${result.activeSheets.join(', ')}`);
-if (result.lineSDest) {
-  console.log(`  local pack: ${result.lineSDest}`);
+if (result.uploadPackPath) {
+  console.log(`  local pack: ${result.uploadPackPath}`);
 }
-if (result.lineSSyncDest) {
-  console.log(`  upload root sync: ${result.lineSSyncDest}`);
+if (result.uploadSyncPath) {
+  console.log(`  upload root sync: ${result.uploadSyncPath}`);
 }
-if (result.lineSEnvFile) {
-  const envRel = relative(resolve(process.cwd()), result.lineSEnvFile).replace(/\\/g, '/');
+if (result.uploadEnvFile) {
+  const envRel = relative(resolve(process.cwd()), result.uploadEnvFile).replace(/\\/g, '/');
   console.log(`  upload env: ${envRel}`);
 }

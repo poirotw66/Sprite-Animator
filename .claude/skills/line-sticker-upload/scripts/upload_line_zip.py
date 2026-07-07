@@ -218,7 +218,12 @@ def main() -> None:
         help="Image editor URL; default from LINE_CREATOR_ID + LINE_STICKER_ID in .env",
     )
     parser.add_argument("--zip", type=Path, default=DEFAULT_ZIP)
-    parser.add_argument("--env", type=Path, default=PROJECT_ROOT / ".env")
+    parser.add_argument(
+        "--env",
+        type=Path,
+        required=True,
+        help="Per-set batch env (e.g. output/my-set/.env.batch/Set_Name.env)",
+    )
     parser.add_argument("--two-fa-timeout", type=int, default=120)
     parser.add_argument(
         "--post-upload-pause",

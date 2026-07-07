@@ -183,7 +183,12 @@ def submit(page: Page, env: dict[str, str], sticker_url: str) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Submit LINE sticker for review.")
-    parser.add_argument("--env", type=Path, default=PROJECT_ROOT / ".env")
+    parser.add_argument(
+        "--env",
+        type=Path,
+        required=True,
+        help="Per-set batch env (e.g. output/my-set/.env.batch/Set_Name.env)",
+    )
     parser.add_argument("--url", default="", help="Sticker detail URL (overrides .env IDs)")
     parser.add_argument("--headless", action="store_true")
     args = parser.parse_args()

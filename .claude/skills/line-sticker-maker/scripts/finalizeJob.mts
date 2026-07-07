@@ -14,11 +14,12 @@ import {
   type LineUploadPackResult,
 } from './lineUploadPack.mts';
 import {
-  isLineSEnabled,
-  packLineSOutput,
-  type LineSConfig,
-} from './organize-line-upload-input.mts';
-import { shouldSyncToLineS, syncPackToLineS } from './sync-upload-input.mts';
+  isUploadEnabled,
+  packUploadOutput,
+  resolveUploadConfig,
+  type UploadConfig,
+} from './uploadConfig.mts';
+import { shouldSyncToUploadRoot, syncPackToUploadRoot } from './sync-upload-input.mts';
 import { resolveSetLayout, DEFAULT_LINE_STICKER_SET_COUNT } from './sheetPlan.ts';
 import { validateSheetGrid, buildGridCandidates } from '../../../../utils/sheetGridValidation.ts';
 import {
@@ -37,7 +38,13 @@ export interface JobManifest {
   config?: JobConfig;
   activeSheets?: string[];
   gridScores?: Record<string, number>;
+  uploadPackPath?: string;
+  uploadSyncPath?: string;
+  uploadEnvFile?: string;
+  /** @deprecated legacy manifest fields */
   lineSDest?: string;
+  lineSSyncDest?: string;
+  lineSEnvFile?: string;
   stickers?: Array<Record<string, unknown>>;
 }
 
@@ -47,7 +54,8 @@ export interface JobConfig {
   tabStickerIndex?: number;
   lineUploadStickerCount?: number;
   customPhrases?: string[];
-  lineS?: LineSConfig;
+  upload?: UploadConfig;
+  lineS?: UploadConfig & { syncToLineS?: boolean };
   lineUpload?: boolean;
   scope?: string;
   includeText?: boolean;
@@ -68,11 +76,11 @@ export interface FinalizeJobResult {
   activeSheets: string[];
   gridScores: Record<string, number>;
   qaReport?: StickerQaReport;
-  lineSDest?: string;
-  lineSSyncDest?: string;
-  lineSEnvFile?: string;
+  uploadPackPath?: string;
+  uploadSyncPath?: string;
+  uploadEnvFile?: string;
   uploadPack: LineUploadPackResult;
-  usedLineS: boolean;
+  usedUploadPack: boolean;
 }
 
 function pad(n: number): string {
@@ -240,35 +248,36 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
   });
   uploadPack.warnings.forEach((warning) => console.warn(`   ! ${warning}`));
 
-  const usedLineS =
-    isLineSEnabled(mergedConfig.lineS) &&
+  const upload = resolveUploadConfig(mergedConfig);
+  const usedUploadPack =
+    isUploadEnabled(upload) &&
     mergedConfig.lineUpload !== false &&
     (mergedConfig.scope ?? 'set') === 'set';
 
-  let lineSDest: string | undefined;
-  let lineSSyncDest: string | undefined;
-  let lineSEnvFile: string | undefined;
-  if (usedLineS && mergedConfig.lineS) {
-    const { destDir, envFilePath } = await packLineSOutput({
+  let uploadPackPath: string | undefined;
+  let uploadSyncPath: string | undefined;
+  let uploadEnvFile: string | undefined;
+  if (usedUploadPack && upload) {
+    const { destDir, envFilePath } = await packUploadOutput({
       sourceDir: outDir,
-      lineS: mergedConfig.lineS,
+      upload,
       sheetDirs,
       zipBytes,
     });
-    lineSDest = destDir;
+    uploadPackPath = destDir;
     console.log(`   ✓ upload pack → ${destDir}`);
-    console.log(`     ${mergedConfig.lineS.setName}.zip (${uploadPack.stickerCount + 2} PNGs)`);
+    console.log(`     ${upload.setName}.zip (${uploadPack.stickerCount + 2} PNGs)`);
     console.log(`     sprite_sheets/ (${sheetDirs.length} sheets)`);
     if (envFilePath) console.log(`     ${envFilePath}`);
 
-    if (shouldSyncToLineS(mergedConfig.lineS)) {
+    if (shouldSyncToUploadRoot(upload)) {
       console.log('\n▶ Syncing to upload root...');
-      const sync = await syncPackToLineS({
+      const sync = await syncPackToUploadRoot({
         sourceDir: outDir,
-        lineS: mergedConfig.lineS,
+        upload,
       });
-      lineSSyncDest = sync.destDir;
-      lineSEnvFile = sync.envFilePath;
+      uploadSyncPath = sync.destDir;
+      uploadEnvFile = sync.envFilePath;
       console.log(`   ✓ upload root → ${sync.destDir}`);
       console.log(`   ✓ ${sync.envFilePath}`);
       const envRel = relative(FINALIZE_PROJECT_ROOT, sync.envFilePath).replace(/\\/g, '/');
@@ -304,9 +313,9 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
                 gridFailures,
               }
             : undefined,
-          lineSDest,
-          lineSSyncDest,
-          lineSEnvFile,
+          uploadPackPath,
+          uploadSyncPath,
+          uploadEnvFile,
           stickers: manifestStickers,
         },
         null,
@@ -320,11 +329,11 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
     activeSheets: sheetDirs,
     gridScores,
     qaReport,
-    lineSDest,
-    lineSSyncDest,
-    lineSEnvFile,
+    uploadPackPath,
+    uploadSyncPath,
+    uploadEnvFile,
     uploadPack,
-    usedLineS,
+    usedUploadPack,
   };
 }
 

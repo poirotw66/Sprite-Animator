@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Run Drive -> provision -> ZIP upload -> submit review for each sticker set folder."""
+"""Batch LINE upload for sticker set folders under an upload input root.
+
+Uses credentials.env + per-set batch env files (same model as run-line-upload.mts).
+"""
 
 from __future__ import annotations
 
@@ -15,8 +18,18 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parents[4]
-BATCH_ENV_DIR = PROJECT_ROOT / ".env.batch"
+CREDENTIALS_ENV = PROJECT_ROOT / ".claude/skills/line-sticker-maker/credentials.env"
+DEFAULT_BATCH_ENV_DIR = PROJECT_ROOT / ".line-upload" / ".env.batch"
 MASTER_STORAGE = SCRIPT_DIR / "playwright_line_state.json"
+
+CREDENTIAL_KEYS = (
+    "LINE_EMAIL",
+    "LINE_PASSWORD",
+    "LINE_CREATOR_ID",
+    "GOOGLE_EMAIL",
+    "GOOGLE_PASSWORD",
+    "GDRIVE_PARENT_FOLDER",
+)
 
 from line_playwright_common import (
     load_env,
@@ -58,11 +71,24 @@ def safe_env_name(set_name: str) -> str:
     return re.sub(r"[^\w\-]+", "_", set_name).strip("_")[:96]
 
 
+def merge_credentials(batch_path: Path, credentials_path: Path) -> None:
+    cred = load_env(credentials_path)
+    batch = load_env(batch_path)
+    for key in CREDENTIAL_KEYS:
+        if cred.get(key):
+            batch[key] = cred[key]
+    lines = [f"# LINE Creators Market — {batch.get('GDRIVE_SET_FOLDER', batch_path.stem)}", ""]
+    for key, value in batch.items():
+        lines.append(f"{key}={value}")
+    batch_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def update_env(env_path: Path, set_dir: Path, meta: dict[str, str], zip_path: Path) -> None:
-    lines = env_path.read_text(encoding="utf-8").splitlines()
+    header = f"# LINE Creators Market — {set_dir.name}"
     updates = {
         "LINE_STICKER_ID": "",
         "GDRIVE_SET_FOLDER": set_dir.name,
+        "GDRIVE_STICKER_SUBFOLDER": "sticker-pack",
         "GDRIVE_FOLDER_ID": "",
         "GDRIVE_SHARE_URL": "",
         "STICKER_TITLE_ZH": meta.get("STICKER_TITLE_ZH", ""),
@@ -73,26 +99,26 @@ def update_env(env_path: Path, set_dir: Path, meta: dict[str, str], zip_path: Pa
         "UPLOAD_ZIP": rel_posix(zip_path),
         "SPRITE_SHEETS_DIR": rel_posix(set_dir / "sprite_sheets"),
     }
-    out: list[str] = []
-    seen: set[str] = set()
-    for line in lines:
-        key = line.split("=", 1)[0].strip() if "=" in line and not line.strip().startswith("#") else ""
-        if key in updates:
-            out.append(f"{key}={updates[key]}")
-            seen.add(key)
-        else:
-            out.append(line)
-    for key, val in updates.items():
-        if key not in seen:
-            out.append(f"{key}={val}")
-    env_path.write_text("\n".join(out) + "\n", encoding="utf-8")
+    env_path.write_text(
+        header
+        + "\n# Account secrets merged from credentials.env\n\n"
+        + "\n".join(f"{key}={value}" for key, value in updates.items())
+        + "\n",
+        encoding="utf-8",
+    )
 
 
-def prepare_set_env(master_env: Path, set_dir: Path, meta: dict[str, str], zip_path: Path) -> Path:
-    BATCH_ENV_DIR.mkdir(parents=True, exist_ok=True)
-    env_path = BATCH_ENV_DIR / f"{safe_env_name(set_dir.name)}.env"
-    env_path.write_text(master_env.read_text(encoding="utf-8"), encoding="utf-8")
+def prepare_set_env(
+    credentials_env: Path,
+    batch_env_dir: Path,
+    set_dir: Path,
+    meta: dict[str, str],
+    zip_path: Path,
+) -> Path:
+    batch_env_dir.mkdir(parents=True, exist_ok=True)
+    env_path = batch_env_dir / f"{safe_env_name(set_dir.name)}.env"
     update_env(env_path, set_dir, meta, zip_path)
+    merge_credentials(env_path, credentials_env)
     return env_path
 
 
@@ -125,7 +151,8 @@ def discover_sets(base: Path) -> list[Path]:
 @dataclass(frozen=True)
 class SetJob:
     set_dir: str
-    master_env: str
+    credentials_env: str
+    batch_env_dir: str
     worker_id: int
     skip_drive: bool
     skip_provision: bool
@@ -145,7 +172,8 @@ def process_one_set(job: SetJob) -> tuple[str, str | None, bool]:
     name = set_dir.name
     py = sys.executable
     scripts = SCRIPT_DIR
-    master_env = Path(job.master_env)
+    credentials_env = Path(job.credentials_env)
+    batch_env_dir = Path(job.batch_env_dir)
 
     print(f"\n{'=' * 60}\nProcessing [{job.worker_id}]: {name}\n{'=' * 60}", flush=True)
 
@@ -155,7 +183,7 @@ def process_one_set(job: SetJob) -> tuple[str, str | None, bool]:
 
     md_path = next(iter(set_dir.glob("*.md")))
     meta = normalize_sticker_meta(parse_sticker_md(md_path), set_dir.name)
-    env_path = prepare_set_env(master_env, set_dir, meta, zip_path)
+    env_path = prepare_set_env(credentials_env, batch_env_dir, set_dir, meta, zip_path)
 
     worker_storage = worker_storage_path(job.worker_id)
     if MASTER_STORAGE.is_file():
@@ -169,7 +197,14 @@ def process_one_set(job: SetJob) -> tuple[str, str | None, bool]:
     if not job.skip_drive:
         ok = run_step(
             "Drive (stage + upload)",
-            [py, str(scripts / "upload_gdrive.py"), "--stage", *env_flag],
+            [
+                py,
+                str(scripts / "upload_gdrive.py"),
+                "--stage",
+                "--project-root",
+                str(PROJECT_ROOT),
+                *env_flag,
+            ],
             continue_on_error=job.continue_on_error,
             env=child_env,
         ) and ok
@@ -221,7 +256,23 @@ def process_one_set(job: SetJob) -> tuple[str, str | None, bool]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Batch LINE sticker upload for folders under a base path.")
-    parser.add_argument("base_dir", type=Path, help="e.g. 517")
+    parser.add_argument(
+        "base_dir",
+        type=Path,
+        help="Upload input root, e.g. .line-upload/input/706",
+    )
+    parser.add_argument(
+        "--credentials",
+        type=Path,
+        default=CREDENTIALS_ENV,
+        help="Shared credentials.env path",
+    )
+    parser.add_argument(
+        "--batch-env-dir",
+        type=Path,
+        default=DEFAULT_BATCH_ENV_DIR,
+        help="Directory for generated per-set batch env files",
+    )
     parser.add_argument("--skip-drive", action="store_true")
     parser.add_argument("--skip-provision", action="store_true")
     parser.add_argument("--skip-zip", action="store_true")
@@ -261,9 +312,11 @@ def main() -> None:
     if not base.is_dir():
         raise SystemExit(f"Not a directory: {base}")
 
-    master_env = PROJECT_ROOT / ".env"
-    if not master_env.is_file():
-        raise SystemExit(f"Missing {master_env}")
+    credentials_env = args.credentials.resolve()
+    if not credentials_env.is_file():
+        raise SystemExit(f"Missing credentials file: {credentials_env}")
+
+    batch_env_dir = args.batch_env_dir.resolve()
 
     parallel = max(1, args.parallel)
     if parallel > 1 and not args.headless_provision:
@@ -287,7 +340,8 @@ def main() -> None:
         jobs.append(
             SetJob(
                 set_dir=str(set_dir.resolve()),
-                master_env=str(master_env.resolve()),
+                credentials_env=str(credentials_env),
+                batch_env_dir=str(batch_env_dir),
                 worker_id=(index % parallel) + 1,
                 skip_drive=args.skip_drive,
                 skip_provision=args.skip_provision,

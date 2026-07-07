@@ -422,12 +422,12 @@ def main() -> None:
     parser.add_argument(
         "--env",
         type=Path,
-        default=None,
-        help="Env file path (default: project root .env)",
+        required=True,
+        help="Per-set batch env (e.g. output/my-set/.env.batch/Set_Name.env)",
     )
     args = parser.parse_args()
 
-    env_path = args.env.resolve() if args.env else PROJECT_ROOT / ".env"
+    env_path = args.env.resolve()
     if sync_env_from_md_path(env_path):
         print("Synced sticker text from .md to .env", flush=True)
     env = load_env(env_path)

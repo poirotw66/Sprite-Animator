@@ -23,7 +23,7 @@ It **reuses the app's own modules** (`utils/lineStickerPrompt.ts`,
 ```bash
 npx tsx .claude/skills/line-sticker-maker/scripts/run-from-inputs.mts \
   --image path/to/character.png \
-  --phrase-set path/to/phrases.json \
+  --phrase-set .claude/skills/line-sticker-phrase-design/example/daily-set-40.json \
   --out output/my-set
 ```
 
@@ -31,18 +31,15 @@ npx tsx .claude/skills/line-sticker-maker/scripts/run-from-inputs.mts \
 
 ```bash
 npx tsx .claude/skills/line-sticker-maker/scripts/generate.mts \
-  --config <path/to/config.json> \
-  --out <output-dir>
+  --config .claude/skills/line-sticker-maker/examples/demo-job.config.json \
+  --out output/my-set
 ```
 
-When `lineS` is present, the upload pack is written **into the job `--out` folder**
-(under `.claude/skills/line-sticker-maker/example/output/pX/`). No `root` needed.
+Place `reference-image.png` beside the job config or set `referenceImage` to your ref path.
 
-```bash
-npx tsx .../generate.mts \
-  --config example/p4-job.config.json \
-  --out .claude/skills/line-sticker-maker/example/output/p4
-```
+When `upload` is present, the upload pack is written **into the job `--out` folder**.
+No `root` needed.
+
 - `--dry-run` prints the assembled prompt + phrase list per sheet (no API, no files).
 - Gemini API key: `GEMINI_API_KEY` env var, else repo `.env` / `.env.local`.
 - Run from the repo root.
@@ -50,14 +47,14 @@ npx tsx .../generate.mts \
 ### Regenerate one sheet (isolated)
 
 ```bash
-npx tsx .../generate.mts --config job.json --out output/p3 \
+npx tsx .../generate.mts --config job.json --out output/my-set \
   --sheet sheet-1 --sheet-dir sheet-1-v2
 ```
 
 Then merge and repack (updates `activeSheets` in manifest):
 
 ```bash
-npx tsx .../finalize.mts --out output/p3 --config job.json \
+npx tsx .../finalize.mts --out output/my-set --config job.json \
   --sheets sheet-1-v2,sheet-2
 ```
 
@@ -69,12 +66,12 @@ use `manifest.json` → `activeSheets`, or fall back to `sheet-1`, `sheet-2`.
 1. **Gather inputs** (ask only for what's missing):
    - reference image path
    - `phraseSetFile` or custom phrases
-   - `lineS.setName` + zh/en titles & descriptions
-2. **Write `config.json`** from `config.example.json`.
+   - `upload.setName` + zh/en titles & descriptions
+2. **Write `config.json`** from `config.example.json` or `examples/demo-job.config.json`.
 3. **`--dry-run`** to verify prompt + phrases.
 4. **Run for real** → one command produces debug output + repo-local upload folder.
 5. **Spot-check** a few `stickers/sticker-NN.png` and `manifest.json` grid scores.
-6. Tell the user the **`--out` folder** and, when `syncToLineS` is on, the synced
+6. Tell the user the **`--out` folder** and, when `syncToUploadRoot` is on, the synced
    **`.line-upload/input/706/{Set Name}/`** path + upload command.
 
 ## Upload to LINE Creators Market
@@ -102,9 +99,11 @@ npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts \
   --env output/my-set/.env.batch/My_Set_Name.env
 ```
 
-After `generate.mts` / `finalize.mts`, if `lineS.syncToLineS` is not disabled,
+After `generate.mts` / `finalize.mts`, if `upload.syncToUploadRoot` is not disabled,
 the pack is copied to `.line-upload/input/706/{Set Name}/` and the batch env stays
 under `<out>/.env.batch/`.
+
+Legacy job configs with `lineS` / `syncToLineS` are still accepted when reading.
 
 ## config.json fields
 
@@ -132,27 +131,27 @@ under `<out>/.env.batch/`.
 | `qaEnabled` | `true` | write `qa-report.json` at finalize (warn-only) |
 | `lineUpload` | `true` | build upload ZIP at end of full run |
 | `mainStickerIndex` / `tabStickerIndex` | `1` | 1-based indices for shop images |
-| **`lineS`** | — | **repo-local upload layout (recommended)** |
+| **`upload`** | — | **repo-local upload layout (recommended)** |
 
-### `lineS` block
+### `upload` block
 
 | field | notes |
 |---|---|
 | `enabled` | default `true` when block is present |
 | `root` | **optional** — external upload root. Omit to pack into `--out` (recommended). |
-| `creatorId` | used in `.env.batch` paths (default `706`) |
+| `creatorId` | used in upload input paths (default `706`) |
 | `setName` | English ZIP / MD base name, e.g. `Cozy Cream Cat Daily Chat` |
 | `titleZh` / `descZh` | Traditional Chinese shop listing |
 | `titleEn` / `descEn` | English shop listing |
 | `writeEnvBatch` | default `true`; writes `<out>/.env.batch/{Set_Name}.env` |
-| `syncToLineS` | default `true`; copies pack to repo-local upload root |
+| `syncToUploadRoot` | default `true`; copies pack to `.line-upload/input/706/` |
 | `uploadRoot` | upload root path (default `.line-upload`) |
 
-When `lineS` is enabled (default), **`generate.mts` writes the upload pack into `--out`**
+When `upload` is enabled (default), **`generate.mts` writes the upload pack into `--out`**
 and optionally syncs to **`.line-upload/input/706/{Set Name}/`**:
 
 ```
-.claude/skills/line-sticker-maker/example/output/p4/
+output/my-set/
   sheet-1/                          ← debug slices
   sheet-2/
   stickers/                         ← flat 40 PNGs
@@ -165,11 +164,11 @@ and optionally syncs to **`.line-upload/input/706/{Set Name}/`**:
   .env.batch/
     Cozy_Cream_Cat_Daily_Chat.env
 
-.line-upload/input/706/Cozy Cream Cat Daily Chat/   ← auto-sync when syncToLineS
+.line-upload/input/706/Cozy Cream Cat Daily Chat/   ← auto-sync when syncToUploadRoot
   (zip, md, sprite_sheets only — batch env stays in --out)
 ```
 
-Without `lineS`, legacy output is `<out>/line-upload/` + `line-upload.zip`.
+Without `upload`, legacy output is `<out>/line-upload/` + `line-upload.zip`.
 
 ## Scripts
 
@@ -177,7 +176,7 @@ Without `lineS`, legacy output is `<out>/line-upload/` + `line-upload.zip`.
 |---|---|
 | `generate.mts` | full pipeline: Gemini → slice → finalize → sync upload root |
 | `finalize.mts` | merge `activeSheets` → stickers + upload pack + sync |
-| `sync-line-upload-input.mts` | copy local pack → `.line-upload/input/706/` |
+| `sync-upload-input.mts` | copy local pack → `.line-upload/input/706/` |
 | `run-line-upload.mts` | run Drive + Playwright upload pipeline |
 | `reslice-sheet.mts` | re-slice existing `_processed-sheet.png` (no Gemini) |
 | `stickerQa` (via finalize) | auto `qa-report.json` — foreground, size, text, LINE limits |
@@ -193,7 +192,9 @@ After a full run or `finalize.mts`:
   "activeSheets": ["sheet-1", "sheet-2"],
   "gridScores": { "sheet-1": 0.85, "sheet-2": 0.84 },
   "qaReport": { "overallScore": 0.91, "pass": true, "summaryWarnings": [] },
-  "lineSDest": ".../example/output/p4",
+  "uploadPackPath": "output/my-set",
+  "uploadSyncPath": ".line-upload/input/706/Cozy Cream Cat Daily Chat",
+  "uploadEnvFile": "output/my-set/.env.batch/Cozy_Cream_Cat_Daily_Chat.env",
   "stickers": [ ... ]
 }
 ```

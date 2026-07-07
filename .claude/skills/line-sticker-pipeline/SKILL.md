@@ -149,6 +149,8 @@ Spot-check 2–3 stickers and `manifest.json` → `gridScores` (target ≥ 0.8).
 1. Copy and fill **`.claude/skills/line-sticker-maker/credentials.env`** (see `credentials.env.example`).
 2. Run upload — credentials are merged into `<out>/.env.batch/*.env` automatically.
 
+Couple / dual-character sets: pass `--image2 path/to/second-ref.png` on `run-from-inputs.mts`.
+
 See **`.claude/skills/line-sticker-upload/SKILL.md`** for Drive / Playwright setup.
 
 ```bash

@@ -27,6 +27,8 @@ import {
   suggestSetNameEn,
 } from '../../../../utils/lineStickerSetNaming.ts';
 import { DEFAULT_LINE_STICKER_SET_COUNT } from './sheetPlan.ts';
+import { resolveUploadConfig } from './uploadConfig.mts';
+import { loadCredentials } from './uploadCredentials.mts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(SCRIPT_DIR, '../../../..');
@@ -190,8 +192,8 @@ async function main(): Promise<void> {
       maxSheetRetries: 3,
       minGridAlignmentScore: 0.8,
       promptVersion: 'v3compact',
-      lineS: {
-        syncToLineS: true,
+      upload: {
+        syncToUploadRoot: true,
         creatorId: '706',
         setName,
         titleZh,
@@ -232,12 +234,15 @@ async function main(): Promise<void> {
   run('npx', generateArgs);
 
   if (upload && !dryRun) {
+    await loadCredentials();
     const job = JSON.parse(await readFile(configPath, 'utf8')) as {
+      upload?: { setName?: string };
       lineS?: { setName?: string };
     };
-    const setName = job.lineS?.setName;
+    const uploadConfig = resolveUploadConfig(job);
+    const setName = uploadConfig?.setName;
     if (!setName) {
-      throw new Error('Upload requires lineS.setName in job config');
+      throw new Error('Upload requires upload.setName in job config');
     }
     const envBase = slugSetName(setName);
     const envRel = `${outRel.replace(/\\/g, '/')}/.env.batch/${envBase}.env`;

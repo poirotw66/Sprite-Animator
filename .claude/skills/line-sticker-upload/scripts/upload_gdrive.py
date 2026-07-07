@@ -488,7 +488,12 @@ def main() -> None:
         help="Optional local set folder (default: upload from .env ZIP/sprites directly)",
     )
     parser.add_argument("--project-root", type=Path, help="Project root (default: auto)")
-    parser.add_argument("--env", type=Path, help="Env file path (default: project root .env)")
+    parser.add_argument(
+        "--env",
+        type=Path,
+        required=True,
+        help="Per-set batch env (e.g. output/my-set/.env.batch/Set_Name.env)",
+    )
     parser.add_argument("--folder-id", help="Drive folder ID override")
     parser.add_argument("--auth-only", action="store_true", help="Run OAuth only, then exit")
     parser.add_argument(
@@ -512,7 +517,7 @@ def main() -> None:
     args = parser.parse_args()
 
     root = project_root_from_arg(args.project_root)
-    env_path = (args.env.resolve() if args.env else root / ".env")
+    env_path = args.env.resolve()
     env = load_env_file(env_path)
 
     if args.auth_only:

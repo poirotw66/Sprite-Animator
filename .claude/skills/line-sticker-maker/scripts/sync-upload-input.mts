@@ -1,27 +1,26 @@
 /**
  * Sync a packed sticker set from line-sticker-maker `--out` to the repo-local upload root.
  *
- *   npx tsx sync-upload-input.mts --source example/output/p4 --config example/p4-job.config.json
+ *   npx tsx sync-upload-input.mts --source output/my-set --config examples/demo-job.config.json
  */
 
 import { copyFile, cp, mkdir, readFile, writeFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  type LineSConfig,
-  validateLineSConfig,
-  isLineSEnabled,
-} from './organize-line-upload-input.mts';
+  type UploadConfig,
+  validateUploadConfig,
+  isUploadEnabled,
+} from './uploadConfig.mts';
 import { buildBatchEnvContent } from './uploadCredentials.mts';
 
 const SKILL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PROJECT_ROOT = resolve(SKILL_ROOT, '../../..');
 export const DEFAULT_UPLOAD_ROOT = resolve(PROJECT_ROOT, '.line-upload');
 
-export interface SyncToLineSOptions {
+export interface SyncUploadOptions {
   sourceDir: string;
-  lineS: LineSConfig;
+  upload: UploadConfig;
   /** Upload root (default: <repo>/.line-upload). */
   uploadRoot?: string;
 }
@@ -35,59 +34,58 @@ function resolveUploadRoot(uploadRoot?: string): string {
   return resolve(PROJECT_ROOT, uploadRoot);
 }
 
-export function resolveLineSInputDest(uploadRoot: string, lineS: LineSConfig): string {
-  const creatorId = lineS.creatorId?.trim() || '706';
-  return resolve(uploadRoot, 'input', creatorId, lineS.setName);
+export function resolveUploadInputDest(uploadRoot: string, upload: UploadConfig): string {
+  const creatorId = upload.creatorId?.trim() || '706';
+  return resolve(uploadRoot, 'input', creatorId, upload.setName);
 }
 
 /** Copy Set Name.zip / .md / sprite_sheets + .env.batch into the repo-local upload root. */
-export async function syncPackToLineS(options: SyncToLineSOptions): Promise<{
+export async function syncPackToUploadRoot(options: SyncUploadOptions): Promise<{
   destDir: string;
   envFilePath: string;
   uploadRoot: string;
 }> {
-  const { sourceDir, lineS } = options;
-  validateLineSConfig(lineS);
+  const { sourceDir, upload } = options;
+  validateUploadConfig(upload);
 
-  const uploadRoot = resolveUploadRoot(options.uploadRoot ?? lineS.uploadRoot);
+  const uploadRoot = resolveUploadRoot(options.uploadRoot ?? upload.uploadRoot);
   await mkdir(uploadRoot, { recursive: true });
 
-  const destDir = resolveLineSInputDest(uploadRoot, lineS);
+  const destDir = resolveUploadInputDest(uploadRoot, upload);
   const spriteDest = resolve(destDir, 'sprite_sheets');
   await mkdir(spriteDest, { recursive: true });
 
-  const zipSrc = resolve(sourceDir, `${lineS.setName}.zip`);
-  const mdSrc = resolve(sourceDir, `${lineS.setName}.md`);
+  const zipSrc = resolve(sourceDir, `${upload.setName}.zip`);
+  const mdSrc = resolve(sourceDir, `${upload.setName}.md`);
   const spritesSrc = resolve(sourceDir, 'sprite_sheets');
 
-  await copyFile(zipSrc, resolve(destDir, `${lineS.setName}.zip`));
-  await copyFile(mdSrc, resolve(destDir, `${lineS.setName}.md`));
+  await copyFile(zipSrc, resolve(destDir, `${upload.setName}.zip`));
+  await copyFile(mdSrc, resolve(destDir, `${upload.setName}.md`));
   await cp(spritesSrc, spriteDest, { recursive: true });
 
   const relBase = relative(PROJECT_ROOT, destDir).replace(/\\/g, '/');
   const envContent = buildBatchEnvContent(
     {
-      setName: lineS.setName,
-      titleZh: lineS.titleZh,
-      descZh: lineS.descZh,
-      titleEn: lineS.titleEn,
-      descEn: lineS.descEn,
+      setName: upload.setName,
+      titleZh: upload.titleZh,
+      descZh: upload.descZh,
+      titleEn: upload.titleEn,
+      descEn: upload.descEn,
     },
     relBase
   );
 
-  // Keep .env.batch under job --out so generated IDs remain beside the pack output.
   const envBatchDir = resolve(sourceDir, '.env.batch');
-  const envFilePath = resolve(envBatchDir, `${envFileBaseName(lineS.setName)}.env`);
+  const envFilePath = resolve(envBatchDir, `${envFileBaseName(upload.setName)}.env`);
   await mkdir(envBatchDir, { recursive: true });
   await writeFile(envFilePath, envContent, 'utf8');
 
   return { destDir, envFilePath, uploadRoot };
 }
 
-export function shouldSyncToLineS(lineS: LineSConfig | undefined): boolean {
-  if (!isLineSEnabled(lineS) || !lineS) return false;
-  if (lineS.syncToLineS === false) return false;
+export function shouldSyncToUploadRoot(upload: UploadConfig | undefined): boolean {
+  if (!isUploadEnabled(upload) || !upload) return false;
+  if (upload.syncToUploadRoot === false) return false;
   return true;
 }
 
@@ -114,19 +112,24 @@ export async function main() {
     throw new Error('Usage: sync-upload-input.mts --source <out> --config <job.json>');
   }
 
-  const config = JSON.parse(await readFile(resolve(configPath), 'utf8')) as { lineS?: LineSConfig };
-  if (!config.lineS) throw new Error('config.lineS is required');
+  const { resolveUploadConfig } = await import('./uploadConfig.mts');
+  const config = JSON.parse(await readFile(resolve(PROJECT_ROOT, configPath), 'utf8')) as {
+    upload?: UploadConfig;
+    lineS?: UploadConfig;
+  };
+  const upload = resolveUploadConfig(config);
+  if (!upload) throw new Error('config.upload is required');
 
-  const result = await syncPackToLineS({
-    sourceDir: resolve(sourceDir),
-    lineS: config.lineS,
-    uploadRoot: args['upload-root'],
+  const result = await syncPackToUploadRoot({
+    sourceDir: resolve(PROJECT_ROOT, sourceDir),
+    upload,
   });
 
   console.log(`✓ Synced → ${result.destDir}`);
-  console.log(`  ${result.envFilePath}`);
-  console.log('\n▶ Upload (from repo root):');
-  console.log(`  npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts --env ${result.envFilePath}`);
+  console.log(`  batch env: ${result.envFilePath}`);
+  console.log(
+    `  npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts --env ${result.envFilePath}`
+  );
 }
 
 const isCli = process.argv[1]?.includes('sync-upload-input');

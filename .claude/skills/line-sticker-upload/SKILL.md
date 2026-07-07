@@ -64,16 +64,16 @@ line-sticker-maker (generate.mts)
 
 ```bash
 npx tsx .claude/skills/line-sticker-maker/scripts/generate.mts \
-  --config .claude/skills/line-sticker-maker/example/p4-job.config.json \
-  --out .claude/skills/line-sticker-maker/example/output/p4
+  --config .claude/skills/line-sticker-maker/examples/demo-job.config.json \
+  --out output/my-set
 ```
 
 ### 2. Manual sync (if needed)
 
 ```bash
 npx tsx .claude/skills/line-sticker-maker/scripts/sync-upload-input.mts \
-  --source .claude/skills/line-sticker-maker/example/output/p4 \
-  --config .claude/skills/line-sticker-maker/example/p4-job.config.json
+  --source output/my-set \
+  --config .claude/skills/line-sticker-maker/examples/demo-job.config.json
 ```
 
 ### 3. Upload to LINE
@@ -103,7 +103,16 @@ npx tsx .../run-line-upload.mts --env <out>/.env.batch/Set_Name.env --step submi
 | 3 | `upload_line_zip.py` | Upload 42-PNG ZIP on image edit page |
 | 4 | `submit_line_review.py` | Submit for review → prints `PROJECT_URL=` |
 
-All Python scripts accept `--env <batch env path>` (credentials merged if you use `run-line-upload.mts`).
+All Python scripts require `--env <out>/.env.batch/Set_Name.env` (credentials merged if you use `run-line-upload.mts`).
+
+### Batch upload (multiple sets)
+
+```bash
+python .claude/skills/line-sticker-upload/scripts/batch_submit_sticker_sets.py \
+  .line-upload/input/706
+```
+
+Uses `credentials.env` + writes batch env files under `.line-upload/.env.batch/`.
 
 ## Upload root layout
 
