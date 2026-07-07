@@ -30,6 +30,7 @@ Design phrase-set first: **`.claude/skills/line-sticker-phrase-design/SKILL.md`*
 ## Full flow (design → generate)
 
 ```
+0. line-sticker-character-ref  →  character-ref.png (optional)
 1. line-sticker-phrase-design  →  phrases.json
 2. line-sticker-pipeline       →  image + phrases.json → stickers/
 3. line-sticker-upload         →  (optional) LINE Creators Market
@@ -172,6 +173,7 @@ Details: `.claude/skills/line-sticker-maker/SKILL.md`
 
 | skill | when |
 |---|---|
+| `line-sticker-character-ref` | generate character model-sheet reference image |
 | `line-sticker-phrase-design` | design phrase-set JSON before generation |
 | `line-sticker-maker` | low-level script reference, config fields, manifest |
 | `line-sticker-upload` | Drive + Playwright LINE Creators Market upload |
