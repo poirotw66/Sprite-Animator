@@ -1,5 +1,5 @@
 /**
- * Rebuild upload pack from active sheet folders and pack to line-s (or legacy line-upload).
+ * Rebuild upload pack from active sheet folders and pack to the repo-local upload root.
  *
  *   npx tsx finalize.mts --out example/output/p3 [--config example/p3-job.config.json]
  *   npx tsx finalize.mts --out example/output/p3 --sheets sheet-1-v2,sheet-2-v3
@@ -49,7 +49,7 @@ if (result.lineSDest) {
   console.log(`  local pack: ${result.lineSDest}`);
 }
 if (result.lineSSyncDest) {
-  console.log(`  line-s sync: ${result.lineSSyncDest}`);
+  console.log(`  upload root sync: ${result.lineSSyncDest}`);
 }
 if (result.lineSEnvFile) {
   const envRel = relative(resolve(process.cwd()), result.lineSEnvFile).replace(/\\/g, '/');

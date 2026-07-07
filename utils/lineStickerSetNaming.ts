@@ -168,7 +168,7 @@ export function suggestPhraseSetNameZh(params: {
   return `${theme}·${voice}`;
 }
 
-/** English filesystem slug for ZIP / line-s when title is Chinese. */
+/** English filesystem slug for ZIP / upload folder when title is Chinese. */
 export function suggestSetNameEn(params: {
   titleZh: string;
   themeKey?: string;

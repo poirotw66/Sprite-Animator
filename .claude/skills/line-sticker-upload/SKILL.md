@@ -1,41 +1,35 @@
 ---
 name: line-sticker-upload
 description: >-
-  LINE Creators Market upload pipeline (submodule line-s/): Google Drive staging,
-  Playwright form provision, ZIP upload, submit for review. Use after
-  line-sticker-maker produces a set — sync with sync-to-line-s.mts or auto-sync
-  via lineS.syncToLineS, then run run-line-upload.mts. Source:
-  https://github.com/poirotw66/line-stickers-upload-skill
+  LINE Creators Market upload pipeline localized in this repo: Google Drive
+  staging, Playwright form provision, ZIP upload, and submit-for-review.
+  Use after line-sticker-maker produces a set.
 ---
 
 # LINE Sticker Upload
 
-Vendored as **`line-s/`** git submodule in this repo
-([poirotw66/line-stickers-upload-skill](https://github.com/poirotw66/line-stickers-upload-skill)).
-
-Playwright + Google Drive scripts live at:
-`line-s/.cursor/skills/line-sticker-upload/scripts/`
+Google Drive and Playwright scripts live at:
+`.claude/skills/line-sticker-upload/scripts/`
 
 ## Setup (once)
 
 ```bash
-git submodule update --init line-s
-pip install -r line-s/.cursor/skills/line-sticker-upload/scripts/requirements-gdrive.txt
-pip install -r line-s/.cursor/skills/line-sticker-upload/scripts/requirements-playwright.txt
+pip install -r .claude/skills/line-sticker-upload/scripts/requirements-gdrive.txt
+pip install -r .claude/skills/line-sticker-upload/scripts/requirements-playwright.txt
 playwright install chromium
-cp line-s/.env.example line-s/.env
-# Fill LINE_EMAIL, LINE_PASSWORD, LINE_CREATOR_ID, GOOGLE_* in line-s/.env
+cp .claude/skills/line-sticker-upload/.env.example .claude/skills/line-sticker-upload/.env
+# Or fill .claude/skills/line-sticker-maker/credentials.env for shared creds
 ```
 
 ## Workflow with line-sticker-maker
 
-```
+```text
 line-sticker-maker (generate.mts)
-  → example/output/pX/          ← local pack (zip, md, sprite_sheets)
-  → sync-to-line-s (auto if lineS.syncToLineS)
-  → line-s/input/706/{Set Name}/
+  → example/output/pX/                  ← local pack (zip, md, sprite_sheets)
+  → sync-line-upload-input (auto by default)
+  → .line-upload/input/706/{Set Name}/
   → example/output/pX/.env.batch/{Set_Name}.env
-  → run-line-upload.mts         ← Drive + LINE Creators Market
+  → run-line-upload.mts                 ← Drive + LINE Creators Market
 ```
 
 ### 1. Generate stickers
@@ -46,13 +40,10 @@ npx tsx .claude/skills/line-sticker-maker/scripts/generate.mts \
   --out .claude/skills/line-sticker-maker/example/output/p4
 ```
 
-Config `lineS` block sets titles; **`syncToLineS: true`** (default when `line-s/` exists)
-copies the pack into the submodule after finalize.
-
 ### 2. Manual sync (if needed)
 
 ```bash
-npx tsx .claude/skills/line-sticker-maker/scripts/sync-to-line-s.mts \
+npx tsx .claude/skills/line-sticker-maker/scripts/sync-line-upload-input.mts \
   --source .claude/skills/line-sticker-maker/example/output/p4 \
   --config .claude/skills/line-sticker-maker/example/p4-job.config.json
 ```
@@ -63,6 +54,8 @@ npx tsx .claude/skills/line-sticker-maker/scripts/sync-to-line-s.mts \
 npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts \
   --env .claude/skills/line-sticker-maker/example/output/p4/.env.batch/Cozy_Cream_Cat_Daily_Chat.env
 ```
+
+Visible browser is the default. For automation, add `--headless true`.
 
 Single step:
 
@@ -82,27 +75,23 @@ npx tsx .../run-line-upload.mts --env example/output/pX/.env.batch/Set_Name.env 
 | 3 | `upload_line_zip.py` | Upload 42-PNG ZIP on image edit page |
 | 4 | `submit_line_review.py` | Submit for review → prints `PROJECT_URL=` |
 
-All Python scripts run with **`cwd: line-s/`** and read **`line-s/.env`**.
+All Python scripts can be run directly with `--env <batch env path>`.
 
-## line-s folder layout (after sync)
+## Upload root layout
 
-```
-line-s/
+```text
+.line-upload/
   input/706/{Set Name}/
     {Set Name}.zip
     {Set Name}.md
     sprite_sheets/
-  .env.batch/{Set_Name}.env   ← under job --out, not inside line-s submodule
 ```
 
 ## Secrets (never commit)
 
-- `line-s/.env`
-- `example/output/*/.env.batch/` (local batch configs)
-- `line-s/.cursor/skills/line-sticker-upload/scripts/playwright_line_state.json`
-- `line-s/.cursor/skills/line-sticker-upload/scripts/gdrive_token.json`
-
-## Full reference
-
-See upstream skill doc:
-`line-s/.cursor/skills/line-sticker-upload/SKILL.md`
+- `.claude/skills/line-sticker-upload/.env`
+- `.claude/skills/line-sticker-maker/credentials.env`
+- `example/output/*/.env.batch/`
+- `.claude/skills/line-sticker-upload/scripts/playwright_line_state.json`
+- `.claude/skills/line-sticker-upload/scripts/gdrive_token.json`
+- `.claude/skills/line-sticker-upload/scripts/gdrive_credentials.json`

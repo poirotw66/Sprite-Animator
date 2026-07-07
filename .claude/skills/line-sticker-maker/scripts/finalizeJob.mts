@@ -17,8 +17,8 @@ import {
   isLineSEnabled,
   packLineSOutput,
   type LineSConfig,
-} from './organize-line-s-input.mts';
-import { shouldSyncToLineS, syncPackToLineS } from './sync-to-line-s.mts';
+} from './organize-line-upload-input.mts';
+import { shouldSyncToLineS, syncPackToLineS } from './sync-upload-input.mts';
 import { resolveSetLayout, DEFAULT_LINE_STICKER_SET_COUNT } from './sheetPlan.ts';
 import { validateSheetGrid, buildGridCandidates } from '../../../../utils/sheetGridValidation.ts';
 import {
@@ -256,20 +256,20 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
       zipBytes,
     });
     lineSDest = destDir;
-    console.log(`   ✓ line-s pack → ${destDir}`);
+    console.log(`   ✓ upload pack → ${destDir}`);
     console.log(`     ${mergedConfig.lineS.setName}.zip (${uploadPack.stickerCount + 2} PNGs)`);
     console.log(`     sprite_sheets/ (${sheetDirs.length} sheets)`);
     if (envFilePath) console.log(`     ${envFilePath}`);
 
     if (shouldSyncToLineS(mergedConfig.lineS)) {
-      console.log('\n▶ Syncing to line-s submodule...');
+      console.log('\n▶ Syncing to upload root...');
       const sync = await syncPackToLineS({
         sourceDir: outDir,
         lineS: mergedConfig.lineS,
       });
       lineSSyncDest = sync.destDir;
       lineSEnvFile = sync.envFilePath;
-      console.log(`   ✓ line-s/input → ${sync.destDir}`);
+      console.log(`   ✓ upload root → ${sync.destDir}`);
       console.log(`   ✓ ${sync.envFilePath}`);
       const envRel = relative(FINALIZE_PROJECT_ROOT, sync.envFilePath).replace(/\\/g, '/');
       console.log(

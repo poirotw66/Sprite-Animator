@@ -1,5 +1,5 @@
 /**
- * Load LINE / Google upload credentials from credentials.env or line-s/.env.
+ * Load LINE / Google upload credentials from credentials.env or the local upload skill env.
  */
 
 import { readFile, writeFile } from 'node:fs/promises';
@@ -12,7 +12,7 @@ const SKILL_ROOT = resolve(SCRIPT_DIR, '..');
 const PROJECT_ROOT = resolve(SKILL_ROOT, '../../..');
 
 const CREDENTIALS_ENV = resolve(SKILL_ROOT, 'credentials.env');
-const LINE_S_ENV = resolve(PROJECT_ROOT, 'line-s/.env');
+const LOCAL_UPLOAD_ENV = resolve(PROJECT_ROOT, '.claude/skills/line-sticker-upload/.env');
 
 const CREDENTIAL_KEYS = [
   'LINE_EMAIL',
@@ -75,7 +75,7 @@ export function envHeader(setName: string): string {
 export async function loadCredentials(): Promise<Record<string, string>> {
   const candidates: string[] = [];
   if (existsSync(CREDENTIALS_ENV)) candidates.push(CREDENTIALS_ENV);
-  if (existsSync(LINE_S_ENV)) candidates.push(LINE_S_ENV);
+  if (existsSync(LOCAL_UPLOAD_ENV)) candidates.push(LOCAL_UPLOAD_ENV);
 
   for (const credPath of candidates) {
     const cred = parseEnv(await readFile(credPath, 'utf8'));
@@ -87,7 +87,7 @@ export async function loadCredentials(): Promise<Record<string, string>> {
 
   throw new Error(
     `No valid credentials (LINE_EMAIL + LINE_CREATOR_ID). ` +
-      `Create ${CREDENTIALS_ENV} or restore ${LINE_S_ENV}`
+      `Create ${CREDENTIALS_ENV} or restore ${LOCAL_UPLOAD_ENV}`
   );
 }
 

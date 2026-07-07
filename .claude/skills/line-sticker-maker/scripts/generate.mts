@@ -36,7 +36,7 @@ import { DEFAULT_SKILL_STICKER_MODEL } from '../../../../utils/constants.ts';
 import type { ChromaKeyColorType } from '../../../../types.ts';
 
 import { finalizeStickerJob } from './finalizeJob.mts';
-import type { LineSConfig } from './organize-line-s-input.mts';
+import type { LineSConfig } from './organize-line-upload-input.mts';
 import { generateOneSheet, type SheetPlan } from './sheetGeneration.mts';
 import { decodePng, type RgbaImage } from './nodeImage.mts';
 import {
@@ -72,7 +72,7 @@ interface StickerConfig {
   rows?: number; // single mode only (default 6)
   model?: string; // default: gemini-3.1-flash-image (DEFAULT_SKILL_STICKER_MODEL)
   resolution?: string; // output resolution, default: 1K (model-dependent)
-  /** line-s upload repo layout (replaces legacy line-upload/ when enabled). */
+  /** Repo-local upload layout (replaces legacy line-upload/ when enabled). */
   lineS?: LineSConfig;
   /** When true (default for set scope), emit LINE Creators Market upload pack + ZIP. */
   lineUpload?: boolean;
@@ -585,7 +585,7 @@ async function main() {
     await writeFile(manifestPath, JSON.stringify(isolatedManifest, null, 2));
     console.log(`\n✓ Sheet regen done. ${manifest.length} stickers in ${sheetDirOverride}`);
     console.log(`  manifest: ${manifestPath}`);
-    console.log('\n▶ Next: merge sheets and repack to line-s:');
+    console.log('\n▶ Next: merge sheets and repack to the upload root:');
     console.log(
       `  npx tsx .claude/skills/line-sticker-maker/scripts/finalize.mts --out "${outDir}" --config "${configArg}"` +
         (sheetDirOverride ? ` --sheets <sheet-1>,${sheetDirOverride}` : '')
@@ -608,7 +608,7 @@ async function main() {
     console.log(`  activeSheets: ${finalizeResult.activeSheets.join(', ')}`);
     console.log(`  manifest: ${resolve(outDir, 'manifest.json')}`);
     if (finalizeResult.lineSDest) {
-      console.log(`  line-s upload: ${finalizeResult.lineSDest}`);
+      console.log(`  upload root: ${finalizeResult.lineSDest}`);
     } else {
       console.log(`  upload: ${resolve(outDir, 'line-upload.zip')}`);
     }

@@ -34,12 +34,13 @@ test/
 # Generated LINE sticker output (line-sticker-maker skill)
 line-stickers-out/
 
-# line-s submodule (upload skill) — secrets & generated input
-line-s/.env
-line-s/.env.batch/
+# Local upload skill — secrets & generated input
 .claude/skills/line-sticker-maker/credentials.env
-line-s/input/
-line-s/*.log
+.claude/skills/line-sticker-upload/scripts/gdrive_credentials.json
+.claude/skills/line-sticker-upload/scripts/gdrive_token.json
+.claude/skills/line-sticker-upload/scripts/playwright_line_state.json
+.claude/skills/line-sticker-upload/.env
+.line-upload/
 
 # Local secrets & machine-local config (never commit)
 .env

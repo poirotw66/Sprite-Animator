@@ -1,11 +1,10 @@
 /**
- * Backward-compatible wrapper. Prefer `sync-upload-input.mts`.
+ * Compatibility wrapper around the repo-local upload-root sync.
  */
 
-export * from './sync-upload-input.mts';
 import { main } from './sync-upload-input.mts';
 
-const isCli = process.argv[1]?.includes('sync-to-line-s');
+const isCli = process.argv[1]?.includes('sync-line-upload-input');
 if (isCli) {
   main().catch((err) => {
     console.error('✗', err instanceof Error ? err.message : err);

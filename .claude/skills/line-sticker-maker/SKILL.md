@@ -1,6 +1,6 @@
 ---
 name: line-sticker-maker
-description: Generate a complete LINE sticker set from a single character reference image, fully headless (no browser). Produces sprite sheets via Gemini, slices stickers, and packages output for the line-s upload script (or legacy line-upload.zip). Use when the user wants to "make LINE stickers", "produce a sticker set", "生成貼圖 / 做一套貼圖" from a reference image.
+description: Generate a complete LINE sticker set from a single character reference image, fully headless (no browser). Produces sprite sheets via Gemini, slices stickers, and packages output for the repo-local upload workflow (or legacy line-upload.zip). Use when the user wants to "make LINE stickers", "produce a sticker set", "生成貼圖 / 做一套貼圖" from a reference image.
 ---
 
 # LINE Sticker Maker
@@ -8,7 +8,7 @@ description: Generate a complete LINE sticker set from a single character refere
 Headless version of this project's LINE sticker workflow. Given one character
 reference image, it generates sprite sheets with Gemini, removes the chroma-key
 background, slices individual transparent sticker PNGs, and packages the result
-for **line-s upload** (preferred) or legacy LINE Creators Market ZIP — all from
+for the **repo-local upload workflow** (preferred) or legacy LINE Creators Market ZIP — all from
 the command line, no browser/UI.
 
 It **reuses the app's own modules** (`utils/lineStickerPrompt.ts`,
@@ -72,22 +72,19 @@ use `manifest.json` → `activeSheets`, or fall back to `sheet-1`, `sheet-2`.
    - `lineS.setName` + zh/en titles & descriptions
 2. **Write `config.json`** from `config.example.json`.
 3. **`--dry-run`** to verify prompt + phrases.
-4. **Run for real** → one command produces debug output + line-s upload folder.
+4. **Run for real** → one command produces debug output + repo-local upload folder.
 5. **Spot-check** a few `stickers/sticker-NN.png` and `manifest.json` grid scores.
 6. Tell the user the **`--out` folder** and, when `syncToLineS` is on, the synced
-   **`line-s/input/706/{Set Name}/`** path + upload command.
+   **`.line-upload/input/706/{Set Name}/`** path + upload command.
 
 ## Upload to LINE Creators Market
 
-The upload skill is vendored as **`line-s/`** git submodule
-([poirotw66/line-stickers-upload-skill](https://github.com/poirotw66/line-stickers-upload-skill)).
+The upload skill now runs entirely from this repo under
+`.claude/skills/line-sticker-upload/`.
 
-```bash
-git submodule update --init line-s
-```
-
-After `generate.mts` / `finalize.mts`, if `lineS.syncToLineS: true` (default when
-`line-s/` exists), the pack is copied to `line-s/input/706/{Set Name}/` and writes `<out>/.env.batch/{Set_Name}.env`.
+After `generate.mts` / `finalize.mts`, if `lineS.syncToLineS` is not disabled,
+the pack is copied to `.line-upload/input/706/{Set Name}/` and writes
+`<out>/.env.batch/{Set_Name}.env`.
 
 ```bash
 npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts \
@@ -122,24 +119,24 @@ See **`.claude/skills/line-sticker-upload/SKILL.md`** for Drive / Playwright set
 | `qaEnabled` | `true` | write `qa-report.json` at finalize (warn-only) |
 | `lineUpload` | `true` | build upload ZIP at end of full run |
 | `mainStickerIndex` / `tabStickerIndex` | `1` | 1-based indices for shop images |
-| **`lineS`** | — | **line-s upload layout (recommended)** |
+| **`lineS`** | — | **repo-local upload layout (recommended)** |
 
 ### `lineS` block
 
 | field | notes |
 |---|---|
 | `enabled` | default `true` when block is present |
-| `root` | **optional** — external line-s repo. Omit to pack into `--out` (recommended). |
+| `root` | **optional** — external upload root. Omit to pack into `--out` (recommended). |
 | `creatorId` | used in `.env.batch` paths (default `706`) |
 | `setName` | English ZIP / MD base name, e.g. `Cozy Cream Cat Daily Chat` |
 | `titleZh` / `descZh` | Traditional Chinese shop listing |
 | `titleEn` / `descEn` | English shop listing |
 | `writeEnvBatch` | default `true`; writes `<out>/.env.batch/{Set_Name}.env` |
-| `syncToLineS` | default `true` when `line-s/` submodule exists; copies pack to submodule |
-| `uploadRoot` | submodule path (default `line-s`) |
+| `syncToLineS` | default `true`; copies pack to repo-local upload root |
+| `uploadRoot` | upload root path (default `.line-upload`) |
 
 When `lineS` is enabled (default), **`generate.mts` writes the upload pack into `--out`**
-and optionally syncs to **`line-s/input/706/{Set Name}/`**:
+and optionally syncs to **`.line-upload/input/706/{Set Name}/`**:
 
 ```
 .claude/skills/line-sticker-maker/example/output/p4/
@@ -155,7 +152,7 @@ and optionally syncs to **`line-s/input/706/{Set Name}/`**:
   .env.batch/
     Cozy_Cream_Cat_Daily_Chat.env
 
-line-s/input/706/Cozy Cream Cat Daily Chat/   ← auto-sync when syncToLineS
+.line-upload/input/706/Cozy Cream Cat Daily Chat/   ← auto-sync when syncToLineS
   (same zip, md, sprite_sheets)
   .env.batch/Cozy_Cream_Cat_Daily_Chat.env    ← upload env (stays in --out, not in submodule)
 ```
@@ -166,13 +163,13 @@ Without `lineS`, legacy output is `<out>/line-upload/` + `line-upload.zip`.
 
 | script | purpose |
 |---|---|
-| `generate.mts` | full pipeline: Gemini → slice → finalize → sync line-s |
+| `generate.mts` | full pipeline: Gemini → slice → finalize → sync upload root |
 | `finalize.mts` | merge `activeSheets` → stickers + upload pack + sync |
-| `sync-to-line-s.mts` | copy local pack → `line-s/input/706/` |
+| `sync-line-upload-input.mts` | copy local pack → `.line-upload/input/706/` |
 | `run-line-upload.mts` | run Drive + Playwright upload pipeline |
 | `reslice-sheet.mts` | re-slice existing `_processed-sheet.png` (no Gemini) |
 | `stickerQa` (via finalize) | auto `qa-report.json` — foreground, size, text, LINE limits |
-| `organize-line-s-input.mts` | standalone pack from legacy `line-upload.zip` (fallback) |
+| `organize-line-upload-input.mts` | standalone pack into upload layout (fallback) |
 | `rebuild-line-upload.mts` | legacy only; prefer `finalize.mts` |
 
 ## manifest.json

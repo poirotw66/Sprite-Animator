@@ -120,7 +120,7 @@ export async function buildLineUploadZipBytes(
   return { pack, zipBytes };
 }
 
-/** Write upload ZIP to an explicit path (line-s layout or custom destination). */
+/** Write upload ZIP to an explicit path (upload-root layout or custom destination). */
 export async function writeLineUploadZip(
   zipPath: string,
   frames: RgbaImage[],

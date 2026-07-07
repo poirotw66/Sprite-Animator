@@ -63,11 +63,11 @@ Options:
 | flag | purpose |
 |---|---|
 | `--dry-run` | print prompts only (no Gemini, no files beyond `job.config.json`) |
-| `--set-name` | English ZIP / line-s folder name (default: derived from Chinese title) |
+| `--set-name` | English ZIP / upload folder name (default: derived from Chinese title) |
 | `--title-zh` / `--desc-zh` | LINE 商店標題與說明（預設取自 phrase-set `name`） |
 | `--title-en` / `--desc-en` | English shop listing |
 | `--job path/to/job.config.json` | skip auto-config; use existing job file |
-| `--upload` | after generate, run LINE upload (needs `line-s/` setup) |
+| `--upload` | after generate, run LINE upload (needs local Python/Playwright setup) |
 
 `run-from-inputs.mts` writes `<out>/job.config.json` + copies phrase-set, then
 calls `generate.mts`.
@@ -183,4 +183,4 @@ Details: `.claude/skills/line-sticker-maker/SKILL.md`
 - Set mode: 40 stickers = 2× 4×5 sheets (parallel by default).
 - Default: `textRendering: model` (Gemini draws captions); `programmatic` optional for stable zh-TW overlay.
 - Default image model: `gemini-3.1-flash-image` (not flash-lite — better 4×5 grid alignment).
-- Upload needs `git submodule update --init line-s` + Python deps.
+- Upload needs the repo-local upload skill deps from `.claude/skills/line-sticker-upload/`.
