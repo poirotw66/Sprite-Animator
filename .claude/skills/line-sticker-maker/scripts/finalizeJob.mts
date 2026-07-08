@@ -16,6 +16,7 @@ import {
 } from './lineUploadPack.mts';
 import {
   isUploadEnabled,
+  normalizeUploadListing,
   packUploadOutput,
   resolveUploadConfig,
   type UploadConfig,
@@ -277,16 +278,29 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
   let uploadSyncPath: string | undefined;
   let uploadEnvFile: string | undefined;
   if (usedUploadPack && upload) {
+    const phraseSamples = phrases.length
+      ? phrases
+      : manifestStickers.map((entry) => String(entry.phrase ?? ''));
+    const { upload: normalizedUpload, warnings: listingWarnings } = normalizeUploadListing(
+      upload,
+      phraseSamples
+    );
+    for (const warning of listingWarnings) {
+      console.warn(`   ! listing: ${warning}`);
+    }
+    console.log(`   · shop title: ${normalizedUpload.titleZh}`);
+    console.log(`   · shop desc: ${normalizedUpload.descZh}`);
+
     const { destDir, envFilePath } = await packUploadOutput({
       sourceDir: outDir,
-      upload,
+      upload: normalizedUpload,
       sheetDirs,
       zipBytes,
       submitForReview: mergedConfig.lineUploadSubmit !== false,
     });
     uploadPackPath = destDir;
     console.log(`   ✓ upload pack → ${destDir}`);
-    console.log(`     ${upload.setName}.zip (${uploadPack.stickerCount + 2} PNGs)`);
+    console.log(`     ${normalizedUpload.setName}.zip (${uploadPack.stickerCount + 2} PNGs)`);
     console.log(`     sprite_sheets/ (${sheetDirs.length} sheets)`);
     if (envFilePath) console.log(`     ${envFilePath}`);
 
@@ -294,7 +308,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
       console.log('\n▶ Syncing to upload root...');
       const sync = await syncPackToUploadRoot({
         sourceDir: outDir,
-        upload,
+        upload: normalizedUpload,
         submitForReview: mergedConfig.lineUploadSubmit !== false,
       });
       uploadSyncPath = sync.destDir;

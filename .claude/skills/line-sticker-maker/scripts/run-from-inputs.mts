@@ -22,9 +22,9 @@ import {
 import { DEFAULT_SKILL_STICKER_MODEL } from '../../../../utils/constants.ts';
 import {
   defaultTitleZhFromPhraseSet,
-  suggestDescZh,
   suggestSetNameEn,
 } from '../../../../utils/lineStickerSetNaming.ts';
+import { prepareShopListing } from '../../../../utils/lineCreatorsListingText.ts';
 import { DEFAULT_LINE_STICKER_SET_COUNT } from './sheetPlan.ts';
 import { resolveUploadConfig } from './uploadConfig.mts';
 import { loadCredentials } from './uploadCredentials.mts';
@@ -139,18 +139,22 @@ async function main(): Promise<void> {
             themeKey: 'daily',
             voiceKey: 'nishimura',
           });
-    const titleEn =
+    const titleEnCandidate =
       typeof args['title-en'] === 'string' && args['title-en'].trim()
         ? args['title-en'].trim()
         : setName;
-    const descZh =
-      typeof args['desc-zh'] === 'string'
-        ? args['desc-zh']
-        : suggestDescZh(titleZh);
-    const descEn =
-      typeof args['desc-en'] === 'string'
-        ? args['desc-en']
-        : `${titleEn} sticker set`;
+    const listing = prepareShopListing({
+      titleZh,
+      titleEn: titleEnCandidate,
+      descZh: typeof args['desc-zh'] === 'string' ? args['desc-zh'] : undefined,
+      descEn: typeof args['desc-en'] === 'string' ? args['desc-en'] : undefined,
+      phrases: phraseSet.phrases,
+      themeKey: 'daily',
+    });
+    for (const warning of listing.warnings) {
+      console.warn(`   listing: ${warning}`);
+    }
+    const { titleZh: shopTitleZh, descZh, titleEn, descEn } = listing;
 
     const scope = phraseSet.mode === 'single' ? 'single' : 'set';
     const nonEmptyPhrases = phraseSet.phrases.filter((p) => p.trim().length > 0).length;
@@ -187,8 +191,6 @@ async function main(): Promise<void> {
       resolution: '1K',
       lineUpload: scope === 'set',
       lineUploadSubmit: true,
-      mainStickerIndex: 1,
-      tabStickerIndex: 1,
       maxSheetRetries: 3,
       minGridAlignmentScore: 0.8,
       promptVersion: 'v3compact',
@@ -196,7 +198,7 @@ async function main(): Promise<void> {
         syncToUploadRoot: true,
         creatorId: '706',
         setName,
-        titleZh,
+        titleZh: shopTitleZh,
         descZh,
         titleEn,
         descEn,
@@ -213,7 +215,7 @@ async function main(): Promise<void> {
     }
     console.log(`  phrases: ${phraseSet.phrases.length} (${phraseSet.mode})`);
     console.log(`  set: ${setName}`);
-    console.log(`  titleZh: ${titleZh}`);
+    console.log(`  titleZh: ${shopTitleZh}`);
   }
 
   const configRel = relative(ROOT, configPath);

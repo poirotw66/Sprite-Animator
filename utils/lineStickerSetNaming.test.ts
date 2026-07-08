@@ -56,8 +56,9 @@ describe('lineStickerSetNaming', () => {
     expect(defaultTitleZhFromPhraseSet('My Set', ['OK'])).toBe('My Set');
   });
 
-  it('formats description with 貼圖組 suffix', () => {
-    expect(suggestDescZh('奶油獺日常')).toBe('奶油獺日常 貼圖組');
-    expect(suggestDescZh('已含貼圖組')).toBe('已含貼圖組');
+  it('formats engaging description within LINE limits', () => {
+    const desc = suggestDescZh('奶油獺日常', ['早安', '晚安']);
+    expect(desc.length).toBeLessThanOrEqual(80);
+    expect(desc).toContain('早安');
   });
 });

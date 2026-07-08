@@ -6,6 +6,7 @@ import { copyFile, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildBatchEnvContent } from './uploadCredentials.mts';
+import { prepareShopListing } from '../../../../utils/lineCreatorsListingText.ts';
 
 const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 
@@ -176,4 +177,28 @@ export async function packUploadOutput(options: PackUploadOptions): Promise<{
   );
 
   return { destDir, envFilePath };
+}
+
+/** Fit shop listing copy to LINE Creators limits before packaging. */
+export function normalizeUploadListing(
+  upload: UploadConfig,
+  phrases: string[] = []
+): { upload: UploadConfig; warnings: string[] } {
+  const listing = prepareShopListing({
+    titleZh: upload.titleZh,
+    descZh: upload.descZh,
+    titleEn: upload.titleEn,
+    descEn: upload.descEn,
+    phrases,
+  });
+  return {
+    upload: {
+      ...upload,
+      titleZh: listing.titleZh,
+      descZh: listing.descZh,
+      titleEn: listing.titleEn,
+      descEn: listing.descEn,
+    },
+    warnings: listing.warnings,
+  };
 }

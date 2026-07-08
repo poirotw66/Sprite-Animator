@@ -70,6 +70,17 @@ npx tsx .../design-phrase-set.mts --theme 美食 --voice 咖波 --out output/咖
 
 此名稱寫入 phrase-set 的 `name`，並在 pipeline 中作為 **`titleZh`**（LINE 商店標題）。
 
+**LINE 官方字數上限（自動裁切）：**
+
+| 欄位 | 上限 |
+|------|------|
+| 中文標題 `titleZh` | 20 字 |
+| 中文說明 `descZh` | 80 字 |
+| 英文標題 `titleEn` | 39 字元（半形） |
+| 英文說明 `descEn` | 160 字元（須含 `Sticker set.`） |
+
+腳本會自動產生簡短、吸睛且合規的標題／說明；過長時會裁切並在 log 提示。
+
 ```bash
 # 企鵝家族心情日常風
 npx tsx .../design-phrase-set.mts --theme 日常 --voice 企鵝 --out output/企鵝日常/phrases.json

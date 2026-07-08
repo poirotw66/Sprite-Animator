@@ -2,6 +2,7 @@
  * Traditional Chinese naming helpers for LINE sticker sets (phrase-set name, shop title).
  */
 
+import { fitZhTitle, prepareShopListing } from './lineCreatorsListingText.ts';
 import { THEME_PRESETS } from './lineStickerPresets.ts';
 import {
   listStickerVoiceKeys,
@@ -159,13 +160,15 @@ export function suggestPhraseSetNameZh(params: {
   const voice = voiceShortLabel(params.voiceKey, params.voice);
   const character = params.characterName?.trim();
 
+  let raw: string;
   if (character) {
-    return `${character}·${theme}`;
+    raw = `${character}·${theme}`;
+  } else if (theme.includes(voice) || voice.includes(theme)) {
+    raw = theme;
+  } else {
+    raw = `${theme}·${voice}`;
   }
-  if (theme.includes(voice) || voice.includes(theme)) {
-    return theme;
-  }
-  return `${theme}·${voice}`;
+  return fitZhTitle(raw);
 }
 
 /** English filesystem slug for ZIP / upload folder when title is Chinese. */
@@ -187,20 +190,22 @@ export function suggestSetNameEn(params: {
   return `${themeEn} ${voiceEn} Set`;
 }
 
-export function suggestDescZh(titleZh: string): string {
-  const base = titleZh.trim();
-  if (!base) return '原創貼圖組';
-  return base.endsWith('貼圖') || base.endsWith('貼圖組') ? base : `${base} 貼圖組`;
+export function suggestDescZh(titleZh: string, phrases?: string[]): string {
+  return prepareShopListing({
+    titleZh,
+    titleEn: 'Sticker Set',
+    phrases,
+  }).descZh;
 }
 
 export function defaultTitleZhFromPhraseSet(name: string | undefined, phrases: string[]): string {
   const trimmed = name?.trim();
   if (trimmed && containsCjk(trimmed)) {
-    return trimmed;
+    return fitZhTitle(trimmed);
   }
   const first = phrases.find((phrase) => phrase.trim().length > 0)?.trim();
   if (first && containsCjk(first)) {
-    return `${first}貼圖`;
+    return fitZhTitle(`${first}貼圖`);
   }
   if (trimmed) {
     return trimmed;
