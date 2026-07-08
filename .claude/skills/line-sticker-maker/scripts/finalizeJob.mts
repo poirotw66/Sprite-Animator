@@ -11,6 +11,7 @@ import { auditStickerFrames, type StickerQaReport } from '../../../../utils/stic
 import {
   buildLineUploadZipBytes,
   writeLineUploadPack,
+  type LineUploadPackOptions,
   type LineUploadPackResult,
 } from './lineUploadPack.mts';
 import {
@@ -91,6 +92,19 @@ function pad(n: number): string {
 
 function toZeroBased(oneBased: number | undefined, fallback: number): number {
   return Math.max(0, (oneBased ?? fallback) - 1);
+}
+
+function buildUploadPackOptions(config: JobConfig): LineUploadPackOptions {
+  const options: LineUploadPackOptions = {
+    stickerCount: config.lineUploadStickerCount,
+  };
+  if (config.mainStickerIndex != null) {
+    options.mainStickerIndex = toZeroBased(config.mainStickerIndex, 1);
+  }
+  if (config.tabStickerIndex != null) {
+    options.tabStickerIndex = toZeroBased(config.tabStickerIndex, 1);
+  }
+  return options;
 }
 
 async function loadSheetFrames(sheetDir: string, count: number): Promise<RgbaImage[]> {
@@ -243,11 +257,14 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
   }
 
   console.log('\n▶ Building LINE upload pack...');
-  const { pack: uploadPack, zipBytes } = await buildLineUploadZipBytes(nativeFrames, {
-    mainStickerIndex: toZeroBased(mergedConfig.mainStickerIndex, 1),
-    tabStickerIndex: toZeroBased(mergedConfig.tabStickerIndex, 1),
-    stickerCount: mergedConfig.lineUploadStickerCount,
-  });
+  const uploadPackOptions = buildUploadPackOptions(mergedConfig);
+  const { pack: uploadPack, zipBytes } = await buildLineUploadZipBytes(
+    nativeFrames,
+    uploadPackOptions
+  );
+  console.log(
+    `   · shop images: main=sticker-${String(uploadPack.mainStickerIndex).padStart(2, '0')}, tab=sticker-${String(uploadPack.tabStickerIndex).padStart(2, '0')}`
+  );
   uploadPack.warnings.forEach((warning) => console.warn(`   ! ${warning}`));
 
   const upload = resolveUploadConfig(mergedConfig);
@@ -292,11 +309,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
       );
     }
   } else {
-    await writeLineUploadPack(outDir, nativeFrames, {
-      mainStickerIndex: toZeroBased(mergedConfig.mainStickerIndex, 1),
-      tabStickerIndex: toZeroBased(mergedConfig.tabStickerIndex, 1),
-      stickerCount: mergedConfig.lineUploadStickerCount,
-    });
+    await writeLineUploadPack(outDir, nativeFrames, uploadPackOptions);
     console.log(`   ✓ line-upload/ (${uploadPack.stickerCount + 2} PNGs) + line-upload.zip`);
   }
 
@@ -322,6 +335,8 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
           uploadPackPath,
           uploadSyncPath,
           uploadEnvFile,
+          mainStickerIndex: uploadPack.mainStickerIndex,
+          tabStickerIndex: uploadPack.tabStickerIndex,
           stickers: manifestStickers,
         },
         null,

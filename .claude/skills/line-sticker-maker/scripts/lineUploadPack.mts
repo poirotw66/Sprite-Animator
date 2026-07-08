@@ -30,6 +30,9 @@ export interface LineUploadPackFile {
 
 export interface LineUploadPackResult {
   stickerCount: number;
+  /** 1-based sticker numbers used for main.png / tab.png */
+  mainStickerIndex: number;
+  tabStickerIndex: number;
   files: LineUploadPackFile[];
   warnings: string[];
 }
@@ -43,6 +46,52 @@ function clampIndex(index: number, length: number, label: string): number {
     return clamped;
   }
   return index;
+}
+
+/** Pick two distinct 0-based indices for shop main/tab images. */
+export function pickRandomShopStickerIndices(
+  stickerCount: number,
+  rng: () => number = Math.random
+): { mainIndex: number; tabIndex: number } {
+  if (stickerCount <= 0) {
+    throw new Error('Cannot pick shop images: no sticker frames available');
+  }
+  if (stickerCount === 1) {
+    return { mainIndex: 0, tabIndex: 0 };
+  }
+
+  const mainIndex = Math.floor(rng() * stickerCount);
+  let tabIndex = Math.floor(rng() * stickerCount);
+  while (tabIndex === mainIndex) {
+    tabIndex = Math.floor(rng() * stickerCount);
+  }
+  return { mainIndex, tabIndex };
+}
+
+export function resolveShopStickerIndices(
+  stickerCount: number,
+  options: LineUploadPackOptions
+): { mainIndex: number; tabIndex: number } {
+  const mainGiven = options.mainStickerIndex !== undefined;
+  const tabGiven = options.tabStickerIndex !== undefined;
+
+  if (!mainGiven && !tabGiven) {
+    return pickRandomShopStickerIndices(stickerCount);
+  }
+
+  const fallback = pickRandomShopStickerIndices(stickerCount);
+  let mainIndex = mainGiven
+    ? clampIndex(options.mainStickerIndex!, stickerCount, 'main image')
+    : fallback.mainIndex;
+  let tabIndex = tabGiven
+    ? clampIndex(options.tabStickerIndex!, stickerCount, 'tab image')
+    : fallback.tabIndex;
+
+  if (mainIndex === tabIndex && stickerCount > 1) {
+    tabIndex = (mainIndex + 1) % stickerCount;
+  }
+
+  return { mainIndex, tabIndex };
 }
 
 function buildUploadFile(name: string, image: RgbaImage): LineUploadPackFile {
@@ -69,8 +118,7 @@ export function buildLineUploadPack(
     );
   }
 
-  const mainIndex = clampIndex(options.mainStickerIndex ?? 0, stickerCount, 'main image');
-  const tabIndex = clampIndex(options.tabStickerIndex ?? 0, stickerCount, 'tab image');
+  const { mainIndex, tabIndex } = resolveShopStickerIndices(stickerCount, options);
 
   const files: LineUploadPackFile[] = [];
   files.push(buildUploadFile('main.png', prepareLineMainImage(frames[mainIndex]!)));
@@ -89,7 +137,13 @@ export function buildLineUploadPack(
     }
   }
 
-  return { stickerCount, files, warnings };
+  return {
+    stickerCount,
+    mainStickerIndex: mainIndex + 1,
+    tabStickerIndex: tabIndex + 1,
+    files,
+    warnings,
+  };
 }
 
 async function encodeUploadZip(pack: LineUploadPackResult): Promise<Uint8Array> {

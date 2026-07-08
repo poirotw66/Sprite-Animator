@@ -131,7 +131,7 @@ Legacy job configs with `lineS` / `syncToLineS` are still accepted when reading.
 | `gridTemplate` | `false` | `true` = plan A blank chroma canvas; `"guided"` = plan B visible grid layout ref (paint on template) + fixed equal-split slice |
 | `qaEnabled` | `true` | write `qa-report.json` at finalize (warn-only) |
 | `lineUpload` | `true` | build upload ZIP at end of full run |
-| `mainStickerIndex` / `tabStickerIndex` | `1` | 1-based indices for shop images |
+| `mainStickerIndex` / `tabStickerIndex` | random | optional 1-based overrides; default picks two distinct stickers from the set |
 | **`upload`** | — | **repo-local upload layout (recommended)** |
 
 ### `upload` block

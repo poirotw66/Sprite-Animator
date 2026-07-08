@@ -8,7 +8,7 @@
 import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { decodePng, encodePng, type RgbaImage } from './nodeImage.mts';
-import { writeLineUploadPack } from './lineUploadPack.mts';
+import { writeLineUploadPack, type LineUploadPackOptions } from './lineUploadPack.mts';
 import { resolveSetLayout } from './sheetPlan.ts';
 import { DEFAULT_LINE_STICKER_SET_COUNT } from './sheetPlan.ts';
 
@@ -122,16 +122,27 @@ for (let sheetIndex = 0; sheetIndex < sheetFolders.length; sheetIndex++) {
 
 const toZeroBased = (oneBased: number | undefined, fallback: number) =>
   Math.max(0, (oneBased ?? fallback) - 1);
-const mainStickerIndex = args.main ? Number(args.main) - 1 : toZeroBased(config.mainStickerIndex, 1);
-const tabStickerIndex = args.tab ? Number(args.tab) - 1 : toZeroBased(config.tabStickerIndex, 1);
+
+const uploadOptions: LineUploadPackOptions = {
+  stickerCount: config.lineUploadStickerCount,
+};
+if (args.main) {
+  uploadOptions.mainStickerIndex = Number(args.main) - 1;
+} else if (config.mainStickerIndex != null) {
+  uploadOptions.mainStickerIndex = toZeroBased(config.mainStickerIndex, 1);
+}
+if (args.tab) {
+  uploadOptions.tabStickerIndex = Number(args.tab) - 1;
+} else if (config.tabStickerIndex != null) {
+  uploadOptions.tabStickerIndex = toZeroBased(config.tabStickerIndex, 1);
+}
 
 console.log('\n▶ Building LINE Creators Market upload pack...');
-const uploadPack = await writeLineUploadPack(outDir, nativeFrames, {
-  mainStickerIndex,
-  tabStickerIndex,
-  stickerCount: config.lineUploadStickerCount,
-});
+const uploadPack = await writeLineUploadPack(outDir, nativeFrames, uploadOptions);
 uploadPack.warnings.forEach((warning) => console.warn(`   ! ${warning}`));
+console.log(
+  `   · shop images: main=sticker-${String(uploadPack.mainStickerIndex).padStart(2, '0')}, tab=sticker-${String(uploadPack.tabStickerIndex).padStart(2, '0')}`
+);
 
 await writeFile(
   manifestPath,
