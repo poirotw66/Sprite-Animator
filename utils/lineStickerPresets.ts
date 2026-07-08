@@ -25,6 +25,11 @@ export const FONT_PRESETS: Record<string, { label: string; promptDesc: string }>
     pop: { label: '流行體', promptDesc: 'Pop trendy sticker font, bold rhythm, strong stroke contrast, subtle accent only, no busy effects' },
     pinkBubble: { label: '粉嫩泡泡風', promptDesc: 'Pink bubble sticker font, thick white and dark outer stroke, soft highlights only, keep glyphs crisp' },
     thinHandwritten: { label: '簡約手繪風', promptDesc: 'Clean minimal hand-drawn sticker font, slightly thin but reinforced with clear outer stroke for readability' },
+    kidDoodle: {
+        label: '五歲塗鴉',
+        promptDesc:
+            'Childishly crooked MS Paint mouse-lettering, uneven stroke width, almost-readable clumsy glyphs, thick crude outline, off-kilter spacing, intentionally awkward and low-fi',
+    },
     custom: { label: '自訂字體', promptDesc: '' },
 };
 
@@ -37,6 +42,7 @@ export const FONT_PRESET_ORDER: (keyof typeof FONT_PRESETS)[] = [
     'pop',
     'pinkBubble',
     'thinHandwritten',
+    'kidDoodle',
     'custom',
 ];
 
@@ -197,6 +203,14 @@ export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
         styleType: "Casual doodle and sketch style, hand-drawn feel, playful and loose",
         drawingMethod: "Sketchy or marker-like lines, slightly imperfect outlines, simple fills, notebook or memo vibe",
     },
+    kidDoodle: {
+        label: "五歲塗鴉",
+        styleType:
+            "Intentionally clumsy kid doodle / bad MS Paint redraw: more awkward, scribbly, and pitifully off than the reference. Almost like the subject but nowhere quite right—confusing, embarrassing uncanny wobbliness. Looks mouse-drawn in an old desktop paint program with low-res, pixel-by-pixel tracing. Exaggerate how hilariously bad it is; freely warp proportion and line—anything goes as long as the mess stays charmingly terrible.",
+        drawingMethod:
+            "Crude mouse-drag strokes, jagged low-quality pixel edges, uneven fills, shaky outlines, wrong-but-recognizable shapes. Avoid: polished digital art, clean vectors, anime polish, soft painterly beauty, photorealism.",
+        outlinePreference: 'style',
+    },
     gouache: {
         label: "不透明水彩",
         styleType: "Gouache and opaque watercolor style, matte and soft, picture-book illustration feel",
@@ -227,6 +241,7 @@ export const STYLE_PRESET_ORDER: (keyof typeof STYLE_PRESETS)[] = [
     'cartoon',
     'flat',
     'doodle',
+    'kidDoodle',
     'gouache',
     'pixel',
 ];

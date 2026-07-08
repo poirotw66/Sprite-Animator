@@ -109,6 +109,7 @@ const STYLE_PREVIEW_PLACEHOLDER_LABELS: Record<keyof typeof STYLE_PRESETS, strin
   pastel: 'Pastel',
   flat: 'Flat',
   doodle: 'Doodle',
+  kidDoodle: 'Kid Doodle',
   gouache: 'Gouache',
   lineChibi: 'LINE Chibi',
 };

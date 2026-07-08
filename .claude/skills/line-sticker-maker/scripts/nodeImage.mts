@@ -36,7 +36,7 @@ import {
   shouldUseWhiteDividerSlice,
   type WhiteDividerGrid,
 } from '../../../../utils/sheetWhiteDividerDetection.ts';
-import { computeCellCropRect } from '../../../../utils/sheetCellCrop.ts';
+import { computeCellCropRect, computeGuidedTemplateCellRect } from '../../../../utils/sheetCellCrop.ts';
 import {
   detectBestGridLayoutFromRgba,
   scoreGridLayoutFromRgba,
@@ -230,6 +230,8 @@ export interface SliceSheetOptions {
   /** `divider` splits on visible white grid lines (excludes them); `template` uses fixed bounds; `detect` runs seam heuristics. */
   sliceMode?: SliceMode;
   templateBounds?: TemplateGridBounds;
+  /** When true with `template`, crop to foreground in gutters (guided sheets). */
+  guidedContentCrop?: boolean;
   /** Pre-detected divider grid (e.g. from raw sheet before chroma key). */
   dividerGrid?: WhiteDividerGrid;
 }
@@ -368,9 +370,9 @@ export function sliceSheet(
     );
   }
 
-  const insetFactor = whiteDividerGrid
-    ? 1
-    : 1 - 2 * Math.max(0, Math.min(0.2, insetRatio));
+  const effectiveInset =
+    sliceMode === 'template' || whiteDividerGrid ? 0 : insetRatio;
+  const insetFactor = 1 - 2 * Math.max(0, Math.min(0.2, effectiveInset));
   const frames: RgbaImage[] = [];
 
   for (let r = 0; r < rows; r++) {
@@ -385,6 +387,18 @@ export function sliceSheet(
               r,
               c,
               whiteDividerGrid
+            )
+          : sliceMode === 'template' && options.guidedContentCrop && options.templateBounds
+          ? computeGuidedTemplateCellRect(
+              sheet.data,
+              totalWidth,
+              totalHeight,
+              cols,
+              rows,
+              r,
+              c,
+              xBounds,
+              yBounds
             )
           : yBoundsPerColumn && useDetectCrop
           ? computeCellCropRect(

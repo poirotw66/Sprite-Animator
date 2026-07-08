@@ -70,6 +70,7 @@ Same keys as the web app / `line-sticker-maker` config:
 | `cartoon` | 美式卡通 |
 | `flat` | 扁平時尚 |
 | `doodle` | 塗鴉手繪 |
+| `kidDoodle` | 五歲塗鴉 |
 | `gouache` | 不透明水彩 |
 | `pixel` | 像素藝術 |
 

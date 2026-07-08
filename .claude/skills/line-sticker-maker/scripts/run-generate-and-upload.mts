@@ -66,7 +66,6 @@ await ensureBatchEnvReady(batchPath);
 
 const envRel = `${out.replace(/\\/g, '/')}/.env.batch/${envBase}.env`;
 const submitArg = job.lineUploadSubmit === false ? 'false' : 'true';
-const autoArg = args.auto === 'true' ? ['--auto', 'true'] : [];
 console.log('\n▶ upload (gdrive → provision → zip → optional submit)...');
 run('npx', [
   'tsx',
@@ -75,7 +74,6 @@ run('npx', [
   envRel,
   '--submit',
   submitArg,
-  ...autoArg,
 ]);
 
 const final = parseEnv(await readFile(batchPath, 'utf8'));

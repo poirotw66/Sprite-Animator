@@ -138,8 +138,71 @@ def upload_zip_file(page: Page, zip_path: Path) -> None:
     print(f"ZIP submitted via file chooser: {zip_path.name}", flush=True)
 
 
+def count_filled_sticker_slots(page: Page) -> tuple[int, int, list[str]]:
+    """Count LINE editor slots with uploaded CDN images. Returns filled, total, empty labels."""
+    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+    page.wait_for_timeout(400)
+    result = page.evaluate(
+        """() => {
+            const items = [...document.querySelectorAll('[data-test="product-image-key"]')].map((keyEl) => {
+                const label = (keyEl.textContent || '').trim();
+                const li = keyEl.closest('li');
+                const inp = li ? li.querySelector('input.cm-product-image') : null;
+                const src = inp ? (inp.getAttribute('src') || '') : '';
+                const filled =
+                    src.includes('line-scdn.net') ||
+                    src.includes('line.me/sticker') ||
+                    src.includes('line-cdn.net');
+                return { label, filled };
+            });
+            const empty = items.filter((item) => !item.filled).map((item) => item.label);
+            const filled = items.filter((item) => item.filled).length;
+            return { filled, total: items.length, empty };
+        }"""
+    )
+    return int(result["filled"]), int(result["total"]), list(result["empty"])
+
+
+def wait_for_zip_import(
+    page: Page,
+    expected_stickers: int,
+    *,
+    timeout_sec: int = 600,
+    min_wait_sec: int = 0,
+) -> None:
+    """Poll until main+tab+N stickers show CDN images, or raise on timeout."""
+    expected_total = expected_stickers + 2
+    if min_wait_sec > 0:
+        print(f"ZIP import: initial wait {min_wait_sec}s…", flush=True)
+        page.wait_for_timeout(min_wait_sec * 1000)
+
+    deadline = time.monotonic() + timeout_sec
+    last_filled = -1
+    while time.monotonic() < deadline:
+        filled, total, empty = count_filled_sticker_slots(page)
+        if total >= expected_total and filled >= expected_total:
+            print(f"ZIP import complete: {filled}/{total} slots filled.", flush=True)
+            return
+        if filled != last_filled:
+            print(
+                f"ZIP import progress: {filled}/{expected_total} slots filled "
+                f"({len(empty)} remaining)…",
+                flush=True,
+            )
+            last_filled = filled
+        page.wait_for_timeout(3_000)
+
+    _, _, empty = count_filled_sticker_slots(page)
+    preview = ", ".join(empty[:15])
+    if len(empty) > 15:
+        preview += f", … (+{len(empty) - 15} more)"
+    raise PlaywrightTimeout(
+        f"ZIP import incomplete after {timeout_sec}s — empty slots: {preview or 'unknown'}"
+    )
+
+
 def pause_after_zip(page: Page, seconds: int) -> None:
-    """Short buffer so the editor can start processing; no DOM thumbnail polling."""
+    """Legacy fixed delay; prefer wait_for_zip_import."""
     if seconds <= 0:
         return
     print(
@@ -157,12 +220,17 @@ def run(
     two_fa_timeout_sec: int,
     post_upload_pause_sec: int,
     reuse_session: bool,
+    *,
+    headless: bool = False,
+    sticker_count: int = 40,
+    import_timeout_sec: int = 600,
+    wait_for_import: bool = True,
 ) -> None:
     if not zip_path.is_file():
         raise SystemExit(f"ZIP not found: {zip_path}")
 
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=False)
+        browser = playwright.chromium.launch(headless=headless)
         if reuse_session and get_storage().is_file():
             context = browser.new_context(
                 storage_state=str(get_storage()),
@@ -184,7 +252,15 @@ def run(
         open_image_editor(page, page_url)
         ensure_forty_stickers(page)
         upload_zip_file(page, zip_path)
-        pause_after_zip(page, post_upload_pause_sec)
+        if wait_for_import:
+            wait_for_zip_import(
+                page,
+                sticker_count,
+                timeout_sec=import_timeout_sec,
+                min_wait_sec=post_upload_pause_sec,
+            )
+        else:
+            pause_after_zip(page, post_upload_pause_sec)
 
         storage = get_storage()
         context.storage_state(path=str(storage))
@@ -228,9 +304,21 @@ def main() -> None:
     parser.add_argument(
         "--post-upload-pause",
         type=int,
-        default=8,
-        help="Seconds to wait after the ZIP is accepted (no thumbnail checks)",
+        default=0,
+        help="Minimum seconds to wait before polling import progress (fixed delay if --no-wait-import)",
     )
+    parser.add_argument(
+        "--import-timeout",
+        type=int,
+        default=600,
+        help="Max seconds to wait for all sticker slots to fill after ZIP upload",
+    )
+    parser.add_argument(
+        "--no-wait-import",
+        action="store_true",
+        help="Skip import polling (legacy: only use --post-upload-pause delay)",
+    )
+    parser.add_argument("--headless", action="store_true")
     parser.add_argument("--no-reuse-session", action="store_true")
     args = parser.parse_args()
 
@@ -249,6 +337,7 @@ def main() -> None:
         page_url = sticker_image_url(creator, sticker_id)
 
     zip_path = resolve_zip_path(args.zip, env)
+    sticker_count = int(env.get("STICKER_COUNT", "40") or "40")
 
     run(
         page_url=page_url,
@@ -258,6 +347,10 @@ def main() -> None:
         two_fa_timeout_sec=args.two_fa_timeout,
         post_upload_pause_sec=args.post_upload_pause,
         reuse_session=not args.no_reuse_session,
+        headless=bool(args.headless),
+        sticker_count=sticker_count,
+        import_timeout_sec=args.import_timeout,
+        wait_for_import=not args.no_wait_import,
     )
 
     creator = env.get("LINE_CREATOR_ID", "").strip()

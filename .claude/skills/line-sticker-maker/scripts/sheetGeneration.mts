@@ -433,7 +433,13 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     );
   }
 
-  log(logPrefix, `slicing into ${sheet.cols * sheet.rows} stickers (white-divider mode)...`);
+  const useGuidedTemplateSlice = sheetTemplate?.mode === 'guided';
+  log(
+    logPrefix,
+    useGuidedTemplateSlice
+      ? `slicing into ${sheet.cols * sheet.rows} stickers (guided template bounds)...`
+      : `slicing into ${sheet.cols * sheet.rows} stickers (white-divider mode)...`
+  );
 
   const rawForDivide = decodeImage(rawPng);
   const dividerGridFromRaw = detectWhiteDividerGrid(
@@ -445,10 +451,13 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
   );
 
   let frames = sliceSheet(image, sheet.cols, sheet.rows, {
-    sliceMode: 'divider',
-    dividerGrid: shouldUseWhiteDividerSlice(dividerGridFromRaw, sheet.cols, sheet.rows)
-      ? dividerGridFromRaw
-      : undefined,
+    sliceMode: useGuidedTemplateSlice ? 'template' : 'divider',
+    guidedContentCrop: useGuidedTemplateSlice,
+    dividerGrid:
+      !useGuidedTemplateSlice &&
+      shouldUseWhiteDividerSlice(dividerGridFromRaw, sheet.cols, sheet.rows)
+        ? dividerGridFromRaw
+        : undefined,
     templateBounds: sheetTemplate
       ? { xBounds: sheetTemplate.xBounds, yBounds: sheetTemplate.yBounds }
       : undefined,

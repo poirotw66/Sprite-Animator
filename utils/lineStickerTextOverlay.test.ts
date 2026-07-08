@@ -64,6 +64,7 @@ describe('fontCssStackForPreset', () => {
     expect(fontCssStackForPreset('bold')).toMatch(/Heiti TC/);
     expect(fontCssStackForPreset('pop')).toMatch(/^"PingFang TC"/);
     expect(fontCssStackForPreset('thinHandwritten')).toMatch(/Bradley Hand ITC/);
+    expect(fontCssStackForPreset('kidDoodle')).toMatch(/Comic Sans MS/);
     expect(fontCssStackForPreset('custom')).toMatch(/Hiragino Maru Gothic ProN/);
   });
 });

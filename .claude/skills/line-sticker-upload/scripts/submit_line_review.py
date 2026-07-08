@@ -67,9 +67,27 @@ def click_submit_button(page: Page) -> None:
         status = detect_review_status(page)
         if status == "waiting_for_review":
             return
-        raise PlaywrightTimeout(
-            "Submit button not visible and status is not 等待審核 / 審核中."
-        )
+        # ponytail: LINE enables submit async after ZIP import — poll up to ~2 min
+        for attempt in range(24):
+            print(
+                f"Waiting for 送出申請 button… ({attempt + 1}/24, ~{(attempt + 1) * 5}s)",
+                flush=True,
+            )
+            page.wait_for_timeout(5_000)
+            dismiss_overlays(page)
+            status = detect_review_status(page)
+            if status == "waiting_for_review":
+                return
+            if submit_button_visible(page):
+                break
+        else:
+            status = detect_review_status(page)
+            if status == "waiting_for_review":
+                return
+            raise PlaywrightTimeout(
+                "Submit button not visible and status is not 等待審核 / 審核中. "
+                "Open PROJECT_URL in browser — check for form errors or ZIP still importing."
+            )
     submit_btn = page.locator(SUBMIT_BTN)
     submit_btn.wait_for(state="visible", timeout=30_000)
     for _ in range(5):

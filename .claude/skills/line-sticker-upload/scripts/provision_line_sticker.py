@@ -410,9 +410,14 @@ def main() -> None:
         help="Show browser explicitly (same as default when neither flag is passed).",
     )
     parser.add_argument(
+        "--pause-before-save",
+        action="store_true",
+        help="Wait for Enter before saving the form (debug / manual review).",
+    )
+    parser.add_argument(
         "--no-pause-before-save",
         action="store_true",
-        help="Save immediately without waiting for Enter (headed mode pauses by default).",
+        help="Save immediately without waiting for Enter.",
     )
     parser.add_argument(
         "--update",
@@ -434,7 +439,7 @@ def main() -> None:
     storage = get_storage()
 
     headless = bool(args.headless)
-    pause_before_save = not headless and not args.no_pause_before_save
+    pause_before_save = bool(args.pause_before_save) and not args.no_pause_before_save
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=headless)

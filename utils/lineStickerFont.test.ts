@@ -14,8 +14,9 @@ describe('resolveFontStylePromptDesc', () => {
 });
 
 describe('FONT_PRESET_ORDER', () => {
-  it('keeps seven presets plus custom', () => {
-    expect(FONT_PRESET_ORDER).toHaveLength(8);
+  it('keeps built-in presets plus custom last', () => {
+    expect(FONT_PRESET_ORDER).toHaveLength(9);
+    expect(FONT_PRESET_ORDER).toContain('kidDoodle');
     expect(FONT_PRESET_ORDER.at(-1)).toBe('custom');
   });
 });

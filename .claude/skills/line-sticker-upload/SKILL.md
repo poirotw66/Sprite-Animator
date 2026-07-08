@@ -83,7 +83,8 @@ npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts \
   --env output/my-set/.env.batch/Set_Name.env
 ```
 
-Visible browser is the default. For automation, add `--headless true`.
+Visible browser and save pauses are **opt-in** via `--interactive true` on `run-line-upload.mts`.
+Default: headless Playwright, no Enter prompts, ZIP pause 0s, auto submit when enabled.
 
 Single step:
 

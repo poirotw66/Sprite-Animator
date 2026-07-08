@@ -4,7 +4,7 @@
  *   npx tsx run-line-upload.mts --env output/p4/.env.batch/Cozy_Cream_Cat_Daily_Chat.env
  *   npx tsx run-line-upload.mts --env ... --step gdrive
  *   npx tsx run-line-upload.mts --env ... --step provision|zip|submit|all
- *   npx tsx run-line-upload.mts --env ... --auto true
+ *   npx tsx run-line-upload.mts --env ... --interactive true
  *   npx tsx run-line-upload.mts --env ... --submit false
  */
 
@@ -79,7 +79,7 @@ const skipGridGate = args['skip-grid-gate'] === 'true';
 
 if (!envFile) {
   console.error(
-    'Usage: run-line-upload.mts --env output/pX/.env.batch/Set_Name.env [--step gdrive|provision|zip|submit|all] [--submit true|false] [--headless true] [--auto true]'
+    'Usage: run-line-upload.mts --env output/pX/.env.batch/Set_Name.env [--step gdrive|provision|zip|submit|all] [--submit true|false] [--interactive true]'
   );
   process.exit(1);
 }
@@ -108,24 +108,37 @@ const submitEnabled = resolveSubmitEnabled({
   envSubmit: batchEnv.LINE_UPLOAD_SUBMIT,
 });
 const steps = resolvePipelineSteps(step, submitEnabled);
-const runHeadless = args.headless === 'true' || args.auto === 'true';
-const runAuto = args.auto === 'true';
+/** Default: unattended pipeline (no Enter prompts, headless Playwright). */
+const runInteractive = args.interactive === 'true' || args.auto === 'false';
 
 if (step === 'all' && !submitEnabled) {
   console.log('▶ Submit skipped (--submit false / LINE_UPLOAD_SUBMIT=false)');
+}
+if (!runInteractive) {
+  console.log('▶ Unattended upload (headless, no Enter prompts). Pass --interactive true to review in browser.');
 }
 
 for (const name of steps) {
   console.log(`\n▶ ${name}: ${STEP_SCRIPTS[name]}`);
   const extra = name === 'gdrive' ? ['--stage'] : [];
-  if (runHeadless && (name === 'provision' || name === 'submit')) {
-    extra.push('--headless');
-  }
-  if (runAuto && name === 'provision') {
-    extra.push('--no-pause-before-save');
-  }
-  if (runAuto && name === 'zip') {
-    extra.push('--post-upload-pause', '0');
+  if (!runInteractive) {
+    if (name === 'provision' || name === 'submit' || name === 'zip') {
+      extra.push('--headless');
+    }
+    if (name === 'provision') {
+      extra.push('--no-pause-before-save');
+    }
+    if (name === 'zip') {
+      extra.push('--post-upload-pause', '5');
+      extra.push('--import-timeout', '600');
+    }
+  } else {
+    if (name === 'provision') {
+      extra.push('--pause-before-save');
+    }
+    if (name === 'zip') {
+      extra.push('--post-upload-pause', '8');
+    }
   }
   runPython(STEP_SCRIPTS[name], envSrc, extra);
 }
