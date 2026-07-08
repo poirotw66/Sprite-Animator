@@ -4,6 +4,7 @@
  *   npx tsx run-batch-jobs.mts --manifest output/example/p3-p10-batch.json
  */
 
+import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,6 +28,8 @@ interface BatchManifest {
   phraseSetFile: string;
   lineUploadSubmit?: boolean;
   jobs: BatchJob[];
+  /** Optional: only run jobs whose `out` is in this list. */
+  only?: string[];
 }
 
 function parseArgs(argv: string[]): Record<string, string> {
@@ -103,8 +106,17 @@ const manifestDir = dirname(manifestAbs);
 const manifest = JSON.parse(await readFile(manifestAbs, 'utf8')) as BatchManifest;
 const runAuto = args.auto !== 'false';
 const submitArg = manifest.lineUploadSubmit === false ? 'false' : 'true';
+const onlyOut = new Set(
+  [
+    ...(args.only ? args.only.split(',') : []),
+    ...(Array.isArray(manifest.only) ? manifest.only : []),
+  ]
+    .map((s) => s.trim())
+    .filter(Boolean)
+);
+const jobs = onlyOut.size > 0 ? manifest.jobs.filter((j) => onlyOut.has(j.out)) : manifest.jobs;
 
-for (const job of manifest.jobs) {
+for (const job of jobs) {
   const outDir = resolve(manifestDir, job.out);
   const configPath = resolve(manifestDir, `${job.out}-job.config.json`);
   const config = buildJobConfig(manifest, job);
@@ -115,19 +127,29 @@ for (const job of manifest.jobs) {
   const outRel = relative(ROOT, outDir).replace(/\\/g, '/');
 
   console.log(`\n========== ${job.setName} (${job.referenceImage} → ${job.out}) ==========\n`);
-  run('npx', ['tsx', '.claude/skills/line-sticker-maker/scripts/generate.mts', '--config', configRel, '--out', outRel]);
+  try {
+    const manifestExists = existsSync(resolve(outDir, 'manifest.json'));
+    if (!manifestExists || args['force-generate'] === 'true') {
+      run('npx', ['tsx', '.claude/skills/line-sticker-maker/scripts/generate.mts', '--config', configRel, '--out', outRel]);
+    } else {
+      console.log(`▶ ${job.out}: manifest exists — skipping generate (use --force-generate true to rebuild)`);
+    }
 
-  const envRel = `${outRel}/.env.batch/${slugSetName(job.setName)}.env`;
-  const uploadArgs = [
-    'tsx',
-    '.claude/skills/line-sticker-maker/scripts/run-line-upload.mts',
-    '--env',
-    envRel,
-    '--submit',
-    submitArg,
-  ];
-  if (runAuto) uploadArgs.push('--auto', 'true');
-  run('npx', uploadArgs);
+    const envRel = `${outRel}/.env.batch/${slugSetName(job.setName)}.env`;
+    const uploadArgs = [
+      'tsx',
+      '.claude/skills/line-sticker-maker/scripts/run-line-upload.mts',
+      '--env',
+      envRel,
+      '--submit',
+      submitArg,
+    ];
+    if (runAuto) uploadArgs.push('--auto', 'true');
+    run('npx', uploadArgs);
+    console.log(`✓ ${job.out} complete`);
+  } catch (err) {
+    console.error(`✗ ${job.out} failed:`, err instanceof Error ? err.message : err);
+  }
 }
 
-console.log(`\n✓ Batch complete (${manifest.jobs.length} jobs).`);
+console.log(`\n✓ Batch complete (${jobs.length} jobs attempted).`);

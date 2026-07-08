@@ -17,6 +17,7 @@ from line_playwright_common import (
     dismiss_overlays,
     get_storage,
     load_env,
+    normalize_en_description,
     normalize_en_title,
     normalize_zh_description,
     normalize_zh_title,
@@ -27,6 +28,46 @@ from line_playwright_common import (
 from upload_line_zip import login_line
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+
+
+def dismiss_creator_announcements(page: Page) -> None:
+    for pattern in (r"^\u95dc\u9589$", r"^Close$", r"^\u4ee5\u5f8c\u4e0d\u518d\u986f\u793a$"):
+        btn = page.get_by_role("button", name=re.compile(pattern))
+        for _ in range(6):
+            if not btn.count():
+                break
+            try:
+                if btn.first.is_visible():
+                    btn.first.click(timeout=2_000)
+                    page.wait_for_timeout(350)
+            except PlaywrightTimeout:
+                break
+
+
+def configure_campaigns(page: Page, env: dict[str, str]) -> None:
+    """LINE blocks save while a freemium campaign is active; opt out when JOIN_CAMPAIGNS=false."""
+    join = env.get("JOIN_CAMPAIGNS", "false").lower() in ("1", "true", "yes")
+    if join:
+        return
+
+    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+    page.wait_for_timeout(600)
+    declined = page.evaluate(
+        """() => {
+            let count = 0;
+            for (const label of document.querySelectorAll('label')) {
+                const text = (label.innerText || label.textContent || '').trim();
+                if (text === '不參加' || text === '不参加' || text === 'Do not participate') {
+                    label.click();
+                    count++;
+                }
+            }
+            return count;
+        }"""
+    )
+    if declined:
+        print(f"Declined {declined} campaign(s) (JOIN_CAMPAIGNS=false)", flush=True)
+    page.wait_for_timeout(800)
 
 
 def dismiss_campaign_float(page: Page) -> None:
@@ -41,6 +82,7 @@ def dismiss_campaign_float(page: Page) -> None:
 
 def dismiss_wizards(page: Page) -> None:
     dismiss_overlays(page)
+    dismiss_creator_announcements(page)
     dismiss_campaign_float(page)
     for _ in range(12):
         clicked = False
@@ -69,7 +111,7 @@ def select_static_type(page: Page) -> None:
 
 def fill_english(page: Page, env: dict[str, str]) -> None:
     title = normalize_en_title(env.get("STICKER_TITLE_EN", ""))
-    desc = sanitize_line_creators_en_text(env.get("STICKER_DESC_EN", ""))
+    desc = normalize_en_description(env.get("STICKER_DESC_EN", ""), title)
     page.fill('input[name="meta[en][title]"]', title)
     page.fill('textarea[name="meta[en][description]"]', desc)
 
@@ -184,26 +226,108 @@ def fill_sale_block(page: Page, env: dict[str, str]) -> None:
     drive_url = env.get("GDRIVE_SHARE_URL", "").strip()
     if drive_url:
         page.fill('input[name="design_url"]', drive_url)
+        page.keyboard.press("Tab")
+        page.wait_for_timeout(2_500)
 
     page.locator('input[name="area_group"][value="all"]').click(force=True)
 
     auto_sale = env.get("SALE_START", "auto").lower() == "auto"
     release_val = "true" if auto_sale else "false"
     page.locator(f'input[name="is_auto_release"][value="{release_val}"]').click(force=True)
+    configure_campaigns(page, env)
+
+
+def scrape_validation_errors(page: Page) -> list[str]:
+    return page.evaluate(
+        """() => {
+            const msgs = [];
+            for (const el of document.querySelectorAll(
+                '.error, .alert, .alert-danger, [class*="error"], [class*="invalid"], .help-block, p, span, div'
+            )) {
+                const t = (el.innerText || el.textContent || '').trim().replace(/\\s+/g, ' ');
+                if (!t || t.length > 240) continue;
+                if (
+                    t.includes('已被使用') ||
+                    t.includes('已被採用') ||
+                    /already (used|taken)/i.test(t) ||
+                    t.includes('請使用其他標題') ||
+                    t.includes('請使用其他說明')
+                ) {
+                    msgs.push(t);
+                }
+            }
+            return [...new Set(msgs)].slice(0, 6);
+        }"""
+    )
+
+
+def assert_no_duplicate_title_errors(page: Page) -> None:
+    errors = scrape_validation_errors(page)
+    if errors:
+        joined = " | ".join(errors)
+        raise SystemExit(f"LINE rejected duplicate title/description: {joined}")
+
+
+def save_button_state(page: Page) -> dict | None:
+    return page.evaluate(
+        """() => {
+            const el = document.querySelector('[data-test="btn-save"]');
+            if (!el) return null;
+            const r = el.getBoundingClientRect();
+            return {
+                disabled: el.disabled,
+                ngDisabled: el.getAttribute('ng-disabled'),
+                text: (el.innerText || el.textContent || '').trim(),
+                visible: r.width > 0 && r.height > 0,
+            };
+        }"""
+    )
+
+
+def dump_provision_debug(page: Page, label: str) -> None:
+    debug_dir = SCRIPT_DIR / "debug_snapshots"
+    debug_dir.mkdir(exist_ok=True)
+    safe = re.sub(r"[^\w.-]+", "_", label)[:80]
+    shot = debug_dir / f"{safe}.png"
+    page.screenshot(path=str(shot), full_page=True)
+    state = save_button_state(page)
+    errors = scrape_validation_errors(page)
+    print(f"DEBUG url={page.url}", flush=True)
+    print(f"DEBUG save_button={state}", flush=True)
+    if errors:
+        print(f"DEBUG validation_errors={errors}", flush=True)
+    print(f"DEBUG screenshot={shot}", flush=True)
+
+
+def wait_for_save_enabled(page: Page, timeout_ms: int = 90_000) -> None:
+    save_btn = page.locator('[data-test="btn-save"]')
+    save_btn.wait_for(state="attached", timeout=timeout_ms)
+    page.wait_for_function(
+        """() => {
+            const el = document.querySelector('[data-test="btn-save"]');
+            if (!el || el.offsetParent === null) return false;
+            return !el.disabled;
+        }""",
+        timeout=timeout_ms,
+    )
 
 
 def click_save(page: Page) -> None:
     dismiss_campaign_float(page)
     page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
     page.wait_for_timeout(500)
-    page.evaluate(
+    wait_for_save_enabled(page)
+    clicked = page.evaluate(
         """() => {
             const el = document.querySelector('[data-test="btn-save"]');
-            if (!el) return;
+            if (!el) return false;
             el.scrollIntoView({ block: 'center', inline: 'center' });
             el.click();
+            return true;
         }"""
     )
+    if not clicked:
+        raise SystemExit("Save button not found on sticker form.")
     page.wait_for_timeout(800)
 
 
@@ -277,11 +401,12 @@ def ensure_chinese_fields(page: Page, env: dict[str, str]) -> None:
 
 
 def save_sticker_form(
-    page: Page, *, pause_before_save: bool = False
+    page: Page, *, pause_before_save: bool = False, debug_label: str = "provision"
 ) -> tuple[str, str]:
     dismiss_campaign_float(page)
     if pause_before_save:
         wait_for_user_verification()
+    assert_no_duplicate_title_errors(page)
     click_save(page)
     for _ in range(8):
         confirm_save_dialog(page)
@@ -291,7 +416,11 @@ def save_sticker_form(
             break
         except PlaywrightTimeout:
             continue
-    wait_for_sticker_project_url(page, timeout_ms=120_000)
+    try:
+        wait_for_sticker_project_url(page, timeout_ms=120_000)
+    except PlaywrightTimeout:
+        dump_provision_debug(page, debug_label)
+        raise
     final_url = page.url
     sid = extract_sticker_id(final_url)
     if not sid:
@@ -311,12 +440,48 @@ def wait_for_user_verification() -> None:
         pass
 
 
+def find_sticker_id_from_list(page: Page, creator: str, query: str) -> str | None:
+    if not query.strip():
+        return None
+    list_url = (
+        f"https://creator.line.me/my/{creator}/sticker/"
+        f"?status=all&query={query}&page=1"
+    )
+    page.goto(list_url, wait_until="networkidle", timeout=120_000)
+    dismiss_wizards(page)
+    found = page.evaluate(
+        """() => {
+            for (const a of document.querySelectorAll('a[href*="/sticker/"]')) {
+                const href = a.getAttribute('href') || '';
+                const m = href.match(/\\/sticker\\/(\\d+)/);
+                if (m) return m[1];
+            }
+            return null;
+        }"""
+    )
+    return str(found) if found else None
+
+
 def provision(
-    page: Page, env: dict[str, str], *, pause_before_save: bool = False
+    page: Page, env: dict[str, str], *, pause_before_save: bool = False, debug_label: str = "provision"
 ) -> tuple[str, str]:
     creator = env.get("LINE_CREATOR_ID", "").strip()
     if not creator:
         raise SystemExit("LINE_CREATOR_ID missing in .env")
+
+    existing_id = env.get("LINE_STICKER_ID", "").strip()
+    if not existing_id:
+        for query in (env.get("STICKER_TITLE_EN", ""), env.get("STICKER_TITLE_ZH", "")):
+            found = find_sticker_id_from_list(page, creator, query.strip())
+            if found:
+                existing_id = found
+                print(f"Reusing existing LINE project {found} (matched {query!r})", flush=True)
+                break
+    if existing_id:
+        env["LINE_STICKER_ID"] = existing_id
+        return update_existing(
+            page, env, pause_before_save=pause_before_save, debug_label=debug_label
+        )
 
     create_url = f"https://creator.line.me/my/{creator}/sticker/create"
     ensure_creators_logged_in(page, env, create_url)
@@ -325,7 +490,7 @@ def provision(
     fill_english(page, env)
     ensure_chinese_fields(page, env)
     fill_sale_block(page, env)
-    return save_sticker_form(page, pause_before_save=pause_before_save)
+    return save_sticker_form(page, pause_before_save=pause_before_save, debug_label=debug_label)
 
 
 def open_sticker_edit_form(
@@ -375,7 +540,7 @@ def open_sticker_edit_form(
 
 
 def update_existing(
-    page: Page, env: dict[str, str], *, pause_before_save: bool = False
+    page: Page, env: dict[str, str], *, pause_before_save: bool = False, debug_label: str = "update"
 ) -> tuple[str, str]:
     creator = env.get("LINE_CREATOR_ID", "").strip()
     sticker_id = env.get("LINE_STICKER_ID", "").strip()
@@ -393,7 +558,7 @@ def update_existing(
     fill_english(page, env)
     ensure_chinese_fields(page, env)
     fill_sale_block(page, env)
-    return save_sticker_form(page, pause_before_save=pause_before_save)
+    return save_sticker_form(page, pause_before_save=pause_before_save, debug_label=debug_label)
 
 
 def main() -> None:
@@ -446,7 +611,9 @@ def main() -> None:
         ctx = create_browser_context(browser, storage)
         page = ctx.new_page()
         action = update_existing if args.update else provision
-        sticker_id, final_url = action(page, env, pause_before_save=pause_before_save)
+        sticker_id, final_url = action(
+            page, env, pause_before_save=pause_before_save, debug_label=env_path.stem
+        )
         ctx.storage_state(path=str(storage))
         browser.close()
 
