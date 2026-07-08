@@ -206,7 +206,7 @@ export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
     kidDoodle: {
         label: "五歲塗鴉",
         styleType:
-            "Intentionally clumsy kid doodle / bad MS Paint redraw: more awkward, scribbly, and pitifully off than the reference. Almost like the subject but nowhere quite right—confusing, embarrassing uncanny wobbliness. Looks mouse-drawn in an old desktop paint program with low-res, pixel-by-pixel tracing. Exaggerate how hilariously bad it is; freely warp proportion and line—anything goes as long as the mess stays charmingly terrible.",
+            "Create a clumsy kid-doodle rendition: redraw-like awkwardness that is intentionally confused and embarrassing. Use a white background so it looks like it was drawn with a mouse inside an old computer drawing program. It should feel like it almost matches the intended character, but not really—like everything is slightly off. Make it look like low-quality, pixel-by-pixel tracing that feels slow and step-by-step. Exaggerate how ridiculously bad it is while keeping the subject recognizable enough to be “almost right.”",
         drawingMethod:
             "Crude mouse-drag strokes, jagged low-quality pixel edges, uneven fills, shaky outlines, wrong-but-recognizable shapes. Avoid: polished digital art, clean vectors, anime polish, soft painterly beauty, photorealism.",
         outlinePreference: 'style',
