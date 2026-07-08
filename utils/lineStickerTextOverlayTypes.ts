@@ -47,7 +47,7 @@ export const DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING: ProgrammaticTextOverlayTu
   lineHeightMultiplier: 1.25,
   strokeScale: 1,
   /** Aligns with per-cell Reserved caption band in the generation prompt. */
-  placementMode: 'cycle',
+  placementMode: 'auto_avoid_subject',
   fontWeight: 700,
   offsetXPercent: 0,
   offsetYPercent: 0,

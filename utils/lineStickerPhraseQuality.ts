@@ -31,7 +31,6 @@ const ZH_WRITTEN_FORM_RE =
 const WHITESPACE_RE = /\s+/g;
 
 export type StickerPhraseIssueCode =
-  | 'empty'
   | 'too_long'
   | 'over_ideal_length'
   | 'emoji'
@@ -39,6 +38,25 @@ export type StickerPhraseIssueCode =
   | 'english_too_wordy'
   | 'written_form'
   | 'whitespace';
+
+/** True when the sticker cell has no on-image caption (expression-only). */
+export function isVisualOnlyStickerPhrase(phrase: string): boolean {
+  const raw = phrase.trim();
+  if (!raw) return true;
+  return /^(無字|无字|\(visual[- ]?only\)|\[visual[- ]?only\]|visual[- ]?only|\[無字\])$/i.test(raw);
+}
+
+/** Normalize one model output line to a phrase slot (`""` = visual-only). */
+export function parseStickerPhraseLine(line: string): string {
+  return isVisualOnlyStickerPhrase(line) ? '' : line.trim();
+}
+
+export const STICKER_PHRASE_HARD_REJECT_CODES: StickerPhraseIssueCode[] = [
+  'too_long',
+  'emoji',
+  'forbidden_char',
+  'english_too_wordy',
+];
 
 export interface StickerPhraseIssue {
   code: StickerPhraseIssueCode;
@@ -84,8 +102,7 @@ export function getStickerPhraseIssues(
 ): StickerPhraseIssue[] {
   const issues: StickerPhraseIssue[] = [];
   const raw = phrase.trim();
-  if (!raw) {
-    issues.push({ code: 'empty', message: 'empty phrase' });
+  if (isVisualOnlyStickerPhrase(raw)) {
     return issues;
   }
 
@@ -124,7 +141,9 @@ export function getStickerPhraseIssues(
 }
 
 export function polishStickerPhrases(phrases: string[], language: string): string[] {
-  return phrases.map((phrase) => normalizeStickerPhrase(phrase, language));
+  return phrases.map((phrase) =>
+    isVisualOnlyStickerPhrase(phrase) ? '' : normalizeStickerPhrase(phrase, language)
+  );
 }
 
 export function auditStickerPhrases(
@@ -140,12 +159,16 @@ export function auditStickerPhrases(
     .filter((entry) => entry.issues.length > 0);
 }
 
+export function isHardRejectStickerPhraseIssue(code: StickerPhraseIssueCode): boolean {
+  return STICKER_PHRASE_HARD_REJECT_CODES.includes(code);
+}
+
 /** True when phrase is unusable on a sticker (hard reject). */
 export function isStickerPhraseRejected(
   phrase: string,
   language: string = 'Traditional Chinese'
 ): boolean {
   return getStickerPhraseIssues(phrase, language).some((issue) =>
-    ['empty', 'too_long', 'emoji', 'forbidden_char', 'english_too_wordy'].includes(issue.code)
+    isHardRejectStickerPhraseIssue(issue.code)
   );
 }

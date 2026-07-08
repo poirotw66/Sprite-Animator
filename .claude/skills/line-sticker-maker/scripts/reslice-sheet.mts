@@ -18,10 +18,12 @@ import {
   validateSheetGrid,
 } from '../../../../utils/sheetGridValidation.ts';
 import { buildEqualGridBounds } from '../../../../utils/gridSheetTemplate.ts';
+import { trimFrameToContent } from '../../../../utils/sheetComponentSlicer.ts';
 
 const sheetDir = resolve(process.argv[2] ?? '');
 const cols = Number(process.argv[3] ?? 4);
 const rows = Number(process.argv[4] ?? 5);
+const sliceModeArg = process.argv[5] ?? '';
 const chromaKeyColor = 'green' as const;
 
 if (!sheetDir) {
@@ -62,21 +64,28 @@ if (!expected.ok) {
   );
 }
 
-const useGuidedTemplate = existsSync(resolve(sheetDir, '_grid-template-guided.png'));
+const useGuidedTemplate =
+  sliceModeArg === 'template' ||
+  (sliceModeArg !== 'detect' &&
+    sliceModeArg !== 'divider' &&
+    existsSync(resolve(sheetDir, '_grid-template-guided.png')));
+const useDetect = sliceModeArg === 'detect';
 const templateBounds = buildEqualGridBounds(image.width, cols, rows);
 console.log(
-  useGuidedTemplate
-    ? 'Slice mode: template + content crop (guided grid)'
-    : 'Slice mode: divider (white grid lines excluded when detected)'
+  useDetect
+    ? 'Slice mode: detect (per-cell content crop)'
+    : useGuidedTemplate
+      ? 'Slice mode: template + content crop (guided grid)'
+      : 'Slice mode: divider (white grid lines excluded when detected)'
 );
 
+// ponytail: reslice writes final stickers with no overlay step after it, so trim here.
 const frames = sliceSheet(image, cols, rows, {
-  sliceMode: useGuidedTemplate ? 'template' : 'divider',
+  sliceMode: useDetect ? 'detect' : useGuidedTemplate ? 'template' : 'divider',
   guidedContentCrop: useGuidedTemplate,
-  templateBounds: useGuidedTemplate || existsSync(resolve(sheetDir, '_grid-template.png'))
-    ? templateBounds
-    : undefined,
-});
+  templateBounds: useGuidedTemplate ? templateBounds : undefined,
+  detectBoundaries: useDetect,
+}).map((frame) => trimFrameToContent(frame));
 for (let i = 0; i < frames.length; i++) {
   const name = `sticker-${String(i + 1).padStart(2, '0')}.png`;
   await writeFile(resolve(sheetDir, name), encodePng(frames[i]!));

@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   auditStickerPhrases,
   getStickerPhraseIssues,
+  isVisualOnlyStickerPhrase,
   normalizeStickerPhrase,
+  parseStickerPhraseLine,
   polishStickerPhrases,
 } from './lineStickerPhraseQuality';
 
@@ -29,8 +31,12 @@ describe('getStickerPhraseIssues', () => {
     expect(issues.some((i) => i.code === 'written_form')).toBe(true);
   });
 
-  it('allows witty 5-char punchlines', () => {
-    expect(getStickerPhraseIssues('又遲到了', 'Traditional Chinese')).toEqual([]);
+  it('allows visual-only empty slots', () => {
+    expect(getStickerPhraseIssues('', 'Traditional Chinese')).toEqual([]);
+    expect(isVisualOnlyStickerPhrase('')).toBe(true);
+    expect(isVisualOnlyStickerPhrase('[無字]')).toBe(true);
+    expect(parseStickerPhraseLine('[無字]')).toBe('');
+    expect(parseStickerPhraseLine(' 又遲到了 ')).toBe('又遲到了');
   });
 
   it('rejects overly long English', () => {
@@ -46,11 +52,15 @@ describe('polishStickerPhrases', () => {
       '加油',
     ]);
   });
+
+  it('converts visual-only markers to empty strings', () => {
+    expect(polishStickerPhrases(['[無字]', '晚安'], 'Traditional Chinese')).toEqual(['', '晚安']);
+  });
 });
 
 describe('auditStickerPhrases', () => {
   it('returns only problematic indices', () => {
     const report = auditStickerPhrases(['好', '請查收', ''], 'Traditional Chinese');
-    expect(report.map((r) => r.index)).toEqual([1, 2]);
+    expect(report.map((r) => r.index)).toEqual([1]);
   });
 });

@@ -4,32 +4,22 @@
  */
 
 import { createCanvas } from '@napi-rs/canvas';
-import { FONT_PRESETS, TEXT_COLOR_PRESETS } from '../../../../utils/lineStickerPrompt.ts';
+import {
+  FONT_PRESETS,
+  TEXT_COLOR_PRESETS,
+  getReservedCaptionBandLabelForFrame,
+} from '../../../../utils/lineStickerPrompt.ts';
 import {
   DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING,
   type ProgrammaticTextOverlayTuning,
 } from '../../../../utils/lineStickerTextOverlayTypes.ts';
-import {
-  layoutFromPlacementLabel,
-  wrapLines,
-  textOverlayAvoidancePadPx,
-  estimateTextBlockBoxFromMeasuredLines,
-  preferredNudgeDirectionForPlacementLabel,
-} from '../../../../utils/lineStickerTextOverlayGeometry.ts';
-import type { TextPlacementLayout } from '../../../../utils/lineStickerTextOverlayGeometry.ts';
-import {
-  computeSubjectBoundingBoxFromContext,
-  computeAnchorNudgeToClearSubject,
-  subjectAvoidanceRegion,
-  pickBestPlacementLabelAutoAvoid,
-  frameInsetPx,
-} from '../../../../utils/lineStickerTextOverlaySubject.ts';
+import { computeAutoCaptionLayout } from '../../../../utils/lineStickerTextOverlaySubject.ts';
 import {
   extractFillHexFromTextColorPreset,
-  getEffectiveProgrammaticPlacementMode,
   resolveCanvasFontNumericWeight,
   resolveProgrammaticFontFamilyCss,
   resolveProgrammaticPlacementLabel,
+  getEffectiveProgrammaticPlacementMode,
   strokeColorForFill,
 } from '../../../../utils/lineStickerTextOverlay.ts';
 import type { RgbaImage } from './nodeImage.mts';
@@ -87,112 +77,50 @@ export function overlayPhraseOnRgbaFrame(
   if (!ctx) {
     return frame;
   }
-
   blitRgbaOntoCanvas(ctx, frame);
 
-  const workW = frame.width;
-  const workH = frame.height;
-  const fontSize = Math.max(10, Math.round(Math.min(workW, workH) * sizeRatio));
   const fontFamily = resolveProgrammaticFontFamilyCss(fontKey, tuning);
   const numericWeight = resolveCanvasFontNumericWeight(fontKey, tuning);
-  ctx.font = `${numericWeight} ${fontSize}px ${fontFamily}`;
+  const mode = getEffectiveProgrammaticPlacementMode(tuning, frameIndex);
+  const preferredLabel =
+    mode === 'auto_avoid_subject' || mode === 'cycle'
+      ? getReservedCaptionBandLabelForFrame(frameIndex)
+      : resolveProgrammaticPlacementLabel(frameIndex, tuning);
+
+  const layout = computeAutoCaptionLayout(ctx, {
+    width: frame.width,
+    height: frame.height,
+    text: trimmed,
+    preferredLabel,
+    marginRatio,
+    lineHeightMultiplier: lineMult,
+    strokeScale: strokeMult,
+    baseFontSizePx: Math.max(10, Math.round(Math.min(frame.width, frame.height) * sizeRatio)),
+    applyFont: (px) => {
+      ctx.font = `${numericWeight} ${px}px ${fontFamily}`;
+    },
+  });
 
   const fillHex = extractFillHexFromTextColorPreset(colorKey);
   const strokeHex = strokeColorForFill(fillHex);
-  const lineHeight = fontSize * lineMult;
-  const mode = getEffectiveProgrammaticPlacementMode(tuning, frameIndex);
-  const analysisSide = Math.max(256, Math.min(workW, workH));
-  const subjectRaw = computeSubjectBoundingBoxFromContext(ctx, workW, workH, {
-    maxAnalysisSide: analysisSide,
-  });
-  const subjectForAvoid =
-    subjectRaw != null ? subjectAvoidanceRegion(subjectRaw, workW, workH, fontSize) : null;
-
-  let placementLabel: string;
-  if (mode === 'auto_avoid_subject') {
-    placementLabel = pickBestPlacementLabelAutoAvoid(
-      ctx,
-      trimmed,
-      workW,
-      workH,
-      marginRatio,
-      fontSize,
-      lineHeight,
-      strokeMult,
-      frameIndex,
-      subjectRaw
-    );
-  } else {
-    placementLabel = resolveProgrammaticPlacementLabel(frameIndex, tuning);
-  }
-
-  const layout = layoutFromPlacementLabel(placementLabel, workW, workH, marginRatio, {
-    useReservedCaptionBandAnchors: true,
-  });
-
-  const offsetX = (workW * tuning.offsetXPercent) / 100;
-  const offsetY = (workH * tuning.offsetYPercent) / 100;
-  let anchorX = layout.anchorX + offsetX;
-  let anchorY = layout.anchorY + offsetY;
-
-  ctx.textAlign = layout.textAlign;
-  ctx.textBaseline = layout.textBaseline;
-  const lines = wrapLines(ctx, trimmed, layout.maxWidth);
-
-  const shouldNudgeForOverlap =
-    subjectForAvoid != null && (mode === 'auto_avoid_subject' || mode === 'cycle');
-  if (shouldNudgeForOverlap) {
-    const { padX, padY } = textOverlayAvoidancePadPx(fontSize, strokeMult);
-    const inset = frameInsetPx(workW, workH, marginRatio);
-    const layoutAtAnchor: TextPlacementLayout = { ...layout, anchorX, anchorY };
-    const textBox = estimateTextBlockBoxFromMeasuredLines(
-      ctx,
-      workW,
-      workH,
-      layoutAtAnchor,
-      lines,
-      lineHeight,
-      padX,
-      padY
-    );
-    const maxShift =
-      mode === 'auto_avoid_subject'
-        ? Math.min(workW, workH) * 0.18
-        : Math.min(workW, workH) * 0.1;
-    const preferredDir =
-      mode === 'cycle' ? preferredNudgeDirectionForPlacementLabel(placementLabel) : undefined;
-    const nudge = computeAnchorNudgeToClearSubject(
-      textBox,
-      subjectForAvoid,
-      workW,
-      workH,
-      maxShift,
-      inset,
-      preferredDir
-    );
-    anchorX += nudge.dx;
-    anchorY += nudge.dy;
-  }
-
-  const totalTextHeight = lines.length * lineHeight;
-  let startY = anchorY;
-  if (layout.textBaseline === 'bottom') {
-    startY = anchorY - (lines.length - 1) * lineHeight;
-  } else if (layout.textBaseline === 'middle') {
-    startY = anchorY - totalTextHeight / 2 + lineHeight / 2;
-  }
-
-  const strokeW = Math.max(1.5, fontSize * 0.12 * strokeMult);
+  const strokeW = Math.max(1.5, layout.fontSize * 0.12 * strokeMult);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
   ctx.lineJoin = 'round';
   ctx.miterLimit = 2;
 
-  lines.forEach((line, i) => {
-    const y = startY + i * lineHeight;
+  const offsetX = (frame.width * tuning.offsetXPercent) / 100;
+  const offsetY = (frame.height * tuning.offsetYPercent) / 100;
+  const firstLineY =
+    layout.centerY + offsetY - ((layout.lines.length - 1) / 2) * layout.lineHeight;
+
+  layout.lines.forEach((line, i) => {
+    const y = firstLineY + i * layout.lineHeight;
     ctx.strokeStyle = strokeHex;
     ctx.lineWidth = strokeW * 2;
-    ctx.strokeText(line, anchorX, y);
+    ctx.strokeText(line, layout.centerX + offsetX, y);
     ctx.fillStyle = fillHex;
-    ctx.fillText(line, anchorX, y);
+    ctx.fillText(line, layout.centerX + offsetX, y);
   });
 
   return readRgbaFromCanvas(canvas);

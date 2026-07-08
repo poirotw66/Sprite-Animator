@@ -36,7 +36,8 @@ import {
   shouldUseWhiteDividerSlice,
   type WhiteDividerGrid,
 } from '../../../../utils/sheetWhiteDividerDetection.ts';
-import { computeCellCropRect, computeGuidedTemplateCellRect } from '../../../../utils/sheetCellCrop.ts';
+import { computeCellCropRect } from '../../../../utils/sheetCellCrop.ts';
+import { sliceSheetByComponentOwnership } from '../../../../utils/sheetComponentSlicer.ts';
 import {
   detectBestGridLayoutFromRgba,
   scoreGridLayoutFromRgba,
@@ -370,8 +371,19 @@ export function sliceSheet(
     );
   }
 
-  const effectiveInset =
-    sliceMode === 'template' || whiteDividerGrid ? 0 : insetRatio;
+  if (sliceMode === 'template') {
+    // Ownership slicing: full cell bounds kept (caption space preserved),
+    // foreign components masked out (no neighbor bleed, no edge-cleanup patches).
+    return sliceSheetByComponentOwnership(
+      sheet.data,
+      totalWidth,
+      totalHeight,
+      xBounds,
+      yBounds
+    );
+  }
+
+  const effectiveInset = whiteDividerGrid ? 0 : insetRatio;
   const insetFactor = 1 - 2 * Math.max(0, Math.min(0.2, effectiveInset));
   const frames: RgbaImage[] = [];
 
@@ -387,18 +399,6 @@ export function sliceSheet(
               r,
               c,
               whiteDividerGrid
-            )
-          : sliceMode === 'template' && options.guidedContentCrop && options.templateBounds
-          ? computeGuidedTemplateCellRect(
-              sheet.data,
-              totalWidth,
-              totalHeight,
-              cols,
-              rows,
-              r,
-              c,
-              xBounds,
-              yBounds
             )
           : yBoundsPerColumn && useDetectCrop
           ? computeCellCropRect(

@@ -28,7 +28,7 @@ Headless; reuses `services/gemini/stickerPhrases.ts` and `actionDescriptions.ts`
 | field | rules |
 |---|---|
 | `mode` | `set` = full pack (default 40 phrases); `single` = one sheet (`gridCols` × `gridRows`) |
-| `phrases` | **On-sticker captions** — zh: **3–5 字** witty/relatable, max 5; en: 1–2 words, max 3 |
+| `phrases` | **Sticker slots** — each entry is either a **sendable chat caption** (zh: **3–5 字**, max 5; en: 1–2 words) **or** `""` for **visual-only** (no on-image text, expression/gesture only) |
 | `actionDescs` | English pose/expression per phrase; same length as `phrases` |
 | `name` | Optional display name for the set |
 
@@ -218,7 +218,9 @@ For small edits, patch the JSON directly then `--validate`.
 **Phrase rules** (voice preset + `lineStickerPhraseQuality.ts`):
 
 - Pick **`--voice`** or **`--voice-context`** to set tone
-- On-sticker: zh max **5 字**; match voice (戲謔 / 極短 / 撒嬌 / …)
+- Mix **captioned** slots and **visual-only** slots (`""`); AI targets ~30% visual-only via `[無字]` marker
+- Non-empty captions must be **tap-to-send LINE chat fragments** — witty, relatable, voice-matched
+- On-sticker captions: zh max **5 字**; match voice (戲謔 / 極短 / 撒嬌 / …)
 - One beat per sticker; no 公告語氣
 - No emojis or decorative punctuation
 
@@ -237,8 +239,9 @@ Always run `--validate` before generation.
 Show a short sample table:
 
 | # | phrase | action |
-|---|---|---|
+|---|--------|--------|
 | 1 | 早安 | waving good morning |
+| 5 | *(visual-only)* | laughing with closed eyes |
 | … | … | … |
 
 Ask for theme/tone tweaks before running Gemini image generation.

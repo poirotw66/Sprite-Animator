@@ -158,13 +158,12 @@ async function main(): Promise<void> {
 
     const scope = phraseSet.mode === 'single' ? 'single' : 'set';
     const nonEmptyPhrases = phraseSet.phrases.filter((p) => p.trim().length > 0).length;
+    // LINE set sizes we generate: 40 or 48 only (32 is unsupported by generate.mts).
     const stickerCount =
       scope === 'set'
-        ? nonEmptyPhrases <= 32
-          ? 32
-          : nonEmptyPhrases <= 40
-            ? DEFAULT_LINE_STICKER_SET_COUNT
-            : 48
+        ? nonEmptyPhrases <= 40
+          ? DEFAULT_LINE_STICKER_SET_COUNT
+          : 48
         : undefined;
 
     const job = {
@@ -181,7 +180,7 @@ async function main(): Promise<void> {
       language: 'zh-TW',
       chromaKeyColor: 'green',
       includeText: true,
-      textRendering: 'model',
+      textRendering: 'programmatic',
       scope,
       ...(scope === 'set' ? { stickerCount } : {}),
       ...(scope === 'single'
@@ -194,6 +193,7 @@ async function main(): Promise<void> {
       maxSheetRetries: 3,
       minGridAlignmentScore: 0.8,
       promptVersion: 'v3compact',
+      gridTemplate: 'guided',
       upload: {
         syncToUploadRoot: true,
         creatorId: '706',

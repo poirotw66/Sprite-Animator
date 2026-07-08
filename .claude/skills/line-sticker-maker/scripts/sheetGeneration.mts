@@ -37,6 +37,7 @@ import {
   type RgbaImage,
 } from './nodeImage.mts';
 import { overlayPhrasesOnRgbaFrames } from './programmaticTextOverlay.mts';
+import { trimFrameToContent } from '../../../../utils/sheetComponentSlicer.ts';
 
 export interface SheetPlan {
   label: string;
@@ -470,6 +471,10 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
       colorKey: textColorKey,
     });
   }
+
+  // Frames keep full cell space through overlay (caption placement needs it);
+  // trim to content only after text is drawn.
+  frames = frames.map((frame) => trimFrameToContent(frame));
 
   const manifestEntries: SheetManifestEntry[] = [];
   for (let i = 0; i < frames.length; i++) {

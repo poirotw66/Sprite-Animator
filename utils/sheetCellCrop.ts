@@ -1,6 +1,9 @@
 /**
  * Per-cell crop rectangles for sticker sheets: per-column row seams plus
  * connected-component grouping so overflow text/limbs in gutters stay attached.
+ *
+ * Used by the legacy `detect` slice mode only. Guided/template slicing lives in
+ * utils/sheetComponentSlicer.ts (ownership masking).
  */
 
 import { isSliceBackgroundPixel } from './imageContentAnalysis';
@@ -236,95 +239,4 @@ export function computeCellCropRect(
     x1: Math.min(maxCropX, maxX + 1 + paddingPx),
     y1: Math.min(y1, maxY + 1 + paddingPx),
   };
-}
-
-function measureContentBboxInRect(
-  data: Uint8ClampedArray,
-  sheetWidth: number,
-  x0: number,
-  y0: number,
-  x1: number,
-  y1: number
-): CellCropRect | null {
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  let pixels = 0;
-  for (let y = y0; y < y1; y++) {
-    for (let x = x0; x < x1; x++) {
-      const offset = (y * sheetWidth + x) * 4;
-      if (
-        !isSliceBackgroundPixel(
-          data[offset]!,
-          data[offset + 1]!,
-          data[offset + 2]!,
-          data[offset + 3]!
-        )
-      ) {
-        pixels++;
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x);
-        maxY = Math.max(maxY, y);
-      }
-    }
-  }
-  if (pixels === 0) return null;
-  return { x0: minX, y0: minY, x1: maxX + 1, y1: maxY + 1 };
-}
-
-/**
- * Guided-template crop: keep equal-split ownership, but expand slightly into gutters
- * when artwork touches a cell edge (common with Gemini overflow).
- */
-export function computeGuidedTemplateCellRect(
-  data: Uint8ClampedArray,
-  sheetWidth: number,
-  sheetHeight: number,
-  cols: number,
-  rows: number,
-  row: number,
-  col: number,
-  xBounds: number[],
-  yBounds: number[],
-  options: ComputeCellCropOptions = {}
-): CellCropRect {
-  const edgeTol = 2;
-  const padPx = options.paddingPx ?? 8;
-
-  const colX0 = xBounds[col]!;
-  const colX1 = xBounds[col + 1]!;
-  const rowY0 = yBounds[row]!;
-  const rowY1 = yBounds[row + 1]!;
-
-  const strict = measureContentBboxInRect(data, sheetWidth, colX0, rowY0, colX1, rowY1);
-  if (!strict) {
-    return fallbackCellRect(colX0, colX1, rowY0, rowY1);
-  }
-
-  const midX0 = col === 0 ? 0 : xBounds[col]!;
-  const midX1 = col === cols - 1 ? sheetWidth : xBounds[col + 1]!;
-  const midY0 = row === 0 ? 0 : yBounds[row]!;
-  const midY1 = row === rows - 1 ? sheetHeight : yBounds[row + 1]!;
-
-  let x0 = colX0;
-  let y0 = rowY0;
-  let x1 = colX1;
-  let y1 = rowY1;
-
-  if (strict.x0 <= colX0 + edgeTol) {
-    x0 = Math.max(midX0, strict.x0 - padPx);
-  }
-  if (strict.x1 >= colX1 - edgeTol) {
-    x1 = Math.min(midX1, strict.x1 + padPx);
-  }
-  if (strict.y0 <= rowY0 + edgeTol) {
-    y0 = Math.max(midY0, strict.y0 - padPx);
-  }
-  if (strict.y1 >= rowY1 - edgeTol) {
-    y1 = Math.min(midY1, strict.y1 + padPx);
-  }
-
-  return { x0, y0, x1, y1 };
 }

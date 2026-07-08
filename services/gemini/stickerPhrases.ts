@@ -6,7 +6,10 @@ import { GoogleGenAI } from '@google/genai';
 import { logger } from '../../utils/logger';
 import { PHRASE_GENERATION_MODEL } from '../../utils/constants';
 import { clampStickerPhrases } from '../../utils/lineStickerPhraseLength';
-import { polishStickerPhrases } from '../../utils/lineStickerPhraseQuality';
+import {
+  parseStickerPhraseLine,
+  polishStickerPhrases,
+} from '../../utils/lineStickerPhraseQuality';
 import {
   buildStickerVoicePromptBlock,
   DEFAULT_STICKER_LENGTH_HINT,
@@ -30,6 +33,8 @@ export async function generateStickerPhrases(
   const ai = new GoogleGenAI({ apiKey });
 
   const contentCount = Math.max(1, totalFrames);
+  const visualOnlyTarget = Math.max(1, Math.round(contentCount * 0.3));
+  const captionedTarget = contentCount - visualOnlyTarget;
 
   const exampleBlock =
     examplePhrases.length > 0
@@ -40,11 +45,13 @@ export async function generateStickerPhrases(
   const voiceBlock = buildStickerVoicePromptBlock(voice);
   const lengthHint = voice.lengthHint ?? DEFAULT_STICKER_LENGTH_HINT;
 
-  const prompt = `You are an expert LINE sticker copywriter. ${voice.intro} Each phrase is printed **ON the sticker** as a bold caption beside the character—still legible at thumbnail size (~15–20% cell height).
+  const prompt = `You are an expert LINE sticker copywriter. ${voice.intro}
 
 ### [Objective]
-- Produce exactly **${contentCount}** phrases for one coherent sticker pack matching the Theme below.
-- Every phrase must **earn a tap**: reader thinks "I'll send this instead of typing."
+- Produce exactly **${contentCount}** sticker slots for one coherent pack matching the Theme below.
+- **~${captionedTarget} slots** get a short caption printed ON the sticker (bold, legible at thumbnail size).
+- **~${visualOnlyTarget} slots** are **visual-only** — strong pose/expression, **no on-image text**. Mark these with exactly \`[無字]\`.
+- Every **non-empty** caption must be something a user would **tap and send in LINE chat** instead of typing — witty, relatable, voice-matched.
 - **Character voice first** — match the Voice section; NOT neutral utility text unless Voice says so.
 - Spread **distinct moods** across the pack.
 
@@ -56,34 +63,38 @@ Output **${language}** only.
 
 ${voiceBlock}
 
-### [Length — still fits ON the sticker]
+### [Length — captions that fit ON the sticker]
 ${lengthHint}
 
-### [On-sticker legibility]
+### [Caption quality — when text is present]
 - Thumbnail-first: avoid dense punctuation, quotes, parentheses, slashes, hashtags, URLs.
 - **Pairable with art**: illustrator draws pose/expression from the line—concrete reactions beat abstract metaphors.
-- Cover varied chat beats within the theme—but each with the chosen **Voice**.
+- Natural spoken rhythm; Taiwanese/Japanese LINE chat flavor for zh/ja when applicable.
+- No duplicate or near-synonym meanings across captioned lines.
+- Each caption works alone without context from other stickers.
+
+### [Visual-only slots]
+- Use \`[無字]\` for expression/gesture-only stickers (laughing face, shocked face, thumbs up, etc.).
+- Do NOT use \`[無字]\` for every slot — mix captioned and visual-only for a balanced pack.
+- Visual-only slots still need a drawable reaction; captions are omitted on purpose.
 
 ### [Theme alignment]
 - No category headers in output.
 - Stay inside the Theme; no generic filler.
 
-### [Quality bar]
-- Natural spoken rhythm; Taiwanese/Japanese LINE chat flavor for zh/ja when applicable.
-- No duplicate or near-synonym meanings across ${contentCount} lines.
-- Each phrase works alone without context from other stickers.
-
 ### [Output format — STRICT]
 Exactly **${contentCount}** lines, flat list only.
-- Each line: "- " then the phrase only.
+- Captioned line: "- " then the phrase only (no quotes).
+- Visual-only line: "- [無字]"
 - No headings, numbering, blank lines, preamble, or sign-off.
 
 ### [Forbidden]
 - Emojis, explanations, meta commentary
 - Labels ("Sticker 1/48"), numbering prefixes on phrases
 - Multi-clause sentences, semicolon chains
+- Empty lines or placeholder text other than \`[無字]\`
 
-Generate the ${contentCount} phrases now.`;
+Generate the ${contentCount} lines now.`;
 
   const response = await ai.models.generateContent({
     model,
@@ -136,13 +147,13 @@ Generate the ${contentCount} phrases now.`;
       if (/^#{1,6}\s/.test(line)) return [];
       if (sectionHeaders.test(line)) return [];
       const m = line.match(bulletMatch);
-      if (m) return [m[1]!.trim()];
-      if (/^[#\-\*]+$/.test(line)) return [];
-      if (/^\d+[\.\)\:\-\s]/.test(line))
-        return [line.replace(/^\s*\d+[\.\)\:\-\s]+/, '').trim()];
-      return [line];
+      const content = m ? m[1]!.trim() : line;
+      if (/^[#\-\*]+$/.test(content)) return [];
+      if (/^\d+[\.\)\:\-\s]/.test(content))
+        return [parseStickerPhraseLine(content.replace(/^\s*\d+[\.\)\:\-\s]+/, '').trim())];
+      return [parseStickerPhraseLine(content)];
     })
-    .filter((line) => line.length > 0);
+    .map((line) => (line === '' ? '' : line));
 
   logger.log(
     '[gemini-3-flash] Parsed phrase count:',
@@ -163,7 +174,11 @@ Generate the ${contentCount} phrases now.`;
   const unique: string[] = [];
   for (const line of rawMain) {
     const key = line.trim();
-    if (key && !seen.has(key)) {
+    if (key === '') {
+      unique.push('');
+      continue;
+    }
+    if (!seen.has(key)) {
       seen.add(key);
       unique.push(line);
     }

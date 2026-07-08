@@ -268,7 +268,9 @@ export async function generateActionDescriptions(
   if (phrases.length === 0) return [];
 
   const ai = new GoogleGenAI({ apiKey });
-  const list = phrases.map((p, i) => `${i + 1}. ${p}`).join('\n');
+  const list = phrases
+    .map((p, i) => `${i + 1}. ${p.trim() ? p : '(visual-only — no on-image text)'}`)
+    .join('\n');
   const themeContext = context.themeContext?.trim() ?? '';
   const language = context.language?.trim() ?? '';
   const nearDuplicateThreshold =
@@ -277,7 +279,7 @@ export async function generateActionDescriptions(
 
   const prompt = `You are an expert at describing character poses and expressions for LINE stickers.
 
-Given the following list of sticker PHRASES (short text that will appear on each sticker), output exactly ONE action description per phrase, in the same order.
+Given the following list of sticker slots (caption text or visual-only), output exactly ONE action description per slot, in the same order.
 
 Theme context: ${themeContext || 'General chat context'}
 Phrase language: ${language || 'Unknown'}
@@ -286,6 +288,8 @@ Phrase language: ${language || 'Unknown'}
 - Describe only visible, drawable pose/expression: gesture (e.g. waving, thumbs up), face (e.g. smiling, eyes closed), or posture (e.g. tilting head). Avoid abstract moods without a clear visual.
 - Each action must be concrete and specific so an illustrator can draw it.
 - Every line must be visually distinct—no two cells should describe the same pose or expression.
+- For **visual-only** slots (no on-image text), focus on a strong reaction pose or expression; do not mention text or captions.
+- For captioned slots, match the phrase meaning in the pose/expression.
 - Keep each action short (3-8 words preferred), concrete, and drawable.
 
 **Output format (strict):**

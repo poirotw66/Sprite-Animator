@@ -14,9 +14,16 @@ import {
   estimateTextBlockBox,
   estimateTextBlockBoxFromMeasuredLines,
   inflatePixelRect,
-  computeAnchorNudgeToClearSubject,
   getEffectiveProgrammaticPlacementMode,
 } from './lineStickerTextOverlay';
+import {
+  buildForegroundOverlapIndex,
+  countOverlapCellsInBox,
+  findLeastOverlapCaptionCenter,
+  computeAutoCaptionLayout,
+  preferredCaptionCenterForLabel,
+} from './lineStickerTextOverlaySubject';
+import { createCanvas } from '@napi-rs/canvas';
 
 describe('extractFillHexFromTextColorPreset', () => {
   it('parses hex from preset promptDesc', () => {
@@ -101,8 +108,8 @@ describe('resolveProgrammaticPlacementLabel', () => {
 });
 
 describe('DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING', () => {
-  it('defaults to cycle placement (matches prompt reserved caption bands)', () => {
-    expect(DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING.placementMode).toBe('cycle');
+  it('defaults to auto_avoid_subject placement', () => {
+    expect(DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING.placementMode).toBe('auto_avoid_subject');
   });
 });
 
@@ -195,31 +202,114 @@ describe('estimateTextBlockBox and rectangle helpers', () => {
     expect(tight.maxX - tight.minX).toBe(16);
   });
 
-  it('computeAnchorNudgeToClearSubject moves text away from overlapping subject', () => {
-    const subject = { minX: 40, minY: 40, maxX: 60, maxY: 60 };
-    const textBox = { minX: 45, minY: 45, maxX: 75, maxY: 55 };
-    expect(rectangleIntersectionArea(textBox, subject)).toBeGreaterThan(0);
-    const { dx, dy } = computeAnchorNudgeToClearSubject(textBox, subject, 100, 100, 40, 4);
-    const shifted = {
-      minX: textBox.minX + dx,
-      minY: textBox.minY + dy,
-      maxX: textBox.maxX + dx,
-      maxY: textBox.maxY + dy,
-    };
-    expect(rectangleIntersectionArea(shifted, subject)).toBeLessThan(
-      rectangleIntersectionArea(textBox, subject)
-    );
-    expect(Math.abs(dx) + Math.abs(dy)).toBeGreaterThan(0);
-    expect(shifted.minX).toBeGreaterThanOrEqual(4);
-    expect(shifted.maxX).toBeLessThanOrEqual(96);
-    expect(shifted.minY).toBeGreaterThanOrEqual(4);
-    expect(shifted.maxY).toBeLessThanOrEqual(96);
-  });
-
   it('inflatePixelRect expands bounds within frame', () => {
     const inner = { minX: 10, minY: 10, maxX: 20, maxY: 20 };
     const outer = inflatePixelRect(inner, 5, 5, 100, 100);
     expect(outer.minX).toBe(5);
     expect(outer.maxX).toBe(25);
+  });
+});
+
+describe('buildForegroundOverlapIndex + countOverlapCellsInBox', () => {
+  it('counts zero overlap in empty regions and positive overlap over the subject', () => {
+    const canvas = createCanvas(200, 200);
+    const ctx = canvas.getContext('2d')!;
+    ctx.clearRect(0, 0, 200, 200);
+    ctx.fillStyle = 'rgba(0,0,0,1)';
+    ctx.fillRect(60, 50, 80, 100);
+
+    const index = buildForegroundOverlapIndex(ctx, 200, 200);
+    expect(countOverlapCellsInBox(index, 70, 60, 130, 140)).toBeGreaterThan(0);
+    // Bottom strip is empty (subject ends at y=150, dilation adds ~1 cell).
+    expect(countOverlapCellsInBox(index, 10, 175, 190, 198)).toBe(0);
+  });
+});
+
+describe('findLeastOverlapCaptionCenter', () => {
+  it('finds an overlap-free center away from a centered subject', () => {
+    const canvas = createCanvas(200, 200);
+    const ctx = canvas.getContext('2d')!;
+    ctx.clearRect(0, 0, 200, 200);
+    ctx.fillStyle = 'rgba(0,0,0,1)';
+    ctx.fillRect(60, 20, 80, 140);
+
+    const index = buildForegroundOverlapIndex(ctx, 200, 200);
+    const preferred = preferredCaptionCenterForLabel('Bottom center', 200, 200, 100, 30, 0.06);
+    const result = findLeastOverlapCaptionCenter(index, 100, 30, {
+      width: 200,
+      height: 200,
+      insetPx: 8,
+      preferredX: preferred.x,
+      preferredY: preferred.y,
+    });
+
+    expect(result.overlapCells).toBe(0);
+    // Only the bottom strip (y > 160) is free for a 30px-tall box.
+    expect(result.centerY).toBeGreaterThan(150);
+  });
+});
+
+describe('computeAutoCaptionLayout', () => {
+  it('returns an overlap-free layout when free space exists', () => {
+    const canvas = createCanvas(200, 200);
+    const ctx = canvas.getContext('2d')!;
+    ctx.clearRect(0, 0, 200, 200);
+    ctx.fillStyle = 'rgba(0,0,0,1)';
+    ctx.fillRect(40, 10, 120, 130);
+
+    const layout = computeAutoCaptionLayout(ctx, {
+      width: 200,
+      height: 200,
+      text: '測試',
+      preferredLabel: 'Bottom center',
+      marginRatio: 0.06,
+      lineHeightMultiplier: 1.15,
+      strokeScale: 1,
+      baseFontSizePx: 22,
+      applyFont: (px) => {
+        ctx.font = `700 ${px}px sans-serif`;
+      },
+    });
+
+    expect(layout.overlapCells).toBe(0);
+    expect(layout.lines.length).toBeGreaterThan(0);
+    expect(layout.centerY).toBeGreaterThan(140);
+    expect(layout.fontSize).toBe(22); // no shrink needed
+  });
+
+  it('shrinks the font when the frame is crowded', () => {
+    const canvas = createCanvas(120, 120);
+    const ctx = canvas.getContext('2d')!;
+    ctx.clearRect(0, 0, 120, 120);
+    ctx.fillStyle = 'rgba(0,0,0,1)';
+    // Leave only a thin bottom strip free.
+    ctx.fillRect(4, 4, 112, 96);
+
+    const layout = computeAutoCaptionLayout(ctx, {
+      width: 120,
+      height: 120,
+      text: '很長的一句測試文字',
+      preferredLabel: 'Bottom center',
+      marginRatio: 0.06,
+      lineHeightMultiplier: 1.15,
+      strokeScale: 1,
+      baseFontSizePx: 20,
+      applyFont: (px) => {
+        ctx.font = `700 ${px}px sans-serif`;
+      },
+    });
+
+    expect(layout.fontSize).toBeLessThanOrEqual(20);
+    expect(layout.lines.length).toBeGreaterThan(0);
+  });
+});
+
+describe('preferredCaptionCenterForLabel', () => {
+  it('maps labels to their zone centers', () => {
+    const top = preferredCaptionCenterForLabel('Top center', 200, 200, 80, 30, 0.06);
+    expect(top.y).toBeLessThan(60);
+    const bottomRight = preferredCaptionCenterForLabel('Bottom right', 200, 200, 80, 30, 0.06);
+    expect(bottomRight.x).toBeGreaterThan(100);
+    expect(bottomRight.y).toBeGreaterThan(140);
   });
 });

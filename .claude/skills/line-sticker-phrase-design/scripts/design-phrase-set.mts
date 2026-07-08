@@ -22,6 +22,7 @@ import { generateActionDescriptions } from '../../../../services/gemini/actionDe
 import { generateStickerPhrases } from '../../../../services/gemini/stickerPhrases.ts';
 import {
   auditStickerPhrases,
+  isHardRejectStickerPhraseIssue,
   polishStickerPhrases,
 } from '../../../../utils/lineStickerPhraseQuality.ts';
 import {
@@ -107,11 +108,7 @@ function validatePhraseLengths(phrases: string[], languageLabel: string): string
     if (!entry.phrase.trim()) continue;
     const label = `phrase[${entry.index + 1}] "${entry.phrase}"`;
     for (const issue of entry.issues) {
-      const prefix = ['too_long', 'emoji', 'forbidden_char', 'english_too_wordy', 'empty'].includes(
-        issue.code
-      )
-        ? '✗'
-        : '⚠';
+      const prefix = isHardRejectStickerPhraseIssue(issue.code) ? '✗' : '⚠';
       warnings.push(`${prefix} ${label}: ${issue.message}`);
     }
   }
@@ -143,7 +140,7 @@ async function validatePhraseSetFile(path: string, languageLabel = 'Traditional 
   if (parsed.mode === 'single') {
     console.log(`  grid: ${parsed.gridCols}×${parsed.gridRows}`);
   }
-  console.log(`  phrases: ${filePhraseCount || parsed.phrases.length} (${nonEmpty} non-empty)`);
+  console.log(`  phrases: ${filePhraseCount || parsed.phrases.length} (${nonEmpty} captioned, ${parsed.phrases.length - nonEmpty} visual-only)`);
   console.log(`  actionDescs: ${parsed.actionDescs?.length ?? 0}`);
 
   if (dupes.length > 0) {
@@ -269,9 +266,7 @@ async function designPhraseSet(args: Record<string, string | boolean>): Promise<
   phrases = polishStickerPhrases(phrases, languageLabel);
   const captionAudit = auditStickerPhrases(phrases, languageLabel);
   const hardFails = captionAudit.filter((entry) =>
-    entry.issues.some((issue) =>
-      ['empty', 'too_long', 'emoji', 'forbidden_char', 'english_too_wordy'].includes(issue.code)
-    )
+    entry.issues.some((issue) => isHardRejectStickerPhraseIssue(issue.code))
   );
   if (hardFails.length > 0) {
     const sample = hardFails
@@ -280,6 +275,8 @@ async function designPhraseSet(args: Record<string, string | boolean>): Promise<
       .join(', ');
     throw new Error(`Sticker caption quality failed for: ${sample}`);
   }
+  const visualOnly = phrases.length - countNonEmpty(phrases);
+  console.log(`  captions: ${countNonEmpty(phrases)}, visual-only: ${visualOnly}`);
   const softWarnings = validatePhraseLengths(phrases, languageLabel);
   for (const warning of softWarnings) {
     console.warn(`  ${warning}`);

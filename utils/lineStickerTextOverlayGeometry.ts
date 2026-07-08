@@ -130,6 +130,23 @@ export function layoutFromPlacementLabel(
   return { anchorX, anchorY, textAlign, textBaseline, maxWidth };
 }
 
+/** First line Y for multi-line draw given anchor and canvas baseline. */
+export function textStartYFromAnchor(
+  anchorY: number,
+  lineCount: number,
+  lineHeight: number,
+  textBaseline: CanvasTextBaseline
+): number {
+  const totalTextHeight = lineCount * lineHeight;
+  if (textBaseline === 'bottom') {
+    return anchorY - (lineCount - 1) * lineHeight;
+  }
+  if (textBaseline === 'middle') {
+    return anchorY - totalTextHeight / 2 + lineHeight / 2;
+  }
+  return anchorY;
+}
+
 export function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
   const trimmed = text.trim();
   if (!trimmed) return [];
