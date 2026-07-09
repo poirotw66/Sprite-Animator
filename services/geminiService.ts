@@ -10,3 +10,7 @@ export { generateStickerPhrases } from './gemini/stickerPhrases';
 export { generateActionDescriptions } from './gemini/actionDescriptions';
 export { generateSpriteSheet } from './gemini/spriteSheet';
 export { generateAnimationFrames } from './gemini/animationFrames';
+export { generateComicCharacterSheet, resolveComicStyleBlock } from './gemini/comicCharacterSheet';
+export { generateComicStoryboard, parseComicStoryboardJson } from './gemini/comicStoryboard';
+export { generateComicPage } from './gemini/comicPage';
+export { buildComicPagePrompt } from './gemini/comicPagePrompt';

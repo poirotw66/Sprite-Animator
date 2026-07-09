@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, MessageCircle, ArrowRight, Eraser, Grid } from 'lucide-react';
+import { Zap, MessageCircle, ArrowRight, Eraser, Grid, BookOpen } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 
@@ -35,6 +35,14 @@ const HomePage: React.FC = () => {
             hoverGlow: 'hover:shadow-green-200/50',
         },
         {
+            id: 'one-page-comic',
+            path: '/one-page-comic',
+            icon: <BookOpen className="w-10 h-10 md:w-12 md:h-12 text-white" />,
+            gradient: 'from-indigo-500 to-violet-600',
+            borderColor: 'border-indigo-200 hover:border-indigo-300',
+            hoverGlow: 'hover:shadow-indigo-200/50',
+        },
+        {
             id: 'rmbg',
             path: '/rmbg',
             icon: <Eraser className="w-10 h-10 md:w-12 md:h-12 text-white" />,
@@ -58,6 +66,8 @@ const HomePage: React.FC = () => {
                 return { title: t.spriteAnimatorTool, desc: t.spriteAnimatorDesc };
             case 'line-sticker':
                 return { title: t.lineStickerTool, desc: t.lineStickerDesc };
+            case 'one-page-comic':
+                return { title: t.comicTool, desc: t.comicDesc };
             case 'rmbg':
                 return { title: t.rmbgTitle, desc: t.rmbgDesc };
             case 'parting':

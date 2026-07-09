@@ -7,6 +7,7 @@ import { Loader2 } from './components/Icons';
 const HomePage = lazyWithRetry(() => import('./pages/HomePage'));
 const SpriteAnimatorPage = lazyWithRetry(() => import('./pages/SpriteAnimatorPage'));
 const LineStickerPage = lazyWithRetry(() => import('./pages/LineStickerPage'));
+const OnePageComicPage = lazyWithRetry(() => import('./pages/OnePageComicPage'));
 const RemoveBackgroundPage = lazyWithRetry(() => import('./pages/RemoveBackgroundPage'));
 const PartingPage = lazyWithRetry(() => import('./pages/PartingPage'));
 
@@ -28,6 +29,7 @@ const App: React.FC = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/sprite-animation" element={<SpriteAnimatorPage />} />
           <Route path="/line-sticker" element={<LineStickerPage />} />
+          <Route path="/one-page-comic" element={<OnePageComicPage />} />
           <Route path="/rmbg" element={<RemoveBackgroundPage />} />
           <Route path="/parting" element={<PartingPage />} />
         </Routes>
