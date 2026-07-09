@@ -4,6 +4,7 @@ import {
   STYLE_PRESETS,
   STYLE_PRESET_ORDER,
 } from '../../utils/lineStickerPresets';
+import { useLanguage } from '../../hooks/useLanguage';
 
 export interface ComicCharacterSheetStepProps {
   styleKey: string;
@@ -23,7 +24,6 @@ function resolveStyleMeta(styleKey: string) {
   return STYLE_PRESETS[effectiveKey];
 }
 
-// TODO(Task 11): Replace temporary English copy with comic i18n keys.
 export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = React.memo(({
   styleKey,
   characterSheetImage,
@@ -35,6 +35,7 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
   onDownload,
   className = '',
 }) => {
+  const { t } = useLanguage();
   const styleMeta = resolveStyleMeta(styleKey);
 
   return (
@@ -46,14 +47,13 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
           </div>
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600">
-              Step 2
+              {t.comicStepSheet}
             </p>
             <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-900">
-              Generate a character sheet
+              {t.comicStepSheet}
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-slate-500">
-              Pick a visual style preset, then ask the parent flow to generate a model
-              sheet preview for downstream comic-page consistency.
+              {t.comicSheetDescription}
             </p>
           </div>
         </div>
@@ -62,7 +62,7 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
           <div className="space-y-4">
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                Style preset
+                {t.comicStyleLabel}
               </label>
               <select
                 value={styleKey}
@@ -80,18 +80,18 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
             <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                 <Check className="h-4 w-4 text-indigo-600" aria-hidden />
-                Selected preset details
+                {t.comicSelectedStyleDetails}
               </div>
               <dl className="mt-4 space-y-4">
                 <div>
                   <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    Label
+                    {t.comicStyleDetailLabel}
                   </dt>
                   <dd className="mt-1 text-sm text-slate-800">{styleMeta.label}</dd>
                 </div>
                 <div>
                   <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    Style type
+                    {t.comicStyleDetailType}
                   </dt>
                   <dd className="mt-1 text-sm leading-relaxed text-slate-600">
                     {styleMeta.styleType}
@@ -99,7 +99,7 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
                 </div>
                 <div>
                   <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    Drawing method
+                    {t.comicStyleDetailMethod}
                   </dt>
                   <dd className="mt-1 text-sm leading-relaxed text-slate-600">
                     {styleMeta.drawingMethod}
@@ -112,14 +112,14 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
           <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 shadow-inner">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h3 className="text-sm font-semibold text-slate-900">Character sheet preview</h3>
+                <h3 className="text-sm font-semibold text-slate-900">{t.comicSheetPreviewTitle}</h3>
                 <p className="mt-1 text-xs text-slate-500">
-                  Use this to confirm style direction before final page generation.
+                  {t.comicSheetPreviewDescription}
                 </p>
               </div>
               {characterSheetImage ? (
                 <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-                  Ready
+                  {t.comicSheetReady}
                 </span>
               ) : null}
             </div>
@@ -128,7 +128,7 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
               {characterSheetImage ? (
                 <img
                   src={characterSheetImage}
-                  alt="Generated character sheet preview"
+                  alt={t.comicSheetPreviewAlt}
                   className="aspect-square w-full object-contain bg-white"
                 />
               ) : (
@@ -138,10 +138,10 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
                       <ImageIcon className="h-6 w-6" aria-hidden />
                     </div>
                     <p className="mt-4 text-sm font-semibold text-slate-700">
-                      No sheet generated yet
+                      {t.comicSheetEmptyTitle}
                     </p>
                     <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                      The parent flow can render the generated model sheet here.
+                      {t.comicSheetEmptyDescription}
                     </p>
                   </div>
                 </div>
@@ -171,7 +171,11 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
                 }`}
               >
                 {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Wand2 className="h-4 w-4" aria-hidden />}
-                {isGenerating ? 'Generating sheet...' : 'Generate character sheet'}
+                {isGenerating
+                  ? t.comicGeneratingSheet
+                  : characterSheetImage
+                    ? t.comicRegenerateSheet
+                    : t.comicGenerateSheet}
               </button>
 
               <button
@@ -181,7 +185,7 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
                 className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Download className="h-4 w-4" aria-hidden />
-                Download preview
+                {t.comicDownloadSheet}
               </button>
             </div>
           </div>
