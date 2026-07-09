@@ -1,9 +1,17 @@
 /**
- * Shared chroma-key removal core (HSL-based detection, connectivity masking,
- * despill, halo removal). Pure array math, no DOM — imported by both the
- * Web Worker and the main-thread fallback so both run the SAME algorithm.
+ * Shared chroma-key removal core (chroma-similarity detection, connectivity
+ * masking, despill, halo removal). Pure array math, no DOM — imported by both
+ * the Web Worker and the main-thread fallback so both run the SAME algorithm.
  * @module chromaKeyCore
  */
+
+import {
+  isChromaLike,
+  isChromaSoftEdge,
+  fuzzPercentToKeyMax,
+  chromaDistanceToKey,
+  CHROMA_LIKE_SOFT_EXTRA,
+} from './chromaSimilarity';
 
 /**
  * Convert RGB to HSL color space
@@ -51,9 +59,14 @@ function isNearWhite(r: number, g: number, b: number): boolean {
   return r >= NEAR_WHITE_THRESHOLD && g >= NEAR_WHITE_THRESHOLD && b >= NEAR_WHITE_THRESHOLD;
 }
 
+export interface ProcessChromaKeyOptions {
+  guided?: boolean; // undefined = auto later (Task 4); true/false explicit
+  keyMaxOverride?: number;
+}
+
 /**
- * Process chroma key removal with progress reporting
- * Uses HSL color space for accurate green/magenta detection
+ * Process chroma key removal with progress reporting.
+ * Similarity uses shared Y-normalized chroma distance (see chromaSimilarity).
  */
 export function processChromaKey(
   data: Uint8ClampedArray,
@@ -63,10 +76,11 @@ export function processChromaKey(
   fuzzPercent: number,
   onProgress: (progress: number) => void,
   edgeBandRadius: number = DEFAULT_EDGE_BAND_RADIUS,
-  edgeBlend: number = DEFAULT_EDGE_BLEND
+  edgeBlend: number = DEFAULT_EDGE_BLEND,
+  options: ProcessChromaKeyOptions = {}
 ): Uint8ClampedArray {
   const totalPixels = data.length / 4;
-  const fuzz = (fuzzPercent / 100) * 255;
+  const keyMax = options.keyMaxOverride ?? fuzzPercentToKeyMax(fuzzPercent);
   const radius = Math.max(1, Math.min(5, Math.round(edgeBandRadius)));
   const blend = Math.max(0, Math.min(1, Number(edgeBlend)));
 
@@ -139,35 +153,6 @@ export function processChromaKey(
   const targetIsMagenta = (targetColorHsl.h >= 270 && targetColorHsl.h <= 360) || (targetColorHsl.h >= 0 && targetColorHsl.h <= 35);
   const targetIsGreen = targetColorHsl.h >= 70 && targetColorHsl.h <= 170;
 
-  // Magenta-like pixel: only true magenta hue (~270–360°). Exclude red/pink (0–35°) to avoid removing blush/lips.
-  // Require very low G (g < 50): pure magenta has G=0; edge blends (magenta+blue) have noticeable G from blue,
-  // so this keeps anti-aliased edges and blue shirt edges from being removed.
-  // Require not blue-dominant (b <= r + 30) to protect blue clothing.
-  // Called per-pixel in magenta mode, so cheap RGB gates run first and HSL is
-  // computed inline (no per-pixel object allocation). Logic equals the prior
-  // hueOk(270–360) && s>0.25 && RGB-gate conjunction.
-  const isMagentaLikePixel = (r: number, g: number, b: number): boolean => {
-    if (!(g < 50 && b <= r + 30 && r > g * 1.2 && b > g && (r > 100 || b > 80))) {
-      return false;
-    }
-    const rn = r / 255, gn = g / 255, bn = b / 255;
-    const max = Math.max(rn, gn, bn);
-    const min = Math.min(rn, gn, bn);
-    if (max === min) return false; // saturation 0
-    const l = (max + min) / 2;
-    const d = max - min;
-    const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    if (s <= 0.25) return false;
-    let h: number;
-    if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) * 60;
-    else if (max === gn) h = ((bn - rn) / d + 2) * 60;
-    else h = ((rn - gn) / d + 4) * 60;
-    return h >= 270 && h <= 360;
-  };
-
-  // Calculate adaptive fuzz based on detected background
-  const adaptiveFuzz = maxCount > 10 ? fuzz * 1.5 : fuzz;
-
   // Pass 1: Connectivity-based Background Masking
   const bgMask = new Uint8Array(totalPixels); // 0: foreground, 1: potential background, 2: confirmed background
   const similarityMask = new Uint8Array(totalPixels);
@@ -177,38 +162,11 @@ export function processChromaKey(
     const r = data[idx];
     const g = data[idx + 1];
     const b = data[idx + 2];
-
-    const rDiff = r - targetColor.r;
-    const gDiff = g - targetColor.g;
-    const bDiff = b - targetColor.b;
-    const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
-
-    let isMatch = distance <= adaptiveFuzz + 20;
-    if (isMatch) {
-      if (targetIsMagenta) {
-        // Only treat as background if very close to pure magenta (g < 50). Edge blends (magenta+blue) have G from blue,
-        // so this prevents cutting into character edges (blue shirt, anti-aliasing).
-        isMatch = r > g * 1.1 && b > g * 1.1 && b <= r + 30 && g < 50;
-      } else if (targetIsGreen) {
-        isMatch = g > r * 1.01 && g > b * 1.01;
-      }
-    }
-    // So middle cells with #E91E63 etc. are treated as background even when far from corner target
-    if (targetIsMagenta && isMagentaLikePixel(r, g, b)) isMatch = true;
-
-    similarityMask[i] = isMatch ? 1 : 0;
+    similarityMask[i] = isChromaLike(r, g, b, targetColor, 'key', keyMax) ? 1 : 0;
   }
 
   const queue: number[] = [];
   const corners = [0, width - 1, (height - 1) * width, height * width - 1];
-  const centerIdx = cy * width + cx;
-  const centerGrid = [
-    Math.floor(width * 0.25) + cy * width,
-    Math.floor(width * 0.75) + cy * width,
-    cx + Math.floor(height * 0.25) * width,
-    cx + Math.floor(height * 0.75) * width,
-    centerIdx,
-  ];
 
   for (const startNode of corners) {
     if (similarityMask[startNode] === 1 && bgMask[startNode] === 0) {
@@ -216,14 +174,10 @@ export function processChromaKey(
       bgMask[startNode] = 2;
     }
   }
-  for (const startNode of centerGrid) {
-    if (startNode >= 0 && startNode < totalPixels && similarityMask[startNode] === 1 && bgMask[startNode] === 0) {
-      queue.push(startNode);
-      bgMask[startNode] = 2;
-    }
-  }
 
-  // Seed from edges
+  // Seed from edges only (not center grid): interior chroma props must stay
+  // unless edge-connected. Middle-cell gutters still reach via edge flood-fill
+  // when the sheet background is contiguous.
   for (let x = 0; x < width; x += Math.max(1, Math.floor(width / 20))) {
     const top = x;
     const bottom = (height - 1) * width + x;
@@ -307,7 +261,6 @@ export function processChromaKey(
 
   // Step 1.3: Compute final Alpha
   const alphaChannel = new Uint8Array(totalPixels);
-  const softness = 10;
 
   for (let i = 0; i < totalPixels; i++) {
     const idx = i * 4;
@@ -321,41 +274,21 @@ export function processChromaKey(
     const r = data[idx];
     const g = data[idx + 1];
     const b = data[idx + 2];
-
-    const rDiff = r - targetColor.r;
-    const gDiff = g - targetColor.g;
-    const bDiff = b - targetColor.b;
-    const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
+    const distance = chromaDistanceToKey(r, g, b, targetColor);
 
     if (bgMask[i] === 2) {
-      if (distance <= adaptiveFuzz) {
+      if (distance <= keyMax) {
         alphaChannel[i] = 0;
-      } else if (distance <= adaptiveFuzz + softness) {
-        const ratio = (distance - adaptiveFuzz) / softness;
-        alphaChannel[i] = Math.floor(255 * ratio);
+      } else if (isChromaSoftEdge(r, g, b, targetColor, keyMax)) {
+        // Soft band includes hard matches; only reach here when d > keyMax.
+        const ratio = (distance - keyMax) / CHROMA_LIKE_SOFT_EXTRA;
+        alphaChannel[i] = Math.floor(255 * Math.min(1, Math.max(0, ratio)));
       } else {
         alphaChannel[i] = 255;
       }
     }
-    // Do not force alpha=0 for magenta-like pixels that are not in the connected background (avoids removing blush/lips).
-    else if (distance < adaptiveFuzz * 0.95) {
-      let isCertainHole = false;
-      if (targetIsMagenta) {
-        // First clause: magenta-shaped (R and B high, G low). Second: extreme R or B dominance but require g < 80
-        // so strong red on character (e.g. red text, lips with G~80) is not treated as hole.
-        isCertainHole =
-          (r > g * 1.4 && b > g * 1.4 && (r + b) > 100) ||
-          ((r > g * 3 || b > g * 3) && g < 80);
-      } else if (targetIsGreen) {
-        isCertainHole = (g > r * 1.4 && g > b * 1.4 && g > 80) || (g > r * 2.5);
-      }
-
-      if (isCertainHole) {
-        alphaChannel[i] = 15;
-      } else {
-        alphaChannel[i] = 255;
-      }
-    }
+    // Connectivity is authoritative: do not hole-punch interior chroma props
+    // that are not edge-connected (e.g. green accent on character).
     else {
       alphaChannel[i] = 255;
     }

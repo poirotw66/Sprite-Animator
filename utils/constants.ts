@@ -79,7 +79,8 @@ export const CHROMA_KEY_COLORS = {
 
 // Legacy - kept for compatibility
 export const CHROMA_KEY_COLOR = CHROMA_KEY_COLORS.magenta;
-export const CHROMA_KEY_FUZZ = 35; // 35% tolerance (0-100) - increased for better coverage
+/** @deprecated Prefer chromaSimilarity CHROMA_LIKE_*; still mapped via fuzzPercentToKeyMax. */
+export const CHROMA_KEY_FUZZ = 35;
 
 /** Edge band radius (px) for spill suppression; tunable from frontend. Default 2. */
 export const CHROMA_KEY_EDGE_BAND_RADIUS = 2;

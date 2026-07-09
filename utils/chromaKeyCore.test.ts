@@ -45,3 +45,28 @@ describe('processChromaKey (green screen)', () => {
     expect(alphaAt(data, w, w / 2, h / 2)).toBe(255);
   });
 });
+
+function makeGreenWithRedCenterAndGreenProp(w: number, h: number, inset: number) {
+  const data = makeGreenWithRedCenter(w, h, inset);
+  // Small green square inside the red subject (not connected to sheet edge)
+  for (let y = h / 2 - 2; y < h / 2 + 2; y++) {
+    for (let x = w / 2 - 2; x < w / 2 + 2; x++) {
+      const i = (y * w + x) * 4;
+      data[i] = 0;
+      data[i + 1] = 255;
+      data[i + 2] = 0;
+      data[i + 3] = 255;
+    }
+  }
+  return data;
+}
+
+describe('processChromaKey hard cases', () => {
+  it('keeps an interior green prop that is not edge-connected', () => {
+    const w = 40, h = 40, inset = 8;
+    const data = makeGreenWithRedCenterAndGreenProp(w, h, inset);
+    processChromaKey(data, w, h, { r: 0, g: 255, b: 0 }, 35, () => {});
+    expect(alphaAt(data, w, 0, 0)).toBe(0);
+    expect(alphaAt(data, w, w / 2, h / 2)).toBeGreaterThan(200);
+  });
+});
