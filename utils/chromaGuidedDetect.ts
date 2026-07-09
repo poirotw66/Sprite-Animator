@@ -32,13 +32,37 @@ export function shouldUseGuidedChromaPath(
   }
   if (like < 6) return false;
 
+  const step = Math.max(1, Math.floor(Math.min(width, height) / 16));
+
   // Continuous vertical mid-seam band (gutter heuristic)
   const mx = Math.floor(width / 2);
-  let seam = 0;
-  const step = Math.max(1, Math.floor(height / 16));
+  let vSeam = 0;
   for (let y = 0; y < height; y += step) {
     const i = (y * width + mx) * 4;
-    if (isChromaLike(data[i]!, data[i + 1]!, data[i + 2]!, key, 'normalize')) seam++;
+    if (isChromaLike(data[i]!, data[i + 1]!, data[i + 2]!, key, 'normalize')) vSeam++;
   }
-  return seam >= 10;
+  if (vSeam < 10) return false;
+
+  // Continuous horizontal mid-seam band
+  const my = Math.floor(height / 2);
+  let hSeam = 0;
+  for (let x = 0; x < width; x += step) {
+    const i = (my * width + x) * 4;
+    if (isChromaLike(data[i]!, data[i + 1]!, data[i + 2]!, key, 'normalize')) hSeam++;
+  }
+  if (hSeam < 10) return false;
+
+  // Subject evidence: at least 2 of 4 cell-center samples must not be chroma-like
+  const cellSamples: Array<[number, number]> = [
+    [Math.floor(width * 0.25), Math.floor(height * 0.25)],
+    [Math.floor(width * 0.75), Math.floor(height * 0.25)],
+    [Math.floor(width * 0.25), Math.floor(height * 0.75)],
+    [Math.floor(width * 0.75), Math.floor(height * 0.75)],
+  ];
+  let notChroma = 0;
+  for (const [x, y] of cellSamples) {
+    const i = (y * width + x) * 4;
+    if (!isChromaLike(data[i]!, data[i + 1]!, data[i + 2]!, key, 'key')) notChroma++;
+  }
+  return notChroma >= 2;
 }

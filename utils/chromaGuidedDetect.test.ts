@@ -23,7 +23,30 @@ describe('shouldUseGuidedChromaPath', () => {
     ).toBe(true);
   });
 
-  it('auto-detects a solid chroma field with seam samples as guided-like', () => {
+  it('returns false for solid green when guided is undefined', () => {
+    const w = 40, h = 40;
+    const data = new Uint8ClampedArray(w * h * 4);
+    fillGreen(data);
+    expect(
+      shouldUseGuidedChromaPath(data, w, h, { r: 0, g: 255, b: 0 }, undefined)
+    ).toBe(false);
+  });
+
+  it('returns false for single centered subject when guided is undefined', () => {
+    const w = 40, h = 40;
+    const data = new Uint8ClampedArray(w * h * 4);
+    fillGreen(data);
+    for (let y = 12; y < 28; y++)
+      for (let x = 12; x < 28; x++) {
+        const i = (y * w + x) * 4;
+        data[i] = 220; data[i + 1] = 30; data[i + 2] = 40;
+      }
+    expect(
+      shouldUseGuidedChromaPath(data, w, h, { r: 0, g: 255, b: 0 }, undefined)
+    ).toBe(false);
+  });
+
+  it('auto-detects 2x2 gutter sheet when guided is undefined', () => {
     const w = 40, h = 40;
     const data = new Uint8ClampedArray(w * h * 4);
     fillGreen(data);
