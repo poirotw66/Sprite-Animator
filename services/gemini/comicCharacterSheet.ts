@@ -1,19 +1,8 @@
-import { buildCharacterRefPrompt, resolveStyleBlock } from '../../utils/characterRefPrompt';
+import { buildComicCharacterRefPrompt, resolveStyleBlock } from '../../utils/characterRefPrompt';
 import { throwIfAborted } from '../../utils/abort';
-import { dataUrlToBase64, loadBundledImageAsDataUrl } from '../../utils/loadBundledImage';
+import { dataUrlToBase64 } from '../../utils/loadBundledImage';
 import { generateCharacterRefImage } from './characterRefImage';
 import { API_KEY_MISSING_MESSAGE, type ProgressCallback } from './types';
-
-const LAYOUT_REF_URL = new URL('../../reference/comic/model-sheet-layout.png', import.meta.url).href;
-
-let cachedLayoutDataUrl: string | null = null;
-
-async function getLayoutRefDataUrl(): Promise<string> {
-  if (!cachedLayoutDataUrl) {
-    cachedLayoutDataUrl = await loadBundledImageAsDataUrl(LAYOUT_REF_URL);
-  }
-  return cachedLayoutDataUrl;
-}
 
 export async function generateComicCharacterSheet(params: {
   apiKey: string;
@@ -31,12 +20,12 @@ export async function generateComicCharacterSheet(params: {
   }
   throwIfAborted(params.signal);
 
-  const layoutDataUrl = await getLayoutRefDataUrl();
-  const prompt = buildCharacterRefPrompt({
+  const hasIdentityReference = Boolean(params.referenceImage);
+  const prompt = buildComicCharacterRefPrompt({
     concept: params.characterConcept,
     styleKey: params.styleKey,
     customStyle: params.customStyle,
-    characterName: undefined,
+    hasIdentityReference,
   });
 
   const identityBase64 = params.referenceImage
@@ -45,11 +34,11 @@ export async function generateComicCharacterSheet(params: {
 
   params.onProgress?.('正在生成角色設定圖…');
 
+  // ponytail: do NOT attach reference/comic/model-sheet-layout.png — it is a full otter
+  // model sheet; Gemini copies the species despite "structure only" prompt text.
   return generateCharacterRefImage({
     apiKey: params.apiKey,
     prompt,
-    layoutRefBase64: dataUrlToBase64(layoutDataUrl),
-    layoutRefMimeType: 'image/png',
     identityRefBase64: identityBase64,
     identityRefMimeType: identityBase64 ? 'image/png' : undefined,
     model: params.model,
