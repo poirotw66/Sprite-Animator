@@ -38,10 +38,17 @@ async function findRawSheet(): Promise<string> {
   return resolve(sheetDir, raw);
 }
 
+const useGuidedTemplate =
+  sliceModeArg === 'template' ||
+  (sliceModeArg !== 'detect' &&
+    sliceModeArg !== 'divider' &&
+    existsSync(resolve(sheetDir, '_grid-template-guided.png')));
+const useDetect = sliceModeArg === 'detect';
+
 const rawPath = await findRawSheet();
 const rawBytes = new Uint8Array(await readFile(rawPath));
 const image = decodeImage(rawBytes);
-processSheetChromaKey(image, chromaKeyColor);
+processSheetChromaKey(image, chromaKeyColor, { guided: useGuidedTemplate });
 await writeFile(resolve(sheetDir, '_processed-sheet.png'), encodePng(image));
 
 const expected = validateSheetGrid(image.data, image.width, image.height, cols, rows, {
@@ -64,12 +71,6 @@ if (!expected.ok) {
   );
 }
 
-const useGuidedTemplate =
-  sliceModeArg === 'template' ||
-  (sliceModeArg !== 'detect' &&
-    sliceModeArg !== 'divider' &&
-    existsSync(resolve(sheetDir, '_grid-template-guided.png')));
-const useDetect = sliceModeArg === 'detect';
 const templateBounds = buildEqualGridBounds(image.width, cols, rows);
 console.log(
   useDetect

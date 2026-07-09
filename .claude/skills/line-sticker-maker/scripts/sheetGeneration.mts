@@ -322,7 +322,9 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     });
 
     const image = decodeImage(rawPng);
-    processSheetChromaKey(image, chromaKeyColor);
+    processSheetChromaKey(image, chromaKeyColor, {
+      guided: sheetTemplate?.mode === 'guided',
+    });
     const validation = validateSheetGrid(
       image.data,
       image.width,

@@ -129,15 +129,20 @@ export function normalizeChromaBackground(
   return image;
 }
 
+export interface SheetChromaKeyOptions {
+  guided?: boolean;
+}
+
 /**
  * Normalize background color, then run chroma-key removal (matches web sprite sheet flow).
  */
 export function processSheetChromaKey(
   image: RgbaImage,
-  chromaKeyColor: ChromaKeyColorType
+  chromaKeyColor: ChromaKeyColorType,
+  options?: SheetChromaKeyOptions
 ): RgbaImage {
   normalizeChromaBackground(image, chromaKeyColor);
-  return removeChromaKey(image, chromaKeyColor);
+  return removeChromaKey(image, chromaKeyColor, options);
 }
 
 /**
@@ -146,7 +151,8 @@ export function processSheetChromaKey(
  */
 export function removeChromaKey(
   image: RgbaImage,
-  chromaKeyColor: ChromaKeyColorType
+  chromaKeyColor: ChromaKeyColorType,
+  options?: SheetChromaKeyOptions
 ): RgbaImage {
   const c = CHROMA_KEY_COLORS[chromaKeyColor];
   processChromaKey(
@@ -157,7 +163,8 @@ export function removeChromaKey(
     CHROMA_KEY_FUZZ,
     () => {}, // no-op progress
     CHROMA_KEY_EDGE_BAND_RADIUS,
-    CHROMA_KEY_EDGE_BLEND
+    CHROMA_KEY_EDGE_BLEND,
+    { guided: options?.guided }
   );
   return image;
 }

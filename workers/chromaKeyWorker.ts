@@ -25,6 +25,8 @@ export interface ChromaKeyWorkerProcessMessage {
   edgeBandRadius?: number;
   /** Edge color blend 0–1; default 0.22. */
   edgeBlend?: number;
+  /** Guided sheet path: skip aggressive hole/clothing specials. */
+  guided?: boolean;
   id?: string;
 }
 
@@ -65,6 +67,7 @@ self.onmessage = function (e: MessageEvent<ChromaKeyWorkerMessage>) {
     fuzzPercent,
     edgeBandRadius,
     edgeBlend,
+    guided,
   } = e.data;
 
   const expectedBytes = width * height * 4;
@@ -89,7 +92,8 @@ self.onmessage = function (e: MessageEvent<ChromaKeyWorkerMessage>) {
         self.postMessage({ type: 'progress', progress, id } as ChromaKeyWorkerResponse);
       },
       edgeBandRadius,
-      edgeBlend
+      edgeBlend,
+      { guided }
     );
 
     self.postMessage(

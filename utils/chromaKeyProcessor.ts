@@ -22,6 +22,8 @@ export interface ChromaKeyOptions {
   edgeBandRadius?: number;
   /** Edge color blend strength 0–1 toward opaque neighbors. Default from CHROMA_KEY_EDGE_BLEND. */
   edgeBlend?: number;
+  /** Guided sheet path: skip aggressive hole/clothing specials. */
+  guided?: boolean;
 }
 
 /**
@@ -95,6 +97,7 @@ export const removeChromaKeyWithWorker = async (
               chromaKey,
               fuzzPercent,
               onProgress,
+              options,
               signal
             );
             ctx.putImageData(processed, 0, 0);
@@ -107,6 +110,7 @@ export const removeChromaKeyWithWorker = async (
             chromaKey,
             fuzzPercent,
             onProgress,
+            options,
             signal
           );
           ctx.putImageData(processed, 0, 0);
@@ -250,6 +254,7 @@ function processWithWorker(
           fuzzPercent,
           edgeBandRadius: options?.edgeBandRadius,
           edgeBlend: options?.edgeBlend,
+          guided: options?.guided,
           id: requestId,
         },
         transferList
@@ -268,6 +273,7 @@ function processInMainThread(
   chromaKey: { r: number; g: number; b: number },
   fuzzPercent: number,
   onProgress?: (progress: number) => void,
+  options?: ChromaKeyOptions,
   signal?: AbortSignal
 ): Promise<ImageData> {
   // Fallback when Web Workers are unavailable. Runs the SAME shared algorithm
@@ -282,7 +288,10 @@ function processInMainThread(
         imageData.height,
         chromaKey,
         fuzzPercent,
-        (progress) => onProgress?.(progress)
+        (progress) => onProgress?.(progress),
+        options?.edgeBandRadius,
+        options?.edgeBlend,
+        { guided: options?.guided }
       );
       resolve(imageData);
     } catch (error) {
