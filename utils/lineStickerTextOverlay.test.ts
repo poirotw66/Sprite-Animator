@@ -25,6 +25,11 @@ import {
 } from './lineStickerTextOverlaySubject';
 import { createCanvas } from '@napi-rs/canvas';
 
+/** @napi-rs/canvas context is API-compatible but not structurally typed as DOM CanvasRenderingContext2D. */
+function asDomCanvasContext(ctx: unknown): CanvasRenderingContext2D {
+  return ctx as CanvasRenderingContext2D;
+}
+
 describe('extractFillHexFromTextColorPreset', () => {
   it('parses hex from preset promptDesc', () => {
     expect(extractFillHexFromTextColorPreset('black')).toBe('#000000');
@@ -213,7 +218,7 @@ describe('estimateTextBlockBox and rectangle helpers', () => {
 describe('buildForegroundOverlapIndex + countOverlapCellsInBox', () => {
   it('counts zero overlap in empty regions and positive overlap over the subject', () => {
     const canvas = createCanvas(200, 200);
-    const ctx = canvas.getContext('2d')!;
+    const ctx = asDomCanvasContext(canvas.getContext('2d'));
     ctx.clearRect(0, 0, 200, 200);
     ctx.fillStyle = 'rgba(0,0,0,1)';
     ctx.fillRect(60, 50, 80, 100);
@@ -228,7 +233,7 @@ describe('buildForegroundOverlapIndex + countOverlapCellsInBox', () => {
 describe('findLeastOverlapCaptionCenter', () => {
   it('finds an overlap-free center away from a centered subject', () => {
     const canvas = createCanvas(200, 200);
-    const ctx = canvas.getContext('2d')!;
+    const ctx = asDomCanvasContext(canvas.getContext('2d'));
     ctx.clearRect(0, 0, 200, 200);
     ctx.fillStyle = 'rgba(0,0,0,1)';
     ctx.fillRect(60, 20, 80, 140);
@@ -252,7 +257,7 @@ describe('findLeastOverlapCaptionCenter', () => {
 describe('computeAutoCaptionLayout', () => {
   it('returns an overlap-free layout when free space exists', () => {
     const canvas = createCanvas(200, 200);
-    const ctx = canvas.getContext('2d')!;
+    const ctx = asDomCanvasContext(canvas.getContext('2d'));
     ctx.clearRect(0, 0, 200, 200);
     ctx.fillStyle = 'rgba(0,0,0,1)';
     ctx.fillRect(40, 10, 120, 130);
@@ -279,7 +284,7 @@ describe('computeAutoCaptionLayout', () => {
 
   it('shrinks the font when the frame is crowded', () => {
     const canvas = createCanvas(120, 120);
-    const ctx = canvas.getContext('2d')!;
+    const ctx = asDomCanvasContext(canvas.getContext('2d'));
     ctx.clearRect(0, 0, 120, 120);
     ctx.fillStyle = 'rgba(0,0,0,1)';
     // Leave only a thin bottom strip free.

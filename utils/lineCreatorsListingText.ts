@@ -100,7 +100,7 @@ export function sanitizeEnText(value: string): string {
   for (const [from, to] of Object.entries(replacements)) {
     out = out.split(from).join(to);
   }
-  return collapseWhitespace(out.replace(/[^\x00-\x7F]/g, ''));
+  return collapseWhitespace(out.replace(/[^\u0020-\u007E]/g, ''));
 }
 
 export function fitEnTitle(title: string, maxLen: number = LINE_CREATORS_LIMITS.enTitle): string {

@@ -80,7 +80,7 @@ export function resolveShopStickerIndices(
   }
 
   const fallback = pickRandomShopStickerIndices(stickerCount);
-  let mainIndex = mainGiven
+  const mainIndex = mainGiven
     ? clampIndex(options.mainStickerIndex!, stickerCount, 'main image')
     : fallback.mainIndex;
   let tabIndex = tabGiven

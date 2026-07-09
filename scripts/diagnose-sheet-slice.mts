@@ -27,8 +27,6 @@ function bleedRatio(
   y1: number,
   marginPx: number
 ): { top: number; bottom: number; left: number; right: number } {
-  const cellW = x1 - x0;
-  const cellH = y1 - y0;
   const m = Math.max(2, marginPx);
   let top = 0,
     bottom = 0,
