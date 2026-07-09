@@ -41,6 +41,14 @@ export async function generateComicCharacterSheet(params: {
   const identityBase64 = referenceImage ? dataUrlToBase64(referenceImage) : undefined;
   const identityMime = referenceImage ? parseDataUrlMime(referenceImage) : undefined;
 
+  if (params.project.sourceMode === 'upload') {
+    if (!identityBase64 || identityBase64.length < 64) {
+      throw new Error(
+        'Reference image was lost (browser storage quota). Please re-upload your image on step 1.'
+      );
+    }
+  }
+
   params.onProgress?.('正在生成角色設定圖…');
 
   return generateCharacterRefImage({
