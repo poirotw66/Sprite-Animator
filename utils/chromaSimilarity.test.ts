@@ -3,6 +3,7 @@ import {
   rgbToYCbCr,
   chromaDistanceToKey,
   isChromaLike,
+  isChromaSoftEdge,
   CHROMA_LIKE_NORMALIZE_MAX,
   CHROMA_LIKE_KEY_MAX,
   CHROMA_LIKE_SOFT_EXTRA,
@@ -55,16 +56,43 @@ describe('isChromaLike', () => {
     expect(isChromaLike(220, 120, 130, magenta, 'key')).toBe(false);
   });
 
-  it('uses a stricter key threshold than normalize for borderline greens', () => {
-    expect(CHROMA_LIKE_KEY_MAX).toBeLessThan(CHROMA_LIKE_NORMALIZE_MAX);
-    expect(CHROMA_LIKE_SOFT_EXTRA).toBe(12);
+  it('treats dark green as chroma-like at both thresholds (brightness invariance)', () => {
+    expect(isChromaLike(0, 120, 0, green, 'normalize')).toBe(true);
+    expect(isChromaLike(0, 120, 0, green, 'key')).toBe(true);
+  });
+
+  it('passes normalize but fails key for borderline AI greens (dual threshold)', () => {
+    const r = 10;
+    const g = 66;
+    const b = 20;
+    const d = chromaDistanceToKey(r, g, b, green);
+    expect(d).toBeGreaterThan(CHROMA_LIKE_KEY_MAX);
+    expect(d).toBeLessThanOrEqual(CHROMA_LIKE_NORMALIZE_MAX);
+    expect(isChromaLike(r, g, b, green, 'normalize')).toBe(true);
+    expect(isChromaLike(r, g, b, green, 'key')).toBe(false);
+    expect(isChromaLike(r, g, b, green, 'key', CHROMA_LIKE_NORMALIZE_MAX)).toBe(true);
+  });
+});
+
+describe('isChromaSoftEdge', () => {
+  it('accepts green-ish pixels just outside key max within the soft band', () => {
+    const r = 10;
+    const g = 66;
+    const b = 20;
+    const d = chromaDistanceToKey(r, g, b, green);
+    expect(d).toBeGreaterThan(CHROMA_LIKE_KEY_MAX);
+    expect(d).toBeLessThanOrEqual(CHROMA_LIKE_KEY_MAX + CHROMA_LIKE_SOFT_EXTRA);
+    expect(isChromaLike(r, g, b, green, 'key')).toBe(false);
+    expect(isChromaSoftEdge(r, g, b, green)).toBe(true);
+  });
+
+  it('rejects skin even when distance might be ambiguous', () => {
+    expect(isChromaSoftEdge(255, 200, 180, green)).toBe(false);
   });
 });
 
 describe('fuzzPercentToKeyMax', () => {
-  it('maps 35% near the default key max band', () => {
-    const mapped = fuzzPercentToKeyMax(35);
-    expect(mapped).toBeGreaterThan(20);
-    expect(mapped).toBeLessThan(80);
+  it('maps 35% exactly to the default key max', () => {
+    expect(fuzzPercentToKeyMax(35)).toBe(CHROMA_LIKE_KEY_MAX);
   });
 });
