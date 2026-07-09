@@ -24,6 +24,7 @@ import {
   getComicPageGenerationState,
 } from '../utils/comicPageFlow';
 import { canGenerateComicCharacterSheet } from '../utils/comicSheetInput';
+import { buildComicDownloadFilename } from '../utils/comicDownloadFilenames';
 
 function downloadDataUrl(dataUrl: string, filename: string) {
   const link = document.createElement('a');
@@ -171,8 +172,11 @@ const OnePageComicPage: React.FC = () => {
     if (!project.characterSheetImage) {
       return;
     }
-    downloadDataUrl(project.characterSheetImage, 'comic-character-sheet.png');
-  }, [project.characterSheetImage]);
+    downloadDataUrl(
+      project.characterSheetImage,
+      buildComicDownloadFilename(project, 'character-sheet')
+    );
+  }, [project]);
 
   const handleSynopsisChange = useCallback((value: string) => {
     setStepError(null);
@@ -280,8 +284,11 @@ const OnePageComicPage: React.FC = () => {
     if (!project.pageImage) {
       return;
     }
-    pageGeneration.downloadPng(project.pageImage, 'one-page-comic.png');
-  }, [pageGeneration, project.pageImage]);
+    pageGeneration.downloadPng(
+      project.pageImage,
+      buildComicDownloadFilename(project, 'page')
+    );
+  }, [pageGeneration, project]);
 
   const handleNext = useCallback(() => {
     if (step === 4) {
