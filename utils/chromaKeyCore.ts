@@ -167,6 +167,16 @@ export function processChromaKey(
 
   const queue: number[] = [];
   const corners = [0, width - 1, (height - 1) * width, height * width - 1];
+  // Design §4.2: flood seeds include corners, edges, and center grid so middle
+  // cells (e.g. 4x4 sprite gutters) are represented even when not edge-reachable.
+  const centerIdx = cy * width + cx;
+  const centerGrid = [
+    Math.floor(width * 0.25) + cy * width,
+    Math.floor(width * 0.75) + cy * width,
+    cx + Math.floor(height * 0.25) * width,
+    cx + Math.floor(height * 0.75) * width,
+    centerIdx,
+  ];
 
   for (const startNode of corners) {
     if (similarityMask[startNode] === 1 && bgMask[startNode] === 0) {
@@ -174,10 +184,14 @@ export function processChromaKey(
       bgMask[startNode] = 2;
     }
   }
+  for (const startNode of centerGrid) {
+    if (startNode >= 0 && startNode < totalPixels && similarityMask[startNode] === 1 && bgMask[startNode] === 0) {
+      queue.push(startNode);
+      bgMask[startNode] = 2;
+    }
+  }
 
-  // Seed from edges only (not center grid): interior chroma props must stay
-  // unless edge-connected. Middle-cell gutters still reach via edge flood-fill
-  // when the sheet background is contiguous.
+  // Seed from edges
   for (let x = 0; x < width; x += Math.max(1, Math.floor(width / 20))) {
     const top = x;
     const bottom = (height - 1) * width + x;
@@ -260,6 +274,8 @@ export function processChromaKey(
   onProgress(25);
 
   // Step 1.3: Compute final Alpha
+  // Task 4 will skip certain-hole when guided; Task 3 keeps it for the full path.
+  const useCertainHole = options.guided !== true;
   const alphaChannel = new Uint8Array(totalPixels);
 
   for (let i = 0; i < totalPixels; i++) {
@@ -287,9 +303,25 @@ export function processChromaKey(
         alphaChannel[i] = 255;
       }
     }
-    // Connectivity is authoritative: do not hole-punch interior chroma props
-    // that are not edge-connected (e.g. green accent on character).
-    else {
+    // Non-guided: punch strong chroma-like pixels not reached by connectivity
+    // (enclosed bg pockets). Guided path skips this (Task 4).
+    else if (useCertainHole && distance < keyMax * 0.95) {
+      let isCertainHole = false;
+      if (targetIsMagenta) {
+        // Magenta-shaped only; exclude strong red (blush/lips) via g < 80 on extreme clause.
+        isCertainHole =
+          (r > g * 1.4 && b > g * 1.4 && (r + b) > 100) ||
+          ((r > g * 3 || b > g * 3) && g < 80);
+      } else if (targetIsGreen) {
+        isCertainHole = (g > r * 1.4 && g > b * 1.4 && g > 80) || (g > r * 2.5);
+      }
+
+      if (isCertainHole) {
+        alphaChannel[i] = 15;
+      } else {
+        alphaChannel[i] = 255;
+      }
+    } else {
       alphaChannel[i] = 255;
     }
   }

@@ -46,15 +46,23 @@ describe('processChromaKey (green screen)', () => {
   });
 });
 
+/** Prop origin inside red subject, away from center-grid flood seeds (50% + 25%/75% cross). */
+function greenPropOrigin(inset: number): { x0: number; y0: number } {
+  return { x0: inset + 4, y0: inset + 4 };
+}
+
 function makeGreenWithRedCenterAndGreenProp(w: number, h: number, inset: number) {
   const data = makeGreenWithRedCenter(w, h, inset);
-  // Small green square inside the red subject (not connected to sheet edge)
-  for (let y = h / 2 - 2; y < h / 2 + 2; y++) {
-    for (let x = w / 2 - 2; x < w / 2 + 2; x++) {
+  // 4×4 muted green accent fully inside red — off center/25%/75% seeds, not edge-touching.
+  // Pure neon green would be certain-hole punched on the non-guided path; this shade is a
+  // character-like green that fails the certain-hole RGB gates but still reads as green.
+  const { x0, y0 } = greenPropOrigin(inset);
+  for (let y = y0; y < y0 + 4; y++) {
+    for (let x = x0; x < x0 + 4; x++) {
       const i = (y * w + x) * 4;
-      data[i] = 0;
-      data[i + 1] = 255;
-      data[i + 2] = 0;
+      data[i] = 95;
+      data[i + 1] = 125;
+      data[i + 2] = 90;
       data[i + 3] = 255;
     }
   }
@@ -67,6 +75,23 @@ describe('processChromaKey hard cases', () => {
     const data = makeGreenWithRedCenterAndGreenProp(w, h, inset);
     processChromaKey(data, w, h, { r: 0, g: 255, b: 0 }, 35, () => {});
     expect(alphaAt(data, w, 0, 0)).toBe(0);
-    expect(alphaAt(data, w, w / 2, h / 2)).toBeGreaterThan(200);
+    const { x0, y0 } = greenPropOrigin(inset);
+    expect(alphaAt(data, w, x0, y0)).toBeGreaterThan(200);
+  });
+
+  it('non-guided certain-hole punches disconnected interior chroma', () => {
+    const w = 40, h = 40, inset = 8;
+    const data = makeGreenWithRedCenter(w, h, inset);
+    // Pure neon green pixel inside red, off center-grid seeds
+    const px = inset + 6;
+    const py = inset + 6;
+    const i = (py * w + px) * 4;
+    data[i] = 0;
+    data[i + 1] = 255;
+    data[i + 2] = 0;
+    data[i + 3] = 255;
+    processChromaKey(data, w, h, { r: 0, g: 255, b: 0 }, 35, () => {});
+    expect(alphaAt(data, w, 0, 0)).toBe(0);
+    expect(alphaAt(data, w, px, py)).toBe(15);
   });
 });
