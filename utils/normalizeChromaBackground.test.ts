@@ -37,4 +37,15 @@ describe('normalizeChromaBackgroundInPlace', () => {
     expect(Array.from(data.slice(4, 8))).toEqual([255, 200, 180, 255]);
     expect(Array.from(data.slice(8, 12))).toEqual([0, 180, 0, 0]);
   });
+
+  it('snaps dark green AI variant to exact target', () => {
+    const data = new Uint8ClampedArray([0, 120, 0, 255, 255, 200, 180, 255]);
+    const count = normalizeChromaBackgroundInPlace(
+      data,
+      'green',
+      { r: 0, g: 255, b: 0 }
+    );
+    expect(count).toBe(1);
+    expect(Array.from(data.slice(0, 4))).toEqual([0, 255, 0, 255]);
+  });
 });

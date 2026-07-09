@@ -1,4 +1,9 @@
 import type { ChromaKeyColorType } from '../types';
+import {
+  isChromaLike,
+  CHROMA_LIKE_NORMALIZE_MAX,
+  type RgbColor as SimRgb,
+} from './chromaSimilarity';
 
 /** Default RGB distance tolerance (matches browser `normalizeBackgroundColor`). */
 export const CHROMA_BACKGROUND_NORMALIZE_TOLERANCE = 100;
@@ -21,37 +26,14 @@ export function isChromaBackgroundPixel(
   targetColor: RgbColor,
   tolerance: number = CHROMA_BACKGROUND_NORMALIZE_TOLERANCE
 ): boolean {
-  if (colorType === 'magenta') {
-    const isPureMagenta = r > 200 && g < 60 && b > 200 && r + b > g * 3;
-    const isMagentaScreen = r > 180 && g < 80 && b > 180 && r - g > 120 && b - g > 120;
-    const isBrightMagentaScreen = r > 220 && g < 100 && b > 220 && r + b > g * 4;
-    const isNeonMagenta = r > 230 && g < 80 && b > 230;
-    const distance = Math.hypot(r - targetColor.r, g - targetColor.g, b - targetColor.b);
-    return (
-      isPureMagenta ||
-      isMagentaScreen ||
-      isBrightMagentaScreen ||
-      isNeonMagenta ||
-      distance < tolerance
-    );
-  }
-
-  const isPureGreen = g > 150 && r < 100 && b < 100;
-  const isStandardGreenScreen =
-    g > 100 && r < 130 && b < 130 && g > r * 1.2 && g > b * 1.2;
-  const isBrightGreenScreen =
-    g > 140 && r < 120 && b < 120 && g > r + 40 && g > b + 40;
-  const isNeonGreen = g > 180 && r < 100 && b < 100;
-  const isGreenVariant = g > 80 && g > r * 1.3 && g > b * 1.3 && r < 150 && b < 150;
-  const distance = Math.hypot(r - targetColor.r, g - targetColor.g, b - targetColor.b);
-  return (
-    isPureGreen ||
-    isStandardGreenScreen ||
-    isBrightGreenScreen ||
-    isNeonGreen ||
-    isGreenVariant ||
-    distance < tolerance
-  );
+  // Legacy tolerance was RGB Euclidean (~100). Map roughly onto chroma max:
+  // when caller passes default 100, use CHROMA_LIKE_NORMALIZE_MAX; otherwise scale.
+  const maxDistance =
+    tolerance === CHROMA_BACKGROUND_NORMALIZE_TOLERANCE
+      ? CHROMA_LIKE_NORMALIZE_MAX
+      : Math.max(20, Math.min(80, (tolerance / 100) * CHROMA_LIKE_NORMALIZE_MAX));
+  void colorType; // key RGB already encodes green vs magenta
+  return isChromaLike(r, g, b, targetColor as SimRgb, 'normalize', maxDistance);
 }
 
 /**
