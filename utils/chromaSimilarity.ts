@@ -13,9 +13,12 @@ export interface YCbCr {
 }
 
 /** Spec defaults; retune only with hard-case tests. */
-export const CHROMA_LIKE_NORMALIZE_MAX = 73;
+export const CHROMA_LIKE_NORMALIZE_MAX = 55;
 export const CHROMA_LIKE_KEY_MAX = 38;
 export const CHROMA_LIKE_SOFT_EXTRA = 12;
+
+/** Avoid divide-by-zero when Y-normalizing near-black pixels. */
+const Y_EPS = 1e-6;
 
 export function rgbToYCbCr(r: number, g: number, b: number): YCbCr {
   const y = 0.299 * r + 0.587 * g + 0.114 * b;
@@ -24,6 +27,10 @@ export function rgbToYCbCr(r: number, g: number, b: number): YCbCr {
   return { y, cb, cr };
 }
 
+/**
+ * Brightness-invariant chroma distance: compare Cb/Y and Cr/Y so pure
+ * greens at different luminance stay close (raw Cb/Cr scale with Y).
+ */
 export function chromaDistanceToKey(
   r: number,
   g: number,
@@ -32,8 +39,10 @@ export function chromaDistanceToKey(
 ): number {
   const p = rgbToYCbCr(r, g, b);
   const k = rgbToYCbCr(key.r, key.g, key.b);
-  const dCb = p.cb - k.cb;
-  const dCr = p.cr - k.cr;
+  const pY = Math.max(p.y, Y_EPS);
+  const kY = Math.max(k.y, Y_EPS);
+  const dCb = p.cb / pY - k.cb / kY;
+  const dCr = p.cr / pY - k.cr / kY;
   return Math.hypot(dCb, dCr);
 }
 
