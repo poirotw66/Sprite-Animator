@@ -72,3 +72,57 @@ ${styleBlock}
 
 Output exactly **one** finished model-sheet image.`;
 }
+
+/** Comic web flow: text-only sheet layout — never attach the stock otter layout PNG. */
+export function buildComicCharacterRefPrompt(params: {
+  concept: string;
+  styleKey: string;
+  customStyle?: string;
+  hasIdentityReference: boolean;
+}): string {
+  const { concept, styleKey, customStyle, hasIdentityReference } = params;
+  const styleBlock = resolveStyleBlock(styleKey, customStyle);
+  const conceptText = concept.trim();
+
+  const identityBlock = hasIdentityReference
+    ? `### [Identity reference — appearance lock]
+The attached image is the user's character. Match **species, face, colors, outfit, and proportions** from that image exactly.
+- Do **NOT** substitute a different species or generic mascot (e.g. otter, cat) unless the upload is that species.
+- Apply the Art style below while preserving identity.`
+    : `### [Character concept — invent from text]
+No identity image attached. Invent the character **only** from the Concept below.
+- Do **NOT** default to otter, cat, or any stock mascot from training bias.`;
+
+  const conceptSection = conceptText
+    ? `### [Character concept]\n${conceptText}`
+    : `### [Character concept]
+(Derive appearance entirely from the attached identity image.)`;
+
+  return `Generate ONE character reference model sheet image (Character model sheet) for a one-page comic.
+
+${identityBlock}
+
+${conceptSection}
+
+### [Sheet layout — text only, no layout image attached]
+Use this panel arrangement on a square 1:1 canvas:
+1. **Full-body turnaround** (top row): front, side, back — same character, standing.
+2. **Expression headshots** (4): distinct readable expressions, bust or head only.
+3. **Detail row**: close-up face, relaxed full-body pose, one feature detail inset, optional personality vignette.
+
+### [Art style]
+${styleBlock}
+
+### [Background & presentation]
+- Clean warm off-white or cream paper-like background.
+- Soft illustration feel; cohesive palette across all panels.
+- Optional short Traditional Chinese labels; keep text minimal.
+- No watermark, no UI chrome, no photorealism.
+
+### [Rules]
+- One character only (unless concept explicitly says duo).
+- Consistent design across every panel.
+- Square 1:1 composition; all panels fit inside one image.
+
+Output exactly **one** finished model-sheet image.`;
+}

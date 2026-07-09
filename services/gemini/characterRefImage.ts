@@ -18,8 +18,9 @@ function isImageSizeRejection(err: unknown): boolean {
 export interface GenerateCharacterRefParams {
   apiKey: string;
   prompt: string;
-  layoutRefBase64: string;
-  layoutRefMimeType: string;
+  /** Optional panel-arrangement reference (headless skill). Omit for comic web flow. */
+  layoutRefBase64?: string;
+  layoutRefMimeType?: string;
   identityRefBase64?: string;
   identityRefMimeType?: string;
   model?: string;
@@ -49,22 +50,51 @@ export async function generateCharacterRefImage(
   const contentParts: Array<{
     inlineData?: { mimeType: string; data: string };
     text?: string;
-  }> = [{ inlineData: { mimeType: layoutRefMimeType, data: layoutRefBase64 } }];
+  }> = [];
 
-  if (identityRefBase64 && identityRefMimeType) {
+  const identityOnly =
+    Boolean(identityRefBase64 && identityRefMimeType) && !layoutRefBase64;
+
+  if (identityOnly) {
     contentParts.push({
-      inlineData: { mimeType: identityRefMimeType, data: identityRefBase64 },
+      text: `The image below is the user's uploaded character reference.
+Recreate THIS exact character in the model sheet (same species, face, colors, outfit, proportions).
+Do NOT replace with a different character (e.g. otter, cat, generic mascot).`,
     });
+    contentParts.push({
+      inlineData: { mimeType: identityRefMimeType!, data: identityRefBase64! },
+    });
+    contentParts.push({ text: prompt });
+  } else {
+    if (layoutRefBase64 && layoutRefMimeType) {
+      contentParts.push({
+        inlineData: { mimeType: layoutRefMimeType, data: layoutRefBase64 },
+      });
+    }
+
+    if (identityRefBase64 && identityRefMimeType) {
+      contentParts.push({
+        inlineData: { mimeType: identityRefMimeType, data: identityRefBase64 },
+      });
+    }
+
+    const attachmentNote =
+      layoutRefBase64 && identityRefBase64
+        ? `
+
+The first attached image is a **layout structure reference** only (panel arrangement). The second is an **identity sketch** — match species, palette, and key features from the identity image.`
+        : layoutRefBase64
+          ? `
+
+The attached image is a **layout structure reference** only — copy panel arrangement, not the character design shown in it.`
+          : identityRefBase64
+            ? `
+
+The attached image is the user's **character identity** — match it exactly (see prompt).`
+            : '';
+
+    contentParts.push({ text: prompt + attachmentNote });
   }
-
-  const identityBlock =
-    identityRefBase64 && identityRefMimeType
-      ? `
-
-The second attached image is an **identity sketch**. Match this character's species, palette, and key features while applying the Art style and sheet layout above.`
-      : '';
-
-  contentParts.push({ text: prompt + identityBlock });
 
   const request = (includeImageSize: boolean) =>
     ai.models.generateContent({

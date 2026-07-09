@@ -8,6 +8,7 @@ import { useLanguage } from '../../hooks/useLanguage';
 
 export interface ComicCharacterSheetStepProps {
   styleKey: string;
+  referenceImage?: string | null;
   characterSheetImage: string | null;
   isGenerating: boolean;
   status?: string | null;
@@ -26,6 +27,7 @@ function resolveStyleMeta(styleKey: string) {
 
 export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = React.memo(({
   styleKey,
+  referenceImage = null,
   characterSheetImage,
   isGenerating,
   status = null,
@@ -57,6 +59,19 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
             </p>
           </div>
         </div>
+
+        {referenceImage ? (
+          <div className="mt-6 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-700">
+              {t.comicUploadReferencePreview}
+            </p>
+            <img
+              src={referenceImage}
+              alt={t.comicUploadReferenceAlt}
+              className="mt-3 max-h-40 w-full rounded-xl border border-indigo-100 object-contain bg-white"
+            />
+          </div>
+        ) : null}
 
         <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_18rem]">
           <div className="space-y-4">

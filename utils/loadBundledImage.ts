@@ -13,6 +13,4 @@ export async function loadBundledImageAsDataUrl(url: string): Promise<string> {
   });
 }
 
-export function dataUrlToBase64(dataUrl: string): string {
-  return dataUrl.replace(/^data:image\/\w+;base64,/, '');
-}
+export { dataUrlToBase64, parseDataUrlMime } from './dataUrl';

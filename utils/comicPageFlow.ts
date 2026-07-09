@@ -3,6 +3,7 @@ import { validatePanelsForGeneration } from './comicPanelSchema';
 
 type ComicFlowErrorKey =
   | 'comicErrorNeedConcept'
+  | 'comicErrorNeedUpload'
   | 'comicErrorNeedSheet'
   | 'comicErrorNeedPanels';
 
@@ -22,11 +23,17 @@ export function getComicNextStepState(
   project: ComicProject
 ): ComicFlowState {
   if (step === 1) {
-    const hasSource =
-      Boolean(project.referenceImage) || Boolean(project.characterConcept.trim());
+    if (project.sourceMode === 'upload') {
+      const hasUpload = Boolean(project.referenceImage);
+      return {
+        canProceed: hasUpload,
+        errorKey: hasUpload ? null : 'comicErrorNeedUpload',
+      };
+    }
+    const hasConcept = Boolean(project.characterConcept.trim());
     return {
-      canProceed: hasSource,
-      errorKey: hasSource ? null : 'comicErrorNeedConcept',
+      canProceed: hasConcept,
+      errorKey: hasConcept ? null : 'comicErrorNeedConcept',
     };
   }
 

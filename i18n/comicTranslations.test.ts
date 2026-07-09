@@ -25,6 +25,7 @@ const REQUIRED_COMIC_KEYS = [
   'comicGeneratePage',
   'comicDownloadPng',
   'comicErrorNeedConcept',
+  'comicErrorNeedUpload',
   'comicErrorNeedSheet',
   'comicErrorNeedPanels',
   'comicNext',

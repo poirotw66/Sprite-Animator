@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import type { ComicPanel } from '../../utils/comicPanelSchema';
 import { throwIfAborted } from '../../utils/abort';
-import { dataUrlToBase64 } from '../../utils/loadBundledImage';
+import { dataUrlToBase64, parseDataUrlMime } from '../../utils/dataUrl';
 import { buildComicPagePrompt } from './comicPagePrompt';
 import { resolveComicStyleBlock } from './comicCharacterSheet';
 import { retryOperation } from './retry';
@@ -41,6 +41,7 @@ export async function generateComicPage(params: {
 
   const ai = new GoogleGenAI({ apiKey: params.apiKey });
   const sheetBase64 = dataUrlToBase64(params.characterSheetImage);
+  const sheetMime = parseDataUrlMime(params.characterSheetImage);
 
   params.onProgress?.('正在生成四格漫畫頁…');
 
@@ -57,7 +58,7 @@ export async function generateComicPage(params: {
       model: params.model,
       contents: {
         parts: [
-          { inlineData: { mimeType: 'image/png', data: sheetBase64 } },
+          { inlineData: { mimeType: sheetMime, data: sheetBase64 } },
           { text: prompt },
         ],
       },

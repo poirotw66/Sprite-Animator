@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 import { API_KEY_MISSING_MESSAGE, generateComicCharacterSheet } from '../services/geminiService';
 import { getErrorMessage } from '../types/errors';
+import type { ComicProject } from '../utils/comicPanelSchema';
+import { canGenerateComicCharacterSheet } from '../utils/comicSheetInput';
 
 export function useComicCharacterSheet(openSettings: () => void) {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -12,23 +14,28 @@ export function useComicCharacterSheet(openSettings: () => void) {
       apiKey: string;
       model: string;
       resolution: string;
-      styleKey: string;
-      characterConcept: string;
-      referenceImage: string | null;
+      project: ComicProject;
     }) => {
       if (!params.apiKey) {
         openSettings();
         throw new Error(API_KEY_MISSING_MESSAGE);
       }
-      if (!params.characterConcept.trim() && !params.referenceImage) {
-        throw new Error('Need character concept or reference image');
+      if (!canGenerateComicCharacterSheet(params.project)) {
+        throw new Error(
+          params.project.sourceMode === 'upload'
+            ? 'Upload a reference image before generating the character sheet.'
+            : 'Need character concept or reference image'
+        );
       }
 
       setIsGenerating(true);
       setError(null);
       try {
         const image = await generateComicCharacterSheet({
-          ...params,
+          apiKey: params.apiKey,
+          model: params.model,
+          resolution: params.resolution,
+          project: params.project,
           onProgress: setStatus,
         });
         return image;
