@@ -6,7 +6,23 @@ import {
 } from './comicPageFlow';
 
 describe('comicPageFlow', () => {
-  it('blocks step 1 until concept or reference image exists', () => {
+  it('blocks step 1 in upload mode until reference image exists', () => {
+    const project = createEmptyComicProject();
+    project.sourceMode = 'upload';
+
+    expect(getComicNextStepState(1, project)).toEqual({
+      canProceed: false,
+      errorKey: 'comicErrorNeedUpload',
+    });
+
+    project.referenceImage = 'data:image/jpeg;base64,upload';
+    expect(getComicNextStepState(1, project)).toEqual({
+      canProceed: true,
+      errorKey: null,
+    });
+  });
+
+  it('blocks step 1 in concept mode until concept text exists', () => {
     const project = createEmptyComicProject();
 
     expect(getComicNextStepState(1, project)).toEqual({

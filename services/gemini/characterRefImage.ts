@@ -52,34 +52,49 @@ export async function generateCharacterRefImage(
     text?: string;
   }> = [];
 
-  if (layoutRefBase64 && layoutRefMimeType) {
+  const identityOnly =
+    Boolean(identityRefBase64 && identityRefMimeType) && !layoutRefBase64;
+
+  if (identityOnly) {
     contentParts.push({
-      inlineData: { mimeType: layoutRefMimeType, data: layoutRefBase64 },
+      text: `The image below is the user's uploaded character reference.
+Recreate THIS exact character in the model sheet (same species, face, colors, outfit, proportions).
+Do NOT replace with a different character (e.g. otter, cat, generic mascot).`,
     });
-  }
-
-  if (identityRefBase64 && identityRefMimeType) {
     contentParts.push({
-      inlineData: { mimeType: identityRefMimeType, data: identityRefBase64 },
+      inlineData: { mimeType: identityRefMimeType!, data: identityRefBase64! },
     });
-  }
+    contentParts.push({ text: prompt });
+  } else {
+    if (layoutRefBase64 && layoutRefMimeType) {
+      contentParts.push({
+        inlineData: { mimeType: layoutRefMimeType, data: layoutRefBase64 },
+      });
+    }
 
-  const attachmentNote =
-    layoutRefBase64 && identityRefBase64
-      ? `
+    if (identityRefBase64 && identityRefMimeType) {
+      contentParts.push({
+        inlineData: { mimeType: identityRefMimeType, data: identityRefBase64 },
+      });
+    }
 
-The first attached image is a **layout structure reference** only (panel arrangement). The second is an **identity sketch** — match species, palette, and key features from the identity image.`
-      : layoutRefBase64
+    const attachmentNote =
+      layoutRefBase64 && identityRefBase64
         ? `
 
-The attached image is a **layout structure reference** only — copy panel arrangement, not the character design shown in it.`
-        : identityRefBase64
+The first attached image is a **layout structure reference** only (panel arrangement). The second is an **identity sketch** — match species, palette, and key features from the identity image.`
+        : layoutRefBase64
           ? `
 
-The attached image is the user's **character identity** — match it exactly (see prompt).`
-          : '';
+The attached image is a **layout structure reference** only — copy panel arrangement, not the character design shown in it.`
+          : identityRefBase64
+            ? `
 
-  contentParts.push({ text: prompt + attachmentNote });
+The attached image is the user's **character identity** — match it exactly (see prompt).`
+            : '';
+
+    contentParts.push({ text: prompt + attachmentNote });
+  }
 
   const request = (includeImageSize: boolean) =>
     ai.models.generateContent({

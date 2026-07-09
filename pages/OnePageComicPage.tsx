@@ -23,6 +23,7 @@ import {
   getComicNextStepState,
   getComicPageGenerationState,
 } from '../utils/comicPageFlow';
+import { canGenerateComicCharacterSheet } from '../utils/comicSheetInput';
 
 function downloadDataUrl(dataUrl: string, filename: string) {
   const link = document.createElement('a');
@@ -62,6 +63,7 @@ const OnePageComicPage: React.FC = () => {
     setStepError(null);
     patchProject({
       sourceMode: mode,
+      ...(mode === 'concept' ? { referenceImage: null } : {}),
       characterSheetImage: null,
       pageImage: null,
       generationMeta: undefined,
@@ -84,7 +86,9 @@ const OnePageComicPage: React.FC = () => {
     }
     setStepError(null);
     patchProject({
+      sourceMode: 'upload',
       referenceImage: result,
+      styleKey: 'matchUploaded',
       characterSheetImage: null,
       pageImage: null,
       generationMeta: undefined,
@@ -129,9 +133,10 @@ const OnePageComicPage: React.FC = () => {
   }, [patchProject]);
 
   const handleGenerateSheet = useCallback(async () => {
-    const sourceState = getComicNextStepState(1, project);
-    if (!sourceState.canProceed) {
-      setStepError(sourceState.errorKey ? t[sourceState.errorKey] : t.comicErrorNeedConcept);
+    if (!canGenerateComicCharacterSheet(project)) {
+      const errorKey =
+        project.sourceMode === 'upload' ? 'comicErrorNeedUpload' : 'comicErrorNeedConcept';
+      setStepError(t[errorKey]);
       return;
     }
 
@@ -141,9 +146,7 @@ const OnePageComicPage: React.FC = () => {
         apiKey: getEffectiveApiKey(),
         model: selectedModel,
         resolution: outputResolution,
-        styleKey: project.styleKey,
-        characterConcept: project.characterConcept,
-        referenceImage: project.referenceImage,
+        project,
       });
 
       patchProject({
@@ -327,6 +330,7 @@ const OnePageComicPage: React.FC = () => {
         return (
           <ComicCharacterSheetStep
             styleKey={project.styleKey}
+            referenceImage={project.sourceMode === 'upload' ? project.referenceImage : null}
             characterSheetImage={project.characterSheetImage}
             isGenerating={characterSheet.isGenerating}
             status={characterSheet.status}

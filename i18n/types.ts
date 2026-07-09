@@ -287,6 +287,8 @@ export interface Translations {
   comicRegenerateSheet: string;
   comicDownloadSheet: string;
   comicSheetPreviewAlt: string;
+  comicUploadReferencePreview: string;
+  comicUploadReferenceAlt: string;
   comicSynopsisLabel: string;
   comicSynopsisDescription: string;
   comicSynopsisPlaceholder: string;
@@ -313,6 +315,7 @@ export interface Translations {
   comicPagePreviewDescription: string;
   comicPagePreviewAlt: string;
   comicErrorNeedConcept: string;
+  comicErrorNeedUpload: string;
   comicErrorNeedSheet: string;
   comicErrorNeedPanels: string;
   comicNext: string;
