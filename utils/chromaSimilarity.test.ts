@@ -30,6 +30,11 @@ describe('chromaDistanceToKey', () => {
     const d = chromaDistanceToKey(0, 120, 0, green);
     expect(d).toBeLessThan(CHROMA_LIKE_NORMALIZE_MAX);
   });
+
+  it('distance alone separates skin from green key (above key max)', () => {
+    const d = chromaDistanceToKey(255, 200, 180, green);
+    expect(d).toBeGreaterThan(CHROMA_LIKE_KEY_MAX);
+  });
 });
 
 describe('isChromaLike', () => {

@@ -20,6 +20,9 @@ export const CHROMA_LIKE_SOFT_EXTRA = 12;
 /** Avoid divide-by-zero when Y-normalizing near-black pixels. */
 const Y_EPS = 1e-6;
 
+/** Maps Y-normalized Cb/Y, Cr/Y ratio deltas back toward Cb/Cr-like units. */
+const CHROMA_RATIO_SCALE = 128;
+
 export function rgbToYCbCr(r: number, g: number, b: number): YCbCr {
   const y = 0.299 * r + 0.587 * g + 0.114 * b;
   const cb = 0.564 * (b - y);
@@ -43,7 +46,7 @@ export function chromaDistanceToKey(
   const kY = Math.max(k.y, Y_EPS);
   const dCb = p.cb / pY - k.cb / kY;
   const dCr = p.cr / pY - k.cr / kY;
-  return Math.hypot(dCb, dCr);
+  return Math.hypot(dCb, dCr) * CHROMA_RATIO_SCALE;
 }
 
 function keyLooksGreen(key: RgbColor): boolean {
