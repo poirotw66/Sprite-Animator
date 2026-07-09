@@ -49,11 +49,11 @@ Pure functions, no DOM:
 | Export | Role |
 |--------|------|
 | `rgbToYCbCr(r,g,b)` | Standard BT.601-style Y, Cb, Cr |
-| `chromaDistanceToKey(r,g,b, keyRgb)` | `√((Cb−Cb_k)² + (Cr−Cr_k)²)` |
+| `chromaDistanceToKey(r,g,b, keyRgb)` | Brightness-invariant: `√((Cb/Y−Cb_k/Y_k)² + (Cr/Y−Cr_k/Y_k)²) × 128` (raw Cb/Cr scale with Y for pure greens; Y-normalize + scale keeps design thresholds 55/38 meaningful) |
 | `isChromaLike(r,g,b, keyRgb, mode)` | `mode: 'normalize' \| 'key'` |
 | `CHROMA_LIKE_NORMALIZE_MAX` | Default **55** |
 | `CHROMA_LIKE_KEY_MAX` | Default **38** |
-| Soft-edge band | Key max **+12** (used only near confirmed background) |
+| Soft-edge band | Key max **+12** (eligible for soft alpha when near confirmed background; includes hard matches — callers must not treat as “outside hard mask only”) |
 
 **Direction gate (cheap, after distance):** green key → G-dominant; magenta key → high R/B and low G. Prevents skin/gray false positives when distance alone is ambiguous.
 
