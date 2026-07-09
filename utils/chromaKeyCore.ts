@@ -12,6 +12,7 @@ import {
   chromaDistanceToKey,
   CHROMA_LIKE_SOFT_EXTRA,
 } from './chromaSimilarity';
+import { shouldUseGuidedChromaPath } from './chromaGuidedDetect';
 
 /**
  * Convert RGB to HSL color space
@@ -60,7 +61,8 @@ function isNearWhite(r: number, g: number, b: number): boolean {
 }
 
 export interface ProcessChromaKeyOptions {
-  guided?: boolean; // undefined = auto later (Task 4); true/false explicit
+  /** true/false wins; undefined → auto-detect regular gutters. */
+  guided?: boolean;
   keyMaxOverride?: number;
 }
 
@@ -83,6 +85,13 @@ export function processChromaKey(
   const keyMax = options.keyMaxOverride ?? fuzzPercentToKeyMax(fuzzPercent);
   const radius = Math.max(1, Math.min(5, Math.round(edgeBandRadius)));
   const blend = Math.max(0, Math.min(1, Number(edgeBlend)));
+  const useGuided = shouldUseGuidedChromaPath(
+    data,
+    width,
+    height,
+    chromaKey,
+    options.guided
+  );
 
   let transparentCount = 0;
   const reportInterval = Math.max(1, Math.floor(totalPixels / 100));
@@ -234,7 +243,7 @@ export function processChromaKey(
   }
 
   const visited = new Uint8Array(totalPixels);
-  const MAX_ISLAND_SIZE = 400;
+  const MAX_ISLAND_SIZE = useGuided ? 80 : 400;
 
   for (let i = 0; i < totalPixels; i++) {
     if (foregroundMask[i] === 1 && visited[i] === 0) {
@@ -274,8 +283,8 @@ export function processChromaKey(
   onProgress(25);
 
   // Step 1.3: Compute final Alpha
-  // Task 4 will skip certain-hole when guided; Task 3 keeps it for the full path.
-  const useCertainHole = options.guided !== true;
+  // Guided (flag or auto-detect) skips certain-hole so in-cell accents survive.
+  const useCertainHole = !useGuided;
   const alphaChannel = new Uint8Array(totalPixels);
 
   for (let i = 0; i < totalPixels; i++) {
@@ -328,28 +337,30 @@ export function processChromaKey(
 
   onProgress(40);
 
-  // Pass 2: Edge Erosion
+  // Pass 2: Edge Erosion (non-guided clothing-direction spill only)
   const erodedAlpha = new Uint8Array(alphaChannel);
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
-      const i = y * width + x;
-      if (alphaChannel[i] > 200 && bgMask[i] === 0) {
-        const hasBgNeighbor =
-          bgMask[i - 1] === 2 || bgMask[i + 1] === 2 ||
-          bgMask[i - width] === 2 || bgMask[i + width] === 2;
+  if (!useGuided) {
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const i = y * width + x;
+        if (alphaChannel[i] > 200 && bgMask[i] === 0) {
+          const hasBgNeighbor =
+            bgMask[i - 1] === 2 || bgMask[i + 1] === 2 ||
+            bgMask[i - width] === 2 || bgMask[i + width] === 2;
 
-        if (hasBgNeighbor) {
-          const idx = i * 4;
-          const r = data[idx];
-          const g = data[idx + 1];
-          const b = data[idx + 2];
+          if (hasBgNeighbor) {
+            const idx = i * 4;
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
 
-          let isSpill = false;
-          if (targetIsMagenta) isSpill = r > g * 1.1 && b > g * 1.1 && b <= r + 30 && g < 100;
-          else if (targetIsGreen) isSpill = g > r * 1.1;
+            let isSpill = false;
+            if (targetIsMagenta) isSpill = r > g * 1.1 && b > g * 1.1 && b <= r + 30 && g < 100;
+            else if (targetIsGreen) isSpill = g > r * 1.1;
 
-          if (isSpill) {
-            erodedAlpha[i] = 160;
+            if (isSpill) {
+              erodedAlpha[i] = 160;
+            }
           }
         }
       }
@@ -400,8 +411,9 @@ export function processChromaKey(
     const applyStrongDespill = isEdge || inEdgeBand;
 
     if (targetIsMagenta) {
-      // Skip despill on blue-dominant pixels (character blue edges) so we do not dull or remove blue.
-      if (b > r + 30) continue;
+      // Non-guided: skip despill on blue-dominant pixels (character blue edges).
+      // Guided: rely on shared similarity + generic edge-band despill only.
+      if (!useGuided && b > r + 30) continue;
       const magContrast = (r + b) / 2 - g;
       if (avg < 100 && magContrast > 4) {
         const decontamIntensity = applyStrongDespill ? 1.0 : 0.85;

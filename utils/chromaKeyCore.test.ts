@@ -106,4 +106,32 @@ describe('processChromaKey hard cases', () => {
     expect(alphaAt(data, w, 0, 0)).toBe(0);
     expect(alphaAt(data, w, px, py)).toBe(15);
   });
+
+  it('guided path does not hole-punch interior chroma-like pixels', () => {
+    const w = 40, h = 40, inset = 8;
+    const data = makeGreenWithRedCenterAndGreenProp(w, h, inset);
+    processChromaKey(data, w, h, { r: 0, g: 255, b: 0 }, 35, () => {}, 2, 0.22, {
+      guided: true,
+    });
+    expect(alphaAt(data, w, 0, 0)).toBe(0);
+    // Prop lives at inset+4..inset+8, not image center (Task 3 layout).
+    expect(alphaAt(data, w, inset + 5, inset + 5)).toBeGreaterThan(200);
+  });
+
+  it('guided: true does not certain-hole-punch a pure neon green interior pocket', () => {
+    const w = 40, h = 40, inset = 8;
+    const data = makeGreenWithRedCenter(w, h, inset);
+    const px = inset + 6;
+    const py = inset + 6;
+    const i = (py * w + px) * 4;
+    data[i] = 0;
+    data[i + 1] = 255;
+    data[i + 2] = 0;
+    data[i + 3] = 255;
+    processChromaKey(data, w, h, { r: 0, g: 255, b: 0 }, 35, () => {}, 2, 0.22, {
+      guided: true,
+    });
+    expect(alphaAt(data, w, 0, 0)).toBe(0);
+    expect(alphaAt(data, w, px, py)).toBeGreaterThan(200);
+  });
 });
