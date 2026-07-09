@@ -89,3 +89,67 @@ export function clearEdgeConnectedResidue(
 
   return cleared;
 }
+
+export interface SmallIslandCleanupOptions {
+  /** Connected components with this many opaque pixels or fewer are erased. */
+  maxIslandSize: number;
+  /** Pixels with alpha <= this are background. Default 15. */
+  alphaThreshold?: number;
+}
+
+/**
+ * Erase tiny opaque islands disconnected from the main subject (chroma speckles,
+ * broken speed-line crumbs). Keeps any component larger than maxIslandSize.
+ * Mutates `data`; returns pixels cleared.
+ */
+export function clearSmallOpaqueIslands(
+  data: Uint8ClampedArray | Uint8Array | number[],
+  width: number,
+  height: number,
+  options: SmallIslandCleanupOptions
+): number {
+  const maxIslandSize = Math.max(1, Math.floor(options.maxIslandSize));
+  const alphaThreshold = options.alphaThreshold ?? 15;
+  if (width <= 0 || height <= 0) return 0;
+
+  const total = width * height;
+  const visited = new Uint8Array(total);
+  let cleared = 0;
+
+  for (let start = 0; start < total; start++) {
+    if (visited[start] || data[start * 4 + 3]! <= alphaThreshold) continue;
+
+    const island: number[] = [];
+    const queue = [start];
+    visited[start] = 1;
+    let head = 0;
+
+    while (head < queue.length) {
+      const curr = queue[head++]!;
+      island.push(curr);
+      const x = curr % width;
+      const y = (curr - x) / width;
+      const neighbors = [
+        x > 0 ? curr - 1 : -1,
+        x < width - 1 ? curr + 1 : -1,
+        y > 0 ? curr - width : -1,
+        y < height - 1 ? curr + width : -1,
+      ];
+      for (const next of neighbors) {
+        if (next < 0 || visited[next]) continue;
+        if (data[next * 4 + 3]! <= alphaThreshold) continue;
+        visited[next] = 1;
+        queue.push(next);
+      }
+    }
+
+    if (island.length <= maxIslandSize) {
+      for (const p of island) {
+        data[p * 4 + 3] = 0;
+        cleared++;
+      }
+    }
+  }
+
+  return cleared;
+}

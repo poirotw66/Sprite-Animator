@@ -390,6 +390,25 @@ export function processChromaKey(
 
   onProgress(60);
 
+  // Wider ring than edgeBand: strong green that fails YCbCr key often sits 3–6px
+  // inside the opaque mass (sticker-09 mark2 gray hair spike).
+  const strongSpillRadius = Math.max(radius + 3, 5);
+  const nearTransparentForSpill = new Uint8Array(totalPixels);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = y * width + x;
+      if (erodedAlpha[i] >= 40) continue;
+      for (let dy = -strongSpillRadius; dy <= strongSpillRadius; dy++) {
+        for (let dx = -strongSpillRadius; dx <= strongSpillRadius; dx++) {
+          const ny = y + dy;
+          const nx = x + dx;
+          if (ny < 0 || ny >= height || nx < 0 || nx >= width) continue;
+          nearTransparentForSpill[ny * width + nx] = 1;
+        }
+      }
+    }
+  }
+
   // Pass 3: Final Decontamination (spill suppression) with full edge band
   // Despill formulas: green g' = min(g, max(r,b)) style; magenta: pull R,B toward G (Wikipedia / industry)
   // Skip color modification for near-white pixels (e.g. white borders) to avoid green/magenta residue.
@@ -408,6 +427,7 @@ export function processChromaKey(
     const avg = (r + g + b) / 3;
     const isEdge = alpha < 255;
     const inEdgeBand = edgeBand[pixelIdx] === 1;
+    const nearTransparentSpill = nearTransparentForSpill[pixelIdx] === 1;
     const applyStrongDespill = isEdge || inEdgeBand;
 
     if (targetIsMagenta) {
@@ -441,22 +461,68 @@ export function processChromaKey(
       }
     } else if (targetIsGreen) {
       const greenContrast = g - (r + b) / 2;
+      // sticker-09 mark2: raw (54,148,36)/(53,81,32) fail YCbCr key (d≈52) so stay
+      // opaque; despill then leaves a gray hair spike. Erase strong spill near
+      // transparency (wider than edgeBand) instead of only recoloring.
+      if (
+        nearTransparentSpill &&
+        g > r &&
+        g > b &&
+        greenContrast > 32
+      ) {
+        // Only erase thin edge spikes — keep interior green props (4×4 block has
+        // ≥3 same-class neighbors in 5×5; a lone hair AA pixel has 0–2).
+        let greenSpillNeighbors = 0;
+        const x = pixelIdx % width;
+        const y = (pixelIdx - x) / width;
+        for (let dy = -2; dy <= 2; dy++) {
+          for (let dx = -2; dx <= 2; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            const nx = x + dx;
+            const ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+            if (erodedAlpha[ny * width + nx]! <= 40) continue;
+            const ni = (ny * width + nx) * 4;
+            const nr = data[ni]!;
+            const ng = data[ni + 1]!;
+            const nb = data[ni + 2]!;
+            const nContrast = ng - (nr + nb) / 2;
+            if (ng > nr && ng > nb && nContrast > 32) greenSpillNeighbors++;
+          }
+        }
+        if (greenSpillNeighbors < 3) {
+          data[i + 3] = 0;
+          erodedAlpha[pixelIdx] = 0;
+          continue;
+        }
+      }
       if (avg < 100 && greenContrast > 4) {
-        const gray = avg;
-        data[i] = Math.round(r * 0.15 + gray * 0.85);
-        data[i + 1] = Math.round(g * 0.15 + gray * 0.85);
-        data[i + 2] = Math.round(b * 0.15 + gray * 0.85);
+        // Gray from R/B only — including G in the average re-bakes spill into dark
+        // olive fringes (e.g. 47,158,30 → 74,90,71 still green-dominant).
+        const spillFreeGray = (r + b) / 2;
+        data[i] = Math.round(r * 0.25 + spillFreeGray * 0.75);
+        data[i + 1] = Math.round(Math.min(g, Math.max(r, b)));
+        data[i + 2] = Math.round(b * 0.25 + spillFreeGray * 0.75);
+        if (inEdgeBand && greenContrast > 12) {
+          const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          data[i] = Math.round(data[i] * 0.55 + gray * 0.45);
+          data[i + 1] = Math.round(data[i + 1] * 0.55 + gray * 0.45);
+          data[i + 2] = Math.round(data[i + 2] * 0.55 + gray * 0.45);
+        }
       }
       else if (applyStrongDespill && greenContrast > 3) {
-        // Despill: cap green at max(r,b) + small margin (Wikipedia: (r, min(g,b), b) style; we use max(r,b) for natural look)
+        // Edge band: hard-cap G at max(R,B) — muted olive AA (e.g. 70,103,69) fails
+        // YCbCr key match (~distance 90) so despill is the only cleanup path.
+        // Interior soft edges keep a small +8 margin to avoid flattening hair/cloth.
         const rbMax = Math.max(r, b);
-        const gCapped = Math.min(g, rbMax + 15);
-        data[i + 1] = Math.round(gCapped);
-        if (inEdgeBand && greenContrast > 10) {
+        const gMargin = inEdgeBand ? 0 : 8;
+        data[i + 1] = Math.round(Math.min(g, rbMax + gMargin));
+        if (inEdgeBand && greenContrast > 8) {
           const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
-          data[i] = Math.round(data[i] * 0.85 + gray * 0.15);
-          data[i + 1] = Math.round(data[i + 1] * 0.85 + gray * 0.15);
-          data[i + 2] = Math.round(data[i + 2] * 0.85 + gray * 0.15);
+          const pull = greenContrast > 18 ? 0.45 : 0.28;
+          data[i] = Math.round(data[i] * (1 - pull) + gray * pull);
+          data[i + 1] = Math.round(data[i + 1] * (1 - pull) + gray * pull);
+          data[i + 2] = Math.round(data[i + 2] * (1 - pull) + gray * pull);
         }
       }
     }
@@ -489,12 +555,24 @@ export function processChromaKey(
         for (let dx = -1; dx <= 1; dx++) {
           if (dx === 0 && dy === 0) continue;
           const ni = ((y + dy) * width + (x + dx)) * 4;
-          if (sampled[ni + 3] >= 250) {
-            sumR += sampled[ni];
-            sumG += sampled[ni + 1];
-            sumB += sampled[ni + 2];
-            count++;
+          if (sampled[ni + 3] < 250) continue;
+          const nR = sampled[ni];
+          const nG = sampled[ni + 1];
+          const nB = sampled[ni + 2];
+          // Skip spill-tinted neighbors so Pass 4 cannot reintroduce green/magenta
+          // fringe after despill (olive AA clusters share the same tint).
+          if (
+            targetIsGreen &&
+            (nG - Math.max(nR, nB) > 4 ||
+              (Math.min(nR, nG) - nB > 4 && Math.abs(nR - nG) <= 16))
+          ) {
+            continue;
           }
+          if (targetIsMagenta && (nR + nB) / 2 - nG > 12) continue;
+          sumR += nR;
+          sumG += nG;
+          sumB += nB;
+          count++;
         }
       }
       if (count > 0) {
@@ -520,6 +598,47 @@ export function processChromaKey(
         data[i] = Math.round(sampled[i] * (1 - effectiveBlend) + nR * effectiveBlend);
         data[i + 1] = Math.round(sampled[i + 1] * (1 - effectiveBlend) + nG * effectiveBlend);
         data[i + 2] = Math.round(sampled[i + 2] * (1 - effectiveBlend) + nB * effectiveBlend);
+      }
+    }
+  }
+
+  // Pass 4c: clamp green spill near transparency. Olive AA often sits 3px past
+  // the soft edge (outside radius-2 edgeBand), so scan a slightly wider ring.
+  if (targetIsGreen) {
+    const clampRadius = Math.max(radius + 6, 8);
+    const nearTransparent = new Uint8Array(totalPixels);
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = y * width + x;
+        if (data[i * 4 + 3] >= 40) continue;
+        for (let dy = -clampRadius; dy <= clampRadius; dy++) {
+          for (let dx = -clampRadius; dx <= clampRadius; dx++) {
+            const ny = y + dy;
+            const nx = x + dx;
+            if (ny < 0 || ny >= height || nx < 0 || nx >= width) continue;
+            nearTransparent[ny * width + nx] = 1;
+          }
+        }
+      }
+    }
+    for (let i = 0; i < totalPixels; i++) {
+      if (nearTransparent[i] === 0) continue;
+      const idx = i * 4;
+      if (data[idx + 3] === 0) continue;
+      let r = data[idx];
+      let g = data[idx + 1];
+      let b = data[idx + 2];
+      const rbMax = Math.max(r, b);
+      if (g > rbMax) {
+        g = rbMax;
+        data[idx + 1] = g;
+      }
+      // Yellow-green olive AA: R≈G and both above B (e.g. 56,59,49 hair or
+      // 251,255,240 white-edge tint). Skip true brown (R clearly above G).
+      const yellowGreenExcess = Math.min(r, g) - b;
+      if (yellowGreenExcess > 2 && g >= r - 4 && r - g <= 12) {
+        data[idx] = b;
+        data[idx + 1] = Math.min(data[idx + 1], b);
       }
     }
   }

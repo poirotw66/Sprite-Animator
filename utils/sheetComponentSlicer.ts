@@ -10,6 +10,7 @@
  */
 
 import { isSliceBackgroundPixel } from './imageContentAnalysis';
+import { clearSmallOpaqueIslands } from './frameEdgeCleanup';
 
 export interface RgbaFrameBuffer {
   data: Uint8ClampedArray;
@@ -237,6 +238,12 @@ export function trimFrameToContent(
   frame: RgbaFrameBuffer,
   marginRatio: number = 0.05
 ): RgbaFrameBuffer {
+  // Drop chroma speckles / broken speed-line crumbs before measuring bounds
+  // (sticker-09 mark: floating islands of ~12–14 px near hair and arm).
+  clearSmallOpaqueIslands(frame.data, frame.width, frame.height, {
+    maxIslandSize: 80,
+  });
+
   const { data, width, height } = frame;
   let minX = width;
   let minY = height;

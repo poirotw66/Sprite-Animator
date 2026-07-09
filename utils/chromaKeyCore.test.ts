@@ -104,7 +104,9 @@ describe('processChromaKey hard cases', () => {
     data[i + 3] = 255;
     processChromaKey(data, w, h, { r: 0, g: 255, b: 0 }, 35, () => {});
     expect(alphaAt(data, w, 0, 0)).toBe(0);
-    expect(alphaAt(data, w, px, py)).toBe(15);
+    // Certain-hole punches to near-transparent; edge-band strong-spill erase may
+    // finish the job to fully transparent — either is correct cleanup.
+    expect(alphaAt(data, w, px, py)).toBeLessThanOrEqual(15);
   });
 
   it('guided path does not hole-punch interior chroma-like pixels', () => {
@@ -133,5 +135,122 @@ describe('processChromaKey hard cases', () => {
     });
     expect(alphaAt(data, w, 0, 0)).toBe(0);
     expect(alphaAt(data, w, px, py)).toBeGreaterThan(200);
+  });
+
+  it('erases muted olive fringe that fails YCbCr key match', () => {
+    // Real residue from twice-1 sheet-2 sticker-09: dark olive AA that stays opaque
+    // because chromaDistance >> KEY_MAX. Strong edge spill is erased (not grayed).
+    const w = 40;
+    const h = 40;
+    const inset = 12;
+    const data = makeGreenWithRedCenter(w, h, inset);
+    const fx = inset;
+    const fy = Math.floor(h / 2);
+    const i = (fy * w + fx) * 4;
+    data[i] = 47;
+    data[i + 1] = 158;
+    data[i + 2] = 30;
+    data[i + 3] = 255;
+
+    processChromaKey(data, w, h, { r: 0, g: 255, b: 0 }, 35, () => {}, 2, 0.22, {
+      guided: true,
+    });
+
+    expect(alphaAt(data, w, 0, 0)).toBe(0);
+    expect(alphaAt(data, w, fx, fy)).toBe(0);
+  });
+
+  it('despills yellow-green olive hair AA where R≈G > B', () => {
+    // After hard G-cap, hair edges often look like 94,94,82 — still reads as lime.
+    const w = 40;
+    const h = 40;
+    const inset = 12;
+    const data = makeGreenWithRedCenter(w, h, inset);
+    const fx = inset;
+    const fy = Math.floor(h / 2);
+    const i = (fy * w + fx) * 4;
+    data[i] = 56;
+    data[i + 1] = 59;
+    data[i + 2] = 49;
+    data[i + 3] = 255;
+
+    processChromaKey(data, w, h, { r: 0, g: 255, b: 0 }, 35, () => {}, 2, 0.22, {
+      guided: true,
+    });
+
+    expect(alphaAt(data, w, 0, 0)).toBe(0);
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    expect(Math.min(r, g) - b).toBeLessThanOrEqual(1);
+    expect(g - Math.max(r, b)).toBeLessThanOrEqual(1);
+  });
+
+  it('despills near-white yellow-green edge tint', () => {
+    const w = 40;
+    const h = 40;
+    const inset = 12;
+    const data = makeGreenWithRedCenter(w, h, inset);
+    const fx = inset;
+    const fy = Math.floor(h / 2);
+    const i = (fy * w + fx) * 4;
+    data[i] = 251;
+    data[i + 1] = 255;
+    data[i + 2] = 240;
+    data[i + 3] = 255;
+
+    processChromaKey(data, w, h, { r: 0, g: 255, b: 0 }, 35, () => {}, 2, 0.22, {
+      guided: true,
+    });
+
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    expect(Math.min(r, g) - b).toBeLessThanOrEqual(1);
+  });
+
+  it('erases strong edge green that fails YCbCr key instead of leaving a gray blob', () => {
+    // sticker-09 mark2: raw (54,148,36) d≈52 > soft band → stayed opaque → despill
+    // grayed to (56,56,54) attached to hair. Must clear alpha on the edge band.
+    const w = 40;
+    const h = 40;
+    const inset = 12;
+    const data = makeGreenWithRedCenter(w, h, inset);
+    const fx = inset;
+    const fy = Math.floor(h / 2);
+    const i = (fy * w + fx) * 4;
+    data[i] = 54;
+    data[i + 1] = 148;
+    data[i + 2] = 36;
+    data[i + 3] = 255;
+
+    processChromaKey(data, w, h, { r: 0, g: 255, b: 0 }, 35, () => {}, 2, 0.22, {
+      guided: true,
+    });
+
+    expect(alphaAt(data, w, 0, 0)).toBe(0);
+    expect(alphaAt(data, w, fx, fy)).toBe(0);
+  });
+
+  it('erases borderline green spill a few px inside the opaque mass', () => {
+    // Remaining mark2 pixels: raw (53,81,32) contrast≈38.5, often outside radius-2 band.
+    const w = 40;
+    const h = 40;
+    const inset = 12;
+    const data = makeGreenWithRedCenter(w, h, inset);
+    // One step inside the subject edge — still near transparency, sparse toward bg.
+    const fx = inset + 1;
+    const fy = Math.floor(h / 2);
+    const i = (fy * w + fx) * 4;
+    data[i] = 53;
+    data[i + 1] = 81;
+    data[i + 2] = 32;
+    data[i + 3] = 255;
+
+    processChromaKey(data, w, h, { r: 0, g: 255, b: 0 }, 35, () => {}, 2, 0.22, {
+      guided: true,
+    });
+
+    expect(alphaAt(data, w, fx, fy)).toBe(0);
   });
 });

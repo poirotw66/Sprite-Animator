@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { clearEdgeConnectedResidue } from './frameEdgeCleanup';
+import { clearEdgeConnectedResidue, clearSmallOpaqueIslands } from './frameEdgeCleanup';
 
 /** Build an RGBA buffer; `opaque(x,y)` decides alpha (255 vs 0), rgb = white. */
 function makeData(
@@ -56,5 +56,38 @@ describe('clearEdgeConnectedResidue', () => {
     const data = makeData(w, h, () => false); // all transparent
     const cleared = clearEdgeConnectedResidue(data, w, h, { maxDepthPx: 3, alphaThreshold: 24 });
     expect(cleared).toBe(0);
+  });
+});
+
+describe('clearSmallOpaqueIslands', () => {
+  it('erases a tiny floating speck while keeping the main subject', () => {
+    const w = 24;
+    const h = 24;
+    // Subject larger than maxIslandSize; 2x2 floater far away (sticker-09 crumb).
+    const data = makeData(
+      w,
+      h,
+      (x, y) =>
+        (x >= 4 && x <= 15 && y >= 4 && y <= 15) || (x >= 20 && x <= 21 && y >= 2 && y <= 3)
+    );
+    const cleared = clearSmallOpaqueIslands(data, w, h, { maxIslandSize: 80 });
+    expect(cleared).toBe(4);
+    expect(alphaAt(data, w, 20, 2)).toBe(0);
+    expect(alphaAt(data, w, 8, 8)).toBe(255);
+  });
+
+  it('keeps intentional mid-size components such as text blocks', () => {
+    const w = 30;
+    const h = 20;
+    const data = makeData(
+      w,
+      h,
+      (x, y) =>
+        (x >= 10 && x <= 25 && y >= 8 && y <= 18) || // subject
+        (x >= 1 && x <= 8 && y >= 1 && y <= 4) // ~32px text-like block
+    );
+    const cleared = clearSmallOpaqueIslands(data, w, h, { maxIslandSize: 20 });
+    expect(cleared).toBe(0);
+    expect(alphaAt(data, w, 2, 2)).toBe(255);
   });
 });
