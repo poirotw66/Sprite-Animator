@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { rgbToHsl, processChromaKey } from './chromaKeyCore';
+import {
+  isChromaLike,
+  chromaDistanceToKey,
+  fuzzPercentToKeyMax,
+} from './chromaSimilarity';
 
 /** Fill a w*h RGBA buffer: green background with a solid red square in the center. */
 function makeGreenWithRedCenter(w: number, h: number, inset: number) {
@@ -51,18 +56,19 @@ function greenPropOrigin(inset: number): { x0: number; y0: number } {
   return { x0: inset + 4, y0: inset + 4 };
 }
 
+/** Interior prop RGB: chroma-like to green key, distance just above keyMax*0.95 so certain-hole skips it. */
+const INTERIOR_PROP_RGB = { r: 20, g: 100, b: 23 } as const;
+
 function makeGreenWithRedCenterAndGreenProp(w: number, h: number, inset: number) {
   const data = makeGreenWithRedCenter(w, h, inset);
-  // 4×4 muted green accent fully inside red — off center/25%/75% seeds, not edge-touching.
-  // Pure neon green would be certain-hole punched on the non-guided path; this shade is a
-  // character-like green that fails the certain-hole RGB gates but still reads as green.
+  // 4×4 green accent fully inside red — off center/25%/75% seeds, not edge-touching.
   const { x0, y0 } = greenPropOrigin(inset);
   for (let y = y0; y < y0 + 4; y++) {
     for (let x = x0; x < x0 + 4; x++) {
       const i = (y * w + x) * 4;
-      data[i] = 95;
-      data[i + 1] = 125;
-      data[i + 2] = 90;
+      data[i] = INTERIOR_PROP_RGB.r;
+      data[i + 1] = INTERIOR_PROP_RGB.g;
+      data[i + 2] = INTERIOR_PROP_RGB.b;
       data[i + 3] = 255;
     }
   }
@@ -72,8 +78,14 @@ function makeGreenWithRedCenterAndGreenProp(w: number, h: number, inset: number)
 describe('processChromaKey hard cases', () => {
   it('keeps an interior green prop that is not edge-connected', () => {
     const w = 40, h = 40, inset = 8;
+    const key = { r: 0, g: 255, b: 0 };
+    const keyMax = fuzzPercentToKeyMax(35);
+    const { r, g, b } = INTERIOR_PROP_RGB;
+    expect(isChromaLike(r, g, b, key, 'key', keyMax)).toBe(true);
+    expect(chromaDistanceToKey(r, g, b, key)).toBeGreaterThanOrEqual(keyMax * 0.95);
+
     const data = makeGreenWithRedCenterAndGreenProp(w, h, inset);
-    processChromaKey(data, w, h, { r: 0, g: 255, b: 0 }, 35, () => {});
+    processChromaKey(data, w, h, key, 35, () => {});
     expect(alphaAt(data, w, 0, 0)).toBe(0);
     const { x0, y0 } = greenPropOrigin(inset);
     expect(alphaAt(data, w, x0, y0)).toBeGreaterThan(200);
