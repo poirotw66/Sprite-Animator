@@ -32,8 +32,8 @@ import {
   type LineStickerTextRendering,
   type LineStickerPromptVersion,
 } from '../../../../utils/lineStickerPrompt.ts';
-import { DEFAULT_SKILL_STICKER_MODEL } from '../../../../utils/constants.ts';
-import type { ChromaKeyColorType } from '../../../../types.ts';
+import { DEFAULT_SKILL_STICKER_MODEL, DEFAULT_CHROMA_KEY_ALGORITHM } from '../../../../utils/constants.ts';
+import type { ChromaKeyColorType, ChromaKeyAlgorithm } from '../../../../types.ts';
 
 import { finalizeStickerJob } from './finalizeJob.mts';
 import type { UploadConfig } from './uploadConfig.mts';
@@ -62,6 +62,8 @@ interface StickerConfig {
   phraseSetFile?: string;
   language?: string; // TEXT_PRESETS key (default: zh-TW)
   chromaKeyColor?: ChromaKeyColorType; // default: green
+  /** `forge` (default) or `core` background removal. */
+  chromaKeyAlgorithm?: ChromaKeyAlgorithm;
   includeText?: boolean; // default: true (model draws text)
   /** 'model' = Gemini draws text; 'programmatic' = overlay after slice (more stable). */
   textRendering?: LineStickerTextRendering;
@@ -311,6 +313,8 @@ async function main() {
   const textRendering: LineStickerTextRendering = config.textRendering ?? 'model';
   const effectiveIncludeText = getEffectiveLineStickerIncludeText(includeText, textRendering);
   const chromaKeyColor: ChromaKeyColorType = config.chromaKeyColor ?? 'green';
+  const chromaKeyAlgorithm: ChromaKeyAlgorithm =
+    config.chromaKeyAlgorithm ?? DEFAULT_CHROMA_KEY_ALGORITHM;
   const model =
     (typeof args.model === 'string' ? args.model : undefined) ??
     config.model ??
@@ -344,7 +348,7 @@ async function main() {
       (sheetFilter ? `, regenerating=${sheetFilter}` : '') +
       (sheetDirOverride ? `, outputDir=${sheetDirOverride}` : '') +
       (isolatedSheetRun ? ', isolated=true' : '') +
-      `, chroma=${chromaKeyColor}, text=${textRendering === 'programmatic' ? 'programmatic' : effectiveIncludeText ? 'model-drawn' : 'none'}, model=${model}, resolution=${resolution}`
+      `, chroma=${chromaKeyColor}, chromaAlgo=${chromaKeyAlgorithm}, text=${textRendering === 'programmatic' ? 'programmatic' : effectiveIncludeText ? 'model-drawn' : 'none'}, model=${model}, resolution=${resolution}`
   );
 
   if (dryRun) {
@@ -448,6 +452,7 @@ async function main() {
       model,
       resolution,
       chromaKeyColor,
+      chromaKeyAlgorithm,
       includeText,
       textRendering,
       fontKey,

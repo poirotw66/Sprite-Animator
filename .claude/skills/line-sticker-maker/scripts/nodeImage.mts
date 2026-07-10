@@ -13,13 +13,11 @@
 
 import UPNG from 'upng-js';
 import jpeg from 'jpeg-js';
-import { processChromaKey } from '../../../../utils/chromaKeyCore.ts';
+import { applyChromaKey } from '../../../../utils/chromaKeyApply.ts';
 import { normalizeChromaBackgroundInPlace } from '../../../../utils/normalizeChromaBackground.ts';
 import {
   CHROMA_KEY_COLORS,
-  CHROMA_KEY_FUZZ,
-  CHROMA_KEY_EDGE_BAND_RADIUS,
-  CHROMA_KEY_EDGE_BLEND,
+  DEFAULT_CHROMA_KEY_ALGORITHM,
   LINE_STICKER_CELL_INSET_RATIO,
 } from '../../../../utils/constants.ts';
 import {
@@ -48,7 +46,7 @@ import {
   computeFitDimensions,
   toEvenDimension,
 } from '../../../../utils/lineStickerUploadSpec.ts';
-import type { ChromaKeyColorType } from '../../../../types.ts';
+import type { ChromaKeyColorType, ChromaKeyAlgorithm } from '../../../../types.ts';
 
 export interface RgbaImage {
   data: Uint8ClampedArray;
@@ -131,23 +129,28 @@ export function normalizeChromaBackground(
 
 export interface SheetChromaKeyOptions {
   guided?: boolean;
+  algorithm?: ChromaKeyAlgorithm;
+  forgeThreshold?: number;
+  forgeEdgeThreshold?: number;
 }
 
 /**
- * Normalize background color, then run chroma-key removal (matches web sprite sheet flow).
+ * Normalize background color (core only), then run chroma-key removal.
  */
 export function processSheetChromaKey(
   image: RgbaImage,
   chromaKeyColor: ChromaKeyColorType,
   options?: SheetChromaKeyOptions
 ): RgbaImage {
-  normalizeChromaBackground(image, chromaKeyColor);
+  const algorithm = options?.algorithm ?? DEFAULT_CHROMA_KEY_ALGORITHM;
+  if (algorithm === 'core') {
+    normalizeChromaBackground(image, chromaKeyColor);
+  }
   return removeChromaKey(image, chromaKeyColor, options);
 }
 
 /**
- * Run chroma-key background removal in place using the shared core.
- * Mutates and returns the same RGBA image (alpha + despill applied).
+ * Run chroma-key background removal in place.
  */
 export function removeChromaKey(
   image: RgbaImage,
@@ -155,17 +158,12 @@ export function removeChromaKey(
   options?: SheetChromaKeyOptions
 ): RgbaImage {
   const c = CHROMA_KEY_COLORS[chromaKeyColor];
-  processChromaKey(
-    image.data,
-    image.width,
-    image.height,
-    { r: c.r, g: c.g, b: c.b },
-    CHROMA_KEY_FUZZ,
-    () => {}, // no-op progress
-    CHROMA_KEY_EDGE_BAND_RADIUS,
-    CHROMA_KEY_EDGE_BLEND,
-    { guided: options?.guided }
-  );
+  applyChromaKey(image.data, image.width, image.height, { r: c.r, g: c.g, b: c.b }, {
+    algorithm: options?.algorithm,
+    guided: options?.guided,
+    forgeThreshold: options?.forgeThreshold,
+    forgeEdgeThreshold: options?.forgeEdgeThreshold,
+  });
   return image;
 }
 

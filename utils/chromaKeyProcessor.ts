@@ -8,7 +8,8 @@
 
 import { logger } from './logger';
 import { createAbortError, isAbortError, throwIfAborted } from './abort';
-import { processChromaKey } from './chromaKeyCore';
+import { applyChromaKey } from './chromaKeyApply';
+import type { ChromaKeyAlgorithm } from '../types';
 
 export interface ChromaKeyProgress {
   progress: number; // 0-100
@@ -18,12 +19,16 @@ export interface ChromaKeyProgress {
 
 /** Optional tuning for edge spill suppression; exposed on frontend. */
 export interface ChromaKeyOptions {
+  /** `forge` (default) or `core` chroma removal. */
+  algorithm?: ChromaKeyAlgorithm;
   /** Edge band radius in pixels (1–5). Default from CHROMA_KEY_EDGE_BAND_RADIUS. */
   edgeBandRadius?: number;
   /** Edge color blend strength 0–1 toward opaque neighbors. Default from CHROMA_KEY_EDGE_BLEND. */
   edgeBlend?: number;
-  /** Guided sheet path: skip aggressive hole/clothing specials. */
+  /** Guided sheet path: skip aggressive hole/clothing specials (core only). */
   guided?: boolean;
+  forgeThreshold?: number;
+  forgeEdgeThreshold?: number;
 }
 
 /**
@@ -255,6 +260,9 @@ function processWithWorker(
           edgeBandRadius: options?.edgeBandRadius,
           edgeBlend: options?.edgeBlend,
           guided: options?.guided,
+          algorithm: options?.algorithm,
+          forgeThreshold: options?.forgeThreshold,
+          forgeEdgeThreshold: options?.forgeEdgeThreshold,
           id: requestId,
         },
         transferList
@@ -282,16 +290,21 @@ function processInMainThread(
   return new Promise((resolve, reject) => {
     try {
       throwIfAborted(signal);
-      processChromaKey(
+      applyChromaKey(
         imageData.data,
         imageData.width,
         imageData.height,
         chromaKey,
-        fuzzPercent,
-        (progress) => onProgress?.(progress),
-        options?.edgeBandRadius,
-        options?.edgeBlend,
-        { guided: options?.guided }
+        {
+          algorithm: options?.algorithm,
+          fuzzPercent,
+          onProgress: (progress) => onProgress?.(progress),
+          edgeBandRadius: options?.edgeBandRadius,
+          edgeBlend: options?.edgeBlend,
+          guided: options?.guided,
+          forgeThreshold: options?.forgeThreshold,
+          forgeEdgeThreshold: options?.forgeEdgeThreshold,
+        }
       );
       resolve(imageData);
     } catch (error) {

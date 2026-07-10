@@ -16,7 +16,7 @@ import {
   type LineStickerPromptVersion,
   type PromptSlots,
 } from '../../../../utils/lineStickerPrompt.ts';
-import type { ChromaKeyColorType } from '../../../../types.ts';
+import type { ChromaKeyColorType, ChromaKeyAlgorithm } from '../../../../types.ts';
 import {
   buildGridCandidates,
   buildGridRetryPromptSuffix,
@@ -25,6 +25,7 @@ import {
   type GridValidationResult,
 } from '../../../../utils/sheetGridValidation.ts';
 import { buildGridSheetTemplate, type GridTemplateMode } from '../../../../utils/gridSheetTemplate.ts';
+import { DEFAULT_CHROMA_KEY_ALGORITHM } from '../../../../utils/constants.ts';
 import { detectWhiteDividerGrid, shouldUseWhiteDividerSlice } from '../../../../utils/sheetWhiteDividerDetection.ts';
 
 import { generateSheetImage, type StyleAnchorImage } from './geminiSheet.mts';
@@ -72,6 +73,7 @@ export interface GenerateOneSheetParams {
   model: string;
   resolution: string;
   chromaKeyColor: ChromaKeyColorType;
+  chromaKeyAlgorithm?: ChromaKeyAlgorithm;
   includeText: boolean;
   textRendering: LineStickerTextRendering;
   fontKey?: keyof typeof FONT_PRESETS;
@@ -215,6 +217,7 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     priorSheetFolder,
     logPrefix = '',
     gridTemplate = false,
+    chromaKeyAlgorithm = DEFAULT_CHROMA_KEY_ALGORITHM,
   } = params;
 
   const effectiveIncludeText = getEffectiveLineStickerIncludeText(includeText, textRendering);
@@ -324,6 +327,7 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     const image = decodeImage(rawPng);
     processSheetChromaKey(image, chromaKeyColor, {
       guided: sheetTemplate?.mode === 'guided',
+      algorithm: chromaKeyAlgorithm,
     });
     const validation = validateSheetGrid(
       image.data,

@@ -1,6 +1,6 @@
 // Application constants
 
-import type { AnimationConfig } from '../types';
+import type { AnimationConfig, ChromaKeyAlgorithm } from '../types';
 
 export const ANIMATION_FPS_MULTIPLIER = 3; // Used for playback FPS = speed * this
 
@@ -86,6 +86,13 @@ export const CHROMA_KEY_FUZZ = 35;
 export const CHROMA_KEY_EDGE_BAND_RADIUS = 2;
 /** Edge color blend strength (0–1) toward opaque neighbors; tunable from frontend. Default 0.22. */
 export const CHROMA_KEY_EDGE_BLEND = 0.22;
+
+/** Default chroma removal: forge (agent-sprite-forge RGB flood). Use `core` for legacy HSL pipeline. */
+export const DEFAULT_CHROMA_KEY_ALGORITHM: ChromaKeyAlgorithm = 'forge';
+
+/** agent-sprite-forge remove_bg_magenta defaults (RGB distance). */
+export const CHROMA_KEY_FORGE_THRESHOLD = 100;
+export const CHROMA_KEY_FORGE_EDGE_THRESHOLD = 150;
 
 // Frame interpolation settings for smooth GIF export
 export const DEFAULT_INTERPOLATION_FRAMES = 2; // Number of frames to insert between keyframes

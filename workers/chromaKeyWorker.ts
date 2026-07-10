@@ -6,7 +6,8 @@
  * @module chromaKeyWorker
  */
 
-import { processChromaKey } from '../utils/chromaKeyCore';
+import { applyChromaKey } from '../utils/chromaKeyApply';
+import type { ChromaKeyAlgorithm } from '../types';
 
 /** Inbound: chroma key job (pixel buffer is transferred and detached on the sender). */
 export interface ChromaKeyWorkerProcessMessage {
@@ -25,8 +26,11 @@ export interface ChromaKeyWorkerProcessMessage {
   edgeBandRadius?: number;
   /** Edge color blend 0–1; default 0.22. */
   edgeBlend?: number;
-  /** Guided sheet path: skip aggressive hole/clothing specials. */
+  /** Guided sheet path: skip aggressive hole/clothing specials (core only). */
   guided?: boolean;
+  algorithm?: ChromaKeyAlgorithm;
+  forgeThreshold?: number;
+  forgeEdgeThreshold?: number;
   id?: string;
 }
 
@@ -68,6 +72,9 @@ self.onmessage = function (e: MessageEvent<ChromaKeyWorkerMessage>) {
     edgeBandRadius,
     edgeBlend,
     guided,
+    algorithm,
+    forgeThreshold,
+    forgeEdgeThreshold,
   } = e.data;
 
   const expectedBytes = width * height * 4;
@@ -82,18 +89,23 @@ self.onmessage = function (e: MessageEvent<ChromaKeyWorkerMessage>) {
 
   try {
     const imageData = new Uint8ClampedArray(pixelBuffer, byteOffset, byteLength);
-    const processed = processChromaKey(
+    const processed = applyChromaKey(
       imageData,
       width,
       height,
       chromaKey,
-      fuzzPercent,
-      (progress) => {
-        self.postMessage({ type: 'progress', progress, id } as ChromaKeyWorkerResponse);
-      },
-      edgeBandRadius,
-      edgeBlend,
-      { guided }
+      {
+        algorithm,
+        fuzzPercent,
+        onProgress: (progress) => {
+          self.postMessage({ type: 'progress', progress, id } as ChromaKeyWorkerResponse);
+        },
+        edgeBandRadius,
+        edgeBlend,
+        guided,
+        forgeThreshold,
+        forgeEdgeThreshold,
+      }
     );
 
     self.postMessage(
