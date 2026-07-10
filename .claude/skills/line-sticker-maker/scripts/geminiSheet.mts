@@ -95,7 +95,7 @@ This is an **image-edit** task — **do not** generate a new sheet layout from s
 
 **CANVAS (already correct in image ${templateImageIndex}):**
 - Exactly **${cols} columns × ${rows} rows** = **${totalFrames} cells** on green chroma.
-- Grid lines and corner ticks in image ${templateImageIndex} mark exact cell boundaries.
+- Grid lines in image ${templateImageIndex} mark exact cell boundaries.
 - **Keep image ${templateImageIndex}'s grid geometry pixel-perfect** — same column widths, row heights, and seam positions.
 
 **FORBIDDEN:**
@@ -136,7 +136,7 @@ function buildGridTemplateInstruction(
 ### [Grid layout canvas — EDIT IMAGE ${img}]
 Using the provided grid canvas (attached image ${img}): **${cols} columns × ${rows} rows** = **${totalFrames} cells** on ${chromaKeyColor.toUpperCase()} (${bg.hex}).
 - **Add sticker art on top of image ${img}**, one subject per visible cell — preserve the existing grid.
-- The faint grid lines and corner ticks are alignment guides — **do not** redraw, thicken, or add white/black divider lines.
+- The faint grid lines are alignment guides — **do not** redraw, thicken, or add white/black divider lines.
 - Every row has exactly **${cols}** equal-width cells; never add a fifth column in any row.
 - Do **not** change the background color outside your artwork (keep ${chromaKeyColor} gutters intact).
 - Keep ~**10–15%** ${chromaKeyColor} margin inside every cell. Prefer bust framing over full-body poses that touch edges.`;

@@ -35,7 +35,7 @@ describe('buildGridSheetTemplate', () => {
     expect(backgroundCount).toBe(64 * 64);
   });
 
-  it('draws visible groove guides for guided mode (plan B)', () => {
+  it('draws groove grid lines without corner ticks by default in guided mode', () => {
     const template = buildGridSheetTemplate(4, 5, { sizePx: 64, chromaKeyColor: 'green', mode: 'guided' });
     expect(template.mode).toBe('guided');
 
@@ -53,5 +53,36 @@ describe('buildGridSheetTemplate', () => {
     }
     expect(pureGreenCount).toBeLessThan(64 * 64);
     expect(guideCount).toBeGreaterThan(0);
+
+    const withTicks = buildGridSheetTemplate(4, 5, {
+      sizePx: 256,
+      chromaKeyColor: 'green',
+      mode: 'guided',
+      cellCornerTicks: true,
+    });
+    const linesOnly = buildGridSheetTemplate(4, 5, {
+      sizePx: 256,
+      chromaKeyColor: 'green',
+      mode: 'guided',
+    });
+    let tickGuideCount = 0;
+    let linesOnlyCount = 0;
+    for (let i = 0; i < withTicks.data.length; i += 4) {
+      const r = withTicks.data[i]!;
+      const g = withTicks.data[i + 1]!;
+      const b = withTicks.data[i + 2]!;
+      if (withTicks.data[i + 3]! > 20 && !(r === 0 && g === 255 && b === 0)) {
+        tickGuideCount++;
+      }
+    }
+    for (let i = 0; i < linesOnly.data.length; i += 4) {
+      const r = linesOnly.data[i]!;
+      const g = linesOnly.data[i + 1]!;
+      const b = linesOnly.data[i + 2]!;
+      if (linesOnly.data[i + 3]! > 20 && !(r === 0 && g === 255 && b === 0)) {
+        linesOnlyCount++;
+      }
+    }
+    expect(linesOnlyCount).toBeLessThan(tickGuideCount);
   });
 });

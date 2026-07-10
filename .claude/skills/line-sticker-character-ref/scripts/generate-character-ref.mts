@@ -6,7 +6,7 @@
  *     --style chibi \
  *     --out output/refs/my-character.png
  *
- * Layout target: reference/model-sheet-layout.png (from p1.png otter model sheet).
+ * Sheet layout is text-only (no layout PNG attachment).
  */
 
 import { existsSync, readFileSync } from 'node:fs';
@@ -23,7 +23,6 @@ import { generateCharacterRefImage } from './geminiCharacterRef.mts';
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const SKILL_DIR = resolve(SCRIPT_DIR, '..');
 const ROOT_DIR = resolve(SKILL_DIR, '../../..');
-const DEFAULT_LAYOUT_REF = resolve(SKILL_DIR, 'reference/model-sheet-layout.png');
 
 function parseArgs(argv: string[]): Record<string, string | boolean> {
   const args: Record<string, string | boolean> = {};
@@ -42,8 +41,6 @@ function parseArgs(argv: string[]): Record<string, string | boolean> {
   return args;
 }
 
-  const apiKey = loadGeminiApiKey();
-  if (!apiKey) throw new Error('GEMINI_API_KEY not found (env or .env.local).');
 function mimeFromPath(path: string): string {
   const ext = extname(path).toLowerCase();
   if (ext === '.png') return 'image/png';
@@ -90,23 +87,22 @@ async function main(): Promise<void> {
   const styleKey = typeof args.style === 'string' ? args.style : 'chibi';
   const styleContext = typeof args['style-context'] === 'string' ? args['style-context'] : undefined;
   const characterName = typeof args.name === 'string' ? args.name : undefined;
-  const layoutRefArg = typeof args['layout-ref'] === 'string' ? args['layout-ref'] : DEFAULT_LAYOUT_REF;
   const identityRefArg = typeof args['identity-ref'] === 'string' ? args['identity-ref'] : undefined;
   const model = typeof args.model === 'string' ? args.model : DEFAULT_MODEL;
   const resolution = typeof args.resolution === 'string' ? args.resolution : '1K';
 
-  const layoutPath = resolveImagePath(layoutRefArg);
   const prompt = buildCharacterRefPrompt({
     concept,
     styleKey,
     customStyle: styleContext,
     characterName,
+    hasIdentityReference: Boolean(identityRefArg),
   });
 
   if (dryRun) {
     console.log('=== Character ref prompt (dry-run) ===\n');
     console.log(prompt);
-    console.log(`\nlayout-ref: ${layoutPath}`);
+    console.log('\nlayout: text-only (no layout image attached)');
     console.log(`style: ${styleKey}`);
     if (identityRefArg) console.log(`identity-ref: ${identityRefArg}`);
     return;
@@ -115,7 +111,6 @@ async function main(): Promise<void> {
   const apiKey = loadGeminiApiKey();
   if (!apiKey) throw new Error('GEMINI_API_KEY not found (env or .env.local).');
 
-  const layoutBase64 = readFileSync(layoutPath).toString('base64');
   let identityBase64: string | undefined;
   let identityMime: string | undefined;
   if (identityRefArg) {
@@ -128,8 +123,6 @@ async function main(): Promise<void> {
   const pngBytes = await generateCharacterRefImage({
     apiKey,
     prompt,
-    layoutRefBase64: layoutBase64,
-    layoutRefMimeType: mimeFromPath(layoutPath),
     identityRefBase64: identityBase64,
     identityRefMimeType: identityMime,
     model,

@@ -38,6 +38,8 @@ export interface BuildGridSheetTemplateOptions {
   chromaKeyColor?: ChromaKeyColorType;
   /** `solid` = blank chroma (plan A). `guided` = visible grid layout canvas (plan B). */
   mode?: GridTemplateMode;
+  /** Guided mode: draw L-shaped corner ticks inside each cell (default false — lines only). */
+  cellCornerTicks?: boolean;
 }
 
 function setPixel(
@@ -156,7 +158,8 @@ function drawGuidedGridOverlay(
   rows: number,
   xBounds: number[],
   yBounds: number[],
-  chromaKeyColor: ChromaKeyColorType
+  chromaKeyColor: ChromaKeyColorType,
+  cellCornerTicks: boolean
 ): void {
   const groove = grooveColor(chromaKeyColor);
   const grooveThickness = 1;
@@ -167,6 +170,10 @@ function drawGuidedGridOverlay(
   }
   for (let r = 1; r < rows; r++) {
     drawHorizontalGroove(data, width, height, yBounds[r]!, 0, width, groove, grooveThickness);
+  }
+
+  if (!cellCornerTicks) {
+    return;
   }
 
   const cellW = width / cols;
@@ -205,13 +212,24 @@ export function buildGridSheetTemplate(
   const sizePx = options.sizePx ?? LINE_STICKER_SPRITE_SHEET_SIZE_PX;
   const chromaKeyColor = options.chromaKeyColor ?? 'green';
   const mode = options.mode ?? 'solid';
+  const cellCornerTicks = options.cellCornerTicks ?? false;
 
   const data = new Uint8ClampedArray(sizePx * sizePx * 4);
   fillChromaBackground(data, chromaKeyColor);
 
   const { xBounds, yBounds } = buildEqualGridBounds(sizePx, cols, rows);
   if (mode === 'guided') {
-    drawGuidedGridOverlay(data, sizePx, sizePx, cols, rows, xBounds, yBounds, chromaKeyColor);
+    drawGuidedGridOverlay(
+      data,
+      sizePx,
+      sizePx,
+      cols,
+      rows,
+      xBounds,
+      yBounds,
+      chromaKeyColor,
+      cellCornerTicks
+    );
   }
 
   return { data, width: sizePx, height: sizePx, xBounds, yBounds, cols, rows, mode };
