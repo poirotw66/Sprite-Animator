@@ -71,6 +71,7 @@ use `manifest.json` → `activeSheets`, or fall back to `sheet-1`, `sheet-2`.
 3. **`--dry-run`** to verify prompt + phrases.
 4. **Run for real** → one command produces debug output + repo-local upload folder.
 5. **Spot-check** a few `stickers/sticker-NN.png` and `manifest.json` grid scores.
+   Read `qa-report.json` → `edgeGreenCount` / `pocketGreenCount` per sticker.
 6. Tell the user the **`--out` folder** and, when `syncToUploadRoot` is on, the synced
    **`.line-upload/input/706/{Set Name}/`** path + upload command.
 
@@ -179,10 +180,31 @@ Without `upload`, legacy output is `<out>/line-upload/` + `line-upload.zip`.
 | `finalize.mts` | merge `activeSheets` → stickers + upload pack + sync |
 | `sync-upload-input.mts` | copy local pack → `.line-upload/input/706/` |
 | `run-line-upload.mts` | run Drive + Playwright upload pipeline |
-| `reslice-sheet.mts` | re-slice existing `_processed-sheet.png` (no Gemini) |
-| `stickerQa` (via finalize) | auto `qa-report.json` — foreground, size, text, LINE limits |
+| `reslice-sheet.mts` | re-slice existing `_raw-sheet.jpg` (no Gemini) |
+| `reoverlay-sheet.mts` | re-apply programmatic text after reslice |
+| `stickerQa` (via finalize) | auto `qa-report.json` — foreground, size, text, LINE limits, **green fringe** |
 | `organize-line-upload-input.mts` | standalone pack into upload layout (fallback) |
 | `rebuild-line-upload.mts` | legacy only; prefer `finalize.mts` |
+
+### Re-slice after chroma changes (no Gemini)
+
+```bash
+npx tsx .claude/skills/line-sticker-maker/scripts/reslice-sheet.mts <out>/sheet-1 4 5 template
+npx tsx .claude/skills/line-sticker-maker/scripts/reoverlay-sheet.mts <out>/sheet-1 4 5 \
+  --phrases <out>/phrase-set.json --offset 0
+npx tsx .claude/skills/line-sticker-maker/scripts/reslice-sheet.mts <out>/sheet-2 4 5 template
+npx tsx .claude/skills/line-sticker-maker/scripts/reoverlay-sheet.mts <out>/sheet-2 4 5 \
+  --phrases <out>/phrase-set.json --offset 20
+npx tsx .claude/skills/line-sticker-maker/scripts/finalize.mts \
+  --out <out> --config <out>/job.config.json
+```
+
+### Chroma safety (guided green)
+
+- **Do** clear enclosed green pockets (`G > max(R,B)`, chroma distance below threshold).
+- **Do not** alpha-erase neutral gray / black line AA (`RGB spread < 12`) — original ink.
+- **Do not** use neutral-gray protrusion cleanup — it deletes speed lines / outlines.
+- `qa-report.json` fields: `edgeGreenCount`, `pocketGreenCount`, `oliveFringeCount`.
 
 ## manifest.json
 
@@ -203,6 +225,7 @@ After a full run or `finalize.mts`:
 ## Notes / limits
 
 - Background normalization + chroma key use the **same shared rules** as the web app (`normalizeChromaBackground` → `processChromaKey`).
+- **Guided green pocket cleanup** (Pass 5): clears enclosed `G > max(R,B)` pockets only; never touches neutral gray / black line AA.
 - Sprite sheets: **1:1 @ 1K → 1024×1024 px** (4×5 → ~256×204 px per cell).
 - Upload PNGs are scaled to LINE limits; `stickers/` keeps native resolution.
 - 40-sticker set = **2 Gemini calls in parallel** (both sheets use the same character reference image only).

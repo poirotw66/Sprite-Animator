@@ -13,6 +13,7 @@ import {
   CHROMA_LIKE_SOFT_EXTRA,
 } from './chromaSimilarity';
 import { shouldUseGuidedChromaPath } from './chromaGuidedDetect';
+import { clearGuidedGreenPockets } from './chromaPocketCleanup';
 
 /**
  * Convert RGB to HSL color space
@@ -406,6 +407,17 @@ export function processChromaKey(
           nearTransparentForSpill[ny * width + nx] = 1;
         }
       }
+    }
+  }
+
+  // Pass 2b (guided green key only): clear enclosed pockets before despill grays them.
+  if (useGuided && targetIsGreen) {
+    for (let p = 0; p < totalPixels; p++) {
+      data[p * 4 + 3] = erodedAlpha[p]!;
+    }
+    clearGuidedGreenPockets(data, width, height, { key: targetColor, keyMax });
+    for (let p = 0; p < totalPixels; p++) {
+      erodedAlpha[p] = data[p * 4 + 3]!;
     }
   }
 

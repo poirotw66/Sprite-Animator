@@ -253,4 +253,27 @@ describe('processChromaKey hard cases', () => {
 
     expect(alphaAt(data, w, fx, fy)).toBe(0);
   });
+
+  it('clears enclosed green pocket clusters in guided mode', () => {
+    const w = 40;
+    const h = 40;
+    const inset = 8;
+    const data = makeGreenWithRedCenter(w, h, inset);
+    for (let y = 14; y <= 16; y++) {
+      for (let x = 14; x <= 16; x++) {
+        const i = (y * w + x) * 4;
+        data[i] = 19;
+        data[i + 1] = 29;
+        data[i + 2] = 13;
+        data[i + 3] = 255;
+      }
+    }
+
+    processChromaKey(data, w, h, { r: 0, g: 255, b: 0 }, 35, () => {}, 2, 0.22, {
+      guided: true,
+    });
+
+    expect(alphaAt(data, w, 15, 15)).toBe(0);
+    expect(alphaAt(data, w, inset + 5, inset + 5)).toBe(255);
+  });
 });

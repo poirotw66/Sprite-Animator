@@ -59,4 +59,18 @@ describe('stickerFrameQa', () => {
     expect(report.pass).toBe(false);
     expect(report.summaryWarnings.length).toBeGreaterThan(0);
   });
+
+  it('reports green fringe counts on sliced frames', () => {
+    const frame = solidFrame(32, 32, (i) => {
+      const x = (i / 4) % 32;
+      const y = Math.floor(i / 4 / 32);
+      if (x === 5 && y === 4) return [10, 40, 8, 255];
+      if (x >= 14 && x <= 16 && y >= 14 && y <= 16) return [19, 29, 13, 255];
+      if (x >= 10 && x <= 18 && y >= 10 && y <= 18) return [80, 50, 40, 255];
+      return [0, 0, 0, 0];
+    });
+    const report = auditStickerFrames([{ globalIndex: 1, frame }]);
+    expect(report.entries[0]!.edgeGreenCount).toBeGreaterThanOrEqual(1);
+    expect(report.entries[0]!.pocketGreenCount).toBeGreaterThanOrEqual(1);
+  });
 });

@@ -144,6 +144,50 @@ npx tsx .claude/skills/line-sticker-maker/scripts/run-from-inputs.mts \
 
 Spot-check 2–3 stickers and `manifest.json` → `gridScores` (target ≥ 0.8).
 
+**Chroma spot-check (required for zh-TW sets):**
+
+| check | what to look for |
+|---|---|
+| Enclosed pockets | green between arms / hair gaps (`pocketGreenCount` in `qa-report.json`) |
+| Outer edge | green halo on hair / shirt (`edgeGreenCount`) |
+| Black lines | speed lines / ink must stay — **never erase neutral gray `(R≈G≈B)`** |
+| Floaters | tiny crumbs disconnected from subject |
+
+`qa-report.json` entries now include `edgeGreenCount`, `pocketGreenCount`, `oliveFringeCount`.
+Warn thresholds: edge green ≥ 10, pocket green ≥ 8. Summary lists flagged sticker IDs.
+
+### Step 5b — Re-slice after chroma fixes (no Gemini)
+
+When tuning `chromaKeyCore` or fixing green pockets **without** regenerating art:
+
+```bash
+# sheet-1 = stickers 01–20, sheet-2 = stickers 21–40 (offset 20)
+npx tsx .claude/skills/line-sticker-maker/scripts/reslice-sheet.mts \
+  output/<set>/sheet-1 4 5 template
+
+npx tsx .claude/skills/line-sticker-maker/scripts/reoverlay-sheet.mts \
+  output/<set>/sheet-1 4 5 \
+  --phrases output/<set>/phrase-set.json --offset 0
+
+npx tsx .claude/skills/line-sticker-maker/scripts/reslice-sheet.mts \
+  output/<set>/sheet-2 4 5 template
+
+npx tsx .claude/skills/line-sticker-maker/scripts/reoverlay-sheet.mts \
+  output/<set>/sheet-2 4 5 \
+  --phrases output/<set>/phrase-set.json --offset 20
+
+npx tsx .claude/skills/line-sticker-maker/scripts/finalize.mts \
+  --out output/<set> --config output/<set>/job.config.json
+```
+
+Requires `_raw-sheet.jpg` in each sheet folder. Use `template` slice mode when
+`_grid-template-guided.png` exists (default for guided grid jobs).
+
+**Chroma safety rule (do not regress):** pocket cleanup only clears pixels where
+`G > max(R,B)` and chroma distance is below threshold. **Never** alpha-erase
+neutral gray / black line AA (`max(R,G,B) - min(R,G,B) < 12`) — those are
+original ink, not green-screen residue.
+
 ### Step 6 — Upload (optional)
 
 1. Copy and fill **`.claude/skills/line-sticker-maker/credentials.env`** (see `credentials.env.example`).
@@ -171,7 +215,40 @@ npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts \
 |---|---|
 | One sheet only | `generate.mts --config <out>/job.config.json --out <out> --sheet sheet-1 --sheet-dir sheet-1-v2` |
 | Merge + repack | `finalize.mts --out <out> --config <out>/job.config.json --sheets sheet-1-v2,sheet-2` |
-| Re-slice (no Gemini) | `reslice-sheet.mts` |
+| Re-slice (no Gemini) | `reslice-sheet.mts` → `reoverlay-sheet.mts` → `finalize.mts` (see below) |
+
+### Re-slice workflow (chroma fix, no Gemini)
+
+```bash
+# sheet-1 (stickers 01–20)
+npx tsx .claude/skills/line-sticker-maker/scripts/reslice-sheet.mts <out>/sheet-1 4 5 template
+npx tsx .claude/skills/line-sticker-maker/scripts/reoverlay-sheet.mts <out>/sheet-1 4 5 \
+  --phrases <out>/phrase-set.json --offset 0
+
+# sheet-2 (stickers 21–40)
+npx tsx .claude/skills/line-sticker-maker/scripts/reslice-sheet.mts <out>/sheet-2 4 5 template
+npx tsx .claude/skills/line-sticker-maker/scripts/reoverlay-sheet.mts <out>/sheet-2 4 5 \
+  --phrases <out>/phrase-set.json --offset 20
+
+npx tsx .claude/skills/line-sticker-maker/scripts/finalize.mts \
+  --out <out> --config <out>/job.config.json
+```
+
+`reslice-sheet.mts` reads `_raw-sheet.jpg`, re-runs chroma key + slice.
+`reoverlay-sheet.mts` re-applies programmatic captions when `textRendering: programmatic`.
+Both sheets must be resliced before `finalize.mts`.
+
+### Chroma key rules (guided green)
+
+| residue type | action |
+|---|---|
+| Enclosed green pocket (armpit / hair gap) | `clearGuidedGreenPockets` — Pass 5 in `chromaKeyCore` |
+| Green edge fringe | despill + strong spill erase (`G > R` and `G > B`) |
+| Neutral gray / black line AA | **never erase** — original ink / speed lines |
+| Interior green prop (`greenExcess >= 45`) | keep |
+| Lone neon green accent (0–1 green neighbors) | keep |
+
+**Never** use neutral-gray protrusion erase — it deletes black line art.
 
 Details: `.claude/skills/line-sticker-maker/SKILL.md`
 

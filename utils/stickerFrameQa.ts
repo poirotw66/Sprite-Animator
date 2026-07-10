@@ -5,6 +5,12 @@
 
 import { isSliceBackgroundPixel } from './imageContentAnalysis';
 import {
+  measureChromaFringe,
+  CHROMA_FRINGE_WARN_EDGE_GREEN,
+  CHROMA_FRINGE_WARN_OLIVE,
+  CHROMA_FRINGE_WARN_POCKET_GREEN,
+} from './chromaFringeMetrics';
+import {
   LINE_STICKER_UPLOAD,
   computeFitDimensions,
 } from './lineStickerUploadSpec';
@@ -42,6 +48,9 @@ export interface StickerFrameQaEntry {
   lineUploadBytes: number;
   lineUploadScore: number;
   overallScore: number;
+  edgeGreenCount: number;
+  pocketGreenCount: number;
+  oliveFringeCount: number;
   warnings: string[];
 }
 
@@ -195,6 +204,32 @@ function scoreForegroundRatio(ratio: number): { score: number; warnings: string[
   return { score: 1, warnings };
 }
 
+function scoreChromaFringe(
+  edgeGreenCount: number,
+  pocketGreenCount: number,
+  oliveFringeCount: number
+): { score: number; warnings: string[] } {
+  const warnings: string[] = [];
+  let score = 1;
+  if (pocketGreenCount >= CHROMA_FRINGE_WARN_POCKET_GREEN) {
+    score = Math.min(score, 0.55);
+    warnings.push(`enclosed green pocket residue (${pocketGreenCount} px)`);
+  } else if (pocketGreenCount > 0) {
+    score = Math.min(score, 0.85);
+  }
+  if (edgeGreenCount >= CHROMA_FRINGE_WARN_EDGE_GREEN) {
+    score = Math.min(score, 0.6);
+    warnings.push(`green edge fringe (${edgeGreenCount} px)`);
+  } else if (edgeGreenCount > 0) {
+    score = Math.min(score, 0.9);
+  }
+  if (oliveFringeCount >= CHROMA_FRINGE_WARN_OLIVE) {
+    score = Math.min(score, 0.75);
+    warnings.push(`olive edge fringe (${oliveFringeCount} px)`);
+  }
+  return { score, warnings };
+}
+
 export function auditStickerFrame(
   input: StickerFrameQaInput,
   medianWidth: number,
@@ -231,7 +266,15 @@ export function auditStickerFrame(
   const line = scoreLineUploadFit(frame, pngBytes);
   warnings.push(...line.warnings);
 
-  const parts = [fg.score, dimensionScore, line.score];
+  const fringe = measureChromaFringe(frame.data, frame.width, frame.height);
+  const fringeScore = scoreChromaFringe(
+    fringe.edgeGreenCount,
+    fringe.pocketGreenCount,
+    fringe.oliveFringeCount
+  );
+  warnings.push(...fringeScore.warnings);
+
+  const parts = [fg.score, dimensionScore, line.score, fringeScore.score];
   if (textContrastScore != null) parts.push(textContrastScore);
   const overallScore = parts.reduce((sum, s) => sum + s, 0) / parts.length;
 
@@ -250,6 +293,9 @@ export function auditStickerFrame(
     lineUploadBytes: pngBytes,
     lineUploadScore: line.score,
     overallScore,
+    edgeGreenCount: fringe.edgeGreenCount,
+    pocketGreenCount: fringe.pocketGreenCount,
+    oliveFringeCount: fringe.oliveFringeCount,
     warnings,
   };
 }
@@ -279,7 +325,22 @@ export function auditStickerFrames(
       : 1;
 
   const lowEntries = entries.filter((e) => e.overallScore < warnThreshold);
+  const fringeEntries = entries.filter(
+    (e) =>
+      e.edgeGreenCount >= CHROMA_FRINGE_WARN_EDGE_GREEN ||
+      e.pocketGreenCount >= CHROMA_FRINGE_WARN_POCKET_GREEN
+  );
   const summaryWarnings: string[] = [];
+  if (fringeEntries.length > 0) {
+    summaryWarnings.push(
+      `${fringeEntries.length}/${entries.length} stickers have notable green fringe (see edgeGreenCount / pocketGreenCount)`
+    );
+    for (const e of fringeEntries.slice(0, 6)) {
+      summaryWarnings.push(
+        `sticker-${String(e.globalIndex).padStart(2, '0')}: edgeGreen=${e.edgeGreenCount}, pocketGreen=${e.pocketGreenCount}`
+      );
+    }
+  }
   if (lowEntries.length > 0) {
     summaryWarnings.push(
       `${lowEntries.length}/${entries.length} stickers scored below ${warnThreshold.toFixed(2)}`
