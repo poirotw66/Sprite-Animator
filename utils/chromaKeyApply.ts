@@ -13,6 +13,7 @@ import {
 } from './constants';
 import { processChromaKey } from './chromaKeyCore';
 import { processChromaKeyForge } from './chromaKeyForge';
+import { despillForgeGreenFringe } from './chromaForgeGreenFringe';
 
 export interface ApplyChromaKeyOptions {
   algorithm?: ChromaKeyAlgorithm;
@@ -35,10 +36,14 @@ export function applyChromaKey(
   const algorithm = options.algorithm ?? DEFAULT_CHROMA_KEY_ALGORITHM;
 
   if (algorithm === 'forge') {
-    return processChromaKeyForge(data, width, height, chromaKey, {
+    processChromaKeyForge(data, width, height, chromaKey, {
       threshold: options.forgeThreshold ?? CHROMA_KEY_FORGE_THRESHOLD,
       edgeThreshold: options.forgeEdgeThreshold ?? CHROMA_KEY_FORGE_EDGE_THRESHOLD,
     });
+    if (chromaKey.g === 255 && chromaKey.r === 0 && chromaKey.b === 0) {
+      despillForgeGreenFringe(data, width, height);
+    }
+    return data;
   }
 
   return processChromaKey(
