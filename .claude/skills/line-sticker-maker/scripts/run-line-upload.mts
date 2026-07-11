@@ -79,7 +79,7 @@ const skipGridGate = args['skip-grid-gate'] === 'true';
 
 if (!envFile) {
   console.error(
-    'Usage: run-line-upload.mts --env output/pX/.env.batch/Set_Name.env [--step gdrive|provision|zip|submit|all] [--submit true|false] [--interactive true]'
+    'Usage: run-line-upload.mts --env output/pX/.env.batch/Set_Name.env [--step gdrive|provision|zip|submit|all] [--submit true|false] [--workers N] [--interactive true]'
   );
   process.exit(1);
 }
@@ -121,6 +121,9 @@ if (!runInteractive) {
 for (const name of steps) {
   console.log(`\n▶ ${name}: ${STEP_SCRIPTS[name]}`);
   const extra = name === 'gdrive' ? ['--stage'] : [];
+  if (name === 'gdrive' && args.workers) {
+    extra.push('--workers', args.workers);
+  }
   if (!runInteractive) {
     if (name === 'provision' || name === 'submit' || name === 'zip') {
       extra.push('--headless');

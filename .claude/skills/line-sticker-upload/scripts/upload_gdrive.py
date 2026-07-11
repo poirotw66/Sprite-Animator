@@ -43,7 +43,10 @@ TOKEN_PATH = SCRIPT_DIR / "gdrive_token.json"
 CREDENTIALS_PATH = SCRIPT_DIR / "gdrive_credentials.json"
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 FOLDER_MIME = "application/vnd.google-apps.folder"
-DEFAULT_WORKERS = 6
+DEFAULT_WORKERS = 10
+NON_RESUMABLE_MAX_BYTES = 5 * 1024 * 1024
+# ponytail: one Drive client per thread; global lock was serializing all "parallel" uploads.
+_thread_local = threading.local()
 # Windows paths + staging; Drive folder names should avoid these too.
 _WIN_INVALID_PATH_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
@@ -128,6 +131,41 @@ def load_credentials(auth_only: bool) -> Credentials:
 
 def escape_drive_query(value: str) -> str:
     return value.replace("\\", "\\\\").replace("'", "\\'")
+
+
+def drive_service_for_thread(creds: Credentials) -> Any:
+    service = getattr(_thread_local, "drive_service", None)
+    if service is None:
+        service = build("drive", "v3", credentials=creds, cache_discovery=False)
+        _thread_local.drive_service = service
+    return service
+
+
+def list_existing_files_in_folders(service: Any, folder_ids: list[str]) -> set[tuple[str, str]]:
+    """Flat list per folder (stickers + sprites); faster than a full recursive tree walk."""
+    existing: set[tuple[str, str]] = set()
+    for folder_id in folder_ids:
+        page_token: str | None = None
+        while True:
+            response = (
+                service.files()
+                .list(
+                    q=(
+                        f"'{folder_id}' in parents and trashed = false "
+                        f"and mimeType != '{FOLDER_MIME}'"
+                    ),
+                    fields="nextPageToken, files(name)",
+                    pageToken=page_token,
+                    pageSize=1000,
+                )
+                .execute()
+            )
+            for item in response.get("files", []):
+                existing.add((folder_id, item["name"]))
+            page_token = response.get("nextPageToken")
+            if not page_token:
+                break
+    return existing
 
 
 def list_existing_files_tree(service: Any, root_folder_id: str) -> set[tuple[str, str]]:
@@ -268,26 +306,32 @@ def collect_tasks_from_local_set(
     return tasks
 
 
-def execute_upload(service: Any, api_lock: threading.Lock, task: UploadTask) -> None:
+def execute_upload(creds: Credentials, task: UploadTask) -> None:
+    service = drive_service_for_thread(creds)
     mime, _ = mimetypes.guess_type(task.filename)
     content_type = mime or "image/png"
     meta = {"name": task.filename, "parents": [task.parent_id]}
     if task.path is not None:
-        media = MediaFileUpload(str(task.path), mimetype=content_type, resumable=True)
+        size = task.path.stat().st_size
+        media = MediaFileUpload(
+            str(task.path),
+            mimetype=content_type,
+            resumable=size > NON_RESUMABLE_MAX_BYTES,
+        )
     elif task.data is not None:
+        size = len(task.data)
         media = MediaIoBaseUpload(
             io.BytesIO(task.data),
             mimetype=content_type,
-            resumable=True,
+            resumable=size > NON_RESUMABLE_MAX_BYTES,
         )
     else:
         raise ValueError(f"No payload for {task.filename}")
-    with api_lock:
-        service.files().create(body=meta, media_body=media, fields="id,name").execute()
+    service.files().create(body=meta, media_body=media, fields="id,name").execute()
 
 
 def upload_tasks_parallel(
-    service: Any,
+    creds: Credentials,
     tasks: list[UploadTask],
     existing: set[tuple[str, str]],
     skip_existing: bool,
@@ -296,7 +340,6 @@ def upload_tasks_parallel(
     if not tasks:
         return []
 
-    api_lock = threading.Lock()
     print_lock = threading.Lock()
     to_upload: list[UploadTask] = []
     skipped = 0
@@ -317,7 +360,7 @@ def upload_tasks_parallel(
     done = 0
 
     def worker(task: UploadTask) -> str:
-        execute_upload(service, api_lock, task)
+        execute_upload(creds, task)
         return task.filename
 
     with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
@@ -440,7 +483,7 @@ def resolve_set_folder_id(service: Any, env: dict[str, str], folder_override: st
 
 
 def run_upload(
-    service: Any,
+    creds: Credentials,
     root: Path,
     env: dict[str, str],
     env_path: Path,
@@ -450,12 +493,17 @@ def run_upload(
     workers: int,
     do_share: bool,
 ) -> None:
+    service = build("drive", "v3", credentials=creds, cache_discovery=False)
     set_folder_id = resolve_set_folder_id(service, env, folder_override)
     update_env_folder_id(env_path, set_folder_id)
     sticker_sub = env.get("GDRIVE_STICKER_SUBFOLDER", "sticker-pack")
+    sticker_drive_id = ensure_child_folder(service, set_folder_id, sticker_sub)
 
-    print("Listing existing Drive files (one pass)...", flush=True)
-    existing = list_existing_files_tree(service, set_folder_id) if skip_existing else set()
+    if skip_existing:
+        print("Listing existing Drive files (flat pass)...", flush=True)
+        existing = list_existing_files_in_folders(service, [set_folder_id, sticker_drive_id])
+    else:
+        existing = set()
 
     if local_dir is not None:
         tasks = collect_tasks_from_local_set(service, local_dir, set_folder_id, sticker_sub)
@@ -470,7 +518,7 @@ def run_upload(
     print(f"Queued {sticker_n} sticker PNGs, {sprite_n} sprite PNGs", flush=True)
     print(f"Upload workers: {workers}", flush=True)
 
-    names = upload_tasks_parallel(service, tasks, existing, skip_existing, workers)
+    names = upload_tasks_parallel(creds, tasks, existing, skip_existing, workers)
     print(f"Uploaded {len(names)} new file(s).", flush=True)
 
     if do_share:
@@ -551,9 +599,8 @@ def main() -> None:
             )
 
     creds = load_credentials(auth_only=False)
-    service = build("drive", "v3", credentials=creds, cache_discovery=False)
     run_upload(
-        service,
+        creds,
         root,
         env,
         env_path,
