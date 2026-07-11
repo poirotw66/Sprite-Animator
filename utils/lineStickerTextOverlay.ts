@@ -135,6 +135,8 @@ export function fontCssStackForPreset(fontKey: FontPresetKey): string {
       '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "Chalkboard SE", "Microsoft JhengHei", "PingFang TC", sans-serif',
     pop:
       '"PingFang TC", "Hiragino Sans", "Microsoft JhengHei", "Helvetica Neue", "Segoe UI", sans-serif',
+    playful:
+      '"Arial Rounded MT Bold", "Hiragino Maru Gothic ProN", "Yu Gothic UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif',
     pinkBubble:
       '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "Yu Gothic UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif',
     thinHandwritten:

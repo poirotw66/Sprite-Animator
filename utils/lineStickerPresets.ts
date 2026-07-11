@@ -13,6 +13,8 @@ export const TEXT_COLOR_PRESETS: Record<string, { label: string; promptDesc: str
     white: { label: '白色', promptDesc: 'White #FFFFFF' },
     darkGray: { label: '深灰', promptDesc: 'Dark gray #333333' },
     navy: { label: '深藍', promptDesc: 'Navy blue #1e3a5f' },
+    pink: { label: '粉紅', promptDesc: 'Pink #E84393' },
+    teal: { label: '墨綠', promptDesc: 'Teal #1F6F5B' },
     darkRed: { label: '深紅', promptDesc: 'Dark red #8b0000' },
     brown: { label: '棕色', promptDesc: 'Brown #5c4033' },
 };
@@ -23,6 +25,11 @@ export const FONT_PRESETS: Record<string, { label: string; promptDesc: string }>
     bold: { label: '黑體', promptDesc: 'Bold sans-serif sticker font, heavy weight, clear edges, strong contrast, optimized for tiny chat previews' },
     cute: { label: '萌系', promptDesc: 'Chunky playful bubble font, rounded edges, double stroke (white and dark), simple pastel colors, high legibility' },
     pop: { label: '流行體', promptDesc: 'Pop trendy sticker font, bold rhythm, strong stroke contrast, subtle accent only, no busy effects' },
+    playful: {
+        label: '俏皮圓體',
+        promptDesc:
+            'Playful rounded sticker font, bouncy rhythm, chunky friendly curves, bold weight, crisp white outline, optimized for chat stickers',
+    },
     pinkBubble: { label: '粉嫩泡泡風', promptDesc: 'Pink bubble sticker font, thick white and dark outer stroke, soft highlights only, keep glyphs crisp' },
     thinHandwritten: { label: '簡約手繪風', promptDesc: 'Clean minimal hand-drawn sticker font, slightly thin but reinforced with clear outer stroke for readability' },
     kidDoodle: {
@@ -40,6 +47,7 @@ export const FONT_PRESET_ORDER: (keyof typeof FONT_PRESETS)[] = [
     'bold',
     'cute',
     'pop',
+    'playful',
     'pinkBubble',
     'thinHandwritten',
     'kidDoodle',

@@ -25,6 +25,8 @@ import {
 import type { RgbaFrameBuffer } from './sheetComponentSlicer';
 import { trimFrameToContent } from './sheetComponentSlicer';
 import { computeFitDimensions, toEvenDimension } from './lineStickerUploadSpec';
+import type { LineStickerFontKey } from './lineStickerPresets';
+import { TEXT_COLOR_PRESETS } from './lineStickerPresets';
 import {
   extractFillHexFromTextColorPreset,
   resolveCanvasFontNumericWeight,
@@ -33,13 +35,15 @@ import {
 } from './lineStickerTextOverlay';
 import { lineWidthWithSpacing } from './lineStickerTextOverlayGeometry';
 
+type TextColorPresetKey = keyof typeof TEXT_COLOR_PRESETS;
+
 export interface ComposeStickerOptions {
   phrase: string;
   frameIndex?: number;
   compose?: ProgrammaticComposeConfig;
   tuning?: ProgrammaticTextOverlayTuning;
-  fontKey?: 'round' | 'handwritten' | 'bold' | 'gothic' | 'poster';
-  colorKey?: 'black' | 'white' | 'navy' | 'red' | 'pink';
+  fontKey?: LineStickerFontKey;
+  colorKey?: TextColorPresetKey;
 }
 
 /** Compose layout applies only when enabled and the frame has caption text. */

@@ -67,12 +67,16 @@ if (!existsSync(processedPath)) {
 async function loadOverlayConfig(): Promise<{
   tuning: ProgrammaticTextOverlayTuning;
   compose: ProgrammaticComposeConfig;
+  fontKey: keyof typeof FONT_PRESETS;
+  textColorKey: keyof typeof TEXT_COLOR_PRESETS;
 }> {
   const configPath = jobConfigPath
     ? resolve(jobConfigPath)
     : resolve(sheetDir, '..', 'job.config.json');
   let partial: Partial<ProgrammaticTextOverlayTuning> | undefined;
   let composePartial: Partial<ProgrammaticComposeConfig> | undefined;
+  let fontKey: keyof typeof FONT_PRESETS = 'round';
+  let textColorKey: keyof typeof TEXT_COLOR_PRESETS = 'black';
   if (existsSync(configPath)) {
     const config = JSON.parse(await readFile(configPath, 'utf8')) as {
       programmaticTextTuning?: Partial<ProgrammaticTextOverlayTuning>;
@@ -82,12 +86,20 @@ async function loadOverlayConfig(): Promise<{
     };
     partial = config.programmaticTextTuning;
     composePartial = config.programmaticCompose;
+    if (config.fontKey) {
+      fontKey = config.fontKey;
+    }
+    if (config.textColorKey) {
+      textColorKey = config.textColorKey;
+    }
     if (fontSizePercent != null) {
       partial = { ...partial, fontSizePercent };
     }
     return {
       tuning: mergeProgrammaticTextTuning(partial),
       compose: mergeProgrammaticComposeConfig(composePartial),
+      fontKey,
+      textColorKey,
     };
   }
   return {
@@ -95,6 +107,8 @@ async function loadOverlayConfig(): Promise<{
       fontSizePercent != null ? { fontSizePercent } : undefined
     ),
     compose: mergeProgrammaticComposeConfig(),
+    fontKey,
+    textColorKey,
   };
 }
 
@@ -107,9 +121,10 @@ let phrases: string[] = await loadSheetPhrases({
   jobConfigPath: jobConfigPath || undefined,
 });
 
-const { tuning, compose } = await loadOverlayConfig();
+const { tuning, compose, fontKey, textColorKey } = await loadOverlayConfig();
 console.log(
   `Programmatic tuning: fontSizePercent=${tuning.fontSizePercent}` +
+    ` | font=${fontKey} | color=${textColorKey}` +
     (compose.enabled ? ` | compose=${compose.layout ?? 'top_caption_bottom_subject'}` : '')
 );
 
@@ -127,8 +142,19 @@ frames = frames.map((frame, i) => {
   const phrase = phrases[i] ?? '';
   const frameIndex = phraseOffset + i;
   const overlaid = compose.enabled
-    ? composePhraseOnRgbaFrame(frame, phrase, { frameIndex, tuning, compose })
-    : overlayPhraseOnRgbaFrame(frame, phrase, { frameIndex, tuning });
+    ? composePhraseOnRgbaFrame(frame, phrase, {
+        frameIndex,
+        tuning,
+        compose,
+        fontKey,
+        colorKey: textColorKey,
+      })
+    : overlayPhraseOnRgbaFrame(frame, phrase, {
+        frameIndex,
+        tuning,
+        fontKey,
+        colorKey: textColorKey,
+      });
   if (!compose.enabled) {
     return trimFrameToContent(overlaid);
   }
