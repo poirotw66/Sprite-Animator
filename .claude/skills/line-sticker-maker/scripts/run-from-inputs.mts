@@ -180,7 +180,7 @@ async function main(): Promise<void> {
       language: 'zh-TW',
       chromaKeyColor: 'green',
       includeText: true,
-      textRendering: 'programmatic',
+      textRendering: 'model',
       scope,
       ...(scope === 'set' ? { stickerCount } : {}),
       ...(scope === 'single'
