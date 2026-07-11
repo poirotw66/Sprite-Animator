@@ -24,7 +24,7 @@ import {
   mergeProgrammaticTextTuning,
 } from '../../../../utils/lineStickerTextOverlayTypes.ts';
 import { FONT_PRESETS, TEXT_COLOR_PRESETS } from '../../../../utils/lineStickerPrompt.ts';
-import { shouldUseComposeLayout } from '../../../../utils/lineStickerCompose.ts';
+import { shouldUseComposeLayout, ensureLandscapeStickerFrame } from '../../../../utils/lineStickerCompose.ts';
 import type { ChromaKeyAlgorithm } from '../../../../types.ts';
 
 const argv = process.argv.slice(2);
@@ -58,11 +58,11 @@ async function findRawSheet(): Promise<string> {
   return resolve(sheetDir, raw);
 }
 
-const resolvedJobConfig =
-  jobConfigPath || resolve(sheetDir, '..', 'job.config.json');
+const resolvedJobConfig = jobConfigPath || resolve(sheetDir, '..', 'job.config.json');
 const config = existsSync(resolvedJobConfig)
   ? (JSON.parse(await readFile(resolvedJobConfig, 'utf8')) as {
       chromaKeyAlgorithm?: ChromaKeyAlgorithm;
+      textRendering?: 'model' | 'programmatic';
       programmaticTextTuning?: object;
       programmaticCompose?: object;
       fontKey?: keyof typeof FONT_PRESETS;
@@ -102,13 +102,18 @@ processSheetChromaKey(image, chromaKeyColor, { guided: useGuided, algorithm });
 await mkdir(outDir, { recursive: true });
 await writeFile(resolve(outDir, `_processed-sheet-${algorithm}.png`), encodePng(image));
 
+const preserveCellAlphaThreshold = config.textRendering === 'model' ? 8 : undefined;
+
 console.log(`Preview (${algorithm}) → ${outDir} (guided=${useGuided})`);
 console.log(
-  `Overlay: font=${fontKey} color=${textColorKey} compose=${compose.enabled ? compose.layout : 'off'}`
+  `Overlay: font=${fontKey} color=${textColorKey} compose=${compose.enabled ? compose.layout : 'off'}${
+    preserveCellAlphaThreshold ? ' preserveCellAlpha' : ''
+  }`
 );
 
 let frames = sliceSheet(image, cols, rows, {
   sliceMode: useGuided ? 'template' : 'divider',
+  preserveCellAlphaThreshold,
   guidedContentCrop: useGuided,
   templateBounds: useGuided ? templateBounds : undefined,
 });
@@ -130,6 +135,12 @@ frames = frames.map((frame, i) => {
   }
   return shouldUseComposeLayout(compose, phrase) ? frame : trimFrameToContent(frame);
 });
+
+if (compose.preferLandscapeAspect !== false) {
+  frames = frames.map((frame) =>
+    ensureLandscapeStickerFrame(frame, compose.minLandscapeAspect ?? 1.05)
+  );
+}
 
 for (let i = 0; i < frames.length; i++) {
   const name = `sticker-${String(i + 1).padStart(2, '0')}.png`;

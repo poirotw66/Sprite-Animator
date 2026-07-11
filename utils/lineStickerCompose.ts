@@ -24,7 +24,7 @@ import {
 } from './lineStickerComposeLayout';
 import type { RgbaFrameBuffer } from './sheetComponentSlicer';
 import { trimFrameToContent } from './sheetComponentSlicer';
-import { computeFitDimensions, toEvenDimension } from './lineStickerUploadSpec';
+import { computeFitDimensions, toEvenDimension, LINE_STICKER_UPLOAD } from './lineStickerUploadSpec';
 import type { LineStickerFontKey } from './lineStickerPresets';
 import { TEXT_COLOR_PRESETS } from './lineStickerPresets';
 import { ensureBundledStickerFontsRegistered } from './lineStickerBundledFonts';
@@ -169,6 +169,52 @@ function readRgbaFromCanvas(canvas: ReturnType<typeof createCanvas>): RgbaFrameB
   }
   const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
   return { data: new Uint8ClampedArray(data), width, height };
+}
+
+/** Pad transparent sides so trimmed stickers read landscape in chat (width > height). */
+export function ensureLandscapeStickerFrame(
+  frame: RgbaFrameBuffer,
+  minAspect: number = 1.05,
+  maxWidth: number = LINE_STICKER_UPLOAD.stickerMaxWidth,
+  maxHeight: number = LINE_STICKER_UPLOAD.stickerMaxHeight
+): RgbaFrameBuffer {
+  if (frame.width > frame.height) {
+    return frame;
+  }
+
+  const aspect = Math.max(1.01, minAspect);
+  let content = frame;
+  let targetW = toEvenDimension(Math.ceil(content.height * aspect));
+  let targetH = toEvenDimension(content.height);
+
+  if (targetW > maxWidth || targetH > maxHeight) {
+    const scale = Math.min(maxWidth / targetW, maxHeight / targetH, 1);
+    content = resampleRgba(
+      content,
+      toEvenDimension(content.width * scale),
+      toEvenDimension(content.height * scale)
+    );
+    targetH = content.height;
+    targetW = toEvenDimension(Math.min(maxWidth, Math.ceil(targetH * aspect)));
+  }
+
+  if (content.width >= targetW && content.width > content.height) {
+    return content;
+  }
+
+  const canvas = createCanvas(targetW, targetH);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    return content;
+  }
+  ctx.clearRect(0, 0, targetW, targetH);
+  drawRgbaFrameOnCanvas(
+    ctx,
+    content,
+    Math.floor((targetW - content.width) / 2),
+    Math.floor((targetH - content.height) / 2)
+  );
+  return readRgbaFromCanvas(canvas);
 }
 
 /** Stroke+fill one line char by char so CJK captions get visible letter spacing. */
@@ -325,7 +371,7 @@ export function composeStickerFrame(
   const tuning = mergeProgrammaticTextTuning({
     ...options.tuning,
     ...compose.tuning,
-    fontSizeMode: compose.tuning?.fontSizeMode ?? options.tuning?.fontSizeMode ?? 'fixed',
+    fontSizeMode: compose.tuning?.fontSizeMode ?? options.tuning?.fontSizeMode ?? 'auto',
   });
   const fontKey = options.fontKey ?? 'round';
   const colorKey = options.colorKey ?? 'black';
@@ -346,7 +392,7 @@ export function composeStickerFrame(
     ...tuning,
     ...compose.tuning,
     fontSizePercent: adaptive.fontSizePercent,
-    fontSizeMode: compose.tuning?.fontSizeMode ?? options.tuning?.fontSizeMode ?? 'fixed',
+    fontSizeMode: compose.tuning?.fontSizeMode ?? options.tuning?.fontSizeMode ?? 'auto',
   });
 
   const canvasW = compose.workCanvas?.width ?? WORK_CANVAS_WIDTH;
@@ -498,6 +544,14 @@ export function composeStickerFrame(
     const evenH = toEvenDimension(output.height);
     if (evenW !== output.width || evenH !== output.height) {
       output = resampleRgba(output, evenW, evenH);
+    }
+    if (compose.preferLandscapeAspect !== false) {
+      output = ensureLandscapeStickerFrame(
+        output,
+        compose.minLandscapeAspect ?? 1.05,
+        LINE_STICKER_UPLOAD.stickerMaxWidth,
+        LINE_STICKER_UPLOAD.stickerMaxHeight
+      );
     }
   }
   return output;

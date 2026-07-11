@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   sliceSheetByComponentOwnership,
+  sliceSheetByGridBounds,
   trimFrameToContent,
 } from './sheetComponentSlicer';
 
@@ -89,6 +90,56 @@ describe('sliceSheetByComponentOwnership', () => {
     const topLeft = frames[0]!;
     expect(alphaAt(topLeft, 50, 99)).toBe(0);
     expect(alphaAt(topLeft, 50, 50)).toBe(255);
+  });
+
+  it('preserves unlabeled semi-transparent pixels inside strict cell bounds', () => {
+    const data = makeTransparentSheet(width, height);
+    paintOpaqueRect(data, width, 30, 60, 70, 90);
+    const edgeOffset = (40 * width + 50) * 4;
+    // Green-tinted semi-transparent edge: visible after chroma key but not foreground-labeled.
+    data[edgeOffset] = 20;
+    data[edgeOffset + 1] = 180;
+    data[edgeOffset + 2] = 20;
+    data[edgeOffset + 3] = 64;
+
+    const without = sliceSheetByComponentOwnership(data, width, height, xBounds, yBounds);
+    const withPreserve = sliceSheetByComponentOwnership(data, width, height, xBounds, yBounds, {
+      preserveCellAlphaThreshold: 8,
+    });
+
+    expect(alphaAt(without[0]!, 50, 40)).toBe(0);
+    expect(alphaAt(withPreserve[0]!, 50, 40)).toBe(64);
+  });
+
+  it('still masks foreign-owned pixels inside strict cell bounds when preserving alpha', () => {
+    const data = makeTransparentSheet(width, height);
+    paintOpaqueRect(data, width, 30, 30, 110, 80); // top-left art spilling into top-right cell
+
+    const frames = sliceSheetByComponentOwnership(data, width, height, xBounds, yBounds, {
+      preserveCellAlphaThreshold: 8,
+    });
+    const topRight = frames[1]!;
+    expect(alphaAt(topRight, 5, 50)).toBe(0);
+  });
+});
+
+describe('sliceSheetByGridBounds', () => {
+  it('copies every pixel inside each cell rectangle including semi-transparent edges', () => {
+    const width = 200;
+    const height = 200;
+    const xBounds = [0, 100, 200];
+    const yBounds = [0, 100, 200];
+    const data = makeTransparentSheet(width, height);
+    const offset = (50 * width + 50) * 4;
+    data[offset] = 255;
+    data[offset + 1] = 255;
+    data[offset + 2] = 255;
+    data[offset + 3] = 64;
+
+    const frames = sliceSheetByGridBounds(data, width, height, xBounds, yBounds);
+    expect(frames[0]!.width).toBe(100);
+    expect(frames[0]!.height).toBe(100);
+    expect(alphaAt(frames[0]!, 50, 50)).toBe(64);
   });
 });
 

@@ -455,7 +455,9 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
   log(
     logPrefix,
     useGuidedTemplateSlice
-      ? `slicing into ${sheet.cols * sheet.rows} stickers (guided template bounds)...`
+      ? `slicing into ${sheet.cols * sheet.rows} stickers (guided template bounds, ownership${
+          textRendering === 'model' ? ', preserve cell alpha' : ''
+        })...`
       : `slicing into ${sheet.cols * sheet.rows} stickers (white-divider mode)...`
   );
 
@@ -470,6 +472,7 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
 
   let frames = sliceSheet(image, sheet.cols, sheet.rows, {
     sliceMode: useGuidedTemplateSlice ? 'template' : 'divider',
+    preserveCellAlphaThreshold: textRendering === 'model' ? 8 : undefined,
     guidedContentCrop: useGuidedTemplateSlice,
     dividerGrid:
       !useGuidedTemplateSlice &&

@@ -105,4 +105,22 @@ describe('composeStickerFrame trimAfterCompose', () => {
     expect(untrimmed.width).toBe(WORK_CANVAS_WIDTH);
     expect(untrimmed.height).toBe(WORK_CANVAS_HEIGHT);
   });
+
+  it('pads trimmed portrait output to landscape when preferLandscapeAspect is enabled', () => {
+    const subject = makeSubjectBlob(120, 200);
+    const output = composeStickerFrame(subject, {
+      phrase: '哼',
+      fontKey: 'naikai',
+      compose: {
+        enabled: true,
+        layout: 'side_caption_right_subject_left',
+        trimAfterCompose: true,
+        preferLandscapeAspect: true,
+        minLandscapeAspect: 1.05,
+        phraseLengthAdaptive: false,
+        tuning: { fontSizePercent: 18, fontSizeMode: 'fixed' },
+      },
+    });
+    expect(output.width).toBeGreaterThan(output.height);
+  });
 });

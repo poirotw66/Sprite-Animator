@@ -25,7 +25,7 @@ import {
 } from './nodeImage.mts';
 import { buildEqualGridBounds } from '../../../../utils/gridSheetTemplate.ts';
 import { composePhraseOnRgbaFrame, overlayPhraseOnRgbaFrame } from './programmaticTextOverlay.mts';
-import { shouldUseComposeLayout } from '../../../../utils/lineStickerCompose.ts';
+import { shouldUseComposeLayout, ensureLandscapeStickerFrame } from '../../../../utils/lineStickerCompose.ts';
 import { trimFrameToContent } from '../../../../utils/sheetComponentSlicer.ts';
 import { loadSheetPhrases } from '../../../../utils/lineStickerSheetPhrases.ts';
 
@@ -169,6 +169,12 @@ frames = frames.map((frame, i) => {
   }
   return trimFrameToContent(overlaid);
 });
+
+if (compose.preferLandscapeAspect !== false) {
+  frames = frames.map((frame) =>
+    ensureLandscapeStickerFrame(frame, compose.minLandscapeAspect ?? 1.05)
+  );
+}
 
 for (let i = 0; i < frames.length; i++) {
   const name = `sticker-${String(i + 1).padStart(2, '0')}.png`;

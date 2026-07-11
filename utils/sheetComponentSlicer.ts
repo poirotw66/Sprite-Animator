@@ -23,6 +23,12 @@ export interface OwnershipSliceOptions {
   minComponentArea?: number;
   /** Extra pixels kept around owned art that overflows its cell. Default 4. */
   overflowPaddingPx?: number;
+  /**
+   * Inside the strict grid cell (not overflow gutters), keep pixels with alpha
+   * above this threshold even when component labeling skipped them (e.g. model-drawn
+   * text anti-alias). Foreign-owned components in the cell are still masked out.
+   */
+  preserveCellAlphaThreshold?: number;
 }
 
 interface SheetComponent {
@@ -158,6 +164,50 @@ function labelSheetComponents(
 }
 
 /**
+ * Slice a sheet into cols*rows frames (row-major) using fixed grid bounds only.
+ * Copies every RGBA pixel inside each cell rectangle (no ownership masking).
+ * Use for model-drawn text where anti-aliased stroke edges must survive slicing.
+ */
+export function sliceSheetByGridBounds(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  xBounds: number[],
+  yBounds: number[]
+): RgbaFrameBuffer[] {
+  const cols = xBounds.length - 1;
+  const rows = yBounds.length - 1;
+  const frames: RgbaFrameBuffer[] = [];
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x0 = Math.round(xBounds[c]!);
+      const y0 = Math.round(yBounds[r]!);
+      const x1 = Math.round(xBounds[c + 1]!);
+      const y1 = Math.round(yBounds[r + 1]!);
+      const frameW = Math.max(1, x1 - x0);
+      const frameH = Math.max(1, y1 - y0);
+      const frame = new Uint8ClampedArray(frameW * frameH * 4);
+
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          const src = (y * width + x) * 4;
+          const dst = ((y - y0) * frameW + (x - x0)) * 4;
+          frame[dst] = data[src]!;
+          frame[dst + 1] = data[src + 1]!;
+          frame[dst + 2] = data[src + 2]!;
+          frame[dst + 3] = data[src + 3]!;
+        }
+      }
+
+      frames.push({ data: frame, width: frameW, height: frameH });
+    }
+  }
+
+  return frames;
+}
+
+/**
  * Slice a sheet into cols*rows frames (row-major). Each frame spans its full grid
  * cell (expanded when owned art overflows into a gutter) with pixels of foreign
  * components cleared to transparent.
@@ -172,6 +222,7 @@ export function sliceSheetByComponentOwnership(
 ): RgbaFrameBuffer[] {
   const minComponentArea = options.minComponentArea ?? 12;
   const overflowPaddingPx = options.overflowPaddingPx ?? 4;
+  const preserveCellAlphaThreshold = options.preserveCellAlphaThreshold;
   const cols = xBounds.length - 1;
   const rows = yBounds.length - 1;
 
@@ -188,10 +239,14 @@ export function sliceSheetByComponentOwnership(
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const cell = r * cols + c;
-      let x0 = Math.round(xBounds[c]!);
-      let y0 = Math.round(yBounds[r]!);
-      let x1 = Math.round(xBounds[c + 1]!);
-      let y1 = Math.round(yBounds[r + 1]!);
+      const cellX0 = Math.round(xBounds[c]!);
+      const cellY0 = Math.round(yBounds[r]!);
+      const cellX1 = Math.round(xBounds[c + 1]!);
+      const cellY1 = Math.round(yBounds[r + 1]!);
+      let x0 = cellX0;
+      let y0 = cellY0;
+      let x1 = cellX1;
+      let y1 = cellY1;
 
       for (const component of components) {
         if (component.ownerCell !== cell) continue;
@@ -213,14 +268,29 @@ export function sliceSheetByComponentOwnership(
         for (let x = x0; x < x1; x++) {
           const p = y * width + x;
           const label = labels[p]!;
-          if (label <= 0) continue;
-          if (components[label - 1]!.ownerCell !== cell) continue;
+          const alpha = data[p * 4 + 3]!;
+          const inStrictCell =
+            x >= cellX0 && x < cellX1 && y >= cellY0 && y < cellY1;
+
+          let copy = false;
+          if (label > 0 && components[label - 1]!.ownerCell === cell) {
+            copy = true;
+          } else if (
+            preserveCellAlphaThreshold !== undefined &&
+            inStrictCell &&
+            label === 0 &&
+            alpha > preserveCellAlphaThreshold
+          ) {
+            copy = true;
+          }
+          if (!copy) continue;
+
           const src = p * 4;
           const dst = ((y - y0) * frameW + (x - x0)) * 4;
           frame[dst] = data[src]!;
           frame[dst + 1] = data[src + 1]!;
           frame[dst + 2] = data[src + 2]!;
-          frame[dst + 3] = data[src + 3]!;
+          frame[dst + 3] = alpha;
         }
       }
 

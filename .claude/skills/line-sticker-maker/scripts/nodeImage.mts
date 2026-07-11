@@ -37,7 +37,10 @@ import {
   type WhiteDividerGrid,
 } from '../../../../utils/sheetWhiteDividerDetection.ts';
 import { computeCellCropRect } from '../../../../utils/sheetCellCrop.ts';
-import { sliceSheetByComponentOwnership } from '../../../../utils/sheetComponentSlicer.ts';
+import {
+  sliceSheetByComponentOwnership,
+  sliceSheetByGridBounds,
+} from '../../../../utils/sheetComponentSlicer.ts';
 import {
   detectBestGridLayoutFromRgba,
   scoreGridLayoutFromRgba,
@@ -231,6 +234,7 @@ function extractCellFrame(
 }
 
 export type SliceMode = 'detect' | 'template' | 'divider';
+export type TemplateSliceStrategy = 'ownership' | 'naive';
 
 export interface TemplateGridBounds {
   xBounds: number[];
@@ -250,6 +254,16 @@ export interface SliceSheetOptions {
   guidedContentCrop?: boolean;
   /** Pre-detected divider grid (e.g. from raw sheet before chroma key). */
   dividerGrid?: WhiteDividerGrid;
+  /**
+   * How guided `template` cells are extracted. `ownership` masks foreign components;
+   * `naive` copies the full cell rectangle (manual/debug only).
+   */
+  templateSliceStrategy?: TemplateSliceStrategy;
+  /**
+   * Ownership slicer: keep unlabeled pixels inside strict cell bounds when alpha
+   * exceeds this value (model-drawn text edge preservation).
+   */
+  preserveCellAlphaThreshold?: number;
 }
 
 /** Auto-trim outer margins on a chroma-keyed sheet (same core as the web app). */
@@ -387,6 +401,9 @@ export function sliceSheet(
   }
 
   if (sliceMode === 'template') {
+    if (options.templateSliceStrategy === 'naive') {
+      return sliceSheetByGridBounds(sheet.data, totalWidth, totalHeight, xBounds, yBounds);
+    }
     // Ownership slicing: full cell bounds kept (caption space preserved),
     // foreign components masked out (no neighbor bleed, no edge-cleanup patches).
     return sliceSheetByComponentOwnership(
@@ -394,7 +411,10 @@ export function sliceSheet(
       totalWidth,
       totalHeight,
       xBounds,
-      yBounds
+      yBounds,
+      {
+        preserveCellAlphaThreshold: options.preserveCellAlphaThreshold,
+      }
     );
   }
 

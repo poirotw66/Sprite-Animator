@@ -48,6 +48,13 @@ const useDetect = sliceModeArg === 'detect';
 const rawPath = await findRawSheet();
 const rawBytes = new Uint8Array(await readFile(rawPath));
 const image = decodeImage(rawBytes);
+
+const jobConfigPath = resolve(sheetDir, '..', 'job.config.json');
+const config = existsSync(jobConfigPath)
+  ? (JSON.parse(await readFile(jobConfigPath, 'utf8')) as { textRendering?: 'model' | 'programmatic' })
+  : {};
+const preserveCellAlphaThreshold = config.textRendering === 'model' ? 8 : undefined;
+
 processSheetChromaKey(image, chromaKeyColor, { guided: useGuidedTemplate });
 await writeFile(resolve(sheetDir, '_processed-sheet.png'), encodePng(image));
 
@@ -76,13 +83,16 @@ console.log(
   useDetect
     ? 'Slice mode: detect (per-cell content crop)'
     : useGuidedTemplate
-      ? 'Slice mode: template + content crop (guided grid)'
+      ? `Slice mode: template + ownership (guided grid${
+          preserveCellAlphaThreshold ? ', preserve cell alpha' : ''
+        })`
       : 'Slice mode: divider (white grid lines excluded when detected)'
 );
 
 // ponytail: reslice writes final stickers with no overlay step after it, so trim here.
 const frames = sliceSheet(image, cols, rows, {
   sliceMode: useDetect ? 'detect' : useGuidedTemplate ? 'template' : 'divider',
+  preserveCellAlphaThreshold,
   guidedContentCrop: useGuidedTemplate,
   templateBounds: useGuidedTemplate ? templateBounds : undefined,
   detectBoundaries: useDetect,

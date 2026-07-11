@@ -105,6 +105,10 @@ export interface ProgrammaticComposeConfig {
   /** Margin ratio when trimAfterCompose is true (default 0.06). */
   trimMarginRatio?: number;
   trimAfterCompose?: boolean;
+  /** When true (default), pad trimmed output so width > height before export. */
+  preferLandscapeAspect?: boolean;
+  /** Minimum width/height ratio when preferLandscapeAspect is enabled (default 1.05). */
+  minLandscapeAspect?: number;
   tuning?: Partial<ProgrammaticTextOverlayTuning>;
 }
 
@@ -117,9 +121,11 @@ export const DEFAULT_PROGRAMMATIC_COMPOSE_CONFIG: ProgrammaticComposeConfig = {
   phraseLengthAdaptive: true,
   trimMarginRatio: 0.06,
   trimAfterCompose: true,
+  preferLandscapeAspect: true,
+  minLandscapeAspect: 1.05,
   tuning: {
-    fontSizePercent: 20,
-    fontSizeMode: 'fixed',
+    fontSizePercent: 18,
+    fontSizeMode: 'auto',
   },
 };
 
