@@ -4,6 +4,7 @@ import {
   fitZhDescription,
   fitZhTitle,
   prepareShopListing,
+  stripShopMetaNotes,
 } from './lineCreatorsListingText';
 
 describe('lineCreatorsListingText', () => {
@@ -24,8 +25,34 @@ describe('lineCreatorsListingText', () => {
     expect(listing.titleZh.length).toBeLessThanOrEqual(20);
     expect(listing.descZh.length).toBeLessThanOrEqual(80);
     expect(listing.descZh).toContain('早安');
+    expect(listing.descZh).not.toMatch(/模型繪字|程式疊字/);
     expect(listing.descEn).toContain('Sticker set.');
     expect(listing.descEn.length).toBeLessThanOrEqual(160);
+    expect(listing.descEn).not.toMatch(/Model Text|programmatic/i);
+  });
+
+  it('strips pipeline meta notes from custom descriptions', () => {
+    const listing = prepareShopListing({
+      titleZh: '校園日常·俏皮篇',
+      titleEn: 'School Daily Playful Chat',
+      descZh: '校園日常俏皮篇。（模型繪字版）',
+      descEn: 'Hand-drawn text version (model).',
+      phrases: ['補眠中', '我不行了', '笑死根本沒'],
+    });
+    expect(listing.descZh).not.toContain('模型繪字');
+    expect(listing.descEn).not.toMatch(/model|programmatic/i);
+  });
+
+  it('builds school-themed copy from phrase hooks', () => {
+    const listing = prepareShopListing({
+      titleZh: '校園日常·俏皮篇',
+      titleEn: 'School Daily Playful Chat',
+      phrases: ['補眠中', '我不行了', '笑死根本沒', '下課沒'],
+      themeKey: 'daily',
+    });
+    expect(listing.descZh).toContain('補眠中');
+    expect(listing.descZh).toContain('校園');
+    expect(listing.descEn.toLowerCase()).toContain('school-life');
   });
 
   it('fits English title below 40 characters', () => {
@@ -43,6 +70,11 @@ describe('lineCreatorsListingText', () => {
     });
     expect(listing.descZh).toBe('軟萌貓咪陪你聊天。');
     expect(listing.descZh.length).toBeLessThanOrEqual(80);
+  });
+
+  it('stripShopMetaNotes removes parenthetical pipeline labels', () => {
+    expect(stripShopMetaNotes('俏皮篇（模型繪字版）')).toBe('俏皮篇');
+    expect(stripShopMetaNotes('Playful (model text version)')).toBe('Playful');
   });
 
   it('reports warnings when text is trimmed', () => {

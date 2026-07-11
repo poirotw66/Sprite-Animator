@@ -1,11 +1,11 @@
 # Graph Report - Sprite-Animator  (2026-07-12)
 
 ## Corpus Check
-- 296 files · ~1,095,178 words
+- 296 files · ~1,095,467 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2270 nodes · 5173 edges · 179 communities (123 shown, 56 thin omitted)
+- 2270 nodes · 5173 edges · 178 communities (122 shown, 56 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 38 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
@@ -154,7 +154,6 @@
 - English
 - English
 - English
-- English
 - 精靈圖切分與校正流程（目前實作）
 - lineStickerSetSchema.ts
 - parsePhraseSetJson
@@ -219,7 +218,7 @@
 ## Hyperedges (group relationships)
 - **Character Style Variants** — public_style_previews_chibi, public_style_previews_doodle, public_style_previews_flat, public_style_previews_linechibi, public_style_previews_minimalist, public_style_previews_pastel, public_style_previews_pixel, public_style_previews_watercolor, public_style_previews_yurukawa [EXTRACTED 1.00]
 
-## Communities (179 total, 56 thin omitted)
+## Communities (178 total, 56 thin omitted)
 
 ### Community 0 - "Gemini Prompt Builders"
 Cohesion: 0.21
@@ -458,8 +457,8 @@ Cohesion: 0.62
 Nodes (6): check_file(), main(), print_report(), Path, read_png_size(), validate()
 
 ### Community 59 - "Upload Pipeline Orchestration"
-Cohesion: 0.09
-Nodes (23): Advanced Sprite Sheet Features, Animation Quality Improvement, API Quota Optimization, Basic Workflow, 🎯 Best Practices, Build Production Version, 🤝 Contributing, 🔧 Development (+15 more)
+Cohesion: 0.07
+Nodes (28): Advanced Sprite Sheet Features, Animation Quality Improvement, API Quota Optimization, Automatic Deployment (Recommended), Basic Workflow, 🎯 Best Practices, Build Production Version, 🤝 Contributing (+20 more)
 
 ### Community 60 - "API Key Management"
 Cohesion: 0.15
@@ -636,10 +635,6 @@ Nodes (3): isNearWhite(), processChromaKeyLegacy(), rgbToHsl()
 ### Community 144 - "English"
 Cohesion: 0.57
 Nodes (5): buildComicDownloadFilename(), ComicDownloadKind, formatComicDownloadTimestamp(), pickComicCharacterLabel(), sanitizeComicFilenameSegment()
-
-### Community 145 - "English"
-Cohesion: 0.40
-Nodes (5): Automatic Deployment (Recommended), 🚀 Deploy to GitHub Pages, Important Notes, Manual Build (Local Testing), Manual Trigger
 
 ### Community 146 - "精靈圖切分與校正流程（目前實作）"
 Cohesion: 0.29

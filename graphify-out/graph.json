@@ -32,7 +32,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_characterrefprompt",
-      "community": 63,
+      "community": 0,
       "norm_label": "characterrefprompt.ts"
     },
     {
@@ -52,7 +52,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_geminicharacterref_generatecharacterrefimage",
-      "community": 63,
+      "community": 0,
       "norm_label": "generatecharacterrefimage()"
     },
     {
@@ -62,7 +62,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref",
-      "community": 63,
+      "community": 0,
       "norm_label": "generate-character-ref.mts"
     },
     {
@@ -72,7 +72,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref_script_dir",
-      "community": 63,
+      "community": 0,
       "norm_label": "script_dir"
     },
     {
@@ -82,7 +82,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref_skill_dir",
-      "community": 63,
+      "community": 0,
       "norm_label": "skill_dir"
     },
     {
@@ -92,7 +92,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref_root_dir",
-      "community": 63,
+      "community": 0,
       "norm_label": "root_dir"
     },
     {
@@ -102,7 +102,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref_parseargs",
-      "community": 63,
+      "community": 0,
       "norm_label": "parseargs()"
     },
     {
@@ -112,7 +112,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref_mimefrompath",
-      "community": 63,
+      "community": 0,
       "norm_label": "mimefrompath()"
     },
     {
@@ -122,7 +122,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref_resolveimagepath",
-      "community": 63,
+      "community": 0,
       "norm_label": "resolveimagepath()"
     },
     {
@@ -132,7 +132,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref_printstyletable",
-      "community": 63,
+      "community": 0,
       "norm_label": "printstyletable()"
     },
     {
@@ -142,7 +142,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref_main",
-      "community": 63,
+      "community": 0,
       "norm_label": "main()"
     },
     {
@@ -792,7 +792,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_finalizejob_jobconfig",
-      "community": 141,
+      "community": 9,
       "norm_label": "jobconfig"
     },
     {
@@ -862,7 +862,7 @@
       "source_location": "L121",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_finalizejob_scoresheetgrid",
-      "community": 32,
+      "community": 20,
       "norm_label": "scoresheetgrid()"
     },
     {
@@ -1522,7 +1522,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_decodepng",
-      "community": 3,
+      "community": 20,
       "norm_label": "decodepng()"
     },
     {
@@ -1662,7 +1662,7 @@
       "source_location": "L313",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_slicesheet",
-      "community": 19,
+      "community": 24,
       "norm_label": "slicesheet()"
     },
     {
@@ -1692,7 +1692,7 @@
       "source_location": "L536",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_blitontocanvas",
-      "community": 49,
+      "community": 19,
       "norm_label": "blitontocanvas()"
     },
     {
@@ -1712,7 +1712,7 @@
       "source_location": "L578",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_composecenteredoncanvas",
-      "community": 49,
+      "community": 19,
       "norm_label": "composecenteredoncanvas()"
     },
     {
@@ -1732,7 +1732,7 @@
       "source_location": "L601",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_preparelinemainimage",
-      "community": 49,
+      "community": 19,
       "norm_label": "preparelinemainimage()"
     },
     {
@@ -1742,7 +1742,7 @@
       "source_location": "L606",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_preparelinetabimage",
-      "community": 49,
+      "community": 19,
       "norm_label": "preparelinetabimage()"
     },
     {
@@ -2042,7 +2042,7 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_composephraseonrgbaframe",
-      "community": 50,
+      "community": 54,
       "norm_label": "composephraseonrgbaframe()"
     },
     {
@@ -2312,7 +2312,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_reoverlay_sheet_loadoverlayconfig",
-      "community": 54,
+      "community": 3,
       "norm_label": "loadoverlayconfig()"
     },
     {
@@ -3262,7 +3262,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sheetplan_test",
-      "community": 27,
+      "community": 3,
       "norm_label": "sheetplan.test.ts"
     },
     {
@@ -3272,7 +3272,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sheetplan",
-      "community": 27,
+      "community": 3,
       "norm_label": "sheetplan.ts"
     },
     {
@@ -3282,7 +3282,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sheetplan_gridsize",
-      "community": 27,
+      "community": 3,
       "norm_label": "gridsize"
     },
     {
@@ -3292,7 +3292,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sheetplan_line_sticker_set_layouts",
-      "community": 27,
+      "community": 3,
       "norm_label": "line_sticker_set_layouts"
     },
     {
@@ -3302,7 +3302,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sheetplan_resolvesetlayout",
-      "community": 27,
+      "community": 3,
       "norm_label": "resolvesetlayout()"
     },
     {
@@ -3312,7 +3312,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sheetplan_splitphrasesacrosssheets",
-      "community": 27,
+      "community": 3,
       "norm_label": "splitphrasesacrosssheets()"
     },
     {
@@ -3322,7 +3322,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sheetplan_totalframesfromlayouts",
-      "community": 27,
+      "community": 3,
       "norm_label": "totalframesfromlayouts()"
     },
     {
@@ -3332,7 +3332,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input",
-      "community": 141,
+      "community": 9,
       "norm_label": "sync-upload-input.mts"
     },
     {
@@ -3342,7 +3342,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_skill_root",
-      "community": 141,
+      "community": 9,
       "norm_label": "skill_root"
     },
     {
@@ -3352,7 +3352,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_project_root",
-      "community": 141,
+      "community": 9,
       "norm_label": "project_root"
     },
     {
@@ -3362,7 +3362,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_default_upload_root",
-      "community": 141,
+      "community": 9,
       "norm_label": "default_upload_root"
     },
     {
@@ -3372,7 +3372,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_syncuploadoptions",
-      "community": 141,
+      "community": 9,
       "norm_label": "syncuploadoptions"
     },
     {
@@ -3382,7 +3382,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_envfilebasename",
-      "community": 141,
+      "community": 9,
       "norm_label": "envfilebasename()"
     },
     {
@@ -3392,7 +3392,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_resolveuploadroot",
-      "community": 141,
+      "community": 9,
       "norm_label": "resolveuploadroot()"
     },
     {
@@ -3402,7 +3402,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_resolveuploadinputdest",
-      "community": 141,
+      "community": 9,
       "norm_label": "resolveuploadinputdest()"
     },
     {
@@ -3412,7 +3412,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_syncpacktouploadroot",
-      "community": 141,
+      "community": 9,
       "norm_label": "syncpacktouploadroot()"
     },
     {
@@ -3432,7 +3432,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_parseargs",
-      "community": 141,
+      "community": 9,
       "norm_label": "parseargs()"
     },
     {
@@ -3442,7 +3442,7 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_main",
-      "community": 141,
+      "community": 9,
       "norm_label": "main()"
     },
     {
@@ -3452,7 +3452,7 @@
       "source_location": "L139",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_iscli",
-      "community": 141,
+      "community": 9,
       "norm_label": "iscli"
     },
     {
@@ -3482,7 +3482,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_uploadconfig_uploadconfig",
-      "community": 141,
+      "community": 9,
       "norm_label": "uploadconfig"
     },
     {
@@ -3559,7 +3559,7 @@
       "label": "envFileBaseName()",
       "file_type": "code",
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L94",
+      "source_location": "L93",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_uploadconfig_envfilebasename",
       "community": 9,
@@ -3569,7 +3569,7 @@
       "label": "buildMarkdown()",
       "file_type": "code",
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L98",
+      "source_location": "L97",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_uploadconfig_buildmarkdown",
       "community": 9,
@@ -3579,7 +3579,7 @@
       "label": "batchRelBase()",
       "file_type": "code",
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L123",
+      "source_location": "L122",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_uploadconfig_batchrelbase",
       "community": 9,
@@ -3589,7 +3589,7 @@
       "label": "packUploadOutput()",
       "file_type": "code",
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L132",
+      "source_location": "L131",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_uploadconfig_packuploadoutput",
       "community": 9,
@@ -3599,7 +3599,7 @@
       "label": "normalizeUploadListing()",
       "file_type": "code",
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L183",
+      "source_location": "L182",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_uploadconfig_normalizeuploadlisting",
       "community": 20,
@@ -6082,7 +6082,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_comic_comicstoryboardstep",
-      "community": 119,
+      "community": 0,
       "norm_label": "comicstoryboardstep.tsx"
     },
     {
@@ -6092,7 +6092,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "components_comic_comicstoryboardstep_comicstoryboardstepprops",
-      "community": 119,
+      "community": 0,
       "norm_label": "comicstoryboardstepprops"
     },
     {
@@ -6102,7 +6102,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "components_comic_comicstoryboardstep_comicstoryboardstep",
-      "community": 119,
+      "community": 0,
       "norm_label": "comicstoryboardstep"
     },
     {
@@ -6262,7 +6262,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_exampleselector",
-      "community": 17,
+      "community": 53,
       "norm_label": "exampleselector.tsx"
     },
     {
@@ -6272,7 +6272,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "components_exampleselector_exampleselectorprops",
-      "community": 17,
+      "community": 53,
       "norm_label": "exampleselectorprops"
     },
     {
@@ -6282,7 +6282,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "components_exampleselector_exampleselector",
-      "community": 17,
+      "community": 53,
       "norm_label": "exampleselector"
     },
     {
@@ -6332,7 +6332,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_icons",
-      "community": 41,
+      "community": 5,
       "norm_label": "icons.tsx"
     },
     {
@@ -6422,7 +6422,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_linesticker_linestickerheader",
-      "community": 41,
+      "community": 5,
       "norm_label": "linestickerheader.tsx"
     },
     {
@@ -6442,7 +6442,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "components_linesticker_linestickerheader_linestickerheader",
-      "community": 41,
+      "community": 5,
       "norm_label": "linestickerheader()"
     },
     {
@@ -6452,7 +6452,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_linesticker_linestickerphrasesection",
-      "community": 53,
+      "community": 5,
       "norm_label": "linestickerphrasesection.tsx"
     },
     {
@@ -6462,7 +6462,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "components_linesticker_linestickerphrasesection_linestickerphrasesectionprops",
-      "community": 53,
+      "community": 5,
       "norm_label": "linestickerphrasesectionprops"
     },
     {
@@ -6472,7 +6472,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "components_linesticker_linestickerphrasesection_linestickerphrasegrideditorprops",
-      "community": 53,
+      "community": 5,
       "norm_label": "linestickerphrasegrideditorprops"
     },
     {
@@ -6482,7 +6482,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "components_linesticker_linestickerphrasesection_linestickerphrasecellprops",
-      "community": 53,
+      "community": 5,
       "norm_label": "linestickerphrasecellprops"
     },
     {
@@ -6492,7 +6492,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "components_linesticker_linestickerphrasesection_linestickerphrasecell",
-      "community": 53,
+      "community": 5,
       "norm_label": "linestickerphrasecell"
     },
     {
@@ -6512,7 +6512,7 @@
       "source_location": "L160",
       "_origin": "ast",
       "id": "components_linesticker_linestickerphrasesection_linestickerphrasesection",
-      "community": 73,
+      "community": 5,
       "norm_label": "linestickerphrasesection"
     },
     {
@@ -6542,7 +6542,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "components_linesticker_linestickerprogrammaticstylecontrols_linestickerprogrammaticstylecontrols",
-      "community": 73,
+      "community": 44,
       "norm_label": "linestickerprogrammaticstylecontrols()"
     },
     {
@@ -6642,7 +6642,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "components_linesticker_linestickerresultpanel_linestickerresultpanelviewerviewmodel",
-      "community": 5,
+      "community": 2,
       "norm_label": "linestickerresultpanelviewerviewmodel"
     },
     {
@@ -6782,7 +6782,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_linesticker_linestickersettingspanel",
-      "community": 73,
+      "community": 44,
       "norm_label": "linestickersettingspanel.tsx"
     },
     {
@@ -6802,7 +6802,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "components_linesticker_linestickersettingspanel_linestickersettingspanelviewmodel",
-      "community": 73,
+      "community": 5,
       "norm_label": "linestickersettingspanelviewmodel"
     },
     {
@@ -6812,7 +6812,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "components_linesticker_linestickersettingspanel_linestickersettingspanelprops",
-      "community": 73,
+      "community": 5,
       "norm_label": "linestickersettingspanelprops"
     },
     {
@@ -6822,7 +6822,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "components_linesticker_linestickersettingspanel_settingssectiontitle",
-      "community": 73,
+      "community": 44,
       "norm_label": "settingssectiontitle()"
     },
     {
@@ -6832,7 +6832,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "components_linesticker_linestickersettingspanel_style_preview_placeholder_labels",
-      "community": 73,
+      "community": 44,
       "norm_label": "style_preview_placeholder_labels"
     },
     {
@@ -6842,7 +6842,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "components_linesticker_linestickersettingspanel_resolvepublicassetpath",
-      "community": 73,
+      "community": 44,
       "norm_label": "resolvepublicassetpath()"
     },
     {
@@ -6852,7 +6852,7 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "components_linesticker_linestickersettingspanel_style_preview_image_map",
-      "community": 73,
+      "community": 44,
       "norm_label": "style_preview_image_map"
     },
     {
@@ -6862,7 +6862,7 @@
       "source_location": "L139",
       "_origin": "ast",
       "id": "components_linesticker_linestickersettingspanel_linestickersettingspanel",
-      "community": 5,
+      "community": 10,
       "norm_label": "linestickersettingspanel"
     },
     {
@@ -6872,7 +6872,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_linesticker_linestickeruploadcard",
-      "community": 73,
+      "community": 5,
       "norm_label": "linestickeruploadcard.tsx"
     },
     {
@@ -6882,7 +6882,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "components_linesticker_linestickeruploadcard_linestickeruploadcardprops",
-      "community": 73,
+      "community": 5,
       "norm_label": "linestickeruploadcardprops"
     },
     {
@@ -6892,7 +6892,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "components_linesticker_linestickeruploadcard_linestickeruploadcard",
-      "community": 73,
+      "community": 5,
       "norm_label": "linestickeruploadcard()"
     },
     {
@@ -6912,7 +6912,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_projecthistory",
-      "community": 17,
+      "community": 46,
       "norm_label": "projecthistory.tsx"
     },
     {
@@ -6922,7 +6922,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "components_projecthistory_projecthistoryprops",
-      "community": 17,
+      "community": 46,
       "norm_label": "projecthistoryprops"
     },
     {
@@ -6932,7 +6932,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "components_projecthistory_projecthistory",
-      "community": 17,
+      "community": 46,
       "norm_label": "projecthistory"
     },
     {
@@ -6942,7 +6942,7 @@
       "source_location": "L205",
       "_origin": "ast",
       "id": "components_projecthistory_projecthistoryitemprops",
-      "community": 17,
+      "community": 46,
       "norm_label": "projecthistoryitemprops"
     },
     {
@@ -6952,7 +6952,7 @@
       "source_location": "L212",
       "_origin": "ast",
       "id": "components_projecthistory_projecthistoryitem",
-      "community": 17,
+      "community": 46,
       "norm_label": "projecthistoryitem"
     },
     {
@@ -7052,7 +7052,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_sheetsliceprogrammaticoverlaypanel",
-      "community": 44,
+      "community": 62,
       "norm_label": "sheetsliceprogrammaticoverlaypanel.tsx"
     },
     {
@@ -7062,7 +7062,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "components_sheetsliceprogrammaticoverlaypanel_sheetsliceprogrammaticoverlaypanelprops",
-      "community": 44,
+      "community": 62,
       "norm_label": "sheetsliceprogrammaticoverlaypanelprops"
     },
     {
@@ -7072,7 +7072,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "components_sheetsliceprogrammaticoverlaypanel_focusring",
-      "community": 44,
+      "community": 62,
       "norm_label": "focusring"
     },
     {
@@ -7082,7 +7082,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "components_sheetsliceprogrammaticoverlaypanel_sheetsliceprogrammaticoverlaypanel",
-      "community": 41,
+      "community": 62,
       "norm_label": "sheetsliceprogrammaticoverlaypanel()"
     },
     {
@@ -7092,7 +7092,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_spritesheeterasermodal",
-      "community": 41,
+      "community": 56,
       "norm_label": "spritesheeterasermodal.tsx"
     },
     {
@@ -7102,7 +7102,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "components_spritesheeterasermodal_spritesheeterasermodalprops",
-      "community": 41,
+      "community": 56,
       "norm_label": "spritesheeterasermodalprops"
     },
     {
@@ -7112,7 +7112,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "components_spritesheeterasermodal_getcanvaspoint",
-      "community": 41,
+      "community": 56,
       "norm_label": "getcanvaspoint()"
     },
     {
@@ -7122,7 +7122,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "components_spritesheeterasermodal_erasecircle",
-      "community": 41,
+      "community": 56,
       "norm_label": "erasecircle()"
     },
     {
@@ -7132,7 +7132,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "components_spritesheeterasermodal_eraseline",
-      "community": 41,
+      "community": 56,
       "norm_label": "eraseline()"
     },
     {
@@ -7142,7 +7142,7 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "components_spritesheeterasermodal_spritesheeterasermodal",
-      "community": 41,
+      "community": 56,
       "norm_label": "spritesheeterasermodal()"
     },
     {
@@ -7152,7 +7152,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_spritesheetslicecontrols",
-      "community": 41,
+      "community": 56,
       "norm_label": "spritesheetslicecontrols.tsx"
     },
     {
@@ -7162,7 +7162,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "components_spritesheetslicecontrols_slicecellinfo",
-      "community": 41,
+      "community": 56,
       "norm_label": "slicecellinfo"
     },
     {
@@ -7172,7 +7172,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "components_spritesheetslicecontrols_spritesheetslicecontrolsprops",
-      "community": 39,
+      "community": 56,
       "norm_label": "spritesheetslicecontrolsprops"
     },
     {
@@ -7182,7 +7182,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "components_spritesheetslicecontrols_spritesheetslicecontrols",
-      "community": 41,
+      "community": 56,
       "norm_label": "spritesheetslicecontrols()"
     },
     {
@@ -7192,7 +7192,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_spritesheetviewer",
-      "community": 41,
+      "community": 56,
       "norm_label": "spritesheetviewer.tsx"
     },
     {
@@ -7202,7 +7202,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "components_spritesheetviewer_spritesheetviewerprops",
-      "community": 39,
+      "community": 56,
       "norm_label": "spritesheetviewerprops"
     },
     {
@@ -7212,7 +7212,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "components_spritesheetviewer_spritesheetviewer",
-      "community": 41,
+      "community": 56,
       "norm_label": "spritesheetviewer"
     },
     {
@@ -7312,7 +7312,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_useanimation",
-      "community": 17,
+      "community": 46,
       "norm_label": "useanimation.ts"
     },
     {
@@ -7322,7 +7322,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "hooks_useanimation_useanimation",
-      "community": 72,
+      "community": 46,
       "norm_label": "useanimation()"
     },
     {
@@ -7332,7 +7332,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_usecomiccharactersheet",
-      "community": 33,
+      "community": 0,
       "norm_label": "usecomiccharactersheet.ts"
     },
     {
@@ -7342,7 +7342,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "hooks_usecomiccharactersheet_usecomiccharactersheet",
-      "community": 33,
+      "community": 0,
       "norm_label": "usecomiccharactersheet()"
     },
     {
@@ -7352,7 +7352,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_usecomicpagegeneration",
-      "community": 33,
+      "community": 0,
       "norm_label": "usecomicpagegeneration.ts"
     },
     {
@@ -7362,7 +7362,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "hooks_usecomicpagegeneration_usecomicpagegeneration",
-      "community": 33,
+      "community": 0,
       "norm_label": "usecomicpagegeneration()"
     },
     {
@@ -7372,7 +7372,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_usecomicproject",
-      "community": 69,
+      "community": 0,
       "norm_label": "usecomicproject.ts"
     },
     {
@@ -7382,7 +7382,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "hooks_usecomicproject_comicwizardstep",
-      "community": 69,
+      "community": 0,
       "norm_label": "comicwizardstep"
     },
     {
@@ -7392,7 +7392,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "hooks_usecomicproject_usecomicproject",
-      "community": 69,
+      "community": 0,
       "norm_label": "usecomicproject()"
     },
     {
@@ -7402,7 +7402,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_usecomicstoryboard",
-      "community": 62,
+      "community": 0,
       "norm_label": "usecomicstoryboard.ts"
     },
     {
@@ -7412,7 +7412,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "hooks_usecomicstoryboard_usecomicstoryboard",
-      "community": 62,
+      "community": 0,
       "norm_label": "usecomicstoryboard()"
     },
     {
@@ -7452,7 +7452,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_uselanguage",
-      "community": 41,
+      "community": 53,
       "norm_label": "uselanguage.tsx"
     },
     {
@@ -7472,7 +7472,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "hooks_uselanguage_languagecontext",
-      "community": 41,
+      "community": 53,
       "norm_label": "languagecontext"
     },
     {
@@ -7482,7 +7482,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "hooks_uselanguage_navigatorwithuserlanguage",
-      "community": 41,
+      "community": 53,
       "norm_label": "navigatorwithuserlanguage"
     },
     {
@@ -7502,7 +7502,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "hooks_uselanguage_languageproviderprops",
-      "community": 41,
+      "community": 53,
       "norm_label": "languageproviderprops"
     },
     {
@@ -7582,7 +7582,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_uselinestickergeneration",
-      "community": 8,
+      "community": 44,
       "norm_label": "uselinestickergeneration.ts"
     },
     {
@@ -7592,7 +7592,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "hooks_uselinestickergeneration_uselinestickergenerationprops",
-      "community": 8,
+      "community": 44,
       "norm_label": "uselinestickergenerationprops"
     },
     {
@@ -7602,7 +7602,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "hooks_uselinestickergeneration_generatesinglesheetoptions",
-      "community": 8,
+      "community": 44,
       "norm_label": "generatesinglesheetoptions"
     },
     {
@@ -7612,7 +7612,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "hooks_uselinestickergeneration_uselinestickergeneration",
-      "community": 10,
+      "community": 8,
       "norm_label": "uselinestickergeneration()"
     },
     {
@@ -7652,7 +7652,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_uselinestickerphrasegeneration",
-      "community": 126,
+      "community": 8,
       "norm_label": "uselinestickerphrasegeneration.ts"
     },
     {
@@ -7662,7 +7662,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "hooks_uselinestickerphrasegeneration_phrasegenerationtexts",
-      "community": 126,
+      "community": 8,
       "norm_label": "phrasegenerationtexts"
     },
     {
@@ -7672,7 +7672,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "hooks_uselinestickerphrasegeneration_uselinestickerphrasegenerationparams",
-      "community": 8,
+      "community": 44,
       "norm_label": "uselinestickerphrasegenerationparams"
     },
     {
@@ -7682,7 +7682,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "hooks_uselinestickerphrasegeneration_uselinestickerphrasegeneration",
-      "community": 10,
+      "community": 8,
       "norm_label": "uselinestickerphrasegeneration()"
     },
     {
@@ -7692,7 +7692,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_uselinestickerphrasegrid",
-      "community": 10,
+      "community": 12,
       "norm_label": "uselinestickerphrasegrid.ts"
     },
     {
@@ -7702,7 +7702,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "hooks_uselinestickerphrasegrid_uselinestickerphrasegridparams",
-      "community": 39,
+      "community": 12,
       "norm_label": "uselinestickerphrasegridparams"
     },
     {
@@ -7712,7 +7712,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "hooks_uselinestickerphrasegrid_ensurelength",
-      "community": 10,
+      "community": 12,
       "norm_label": "ensurelength()"
     },
     {
@@ -7722,7 +7722,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "hooks_uselinestickerphrasegrid_uselinestickerphrasegrid",
-      "community": 10,
+      "community": 12,
       "norm_label": "uselinestickerphrasegrid()"
     },
     {
@@ -7822,7 +7822,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "hooks_uselinestickerprogrammaticoverlay_uselinestickerprogrammaticoverlaycomposeparams",
-      "community": 12,
+      "community": 44,
       "norm_label": "uselinestickerprogrammaticoverlaycomposeparams"
     },
     {
@@ -7862,7 +7862,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "hooks_uselinestickerpromptpreview_uselinestickerpromptpreviewparams",
-      "community": 39,
+      "community": 10,
       "norm_label": "uselinestickerpromptpreviewparams"
     },
     {
@@ -7922,7 +7922,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "hooks_uselinestickerselection_uselinestickerselectionparams",
-      "community": 39,
+      "community": 10,
       "norm_label": "uselinestickerselectionparams"
     },
     {
@@ -7942,7 +7942,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_uselinestickersettingspanelviewmodel",
-      "community": 39,
+      "community": 44,
       "norm_label": "uselinestickersettingspanelviewmodel.ts"
     },
     {
@@ -7952,7 +7952,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "hooks_uselinestickersettingspanelviewmodel_uselinestickersettingspanelviewmodelparams",
-      "community": 39,
+      "community": 44,
       "norm_label": "uselinestickersettingspanelviewmodelparams"
     },
     {
@@ -7992,7 +7992,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "hooks_uselinestickersheetgeneration_uselinestickersheetgeneration",
-      "community": 139,
+      "community": 39,
       "norm_label": "uselinestickersheetgeneration()"
     },
     {
@@ -8012,7 +8012,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "hooks_uselinestickerslicing_uselinestickerslicingparams",
-      "community": 39,
+      "community": 2,
       "norm_label": "uselinestickerslicingparams"
     },
     {
@@ -8022,7 +8022,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "hooks_uselinestickerslicing_sliceprocessedsheetoptions",
-      "community": 39,
+      "community": 2,
       "norm_label": "sliceprocessedsheetoptions"
     },
     {
@@ -8032,7 +8032,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "hooks_uselinestickerslicing_uselinestickerslicing",
-      "community": 2,
+      "community": 10,
       "norm_label": "uselinestickerslicing()"
     },
     {
@@ -8182,7 +8182,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_usesettings",
-      "community": 41,
+      "community": 17,
       "norm_label": "usesettings.ts"
     },
     {
@@ -8192,7 +8192,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "hooks_usesettings_legacy_model_ids",
-      "community": 41,
+      "community": 17,
       "norm_label": "legacy_model_ids"
     },
     {
@@ -8202,7 +8202,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "hooks_usesettings_resolvestoredmodel",
-      "community": 41,
+      "community": 17,
       "norm_label": "resolvestoredmodel()"
     },
     {
@@ -8212,7 +8212,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "hooks_usesettings_usesettings",
-      "community": 41,
+      "community": 17,
       "norm_label": "usesettings()"
     },
     {
@@ -8222,7 +8222,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_usesheetsliceprogrammaticoverlay",
-      "community": 44,
+      "community": 62,
       "norm_label": "usesheetsliceprogrammaticoverlay.ts"
     },
     {
@@ -8232,7 +8232,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "hooks_usesheetsliceprogrammaticoverlay_sheetsliceoverlayfontkey",
-      "community": 44,
+      "community": 62,
       "norm_label": "sheetsliceoverlayfontkey"
     },
     {
@@ -8242,7 +8242,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "hooks_usesheetsliceprogrammaticoverlay_sheetsliceoverlaycolorkey",
-      "community": 44,
+      "community": 62,
       "norm_label": "sheetsliceoverlaycolorkey"
     },
     {
@@ -8252,7 +8252,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "hooks_usesheetsliceprogrammaticoverlay_buildphrasesfrommultiline",
-      "community": 44,
+      "community": 62,
       "norm_label": "buildphrasesfrommultiline()"
     },
     {
@@ -8262,7 +8262,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "hooks_usesheetsliceprogrammaticoverlay_usesheetsliceprogrammaticoverlay",
-      "community": 41,
+      "community": 62,
       "norm_label": "usesheetsliceprogrammaticoverlay()"
     },
     {
@@ -8312,7 +8312,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "hooks_usespritesheetflow_usespritesheetflowoptions",
-      "community": 39,
+      "community": 2,
       "norm_label": "usespritesheetflowoptions"
     },
     {
@@ -8322,7 +8322,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "hooks_usespritesheetflow_usespritesheetflowresult",
-      "community": 39,
+      "community": 2,
       "norm_label": "usespritesheetflowresult"
     },
     {
@@ -8422,7 +8422,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "i18n_types",
-      "community": 53,
+      "community": 5,
       "norm_label": "types.ts"
     },
     {
@@ -8442,7 +8442,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "i18n_types_translations",
-      "community": 53,
+      "community": 5,
       "norm_label": "translations"
     },
     {
@@ -8692,7 +8692,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "package_dependencies_jszip",
-      "community": 41,
+      "community": 49,
       "norm_label": "jszip"
     },
     {
@@ -9012,7 +9012,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "pages_onepagecomicpage",
-      "community": 33,
+      "community": 0,
       "norm_label": "onepagecomicpage.tsx"
     },
     {
@@ -9022,7 +9022,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "pages_onepagecomicpage_downloaddataurl",
-      "community": 33,
+      "community": 0,
       "norm_label": "downloaddataurl()"
     },
     {
@@ -9032,7 +9032,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "pages_onepagecomicpage_onepagecomicpage",
-      "community": 33,
+      "community": 0,
       "norm_label": "onepagecomicpage()"
     },
     {
@@ -9082,7 +9082,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "pages_removebackgroundpage",
-      "community": 41,
+      "community": 17,
       "norm_label": "removebackgroundpage.tsx"
     },
     {
@@ -9092,7 +9092,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "pages_removebackgroundpage_removebackgroundpage",
-      "community": 41,
+      "community": 17,
       "norm_label": "removebackgroundpage()"
     },
     {
@@ -9102,7 +9102,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "pages_spriteanimatorpage",
-      "community": 17,
+      "community": 46,
       "norm_label": "spriteanimatorpage.tsx"
     },
     {
@@ -9112,7 +9112,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "pages_spriteanimatorpage_spritesheetviewer",
-      "community": 17,
+      "community": 46,
       "norm_label": "spritesheetviewer"
     },
     {
@@ -9122,7 +9122,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "pages_spriteanimatorpage_animationpreview",
-      "community": 17,
+      "community": 46,
       "norm_label": "animationpreview"
     },
     {
@@ -9132,7 +9132,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "pages_spriteanimatorpage_framegrid",
-      "community": 17,
+      "community": 46,
       "norm_label": "framegrid"
     },
     {
@@ -9142,7 +9142,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "pages_spriteanimatorpage_spriteanimatorpage",
-      "community": 72,
+      "community": 46,
       "norm_label": "spriteanimatorpage()"
     },
     {
@@ -9322,7 +9322,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "services_gemini_actiondescriptions_actiondedupestrength",
-      "community": 39,
+      "community": 44,
       "norm_label": "actiondedupestrength"
     },
     {
@@ -9572,7 +9572,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_comicpageprompt_test",
-      "community": 62,
+      "community": 0,
       "norm_label": "comicpageprompt.test.ts"
     },
     {
@@ -9582,7 +9582,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "services_gemini_comicpageprompt_test_panels",
-      "community": 62,
+      "community": 0,
       "norm_label": "panels"
     },
     {
@@ -9592,7 +9592,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_comicpageprompt",
-      "community": 62,
+      "community": 0,
       "norm_label": "comicpageprompt.ts"
     },
     {
@@ -9602,7 +9602,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "services_gemini_comicpageprompt_buildcomicpagepromptparams",
-      "community": 62,
+      "community": 0,
       "norm_label": "buildcomicpagepromptparams"
     },
     {
@@ -9612,7 +9612,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "services_gemini_comicpageprompt_panelblock",
-      "community": 62,
+      "community": 0,
       "norm_label": "panelblock()"
     },
     {
@@ -9622,7 +9622,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "services_gemini_comicpageprompt_buildcomicpageprompt",
-      "community": 62,
+      "community": 0,
       "norm_label": "buildcomicpageprompt()"
     },
     {
@@ -9632,7 +9632,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_comicstoryboard_test",
-      "community": 62,
+      "community": 0,
       "norm_label": "comicstoryboard.test.ts"
     },
     {
@@ -9642,7 +9642,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_comicstoryboard",
-      "community": 62,
+      "community": 0,
       "norm_label": "comicstoryboard.ts"
     },
     {
@@ -9652,7 +9652,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "services_gemini_comicstoryboard_storyboardentry",
-      "community": 62,
+      "community": 0,
       "norm_label": "storyboardentry"
     },
     {
@@ -9662,7 +9662,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "services_gemini_comicstoryboard_parsecomicstoryboardjson",
-      "community": 62,
+      "community": 0,
       "norm_label": "parsecomicstoryboardjson()"
     },
     {
@@ -9672,7 +9672,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "services_gemini_comicstoryboard_generatecomicstoryboard",
-      "community": 62,
+      "community": 0,
       "norm_label": "generatecomicstoryboard()"
     },
     {
@@ -9852,7 +9852,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_stickerphrases",
-      "community": 148,
+      "community": 34,
       "norm_label": "stickerphrases.ts"
     },
     {
@@ -9862,7 +9862,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "services_gemini_stickerphrases_generatestickerphrases",
-      "community": 148,
+      "community": 34,
       "norm_label": "generatestickerphrases()"
     },
     {
@@ -10242,7 +10242,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "types",
-      "community": 17,
+      "community": 46,
       "norm_label": "types.ts"
     },
     {
@@ -10252,7 +10252,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "types_chromakeycolortype",
-      "community": 39,
+      "community": 44,
       "norm_label": "chromakeycolortype"
     },
     {
@@ -10292,7 +10292,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "types_generationresult",
-      "community": 17,
+      "community": 46,
       "norm_label": "generationresult"
     },
     {
@@ -10302,7 +10302,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "types_exampledata",
-      "community": 17,
+      "community": 53,
       "norm_label": "exampledata"
     },
     {
@@ -10312,7 +10312,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "types_savedframeoverride",
-      "community": 17,
+      "community": 46,
       "norm_label": "savedframeoverride"
     },
     {
@@ -10322,7 +10322,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "types_savedslicesettings",
-      "community": 17,
+      "community": 46,
       "norm_label": "savedslicesettings"
     },
     {
@@ -10332,7 +10332,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "types_savedproject",
-      "community": 17,
+      "community": 46,
       "norm_label": "savedproject"
     },
     {
@@ -10342,7 +10342,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "types_savedprojectmeta",
-      "community": 17,
+      "community": 46,
       "norm_label": "savedprojectmeta"
     },
     {
@@ -10352,7 +10352,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "types_errors",
-      "community": 72,
+      "community": 2,
       "norm_label": "errors.ts"
     },
     {
@@ -10362,7 +10362,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "types_errors_apierror",
-      "community": 72,
+      "community": 2,
       "norm_label": "apierror"
     },
     {
@@ -10372,7 +10372,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "types_errors_quotaerror",
-      "community": 72,
+      "community": 2,
       "norm_label": "quotaerror"
     },
     {
@@ -10382,7 +10382,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "types_errors_isapierror",
-      "community": 72,
+      "community": 2,
       "norm_label": "isapierror()"
     },
     {
@@ -10392,7 +10392,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "types_errors_isquotaerror",
-      "community": 72,
+      "community": 2,
       "norm_label": "isquotaerror()"
     },
     {
@@ -10402,7 +10402,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "types_errors_geterrormessage",
-      "community": 72,
+      "community": 2,
       "norm_label": "geterrormessage()"
     },
     {
@@ -10512,7 +10512,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "types_modules_d_gifencoder",
-      "community": 120,
+      "community": 126,
       "norm_label": "gifencoder"
     },
     {
@@ -10522,7 +10522,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "types_modules_d_gifencoder_constructor",
-      "community": 120,
+      "community": 126,
       "norm_label": ".constructor()"
     },
     {
@@ -10532,7 +10532,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "types_modules_d_gifencoder_writeframe",
-      "community": 120,
+      "community": 126,
       "norm_label": ".writeframe()"
     },
     {
@@ -10542,7 +10542,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "types_modules_d_gifencoder_finish",
-      "community": 120,
+      "community": 126,
       "norm_label": ".finish()"
     },
     {
@@ -10552,7 +10552,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "types_modules_d_gifencoder_bytes",
-      "community": 120,
+      "community": 126,
       "norm_label": ".bytes()"
     },
     {
@@ -10562,7 +10562,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "types_modules_d_gifencoder_bytesview",
-      "community": 120,
+      "community": 126,
       "norm_label": ".bytesview()"
     },
     {
@@ -10612,7 +10612,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "utils_abort_isaborterror",
-      "community": 139,
+      "community": 118,
       "norm_label": "isaborterror()"
     },
     {
@@ -10642,7 +10642,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_aibackgroundremoval",
-      "community": 118,
+      "community": 17,
       "norm_label": "aibackgroundremoval.ts"
     },
     {
@@ -10652,7 +10652,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "utils_aibackgroundremoval_transformersmodule",
-      "community": 118,
+      "community": 17,
       "norm_label": "transformersmodule"
     },
     {
@@ -10662,7 +10662,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "utils_aibackgroundremoval_loadtransformers",
-      "community": 118,
+      "community": 17,
       "norm_label": "loadtransformers()"
     },
     {
@@ -10672,7 +10672,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "utils_aibackgroundremoval_getsegmenter",
-      "community": 118,
+      "community": 17,
       "norm_label": "getsegmenter()"
     },
     {
@@ -10692,7 +10692,7 @@
       "source_location": "L157",
       "_origin": "ast",
       "id": "utils_aibackgroundremoval_removebackgroundai",
-      "community": 118,
+      "community": 17,
       "norm_label": "removebackgroundai()"
     },
     {
@@ -10822,7 +10822,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_characterrefprompt_test",
-      "community": 63,
+      "community": 0,
       "norm_label": "characterrefprompt.test.ts"
     },
     {
@@ -10832,7 +10832,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_characterrefprompt",
-      "community": 63,
+      "community": 0,
       "norm_label": "characterrefprompt.ts"
     },
     {
@@ -10842,7 +10842,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "utils_characterrefprompt_liststylekeys",
-      "community": 63,
+      "community": 0,
       "norm_label": "liststylekeys()"
     },
     {
@@ -10852,7 +10852,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "utils_characterrefprompt_resolvestyleblock",
-      "community": 63,
+      "community": 0,
       "norm_label": "resolvestyleblock()"
     },
     {
@@ -10862,7 +10862,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "utils_characterrefprompt_buildcharacterrefprompt",
-      "community": 63,
+      "community": 0,
       "norm_label": "buildcharacterrefprompt()"
     },
     {
@@ -10872,7 +10872,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "utils_characterrefprompt_buildcomiccharacterrefprompt",
-      "community": 63,
+      "community": 0,
       "norm_label": "buildcomiccharacterrefprompt()"
     },
     {
@@ -11322,7 +11322,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_chromakeyprocessor",
-      "community": 139,
+      "community": 118,
       "norm_label": "chromakeyprocessor.ts"
     },
     {
@@ -11332,7 +11332,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "utils_chromakeyprocessor_chromakeyprogress",
-      "community": 139,
+      "community": 118,
       "norm_label": "chromakeyprogress"
     },
     {
@@ -11352,7 +11352,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "utils_chromakeyprocessor_removechromakeywithworker",
-      "community": 139,
+      "community": 118,
       "norm_label": "removechromakeywithworker()"
     },
     {
@@ -11362,7 +11362,7 @@
       "source_location": "L144",
       "_origin": "ast",
       "id": "utils_chromakeyprocessor_getpixelbuffertransfersource",
-      "community": 139,
+      "community": 118,
       "norm_label": "getpixelbuffertransfersource()"
     },
     {
@@ -11372,7 +11372,7 @@
       "source_location": "L166",
       "_origin": "ast",
       "id": "utils_chromakeyprocessor_processwithworker",
-      "community": 139,
+      "community": 118,
       "norm_label": "processwithworker()"
     },
     {
@@ -11382,7 +11382,7 @@
       "source_location": "L279",
       "_origin": "ast",
       "id": "utils_chromakeyprocessor_processinmainthread",
-      "community": 139,
+      "community": 118,
       "norm_label": "processinmainthread()"
     },
     {
@@ -11642,7 +11642,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_comicdownloadfilenames_test",
-      "community": 144,
+      "community": 0,
       "norm_label": "comicdownloadfilenames.test.ts"
     },
     {
@@ -11652,7 +11652,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_comicdownloadfilenames",
-      "community": 144,
+      "community": 0,
       "norm_label": "comicdownloadfilenames.ts"
     },
     {
@@ -11662,7 +11662,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "utils_comicdownloadfilenames_comicdownloadkind",
-      "community": 144,
+      "community": 0,
       "norm_label": "comicdownloadkind"
     },
     {
@@ -11672,7 +11672,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "utils_comicdownloadfilenames_pickcomiccharacterlabel",
-      "community": 144,
+      "community": 0,
       "norm_label": "pickcomiccharacterlabel()"
     },
     {
@@ -11682,7 +11682,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "utils_comicdownloadfilenames_sanitizecomicfilenamesegment",
-      "community": 144,
+      "community": 0,
       "norm_label": "sanitizecomicfilenamesegment()"
     },
     {
@@ -11692,7 +11692,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "utils_comicdownloadfilenames_formatcomicdownloadtimestamp",
-      "community": 144,
+      "community": 0,
       "norm_label": "formatcomicdownloadtimestamp()"
     },
     {
@@ -11702,7 +11702,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "utils_comicdownloadfilenames_buildcomicdownloadfilename",
-      "community": 144,
+      "community": 0,
       "norm_label": "buildcomicdownloadfilename()"
     },
     {
@@ -11712,7 +11712,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_comicpageflow_test",
-      "community": 33,
+      "community": 0,
       "norm_label": "comicpageflow.test.ts"
     },
     {
@@ -11722,7 +11722,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_comicpageflow",
-      "community": 33,
+      "community": 0,
       "norm_label": "comicpageflow.ts"
     },
     {
@@ -11732,7 +11732,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "utils_comicpageflow_comicflowerrorkey",
-      "community": 33,
+      "community": 0,
       "norm_label": "comicflowerrorkey"
     },
     {
@@ -11742,7 +11742,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "utils_comicpageflow_comicflowstate",
-      "community": 33,
+      "community": 0,
       "norm_label": "comicflowstate"
     },
     {
@@ -11752,7 +11752,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "utils_comicpageflow_comicpagegenerationstate",
-      "community": 33,
+      "community": 0,
       "norm_label": "comicpagegenerationstate"
     },
     {
@@ -11762,7 +11762,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "utils_comicpageflow_getcomicnextstepstate",
-      "community": 33,
+      "community": 0,
       "norm_label": "getcomicnextstepstate()"
     },
     {
@@ -11772,7 +11772,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "utils_comicpageflow_getcomicpagegenerationstate",
-      "community": 33,
+      "community": 0,
       "norm_label": "getcomicpagegenerationstate()"
     },
     {
@@ -11782,7 +11782,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_comicpanelschema_test",
-      "community": 62,
+      "community": 0,
       "norm_label": "comicpanelschema.test.ts"
     },
     {
@@ -11792,7 +11792,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_comicpanelschema",
-      "community": 62,
+      "community": 0,
       "norm_label": "comicpanelschema.ts"
     },
     {
@@ -11802,7 +11802,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_comicpanelschema_comic_layout_4a",
-      "community": 62,
+      "community": 0,
       "norm_label": "comic_layout_4a"
     },
     {
@@ -11812,7 +11812,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "utils_comicpanelschema_comicpanel",
-      "community": 62,
+      "community": 0,
       "norm_label": "comicpanel"
     },
     {
@@ -11822,7 +11822,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "utils_comicpanelschema_comicproject",
-      "community": 33,
+      "community": 0,
       "norm_label": "comicproject"
     },
     {
@@ -11832,7 +11832,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "utils_comicpanelschema_createemptypanels",
-      "community": 69,
+      "community": 0,
       "norm_label": "createemptypanels()"
     },
     {
@@ -11842,7 +11842,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "utils_comicpanelschema_createemptycomicproject",
-      "community": 69,
+      "community": 0,
       "norm_label": "createemptycomicproject()"
     },
     {
@@ -11852,7 +11852,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "utils_comicpanelschema_clampcomicdialogue",
-      "community": 62,
+      "community": 0,
       "norm_label": "clampcomicdialogue()"
     },
     {
@@ -11862,7 +11862,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "utils_comicpanelschema_validatepanelsforgeneration",
-      "community": 33,
+      "community": 0,
       "norm_label": "validatepanelsforgeneration()"
     },
     {
@@ -11872,7 +11872,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_comicprojectstorage_test",
-      "community": 69,
+      "community": 0,
       "norm_label": "comicprojectstorage.test.ts"
     },
     {
@@ -11882,7 +11882,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "utils_comicprojectstorage_test_createstoragemock",
-      "community": 69,
+      "community": 0,
       "norm_label": "createstoragemock()"
     },
     {
@@ -11892,7 +11892,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_comicprojectstorage",
-      "community": 69,
+      "community": 0,
       "norm_label": "comicprojectstorage.ts"
     },
     {
@@ -11902,7 +11902,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "utils_comicprojectstorage_legacy_image_session_keys",
-      "community": 69,
+      "community": 0,
       "norm_label": "legacy_image_session_keys"
     },
     {
@@ -11912,7 +11912,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "utils_comicprojectstorage_comicprojectmeta",
-      "community": 69,
+      "community": 0,
       "norm_label": "comicprojectmeta"
     },
     {
@@ -11922,7 +11922,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "utils_comicprojectstorage_stripcomicprojectimages",
-      "community": 69,
+      "community": 0,
       "norm_label": "stripcomicprojectimages()"
     },
     {
@@ -11932,7 +11932,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "utils_comicprojectstorage_purgelegacycomicimagestorage",
-      "community": 69,
+      "community": 0,
       "norm_label": "purgelegacycomicimagestorage()"
     },
     {
@@ -11942,7 +11942,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "utils_comicprojectstorage_isquotaexceedederror",
-      "community": 69,
+      "community": 0,
       "norm_label": "isquotaexceedederror()"
     },
     {
@@ -11952,7 +11952,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "utils_comicprojectstorage_purgebloatedcomicprojectlocalstorage",
-      "community": 69,
+      "community": 0,
       "norm_label": "purgebloatedcomicprojectlocalstorage()"
     },
     {
@@ -11962,7 +11962,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "utils_comicprojectstorage_loadcomicprojectmeta",
-      "community": 69,
+      "community": 0,
       "norm_label": "loadcomicprojectmeta()"
     },
     {
@@ -11972,7 +11972,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "utils_comicprojectstorage_savecomicprojectmeta",
-      "community": 69,
+      "community": 0,
       "norm_label": "savecomicprojectmeta()"
     },
     {
@@ -11982,7 +11982,7 @@
       "source_location": "L120",
       "_origin": "ast",
       "id": "utils_comicprojectstorage_mergecomicproject",
-      "community": 69,
+      "community": 0,
       "norm_label": "mergecomicproject()"
     },
     {
@@ -11992,7 +11992,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_comicsheetinput_test",
-      "community": 33,
+      "community": 0,
       "norm_label": "comicsheetinput.test.ts"
     },
     {
@@ -12002,7 +12002,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_comicsheetinput",
-      "community": 33,
+      "community": 0,
       "norm_label": "comicsheetinput.ts"
     },
     {
@@ -12012,7 +12012,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "utils_comicsheetinput_resolvecomicsheetreferenceimage",
-      "community": 33,
+      "community": 0,
       "norm_label": "resolvecomicsheetreferenceimage()"
     },
     {
@@ -12022,7 +12022,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "utils_comicsheetinput_cangeneratecomiccharactersheet",
-      "community": 33,
+      "community": 0,
       "norm_label": "cangeneratecomiccharactersheet()"
     },
     {
@@ -12102,7 +12102,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "utils_constants_chroma_key_colors",
-      "community": 41,
+      "community": 17,
       "norm_label": "chroma_key_colors"
     },
     {
@@ -12162,7 +12162,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_frameedgecleanup_test",
-      "community": 6,
+      "community": 33,
       "norm_label": "frameedgecleanup.test.ts"
     },
     {
@@ -12172,7 +12172,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "utils_frameedgecleanup_test_makedata",
-      "community": 6,
+      "community": 33,
       "norm_label": "makedata()"
     },
     {
@@ -12182,7 +12182,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "utils_frameedgecleanup_test_alphaat",
-      "community": 6,
+      "community": 33,
       "norm_label": "alphaat()"
     },
     {
@@ -12192,7 +12192,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_frameedgecleanup",
-      "community": 6,
+      "community": 33,
       "norm_label": "frameedgecleanup.ts"
     },
     {
@@ -12202,7 +12202,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "utils_frameedgecleanup_edgecleanupoptions",
-      "community": 6,
+      "community": 33,
       "norm_label": "edgecleanupoptions"
     },
     {
@@ -12212,7 +12212,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "utils_frameedgecleanup_clearedgeconnectedresidue",
-      "community": 2,
+      "community": 33,
       "norm_label": "clearedgeconnectedresidue()"
     },
     {
@@ -12222,7 +12222,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "utils_frameedgecleanup_smallislandcleanupoptions",
-      "community": 6,
+      "community": 33,
       "norm_label": "smallislandcleanupoptions"
     },
     {
@@ -12232,7 +12232,7 @@
       "source_location": "L105",
       "_origin": "ast",
       "id": "utils_frameedgecleanup_clearsmallopaqueislands",
-      "community": 6,
+      "community": 33,
       "norm_label": "clearsmallopaqueislands()"
     },
     {
@@ -12322,7 +12322,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_gridsheettemplate_test",
-      "community": 56,
+      "community": 124,
       "norm_label": "gridsheettemplate.test.ts"
     },
     {
@@ -12332,7 +12332,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_gridsheettemplate",
-      "community": 56,
+      "community": 124,
       "norm_label": "gridsheettemplate.ts"
     },
     {
@@ -12342,7 +12342,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "utils_gridsheettemplate_gridtemplatemode",
-      "community": 56,
+      "community": 124,
       "norm_label": "gridtemplatemode"
     },
     {
@@ -12352,7 +12352,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "utils_gridsheettemplate_gridsheettemplate",
-      "community": 56,
+      "community": 124,
       "norm_label": "gridsheettemplate"
     },
     {
@@ -12362,7 +12362,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "utils_gridsheettemplate_equalgridbounds",
-      "community": 56,
+      "community": 124,
       "norm_label": "equalgridbounds"
     },
     {
@@ -12372,7 +12372,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "utils_gridsheettemplate_buildequalgridbounds",
-      "community": 56,
+      "community": 124,
       "norm_label": "buildequalgridbounds()"
     },
     {
@@ -12382,7 +12382,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "utils_gridsheettemplate_buildgridsheettemplateoptions",
-      "community": 56,
+      "community": 124,
       "norm_label": "buildgridsheettemplateoptions"
     },
     {
@@ -12392,7 +12392,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "utils_gridsheettemplate_setpixel",
-      "community": 56,
+      "community": 124,
       "norm_label": "setpixel()"
     },
     {
@@ -12402,7 +12402,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "utils_gridsheettemplate_fillchromabackground",
-      "community": 56,
+      "community": 124,
       "norm_label": "fillchromabackground()"
     },
     {
@@ -12412,7 +12412,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "utils_gridsheettemplate_groovecolor",
-      "community": 56,
+      "community": 124,
       "norm_label": "groovecolor()"
     },
     {
@@ -12422,7 +12422,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "utils_gridsheettemplate_drawhorizontalgroove",
-      "community": 56,
+      "community": 124,
       "norm_label": "drawhorizontalgroove()"
     },
     {
@@ -12432,7 +12432,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "utils_gridsheettemplate_drawverticalgroove",
-      "community": 56,
+      "community": 124,
       "norm_label": "drawverticalgroove()"
     },
     {
@@ -12442,7 +12442,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "utils_gridsheettemplate_drawcellcornerticks",
-      "community": 56,
+      "community": 124,
       "norm_label": "drawcellcornerticks()"
     },
     {
@@ -12452,7 +12452,7 @@
       "source_location": "L153",
       "_origin": "ast",
       "id": "utils_gridsheettemplate_drawguidedgridoverlay",
-      "community": 56,
+      "community": 124,
       "norm_label": "drawguidedgridoverlay()"
     },
     {
@@ -12462,7 +12462,7 @@
       "source_location": "L207",
       "_origin": "ast",
       "id": "utils_gridsheettemplate_buildgridsheettemplate",
-      "community": 56,
+      "community": 124,
       "norm_label": "buildgridsheettemplate()"
     },
     {
@@ -12542,7 +12542,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_imagecrop",
-      "community": 72,
+      "community": 2,
       "norm_label": "imagecrop.ts"
     },
     {
@@ -12552,7 +12552,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "utils_imagecrop_cropcellfromimage",
-      "community": 72,
+      "community": 2,
       "norm_label": "cropcellfromimage()"
     },
     {
@@ -12562,7 +12562,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "utils_imagecrop_computetemplatematchscore",
-      "community": 72,
+      "community": 2,
       "norm_label": "computetemplatematchscore()"
     },
     {
@@ -12572,7 +12572,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "utils_imagecrop_runtemplatesearch",
-      "community": 72,
+      "community": 2,
       "norm_label": "runtemplatesearch()"
     },
     {
@@ -12582,7 +12582,7 @@
       "source_location": "L138",
       "_origin": "ast",
       "id": "utils_imagecrop_getbestoffsetbytemplatematch",
-      "community": 72,
+      "community": 2,
       "norm_label": "getbestoffsetbytemplatematch()"
     },
     {
@@ -12592,7 +12592,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_imageinterpolation",
-      "community": 126,
+      "community": 2,
       "norm_label": "imageinterpolation.ts"
     },
     {
@@ -12602,7 +12602,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "utils_imageinterpolation_interpolationsettings",
-      "community": 126,
+      "community": 2,
       "norm_label": "interpolationsettings"
     },
     {
@@ -12612,7 +12612,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "utils_imageinterpolation_easingfunctions",
-      "community": 126,
+      "community": 2,
       "norm_label": "easingfunctions"
     },
     {
@@ -12622,7 +12622,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "utils_imageinterpolation_blendframes",
-      "community": 126,
+      "community": 2,
       "norm_label": "blendframes()"
     },
     {
@@ -12632,7 +12632,7 @@
       "source_location": "L120",
       "_origin": "ast",
       "id": "utils_imageinterpolation_interpolateframes",
-      "community": 126,
+      "community": 2,
       "norm_label": "interpolateframes()"
     },
     {
@@ -12642,7 +12642,7 @@
       "source_location": "L151",
       "_origin": "ast",
       "id": "utils_imageinterpolation_createloopinganimation",
-      "community": 126,
+      "community": 2,
       "norm_label": "createloopinganimation()"
     },
     {
@@ -12652,7 +12652,7 @@
       "source_location": "L163",
       "_origin": "ast",
       "id": "utils_imageinterpolation_generatesmoothanimation",
-      "community": 126,
+      "community": 2,
       "norm_label": "generatesmoothanimation()"
     },
     {
@@ -12692,7 +12692,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "utils_imageutils_removechromakey",
-      "community": 139,
+      "community": 118,
       "norm_label": "removechromakey()"
     },
     {
@@ -12712,7 +12712,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_lazywithretry",
-      "community": 17,
+      "community": 22,
       "norm_label": "lazywithretry.tsx"
     },
     {
@@ -12722,7 +12722,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "utils_lazywithretry_lazywithretry",
-      "community": 17,
+      "community": 22,
       "norm_label": "lazywithretry()"
     },
     {
@@ -12776,10 +12776,30 @@
       "norm_label": "theme_en_hooks"
     },
     {
+      "label": "THEME_EN_SCENES",
+      "file_type": "code",
+      "source_file": "utils/lineCreatorsListingText.ts",
+      "source_location": "L32",
+      "_origin": "ast",
+      "id": "utils_linecreatorslistingtext_theme_en_scenes",
+      "community": 31,
+      "norm_label": "theme_en_scenes"
+    },
+    {
+      "label": "stripShopMetaNotes()",
+      "file_type": "code",
+      "source_file": "utils/lineCreatorsListingText.ts",
+      "source_location": "L45",
+      "_origin": "ast",
+      "id": "utils_linecreatorslistingtext_stripshopmetanotes",
+      "community": 31,
+      "norm_label": "stripshopmetanotes()"
+    },
+    {
       "label": "ShopListingInput",
       "file_type": "code",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L31",
+      "source_location": "L49",
       "_origin": "ast",
       "id": "utils_linecreatorslistingtext_shoplistinginput",
       "community": 31,
@@ -12789,7 +12809,7 @@
       "label": "ShopListingResult",
       "file_type": "code",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L40",
+      "source_location": "L58",
       "_origin": "ast",
       "id": "utils_linecreatorslistingtext_shoplistingresult",
       "community": 31,
@@ -12799,7 +12819,7 @@
       "label": "collapseWhitespace()",
       "file_type": "code",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L48",
+      "source_location": "L66",
       "_origin": "ast",
       "id": "utils_linecreatorslistingtext_collapsewhitespace",
       "community": 31,
@@ -12809,7 +12829,7 @@
       "label": "fitZhTitle()",
       "file_type": "code",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L52",
+      "source_location": "L70",
       "_origin": "ast",
       "id": "utils_linecreatorslistingtext_fitzhtitle",
       "community": 31,
@@ -12819,7 +12839,7 @@
       "label": "fitZhDescription()",
       "file_type": "code",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L75",
+      "source_location": "L93",
       "_origin": "ast",
       "id": "utils_linecreatorslistingtext_fitzhdescription",
       "community": 31,
@@ -12829,7 +12849,7 @@
       "label": "sanitizeEnText()",
       "file_type": "code",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L86",
+      "source_location": "L104",
       "_origin": "ast",
       "id": "utils_linecreatorslistingtext_sanitizeentext",
       "community": 31,
@@ -12839,7 +12859,7 @@
       "label": "fitEnTitle()",
       "file_type": "code",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L106",
+      "source_location": "L124",
       "_origin": "ast",
       "id": "utils_linecreatorslistingtext_fitentitle",
       "community": 31,
@@ -12849,7 +12869,7 @@
       "label": "fitEnDescription()",
       "file_type": "code",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L119",
+      "source_location": "L137",
       "_origin": "ast",
       "id": "utils_linecreatorslistingtext_fitendescription",
       "community": 31,
@@ -12859,7 +12879,7 @@
       "label": "pickPhraseHooks()",
       "file_type": "code",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L135",
+      "source_location": "L159",
       "_origin": "ast",
       "id": "utils_linecreatorslistingtext_pickphrasehooks",
       "community": 31,
@@ -12869,7 +12889,7 @@
       "label": "buildDescZh()",
       "file_type": "code",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L142",
+      "source_location": "L166",
       "_origin": "ast",
       "id": "utils_linecreatorslistingtext_builddesczh",
       "community": 31,
@@ -12879,7 +12899,7 @@
       "label": "buildDescEn()",
       "file_type": "code",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L158",
+      "source_location": "L202",
       "_origin": "ast",
       "id": "utils_linecreatorslistingtext_builddescen",
       "community": 31,
@@ -12889,7 +12909,7 @@
       "label": "pushLimitWarning()",
       "file_type": "code",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L175",
+      "source_location": "L222",
       "_origin": "ast",
       "id": "utils_linecreatorslistingtext_pushlimitwarning",
       "community": 31,
@@ -12899,7 +12919,7 @@
       "label": "prepareShopListing()",
       "file_type": "code",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L187",
+      "source_location": "L234",
       "_origin": "ast",
       "id": "utils_linecreatorslistingtext_prepareshoplisting",
       "community": 31,
@@ -12932,7 +12952,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "utils_linestickeractivesheetstate_activesheetstateargs",
-      "community": 39,
+      "community": 2,
       "norm_label": "activesheetstateargs"
     },
     {
@@ -12952,7 +12972,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickerbundledfonts",
-      "community": 43,
+      "community": 50,
       "norm_label": "linestickerbundledfonts.ts"
     },
     {
@@ -12962,7 +12982,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "utils_linestickerbundledfonts_project_root",
-      "community": 43,
+      "community": 50,
       "norm_label": "project_root"
     },
     {
@@ -12972,7 +12992,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "utils_linestickerbundledfonts_bundled_sticker_font_files",
-      "community": 43,
+      "community": 50,
       "norm_label": "bundled_sticker_font_files"
     },
     {
@@ -12982,7 +13002,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "utils_linestickerbundledfonts_ensurebundledstickerfontsregistered",
-      "community": 43,
+      "community": 50,
       "norm_label": "ensurebundledstickerfontsregistered()"
     },
     {
@@ -13062,7 +13082,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "utils_linestickercompose_shouldusecomposelayout",
-      "community": 50,
+      "community": 54,
       "norm_label": "shouldusecomposelayout()"
     },
     {
@@ -13212,7 +13232,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickercomposecaption_test",
-      "community": 129,
+      "community": 43,
       "norm_label": "linestickercomposecaption.test.ts"
     },
     {
@@ -13222,7 +13242,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "utils_linestickercomposecaption_test_makesubjectblob",
-      "community": 129,
+      "community": 43,
       "norm_label": "makesubjectblob()"
     },
     {
@@ -13422,7 +13442,7 @@
       "source_location": "L306",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_fitsubjectplacement",
-      "community": 43,
+      "community": 60,
       "norm_label": "fitsubjectplacement()"
     },
     {
@@ -13642,7 +13662,7 @@
       "source_location": "L149",
       "_origin": "ast",
       "id": "utils_linestickerphrasequality_auditstickerphrases",
-      "community": 26,
+      "community": 23,
       "norm_label": "auditstickerphrases()"
     },
     {
@@ -13652,7 +13672,7 @@
       "source_location": "L162",
       "_origin": "ast",
       "id": "utils_linestickerphrasequality_ishardrejectstickerphraseissue",
-      "community": 26,
+      "community": 23,
       "norm_label": "ishardrejectstickerphraseissue()"
     },
     {
@@ -13832,7 +13852,7 @@
       "source_location": "L205",
       "_origin": "ast",
       "id": "utils_linestickerpresets_themeoption",
-      "community": 8,
+      "community": 44,
       "norm_label": "themeoption"
     },
     {
@@ -13852,7 +13872,7 @@
       "source_location": "L291",
       "_origin": "ast",
       "id": "utils_linestickerpresets_linestickerstyleoption",
-      "community": 8,
+      "community": 44,
       "norm_label": "linestickerstyleoption"
     },
     {
@@ -13892,7 +13912,7 @@
       "source_location": "L349",
       "_origin": "ast",
       "id": "utils_linestickerpresets_text_presets",
-      "community": 8,
+      "community": 44,
       "norm_label": "text_presets"
     },
     {
@@ -14022,7 +14042,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "utils_linestickerprompt_linestickertextrendering",
-      "community": 12,
+      "community": 44,
       "norm_label": "linestickertextrendering"
     },
     {
@@ -14032,7 +14052,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "utils_linestickerprompt_geteffectivelinestickerincludetext",
-      "community": 3,
+      "community": 8,
       "norm_label": "geteffectivelinestickerincludetext()"
     },
     {
@@ -14362,7 +14382,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "utils_linestickersetnaming_containscjk",
-      "community": 34,
+      "community": 21,
       "norm_label": "containscjk()"
     },
     {
@@ -14432,7 +14452,7 @@
       "source_location": "L175",
       "_origin": "ast",
       "id": "utils_linestickersetnaming_suggestsetnameen",
-      "community": 34,
+      "community": 21,
       "norm_label": "suggestsetnameen()"
     },
     {
@@ -14452,7 +14472,7 @@
       "source_location": "L201",
       "_origin": "ast",
       "id": "utils_linestickersetnaming_defaulttitlezhfromphraseset",
-      "community": 34,
+      "community": 21,
       "norm_label": "defaulttitlezhfromphraseset()"
     },
     {
@@ -14472,7 +14492,7 @@
       "source_location": "L226",
       "_origin": "ast",
       "id": "utils_linestickersetnaming_listvoicechoiceszh",
-      "community": 23,
+      "community": 34,
       "norm_label": "listvoicechoiceszh()"
     },
     {
@@ -14502,7 +14522,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "utils_linestickersetschema_linestickersheetindex",
-      "community": 39,
+      "community": 5,
       "norm_label": "linestickersheetindex"
     },
     {
@@ -14562,7 +14582,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "utils_linestickersetschema_slicelinestickersheetframes",
-      "community": 10,
+      "community": 12,
       "norm_label": "slicelinestickersheetframes()"
     },
     {
@@ -14582,7 +14602,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickersheetaspect_test",
-      "community": 118,
+      "community": 8,
       "norm_label": "linestickersheetaspect.test.ts"
     },
     {
@@ -14652,7 +14672,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "utils_linestickersheetaspect_getlinestickercanvasaspectprompt",
-      "community": 118,
+      "community": 8,
       "norm_label": "getlinestickercanvasaspectprompt()"
     },
     {
@@ -14672,7 +14692,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickersheetphrases",
-      "community": 149,
+      "community": 21,
       "norm_label": "linestickersheetphrases.ts"
     },
     {
@@ -14682,7 +14702,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "utils_linestickersheetphrases_loadsheetphrasesoptions",
-      "community": 149,
+      "community": 21,
       "norm_label": "loadsheetphrasesoptions"
     },
     {
@@ -14692,7 +14712,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "utils_linestickersheetphrases_sheetphraseoffsetfromdir",
-      "community": 149,
+      "community": 21,
       "norm_label": "sheetphraseoffsetfromdir()"
     },
     {
@@ -14702,7 +14722,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "utils_linestickersheetphrases_slicephrasewindow",
-      "community": 149,
+      "community": 21,
       "norm_label": "slicephrasewindow()"
     },
     {
@@ -14712,7 +14732,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "utils_linestickersheetphrases_readphrasesetfile",
-      "community": 149,
+      "community": 21,
       "norm_label": "readphrasesetfile()"
     },
     {
@@ -14722,7 +14742,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "utils_linestickersheetphrases_phrasesfromjobmanifest",
-      "community": 149,
+      "community": 21,
       "norm_label": "phrasesfromjobmanifest()"
     },
     {
@@ -14732,7 +14752,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "utils_linestickersheetphrases_loadsheetphrases",
-      "community": 149,
+      "community": 21,
       "norm_label": "loadsheetphrases()"
     },
     {
@@ -14742,7 +14762,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_test",
-      "community": 4,
+      "community": 36,
       "norm_label": "linestickertextoverlay.test.ts"
     },
     {
@@ -14752,7 +14772,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_test_asdomcanvascontext",
-      "community": 4,
+      "community": 36,
       "norm_label": "asdomcanvascontext()"
     },
     {
@@ -14832,7 +14852,7 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_strokecolorforfill",
-      "community": 50,
+      "community": 36,
       "norm_label": "strokecolorforfill()"
     },
     {
@@ -14842,7 +14862,7 @@
       "source_location": "L149",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_fontcssstackforpreset",
-      "community": 4,
+      "community": 36,
       "norm_label": "fontcssstackforpreset()"
     },
     {
@@ -14852,7 +14872,7 @@
       "source_location": "L178",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_resolvecanvasfontnumericweight",
-      "community": 50,
+      "community": 43,
       "norm_label": "resolvecanvasfontnumericweight()"
     },
     {
@@ -14862,7 +14882,7 @@
       "source_location": "L205",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_resolveprogrammaticfontfamilycss",
-      "community": 50,
+      "community": 36,
       "norm_label": "resolveprogrammaticfontfamilycss()"
     },
     {
@@ -14872,7 +14892,7 @@
       "source_location": "L215",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_linestickertextoverlayoptions",
-      "community": 44,
+      "community": 36,
       "norm_label": "linestickertextoverlayoptions"
     },
     {
@@ -14892,7 +14912,7 @@
       "source_location": "L354",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_overlayphrasesonstickerframes",
-      "community": 36,
+      "community": 62,
       "norm_label": "overlayphrasesonstickerframes()"
     },
     {
@@ -15072,7 +15092,7 @@
       "source_location": "L429",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_textoverlayavoidancepadpx",
-      "community": 36,
+      "community": 4,
       "norm_label": "textoverlayavoidancepadpx()"
     },
     {
@@ -15302,7 +15322,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_programmaticfontfamilysource",
-      "community": 44,
+      "community": 129,
       "norm_label": "programmaticfontfamilysource"
     },
     {
@@ -15332,7 +15352,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_programmatictextstrokewidthpx",
-      "community": 36,
+      "community": 50,
       "norm_label": "programmatictextstrokewidthpx()"
     },
     {
@@ -15342,7 +15362,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_default_programmatic_text_overlay_tuning",
-      "community": 129,
+      "community": 36,
       "norm_label": "default_programmatic_text_overlay_tuning"
     },
     {
@@ -15352,7 +15372,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_mergeprogrammatictexttuning",
-      "community": 54,
+      "community": 3,
       "norm_label": "mergeprogrammatictexttuning()"
     },
     {
@@ -15382,7 +15402,7 @@
       "source_location": "L133",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_resolvephraseadaptivecaptiontuning",
-      "community": 129,
+      "community": 43,
       "norm_label": "resolvephraseadaptivecaptiontuning()"
     },
     {
@@ -15392,7 +15412,7 @@
       "source_location": "L154",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_mergeprogrammaticcomposeconfig",
-      "community": 54,
+      "community": 3,
       "norm_label": "mergeprogrammaticcomposeconfig()"
     },
     {
@@ -15402,7 +15422,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickeruploadspec_test",
-      "community": 19,
+      "community": 60,
       "norm_label": "linestickeruploadspec.test.ts"
     },
     {
@@ -15412,7 +15432,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickeruploadspec",
-      "community": 19,
+      "community": 60,
       "norm_label": "linestickeruploadspec.ts"
     },
     {
@@ -15422,7 +15442,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "utils_linestickeruploadspec_line_sticker_upload",
-      "community": 19,
+      "community": 60,
       "norm_label": "line_sticker_upload"
     },
     {
@@ -15432,7 +15452,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "utils_linestickeruploadspec_lineuploadstickercount",
-      "community": 19,
+      "community": 60,
       "norm_label": "lineuploadstickercount"
     },
     {
@@ -15442,7 +15462,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "utils_linestickeruploadspec_toevendimension",
-      "community": 19,
+      "community": 60,
       "norm_label": "toevendimension()"
     },
     {
@@ -15452,7 +15472,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "utils_linestickeruploadspec_computefitdimensions",
-      "community": 19,
+      "community": 60,
       "norm_label": "computefitdimensions()"
     },
     {
@@ -15462,7 +15482,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "utils_linestickeruploadspec_islineuploadstickercount",
-      "community": 19,
+      "community": 60,
       "norm_label": "islineuploadstickercount()"
     },
     {
@@ -15472,7 +15492,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "utils_linestickeruploadspec_resolvelineuploadstickercount",
-      "community": 19,
+      "community": 60,
       "norm_label": "resolvelineuploadstickercount()"
     },
     {
@@ -15492,7 +15512,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickervoicepresets_test",
-      "community": 148,
+      "community": 34,
       "norm_label": "linestickervoicepresets.test.ts"
     },
     {
@@ -15502,7 +15522,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickervoicepresets",
-      "community": 148,
+      "community": 34,
       "norm_label": "linestickervoicepresets.ts"
     },
     {
@@ -15522,7 +15542,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "utils_linestickervoicepresets_sticker_voice_presets",
-      "community": 148,
+      "community": 34,
       "norm_label": "sticker_voice_presets"
     },
     {
@@ -15532,7 +15552,7 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "utils_linestickervoicepresets_liststickervoicekeys",
-      "community": 148,
+      "community": 34,
       "norm_label": "liststickervoicekeys()"
     },
     {
@@ -15542,7 +15562,7 @@
       "source_location": "L120",
       "_origin": "ast",
       "id": "utils_linestickervoicepresets_resolvestickervoice",
-      "community": 148,
+      "community": 34,
       "norm_label": "resolvestickervoice()"
     },
     {
@@ -15552,7 +15572,7 @@
       "source_location": "L144",
       "_origin": "ast",
       "id": "utils_linestickervoicepresets_buildstickervoicepromptblock",
-      "community": 148,
+      "community": 34,
       "norm_label": "buildstickervoicepromptblock()"
     },
     {
@@ -15582,7 +15602,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_logger",
-      "community": 126,
+      "community": 0,
       "norm_label": "logger.ts"
     },
     {
@@ -15592,7 +15612,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "utils_logger_logger",
-      "community": 126,
+      "community": 0,
       "norm_label": "logger"
     },
     {
@@ -15692,7 +15712,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_test",
-      "community": 126,
+      "community": 19,
       "norm_label": "optimizeslicesettings.test.ts"
     },
     {
@@ -15702,7 +15722,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_test_fillbackground",
-      "community": 126,
+      "community": 19,
       "norm_label": "fillbackground()"
     },
     {
@@ -15712,7 +15732,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_test_setpixel",
-      "community": 126,
+      "community": 19,
       "norm_label": "setpixel()"
     },
     {
@@ -15722,7 +15742,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings",
-      "community": 126,
+      "community": 19,
       "norm_label": "optimizeslicesettings.ts"
     },
     {
@@ -15732,7 +15752,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_optimizedsliceresult",
-      "community": 126,
+      "community": 19,
       "norm_label": "optimizedsliceresult"
     },
     {
@@ -15742,7 +15762,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_optimizesliceoptions",
-      "community": 126,
+      "community": 19,
       "norm_label": "optimizesliceoptions"
     },
     {
@@ -15762,7 +15782,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_contentmargins",
-      "community": 126,
+      "community": 19,
       "norm_label": "contentmargins"
     },
     {
@@ -15772,7 +15792,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_rowhascontent",
-      "community": 24,
+      "community": 19,
       "norm_label": "rowhascontent()"
     },
     {
@@ -15782,7 +15802,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_columnhascontent",
-      "community": 24,
+      "community": 19,
       "norm_label": "columnhascontent()"
     },
     {
@@ -15792,7 +15812,7 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_measurecontentmargins",
-      "community": 24,
+      "community": 19,
       "norm_label": "measurecontentmargins()"
     },
     {
@@ -15802,7 +15822,7 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_computeoptimizedslicefrommargins",
-      "community": 126,
+      "community": 19,
       "norm_label": "computeoptimizedslicefrommargins()"
     },
     {
@@ -16242,7 +16262,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_sheetcomponentslicer_test",
-      "community": 19,
+      "community": 33,
       "norm_label": "sheetcomponentslicer.test.ts"
     },
     {
@@ -16252,7 +16272,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "utils_sheetcomponentslicer_test_maketransparentsheet",
-      "community": 19,
+      "community": 33,
       "norm_label": "maketransparentsheet()"
     },
     {
@@ -16262,7 +16282,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "utils_sheetcomponentslicer_test_paintopaquerect",
-      "community": 19,
+      "community": 33,
       "norm_label": "paintopaquerect()"
     },
     {
@@ -16272,7 +16292,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "utils_sheetcomponentslicer_test_alphaat",
-      "community": 19,
+      "community": 33,
       "norm_label": "alphaat()"
     },
     {
@@ -16282,7 +16302,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_sheetcomponentslicer",
-      "community": 19,
+      "community": 33,
       "norm_label": "sheetcomponentslicer.ts"
     },
     {
@@ -16292,7 +16312,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "utils_sheetcomponentslicer_rgbaframebuffer",
-      "community": 19,
+      "community": 33,
       "norm_label": "rgbaframebuffer"
     },
     {
@@ -16302,7 +16322,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "utils_sheetcomponentslicer_ownershipsliceoptions",
-      "community": 19,
+      "community": 33,
       "norm_label": "ownershipsliceoptions"
     },
     {
@@ -16312,7 +16332,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "utils_sheetcomponentslicer_sheetcomponent",
-      "community": 19,
+      "community": 33,
       "norm_label": "sheetcomponent"
     },
     {
@@ -16322,7 +16342,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "utils_sheetcomponentslicer_labeledsheet",
-      "community": 19,
+      "community": 33,
       "norm_label": "labeledsheet"
     },
     {
@@ -16332,7 +16352,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "utils_sheetcomponentslicer_buildcelllookup",
-      "community": 19,
+      "community": 33,
       "norm_label": "buildcelllookup()"
     },
     {
@@ -16342,7 +16362,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "utils_sheetcomponentslicer_isdividerresidue",
-      "community": 19,
+      "community": 33,
       "norm_label": "isdividerresidue()"
     },
     {
@@ -16352,7 +16372,7 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "utils_sheetcomponentslicer_labelsheetcomponents",
-      "community": 19,
+      "community": 33,
       "norm_label": "labelsheetcomponents()"
     },
     {
@@ -16362,7 +16382,7 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "utils_sheetcomponentslicer_slicesheetbygridbounds",
-      "community": 19,
+      "community": 33,
       "norm_label": "slicesheetbygridbounds()"
     },
     {
@@ -16372,7 +16392,7 @@
       "source_location": "L215",
       "_origin": "ast",
       "id": "utils_sheetcomponentslicer_slicesheetbycomponentownership",
-      "community": 19,
+      "community": 33,
       "norm_label": "slicesheetbycomponentownership()"
     },
     {
@@ -16402,7 +16422,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "utils_sheetgridvalidation_realworld_test_loadattemptimage",
-      "community": 3,
+      "community": 32,
       "norm_label": "loadattemptimage()"
     },
     {
@@ -16832,7 +16852,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_slicebycellrects",
-      "community": 72,
+      "community": 2,
       "norm_label": "slicebycellrects.ts"
     },
     {
@@ -16842,7 +16862,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "utils_slicebycellrects_slicespritesheetbycellrects",
-      "community": 72,
+      "community": 2,
       "norm_label": "slicespritesheetbycellrects()"
     },
     {
@@ -16862,7 +16882,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "utils_slicespritesheet_slicespritesheet",
-      "community": 2,
+      "community": 10,
       "norm_label": "slicespritesheet()"
     },
     {
@@ -16982,7 +17002,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "utils_spriteslicing_slicesettings",
-      "community": 39,
+      "community": 2,
       "norm_label": "slicesettings"
     },
     {
@@ -17729,7 +17749,7 @@
       "label": "\u65b0\u589e voice preset",
       "file_type": "document",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L104",
+      "source_location": "L106",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_skill_\u65b0\u589e_voice_preset",
       "community": 65,
@@ -17739,7 +17759,7 @@
       "label": "Commands",
       "file_type": "document",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L121",
+      "source_location": "L123",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_skill_commands",
       "community": 65,
@@ -17749,7 +17769,7 @@
       "label": "AI design (recommended)",
       "file_type": "document",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L123",
+      "source_location": "L125",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_skill_ai_design_recommended",
       "community": 65,
@@ -17759,7 +17779,7 @@
       "label": "Preset only (no phrase AI \u2014 cycles theme examples)",
       "file_type": "document",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L145",
+      "source_location": "L147",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_skill_preset_only_no_phrase_ai_cycles_theme_examples",
       "community": 65,
@@ -17769,7 +17789,7 @@
       "label": "Single sheet (e.g. 4\u00d75 test grid)",
       "file_type": "document",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L156",
+      "source_location": "L158",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_skill_single_sheet_e_g_4_5_test_grid",
       "community": 65,
@@ -17779,7 +17799,7 @@
       "label": "Validate existing JSON",
       "file_type": "document",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L166",
+      "source_location": "L168",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_skill_validate_existing_json",
       "community": 65,
@@ -17789,7 +17809,7 @@
       "label": "Add / refresh actionDescs only",
       "file_type": "document",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L172",
+      "source_location": "L174",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_skill_add_refresh_actiondescs_only",
       "community": 65,
@@ -17799,7 +17819,7 @@
       "label": "Theme presets",
       "file_type": "document",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L181",
+      "source_location": "L183",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_skill_theme_presets",
       "community": 65,
@@ -17809,7 +17829,7 @@
       "label": "Agent workflow",
       "file_type": "document",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L194",
+      "source_location": "L196",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_skill_agent_workflow",
       "community": 65,
@@ -17819,7 +17839,7 @@
       "label": "Step 1 \u2014 Gather (ask only what's missing)",
       "file_type": "document",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L205",
+      "source_location": "L207",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_skill_step_1_gather_ask_only_what_s_missing",
       "community": 65,
@@ -17829,7 +17849,7 @@
       "label": "Step 2 \u2014 Design",
       "file_type": "document",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L213",
+      "source_location": "L215",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_skill_step_2_design",
       "community": 65,
@@ -17839,7 +17859,7 @@
       "label": "Step 3 \u2014 Validate",
       "file_type": "document",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L233",
+      "source_location": "L235",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_skill_step_3_validate",
       "community": 65,
@@ -17849,7 +17869,7 @@
       "label": "Step 4 \u2014 User spot-check",
       "file_type": "document",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L237",
+      "source_location": "L239",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_skill_step_4_user_spot_check",
       "community": 65,
@@ -17859,7 +17879,7 @@
       "label": "Step 5 \u2014 Pipeline",
       "file_type": "document",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L249",
+      "source_location": "L251",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_skill_step_5_pipeline",
       "community": 65,
@@ -17869,7 +17889,7 @@
       "label": "Flags reference",
       "file_type": "document",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L260",
+      "source_location": "L262",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_skill_flags_reference",
       "community": 65,
@@ -17879,7 +17899,7 @@
       "label": "Hand-written JSON",
       "file_type": "document",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L279",
+      "source_location": "L281",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_skill_hand_written_json",
       "community": 65,
@@ -17889,7 +17909,7 @@
       "label": "Related skills",
       "file_type": "document",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L288",
+      "source_location": "L290",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_skill_related_skills",
       "community": 65,
@@ -18362,7 +18382,7 @@
       "source_location": "L186",
       "_origin": "ast",
       "id": "readme_\u90e8\u7f72\u5230_github_pages",
-      "community": 29,
+      "community": 63,
       "norm_label": "\ud83d\ude80 \u90e8\u7f72\u5230 github pages"
     },
     {
@@ -18372,7 +18392,7 @@
       "source_location": "L188",
       "_origin": "ast",
       "id": "readme_\u81ea\u52d5\u90e8\u7f72_\u63a8\u85a6",
-      "community": 29,
+      "community": 63,
       "norm_label": "\u81ea\u52d5\u90e8\u7f72(\u63a8\u85a6)"
     },
     {
@@ -18382,7 +18402,7 @@
       "source_location": "L209",
       "_origin": "ast",
       "id": "readme_\u624b\u52d5\u89f8\u767c\u90e8\u7f72",
-      "community": 29,
+      "community": 63,
       "norm_label": "\u624b\u52d5\u89f8\u767c\u90e8\u7f72"
     },
     {
@@ -18392,7 +18412,7 @@
       "source_location": "L216",
       "_origin": "ast",
       "id": "readme_\u624b\u52d5\u69cb\u5efa_\u672c\u5730\u6e2c\u8a66",
-      "community": 29,
+      "community": 63,
       "norm_label": "\u624b\u52d5\u69cb\u5efa(\u672c\u5730\u6e2c\u8a66)"
     },
     {
@@ -18402,7 +18422,7 @@
       "source_location": "L232",
       "_origin": "ast",
       "id": "readme_\u6ce8\u610f\u4e8b\u9805",
-      "community": 29,
+      "community": 63,
       "norm_label": "\u6ce8\u610f\u4e8b\u9805"
     },
     {
@@ -33023,7 +33043,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L123",
+      "source_location": "L122",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_uploadconfig",
       "target": "claude_skills_line_sticker_maker_scripts_uploadconfig_batchrelbase",
@@ -33033,7 +33053,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L98",
+      "source_location": "L97",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_uploadconfig",
       "target": "claude_skills_line_sticker_maker_scripts_uploadconfig_buildmarkdown",
@@ -33043,7 +33063,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L94",
+      "source_location": "L93",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_uploadconfig",
       "target": "claude_skills_line_sticker_maker_scripts_uploadconfig_envfilebasename",
@@ -33063,7 +33083,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L183",
+      "source_location": "L182",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_uploadconfig",
       "target": "claude_skills_line_sticker_maker_scripts_uploadconfig_normalizeuploadlisting",
@@ -33083,7 +33103,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L132",
+      "source_location": "L131",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_uploadconfig",
       "target": "claude_skills_line_sticker_maker_scripts_uploadconfig_packuploadoutput",
@@ -33230,7 +33250,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L139",
+      "source_location": "L138",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_uploadconfig_packuploadoutput",
       "target": "claude_skills_line_sticker_maker_scripts_uploadconfig_resolveuploadpackdir",
@@ -33241,7 +33261,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L159",
+      "source_location": "L158",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_uploadconfig_packuploadoutput",
       "target": "claude_skills_line_sticker_maker_scripts_uploadconfig_resolveenvbatchdir",
@@ -33252,7 +33272,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L137",
+      "source_location": "L136",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_uploadconfig_packuploadoutput",
       "target": "claude_skills_line_sticker_maker_scripts_uploadconfig_validateuploadconfig",
@@ -33274,7 +33294,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L160",
+      "source_location": "L159",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_uploadconfig_packuploadoutput",
       "target": "claude_skills_line_sticker_maker_scripts_uploadconfig_envfilebasename",
@@ -33285,7 +33305,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L152",
+      "source_location": "L151",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_uploadconfig_packuploadoutput",
       "target": "claude_skills_line_sticker_maker_scripts_uploadconfig_buildmarkdown",
@@ -33296,7 +33316,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L174",
+      "source_location": "L173",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_uploadconfig_packuploadoutput",
       "target": "claude_skills_line_sticker_maker_scripts_uploadconfig_batchrelbase",
@@ -33308,7 +33328,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L165",
+      "source_location": "L164",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_uploadconfig_packuploadoutput",
       "target": "claude_skills_line_sticker_maker_scripts_uploadcredentials_buildbatchenvcontent"
@@ -33319,7 +33339,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".claude/skills/line-sticker-maker/scripts/uploadConfig.mts",
-      "source_location": "L187",
+      "source_location": "L186",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_uploadconfig_normalizeuploadlisting",
       "target": "utils_linecreatorslistingtext_prepareshoplisting"
@@ -62893,10 +62913,21 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "utils/lineCreatorsListingText.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "utils_linecreatorslistingtext_test",
+      "target": "utils_linecreatorslistingtext_stripshopmetanotes",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L158",
+      "source_location": "L202",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext",
       "target": "utils_linecreatorslistingtext_builddescen",
@@ -62906,7 +62937,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L142",
+      "source_location": "L166",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext",
       "target": "utils_linecreatorslistingtext_builddesczh",
@@ -62916,7 +62947,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L48",
+      "source_location": "L66",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext",
       "target": "utils_linecreatorslistingtext_collapsewhitespace",
@@ -62926,7 +62957,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L119",
+      "source_location": "L137",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext",
       "target": "utils_linecreatorslistingtext_fitendescription",
@@ -62936,7 +62967,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L106",
+      "source_location": "L124",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext",
       "target": "utils_linecreatorslistingtext_fitentitle",
@@ -62946,7 +62977,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L75",
+      "source_location": "L93",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext",
       "target": "utils_linecreatorslistingtext_fitzhdescription",
@@ -62956,7 +62987,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L52",
+      "source_location": "L70",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext",
       "target": "utils_linecreatorslistingtext_fitzhtitle",
@@ -62976,7 +63007,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L135",
+      "source_location": "L159",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext",
       "target": "utils_linecreatorslistingtext_pickphrasehooks",
@@ -62986,7 +63017,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L187",
+      "source_location": "L234",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext",
       "target": "utils_linecreatorslistingtext_prepareshoplisting",
@@ -62996,7 +63027,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L175",
+      "source_location": "L222",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext",
       "target": "utils_linecreatorslistingtext_pushlimitwarning",
@@ -63006,7 +63037,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L86",
+      "source_location": "L104",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext",
       "target": "utils_linecreatorslistingtext_sanitizeentext",
@@ -63016,7 +63047,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L31",
+      "source_location": "L49",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext",
       "target": "utils_linecreatorslistingtext_shoplistinginput",
@@ -63026,10 +63057,20 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L40",
+      "source_location": "L58",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext",
       "target": "utils_linecreatorslistingtext_shoplistingresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "utils/lineCreatorsListingText.ts",
+      "source_location": "L45",
+      "weight": 1.0,
+      "source": "utils_linecreatorslistingtext",
+      "target": "utils_linecreatorslistingtext_stripshopmetanotes",
       "confidence_score": 1.0
     },
     {
@@ -63040,6 +63081,16 @@
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext",
       "target": "utils_linecreatorslistingtext_theme_en_hooks",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "utils/lineCreatorsListingText.ts",
+      "source_location": "L32",
+      "weight": 1.0,
+      "source": "utils_linecreatorslistingtext",
+      "target": "utils_linecreatorslistingtext_theme_en_scenes",
       "confidence_score": 1.0
     },
     {
@@ -63068,7 +63119,51 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L79",
+      "source_location": "L204",
+      "weight": 1.0,
+      "source": "utils_linecreatorslistingtext_builddescen",
+      "target": "utils_linecreatorslistingtext_stripshopmetanotes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "utils/lineCreatorsListingText.ts",
+      "source_location": "L168",
+      "weight": 1.0,
+      "source": "utils_linecreatorslistingtext_builddesczh",
+      "target": "utils_linecreatorslistingtext_stripshopmetanotes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "utils/lineCreatorsListingText.ts",
+      "source_location": "L237",
+      "weight": 1.0,
+      "source": "utils_linecreatorslistingtext_prepareshoplisting",
+      "target": "utils_linecreatorslistingtext_stripshopmetanotes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "utils/lineCreatorsListingText.ts",
+      "source_location": "L46",
+      "weight": 1.0,
+      "source": "utils_linecreatorslistingtext_stripshopmetanotes",
+      "target": "utils_linecreatorslistingtext_collapsewhitespace",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "utils/lineCreatorsListingText.ts",
+      "source_location": "L97",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext_fitzhdescription",
       "target": "utils_linecreatorslistingtext_collapsewhitespace",
@@ -63079,7 +63174,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L53",
+      "source_location": "L71",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext_fitzhtitle",
       "target": "utils_linecreatorslistingtext_collapsewhitespace",
@@ -63090,7 +63185,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L103",
+      "source_location": "L121",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext_sanitizeentext",
       "target": "utils_linecreatorslistingtext_collapsewhitespace",
@@ -63101,7 +63196,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L191",
+      "source_location": "L238",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext_prepareshoplisting",
       "target": "utils_linecreatorslistingtext_fitzhtitle",
@@ -63145,7 +63240,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L195",
+      "source_location": "L242",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext_prepareshoplisting",
       "target": "utils_linecreatorslistingtext_fitzhdescription",
@@ -63156,7 +63251,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L164",
+      "source_location": "L209",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext_builddescen",
       "target": "utils_linecreatorslistingtext_sanitizeentext",
@@ -63167,7 +63262,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L124",
+      "source_location": "L142",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext_fitendescription",
       "target": "utils_linecreatorslistingtext_sanitizeentext",
@@ -63178,7 +63273,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L107",
+      "source_location": "L125",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext_fitentitle",
       "target": "utils_linecreatorslistingtext_sanitizeentext",
@@ -63189,7 +63284,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L200",
+      "source_location": "L247",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext_prepareshoplisting",
       "target": "utils_linecreatorslistingtext_sanitizeentext",
@@ -63200,7 +63295,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L199",
+      "source_location": "L246",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext_prepareshoplisting",
       "target": "utils_linecreatorslistingtext_fitentitle",
@@ -63211,7 +63306,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L203",
+      "source_location": "L250",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext_prepareshoplisting",
       "target": "utils_linecreatorslistingtext_fitendescription",
@@ -63222,18 +63317,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L163",
-      "weight": 1.0,
-      "source": "utils_linecreatorslistingtext_builddescen",
-      "target": "utils_linecreatorslistingtext_pickphrasehooks",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L147",
+      "source_location": "L171",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext_builddesczh",
       "target": "utils_linecreatorslistingtext_pickphrasehooks",
@@ -63244,7 +63328,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L194",
+      "source_location": "L241",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext_prepareshoplisting",
       "target": "utils_linecreatorslistingtext_builddesczh",
@@ -63255,7 +63339,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L202",
+      "source_location": "L249",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext_prepareshoplisting",
       "target": "utils_linecreatorslistingtext_builddescen",
@@ -63266,7 +63350,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineCreatorsListingText.ts",
-      "source_location": "L192",
+      "source_location": "L239",
       "weight": 1.0,
       "source": "utils_linecreatorslistingtext_prepareshoplisting",
       "target": "utils_linecreatorslistingtext_pushlimitwarning",
@@ -73273,7 +73357,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L194",
+      "source_location": "L196",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_phrase_design_skill_line_sticker_phrase_design",
       "target": "claude_skills_line_sticker_phrase_design_skill_agent_workflow",
@@ -73283,7 +73367,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L121",
+      "source_location": "L123",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_phrase_design_skill_line_sticker_phrase_design",
       "target": "claude_skills_line_sticker_phrase_design_skill_commands",
@@ -73293,7 +73377,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L260",
+      "source_location": "L262",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_phrase_design_skill_line_sticker_phrase_design",
       "target": "claude_skills_line_sticker_phrase_design_skill_flags_reference",
@@ -73303,7 +73387,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L279",
+      "source_location": "L281",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_phrase_design_skill_line_sticker_phrase_design",
       "target": "claude_skills_line_sticker_phrase_design_skill_hand_written_json",
@@ -73323,7 +73407,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L288",
+      "source_location": "L290",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_phrase_design_skill_line_sticker_phrase_design",
       "target": "claude_skills_line_sticker_phrase_design_skill_related_skills",
@@ -73333,7 +73417,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L181",
+      "source_location": "L183",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_phrase_design_skill_line_sticker_phrase_design",
       "target": "claude_skills_line_sticker_phrase_design_skill_theme_presets",
@@ -73353,7 +73437,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L104",
+      "source_location": "L106",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_phrase_design_skill_voice_presets_voice",
       "target": "claude_skills_line_sticker_phrase_design_skill_\u65b0\u589e_voice_preset",
@@ -73373,7 +73457,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L172",
+      "source_location": "L174",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_phrase_design_skill_commands",
       "target": "claude_skills_line_sticker_phrase_design_skill_add_refresh_actiondescs_only",
@@ -73383,7 +73467,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L123",
+      "source_location": "L125",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_phrase_design_skill_commands",
       "target": "claude_skills_line_sticker_phrase_design_skill_ai_design_recommended",
@@ -73393,7 +73477,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L145",
+      "source_location": "L147",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_phrase_design_skill_commands",
       "target": "claude_skills_line_sticker_phrase_design_skill_preset_only_no_phrase_ai_cycles_theme_examples",
@@ -73403,7 +73487,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L156",
+      "source_location": "L158",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_phrase_design_skill_commands",
       "target": "claude_skills_line_sticker_phrase_design_skill_single_sheet_e_g_4_5_test_grid",
@@ -73413,7 +73497,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L166",
+      "source_location": "L168",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_phrase_design_skill_commands",
       "target": "claude_skills_line_sticker_phrase_design_skill_validate_existing_json",
@@ -73423,7 +73507,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L205",
+      "source_location": "L207",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_phrase_design_skill_agent_workflow",
       "target": "claude_skills_line_sticker_phrase_design_skill_step_1_gather_ask_only_what_s_missing",
@@ -73433,7 +73517,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L213",
+      "source_location": "L215",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_phrase_design_skill_agent_workflow",
       "target": "claude_skills_line_sticker_phrase_design_skill_step_2_design",
@@ -73443,7 +73527,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L233",
+      "source_location": "L235",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_phrase_design_skill_agent_workflow",
       "target": "claude_skills_line_sticker_phrase_design_skill_step_3_validate",
@@ -73453,7 +73537,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L237",
+      "source_location": "L239",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_phrase_design_skill_agent_workflow",
       "target": "claude_skills_line_sticker_phrase_design_skill_step_4_user_spot_check",
@@ -73463,7 +73547,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-phrase-design/SKILL.md",
-      "source_location": "L249",
+      "source_location": "L251",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_phrase_design_skill_agent_workflow",
       "target": "claude_skills_line_sticker_phrase_design_skill_step_5_pipeline",
@@ -77707,5 +77791,5 @@
       "source_file": "public/style-previews"
     }
   ],
-  "built_at_commit": "0c742c207028159c77572f311101c86c153ad9f9"
+  "built_at_commit": "5427be3ff1fe4580308637b4b54cedf409acdc6c"
 }

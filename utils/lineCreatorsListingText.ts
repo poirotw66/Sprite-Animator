@@ -28,6 +28,24 @@ const THEME_EN_HOOKS: Record<string, string> = {
   food: 'snacks, meals, and foodie moods',
 };
 
+/** Scenes for English shop blurbs (ASCII-safe). */
+const THEME_EN_SCENES: Record<string, string> = {
+  daily: 'class, group chats, and sleepy mornings',
+  social: 'friends, DMs, and group banter',
+  workplace: 'meetings, deadlines, and coffee breaks',
+  emotion: 'big feelings and little wins',
+  meme: 'memes, roasts, and dramatic moments',
+  food: 'snacks, cravings, and foodie moods',
+};
+
+/** Strip pipeline / draft notes that must not appear in LINE shop copy. */
+const SHOP_META_NOTE_RE =
+  /[（(][^）)]*(?:版|測試|draft|beta|wip|internal|模型繪字|程式疊字|model|programmatic|debug|工作留|內部)[^）)]*[）)]/giu;
+
+export function stripShopMetaNotes(text: string): string {
+  return collapseWhitespace(text.replace(SHOP_META_NOTE_RE, ''));
+}
+
 export interface ShopListingInput {
   titleZh: string;
   descZh?: string;
@@ -123,7 +141,13 @@ export function fitEnDescription(
 ): string {
   let out = sanitizeEnText(desc);
   const prefix = `${titleEn} Sticker set. `;
-  if (!out.includes('Sticker set.')) {
+  const lower = out.toLowerCase();
+  const titleLower = sanitizeEnText(titleEn).toLowerCase();
+  if (
+    out.length > 0 &&
+    !lower.includes('sticker set') &&
+    !lower.startsWith(titleLower)
+  ) {
     out = prefix + out;
   }
   if (out.length <= maxLen) {
@@ -141,35 +165,58 @@ function pickPhraseHooks(phrases: string[], maxCount: number = 3): string[] {
 
 export function buildDescZh(input: ShopListingInput, titleZh: string): string {
   if (input.descZh?.trim()) {
-    return input.descZh.trim();
+    return stripShopMetaNotes(input.descZh);
   }
 
-  const hooks = pickPhraseHooks(input.phrases ?? []);
+  const hooks = pickPhraseHooks(input.phrases ?? [], 4);
+  const themeKey = input.themeKey ?? 'daily';
+
+  if (hooks.length >= 3) {
+    const lead = hooks.slice(0, 3).join('、');
+    const tail =
+      titleZh.includes('校園') || titleZh.includes('學校')
+        ? '校園俏皮梗全收錄，群組聊天秒接招！'
+        : themeKey === 'workplace'
+          ? '職場嘴砲梗一次備齊，回訊息超有戲！'
+          : themeKey === 'meme'
+            ? '迷因梗圖通通有，聊天秒接招！'
+            : '日常俏皮梗全收錄，聊天回你剛剛好！';
+    return `${lead}——${tail}`;
+  }
+
+  if (hooks.length >= 2) {
+    const hookText = hooks.join('、');
+    return `${hookText}——句句有戲，聊天剛剛好！`;
+  }
+
   const hookText =
     hooks.length > 0
       ? hooks.join('、')
-      : THEME_ZH_HOOKS[input.themeKey ?? 'daily'] ?? THEME_ZH_HOOKS.daily!;
+      : THEME_ZH_HOOKS[themeKey] ?? THEME_ZH_HOOKS.daily!;
 
   const subject = titleZh.replace(/貼圖(組)?$/u, '').replace(/·/gu, '');
   const shortSubject = subject.length > 10 ? subject.slice(0, 10) : subject;
-  return `${shortSubject}陪你${hookText}！每句都有可愛反應。`;
+  return `${shortSubject}陪你${hookText}，句句俏皮有戲！`;
 }
 
 export function buildDescEn(input: ShopListingInput, titleEn: string): string {
   if (input.descEn?.trim()) {
-    return input.descEn.trim();
+    return stripShopMetaNotes(input.descEn);
   }
 
-  const samples = pickPhraseHooks(input.phrases ?? [], 3)
-    .map((phrase) => sanitizeEnText(phrase))
-    .filter(Boolean);
-  if (samples.length > 0) {
-    return `Perfect for ${samples.join(', ')} and more.`;
+  const themeKey = input.themeKey ?? 'daily';
+  const scene = THEME_EN_SCENES[themeKey] ?? THEME_EN_SCENES.daily!;
+  const titleLower = sanitizeEnText(titleEn).toLowerCase();
+
+  if (titleLower.includes('school') || titleLower.includes('campus')) {
+    return `Cute school-life comebacks for ${scene} — punchy reactions friends will love.`;
+  }
+  if (titleLower.includes('couple') || titleLower.includes('lover')) {
+    return `Sweet couple comebacks for ${scene} — reactions that feel just right.`;
   }
 
-  const hook =
-    THEME_EN_HOOKS[input.themeKey ?? 'daily'] ?? THEME_EN_HOOKS.daily!;
-  return `Cute reactions for ${hook}.`;
+  const hook = THEME_EN_HOOKS[themeKey] ?? THEME_EN_HOOKS.daily!;
+  return `Cute comebacks for ${scene} — playful reactions for ${hook}.`;
 }
 
 function pushLimitWarning(
@@ -187,7 +234,7 @@ function pushLimitWarning(
 export function prepareShopListing(input: ShopListingInput): ShopListingResult {
   const warnings: string[] = [];
 
-  const rawTitleZh = input.titleZh.trim() || '原創貼圖';
+  const rawTitleZh = stripShopMetaNotes(input.titleZh.trim() || '原創貼圖');
   const titleZh = fitZhTitle(rawTitleZh);
   pushLimitWarning(warnings, 'titleZh', rawTitleZh.replace(/\s+/g, ''), titleZh);
 
@@ -195,7 +242,7 @@ export function prepareShopListing(input: ShopListingInput): ShopListingResult {
   const descZh = fitZhDescription(rawDescZh);
   pushLimitWarning(warnings, 'descZh', rawDescZh, descZh);
 
-  const rawTitleEn = input.titleEn.trim() || 'Original Sticker Set';
+  const rawTitleEn = stripShopMetaNotes(input.titleEn.trim() || 'Original Sticker Set');
   const titleEn = fitEnTitle(rawTitleEn);
   pushLimitWarning(warnings, 'titleEn', sanitizeEnText(rawTitleEn), titleEn);
 

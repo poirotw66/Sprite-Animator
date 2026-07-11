@@ -79,6 +79,8 @@ npx tsx .../design-phrase-set.mts --theme 美食 --voice 咖波 --out output/咖
 | 英文標題 `titleEn` | 39 字元（半形） |
 | 英文說明 `descEn` | 160 字元（須含 `Sticker set.`） |
 
+`finalize` / `normalizeUploadListing` 會從 phrase 自動產生吸睛說明（可省略 `descZh` / `descEn`）。**勿**在商店文案寫 pipeline 標記（如 `（模型繪字版）`、`Model Text Set`）——會被自動剔除或應避免。
+
 腳本會自動產生簡短、吸睛且合規的標題／說明；過長時會裁切並在 log 提示。
 
 ```bash

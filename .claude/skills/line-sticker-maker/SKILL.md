@@ -143,8 +143,8 @@ Legacy job configs with `lineS` / `syncToLineS` are still accepted when reading.
 | `root` | **optional** — external upload root. Omit to pack into `--out` (recommended). |
 | `creatorId` | used in upload input paths (default `706`) |
 | `setName` | English ZIP / MD base name, e.g. `Cozy Cream Cat Daily Chat` |
-| `titleZh` / `descZh` | Traditional Chinese shop listing (auto-fit: title ≤20, desc ≤80) |
-| `titleEn` / `descEn` | English listing (title &lt;40 ASCII, desc ≤160 with `Sticker set.`) |
+| `titleZh` / `descZh` | Traditional Chinese shop listing (auto-fit: title ≤20, desc ≤80). Omit `descZh` to auto-build from phrase hooks. **Never** put pipeline labels like `（模型繪字版）` in shop copy — they are stripped automatically. |
+| `titleEn` / `descEn` | English listing (title &lt;40 ASCII, desc ≤160). Omit `descEn` for auto-build. Avoid internal set names like `Model Text Set` — use shopper-facing names (`Playful Chat`, `Daily Banter`). |
 | `writeEnvBatch` | default `true`; writes `<out>/.env.batch/{Set_Name}.env` |
 | `syncToUploadRoot` | default `true`; copies pack to `.line-upload/input/706/` |
 | `uploadRoot` | upload root path (default `.line-upload`) |

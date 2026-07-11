@@ -83,9 +83,8 @@ export function validateUploadConfig(upload: UploadConfig): void {
   const missing: string[] = [];
   if (!upload.setName?.trim()) missing.push('upload.setName');
   if (!upload.titleZh?.trim()) missing.push('upload.titleZh');
-  if (!upload.descZh?.trim()) missing.push('upload.descZh');
   if (!upload.titleEn?.trim()) missing.push('upload.titleEn');
-  if (!upload.descEn?.trim()) missing.push('upload.descEn');
+  // descZh / descEn may be omitted — normalizeUploadListing auto-builds from phrases.
   if (missing.length > 0) {
     throw new Error(`upload config incomplete — set: ${missing.join(', ')}`);
   }
@@ -186,9 +185,9 @@ export function normalizeUploadListing(
 ): { upload: UploadConfig; warnings: string[] } {
   const listing = prepareShopListing({
     titleZh: upload.titleZh,
-    descZh: upload.descZh,
+    descZh: upload.descZh?.trim() || undefined,
     titleEn: upload.titleEn,
-    descEn: upload.descEn,
+    descEn: upload.descEn?.trim() || undefined,
     phrases,
   });
   return {
