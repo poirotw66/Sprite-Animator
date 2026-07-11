@@ -1,20 +1,8 @@
-/**
- * Shared chroma-key removal core (chroma-similarity detection, connectivity
- * masking, despill, halo removal). Pure array math, no DOM — imported by both
- * the Web Worker and the main-thread fallback so both run the SAME algorithm.
- * @module chromaKeyCore
+﻿/**
+ * Pre-refactor chroma key (ecf81e5): HSL RGB-distance detection, connectivity
+ * masking, despill, halo removal. Frozen snapshot — use algorithm `legacy`.
+ * @module chromaKeyLegacy
  */
-
-import {
-  isChromaLike,
-  isChromaSoftEdge,
-  fuzzPercentToKeyMax,
-  chromaDistanceToKey,
-  CHROMA_LIKE_SOFT_EXTRA,
-} from './chromaSimilarity';
-import { shouldUseGuidedChromaPath } from './chromaGuidedDetect';
-import { clearGuidedGreenPockets } from './chromaPocketCleanup';
-import { isNeutralDarkInk } from './stickerStrokeWhite';
 
 /**
  * Convert RGB to HSL color space
@@ -62,17 +50,11 @@ function isNearWhite(r: number, g: number, b: number): boolean {
   return r >= NEAR_WHITE_THRESHOLD && g >= NEAR_WHITE_THRESHOLD && b >= NEAR_WHITE_THRESHOLD;
 }
 
-export interface ProcessChromaKeyOptions {
-  /** true/false wins; undefined → auto-detect regular gutters. */
-  guided?: boolean;
-  keyMaxOverride?: number;
-}
-
 /**
- * Process chroma key removal with progress reporting.
- * Similarity uses shared Y-normalized chroma distance (see chromaSimilarity).
+ * Process chroma key removal with progress reporting
+ * Uses HSL color space for accurate green/magenta detection
  */
-export function processChromaKey(
+export function processChromaKeyLegacy(
   data: Uint8ClampedArray,
   width: number,
   height: number,
@@ -80,20 +62,12 @@ export function processChromaKey(
   fuzzPercent: number,
   onProgress: (progress: number) => void,
   edgeBandRadius: number = DEFAULT_EDGE_BAND_RADIUS,
-  edgeBlend: number = DEFAULT_EDGE_BLEND,
-  options: ProcessChromaKeyOptions = {}
+  edgeBlend: number = DEFAULT_EDGE_BLEND
 ): Uint8ClampedArray {
   const totalPixels = data.length / 4;
-  const keyMax = options.keyMaxOverride ?? fuzzPercentToKeyMax(fuzzPercent);
+  const fuzz = (fuzzPercent / 100) * 255;
   const radius = Math.max(1, Math.min(5, Math.round(edgeBandRadius)));
   const blend = Math.max(0, Math.min(1, Number(edgeBlend)));
-  const useGuided = shouldUseGuidedChromaPath(
-    data,
-    width,
-    height,
-    chromaKey,
-    options.guided
-  );
 
   let transparentCount = 0;
   const reportInterval = Math.max(1, Math.floor(totalPixels / 100));
@@ -164,6 +138,35 @@ export function processChromaKey(
   const targetIsMagenta = (targetColorHsl.h >= 270 && targetColorHsl.h <= 360) || (targetColorHsl.h >= 0 && targetColorHsl.h <= 35);
   const targetIsGreen = targetColorHsl.h >= 70 && targetColorHsl.h <= 170;
 
+  // Magenta-like pixel: only true magenta hue (~270??60簞). Exclude red/pink (0??5簞) to avoid removing blush/lips.
+  // Require very low G (g < 50): pure magenta has G=0; edge blends (magenta+blue) have noticeable G from blue,
+  // so this keeps anti-aliased edges and blue shirt edges from being removed.
+  // Require not blue-dominant (b <= r + 30) to protect blue clothing.
+  // Called per-pixel in magenta mode, so cheap RGB gates run first and HSL is
+  // computed inline (no per-pixel object allocation). Logic equals the prior
+  // hueOk(270??60) && s>0.25 && RGB-gate conjunction.
+  const isMagentaLikePixel = (r: number, g: number, b: number): boolean => {
+    if (!(g < 50 && b <= r + 30 && r > g * 1.2 && b > g && (r > 100 || b > 80))) {
+      return false;
+    }
+    const rn = r / 255, gn = g / 255, bn = b / 255;
+    const max = Math.max(rn, gn, bn);
+    const min = Math.min(rn, gn, bn);
+    if (max === min) return false; // saturation 0
+    const l = (max + min) / 2;
+    const d = max - min;
+    const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (s <= 0.25) return false;
+    let h: number;
+    if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) * 60;
+    else if (max === gn) h = ((bn - rn) / d + 2) * 60;
+    else h = ((rn - gn) / d + 4) * 60;
+    return h >= 270 && h <= 360;
+  };
+
+  // Calculate adaptive fuzz based on detected background
+  const adaptiveFuzz = maxCount > 10 ? fuzz * 1.5 : fuzz;
+
   // Pass 1: Connectivity-based Background Masking
   const bgMask = new Uint8Array(totalPixels); // 0: foreground, 1: potential background, 2: confirmed background
   const similarityMask = new Uint8Array(totalPixels);
@@ -173,13 +176,30 @@ export function processChromaKey(
     const r = data[idx];
     const g = data[idx + 1];
     const b = data[idx + 2];
-    similarityMask[i] = isChromaLike(r, g, b, targetColor, 'key', keyMax) ? 1 : 0;
+
+    const rDiff = r - targetColor.r;
+    const gDiff = g - targetColor.g;
+    const bDiff = b - targetColor.b;
+    const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
+
+    let isMatch = distance <= adaptiveFuzz + 20;
+    if (isMatch) {
+      if (targetIsMagenta) {
+        // Only treat as background if very close to pure magenta (g < 50). Edge blends (magenta+blue) have G from blue,
+        // so this prevents cutting into character edges (blue shirt, anti-aliasing).
+        isMatch = r > g * 1.1 && b > g * 1.1 && b <= r + 30 && g < 50;
+      } else if (targetIsGreen) {
+        isMatch = g > r * 1.01 && g > b * 1.01;
+      }
+    }
+    // So middle cells with #E91E63 etc. are treated as background even when far from corner target
+    if (targetIsMagenta && isMagentaLikePixel(r, g, b)) isMatch = true;
+
+    similarityMask[i] = isMatch ? 1 : 0;
   }
 
   const queue: number[] = [];
   const corners = [0, width - 1, (height - 1) * width, height * width - 1];
-  // Design §4.2: flood seeds include corners, edges, and center grid so middle
-  // cells (e.g. 4x4 sprite gutters) are represented even when not edge-reachable.
   const centerIdx = cy * width + cx;
   const centerGrid = [
     Math.floor(width * 0.25) + cy * width,
@@ -245,7 +265,7 @@ export function processChromaKey(
   }
 
   const visited = new Uint8Array(totalPixels);
-  const MAX_ISLAND_SIZE = useGuided ? 80 : 400;
+  const MAX_ISLAND_SIZE = 400;
 
   for (let i = 0; i < totalPixels; i++) {
     if (foregroundMask[i] === 1 && visited[i] === 0) {
@@ -285,9 +305,8 @@ export function processChromaKey(
   onProgress(25);
 
   // Step 1.3: Compute final Alpha
-  // Guided (flag or auto-detect) skips certain-hole so in-cell accents survive.
-  const useCertainHole = !useGuided;
   const alphaChannel = new Uint8Array(totalPixels);
+  const softness = 10;
 
   for (let i = 0; i < totalPixels; i++) {
     const idx = i * 4;
@@ -301,25 +320,28 @@ export function processChromaKey(
     const r = data[idx];
     const g = data[idx + 1];
     const b = data[idx + 2];
-    const distance = chromaDistanceToKey(r, g, b, targetColor);
+
+    const rDiff = r - targetColor.r;
+    const gDiff = g - targetColor.g;
+    const bDiff = b - targetColor.b;
+    const distance = Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
 
     if (bgMask[i] === 2) {
-      if (distance <= keyMax) {
+      if (distance <= adaptiveFuzz) {
         alphaChannel[i] = 0;
-      } else if (isChromaSoftEdge(r, g, b, targetColor, keyMax)) {
-        // Soft band includes hard matches; only reach here when d > keyMax.
-        const ratio = (distance - keyMax) / CHROMA_LIKE_SOFT_EXTRA;
-        alphaChannel[i] = Math.floor(255 * Math.min(1, Math.max(0, ratio)));
+      } else if (distance <= adaptiveFuzz + softness) {
+        const ratio = (distance - adaptiveFuzz) / softness;
+        alphaChannel[i] = Math.floor(255 * ratio);
       } else {
         alphaChannel[i] = 255;
       }
     }
-    // Non-guided: punch strong chroma-like pixels not reached by connectivity
-    // (enclosed bg pockets). Guided path skips this (Task 4).
-    else if (useCertainHole && distance < keyMax * 0.95) {
+    // Do not force alpha=0 for magenta-like pixels that are not in the connected background (avoids removing blush/lips).
+    else if (distance < adaptiveFuzz * 0.95) {
       let isCertainHole = false;
       if (targetIsMagenta) {
-        // Magenta-shaped only; exclude strong red (blush/lips) via g < 80 on extreme clause.
+        // First clause: magenta-shaped (R and B high, G low). Second: extreme R or B dominance but require g < 80
+        // so strong red on character (e.g. red text, lips with G~80) is not treated as hole.
         isCertainHole =
           (r > g * 1.4 && b > g * 1.4 && (r + b) > 100) ||
           ((r > g * 3 || b > g * 3) && g < 80);
@@ -332,37 +354,36 @@ export function processChromaKey(
       } else {
         alphaChannel[i] = 255;
       }
-    } else {
+    }
+    else {
       alphaChannel[i] = 255;
     }
   }
 
   onProgress(40);
 
-  // Pass 2: Edge Erosion (non-guided clothing-direction spill only)
+  // Pass 2: Edge Erosion
   const erodedAlpha = new Uint8Array(alphaChannel);
-  if (!useGuided) {
-    for (let y = 1; y < height - 1; y++) {
-      for (let x = 1; x < width - 1; x++) {
-        const i = y * width + x;
-        if (alphaChannel[i] > 200 && bgMask[i] === 0) {
-          const hasBgNeighbor =
-            bgMask[i - 1] === 2 || bgMask[i + 1] === 2 ||
-            bgMask[i - width] === 2 || bgMask[i + width] === 2;
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const i = y * width + x;
+      if (alphaChannel[i] > 200 && bgMask[i] === 0) {
+        const hasBgNeighbor =
+          bgMask[i - 1] === 2 || bgMask[i + 1] === 2 ||
+          bgMask[i - width] === 2 || bgMask[i + width] === 2;
 
-          if (hasBgNeighbor) {
-            const idx = i * 4;
-            const r = data[idx];
-            const g = data[idx + 1];
-            const b = data[idx + 2];
+        if (hasBgNeighbor) {
+          const idx = i * 4;
+          const r = data[idx];
+          const g = data[idx + 1];
+          const b = data[idx + 2];
 
-            let isSpill = false;
-            if (targetIsMagenta) isSpill = r > g * 1.1 && b > g * 1.1 && b <= r + 30 && g < 100;
-            else if (targetIsGreen) isSpill = g > r * 1.1;
+          let isSpill = false;
+          if (targetIsMagenta) isSpill = r > g * 1.1 && b > g * 1.1 && b <= r + 30 && g < 100;
+          else if (targetIsGreen) isSpill = g > r * 1.1;
 
-            if (isSpill) {
-              erodedAlpha[i] = 160;
-            }
+          if (isSpill) {
+            erodedAlpha[i] = 160;
           }
         }
       }
@@ -392,36 +413,6 @@ export function processChromaKey(
 
   onProgress(60);
 
-  // Wider ring than edgeBand: strong green that fails YCbCr key often sits 3–6px
-  // inside the opaque mass (sticker-09 mark2 gray hair spike).
-  const strongSpillRadius = Math.max(radius + 3, 5);
-  const nearTransparentForSpill = new Uint8Array(totalPixels);
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const i = y * width + x;
-      if (erodedAlpha[i] >= 40) continue;
-      for (let dy = -strongSpillRadius; dy <= strongSpillRadius; dy++) {
-        for (let dx = -strongSpillRadius; dx <= strongSpillRadius; dx++) {
-          const ny = y + dy;
-          const nx = x + dx;
-          if (ny < 0 || ny >= height || nx < 0 || nx >= width) continue;
-          nearTransparentForSpill[ny * width + nx] = 1;
-        }
-      }
-    }
-  }
-
-  // Pass 2b (guided green key only): clear enclosed pockets before despill grays them.
-  if (useGuided && targetIsGreen) {
-    for (let p = 0; p < totalPixels; p++) {
-      data[p * 4 + 3] = erodedAlpha[p]!;
-    }
-    clearGuidedGreenPockets(data, width, height, { key: targetColor, keyMax });
-    for (let p = 0; p < totalPixels; p++) {
-      erodedAlpha[p] = data[p * 4 + 3]!;
-    }
-  }
-
   // Pass 3: Final Decontamination (spill suppression) with full edge band
   // Despill formulas: green g' = min(g, max(r,b)) style; magenta: pull R,B toward G (Wikipedia / industry)
   // Skip color modification for near-white pixels (e.g. white borders) to avoid green/magenta residue.
@@ -440,13 +431,11 @@ export function processChromaKey(
     const avg = (r + g + b) / 3;
     const isEdge = alpha < 255;
     const inEdgeBand = edgeBand[pixelIdx] === 1;
-    const nearTransparentSpill = nearTransparentForSpill[pixelIdx] === 1;
     const applyStrongDespill = isEdge || inEdgeBand;
 
     if (targetIsMagenta) {
-      // Non-guided: skip despill on blue-dominant pixels (character blue edges).
-      // Guided: rely on shared similarity + generic edge-band despill only.
-      if (!useGuided && b > r + 30) continue;
+      // Skip despill on blue-dominant pixels (character blue edges) so we do not dull or remove blue.
+      if (b > r + 30) continue;
       const magContrast = (r + b) / 2 - g;
       if (avg < 100 && magContrast > 4) {
         const decontamIntensity = applyStrongDespill ? 1.0 : 0.85;
@@ -474,72 +463,22 @@ export function processChromaKey(
       }
     } else if (targetIsGreen) {
       const greenContrast = g - (r + b) / 2;
-      // sticker-09 mark2: raw (54,148,36)/(53,81,32) fail YCbCr key (d≈52) so stay
-      // opaque; despill then leaves a gray hair spike. Erase strong spill near
-      // transparency (wider than edgeBand) instead of only recoloring.
-      if (
-        nearTransparentSpill &&
-        g > r &&
-        g > b &&
-        greenContrast > 32
-      ) {
-        // Only erase thin edge spikes — keep interior green props (4×4 block has
-        // ≥3 same-class neighbors in 5×5; a lone hair AA pixel has 0–2).
-        let greenSpillNeighbors = 0;
-        const x = pixelIdx % width;
-        const y = (pixelIdx - x) / width;
-        for (let dy = -2; dy <= 2; dy++) {
-          for (let dx = -2; dx <= 2; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            const nx = x + dx;
-            const ny = y + dy;
-            if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
-            if (erodedAlpha[ny * width + nx]! <= 40) continue;
-            const ni = (ny * width + nx) * 4;
-            const nr = data[ni]!;
-            const ng = data[ni + 1]!;
-            const nb = data[ni + 2]!;
-            const nContrast = ng - (nr + nb) / 2;
-            if (ng > nr && ng > nb && nContrast > 32) greenSpillNeighbors++;
-          }
-        }
-        if (greenSpillNeighbors < 3) {
-          data[i + 3] = 0;
-          erodedAlpha[pixelIdx] = 0;
-          continue;
-        }
-      }
       if (avg < 100 && greenContrast > 4) {
-        if (isNeutralDarkInk(r, g, b) && greenContrast < 14) {
-          // ponytail: preserve hair/shoes; only gray obvious spill tint
-        } else {
-        // Gray from R/B only — including G in the average re-bakes spill into dark
-        // olive fringes (e.g. 47,158,30 → 74,90,71 still green-dominant).
-        const spillFreeGray = (r + b) / 2;
-        data[i] = Math.round(r * 0.25 + spillFreeGray * 0.75);
-        data[i + 1] = Math.round(Math.min(g, Math.max(r, b)));
-        data[i + 2] = Math.round(b * 0.25 + spillFreeGray * 0.75);
-        if (inEdgeBand && greenContrast > 12) {
-          const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
-          data[i] = Math.round(data[i] * 0.55 + gray * 0.45);
-          data[i + 1] = Math.round(data[i + 1] * 0.55 + gray * 0.45);
-          data[i + 2] = Math.round(data[i + 2] * 0.55 + gray * 0.45);
-        }
-        }
+        const gray = avg;
+        data[i] = Math.round(r * 0.15 + gray * 0.85);
+        data[i + 1] = Math.round(g * 0.15 + gray * 0.85);
+        data[i + 2] = Math.round(b * 0.15 + gray * 0.85);
       }
       else if (applyStrongDespill && greenContrast > 3) {
-        // Edge band: hard-cap G at max(R,B) — muted olive AA (e.g. 70,103,69) fails
-        // YCbCr key match (~distance 90) so despill is the only cleanup path.
-        // Interior soft edges keep a small +8 margin to avoid flattening hair/cloth.
+        // Despill: cap green at max(r,b) + small margin (Wikipedia: (r, min(g,b), b) style; we use max(r,b) for natural look)
         const rbMax = Math.max(r, b);
-        const gMargin = inEdgeBand ? 0 : 8;
-        data[i + 1] = Math.round(Math.min(g, rbMax + gMargin));
-        if (inEdgeBand && greenContrast > 8) {
+        const gCapped = Math.min(g, rbMax + 15);
+        data[i + 1] = Math.round(gCapped);
+        if (inEdgeBand && greenContrast > 10) {
           const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
-          const pull = greenContrast > 18 ? 0.45 : 0.28;
-          data[i] = Math.round(data[i] * (1 - pull) + gray * pull);
-          data[i + 1] = Math.round(data[i + 1] * (1 - pull) + gray * pull);
-          data[i + 2] = Math.round(data[i + 2] * (1 - pull) + gray * pull);
+          data[i] = Math.round(data[i] * 0.85 + gray * 0.15);
+          data[i + 1] = Math.round(data[i + 1] * 0.85 + gray * 0.15);
+          data[i + 2] = Math.round(data[i + 2] * 0.85 + gray * 0.15);
         }
       }
     }
@@ -565,7 +504,6 @@ export function processChromaKey(
       const alpha = sampled[i + 3];
       if (alpha === 0) continue;
       if (isNearWhite(sampled[i], sampled[i + 1], sampled[i + 2])) continue;
-      if (isNeutralDarkInk(sampled[i], sampled[i + 1], sampled[i + 2])) continue;
 
       let sumR = 0, sumG = 0, sumB = 0;
       let count = 0;
@@ -573,24 +511,12 @@ export function processChromaKey(
         for (let dx = -1; dx <= 1; dx++) {
           if (dx === 0 && dy === 0) continue;
           const ni = ((y + dy) * width + (x + dx)) * 4;
-          if (sampled[ni + 3] < 250) continue;
-          const nR = sampled[ni];
-          const nG = sampled[ni + 1];
-          const nB = sampled[ni + 2];
-          // Skip spill-tinted neighbors so Pass 4 cannot reintroduce green/magenta
-          // fringe after despill (olive AA clusters share the same tint).
-          if (
-            targetIsGreen &&
-            (nG - Math.max(nR, nB) > 4 ||
-              (Math.min(nR, nG) - nB > 4 && Math.abs(nR - nG) <= 16))
-          ) {
-            continue;
+          if (sampled[ni + 3] >= 250) {
+            sumR += sampled[ni];
+            sumG += sampled[ni + 1];
+            sumB += sampled[ni + 2];
+            count++;
           }
-          if (targetIsMagenta && (nR + nB) / 2 - nG > 12) continue;
-          sumR += nR;
-          sumG += nG;
-          sumB += nB;
-          count++;
         }
       }
       if (count > 0) {
@@ -616,48 +542,6 @@ export function processChromaKey(
         data[i] = Math.round(sampled[i] * (1 - effectiveBlend) + nR * effectiveBlend);
         data[i + 1] = Math.round(sampled[i + 1] * (1 - effectiveBlend) + nG * effectiveBlend);
         data[i + 2] = Math.round(sampled[i + 2] * (1 - effectiveBlend) + nB * effectiveBlend);
-      }
-    }
-  }
-
-  // Pass 4c: clamp green spill near transparency. Olive AA often sits 3px past
-  // the soft edge (outside radius-2 edgeBand), so scan a slightly wider ring.
-  if (targetIsGreen) {
-    const clampRadius = Math.max(radius + 6, 8);
-    const nearTransparent = new Uint8Array(totalPixels);
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const i = y * width + x;
-        if (data[i * 4 + 3] >= 40) continue;
-        for (let dy = -clampRadius; dy <= clampRadius; dy++) {
-          for (let dx = -clampRadius; dx <= clampRadius; dx++) {
-            const ny = y + dy;
-            const nx = x + dx;
-            if (ny < 0 || ny >= height || nx < 0 || nx >= width) continue;
-            nearTransparent[ny * width + nx] = 1;
-          }
-        }
-      }
-    }
-    for (let i = 0; i < totalPixels; i++) {
-      if (nearTransparent[i] === 0) continue;
-      const idx = i * 4;
-      if (data[idx + 3] === 0) continue;
-      let r = data[idx];
-      let g = data[idx + 1];
-      let b = data[idx + 2];
-      const rbMax = Math.max(r, b);
-      if (g > rbMax) {
-        g = rbMax;
-        data[idx + 1] = g;
-      }
-      // Yellow-green olive AA: R≈G and both above B (e.g. 56,59,49 hair or
-      // 251,255,240 white-edge tint). Skip true brown (R clearly above G).
-      const yellowGreenExcess = Math.min(r, g) - b;
-      if (yellowGreenExcess > 2 && g >= r - 4 && r - g <= 12) {
-        if (isNeutralDarkInk(r, g, b) && yellowGreenExcess < 6) continue;
-        data[idx] = b;
-        data[idx + 1] = Math.min(data[idx + 1], b);
       }
     }
   }

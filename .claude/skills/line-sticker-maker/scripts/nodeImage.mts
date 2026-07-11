@@ -15,11 +15,13 @@ import UPNG from 'upng-js';
 import jpeg from 'jpeg-js';
 import { applyChromaKey } from '../../../../utils/chromaKeyApply.ts';
 import { normalizeChromaBackgroundInPlace } from '../../../../utils/normalizeChromaBackground.ts';
+import { normalizeChromaBackgroundLegacyInPlace } from '../../../../utils/normalizeChromaBackgroundLegacy.ts';
 import {
   CHROMA_KEY_COLORS,
   DEFAULT_CHROMA_KEY_ALGORITHM,
   LINE_STICKER_CELL_INSET_RATIO,
 } from '../../../../utils/constants.ts';
+import { repairStickerStrokeAfterChromaKey } from '../../../../utils/stickerChromaStrokeRepair.ts';
 import {
   computeOptimizedSliceFromMargins,
   measureContentMargins,
@@ -135,7 +137,7 @@ export interface SheetChromaKeyOptions {
 }
 
 /**
- * Normalize background color (core only), then run chroma-key removal.
+ * Normalize background color (core/legacy), then run chroma-key removal.
  */
 export function processSheetChromaKey(
   image: RgbaImage,
@@ -145,6 +147,9 @@ export function processSheetChromaKey(
   const algorithm = options?.algorithm ?? DEFAULT_CHROMA_KEY_ALGORITHM;
   if (algorithm === 'core') {
     normalizeChromaBackground(image, chromaKeyColor);
+  } else if (algorithm === 'legacy') {
+    const c = CHROMA_KEY_COLORS[chromaKeyColor];
+    normalizeChromaBackgroundLegacyInPlace(image.data, chromaKeyColor, { r: c.r, g: c.g, b: c.b });
   }
   return removeChromaKey(image, chromaKeyColor, options);
 }
@@ -158,12 +163,17 @@ export function removeChromaKey(
   options?: SheetChromaKeyOptions
 ): RgbaImage {
   const c = CHROMA_KEY_COLORS[chromaKeyColor];
+  const algorithm = options?.algorithm ?? DEFAULT_CHROMA_KEY_ALGORITHM;
   applyChromaKey(image.data, image.width, image.height, { r: c.r, g: c.g, b: c.b }, {
-    algorithm: options?.algorithm,
+    algorithm,
     guided: options?.guided,
     forgeThreshold: options?.forgeThreshold,
     forgeEdgeThreshold: options?.forgeEdgeThreshold,
   });
+  // ponytail: legacy snapshot had no post-chroma stroke repair; forge/core keep it.
+  if (algorithm !== 'legacy') {
+    repairStickerStrokeAfterChromaKey(image.data, image.width, image.height);
+  }
   return image;
 }
 

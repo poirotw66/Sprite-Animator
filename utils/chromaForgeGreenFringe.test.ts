@@ -66,4 +66,28 @@ describe('despillForgeGreenFringe', () => {
     expect(data[(2 * w + 1) * 4 + 3]).toBe(0);
     expect(data[(2 * w + 2) * 4 + 3]).toBe(255);
   });
+
+  it('preserves neutral dark ink at the subject edge', () => {
+    const w = 5;
+    const h = 5;
+    const data = new Uint8ClampedArray(w * h * 4);
+    const set = (x: number, y: number, r: number, g: number, b: number, a: number) => {
+      const i = (y * w + x) * 4;
+      data[i] = r;
+      data[i + 1] = g;
+      data[i + 2] = b;
+      data[i + 3] = a;
+    };
+
+    set(0, 2, 0, 0, 0, 0);
+    set(1, 2, 35, 40, 32, 255);
+    set(2, 2, 180, 175, 170, 255);
+    set(3, 2, 180, 175, 170, 255);
+    set(4, 2, 0, 0, 0, 0);
+
+    despillForgeGreenFringe(data, w, h);
+
+    expect(data[(2 * w + 1) * 4 + 3]).toBe(255);
+    expect(data[(2 * w + 1) * 4 + 1]).toBe(40);
+  });
 });

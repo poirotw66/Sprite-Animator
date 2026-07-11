@@ -75,4 +75,33 @@ describe('repairStickerStrokeAfterChromaKey', () => {
     expect(data[center + 1]).toBe(248);
     expect(data[center + 2]).toBe(242);
   });
+
+  it('clears dark halo outside the white stroke ring', () => {
+    const w = 9;
+    const h = 5;
+    const data = new Uint8ClampedArray(w * h * 4);
+    const set = (x: number, y: number, r: number, g: number, b: number, a: number) => {
+      const i = (y * w + x) * 4;
+      data[i] = r;
+      data[i + 1] = g;
+      data[i + 2] = b;
+      data[i + 3] = a;
+    };
+
+    for (let x = 0; x < w; x++) {
+      set(x, 2, 0, 0, 0, 0);
+    }
+    set(3, 2, 40, 45, 38, 255);
+    set(4, 2, 255, 255, 255, 255);
+    set(5, 2, 255, 255, 255, 255);
+    set(6, 2, 200, 180, 170, 255);
+
+    repairStickerStrokeAfterChromaKey(data, w, h);
+
+    expect(alphaAt(data, w, 3, 2)).toBe(255);
+    expect(data[(2 * w + 3) * 4]).toBe(255);
+    expect(data[(2 * w + 3) * 4 + 1]).toBe(255);
+    expect(data[(2 * w + 3) * 4 + 2]).toBe(255);
+    expect(alphaAt(data, w, 4, 2)).toBe(255);
+  });
 });

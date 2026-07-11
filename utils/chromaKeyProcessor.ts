@@ -19,7 +19,7 @@ export interface ChromaKeyProgress {
 
 /** Optional tuning for edge spill suppression; exposed on frontend. */
 export interface ChromaKeyOptions {
-  /** `forge` (default) or `core` chroma removal. */
+  /** `legacy` (default), `core`, or `forge` chroma removal. */
   algorithm?: ChromaKeyAlgorithm;
   /** Edge band radius in pixels (1–5). Default from CHROMA_KEY_EDGE_BAND_RADIUS. */
   edgeBandRadius?: number;

@@ -1,16 +1,16 @@
 # Graph Report - Sprite-Animator  (2026-07-11)
 
 ## Corpus Check
-- 308 files · ~3,146,761 words
+- 312 files · ~3,152,118 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2350 nodes · 5170 edges · 175 communities (126 shown, 49 thin omitted)
+- 2381 nodes · 5258 edges · 188 communities (139 shown, 49 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 38 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `82331aca`
+- Built from commit: `d244e06e`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -150,11 +150,15 @@
 - 專案優化路線圖與功能建議
 - PartingPage.tsx
 - despillForgeGreenFringe
+- sync-upload-input.mts
 - English
 - English
 - English
 - English
 - 精靈圖切分與校正流程（目前實作）
+- run-generate-and-upload.mts
+- lineStickerSetSchema.ts
+- parsePhraseSetJson
 - 💡 創新功能建議
 - 🚀 推薦實施順序
 - 🚀 Deploy to GitHub Pages
@@ -184,13 +188,22 @@
 - Giraffe Daily Sprite Sheet 2
 - Meerkat Banter Sprite Sheet 1
 - Meerkat Banter Sprite Sheet 2
+- throwIfAborted
+- alphaEdgeFeather.ts
+- processChromaKeyLegacy
+- comicDownloadFilenames.ts
+- expandThemePhrasesForFrames
+- 💡 常見問題 (FAQ)
+- 🚀 部署到 GitHub Pages
+- imageCrop.ts
+- 🎯 最佳實踐 (Best Practices)
 
 ## God Nodes (most connected - your core abstractions)
 1. `LineStickerSheetIndex` - 36 edges
 2. `useLanguage()` - 35 edges
 3. `LineStickerPage()` - 34 edges
-4. `composeStickerFrame()` - 33 edges
-5. `ChromaKeyColorType` - 32 edges
+4. `ChromaKeyColorType` - 33 edges
+5. `composeStickerFrame()` - 33 edges
 6. `generateOneSheet()` - 30 edges
 7. `SliceSettings` - 29 edges
 8. `compilerOptions` - 28 edges
@@ -217,51 +230,51 @@
 - **Daily Chat Sticker Series** — line_s_input_706_cozy_black_cat_daily_chat_cozy_black_cat_daily_chat, line_s_input_706_cozy_cream_cat_daily_chat_cozy_cream_cat_daily_chat, line_s_input_706_cozy_giraffe_daily_chat_cozy_giraffe_daily_chat, line_s_input_706_cozy_meerkat_daily_chat_cozy_meerkat_daily_chat [EXTRACTED 0.90]
 - **Character Style Variants** — public_style_previews_chibi, public_style_previews_doodle, public_style_previews_flat, public_style_previews_linechibi, public_style_previews_minimalist, public_style_previews_pastel, public_style_previews_pixel, public_style_previews_watercolor, public_style_previews_yurukawa [EXTRACTED 1.00]
 
-## Communities (175 total, 49 thin omitted)
+## Communities (188 total, 49 thin omitted)
 
 ### Community 0 - "Gemini Prompt Builders"
-Cohesion: 0.05
-Nodes (72): generateCharacterRefImage(), main(), mimeFromPath(), parseArgs(), printStyleTable(), resolveImagePath(), ROOT_DIR, SCRIPT_DIR (+64 more)
+Cohesion: 0.19
+Nodes (17): useComicCharacterSheet(), downloadDataUrl(), OnePageComicPage(), buildComicDownloadFilename(), ComicDownloadKind, formatComicDownloadTimestamp(), pickComicCharacterLabel(), sanitizeComicFilenameSegment() (+9 more)
 
 ### Community 1 - "Comic Creation UI"
-Cohesion: 0.17
-Nodes (17): alphaVisualization(), chromaKeyColor, cloneImage(), cols, compositeOnBlack(), cropCell(), cropZoom(), findRawSheet() (+9 more)
+Cohesion: 0.13
+Nodes (21): alphaVisualization(), chromaKeyColor, cloneImage(), cols, compositeOnBlack(), cropCell(), cropZoom(), findRawSheet() (+13 more)
 
 ### Community 2 - "Sprite Sheet Processing"
-Cohesion: 0.12
-Nodes (31): FrameGrid, FrameGridProps, LineStickerResultPanelViewerViewModel, SpriteSheetSliceControlsProps, SpriteSheetViewerProps, SliceProcessedSheetOptions, useLineStickerSlicing(), UseLineStickerSlicingParams (+23 more)
+Cohesion: 0.13
+Nodes (28): FrameGrid, FrameGridProps, SliceCellInfo, SpriteSheetSliceControls(), SpriteSheetSliceControlsProps, SpriteSheetViewer, SpriteSheetViewerProps, SliceProcessedSheetOptions (+20 more)
 
 ### Community 3 - "Text Overlay Engine"
-Cohesion: 0.22
-Nodes (15): wrapLines(), AutoCaptionLayout, AutoCaptionLayoutParams, buildForegroundOverlapIndex(), CaptionCenterResult, CaptionCenterSearch, CaptionCenterSearchBounds, computeAutoCaptionLayout() (+7 more)
+Cohesion: 0.24
+Nodes (9): useComicStoryboard(), generateComicStoryboard(), parseComicStoryboardJson(), StoryboardEntry, ApiError, getErrorMessage(), isApiError(), isQuotaError() (+1 more)
 
 ### Community 4 - "Chroma Key Detection"
-Cohesion: 0.06
-Nodes (49): SheetChromaKeyOptions, ChromaKeyAlgorithm, countGreenSpillNeighbors(), despillForgeGreenFringe(), distanceToGreenKey(), greenExcess(), isNearTransparency(), isNearWhite() (+41 more)
+Cohesion: 0.16
+Nodes (13): removeChromaKey(), SheetChromaKeyOptions, ChromaKeyAlgorithm, applyChromaKey(), ApplyChromaKeyOptions, ChromaKeyForgeOptions, colorDistance(), processChromaKeyForge() (+5 more)
 
 ### Community 5 - "Sticker Section UI"
 Cohesion: 0.11
-Nodes (35): LineStickerDownloadSection(), LineStickerDownloadSectionProps, LineStickerPhraseCell, LineStickerPhraseCellProps, LineStickerPhraseGridEditor, LineStickerPhraseGridEditorProps, LineStickerPhraseSection, LineStickerPhraseSectionProps (+27 more)
+Nodes (35): LineStickerDownloadSection(), LineStickerDownloadSectionProps, LineStickerHeader(), LineStickerPhraseCell, LineStickerPhraseCellProps, LineStickerPhraseGridEditor, LineStickerPhraseGridEditorProps, LineStickerPhraseSection (+27 more)
 
 ### Community 6 - "Alpha Mask Feathering"
-Cohesion: 0.06
-Nodes (44): afterFeather, afterIslands, afterRepair, chromaKeyColor, chromaKeyed, cloneImage(), cols, compositeOnBlack() (+36 more)
+Cohesion: 0.05
+Nodes (51): afterFeather, afterIslands, afterRepair, chromaKeyColor, chromaKeyed, cloneImage(), cols, compositeOnBlack() (+43 more)
 
 ### Community 7 - "Project Dependencies"
 Cohesion: 0.04
 Nodes (44): dependencies, gifenc, @google/genai, @huggingface/transformers, lucide-react, react, react-dom, react-router-dom (+36 more)
 
 ### Community 8 - "Sticker Generation Hooks"
-Cohesion: 0.08
-Nodes (45): applyPhraseSetFile(), buildActionDescList(), buildPhraseList(), buildSlots(), main(), mimeFromPath(), parseArgs(), PhraseSetFile (+37 more)
+Cohesion: 0.06
+Nodes (80): applyPhraseSetFile(), buildActionDescList(), buildPhraseList(), buildSlots(), main(), mimeFromPath(), parseArgs(), PhraseSetFile (+72 more)
 
 ### Community 9 - "Upload Job Configuration"
-Cohesion: 0.10
-Nodes (31): JobConfig, isCli, main(), parseArgs(), DEFAULT_UPLOAD_ROOT, envFileBaseName(), isCli, main() (+23 more)
+Cohesion: 0.17
+Nodes (18): isCli, main(), parseArgs(), batchRelBase(), buildMarkdown(), envFileBaseName(), PackUploadOptions, packUploadOutput() (+10 more)
 
 ### Community 10 - "Sticker Page ViewModels"
-Cohesion: 0.10
-Nodes (36): LineStickerSettingsPanel, useLineStickerGeneration(), useLineStickerImageInput(), UseLineStickerImageInputParams, useLineStickerPhraseGeneration(), ensureLength(), useLineStickerPhraseGrid(), UseLineStickerPhraseGridParams (+28 more)
+Cohesion: 0.16
+Nodes (26): useLineStickerGeneration(), useLineStickerImageInput(), UseLineStickerImageInputParams, useLineStickerPromptPreview(), UseLineStickerPromptPreviewParams, useLineStickerResultPanelViewModel(), useLineStickerSelection(), useLineStickerSettingsPanelViewModel() (+18 more)
 
 ### Community 11 - "LINE Provisioning Automation"
 Cohesion: 0.19
@@ -269,15 +282,15 @@ Nodes (33): add_traditional_chinese(), assert_no_duplicate_title_errors(), click
 
 ### Community 12 - "Programmatic Style Controls"
 Cohesion: 0.18
-Nodes (18): ColorKey, createEmptyOverlaySheetArray(), FontKey, LineStickerProgrammaticOverlayComposeResult, LineStickerProgrammaticOverlayCore, LineStickerProgrammaticOverlayStyle, useDebouncedStyle(), useLineStickerProgrammaticOverlayCompose() (+10 more)
+Nodes (17): ColorKey, createEmptyOverlaySheetArray(), FontKey, LineStickerProgrammaticOverlayComposeResult, LineStickerProgrammaticOverlayCore, LineStickerProgrammaticOverlayStyle, useDebouncedStyle(), useLineStickerProgrammaticOverlayCompose() (+9 more)
 
 ### Community 13 - "Google Drive Upload"
 Cohesion: 0.16
 Nodes (34): Any, collect_tasks_from_dir(), collect_tasks_from_env(), collect_tasks_from_local_set(), collect_tasks_from_zip(), drive_service_for_thread(), ensure_child_folder(), escape_drive_query() (+26 more)
 
 ### Community 14 - "Sticker Generation Types"
-Cohesion: 0.18
-Nodes (25): StickerConfig, GenerateOneSheetParams, LineStickerProgrammaticStyleControls(), LineStickerProgrammaticStyleControlsProps, LineStickerSettingsConfigViewModel, LineStickerSettingsPanelViewModel, STYLE_PREVIEW_IMAGE_MAP, STYLE_PREVIEW_PLACEHOLDER_LABELS (+17 more)
+Cohesion: 0.23
+Nodes (12): shouldUseGuidedChromaPath(), isNearWhite(), processChromaKey(), ProcessChromaKeyOptions, rgbToHsl(), greenPropOrigin(), INTERIOR_PROP_RGB, makeGreenWithRedCenter() (+4 more)
 
 ### Community 15 - "TypeScript Configuration"
 Cohesion: 0.06
@@ -288,16 +301,16 @@ Cohesion: 0.13
 Nodes (27): main(), get_storage(), load_env(), normalize_en_description(), normalize_en_title(), normalize_sticker_meta(), normalize_zh_description(), normalize_zh_text() (+19 more)
 
 ### Community 17 - "Animation Settings UI"
-Cohesion: 0.16
-Nodes (17): AnimationConfigPanel, AnimationConfigPanelProps, AnimationPreview, AnimationPreviewProps, ExampleSelector, ExampleSelectorProps, SettingsModalProps, LEGACY_MODEL_IDS (+9 more)
+Cohesion: 0.14
+Nodes (24): AnimationConfigPanel, AnimationConfigPanelProps, AnimationPreview, AnimationPreviewProps, SettingsModal, SettingsModalProps, useAnimation(), LEGACY_MODEL_IDS (+16 more)
 
 ### Community 18 - "Image Upload & Download"
 Cohesion: 0.06
 Nodes (33): 10. Task Breakdown (develop order), 11. Open Questions (resolve before or during spike), 12. Implementation Status (2026-07-11), 1. Problem Statement, 2. Locked Decisions (proposed defaults), 3. Objectives and Non-Objectives, 4.1 Pipeline comparison, 4.2 New module: `utils/lineStickerComposeLayout.ts` (+25 more)
 
 ### Community 19 - "LINE Upload Packaging"
-Cohesion: 0.25
-Nodes (13): buildLineUploadPack(), buildLineUploadZipBytes(), buildUploadFile(), clampIndex(), encodeUploadZip(), LineUploadPackFile, pickRandomShopStickerIndices(), resolveShopStickerIndices() (+5 more)
+Cohesion: 0.11
+Nodes (34): buildLineUploadPack(), buildLineUploadZipBytes(), buildUploadFile(), clampIndex(), encodeUploadZip(), LineUploadPackFile, pickRandomShopStickerIndices(), resolveShopStickerIndices() (+26 more)
 
 ### Community 20 - "Job Finalization Scripts"
 Cohesion: 0.16
@@ -305,19 +318,19 @@ Nodes (17): args, buildUploadPackOptions(), FINALIZE_PROJECT_ROOT, finalizeFromJ
 
 ### Community 21 - "Sticker Generation CLI"
 Cohesion: 0.21
-Nodes (13): main(), parseArgs(), ROOT, run(), SCRIPT_DIR, slugSetName(), resolveUploadConfig(), DEFAULT_SKILL_STICKER_MODEL (+5 more)
+Nodes (18): blitRgbaOntoCanvas(), ComposeOverlayOptions, composePhraseOnRgbaFrame(), FontPresetKey, overlayPhraseOnRgbaFrame(), ProgrammaticOverlayOptions, readRgbaFromCanvas(), TextColorPresetKey (+10 more)
 
 ### Community 22 - "App Routing & Pages"
 Cohesion: 0.10
-Nodes (12): App(), HomePage, LineStickerPage, OnePageComicPage, PartingPage, RemoveBackgroundPage, SpriteAnimatorPage, ErrorBoundary (+4 more)
+Nodes (13): App(), HomePage, LineStickerPage, OnePageComicPage, PartingPage, RemoveBackgroundPage, SpriteAnimatorPage, ErrorBoundary (+5 more)
 
 ### Community 23 - "Phrase Set Design"
-Cohesion: 0.21
-Nodes (20): actionsOnly(), buildThemeContext(), countNonEmpty(), designPhraseSet(), findDuplicatePhrases(), main(), parseArgs(), printVoiceChoices() (+12 more)
+Cohesion: 0.15
+Nodes (27): actionsOnly(), buildThemeContext(), countNonEmpty(), designPhraseSet(), findDuplicatePhrases(), main(), parseArgs(), printVoiceChoices() (+19 more)
 
 ### Community 24 - "White Divider Detection"
-Cohesion: 0.15
-Nodes (18): clearNearWhiteEdgeArtifacts(), columnXRange(), computeDividerCellRect(), countDetectedWhiteDividers(), detectWhiteDividerGrid(), DetectWhiteDividerOptions, DividerCellRect, findDividerBand() (+10 more)
+Cohesion: 0.13
+Nodes (23): analyzeFrameContent(), ContentAnalysis, getContentCentroidOffset(), isSliceBackgroundPixel(), SmartAutoAlignOptions, clearNearWhiteEdgeArtifacts(), columnXRange(), computeDividerCellRect() (+15 more)
 
 ### Community 25 - "Localization & Internationalization"
 Cohesion: 0.07
@@ -325,19 +338,19 @@ Nodes (28): 10. Error Handling, 11. Testing (MVP), 12. Implementation Phases, 13
 
 ### Community 26 - "Phrase Validation Logic"
 Cohesion: 0.20
-Nodes (19): clampStickerPhrase(), clampStickerPhrases(), isEnglishPhraseLanguage(), ALLOWED_PUNCT, auditStickerPhrases(), cjkCharCount(), englishWordCount(), getStickerPhraseIssues() (+11 more)
+Nodes (19): ensureLength(), useLineStickerPhraseGrid(), UseLineStickerPhraseGridParams, clampStickerPhrase(), isEnglishPhraseLanguage(), ALLOWED_PUNCT, auditStickerPhrases(), cjkCharCount() (+11 more)
 
 ### Community 27 - "Upload Manifest Rebuilding"
-Cohesion: 0.09
-Nodes (21): LineUploadPackOptions, args, config, existingManifest, JobConfig, layouts, loadSheetFrames(), manifest (+13 more)
+Cohesion: 0.11
+Nodes (16): LineUploadPackOptions, args, config, existingManifest, JobConfig, layouts, loadSheetFrames(), manifest (+8 more)
 
 ### Community 28 - "Sticker Quality Auditing"
 Cohesion: 0.18
 Nodes (16): ChromaFringeMetrics, isNearTransparent(), measureChromaFringe(), auditStickerFrame(), auditStickerFrames(), measureCaptionBandInkRatio(), measureForegroundRatio(), median() (+8 more)
 
 ### Community 29 - "Character Reference Generation"
-Cohesion: 0.08
-Nodes (25): API 配額優化, 📖 使用指南, 📷 使用範例, ✨ 功能特色, 動畫質量提升, 原圖（輸入）, 基本流程, 安裝步驟 (+17 more)
+Cohesion: 0.09
+Nodes (23): API 配額優化, 📖 使用指南, 📷 使用範例, ✨ 功能特色, 動畫質量提升, 原圖（輸入）, 基本流程, 安裝步驟 (+15 more)
 
 ### Community 30 - "LINE Zip Upload"
 Cohesion: 0.25
@@ -353,19 +366,19 @@ Nodes (25): scoreSheetGrid(), decodePng(), chromaKeyColor, cols, detected, expec
 
 ### Community 33 - "Sheet Slicing Logic"
 Cohesion: 0.20
-Nodes (19): decodeImage(), encodePng(), extForBytes(), isJpeg(), isPng(), sliceSheet(), composePhrasesOnRgbaFrames(), overlayPhrasesOnRgbaFrames() (+11 more)
+Nodes (14): useComicPageGeneration(), generateComicCharacterSheet(), resolveComicStyleBlock(), generateComicPage(), isImageSizeRejection(), buildComicPagePrompt(), BuildComicPagePromptParams, panelBlock() (+6 more)
 
 ### Community 34 - "Sticker Set Naming"
-Cohesion: 0.18
-Nodes (17): containsCjk(), defaultTitleZhFromPhraseSet(), formatVoiceChoicesForError(), resolveVoiceKey(), stripLabelParenthetical(), suggestDescZh(), suggestPhraseSetNameZh(), suggestSetNameEn() (+9 more)
+Cohesion: 0.13
+Nodes (24): main(), parseArgs(), ROOT, run(), SCRIPT_DIR, slugSetName(), resolveUploadConfig(), containsCjk() (+16 more)
 
 ### Community 35 - "Credential Management"
-Cohesion: 0.09
-Nodes (25): args, batchPath, configPath, envBase, final, job, outDir, ROOT (+17 more)
+Cohesion: 0.19
+Nodes (15): BatchEnvFields, CREDENTIAL_KEYS, CREDENTIALS_ENV, ensureBatchEnvReady(), ENV_KEY_ORDER, envHeader(), extractSetNameFromBatch(), LEGACY_UPLOAD_ENV (+7 more)
 
 ### Community 36 - "Sheet Slice Diagnostics"
-Cohesion: 0.13
-Nodes (22): fontCssStackForPreset(), FontPresetKey, LineStickerTextOverlayOptions, resolveProgrammaticFontFamilyCss(), TextColorPresetKey, captionBandPixelRectForLabel(), centerSearchBoundsForTextBoxInBand(), correctionToFitTextBoxInFrame() (+14 more)
+Cohesion: 0.10
+Nodes (34): fontCssStackForPreset(), FontPresetKey, TextColorPresetKey, captionBandPixelRectForLabel(), centerSearchBoundsForTextBoxInBand(), correctionToFitTextBoxInFrame(), estimateTextBlockBox(), estimateTextBlockBoxFromMeasuredLines() (+26 more)
 
 ### Community 37 - "Upload Execution Pipeline"
 Cohesion: 0.13
@@ -376,76 +389,76 @@ Cohesion: 0.32
 Nodes (13): discover_sets(), find_zip(), main(), merge_credentials(), prepare_set_env(), process_one_set(), Path, rel_posix() (+5 more)
 
 ### Community 39 - "Sticker Result ViewModels"
-Cohesion: 0.14
-Nodes (23): SettingsModal, createInitialSheetStatuses(), isActiveSheetStage(), LineStickerGenerationSetters, LineStickerGenerationTexts, LineStickerSheetStage, UseLineStickerSheetGenerationOptions, SheetIndex (+15 more)
+Cohesion: 0.39
+Nodes (7): createInitialSheetStatuses(), isActiveSheetStage(), LineStickerGenerationSetters, LineStickerGenerationTexts, LineStickerSheetStage, UseLineStickerSheetGenerationOptions, SheetIndex
 
 ### Community 40 - "Render Profiler Debugger"
-Cohesion: 0.18
-Nodes (14): RenderProfilerDebugPanel(), RenderProfilerDebugPanelProps, RenderProfilerStats, clearRenderProfilerEntries(), emit(), getRenderProfilerSnapshot(), Listener, listeners (+6 more)
+Cohesion: 0.15
+Nodes (17): RenderProfiler(), RenderProfilerProps, RenderProfilerDebugPanel(), RenderProfilerDebugPanelProps, RenderProfilerStats, useRenderProfiler(), clearRenderProfilerEntries(), emit() (+9 more)
 
 ### Community 41 - "Sprite Editing UI"
-Cohesion: 0.11
-Nodes (24): ImageUpload, ImageUploadProps, LanguageSwitcher, LineStickerHeader(), LineStickerHeaderProps, eraseCircle(), eraseLine(), getCanvasPoint() (+16 more)
+Cohesion: 0.13
+Nodes (20): ImageUpload, ImageUploadProps, LanguageSwitcher, LineStickerHeaderProps, SheetSliceProgrammaticOverlayPanel(), eraseCircle(), eraseLine(), getCanvasPoint() (+12 more)
 
 ### Community 42 - "Action Description Logic"
 Cohesion: 0.30
 Nodes (13): ACTION_DEDUPE_THRESHOLD_BY_STRENGTH, ActionDescriptionContext, buildActionTokenSet(), buildDeterministicActionFallback(), categorizePhrase(), computeJaccardSimilarity(), extractJsonArrayText(), generateActionDescriptions() (+5 more)
 
 ### Community 43 - "Grid Template Drawing"
-Cohesion: 0.26
-Nodes (13): buildEqualGridBounds(), buildGridSheetTemplate(), BuildGridSheetTemplateOptions, drawCellCornerTicks(), drawGuidedGridOverlay(), drawHorizontalGroove(), drawVerticalGroove(), EqualGridBounds (+5 more)
+Cohesion: 0.18
+Nodes (21): asDomCanvasContext(), composeStickerFrame(), cropFrame(), drawGlyph(), drawLineWithSpacing(), drawRgbaFrameOnCanvas(), measureOpaqueBounds(), PixelBounds (+13 more)
 
 ### Community 44 - "Node Image Processing"
-Cohesion: 0.15
-Nodes (19): blitOntoCanvas(), composeCenteredOnCanvas(), detectBestGridLayout(), extractCellFrame(), normalizeChromaBackground(), prepareLineMainImage(), prepareLineTabImage(), processSheetChromaKey() (+11 more)
+Cohesion: 0.14
+Nodes (17): argv, cols, frames, image, loadOverlayConfig(), processedPath, rows, sheetDir (+9 more)
 
 ### Community 45 - "Batch Job Runner"
 Cohesion: 0.14
 Nodes (9): args, BatchJob, BatchManifest, manifest, manifestAbs, manifestDir, onlyOut, ROOT (+1 more)
 
 ### Community 46 - "SpriteAnimatorPage.tsx"
-Cohesion: 0.10
-Nodes (22): ProjectHistory, ProjectHistoryItem, ProjectHistoryItemProps, ProjectHistoryProps, useAnimation(), decodePngToRgba(), useExport(), deleteProjectItem() (+14 more)
+Cohesion: 0.15
+Nodes (18): ExampleSelector, ExampleSelectorProps, ProjectHistory, ProjectHistoryItem, ProjectHistoryItemProps, ProjectHistoryProps, deleteProjectItem(), loadList() (+10 more)
 
 ### Community 47 - "Sheet Boundary Detection"
-Cohesion: 0.26
-Nodes (11): buildMedianRowBounds(), buildRowDensityProfile(), detectColumnRowBounds(), DetectedSheetGrid, detectSheetGridBoundaries(), DetectSheetGridOptions, enforceMonotonic(), findBestBoundary() (+3 more)
+Cohesion: 0.12
+Nodes (20): bleedForBounds(), bleedRatio(), cols, detected, equalX, equalY, rows, score (+12 more)
 
 ### Community 48 - "Grid Score Gating"
 Cohesion: 0.31
 Nodes (9): assertManifestGridGate(), assertOutDirGridGate(), ManifestGridGateInput, resolveMinGridScore(), assertGridScoresPass(), findGridScoreFailures(), formatGridGateMessage(), GridScoreFailure (+1 more)
 
 ### Community 49 - "Slice Optimization"
-Cohesion: 0.24
-Nodes (7): CellCropRect, Component, ComputeCellCropOptions, computeCellCropRect(), fallbackCellRect(), findComponents(), PixelPoint
+Cohesion: 0.27
+Nodes (8): optimizeSliceForImage(), columnHasContent(), computeOptimizedSliceFromMargins(), ContentMargins, measureContentMargins(), OptimizeSliceOptions, optimizeSliceSettings(), rowHasContent()
 
 ### Community 50 - "Generate & Upload CLI"
-Cohesion: 0.16
-Nodes (23): asDomCanvasContext(), composeStickerFrame(), cropFrame(), drawGlyph(), drawLineWithSpacing(), drawRgbaFrameOnCanvas(), measureOpaqueBounds(), PixelBounds (+15 more)
+Cohesion: 0.29
+Nodes (13): ComicWizardStep, useComicProject(), createEmptyComicProject(), createEmptyPanels(), ComicProjectMeta, isQuotaExceededError(), LEGACY_IMAGE_SESSION_KEYS, loadComicProjectMeta() (+5 more)
 
 ### Community 51 - "LINE Review Submission"
 Cohesion: 0.36
 Nodes (12): dismiss_overlays(), Page, accept_terms_and_confirm(), click_submit_button(), collect_visible_status_labels(), detect_review_status(), ensure_logged_in(), Page (+4 more)
 
 ### Community 52 - "Sheet Reslicing Utility"
-Cohesion: 0.07
-Nodes (30): 1. 選擇正確的背景顏色, 2. 檢查生成結果, 3. 優化生成品質, Q1: 我需要做什麼特殊設定嗎?, Q2: 會增加處理時間嗎?, Q3: 我可以看到處理進度嗎?, Q4: 如果去背還是失敗怎麼辦?, Q5: 支援其他顏色嗎? (+22 more)
+Cohesion: 0.10
+Nodes (20): 🎯 What is This? (這是什麼?), 之前 (Without Normalization), 之後 (With Normalization), 什麼是顏色標準化?, ✨ 使用方法 (How to Use), 快速入門指南 - 背景顏色標準化, 🔍 技術細節 (Technical Details), 🎨 支援的顏色 (Supported Colors) (+12 more)
 
 ### Community 53 - "Input-to-Upload Pipeline"
-Cohesion: 0.21
-Nodes (11): detectBrowserLanguage(), LanguageContext, LanguageProvider(), LanguageProviderProps, NavigatorWithUserLanguage, REQUIRED_COMIC_KEYS, en, getTranslation() (+3 more)
+Cohesion: 0.18
+Nodes (13): detectBrowserLanguage(), LanguageContext, LanguageContextType, LanguageProvider(), LanguageProviderProps, NavigatorWithUserLanguage, REQUIRED_COMIC_KEYS, en (+5 more)
 
 ### Community 54 - "Sheet Re-overlay Utility"
-Cohesion: 0.11
-Nodes (22): argv, cols, frames, image, loadOverlayConfig(), processedPath, rows, sheetDir (+14 more)
+Cohesion: 0.10
+Nodes (32): decodeImage(), encodePng(), extForBytes(), isJpeg(), isPng(), sliceSheet(), composePhrasesOnRgbaFrames(), overlayPhrasesOnRgbaFrames() (+24 more)
 
 ### Community 55 - "Cell Crop Logic"
 Cohesion: 0.17
 Nodes (12): 1. 洋紅色去背邊緣殘留, 2. 綠幕去背完全失敗, v2.0 — 邊緣殘留清理與綠幕修復 (2026-01-30), 去色算法, 向後相容性 (Backward Compatibility), 問題回報 (Issue Report), 已知限制 (Known Limitations), 技術細節 (Technical Details) (+4 more)
 
 ### Community 56 - "Sticker Voice Presets"
-Cohesion: 0.57
-Nodes (5): generateStickerPhrases(), buildStickerVoicePromptBlock(), listStickerVoiceKeys(), resolveStickerVoice(), STICKER_VOICE_PRESETS
+Cohesion: 0.26
+Nodes (13): buildEqualGridBounds(), buildGridSheetTemplate(), BuildGridSheetTemplateOptions, drawCellCornerTicks(), drawGuidedGridOverlay(), drawHorizontalGroove(), drawVerticalGroove(), EqualGridBounds (+5 more)
 
 ### Community 57 - "Provisioning Unit Tests"
 Cohesion: 0.43
@@ -456,12 +469,12 @@ Cohesion: 0.62
 Nodes (6): check_file(), main(), print_report(), Path, read_png_size(), validate()
 
 ### Community 59 - "Upload Pipeline Orchestration"
-Cohesion: 0.09
-Nodes (23): Advanced Sprite Sheet Features, Animation Quality Improvement, API Quota Optimization, Basic Workflow, 🎯 Best Practices, Build Production Version, 🤝 Contributing, 🔧 Development (+15 more)
+Cohesion: 0.07
+Nodes (28): Advanced Sprite Sheet Features, Animation Quality Improvement, API Quota Optimization, Automatic Deployment (Recommended), Basic Workflow, 🎯 Best Practices, Build Production Version, 🤝 Contributing (+20 more)
 
 ### Community 60 - "API Key Management"
-Cohesion: 0.13
-Nodes (20): captionInkWidth(), LAYOUT_PRESETS, makeSubjectBlob(), ComposeCaptionAlign, ComposeCaptionOrientation, ComposeCaptionSizing, ComposeSlots, ComposeSubjectAnchor (+12 more)
+Cohesion: 0.15
+Nodes (18): captionInkWidth(), LAYOUT_PRESETS, makeSubjectBlob(), ComposeCaptionAlign, ComposeCaptionOrientation, ComposeCaptionSizing, ComposeSlots, ComposeSubjectAnchor (+10 more)
 
 ### Community 61 - "Black Cat Assets"
 Cohesion: 0.29
@@ -548,20 +561,20 @@ Cohesion: 0.09
 Nodes (21): 10. Open Decisions Resolved, 11. Success Criteria, 1. Problem Statement, 2. Objectives and Non-Objectives, 3. Recommended Approach, 4.1 `GridHypothesisStage` (coarse localization), 4.2 `ContentConsistencyStage` (fine scoring), 4.3 `BestFitSelector` (decision) (+13 more)
 
 ### Community 92 - "Optimization Roadmap"
-Cohesion: 0.27
-Nodes (8): optimizeSliceForImage(), isSliceBackgroundPixel(), columnHasContent(), computeOptimizedSliceFromMargins(), ContentMargins, measureContentMargins(), OptimizeSliceOptions, rowHasContent()
+Cohesion: 0.18
+Nodes (11): Pass 1: 主要色度去背, Pass 2: 邊緣清理 (改進版), Pass 3: 去色處理 (新增), 增加容差值, 改進 1: 更積極的顏色標準化, 改進 2: 三遍去背處理, 改進 3: 增強綠色檢測範圍, 改進 4: 增加 Fuzz 容差 (+3 more)
 
 ### Community 117 - "sheetComponentSlicer.ts"
-Cohesion: 0.13
-Nodes (12): clearEdgeConnectedResidue(), clearSmallOpaqueIslands(), EdgeCleanupOptions, SmallIslandCleanupOptions, buildCellLookup(), isDividerResidue(), LabeledSheet, labelSheetComponents() (+4 more)
+Cohesion: 0.21
+Nodes (8): buildCellLookup(), isDividerResidue(), LabeledSheet, labelSheetComponents(), OwnershipSliceOptions, RgbaFrameBuffer, SheetComponent, sliceSheetByComponentOwnership()
 
 ### Community 118 - "geminiSheet.mts"
-Cohesion: 0.10
-Nodes (40): AttachmentIndices, buildCharacterRefBlock(), buildCompanionBlock(), buildGridTemplateInstruction(), buildGuidedGridEditAnchorBlock(), buildGuidedGridReminderBlock(), buildGuidedLayoutOverrideBlock(), buildSafeFramingInstruction() (+32 more)
+Cohesion: 0.12
+Nodes (31): AttachmentIndices, buildCharacterRefBlock(), buildCompanionBlock(), buildGridTemplateInstruction(), buildGuidedGridEditAnchorBlock(), buildGuidedGridReminderBlock(), buildGuidedLayoutOverrideBlock(), buildSafeFramingInstruction() (+23 more)
 
 ### Community 119 - "index.ts"
-Cohesion: 0.19
-Nodes (11): ComicCharacterSheetStep, ComicCharacterSheetStepProps, ComicResultStep, ComicResultStepProps, ComicSourceMode, ComicSourceStep, ComicSourceStepProps, ComicWizardSteps (+3 more)
+Cohesion: 0.16
+Nodes (13): ComicCharacterSheetStep, ComicCharacterSheetStepProps, ComicResultStep, ComicResultStepProps, ComicSourceMode, ComicSourceStep, ComicSourceStepProps, ComicStoryboardStep (+5 more)
 
 ### Community 120 - "useExport"
 Cohesion: 0.17
@@ -572,8 +585,8 @@ Cohesion: 0.11
 Nodes (18): 1. Problem Statement, 2. Locked Decisions (from stakeholder), 3. Objectives and Non-Objectives, 4.1 New module: `utils/chromaSimilarity.ts`, 4.2 Data flow (unchanged outer order), 4.3 Call-site wiring, 4.4 Guided simplify rules, 4. Architecture (+10 more)
 
 ### Community 122 - "programmaticTextOverlay.mts"
-Cohesion: 0.22
-Nodes (18): blitRgbaOntoCanvas(), ComposeOverlayOptions, composePhraseOnRgbaFrame(), FontPresetKey, overlayPhraseOnRgbaFrame(), ProgrammaticOverlayOptions, readRgbaFromCanvas(), TextColorPresetKey (+10 more)
+Cohesion: 0.27
+Nodes (9): ChromaLikeMode, isChromaSoftEdge(), keyLooksGreen(), keyLooksMagenta(), passesDirectionGate(), rgbToYCbCr(), green, magenta (+1 more)
 
 ### Community 123 - "Agent workflow"
 Cohesion: 0.11
@@ -588,20 +601,20 @@ Cohesion: 0.12
 Nodes (16): File Map (Phase 1 MVP), One-Page Comic (4A) Implementation Plan, Out of Scope (do not implement in this plan), Self-Review (spec coverage), Task 10: OnePageComicPage orchestration, Task 11: Routing, home card, i18n, Task 12: Manual E2E verification, Task 1: Comic panel schema and validation (+8 more)
 
 ### Community 126 - "OnePageComicPage.tsx"
-Cohesion: 0.28
-Nodes (10): ApiError, getErrorMessage(), isApiError(), isQuotaError(), QuotaError, computeTemplateMatchScore(), cropCellFromImage(), getBestOffsetByTemplateMatch() (+2 more)
+Cohesion: 0.24
+Nodes (5): decodePngToRgba(), useExport(), jszip, GIFEncoder, loadImagesData()
 
 ### Community 127 - "audit-programmatic-overlay.mts"
 Cohesion: 0.13
 Nodes (14): AuditEntry, BandSample, configPath, entries, isTextLikePixel(), missing, outDir, phrasePath (+6 more)
 
 ### Community 128 - "compare-chroma-forge.mts"
-Cohesion: 0.18
-Nodes (11): Pass 1: 主要色度去背, Pass 2: 邊緣清理 (改進版), Pass 3: 去色處理 (新增), 增加容差值, 改進 1: 更積極的顏色標準化, 改進 2: 三遍去背處理, 改進 3: 增強綠色檢測範圍, 改進 4: 增加 Fuzz 容差 (+3 more)
+Cohesion: 0.24
+Nodes (7): CellCropRect, Component, ComputeCellCropOptions, computeCellCropRect(), fallbackCellRect(), findComponents(), PixelPoint
 
 ### Community 129 - "comicStoryboard.ts"
-Cohesion: 0.20
-Nodes (9): bleedForBounds(), bleedRatio(), cols, detected, equalX, equalY, rows, score (+1 more)
+Cohesion: 0.27
+Nodes (6): clearGuidedGreenPockets(), countGreenSpillNeighbors(), GuidedGreenPocketOptions, isPocketGreenResidue(), KEY, KEY_MAX
 
 ### Community 130 - "Background Color Normalization (背景顏色標準化)"
 Cohesion: 0.13
@@ -640,12 +653,16 @@ Cohesion: 0.22
 Nodes (9): 📝 具體實施建議, 📈 專案健康度：85/100, 專案優化路線圖與功能建議, ✅ 已完成的核心功能, 🔧 技術債務, 本週可以實施的, 📊 當前專案狀態評估, 立即可以實施的（今天） (+1 more)
 
 ### Community 139 - "PartingPage.tsx"
-Cohesion: 0.29
-Nodes (9): focusRing, SheetSliceProgrammaticOverlayPanel(), SheetSliceProgrammaticOverlayPanelProps, buildPhrasesFromMultiline(), SheetSliceOverlayColorKey, SheetSliceOverlayFontKey, useSheetSliceProgrammaticOverlay(), overlayPhrasesOnStickerFrames() (+1 more)
+Cohesion: 0.25
+Nodes (13): generateCharacterRefImage(), main(), mimeFromPath(), parseArgs(), printStyleTable(), resolveImagePath(), ROOT_DIR, SCRIPT_DIR (+5 more)
 
 ### Community 140 - "despillForgeGreenFringe"
-Cohesion: 0.67
-Nodes (3): 構建生產版本, 🔧 開發, 預覽生產版本
+Cohesion: 0.29
+Nodes (10): generateAnimationFrames(), generateCharacterRefImage(), GenerateCharacterRefParams, isImageSizeRejection(), isQuotaError(), retryOperation(), wait(), getAnimationStoryboard() (+2 more)
+
+### Community 141 - "sync-upload-input.mts"
+Cohesion: 0.21
+Nodes (13): JobConfig, DEFAULT_UPLOAD_ROOT, envFileBaseName(), isCli, main(), parseArgs(), PROJECT_ROOT, resolveUploadInputDest() (+5 more)
 
 ### Community 142 - "English"
 Cohesion: 0.29
@@ -667,6 +684,18 @@ Nodes (6): Description, Description, English, Title, Title, Traditional Chinese 
 Cohesion: 0.29
 Nodes (7): 1. 精靈圖來源與前處理, 2. 格線與「每格切割框」怎麼算, 3. frameOverrides 的來源與時機, 4. 切分觸發時機（何時用 frameOverrides 重切）, 5. 智能對齊演算法（smartAutoAlignFrames）在做什麼, 6. 流程總覽（簡表）, 精靈圖切分與校正流程（目前實作）
 
+### Community 147 - "run-generate-and-upload.mts"
+Cohesion: 0.15
+Nodes (10): args, batchPath, configPath, envBase, final, job, outDir, ROOT (+2 more)
+
+### Community 148 - "lineStickerSetSchema.ts"
+Cohesion: 0.50
+Nodes (6): generateStickerPhrases(), clampStickerPhrases(), buildStickerVoicePromptBlock(), listStickerVoiceKeys(), resolveStickerVoice(), STICKER_VOICE_PRESETS
+
+### Community 149 - "parsePhraseSetJson"
+Cohesion: 0.48
+Nodes (6): loadSheetPhrases(), LoadSheetPhrasesOptions, phrasesFromJobManifest(), readPhraseSetFile(), sheetPhraseOffsetFromDir(), slicePhraseWindow()
+
 ### Community 150 - "💡 創新功能建議"
 Cohesion: 0.40
 Nodes (5): 1. **智能切片檢測**, 2. **動作庫**, 3. **協作功能**, 4. **集成功能**, 💡 創新功能建議
@@ -676,8 +705,8 @@ Cohesion: 0.40
 Nodes (5): 🚀 推薦實施順序, 第一階段（1-2 週）, 第三階段（3-4 週）, 第二階段（2-3 週）, 第四階段（長期）
 
 ### Community 152 - "🚀 Deploy to GitHub Pages"
-Cohesion: 0.40
-Nodes (5): Automatic Deployment (Recommended), 🚀 Deploy to GitHub Pages, Important Notes, Manual Build (Local Testing), Manual Trigger
+Cohesion: 0.44
+Nodes (7): countGreenSpillNeighbors(), despillForgeGreenFringe(), distanceToGreenKey(), greenExcess(), isNearTransparency(), isNearWhite(), isNeutralDarkInk()
 
 ### Community 153 - "rgbaScale.ts"
 Cohesion: 0.60
@@ -699,25 +728,61 @@ Nodes (3): 優化目標, 📊 性能優化機會, 當前性能指標
 Cohesion: 0.67
 Nodes (3): 📚 參考資源, 工具和庫, 最佳實踐
 
+### Community 179 - "throwIfAborted"
+Cohesion: 0.24
+Nodes (17): useLineStickerSheetGeneration(), normalizeBackgroundColor(), abortableDelay(), createAbortError(), isAbortError(), throwIfAborted(), getSegmenter(), loadImageData() (+9 more)
+
+### Community 180 - "alphaEdgeFeather.ts"
+Cohesion: 0.43
+Nodes (5): normalizeChromaBackground(), RgbColor, isChromaBackgroundPixel(), normalizeChromaBackgroundInPlace(), RgbColor
+
+### Community 181 - "processChromaKeyLegacy"
+Cohesion: 0.48
+Nodes (3): isNearWhite(), processChromaKeyLegacy(), rgbToHsl()
+
+### Community 182 - "comicDownloadFilenames.ts"
+Cohesion: 0.43
+Nodes (6): blendFrames(), createLoopingAnimation(), easingFunctions, generateSmoothAnimation(), interpolateFrames(), InterpolationSettings
+
+### Community 183 - "expandThemePhrasesForFrames"
+Cohesion: 0.47
+Nodes (5): useLineStickerPhraseGeneration(), useLineStickerThemePresetSync(), UseLineStickerThemePresetSyncParams, expandThemePhrasesForFrames(), getActionHint()
+
+### Community 184 - "💡 常見問題 (FAQ)"
+Cohesion: 0.33
+Nodes (6): Q1: 我需要做什麼特殊設定嗎?, Q2: 會增加處理時間嗎?, Q3: 我可以看到處理進度嗎?, Q4: 如果去背還是失敗怎麼辦?, Q5: 支援其他顏色嗎?, 💡 常見問題 (FAQ)
+
+### Community 185 - "🚀 部署到 GitHub Pages"
+Cohesion: 0.40
+Nodes (5): 手動構建（本地測試）, 手動觸發部署, 注意事項, 自動部署（推薦）, 🚀 部署到 GitHub Pages
+
+### Community 186 - "imageCrop.ts"
+Cohesion: 0.70
+Nodes (4): computeTemplateMatchScore(), cropCellFromImage(), getBestOffsetByTemplateMatch(), runTemplateSearch()
+
+### Community 187 - "🎯 最佳實踐 (Best Practices)"
+Cohesion: 0.50
+Nodes (4): 1. 選擇正確的背景顏色, 2. 檢查生成結果, 3. 優化生成品質, 🎯 最佳實踐 (Best Practices)
+
 ## Knowledge Gaps
-- **856 isolated node(s):** `SCRIPT_DIR`, `SKILL_DIR`, `ROOT_DIR`, `outDir`, `phrasePath` (+851 more)
+- **870 isolated node(s):** `SCRIPT_DIR`, `SKILL_DIR`, `ROOT_DIR`, `outDir`, `phrasePath` (+865 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **49 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `jszip` connect `LINE Upload Packaging` to `Sprite Editing UI`, `SpriteAnimatorPage.tsx`, `Project Dependencies`?**
+- **Why does `jszip` connect `OnePageComicPage.tsx` to `Sprite Editing UI`, `LINE Upload Packaging`, `Project Dependencies`?**
+  _High betweenness centrality (0.032) - this node is a cross-community bridge._
+- **Why does `dependencies` connect `Project Dependencies` to `OnePageComicPage.tsx`?**
   _High betweenness centrality (0.031) - this node is a cross-community bridge._
-- **Why does `dependencies` connect `Project Dependencies` to `LINE Upload Packaging`?**
-  _High betweenness centrality (0.031) - this node is a cross-community bridge._
+- **Why does `useLineStickerDownload()` connect `Sprite Editing UI` to `Sticker Page ViewModels`, `OnePageComicPage.tsx`?**
+  _High betweenness centrality (0.020) - this node is a cross-community bridge._
 - **What connects `SCRIPT_DIR`, `SKILL_DIR`, `ROOT_DIR` to the rest of the system?**
-  _871 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Gemini Prompt Builders` be split into smaller, more focused modules?**
-  _Cohesion score 0.053726453726453724 - nodes in this community are weakly interconnected._
+  _885 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Comic Creation UI` be split into smaller, more focused modules?**
+  _Cohesion score 0.13043478260869565 - nodes in this community are weakly interconnected._
 - **Should `Sprite Sheet Processing` be split into smaller, more focused modules?**
-  _Cohesion score 0.12367864693446089 - nodes in this community are weakly interconnected._
-- **Should `Chroma Key Detection` be split into smaller, more focused modules?**
-  _Cohesion score 0.05714285714285714 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.1329268292682927 - nodes in this community are weakly interconnected._
 - **Should `Sticker Section UI` be split into smaller, more focused modules?**
-  _Cohesion score 0.11416490486257928 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.11212121212121212 - nodes in this community are weakly interconnected._

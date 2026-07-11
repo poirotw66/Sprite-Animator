@@ -87,8 +87,8 @@ export const CHROMA_KEY_EDGE_BAND_RADIUS = 2;
 /** Edge color blend strength (0–1) toward opaque neighbors; tunable from frontend. Default 0.22. */
 export const CHROMA_KEY_EDGE_BLEND = 0.22;
 
-/** Default chroma removal: forge (agent-sprite-forge RGB flood). Use `core` for legacy HSL pipeline. */
-export const DEFAULT_CHROMA_KEY_ALGORITHM: ChromaKeyAlgorithm = 'forge';
+/** Default chroma removal: legacy (pre-refactor HSL pipeline). Also: `core`, `forge`. */
+export const DEFAULT_CHROMA_KEY_ALGORITHM: ChromaKeyAlgorithm = 'legacy';
 
 /** agent-sprite-forge remove_bg_magenta defaults (RGB distance). */
 export const CHROMA_KEY_FORGE_THRESHOLD = 100;

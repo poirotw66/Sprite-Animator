@@ -65,8 +65,8 @@
     "semantic_hash": "8fef16e1dc53b5642324d07ab91f7e2a"
   },
   ".claude/skills/line-sticker-maker/scripts/nodeImage.mts": {
-    "mtime": 1783778463.3009756,
-    "ast_hash": "27fcf398c8795c8866de5e6a6e1b30cd",
+    "mtime": 1783781793.2497342,
+    "ast_hash": "862818ae99d95c85716ba161aba8a32b",
     "semantic_hash": ""
   },
   ".claude/skills/line-sticker-maker/scripts/organize-line-upload-input.mts": {
@@ -745,8 +745,8 @@
     "semantic_hash": "8ed6baa47231faaa01c2379ef1664449"
   },
   "types.ts": {
-    "mtime": 1783691107.7897654,
-    "ast_hash": "d29fa661a9115c8221a694b2a650c7f7",
+    "mtime": 1783781790.8900924,
+    "ast_hash": "69f69b9b085f491d5cb3deb9a70a9897",
     "semantic_hash": ""
   },
   "types/errors.ts": {
@@ -815,13 +815,13 @@
     "semantic_hash": "2a8c137bb61d662278d1c1d73b0ba075"
   },
   "utils/chromaKeyCore.ts": {
-    "mtime": 1783738899.8010273,
-    "ast_hash": "8c8ab69033fb2a41ae2fbc6c98325dc6",
+    "mtime": 1783780865.4702413,
+    "ast_hash": "6eb2b583573219cb291ad65136aa931b",
     "semantic_hash": ""
   },
   "utils/chromaKeyProcessor.ts": {
-    "mtime": 1783691156.427651,
-    "ast_hash": "b440c9a2b0b3dfef6f510adedc9efa4a",
+    "mtime": 1783782018.2874987,
+    "ast_hash": "10f10e67cdde763768988f7ba128c01b",
     "semantic_hash": ""
   },
   "utils/chromaPocketCleanup.test.ts": {
@@ -895,8 +895,8 @@
     "semantic_hash": "f9a429ced1f90894d2ec76bd19ee1d75"
   },
   "utils/constants.ts": {
-    "mtime": 1783695831.9020562,
-    "ast_hash": "a078fa7645975cfcbbcf276dcfcd9d88",
+    "mtime": 1783782018.0618694,
+    "ast_hash": "04171e70892671ec6aba408010351abf",
     "semantic_hash": ""
   },
   "utils/dataUrl.test.ts": {
@@ -1235,9 +1235,9 @@
     "semantic_hash": "87da6edf1a2f762d9d2fae0de31f5b7c"
   },
   "utils/stickerStrokeWhite.ts": {
-    "mtime": 1783666737.6663868,
-    "ast_hash": "c42210eebcca6d9e1412f4ff2d8060ef",
-    "semantic_hash": "c42210eebcca6d9e1412f4ff2d8060ef"
+    "mtime": 1783780845.097639,
+    "ast_hash": "bdf95c8a3cbfb8e7ee3bb4e94b01ea7b",
+    "semantic_hash": ""
   },
   "vite.config.ts": {
     "mtime": 1778850321.2826288,
@@ -1275,18 +1275,18 @@
     "semantic_hash": ""
   },
   "utils/chromaForgeGreenFringe.test.ts": {
-    "mtime": 1783701731.595279,
-    "ast_hash": "c86a49b00d91e13d1b13db3994ec51a2",
+    "mtime": 1783780854.2786882,
+    "ast_hash": "9fa4f689ed4176a10172b3720fddb2a2",
     "semantic_hash": ""
   },
   "utils/chromaForgeGreenFringe.ts": {
-    "mtime": 1783701761.6079216,
-    "ast_hash": "97a7c294edf9c00e56c5f36b0b202016",
+    "mtime": 1783780846.0466132,
+    "ast_hash": "82a0ae0513274422dac4b77fdcdb02bd",
     "semantic_hash": ""
   },
   "utils/chromaKeyApply.ts": {
-    "mtime": 1783778463.3314855,
-    "ast_hash": "5fcab42aa87f1c4c889eaf94dae5a7cf",
+    "mtime": 1783781792.3843918,
+    "ast_hash": "bb49ff5ccee9a1acdb84f317a1b8770f",
     "semantic_hash": ""
   },
   "utils/chromaKeyForge.test.ts": {
@@ -1335,13 +1335,13 @@
     "semantic_hash": ""
   },
   "utils/stickerChromaStrokeRepair.test.ts": {
-    "mtime": 1783677564.8311589,
-    "ast_hash": "a1689cdb2806e5d7e456c6f03f7a4224",
+    "mtime": 1783780875.4994006,
+    "ast_hash": "5b7695caff15318797896e2afecaf263",
     "semantic_hash": ""
   },
   "utils/stickerChromaStrokeRepair.ts": {
-    "mtime": 1783677532.2104962,
-    "ast_hash": "c2088534a9249ad2d4786174967d2bdf",
+    "mtime": 1783781119.234889,
+    "ast_hash": "d93d2f2d6ebae0e6fe8c0fab72849840",
     "semantic_hash": ""
   },
   ".claude/skills/line-sticker-character-ref/SKILL.md": {
@@ -1857,6 +1857,26 @@
   "reference/comic/model-sheet-layout.png": {
     "mtime": 1783619282.4656358,
     "ast_hash": "700eaf0778adfb84fa087561f3058200",
+    "semantic_hash": ""
+  },
+  ".claude/skills/line-sticker-maker/scripts/reslice-core-preview.mts": {
+    "mtime": 1783782018.5827415,
+    "ast_hash": "2e0ce4c9d980b1d43161992d7b91b080",
+    "semantic_hash": ""
+  },
+  "utils/chromaKeyLegacy.test.ts": {
+    "mtime": 1783781796.2593331,
+    "ast_hash": "a26bc807aa1847c8804d769b81a03866",
+    "semantic_hash": ""
+  },
+  "utils/chromaKeyLegacy.ts": {
+    "mtime": 1783781791.5921564,
+    "ast_hash": "0091ef9a81f9574c97a36a96d3ef5b57",
+    "semantic_hash": ""
+  },
+  "utils/normalizeChromaBackgroundLegacy.ts": {
+    "mtime": 1783781790.7850227,
+    "ast_hash": "79b718f90a0337b31f2601b180b4ccbd",
     "semantic_hash": ""
   }
 }

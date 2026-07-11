@@ -1,6 +1,6 @@
 export type ChromaKeyColorType = 'magenta' | 'green';
-/** `forge` = agent-sprite-forge RGB flood; `core` = HSL multi-pass despill pipeline. */
-export type ChromaKeyAlgorithm = 'forge' | 'core';
+/** `forge` = RGB flood; `core` = YCbCr multi-pass; `legacy` = pre-refactor HSL pipeline (ecf81e5). */
+export type ChromaKeyAlgorithm = 'forge' | 'core' | 'legacy';
 export type BgRemovalMethod = 'chroma' | 'ai';
 
 export interface AnimationConfig {

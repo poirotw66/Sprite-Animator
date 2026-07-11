@@ -1,5 +1,5 @@
 /**
- * Dispatch chroma-key removal to forge (RGB flood) or core (HSL multi-pass).
+ * Dispatch chroma-key removal to forge, core, or legacy (pre-refactor HSL).
  */
 
 import type { ChromaKeyAlgorithm } from '../types';
@@ -12,6 +12,7 @@ import {
   DEFAULT_CHROMA_KEY_ALGORITHM,
 } from './constants';
 import { processChromaKey } from './chromaKeyCore';
+import { processChromaKeyLegacy } from './chromaKeyLegacy';
 import { processChromaKeyForge } from './chromaKeyForge';
 import { despillForgeGreenFringe } from './chromaForgeGreenFringe';
 
@@ -44,6 +45,19 @@ export function applyChromaKey(
       despillForgeGreenFringe(data, width, height);
     }
     return data;
+  }
+
+  if (algorithm === 'legacy') {
+    return processChromaKeyLegacy(
+      data,
+      width,
+      height,
+      chromaKey,
+      options.fuzzPercent ?? CHROMA_KEY_FUZZ,
+      options.onProgress ?? (() => {}),
+      options.edgeBandRadius ?? CHROMA_KEY_EDGE_BAND_RADIUS,
+      options.edgeBlend ?? CHROMA_KEY_EDGE_BLEND
+    );
   }
 
   return processChromaKey(

@@ -21,3 +21,12 @@ export function isStickerStrokeFringe(r: number, g: number, b: number): boolean 
 export function shouldPreserveStickerStroke(r: number, g: number, b: number): boolean {
   return isStickerStrokeWhite(r, g, b) || isStickerStrokeFringe(r, g, b);
 }
+
+/** Intentional dark line art / fill (hair, shoes, ink) — not green-screen fringe. */
+export function isNeutralDarkInk(r: number, g: number, b: number): boolean {
+  const min = Math.min(r, g, b);
+  const max = Math.max(r, g, b);
+  const spread = max - min;
+  const lum = (r + g + b) / 3;
+  return spread <= 22 && lum < 90;
+}

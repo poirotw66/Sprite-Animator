@@ -1,3 +1,5 @@
+import { isNeutralDarkInk } from './stickerStrokeWhite';
+
 /**
  * Minimal green spill cleanup for forge chroma key — edge-only.
  * Pass 1: erase isolated green chroma specks near transparency.
@@ -111,6 +113,8 @@ export function despillForgeGreenFringe(
         (g > r && g > b && excess > CHROMA_ERASE_GREEN_EXCESS);
 
       if (chromaLike && spillNeighbors <= MAX_GREEN_SPILL_NEIGHBORS && !isNearWhite(r, g, b)) {
+        // ponytail: JPEG spill tints dark hair/shoes G>R; only erase true chroma-like pixels.
+        if (isNeutralDarkInk(r, g, b) && distanceToGreenKey(r, g, b) >= 70) continue;
         eraseMask[p] = 1;
       }
     }
@@ -135,6 +139,7 @@ export function despillForgeGreenFringe(
       const b = data[i + 2]!;
       const excess = greenExcess(r, g, b);
       if (excess <= GREEN_EXCESS_MIN) continue;
+      if (isNeutralDarkInk(r, g, b)) continue;
 
       const rbMax = Math.max(r, b);
       if (isNearWhite(r, g, b)) {
