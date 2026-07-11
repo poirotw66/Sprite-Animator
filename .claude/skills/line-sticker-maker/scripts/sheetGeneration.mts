@@ -39,6 +39,10 @@ import {
 } from './nodeImage.mts';
 import { overlayPhrasesOnRgbaFrames } from './programmaticTextOverlay.mts';
 import { trimFrameToContent } from '../../../../utils/sheetComponentSlicer.ts';
+import {
+  mergeProgrammaticTextTuning,
+  type ProgrammaticTextOverlayTuning,
+} from '../../../../utils/lineStickerTextOverlayTypes.ts';
 
 export interface SheetPlan {
   label: string;
@@ -78,6 +82,7 @@ export interface GenerateOneSheetParams {
   textRendering: LineStickerTextRendering;
   fontKey?: keyof typeof FONT_PRESETS;
   textColorKey?: keyof typeof TEXT_COLOR_PRESETS;
+  programmaticTextTuning?: ProgrammaticTextOverlayTuning;
   maxSheetRetries: number;
   minGridAlignmentScore: number;
   /** Extra Gemini attempts when grid score stays below minGridAlignmentScore. Default 3. */
@@ -207,6 +212,7 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     textRendering,
     fontKey = 'round',
     textColorKey = 'black',
+    programmaticTextTuning = mergeProgrammaticTextTuning(),
     maxSheetRetries,
     minGridAlignmentScore,
     extraSheetRegenAttempts = 3,
@@ -475,6 +481,7 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     frames = overlayPhrasesOnRgbaFrames(frames, sheet.phrases, {
       fontKey,
       colorKey: textColorKey,
+      tuning: programmaticTextTuning,
     });
   }
 

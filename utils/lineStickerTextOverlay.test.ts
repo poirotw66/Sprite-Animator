@@ -372,6 +372,34 @@ describe('computeAutoCaptionLayout', () => {
     expect(layout.fontSize).toBeLessThanOrEqual(20);
     expect(layout.lines.length).toBeGreaterThan(0);
   });
+
+  it('fixed mode keeps baseFontSizePx when auto would shrink', () => {
+    const canvas = createCanvas(120, 120);
+    const ctx = asDomCanvasContext(canvas.getContext('2d'));
+    ctx.clearRect(0, 0, 120, 120);
+    ctx.fillStyle = 'rgba(0,0,0,1)';
+    ctx.fillRect(4, 4, 112, 96);
+
+    const shared = {
+      width: 120,
+      height: 120,
+      text: '很長的一句測試文字',
+      preferredLabel: 'Bottom center',
+      marginRatio: 0.06,
+      lineHeightMultiplier: 1.15,
+      strokeScale: 1,
+      baseFontSizePx: 20,
+      applyFont: (px: number) => {
+        ctx.font = `700 ${px}px sans-serif`;
+      },
+    };
+
+    const autoLayout = computeAutoCaptionLayout(ctx, { ...shared, fontSizeMode: 'auto' });
+    const fixedLayout = computeAutoCaptionLayout(ctx, { ...shared, fontSizeMode: 'fixed' });
+
+    expect(fixedLayout.fontSize).toBe(20);
+    expect(autoLayout.fontSize).toBeLessThan(20);
+  });
 });
 
 describe('preferredCaptionCenterForLabel', () => {

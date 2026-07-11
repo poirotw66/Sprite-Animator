@@ -16,10 +16,19 @@ export type ProgrammaticTextPlacementMode =
 /** How to resolve canvas font-family for programmatic overlay. */
 export type ProgrammaticFontFamilySource = 'preset' | 'custom';
 
+/** How to resolve final caption font size from fontSizePercent. */
+export type ProgrammaticFontSizeMode =
+  /** Binary-search largest overlap-free size up to fontSizePercent cap (default). */
+  | 'auto'
+  /** Use fontSizePercent directly; placement still avoids subject when possible. */
+  | 'fixed';
+
 /** User-tunable overlay parameters (LINE sticker programmatic text mode). */
 export interface ProgrammaticTextOverlayTuning {
   /** Font size as percent of min(frame width, height), e.g. 11 => 0.11 multiplier. */
   fontSizePercent: number;
+  /** When `fixed`, fontSizePercent is the target size; when `auto`, it is only an upper cap. */
+  fontSizeMode?: ProgrammaticFontSizeMode;
   /** Edge inset for text box, percent of min(frame width, height). */
   edgeMarginPercent: number;
   /** Line height as multiple of font size. */
@@ -43,6 +52,7 @@ export interface ProgrammaticTextOverlayTuning {
 
 export const DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING: ProgrammaticTextOverlayTuning = {
   fontSizePercent: 11,
+  fontSizeMode: 'auto',
   edgeMarginPercent: 6,
   lineHeightMultiplier: 1.25,
   strokeScale: 1,
@@ -54,3 +64,19 @@ export const DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING: ProgrammaticTextOverlayTu
   fontFamilySource: 'preset',
   customFontFamily: '"Noto Sans TC", "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
 };
+
+/** Merge job/UI partial tuning onto defaults. */
+export function mergeProgrammaticTextTuning(
+  partial?: Partial<ProgrammaticTextOverlayTuning>
+): ProgrammaticTextOverlayTuning {
+  if (!partial) {
+    return { ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING };
+  }
+  return {
+    ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING,
+    ...partial,
+    placementModeOverrides: partial.placementModeOverrides
+      ? [...partial.placementModeOverrides]
+      : DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING.placementModeOverrides,
+  };
+}

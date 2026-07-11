@@ -96,6 +96,7 @@ export function overlayPhraseOnRgbaFrame(
     lineHeightMultiplier: lineMult,
     strokeScale: strokeMult,
     baseFontSizePx: Math.max(10, Math.round(Math.min(frame.width, frame.height) * sizeRatio)),
+    fontSizeMode: tuning.fontSizeMode ?? 'auto',
     applyFont: (px) => {
       ctx.font = `${numericWeight} ${px}px ${fontFamily}`;
     },

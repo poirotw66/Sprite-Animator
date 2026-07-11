@@ -256,6 +256,7 @@ export function overlayLineStickerTextOnFrame(
           lineHeightMultiplier: lineMult,
           strokeScale: strokeMult,
           baseFontSizePx: Math.max(10, Math.round(Math.min(workW, workH) * sizeRatio)),
+          fontSizeMode: tuning.fontSizeMode ?? 'auto',
           applyFont: (px) => {
             ctx.font = `${numericWeight} ${px}px ${fontFamily}`;
           },

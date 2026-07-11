@@ -12,6 +12,7 @@ import {
   wrapLines,
   textOverlayAvoidancePadPx,
 } from './lineStickerTextOverlayGeometry';
+import type { ProgrammaticFontSizeMode } from './lineStickerTextOverlayTypes';
 
 function isChromaLikePixel(r: number, g: number, b: number, a: number): boolean {
   if (a < 12) return true;
@@ -256,6 +257,8 @@ export interface AutoCaptionLayoutParams {
   lineHeightMultiplier: number;
   strokeScale: number;
   baseFontSizePx: number;
+  /** `fixed` = use baseFontSizePx; `auto` = shrink to largest overlap-free size (default). */
+  fontSizeMode?: ProgrammaticFontSizeMode;
   applyFont: (fontSizePx: number) => void;
 }
 
@@ -321,8 +324,16 @@ export function computeAutoCaptionLayout(
   ctx: CanvasRenderingContext2D,
   params: AutoCaptionLayoutParams
 ): AutoCaptionLayout {
-  const index = buildForegroundOverlapIndex(ctx, params.width, params.height);
   const maxFont = Math.max(MIN_CAPTION_FONT_PX, Math.round(params.baseFontSizePx));
+
+  if (params.fontSizeMode === 'fixed') {
+    const index = buildForegroundOverlapIndex(ctx, params.width, params.height);
+    const layout = layoutAtFontSize(ctx, index, params, maxFont);
+    params.applyFont(layout.fontSize);
+    return layout;
+  }
+
+  const index = buildForegroundOverlapIndex(ctx, params.width, params.height);
 
   let lo = MIN_CAPTION_FONT_PX;
   let hi = maxFont;
