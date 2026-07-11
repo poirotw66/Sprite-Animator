@@ -20,9 +20,14 @@ import {
   buildForegroundOverlapIndex,
   countOverlapCellsInBox,
   findLeastOverlapCaptionCenter,
+  findCaptionCenterBandFirst,
   computeAutoCaptionLayout,
   preferredCaptionCenterForLabel,
 } from './lineStickerTextOverlaySubject';
+import {
+  captionBandPixelRectForLabel,
+  centerSearchBoundsForTextBoxInBand,
+} from './lineStickerTextOverlayGeometry';
 import { createCanvas } from '@napi-rs/canvas';
 
 /** @napi-rs/canvas context is API-compatible but not structurally typed as DOM CanvasRenderingContext2D. */
@@ -254,6 +259,41 @@ describe('findLeastOverlapCaptionCenter', () => {
   });
 });
 
+describe('captionBandPixelRectForLabel', () => {
+  it('places bottom band in the lowest 28% strip', () => {
+    const band = captionBandPixelRectForLabel('Bottom center', 200, 100, 0.06);
+    expect(band.minY).toBeGreaterThanOrEqual(60);
+    expect(band.maxY).toBeLessThanOrEqual(100);
+    expect(band.maxY - band.minY).toBeLessThanOrEqual(34);
+  });
+});
+
+describe('findCaptionCenterBandFirst', () => {
+  it('keeps caption in bottom band when a free spot exists there', () => {
+    const canvas = createCanvas(200, 200);
+    const ctx = asDomCanvasContext(canvas.getContext('2d'));
+    ctx.clearRect(0, 0, 200, 200);
+    ctx.fillStyle = 'rgba(0,0,0,1)';
+    ctx.fillRect(60, 20, 80, 120);
+
+    const index = buildForegroundOverlapIndex(ctx, 200, 200);
+    const preferred = preferredCaptionCenterForLabel('Bottom center', 200, 200, 80, 24, 0.06);
+    const result = findCaptionCenterBandFirst(index, 80, 24, {
+      width: 200,
+      height: 200,
+      insetPx: 8,
+      preferredX: preferred.x,
+      preferredY: preferred.y,
+    }, 'Bottom center', 0.06);
+
+    expect(result.overlapCells).toBe(0);
+    const band = captionBandPixelRectForLabel('Bottom center', 200, 200, 0.06);
+    const bounds = centerSearchBoundsForTextBoxInBand(band, 80, 24, 200, 200, 8)!;
+    expect(result.centerY).toBeGreaterThanOrEqual(bounds.minCy - 1);
+    expect(result.centerY).toBeLessThanOrEqual(bounds.maxCy + 1);
+  });
+});
+
 describe('computeAutoCaptionLayout', () => {
   it('returns an overlap-free layout when free space exists', () => {
     const canvas = createCanvas(200, 200);
@@ -280,6 +320,31 @@ describe('computeAutoCaptionLayout', () => {
     expect(layout.lines.length).toBeGreaterThan(0);
     expect(layout.centerY).toBeGreaterThan(140);
     expect(layout.fontSize).toBe(22); // no shrink needed
+  });
+
+  it('binary search picks a larger font when extra band space allows', () => {
+    const canvas = createCanvas(200, 200);
+    const ctx = asDomCanvasContext(canvas.getContext('2d'));
+    ctx.clearRect(0, 0, 200, 200);
+    ctx.fillStyle = 'rgba(0,0,0,1)';
+    ctx.fillRect(70, 30, 60, 100);
+
+    const layout = computeAutoCaptionLayout(ctx, {
+      width: 200,
+      height: 200,
+      text: '嗨',
+      preferredLabel: 'Bottom center',
+      marginRatio: 0.06,
+      lineHeightMultiplier: 1.15,
+      strokeScale: 1,
+      baseFontSizePx: 22,
+      applyFont: (px) => {
+        ctx.font = `700 ${px}px sans-serif`;
+      },
+    });
+
+    expect(layout.overlapCells).toBe(0);
+    expect(layout.fontSize).toBe(22);
   });
 
   it('shrinks the font when the frame is crowded', () => {
