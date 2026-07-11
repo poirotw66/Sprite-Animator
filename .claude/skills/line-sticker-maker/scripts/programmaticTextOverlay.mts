@@ -11,6 +11,7 @@ import {
 } from '../../../../utils/lineStickerPrompt.ts';
 import {
   DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING,
+  programmaticTextStrokeWidthPx,
   type ProgrammaticTextOverlayTuning,
 } from '../../../../utils/lineStickerTextOverlayTypes.ts';
 import { computeAutoCaptionLayout } from '../../../../utils/lineStickerTextOverlaySubject.ts';
@@ -114,7 +115,7 @@ export function overlayPhraseOnRgbaFrame(
 
   const fillHex = extractFillHexFromTextColorPreset(colorKey);
   const strokeHex = strokeColorForFill(fillHex);
-  const strokeW = Math.max(1.5, layout.fontSize * 0.12 * strokeMult);
+  const strokeW = programmaticTextStrokeWidthPx(layout.fontSize, strokeMult);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.lineJoin = 'round';

@@ -19,7 +19,10 @@ import type {
   ProgrammaticFontFamilySource,
   ProgrammaticTextOverlayTuning,
 } from './lineStickerTextOverlayTypes';
-import { DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING } from './lineStickerTextOverlayTypes';
+import {
+  DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING,
+  programmaticTextStrokeWidthPx,
+} from './lineStickerTextOverlayTypes';
 
 import {
   layoutFromPlacementLabel,
@@ -269,7 +272,7 @@ export function overlayLineStickerTextOnFrame(
         ctx.lineJoin = 'round';
         ctx.miterLimit = 2;
 
-        const strokeW = Math.max(1.5, layout.fontSize * 0.12 * strokeMult);
+        const strokeW = programmaticTextStrokeWidthPx(layout.fontSize, strokeMult);
         const firstLineY =
           layout.centerY + offsetY - ((layout.lines.length - 1) / 2) * layout.lineHeight;
 

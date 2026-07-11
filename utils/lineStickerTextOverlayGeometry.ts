@@ -6,6 +6,10 @@
  */
 
 import { RESERVED_CAPTION_BAND_HEIGHT_RATIO } from './lineStickerPrompt';
+import {
+  PROGRAMMATIC_TEXT_STROKE_WIDTH_RATIO,
+  programmaticTextStrokeWidthPx,
+} from './lineStickerTextOverlayTypes';
 
 export interface TextPlacementLayout {
   anchorX: number;
@@ -264,6 +268,48 @@ export function textStartYFromAnchor(
   return anchorY;
 }
 
+export function lineWidthWithSpacing(
+  ctx: CanvasRenderingContext2D,
+  line: string,
+  letterSpacingPx: number
+): number {
+  const chars = Array.from(line);
+  const glyphs = chars.reduce((sum, ch) => sum + ctx.measureText(ch).width, 0);
+  return glyphs + letterSpacingPx * Math.max(0, chars.length - 1);
+}
+
+/** Wrap text using per-glyph width plus letter spacing (CJK-safe). */
+export function wrapLinesWithSpacing(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  letterSpacingPx: number
+): string[] {
+  const trimmed = text.trim();
+  if (!trimmed) return [];
+
+  const fits = (line: string) => lineWidthWithSpacing(ctx, line, letterSpacingPx) <= maxWidth;
+  const chars = Array.from(trimmed);
+  const lines: string[] = [];
+  let line = '';
+
+  for (const ch of chars) {
+    const trial = line + ch;
+    if (fits(trial)) {
+      line = trial;
+      continue;
+    }
+    if (line) {
+      lines.push(line);
+    }
+    line = ch;
+  }
+  if (line) {
+    lines.push(line);
+  }
+  return lines.length > 0 ? lines : [trimmed];
+}
+
 export function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
   const trimmed = text.trim();
   if (!trimmed) return [];
@@ -378,15 +424,16 @@ export function correctionToFitTextBoxInFrame(
   return { dx, dy };
 }
 
+
 /** Padding around measured glyphs for stroke and descenders when scoring auto-avoid. */
 export function textOverlayAvoidancePadPx(
   fontSize: number,
   strokeMult: number
 ): { padX: number; padY: number } {
-  const strokeW = Math.max(1.5, fontSize * 0.12 * strokeMult);
+  const strokeW = programmaticTextStrokeWidthPx(fontSize, strokeMult);
   const strokeExtent = strokeW * 2;
   return {
-    padX: Math.ceil(strokeExtent + fontSize * 0.12),
+    padX: Math.ceil(strokeExtent + fontSize * PROGRAMMATIC_TEXT_STROKE_WIDTH_RATIO),
     padY: Math.ceil(strokeExtent + fontSize * 0.16),
   };
 }

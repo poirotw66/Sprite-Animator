@@ -52,6 +52,13 @@ export interface ProgrammaticTextOverlayTuning {
   placementModeOverrides?: (ProgrammaticTextPlacementMode | null)[];
 }
 
+/** Stroke width as a fraction of font size (before strokeMult; canvas lineWidth uses 2× this). */
+export const PROGRAMMATIC_TEXT_STROKE_WIDTH_RATIO = 0.065;
+
+export function programmaticTextStrokeWidthPx(fontSize: number, strokeMult: number): number {
+  return Math.max(1.2, fontSize * PROGRAMMATIC_TEXT_STROKE_WIDTH_RATIO * strokeMult);
+}
+
 export const DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING: ProgrammaticTextOverlayTuning = {
   fontSizePercent: 11,
   fontSizeMode: 'auto',
@@ -93,6 +100,10 @@ export interface ProgrammaticComposeConfig {
   subjectScale?: number;
   /** Letter spacing between caption glyphs, in em of the caption font size (default 0.08). */
   captionLetterSpacingEm?: number;
+  /** When true (default), nudge font/spacing by phrase length before layout. */
+  phraseLengthAdaptive?: boolean;
+  /** Margin ratio when trimAfterCompose is true (default 0.06). */
+  trimMarginRatio?: number;
   trimAfterCompose?: boolean;
   tuning?: Partial<ProgrammaticTextOverlayTuning>;
 }
@@ -103,12 +114,36 @@ export const DEFAULT_PROGRAMMATIC_COMPOSE_CONFIG: ProgrammaticComposeConfig = {
   subjectTrim: 'none',
   subjectScale: 1.12,
   captionLetterSpacingEm: 0.16,
-  trimAfterCompose: false,
+  phraseLengthAdaptive: true,
+  trimMarginRatio: 0.06,
+  trimAfterCompose: true,
   tuning: {
     fontSizePercent: 20,
     fontSizeMode: 'fixed',
   },
 };
+
+/** Adjust caption size/spacing from phrase length so short lines breathe and long lines fit. */
+export function resolvePhraseAdaptiveCaptionTuning(
+  phrase: string,
+  baseFontSizePercent: number,
+  baseLetterSpacingEm: number
+): { fontSizePercent: number; letterSpacingEm: number } {
+  const len = Array.from(phrase.trim()).length;
+  if (len <= 3) {
+    return {
+      fontSizePercent: Math.min(24, baseFontSizePercent + 2),
+      letterSpacingEm: Math.min(0.4, baseLetterSpacingEm + 0.02),
+    };
+  }
+  if (len >= 5) {
+    return {
+      fontSizePercent: Math.max(16, baseFontSizePercent - 1),
+      letterSpacingEm: Math.max(0, baseLetterSpacingEm - 0.02),
+    };
+  }
+  return { fontSizePercent: baseFontSizePercent, letterSpacingEm: baseLetterSpacingEm };
+}
 
 export function mergeProgrammaticComposeConfig(
   partial?: Partial<ProgrammaticComposeConfig>

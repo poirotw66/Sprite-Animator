@@ -11,7 +11,6 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { parsePhraseSetJson } from '../../../../utils/lineStickerPhraseSetFormat.ts';
 import {
   mergeProgrammaticComposeConfig,
   mergeProgrammaticTextTuning,
@@ -28,6 +27,7 @@ import { buildEqualGridBounds } from '../../../../utils/gridSheetTemplate.ts';
 import { composePhraseOnRgbaFrame, overlayPhraseOnRgbaFrame } from './programmaticTextOverlay.mts';
 import { shouldUseComposeLayout } from '../../../../utils/lineStickerCompose.ts';
 import { trimFrameToContent } from '../../../../utils/sheetComponentSlicer.ts';
+import { loadSheetPhrases } from '../../../../utils/lineStickerSheetPhrases.ts';
 
 const argv = process.argv.slice(2);
 const sheetDir = resolve(argv[0] ?? '');
@@ -35,6 +35,7 @@ const cols = Number(argv[1] ?? 4);
 const rows = Number(argv[2] ?? 5);
 let phrasesPath = '';
 let phraseOffset = 0;
+let phraseOffsetExplicit = false;
 let fontSizePercent: number | undefined;
 let jobConfigPath = '';
 
@@ -43,6 +44,7 @@ for (let i = 3; i < argv.length; i++) {
     phrasesPath = argv[++i]!;
   } else if (argv[i] === '--offset' && argv[i + 1]) {
     phraseOffset = Number.parseInt(argv[++i]!, 10);
+    phraseOffsetExplicit = true;
   } else if (argv[i] === '--font-size' && argv[i + 1]) {
     fontSizePercent = Number.parseFloat(argv[++i]!);
   } else if (argv[i] === '--job-config' && argv[i + 1]) {
@@ -96,20 +98,14 @@ async function loadOverlayConfig(): Promise<{
   };
 }
 
-let phrases: string[] = [];
-if (phrasesPath) {
-  const parsed = parsePhraseSetJson(await readFile(resolve(phrasesPath), 'utf8'));
-  if (!parsed) throw new Error(`Invalid phrase-set: ${phrasesPath}`);
-  phrases = parsed.phrases.slice(phraseOffset, phraseOffset + cols * rows);
-} else {
-  const manifestPath = resolve(sheetDir, 'manifest.json');
-  if (existsSync(manifestPath)) {
-    const manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as {
-      stickers?: Array<{ phrase?: string }>;
-    };
-    phrases = (manifest.stickers ?? []).map((s) => s.phrase ?? '');
-  }
-}
+let phrases: string[] = await loadSheetPhrases({
+  sheetDir,
+  cols,
+  rows,
+  phraseOffset: phraseOffsetExplicit ? phraseOffset : undefined,
+  explicitPhrasesPath: phrasesPath || undefined,
+  jobConfigPath: jobConfigPath || undefined,
+});
 
 const { tuning, compose } = await loadOverlayConfig();
 console.log(
@@ -133,7 +129,13 @@ frames = frames.map((frame, i) => {
   const overlaid = compose.enabled
     ? composePhraseOnRgbaFrame(frame, phrase, { frameIndex, tuning, compose })
     : overlayPhraseOnRgbaFrame(frame, phrase, { frameIndex, tuning });
-  if (!compose.enabled || compose.trimAfterCompose) {
+  if (!compose.enabled) {
+    return trimFrameToContent(overlaid);
+  }
+  if (compose.trimAfterCompose) {
+    if (shouldUseComposeLayout(compose, phrase)) {
+      return overlaid;
+    }
     return trimFrameToContent(overlaid);
   }
   if (shouldUseComposeLayout(compose, phrase)) {

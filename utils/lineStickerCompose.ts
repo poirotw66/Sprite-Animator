@@ -4,19 +4,15 @@
 
 import { createCanvas } from '@napi-rs/canvas';
 import { getReservedCaptionBandLabelForFrame } from './lineStickerPrompt';
+import { wrapLinesWithSpacing } from './lineStickerTextOverlayGeometry';
 import {
   mergeProgrammaticComposeConfig,
   mergeProgrammaticTextTuning,
+  resolvePhraseAdaptiveCaptionTuning,
+  programmaticTextStrokeWidthPx,
   type ProgrammaticComposeConfig,
   type ProgrammaticTextOverlayTuning,
 } from './lineStickerTextOverlayTypes';
-import {
-  extractFillHexFromTextColorPreset,
-  resolveCanvasFontNumericWeight,
-  resolveProgrammaticFontFamilyCss,
-  strokeColorForFill,
-} from './lineStickerTextOverlay';
-import { wrapLines } from './lineStickerTextOverlayGeometry';
 import {
   captionFontSizePx,
   fitSubjectPlacement,
@@ -27,7 +23,15 @@ import {
   type ComposeSlots,
 } from './lineStickerComposeLayout';
 import type { RgbaFrameBuffer } from './sheetComponentSlicer';
+import { trimFrameToContent } from './sheetComponentSlicer';
 import { computeFitDimensions, toEvenDimension } from './lineStickerUploadSpec';
+import {
+  extractFillHexFromTextColorPreset,
+  resolveCanvasFontNumericWeight,
+  resolveProgrammaticFontFamilyCss,
+  strokeColorForFill,
+} from './lineStickerTextOverlay';
+import { lineWidthWithSpacing } from './lineStickerTextOverlayGeometry';
 
 export interface ComposeStickerOptions {
   phrase: string;
@@ -162,17 +166,6 @@ function readRgbaFromCanvas(canvas: ReturnType<typeof createCanvas>): RgbaFrameB
   return { data: new Uint8ClampedArray(data), width, height };
 }
 
-/** Width of one line including inter-character tracking. */
-function lineWidthWithSpacing(
-  ctx: CanvasRenderingContext2D,
-  line: string,
-  spacingPx: number
-): number {
-  const chars = Array.from(line);
-  const glyphs = chars.reduce((w, c) => w + ctx.measureText(c).width, 0);
-  return glyphs + spacingPx * Math.max(0, chars.length - 1);
-}
-
 /** Stroke+fill one line char by char so CJK captions get visible letter spacing. */
 function drawLineWithSpacing(
   ctx: CanvasRenderingContext2D,
@@ -202,6 +195,33 @@ function drawLineWithSpacing(
   ctx.textAlign = prevAlign;
 }
 
+function drawGlyph(
+  ctx: CanvasRenderingContext2D,
+  glyph: string,
+  x: number,
+  y: number,
+  strokeHex: string,
+  fillHex: string,
+  strokeW: number
+): void {
+  ctx.strokeStyle = strokeHex;
+  ctx.lineWidth = strokeW * 2;
+  ctx.strokeText(glyph, x, y);
+  ctx.fillStyle = fillHex;
+  ctx.fillText(glyph, x, y);
+}
+
+function verticalCaptionHeight(
+  glyphCount: number,
+  lineHeight: number,
+  letterSpacingPx: number
+): number {
+  if (glyphCount <= 0) {
+    return 0;
+  }
+  return glyphCount * lineHeight + Math.max(0, glyphCount - 1) * letterSpacingPx;
+}
+
 function resolveCaptionLayout(
   ctx: CanvasRenderingContext2D,
   phrase: string,
@@ -211,7 +231,15 @@ function resolveCaptionLayout(
   canvasHeight: number,
   fontKey: ComposeStickerOptions['fontKey'],
   letterSpacingEm: number
-): { lines: string[]; fontSize: number; lineHeight: number; centerX: number; centerY: number; letterSpacingPx: number } {
+): {
+  lines: string[];
+  fontSize: number;
+  lineHeight: number;
+  centerX: number;
+  centerY: number;
+  letterSpacingPx: number;
+  captionOrientation: ComposeSlots['captionOrientation'];
+} {
   const { captionSlot, captionAlign, captionOrientation } = slots;
   const slotW = captionSlot.maxX - captionSlot.minX;
   const slotH = captionSlot.maxY - captionSlot.minY;
@@ -229,22 +257,23 @@ function resolveCaptionLayout(
   let letterSpacingPx = fontSize * letterSpacingEm;
 
   if (captionOrientation === 'vertical') {
-    // Vertical CJK stacking: one glyph per line down the strip.
     lines = Array.from(phrase);
     while (fontSize >= minFont) {
       lineHeight = fontSize * lineMult;
-      if (fontSize <= slotW * 0.94 && lines.length * lineHeight <= slotH * 0.96) {
+      letterSpacingPx = fontSize * letterSpacingEm;
+      const blockH = verticalCaptionHeight(lines.length, lineHeight, letterSpacingPx);
+      if (fontSize <= slotW * 0.94 && blockH <= slotH * 0.96) {
         break;
       }
       fontSize -= 1;
     }
     applyFont(fontSize);
-    letterSpacingPx = 0;
+    letterSpacingPx = fontSize * letterSpacingEm;
   } else {
     while (fontSize >= minFont) {
       applyFont(fontSize);
       letterSpacingPx = fontSize * letterSpacingEm;
-      lines = wrapLines(ctx, phrase, maxWidth);
+      lines = wrapLinesWithSpacing(ctx, phrase, maxWidth, letterSpacingPx);
       lineHeight = fontSize * lineMult;
       const widest = lines.reduce(
         (w, line) => Math.max(w, lineWidthWithSpacing(ctx, line, letterSpacingPx)),
@@ -270,7 +299,15 @@ function resolveCaptionLayout(
         : captionSlot.maxX - pad - widest / 2;
   }
   const centerY = (captionSlot.minY + captionSlot.maxY) / 2;
-  return { lines, fontSize, lineHeight, centerX, centerY, letterSpacingPx };
+  return {
+    lines,
+    fontSize,
+    lineHeight,
+    centerX,
+    centerY,
+    letterSpacingPx,
+    captionOrientation,
+  };
 }
 
 /** Compose one sticker: subject + caption on a fixed work canvas, then fit to LINE limits. */
@@ -292,18 +329,32 @@ export function composeStickerFrame(
     return subjectFrame;
   }
 
+  const baseFontSizePercent =
+    compose.tuning?.fontSizePercent ?? tuning.fontSizePercent;
+  const baseLetterSpacingEm = compose.captionLetterSpacingEm ?? 0.16;
+  const adaptive =
+    compose.phraseLengthAdaptive !== false
+      ? resolvePhraseAdaptiveCaptionTuning(phrase, baseFontSizePercent, baseLetterSpacingEm)
+      : { fontSizePercent: baseFontSizePercent, letterSpacingEm: baseLetterSpacingEm };
+  const effectiveTuning = mergeProgrammaticTextTuning({
+    ...tuning,
+    ...compose.tuning,
+    fontSizePercent: adaptive.fontSizePercent,
+    fontSizeMode: compose.tuning?.fontSizeMode ?? options.tuning?.fontSizeMode ?? 'fixed',
+  });
+
   const canvasW = compose.workCanvas?.width ?? WORK_CANVAS_WIDTH;
   const canvasH = compose.workCanvas?.height ?? WORK_CANVAS_HEIGHT;
-  const marginRatio = Math.max(0.02, Math.min(0.18, tuning.edgeMarginPercent / 100));
+  const marginRatio = Math.max(0.02, Math.min(0.18, effectiveTuning.edgeMarginPercent / 100));
   const layout = compose.layout ?? 'top_caption_bottom_subject';
   const preset = resolveEffectiveComposePreset(
     layout,
     frameIndex,
     getReservedCaptionBandLabelForFrame
   );
-  const lineMult = Math.max(1.02, Math.min(1.8, tuning.lineHeightMultiplier));
+  const lineMult = Math.max(1.02, Math.min(1.8, effectiveTuning.lineHeightMultiplier));
   const slots = resolveComposeSlots(preset, canvasW, canvasH, marginRatio, {
-    fontSizePx: captionFontSizePx(canvasW, canvasH, tuning.fontSizePercent),
+    fontSizePx: captionFontSizePx(canvasW, canvasH, effectiveTuning.fontSizePercent),
     lineHeightMultiplier: lineMult,
   });
 
@@ -337,15 +388,15 @@ export function composeStickerFrame(
   }
 
   {
-    const fontFamily = resolveProgrammaticFontFamilyCss(fontKey, tuning);
-    const numericWeight = resolveCanvasFontNumericWeight(fontKey, tuning);
-    const strokeMult = Math.max(0.5, Math.min(2.5, tuning.strokeScale));
-    const letterSpacingEm = Math.max(0, Math.min(0.4, compose.captionLetterSpacingEm ?? 0.16));
+    const fontFamily = resolveProgrammaticFontFamilyCss(fontKey, effectiveTuning);
+    const numericWeight = resolveCanvasFontNumericWeight(fontKey, effectiveTuning);
+    const strokeMult = Math.max(0.5, Math.min(2.5, effectiveTuning.strokeScale));
+    const letterSpacingEm = Math.max(0, Math.min(0.4, adaptive.letterSpacingEm));
     const layoutResult = resolveCaptionLayout(
       ctx,
       phrase,
       slots,
-      tuning,
+      effectiveTuning,
       canvasW,
       canvasH,
       fontKey,
@@ -365,40 +416,68 @@ export function composeStickerFrame(
     ctx.font = `${numericWeight} ${layoutResult.fontSize}px ${fontFamily}`;
     const fillHex = extractFillHexFromTextColorPreset(colorKey);
     const strokeHex = strokeColorForFill(fillHex);
-    const strokeW = Math.max(1.5, layoutResult.fontSize * 0.12 * strokeMult);
+    const strokeW = programmaticTextStrokeWidthPx(layoutResult.fontSize, strokeMult);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.lineJoin = 'round';
     ctx.miterLimit = 2;
 
-    const offsetX = (canvasW * tuning.offsetXPercent) / 100;
-    const offsetY = (canvasH * tuning.offsetYPercent) / 100;
-    const firstLineY =
-      layoutResult.centerY +
-      offsetY -
-      ((layoutResult.lines.length - 1) / 2) * layoutResult.lineHeight;
+    const offsetX = (canvasW * effectiveTuning.offsetXPercent) / 100;
+    const offsetY = (canvasH * effectiveTuning.offsetYPercent) / 100;
 
-    layoutResult.lines.forEach((line, i) => {
-      const y = firstLineY + i * layoutResult.lineHeight;
-      if (layoutResult.letterSpacingPx > 0 && Array.from(line).length > 1) {
-        drawLineWithSpacing(
+    if (layoutResult.captionOrientation === 'vertical') {
+      const blockH = verticalCaptionHeight(
+        layoutResult.lines.length,
+        layoutResult.lineHeight,
+        layoutResult.letterSpacingPx
+      );
+      const firstY =
+        layoutResult.centerY + offsetY - blockH / 2 + layoutResult.lineHeight / 2;
+      layoutResult.lines.forEach((glyph, i) => {
+        const y =
+          firstY + i * (layoutResult.lineHeight + layoutResult.letterSpacingPx);
+        drawGlyph(
           ctx,
-          line,
+          glyph,
           layoutResult.centerX + offsetX,
           y,
-          layoutResult.letterSpacingPx,
           strokeHex,
           fillHex,
           strokeW
         );
-      } else {
-        ctx.strokeStyle = strokeHex;
-        ctx.lineWidth = strokeW * 2;
-        ctx.strokeText(line, layoutResult.centerX + offsetX, y);
-        ctx.fillStyle = fillHex;
-        ctx.fillText(line, layoutResult.centerX + offsetX, y);
-      }
-    });
+      });
+    } else {
+      const firstLineY =
+        layoutResult.centerY +
+        offsetY -
+        ((layoutResult.lines.length - 1) / 2) * layoutResult.lineHeight;
+
+      layoutResult.lines.forEach((line, i) => {
+        const y = firstLineY + i * layoutResult.lineHeight;
+        if (layoutResult.letterSpacingPx > 0 && Array.from(line).length > 1) {
+          drawLineWithSpacing(
+            ctx,
+            line,
+            layoutResult.centerX + offsetX,
+            y,
+            layoutResult.letterSpacingPx,
+            strokeHex,
+            fillHex,
+            strokeW
+          );
+        } else {
+          drawGlyph(
+            ctx,
+            line,
+            layoutResult.centerX + offsetX,
+            y,
+            strokeHex,
+            fillHex,
+            strokeW
+          );
+        }
+      });
+    }
     ctx.restore();
   }
 
@@ -406,6 +485,14 @@ export function composeStickerFrame(
   const fit = computeFitDimensions(output.width, output.height, WORK_CANVAS_WIDTH, WORK_CANVAS_HEIGHT);
   if (fit.width !== output.width || fit.height !== output.height) {
     output = resampleRgba(output, fit.width, fit.height);
+  }
+  if (compose.trimAfterCompose) {
+    output = trimFrameToContent(output, compose.trimMarginRatio ?? 0.06);
+    const evenW = toEvenDimension(output.width);
+    const evenH = toEvenDimension(output.height);
+    if (evenW !== output.width || evenH !== output.height) {
+      output = resampleRgba(output, evenW, evenH);
+    }
   }
   return output;
 }

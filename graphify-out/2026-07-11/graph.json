@@ -60,7 +60,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_characterrefprompt",
-      "community": 128,
+      "community": 8,
       "norm_label": "characterrefprompt.ts"
     },
     {
@@ -80,7 +80,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_geminicharacterref_generatecharacterrefimage",
-      "community": 128,
+      "community": 8,
       "norm_label": "generatecharacterrefimage()"
     },
     {
@@ -90,7 +90,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref",
-      "community": 128,
+      "community": 8,
       "norm_label": "generate-character-ref.mts"
     },
     {
@@ -100,7 +100,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref_script_dir",
-      "community": 128,
+      "community": 8,
       "norm_label": "script_dir"
     },
     {
@@ -110,7 +110,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref_skill_dir",
-      "community": 128,
+      "community": 8,
       "norm_label": "skill_dir"
     },
     {
@@ -120,7 +120,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref_root_dir",
-      "community": 128,
+      "community": 8,
       "norm_label": "root_dir"
     },
     {
@@ -130,7 +130,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref_parseargs",
-      "community": 128,
+      "community": 8,
       "norm_label": "parseargs()"
     },
     {
@@ -140,7 +140,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref_mimefrompath",
-      "community": 128,
+      "community": 8,
       "norm_label": "mimefrompath()"
     },
     {
@@ -150,7 +150,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref_resolveimagepath",
-      "community": 128,
+      "community": 8,
       "norm_label": "resolveimagepath()"
     },
     {
@@ -160,7 +160,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref_printstyletable",
-      "community": 128,
+      "community": 8,
       "norm_label": "printstyletable()"
     },
     {
@@ -170,7 +170,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_generate_character_ref_main",
-      "community": 128,
+      "community": 8,
       "norm_label": "main()"
     },
     {
@@ -340,7 +340,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_compare_chroma_forge",
-      "community": 33,
+      "community": 128,
       "norm_label": "compare-chroma-forge.mts"
     },
     {
@@ -350,7 +350,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_compare_chroma_forge_sheetdir",
-      "community": 33,
+      "community": 128,
       "norm_label": "sheetdir"
     },
     {
@@ -360,7 +360,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_compare_chroma_forge_stickerindex",
-      "community": 33,
+      "community": 128,
       "norm_label": "stickerindex"
     },
     {
@@ -370,7 +370,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_compare_chroma_forge_cols",
-      "community": 33,
+      "community": 128,
       "norm_label": "cols"
     },
     {
@@ -380,7 +380,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_compare_chroma_forge_rows",
-      "community": 33,
+      "community": 128,
       "norm_label": "rows"
     },
     {
@@ -390,7 +390,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_compare_chroma_forge_chromakeycolor",
-      "community": 33,
+      "community": 128,
       "norm_label": "chromakeycolor"
     },
     {
@@ -400,7 +400,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_compare_chroma_forge_cloneimage",
-      "community": 33,
+      "community": 128,
       "norm_label": "cloneimage()"
     },
     {
@@ -410,7 +410,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_compare_chroma_forge_compositeonblack",
-      "community": 33,
+      "community": 128,
       "norm_label": "compositeonblack()"
     },
     {
@@ -420,7 +420,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_compare_chroma_forge_alphavisualization",
-      "community": 33,
+      "community": 128,
       "norm_label": "alphavisualization()"
     },
     {
@@ -430,7 +430,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_compare_chroma_forge_cropcell",
-      "community": 33,
+      "community": 128,
       "norm_label": "cropcell()"
     },
     {
@@ -440,7 +440,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_compare_chroma_forge_cropzoom",
-      "community": 33,
+      "community": 128,
       "norm_label": "cropzoom()"
     },
     {
@@ -450,7 +450,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_compare_chroma_forge_sidebyside",
-      "community": 33,
+      "community": 128,
       "norm_label": "sidebyside()"
     },
     {
@@ -460,7 +460,7 @@
       "source_location": "L123",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_compare_chroma_forge_findrawsheet",
-      "community": 33,
+      "community": 128,
       "norm_label": "findrawsheet()"
     },
     {
@@ -470,7 +470,7 @@
       "source_location": "L134",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_compare_chroma_forge_main",
-      "community": 33,
+      "community": 128,
       "norm_label": "main()"
     },
     {
@@ -750,7 +750,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_finalize",
-      "community": 140,
+      "community": 20,
       "norm_label": "finalize.mts"
     },
     {
@@ -760,7 +760,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_finalize_parseargs",
-      "community": 140,
+      "community": 20,
       "norm_label": "parseargs()"
     },
     {
@@ -770,7 +770,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_finalize_parsesheetlist",
-      "community": 140,
+      "community": 20,
       "norm_label": "parsesheetlist()"
     },
     {
@@ -780,7 +780,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_finalize_args",
-      "community": 140,
+      "community": 20,
       "norm_label": "args"
     },
     {
@@ -900,7 +900,7 @@
       "source_location": "L140",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_finalizejob_resolveactivesheets",
-      "community": 140,
+      "community": 20,
       "norm_label": "resolveactivesheets()"
     },
     {
@@ -920,7 +920,7 @@
       "source_location": "L375",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_finalizejob_finalizefromjob",
-      "community": 140,
+      "community": 20,
       "norm_label": "finalizefromjob()"
     },
     {
@@ -1440,7 +1440,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_manifestgridgate",
-      "community": 20,
+      "community": 48,
       "norm_label": "manifestgridgate.mts"
     },
     {
@@ -1450,7 +1450,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_manifestgridgate_manifestgridgateinput",
-      "community": 20,
+      "community": 48,
       "norm_label": "manifestgridgateinput"
     },
     {
@@ -1460,7 +1460,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_manifestgridgate_resolvemingridscore",
-      "community": 20,
+      "community": 48,
       "norm_label": "resolvemingridscore()"
     },
     {
@@ -1470,7 +1470,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_manifestgridgate_assertmanifestgridgate",
-      "community": 20,
+      "community": 48,
       "norm_label": "assertmanifestgridgate()"
     },
     {
@@ -1480,7 +1480,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_manifestgridgate_assertoutdirgridgate",
-      "community": 20,
+      "community": 48,
       "norm_label": "assertoutdirgridgate()"
     },
     {
@@ -1510,7 +1510,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_ispng",
-      "community": 33,
+      "community": 36,
       "norm_label": "ispng()"
     },
     {
@@ -1520,7 +1520,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_isjpeg",
-      "community": 33,
+      "community": 36,
       "norm_label": "isjpeg()"
     },
     {
@@ -1540,7 +1540,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_decodeimage",
-      "community": 33,
+      "community": 36,
       "norm_label": "decodeimage()"
     },
     {
@@ -1580,7 +1580,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_sheetchromakeyoptions",
-      "community": 4,
+      "community": 44,
       "norm_label": "sheetchromakeyoptions"
     },
     {
@@ -1590,7 +1590,7 @@
       "source_location": "L140",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_processsheetchromakey",
-      "community": 33,
+      "community": 128,
       "norm_label": "processsheetchromakey()"
     },
     {
@@ -1600,7 +1600,7 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_removechromakey",
-      "community": 4,
+      "community": 128,
       "norm_label": "removechromakey()"
     },
     {
@@ -1650,7 +1650,7 @@
       "source_location": "L246",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_optimizesliceforimage",
-      "community": 44,
+      "community": 49,
       "norm_label": "optimizesliceforimage()"
     },
     {
@@ -1680,7 +1680,7 @@
       "source_location": "L289",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_slicesheet",
-      "community": 24,
+      "community": 33,
       "norm_label": "slicesheet()"
     },
     {
@@ -1710,7 +1710,7 @@
       "source_location": "L506",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_blitontocanvas",
-      "community": 19,
+      "community": 44,
       "norm_label": "blitontocanvas()"
     },
     {
@@ -1720,7 +1720,7 @@
       "source_location": "L540",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_resizetofitwithin",
-      "community": 19,
+      "community": 44,
       "norm_label": "resizetofitwithin()"
     },
     {
@@ -1730,7 +1730,7 @@
       "source_location": "L548",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_composecenteredoncanvas",
-      "community": 19,
+      "community": 44,
       "norm_label": "composecenteredoncanvas()"
     },
     {
@@ -1740,7 +1740,7 @@
       "source_location": "L562",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_preparelinestickerframe",
-      "community": 19,
+      "community": 44,
       "norm_label": "preparelinestickerframe()"
     },
     {
@@ -1750,7 +1750,7 @@
       "source_location": "L571",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_preparelinemainimage",
-      "community": 19,
+      "community": 44,
       "norm_label": "preparelinemainimage()"
     },
     {
@@ -1760,7 +1760,7 @@
       "source_location": "L576",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_preparelinetabimage",
-      "community": 19,
+      "community": 44,
       "norm_label": "preparelinetabimage()"
     },
     {
@@ -1987,7 +1987,7 @@
       "label": "FontPresetKey",
       "file_type": "code",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L32",
+      "source_location": "L31",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_fontpresetkey",
       "community": 122,
@@ -1997,7 +1997,7 @@
       "label": "TextColorPresetKey",
       "file_type": "code",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L33",
+      "source_location": "L32",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_textcolorpresetkey",
       "community": 122,
@@ -2007,7 +2007,7 @@
       "label": "ProgrammaticOverlayOptions",
       "file_type": "code",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L37",
+      "source_location": "L36",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_programmaticoverlayoptions",
       "community": 122,
@@ -2017,7 +2017,7 @@
       "label": "ComposeOverlayOptions",
       "file_type": "code",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L44",
+      "source_location": "L43",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_composeoverlayoptions",
       "community": 122,
@@ -2027,7 +2027,7 @@
       "label": "blitRgbaOntoCanvas()",
       "file_type": "code",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L48",
+      "source_location": "L47",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_blitrgbaontocanvas",
       "community": 122,
@@ -2037,7 +2037,7 @@
       "label": "readRgbaFromCanvas()",
       "file_type": "code",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L57",
+      "source_location": "L56",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_readrgbafromcanvas",
       "community": 122,
@@ -2047,7 +2047,7 @@
       "label": "overlayPhraseOnRgbaFrame()",
       "file_type": "code",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L67",
+      "source_location": "L66",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphraseonrgbaframe",
       "community": 122,
@@ -2057,17 +2057,17 @@
       "label": "composePhraseOnRgbaFrame()",
       "file_type": "code",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L142",
+      "source_location": "L141",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_composephraseonrgbaframe",
-      "community": 54,
+      "community": 122,
       "norm_label": "composephraseonrgbaframe()"
     },
     {
       "label": "composePhrasesOnRgbaFrames()",
       "file_type": "code",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L165",
+      "source_location": "L164",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_composephrasesonrgbaframes",
       "community": 33,
@@ -2077,7 +2077,7 @@
       "label": "overlayPhrasesOnRgbaFrames()",
       "file_type": "code",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L176",
+      "source_location": "L175",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphrasesonrgbaframes",
       "community": 33,
@@ -2330,7 +2330,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_reoverlay_sheet_loadoverlayconfig",
-      "community": 54,
+      "community": 21,
       "norm_label": "loadoverlayconfig()"
     },
     {
@@ -2640,7 +2640,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_from_inputs",
-      "community": 34,
+      "community": 53,
       "norm_label": "run-from-inputs.mts"
     },
     {
@@ -2650,7 +2650,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_from_inputs_script_dir",
-      "community": 34,
+      "community": 53,
       "norm_label": "script_dir"
     },
     {
@@ -2660,7 +2660,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_from_inputs_root",
-      "community": 34,
+      "community": 53,
       "norm_label": "root"
     },
     {
@@ -2670,7 +2670,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_from_inputs_parseargs",
-      "community": 34,
+      "community": 53,
       "norm_label": "parseargs()"
     },
     {
@@ -2680,7 +2680,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_from_inputs_run",
-      "community": 34,
+      "community": 53,
       "norm_label": "run()"
     },
     {
@@ -2690,7 +2690,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_from_inputs_slugsetname",
-      "community": 34,
+      "community": 53,
       "norm_label": "slugsetname()"
     },
     {
@@ -2700,7 +2700,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_from_inputs_main",
-      "community": 34,
+      "community": 53,
       "norm_label": "main()"
     },
     {
@@ -3120,7 +3120,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sheetplan_test",
-      "community": 140,
+      "community": 27,
       "norm_label": "sheetplan.test.ts"
     },
     {
@@ -3130,7 +3130,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sheetplan",
-      "community": 140,
+      "community": 27,
       "norm_label": "sheetplan.ts"
     },
     {
@@ -3140,7 +3140,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sheetplan_gridsize",
-      "community": 140,
+      "community": 27,
       "norm_label": "gridsize"
     },
     {
@@ -3150,7 +3150,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sheetplan_line_sticker_set_layouts",
-      "community": 140,
+      "community": 27,
       "norm_label": "line_sticker_set_layouts"
     },
     {
@@ -3160,7 +3160,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sheetplan_resolvesetlayout",
-      "community": 140,
+      "community": 27,
       "norm_label": "resolvesetlayout()"
     },
     {
@@ -3170,7 +3170,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sheetplan_splitphrasesacrosssheets",
-      "community": 140,
+      "community": 27,
       "norm_label": "splitphrasesacrosssheets()"
     },
     {
@@ -3180,7 +3180,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sheetplan_totalframesfromlayouts",
-      "community": 140,
+      "community": 27,
       "norm_label": "totalframesfromlayouts()"
     },
     {
@@ -3280,7 +3280,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_shouldsynctouploadroot",
-      "community": 9,
+      "community": 20,
       "norm_label": "shouldsynctouploadroot()"
     },
     {
@@ -3370,7 +3370,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_uploadconfig_resolveuploadconfig",
-      "community": 34,
+      "community": 53,
       "norm_label": "resolveuploadconfig()"
     },
     {
@@ -3380,7 +3380,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_uploadconfig_isuploadenabled",
-      "community": 9,
+      "community": 20,
       "norm_label": "isuploadenabled()"
     },
     {
@@ -5920,7 +5920,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_comic_comicstoryboardstep",
-      "community": 129,
+      "community": 119,
       "norm_label": "comicstoryboardstep.tsx"
     },
     {
@@ -5930,7 +5930,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "components_comic_comicstoryboardstep_comicstoryboardstepprops",
-      "community": 129,
+      "community": 119,
       "norm_label": "comicstoryboardstepprops"
     },
     {
@@ -5940,7 +5940,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "components_comic_comicstoryboardstep_comicstoryboardstep",
-      "community": 129,
+      "community": 119,
       "norm_label": "comicstoryboardstep"
     },
     {
@@ -6140,7 +6140,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "components_framegrid_framegridprops",
-      "community": 39,
+      "community": 2,
       "norm_label": "framegridprops"
     },
     {
@@ -6170,7 +6170,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_icons",
-      "community": 41,
+      "community": 5,
       "norm_label": "icons.tsx"
     },
     {
@@ -6180,7 +6180,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_imageupload",
-      "community": 139,
+      "community": 41,
       "norm_label": "imageupload.tsx"
     },
     {
@@ -6190,7 +6190,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "components_imageupload_imageuploadprops",
-      "community": 139,
+      "community": 41,
       "norm_label": "imageuploadprops"
     },
     {
@@ -6200,7 +6200,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "components_imageupload_imageupload",
-      "community": 139,
+      "community": 41,
       "norm_label": "imageupload"
     },
     {
@@ -6260,7 +6260,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_linesticker_linestickerheader",
-      "community": 41,
+      "community": 5,
       "norm_label": "linestickerheader.tsx"
     },
     {
@@ -6270,7 +6270,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "components_linesticker_linestickerheader_linestickerheaderprops",
-      "community": 41,
+      "community": 5,
       "norm_label": "linestickerheaderprops"
     },
     {
@@ -6480,7 +6480,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "components_linesticker_linestickerresultpanel_linestickerresultpanelviewerviewmodel",
-      "community": 39,
+      "community": 2,
       "norm_label": "linestickerresultpanelviewerviewmodel"
     },
     {
@@ -6640,7 +6640,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "components_linesticker_linestickersettingspanel_linestickersettingspanelviewmodel",
-      "community": 14,
+      "community": 5,
       "norm_label": "linestickersettingspanelviewmodel"
     },
     {
@@ -6700,7 +6700,7 @@
       "source_location": "L139",
       "_origin": "ast",
       "id": "components_linesticker_linestickersettingspanel_linestickersettingspanel",
-      "community": 5,
+      "community": 10,
       "norm_label": "linestickersettingspanel"
     },
     {
@@ -6710,7 +6710,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_linesticker_linestickeruploadcard",
-      "community": 14,
+      "community": 5,
       "norm_label": "linestickeruploadcard.tsx"
     },
     {
@@ -6720,7 +6720,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "components_linesticker_linestickeruploadcard_linestickeruploadcardprops",
-      "community": 14,
+      "community": 5,
       "norm_label": "linestickeruploadcardprops"
     },
     {
@@ -6730,7 +6730,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "components_linesticker_linestickeruploadcard_linestickeruploadcard",
-      "community": 14,
+      "community": 5,
       "norm_label": "linestickeruploadcard()"
     },
     {
@@ -6750,7 +6750,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_projecthistory",
-      "community": 46,
+      "community": 17,
       "norm_label": "projecthistory.tsx"
     },
     {
@@ -6760,7 +6760,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "components_projecthistory_projecthistoryprops",
-      "community": 46,
+      "community": 17,
       "norm_label": "projecthistoryprops"
     },
     {
@@ -6770,7 +6770,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "components_projecthistory_projecthistory",
-      "community": 46,
+      "community": 17,
       "norm_label": "projecthistory"
     },
     {
@@ -6780,7 +6780,7 @@
       "source_location": "L205",
       "_origin": "ast",
       "id": "components_projecthistory_projecthistoryitemprops",
-      "community": 46,
+      "community": 17,
       "norm_label": "projecthistoryitemprops"
     },
     {
@@ -6790,7 +6790,7 @@
       "source_location": "L212",
       "_origin": "ast",
       "id": "components_projecthistory_projecthistoryitem",
-      "community": 46,
+      "community": 17,
       "norm_label": "projecthistoryitem"
     },
     {
@@ -6880,7 +6880,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "components_settingsmodal_settingsmodal",
-      "community": 139,
+      "community": 41,
       "norm_label": "settingsmodal"
     },
     {
@@ -6890,7 +6890,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_sheetsliceprogrammaticoverlaypanel",
-      "community": 8,
+      "community": 14,
       "norm_label": "sheetsliceprogrammaticoverlaypanel.tsx"
     },
     {
@@ -6900,7 +6900,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "components_sheetsliceprogrammaticoverlaypanel_sheetsliceprogrammaticoverlaypanelprops",
-      "community": 8,
+      "community": 14,
       "norm_label": "sheetsliceprogrammaticoverlaypanelprops"
     },
     {
@@ -6910,7 +6910,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "components_sheetsliceprogrammaticoverlaypanel_focusring",
-      "community": 8,
+      "community": 14,
       "norm_label": "focusring"
     },
     {
@@ -6920,7 +6920,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "components_sheetsliceprogrammaticoverlaypanel_sheetsliceprogrammaticoverlaypanel",
-      "community": 139,
+      "community": 14,
       "norm_label": "sheetsliceprogrammaticoverlaypanel()"
     },
     {
@@ -7150,7 +7150,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_useanimation",
-      "community": 46,
+      "community": 17,
       "norm_label": "useanimation.ts"
     },
     {
@@ -7160,7 +7160,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "hooks_useanimation_useanimation",
-      "community": 46,
+      "community": 17,
       "norm_label": "useanimation()"
     },
     {
@@ -7170,7 +7170,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_usecomiccharactersheet",
-      "community": 48,
+      "community": 126,
       "norm_label": "usecomiccharactersheet.ts"
     },
     {
@@ -7180,7 +7180,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "hooks_usecomiccharactersheet_usecomiccharactersheet",
-      "community": 48,
+      "community": 126,
       "norm_label": "usecomiccharactersheet()"
     },
     {
@@ -7240,7 +7240,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_usecomicstoryboard",
-      "community": 126,
+      "community": 129,
       "norm_label": "usecomicstoryboard.ts"
     },
     {
@@ -7250,7 +7250,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "hooks_usecomicstoryboard_usecomicstoryboard",
-      "community": 126,
+      "community": 129,
       "norm_label": "usecomicstoryboard()"
     },
     {
@@ -7260,7 +7260,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_useexport",
-      "community": 46,
+      "community": 2,
       "norm_label": "useexport.ts"
     },
     {
@@ -7270,7 +7270,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "hooks_useexport_decodepngtorgba",
-      "community": 46,
+      "community": 120,
       "norm_label": "decodepngtorgba()"
     },
     {
@@ -7280,7 +7280,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "hooks_useexport_useexport",
-      "community": 46,
+      "community": 120,
       "norm_label": "useexport()"
     },
     {
@@ -7290,7 +7290,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_uselanguage",
-      "community": 53,
+      "community": 41,
       "norm_label": "uselanguage.tsx"
     },
     {
@@ -7300,7 +7300,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "hooks_uselanguage_languagecontexttype",
-      "community": 53,
+      "community": 41,
       "norm_label": "languagecontexttype"
     },
     {
@@ -7310,7 +7310,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "hooks_uselanguage_languagecontext",
-      "community": 53,
+      "community": 41,
       "norm_label": "languagecontext"
     },
     {
@@ -7320,7 +7320,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "hooks_uselanguage_navigatorwithuserlanguage",
-      "community": 53,
+      "community": 41,
       "norm_label": "navigatorwithuserlanguage"
     },
     {
@@ -7330,7 +7330,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "hooks_uselanguage_detectbrowserlanguage",
-      "community": 53,
+      "community": 41,
       "norm_label": "detectbrowserlanguage()"
     },
     {
@@ -7340,7 +7340,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "hooks_uselanguage_languageproviderprops",
-      "community": 53,
+      "community": 41,
       "norm_label": "languageproviderprops"
     },
     {
@@ -7350,7 +7350,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "hooks_uselanguage_languageprovider",
-      "community": 53,
+      "community": 41,
       "norm_label": "languageprovider()"
     },
     {
@@ -7370,7 +7370,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_uselinestickerdownload",
-      "community": 139,
+      "community": 41,
       "norm_label": "uselinestickerdownload.ts"
     },
     {
@@ -7380,7 +7380,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "hooks_uselinestickerdownload_mapwithconcurrency",
-      "community": 139,
+      "community": 41,
       "norm_label": "mapwithconcurrency()"
     },
     {
@@ -7390,7 +7390,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "hooks_uselinestickerdownload_downloadformat",
-      "community": 139,
+      "community": 41,
       "norm_label": "downloadformat"
     },
     {
@@ -7400,7 +7400,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "hooks_uselinestickerdownload_uselinestickerdownloadprops",
-      "community": 139,
+      "community": 41,
       "norm_label": "uselinestickerdownloadprops"
     },
     {
@@ -7410,7 +7410,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "hooks_uselinestickerdownload_uselinestickerdownload",
-      "community": 139,
+      "community": 41,
       "norm_label": "uselinestickerdownload()"
     },
     {
@@ -7490,7 +7490,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_uselinestickerphrasegeneration",
-      "community": 42,
+      "community": 14,
       "norm_label": "uselinestickerphrasegeneration.ts"
     },
     {
@@ -7500,7 +7500,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "hooks_uselinestickerphrasegeneration_phrasegenerationtexts",
-      "community": 42,
+      "community": 14,
       "norm_label": "phrasegenerationtexts"
     },
     {
@@ -7520,7 +7520,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "hooks_uselinestickerphrasegeneration_uselinestickerphrasegeneration",
-      "community": 42,
+      "community": 10,
       "norm_label": "uselinestickerphrasegeneration()"
     },
     {
@@ -7660,7 +7660,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "hooks_uselinestickerprogrammaticoverlay_uselinestickerprogrammaticoverlaycomposeparams",
-      "community": 12,
+      "community": 14,
       "norm_label": "uselinestickerprogrammaticoverlaycomposeparams"
     },
     {
@@ -7840,7 +7840,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_uselinestickerslicing",
-      "community": 39,
+      "community": 2,
       "norm_label": "uselinestickerslicing.ts"
     },
     {
@@ -7850,7 +7850,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "hooks_uselinestickerslicing_uselinestickerslicingparams",
-      "community": 39,
+      "community": 2,
       "norm_label": "uselinestickerslicingparams"
     },
     {
@@ -7860,7 +7860,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "hooks_uselinestickerslicing_sliceprocessedsheetoptions",
-      "community": 39,
+      "community": 2,
       "norm_label": "sliceprocessedsheetoptions"
     },
     {
@@ -7870,7 +7870,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "hooks_uselinestickerslicing_uselinestickerslicing",
-      "community": 10,
+      "community": 2,
       "norm_label": "uselinestickerslicing()"
     },
     {
@@ -7880,7 +7880,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_uselinestickerthemepresetsync",
-      "community": 42,
+      "community": 8,
       "norm_label": "uselinestickerthemepresetsync.ts"
     },
     {
@@ -7890,7 +7890,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "hooks_uselinestickerthemepresetsync_uselinestickerthemepresetsyncparams",
-      "community": 42,
+      "community": 8,
       "norm_label": "uselinestickerthemepresetsyncparams"
     },
     {
@@ -7900,7 +7900,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "hooks_uselinestickerthemepresetsync_uselinestickerthemepresetsync",
-      "community": 42,
+      "community": 8,
       "norm_label": "uselinestickerthemepresetsync()"
     },
     {
@@ -7910,7 +7910,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_useprojecthistory",
-      "community": 46,
+      "community": 17,
       "norm_label": "useprojecthistory.ts"
     },
     {
@@ -7920,7 +7920,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "hooks_useprojecthistory_loadlist",
-      "community": 46,
+      "community": 17,
       "norm_label": "loadlist()"
     },
     {
@@ -7930,7 +7930,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "hooks_useprojecthistory_savelist",
-      "community": 46,
+      "community": 17,
       "norm_label": "savelist()"
     },
     {
@@ -7940,7 +7940,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "hooks_useprojecthistory_loadproject",
-      "community": 46,
+      "community": 17,
       "norm_label": "loadproject()"
     },
     {
@@ -7950,7 +7950,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "hooks_useprojecthistory_saveprojectitem",
-      "community": 46,
+      "community": 17,
       "norm_label": "saveprojectitem()"
     },
     {
@@ -7960,7 +7960,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "hooks_useprojecthistory_deleteprojectitem",
-      "community": 46,
+      "community": 17,
       "norm_label": "deleteprojectitem()"
     },
     {
@@ -7970,7 +7970,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "hooks_useprojecthistory_useprojecthistory",
-      "community": 46,
+      "community": 17,
       "norm_label": "useprojecthistory()"
     },
     {
@@ -8020,7 +8020,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_usesettings",
-      "community": 17,
+      "community": 41,
       "norm_label": "usesettings.ts"
     },
     {
@@ -8030,7 +8030,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "hooks_usesettings_legacy_model_ids",
-      "community": 17,
+      "community": 41,
       "norm_label": "legacy_model_ids"
     },
     {
@@ -8040,7 +8040,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "hooks_usesettings_resolvestoredmodel",
-      "community": 17,
+      "community": 41,
       "norm_label": "resolvestoredmodel()"
     },
     {
@@ -8050,7 +8050,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "hooks_usesettings_usesettings",
-      "community": 17,
+      "community": 41,
       "norm_label": "usesettings()"
     },
     {
@@ -8060,7 +8060,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_usesheetsliceprogrammaticoverlay",
-      "community": 8,
+      "community": 14,
       "norm_label": "usesheetsliceprogrammaticoverlay.ts"
     },
     {
@@ -8070,7 +8070,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "hooks_usesheetsliceprogrammaticoverlay_sheetsliceoverlayfontkey",
-      "community": 8,
+      "community": 14,
       "norm_label": "sheetsliceoverlayfontkey"
     },
     {
@@ -8080,7 +8080,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "hooks_usesheetsliceprogrammaticoverlay_sheetsliceoverlaycolorkey",
-      "community": 8,
+      "community": 14,
       "norm_label": "sheetsliceoverlaycolorkey"
     },
     {
@@ -8090,7 +8090,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "hooks_usesheetsliceprogrammaticoverlay_buildphrasesfrommultiline",
-      "community": 8,
+      "community": 14,
       "norm_label": "buildphrasesfrommultiline()"
     },
     {
@@ -8100,7 +8100,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "hooks_usesheetsliceprogrammaticoverlay_usesheetsliceprogrammaticoverlay",
-      "community": 139,
+      "community": 14,
       "norm_label": "usesheetsliceprogrammaticoverlay()"
     },
     {
@@ -8150,7 +8150,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "hooks_usespritesheetflow_usespritesheetflowoptions",
-      "community": 39,
+      "community": 2,
       "norm_label": "usespritesheetflowoptions"
     },
     {
@@ -8160,7 +8160,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "hooks_usespritesheetflow_usespritesheetflowresult",
-      "community": 39,
+      "community": 2,
       "norm_label": "usespritesheetflowresult"
     },
     {
@@ -8170,7 +8170,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "hooks_usespritesheetflow_usespritesheetflow",
-      "community": 2,
+      "community": 10,
       "norm_label": "usespritesheetflow()"
     },
     {
@@ -8180,7 +8180,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "i18n_comictranslations_test",
-      "community": 53,
+      "community": 41,
       "norm_label": "comictranslations.test.ts"
     },
     {
@@ -8190,7 +8190,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "i18n_comictranslations_test_required_comic_keys",
-      "community": 53,
+      "community": 41,
       "norm_label": "required_comic_keys"
     },
     {
@@ -8200,7 +8200,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "i18n_en",
-      "community": 53,
+      "community": 41,
       "norm_label": "en.ts"
     },
     {
@@ -8210,7 +8210,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "i18n_en_en",
-      "community": 53,
+      "community": 41,
       "norm_label": "en"
     },
     {
@@ -8220,7 +8220,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "i18n_index",
-      "community": 53,
+      "community": 41,
       "norm_label": "index.ts"
     },
     {
@@ -8230,7 +8230,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "i18n_index_translations",
-      "community": 53,
+      "community": 41,
       "norm_label": "translations"
     },
     {
@@ -8240,7 +8240,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "i18n_index_gettranslation",
-      "community": 53,
+      "community": 41,
       "norm_label": "gettranslation()"
     },
     {
@@ -8250,7 +8250,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "i18n_index_supportedlanguages",
-      "community": 53,
+      "community": 41,
       "norm_label": "supportedlanguages"
     },
     {
@@ -8270,7 +8270,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "i18n_types_language",
-      "community": 53,
+      "community": 41,
       "norm_label": "language"
     },
     {
@@ -8290,7 +8290,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "i18n_zh_tw",
-      "community": 53,
+      "community": 41,
       "norm_label": "zh-tw.ts"
     },
     {
@@ -8300,7 +8300,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "i18n_zh_tw_zhtw",
-      "community": 53,
+      "community": 41,
       "norm_label": "zhtw"
     },
     {
@@ -8530,7 +8530,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "package_dependencies_jszip",
-      "community": 139,
+      "community": 19,
       "norm_label": "jszip"
     },
     {
@@ -8880,7 +8880,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "pages_partingpage",
-      "community": 139,
+      "community": 41,
       "norm_label": "partingpage.tsx"
     },
     {
@@ -8890,7 +8890,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "pages_partingpage_spritesheetviewer",
-      "community": 139,
+      "community": 41,
       "norm_label": "spritesheetviewer"
     },
     {
@@ -8900,7 +8900,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "pages_partingpage_framegrid",
-      "community": 139,
+      "community": 41,
       "norm_label": "framegrid"
     },
     {
@@ -8910,7 +8910,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "pages_partingpage_partingpage",
-      "community": 139,
+      "community": 41,
       "norm_label": "partingpage()"
     },
     {
@@ -8920,7 +8920,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "pages_removebackgroundpage",
-      "community": 17,
+      "community": 41,
       "norm_label": "removebackgroundpage.tsx"
     },
     {
@@ -8930,7 +8930,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "pages_removebackgroundpage_removebackgroundpage",
-      "community": 17,
+      "community": 41,
       "norm_label": "removebackgroundpage()"
     },
     {
@@ -8940,7 +8940,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "pages_spriteanimatorpage",
-      "community": 46,
+      "community": 17,
       "norm_label": "spriteanimatorpage.tsx"
     },
     {
@@ -8950,7 +8950,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "pages_spriteanimatorpage_spritesheetviewer",
-      "community": 46,
+      "community": 17,
       "norm_label": "spritesheetviewer"
     },
     {
@@ -8960,7 +8960,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "pages_spriteanimatorpage_animationpreview",
-      "community": 46,
+      "community": 17,
       "norm_label": "animationpreview"
     },
     {
@@ -8970,7 +8970,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "pages_spriteanimatorpage_framegrid",
-      "community": 46,
+      "community": 17,
       "norm_label": "framegrid"
     },
     {
@@ -8980,7 +8980,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "pages_spriteanimatorpage_spriteanimatorpage",
-      "community": 46,
+      "community": 17,
       "norm_label": "spriteanimatorpage()"
     },
     {
@@ -9000,7 +9000,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice",
-      "community": 47,
+      "community": 36,
       "norm_label": "diagnose-sheet-slice.mts"
     },
     {
@@ -9010,7 +9010,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_sheetdir",
-      "community": 47,
+      "community": 36,
       "norm_label": "sheetdir"
     },
     {
@@ -9020,7 +9020,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_cols",
-      "community": 47,
+      "community": 36,
       "norm_label": "cols"
     },
     {
@@ -9030,7 +9030,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_rows",
-      "community": 47,
+      "community": 36,
       "norm_label": "rows"
     },
     {
@@ -9040,7 +9040,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_equalbounds",
-      "community": 47,
+      "community": 36,
       "norm_label": "equalbounds()"
     },
     {
@@ -9050,7 +9050,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_bleedratio",
-      "community": 47,
+      "community": 36,
       "norm_label": "bleedratio()"
     },
     {
@@ -9060,7 +9060,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_loadprocessed",
-      "community": 33,
+      "community": 36,
       "norm_label": "loadprocessed()"
     },
     {
@@ -9070,7 +9070,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_detected",
-      "community": 47,
+      "community": 36,
       "norm_label": "detected"
     },
     {
@@ -9080,7 +9080,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_equalx",
-      "community": 47,
+      "community": 36,
       "norm_label": "equalx"
     },
     {
@@ -9090,7 +9090,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_equaly",
-      "community": 47,
+      "community": 36,
       "norm_label": "equaly"
     },
     {
@@ -9100,7 +9100,7 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_score",
-      "community": 47,
+      "community": 36,
       "norm_label": "score"
     },
     {
@@ -9110,7 +9110,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_bleedforbounds",
-      "community": 47,
+      "community": 36,
       "norm_label": "bleedforbounds()"
     },
     {
@@ -9350,7 +9350,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_comiccharactersheet",
-      "community": 48,
+      "community": 0,
       "norm_label": "comiccharactersheet.ts"
     },
     {
@@ -9360,7 +9360,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "services_gemini_comiccharactersheet_generatecomiccharactersheet",
-      "community": 48,
+      "community": 0,
       "norm_label": "generatecomiccharactersheet()"
     },
     {
@@ -9370,7 +9370,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "services_gemini_comiccharactersheet_resolvecomicstyleblock",
-      "community": 48,
+      "community": 0,
       "norm_label": "resolvecomicstyleblock()"
     },
     {
@@ -9380,7 +9380,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_comicpage",
-      "community": 48,
+      "community": 0,
       "norm_label": "comicpage.ts"
     },
     {
@@ -9390,7 +9390,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "services_gemini_comicpage_isimagesizerejection",
-      "community": 48,
+      "community": 0,
       "norm_label": "isimagesizerejection()"
     },
     {
@@ -9400,7 +9400,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "services_gemini_comicpage_generatecomicpage",
-      "community": 48,
+      "community": 0,
       "norm_label": "generatecomicpage()"
     },
     {
@@ -9470,7 +9470,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_comicstoryboard_test",
-      "community": 0,
+      "community": 129,
       "norm_label": "comicstoryboard.test.ts"
     },
     {
@@ -9480,7 +9480,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_comicstoryboard",
-      "community": 0,
+      "community": 129,
       "norm_label": "comicstoryboard.ts"
     },
     {
@@ -9490,7 +9490,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "services_gemini_comicstoryboard_storyboardentry",
-      "community": 0,
+      "community": 129,
       "norm_label": "storyboardentry"
     },
     {
@@ -9500,7 +9500,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "services_gemini_comicstoryboard_parsecomicstoryboardjson",
-      "community": 0,
+      "community": 129,
       "norm_label": "parsecomicstoryboardjson()"
     },
     {
@@ -9510,7 +9510,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "services_gemini_comicstoryboard_generatecomicstoryboard",
-      "community": 126,
+      "community": 129,
       "norm_label": "generatecomicstoryboard()"
     },
     {
@@ -9590,7 +9590,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_spritesheet",
-      "community": 118,
+      "community": 92,
       "norm_label": "spritesheet.ts"
     },
     {
@@ -9600,7 +9600,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "services_gemini_spritesheet_generatespritesheet",
-      "community": 118,
+      "community": 92,
       "norm_label": "generatespritesheet()"
     },
     {
@@ -9610,7 +9610,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_spritesheetprompts_test",
-      "community": 118,
+      "community": 92,
       "norm_label": "spritesheetprompts.test.ts"
     },
     {
@@ -9620,7 +9620,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_spritesheetprompts",
-      "community": 118,
+      "community": 92,
       "norm_label": "spritesheetprompts.ts"
     },
     {
@@ -9630,7 +9630,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "services_gemini_spritesheetprompts_isstylepreviewprompt",
-      "community": 118,
+      "community": 92,
       "norm_label": "isstylepreviewprompt()"
     },
     {
@@ -9640,7 +9640,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "services_gemini_spritesheetprompts_islinestickerprompt",
-      "community": 118,
+      "community": 92,
       "norm_label": "islinestickerprompt()"
     },
     {
@@ -9650,7 +9650,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "services_gemini_spritesheetprompts_buildgridlayoutanchorblock",
-      "community": 118,
+      "community": 92,
       "norm_label": "buildgridlayoutanchorblock()"
     },
     {
@@ -9660,7 +9660,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "services_gemini_spritesheetprompts_buildgridlayoutreminderblock",
-      "community": 118,
+      "community": 92,
       "norm_label": "buildgridlayoutreminderblock()"
     },
     {
@@ -9670,7 +9670,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "services_gemini_spritesheetprompts_buildlinestickerpromptsuffix",
-      "community": 118,
+      "community": 92,
       "norm_label": "buildlinestickerpromptsuffix()"
     },
     {
@@ -9680,7 +9680,7 @@
       "source_location": "L175",
       "_origin": "ast",
       "id": "services_gemini_spritesheetprompts_buildanimationspritesheetprompt",
-      "community": 118,
+      "community": 92,
       "norm_label": "buildanimationspritesheetprompt()"
     },
     {
@@ -10090,7 +10090,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "types_chromakeycolortype",
-      "community": 39,
+      "community": 14,
       "norm_label": "chromakeycolortype"
     },
     {
@@ -10100,7 +10100,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "types_chromakeyalgorithm",
-      "community": 4,
+      "community": 17,
       "norm_label": "chromakeyalgorithm"
     },
     {
@@ -10110,7 +10110,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "types_bgremovalmethod",
-      "community": 39,
+      "community": 14,
       "norm_label": "bgremovalmethod"
     },
     {
@@ -10170,7 +10170,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "types_savedproject",
-      "community": 46,
+      "community": 17,
       "norm_label": "savedproject"
     },
     {
@@ -10180,7 +10180,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "types_savedprojectmeta",
-      "community": 46,
+      "community": 17,
       "norm_label": "savedprojectmeta"
     },
     {
@@ -10190,7 +10190,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "types_errors",
-      "community": 126,
+      "community": 39,
       "norm_label": "errors.ts"
     },
     {
@@ -10200,7 +10200,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "types_errors_apierror",
-      "community": 126,
+      "community": 39,
       "norm_label": "apierror"
     },
     {
@@ -10210,7 +10210,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "types_errors_quotaerror",
-      "community": 126,
+      "community": 39,
       "norm_label": "quotaerror"
     },
     {
@@ -10220,7 +10220,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "types_errors_isapierror",
-      "community": 126,
+      "community": 39,
       "norm_label": "isapierror()"
     },
     {
@@ -10230,7 +10230,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "types_errors_isquotaerror",
-      "community": 126,
+      "community": 39,
       "norm_label": "isquotaerror()"
     },
     {
@@ -10240,7 +10240,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "types_errors_geterrormessage",
-      "community": 126,
+      "community": 39,
       "norm_label": "geterrormessage()"
     },
     {
@@ -10450,7 +10450,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "utils_abort_isaborterror",
-      "community": 0,
+      "community": 39,
       "norm_label": "isaborterror()"
     },
     {
@@ -10660,7 +10660,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_characterrefprompt_test",
-      "community": 128,
+      "community": 8,
       "norm_label": "characterrefprompt.test.ts"
     },
     {
@@ -10670,7 +10670,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_characterrefprompt",
-      "community": 128,
+      "community": 8,
       "norm_label": "characterrefprompt.ts"
     },
     {
@@ -10680,7 +10680,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "utils_characterrefprompt_liststylekeys",
-      "community": 128,
+      "community": 8,
       "norm_label": "liststylekeys()"
     },
     {
@@ -10690,7 +10690,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "utils_characterrefprompt_resolvestyleblock",
-      "community": 128,
+      "community": 8,
       "norm_label": "resolvestyleblock()"
     },
     {
@@ -10700,7 +10700,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "utils_characterrefprompt_buildcharacterrefprompt",
-      "community": 128,
+      "community": 8,
       "norm_label": "buildcharacterrefprompt()"
     },
     {
@@ -10710,7 +10710,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "utils_characterrefprompt_buildcomiccharacterrefprompt",
-      "community": 128,
+      "community": 8,
       "norm_label": "buildcomiccharacterrefprompt()"
     },
     {
@@ -10720,7 +10720,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_chromaforgegreenfringe_test",
-      "community": 4,
+      "community": 140,
       "norm_label": "chromaforgegreenfringe.test.ts"
     },
     {
@@ -10730,7 +10730,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_chromaforgegreenfringe",
-      "community": 4,
+      "community": 140,
       "norm_label": "chromaforgegreenfringe.ts"
     },
     {
@@ -10740,7 +10740,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "utils_chromaforgegreenfringe_isnearwhite",
-      "community": 4,
+      "community": 140,
       "norm_label": "isnearwhite()"
     },
     {
@@ -10750,7 +10750,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "utils_chromaforgegreenfringe_greenexcess",
-      "community": 4,
+      "community": 140,
       "norm_label": "greenexcess()"
     },
     {
@@ -10760,7 +10760,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "utils_chromaforgegreenfringe_distancetogreenkey",
-      "community": 4,
+      "community": 140,
       "norm_label": "distancetogreenkey()"
     },
     {
@@ -10770,7 +10770,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "utils_chromaforgegreenfringe_isneartransparency",
-      "community": 4,
+      "community": 140,
       "norm_label": "isneartransparency()"
     },
     {
@@ -10780,7 +10780,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "utils_chromaforgegreenfringe_countgreenspillneighbors",
-      "community": 4,
+      "community": 140,
       "norm_label": "countgreenspillneighbors()"
     },
     {
@@ -10790,7 +10790,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "utils_chromaforgegreenfringe_despillforgegreenfringe",
-      "community": 4,
+      "community": 140,
       "norm_label": "despillforgegreenfringe()"
     },
     {
@@ -10890,7 +10890,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_chromakeyapply",
-      "community": 4,
+      "community": 17,
       "norm_label": "chromakeyapply.ts"
     },
     {
@@ -10900,7 +10900,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "utils_chromakeyapply_applychromakeyoptions",
-      "community": 4,
+      "community": 17,
       "norm_label": "applychromakeyoptions"
     },
     {
@@ -10910,7 +10910,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "utils_chromakeyapply_applychromakey",
-      "community": 4,
+      "community": 2,
       "norm_label": "applychromakey()"
     },
     {
@@ -11030,7 +11030,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_chromakeyforge_test",
-      "community": 4,
+      "community": 149,
       "norm_label": "chromakeyforge.test.ts"
     },
     {
@@ -11040,7 +11040,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "utils_chromakeyforge_test_fillgreen",
-      "community": 4,
+      "community": 149,
       "norm_label": "fillgreen()"
     },
     {
@@ -11050,7 +11050,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_chromakeyforge",
-      "community": 4,
+      "community": 149,
       "norm_label": "chromakeyforge.ts"
     },
     {
@@ -11060,7 +11060,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "utils_chromakeyforge_chromakeyforgeoptions",
-      "community": 4,
+      "community": 149,
       "norm_label": "chromakeyforgeoptions"
     },
     {
@@ -11070,7 +11070,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "utils_chromakeyforge_colordistance",
-      "community": 4,
+      "community": 149,
       "norm_label": "colordistance()"
     },
     {
@@ -11080,7 +11080,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "utils_chromakeyforge_processchromakeyforge",
-      "community": 4,
+      "community": 149,
       "norm_label": "processchromakeyforge()"
     },
     {
@@ -11090,7 +11090,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_chromakeyprocessor",
-      "community": 4,
+      "community": 2,
       "norm_label": "chromakeyprocessor.ts"
     },
     {
@@ -11100,7 +11100,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "utils_chromakeyprocessor_chromakeyprogress",
-      "community": 4,
+      "community": 2,
       "norm_label": "chromakeyprogress"
     },
     {
@@ -11110,7 +11110,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "utils_chromakeyprocessor_chromakeyoptions",
-      "community": 4,
+      "community": 17,
       "norm_label": "chromakeyoptions"
     },
     {
@@ -11130,7 +11130,7 @@
       "source_location": "L144",
       "_origin": "ast",
       "id": "utils_chromakeyprocessor_getpixelbuffertransfersource",
-      "community": 4,
+      "community": 2,
       "norm_label": "getpixelbuffertransfersource()"
     },
     {
@@ -11140,7 +11140,7 @@
       "source_location": "L166",
       "_origin": "ast",
       "id": "utils_chromakeyprocessor_processwithworker",
-      "community": 4,
+      "community": 2,
       "norm_label": "processwithworker()"
     },
     {
@@ -11150,7 +11150,7 @@
       "source_location": "L279",
       "_origin": "ast",
       "id": "utils_chromakeyprocessor_processinmainthread",
-      "community": 4,
+      "community": 2,
       "norm_label": "processinmainthread()"
     },
     {
@@ -11480,7 +11480,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_comicpageflow_test",
-      "community": 126,
+      "community": 1,
       "norm_label": "comicpageflow.test.ts"
     },
     {
@@ -11590,7 +11590,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "utils_comicpanelschema_comicproject",
-      "community": 48,
+      "community": 1,
       "norm_label": "comicproject"
     },
     {
@@ -11620,7 +11620,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "utils_comicpanelschema_clampcomicdialogue",
-      "community": 0,
+      "community": 129,
       "norm_label": "clampcomicdialogue()"
     },
     {
@@ -11760,7 +11760,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_comicsheetinput_test",
-      "community": 48,
+      "community": 126,
       "norm_label": "comicsheetinput.test.ts"
     },
     {
@@ -11770,7 +11770,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_comicsheetinput",
-      "community": 48,
+      "community": 126,
       "norm_label": "comicsheetinput.ts"
     },
     {
@@ -11780,7 +11780,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "utils_comicsheetinput_resolvecomicsheetreferenceimage",
-      "community": 48,
+      "community": 0,
       "norm_label": "resolvecomicsheetreferenceimage()"
     },
     {
@@ -11790,7 +11790,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "utils_comicsheetinput_cangeneratecomiccharactersheet",
-      "community": 48,
+      "community": 126,
       "norm_label": "cangeneratecomiccharactersheet()"
     },
     {
@@ -11820,7 +11820,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "utils_constants_default_slice_settings",
-      "community": 46,
+      "community": 10,
       "norm_label": "default_slice_settings"
     },
     {
@@ -11870,7 +11870,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "utils_constants_chroma_key_colors",
-      "community": 17,
+      "community": 39,
       "norm_label": "chroma_key_colors"
     },
     {
@@ -11890,7 +11890,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_dataurl_test",
-      "community": 48,
+      "community": 0,
       "norm_label": "dataurl.test.ts"
     },
     {
@@ -11900,7 +11900,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_dataurl",
-      "community": 48,
+      "community": 0,
       "norm_label": "dataurl.ts"
     },
     {
@@ -11910,7 +11910,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "utils_dataurl_parsedataurlmime",
-      "community": 48,
+      "community": 0,
       "norm_label": "parsedataurlmime()"
     },
     {
@@ -11920,7 +11920,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "utils_dataurl_dataurltobase64",
-      "community": 48,
+      "community": 0,
       "norm_label": "dataurltobase64()"
     },
     {
@@ -12010,7 +12010,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_gridscoregate_test",
-      "community": 20,
+      "community": 48,
       "norm_label": "gridscoregate.test.ts"
     },
     {
@@ -12020,7 +12020,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_gridscoregate",
-      "community": 20,
+      "community": 48,
       "norm_label": "gridscoregate.ts"
     },
     {
@@ -12030,7 +12030,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "utils_gridscoregate_gridscorefailure",
-      "community": 20,
+      "community": 48,
       "norm_label": "gridscorefailure"
     },
     {
@@ -12040,7 +12040,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "utils_gridscoregate_gridscoregateerror",
-      "community": 20,
+      "community": 48,
       "norm_label": "gridscoregateerror"
     },
     {
@@ -12050,7 +12050,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "utils_gridscoregate_gridscoregateerror_constructor",
-      "community": 20,
+      "community": 48,
       "norm_label": ".constructor()"
     },
     {
@@ -12060,7 +12060,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "utils_gridscoregate_findgridscorefailures",
-      "community": 20,
+      "community": 48,
       "norm_label": "findgridscorefailures()"
     },
     {
@@ -12070,7 +12070,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "utils_gridscoregate_assertgridscorespass",
-      "community": 20,
+      "community": 48,
       "norm_label": "assertgridscorespass()"
     },
     {
@@ -12080,7 +12080,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "utils_gridscoregate_formatgridgatemessage",
-      "community": 20,
+      "community": 48,
       "norm_label": "formatgridgatemessage()"
     },
     {
@@ -12250,7 +12250,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "utils_imagecontentanalysis_isslicebackgroundpixel",
-      "community": 24,
+      "community": 49,
       "norm_label": "isslicebackgroundpixel()"
     },
     {
@@ -12310,7 +12310,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_imagecrop",
-      "community": 2,
+      "community": 39,
       "norm_label": "imagecrop.ts"
     },
     {
@@ -12320,7 +12320,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "utils_imagecrop_cropcellfromimage",
-      "community": 2,
+      "community": 39,
       "norm_label": "cropcellfromimage()"
     },
     {
@@ -12330,7 +12330,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "utils_imagecrop_computetemplatematchscore",
-      "community": 2,
+      "community": 39,
       "norm_label": "computetemplatematchscore()"
     },
     {
@@ -12340,7 +12340,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "utils_imagecrop_runtemplatesearch",
-      "community": 2,
+      "community": 39,
       "norm_label": "runtemplatesearch()"
     },
     {
@@ -12350,7 +12350,7 @@
       "source_location": "L138",
       "_origin": "ast",
       "id": "utils_imagecrop_getbestoffsetbytemplatematch",
-      "community": 2,
+      "community": 39,
       "norm_label": "getbestoffsetbytemplatematch()"
     },
     {
@@ -12440,7 +12440,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "utils_imageutils_loadimagesdata",
-      "community": 46,
+      "community": 2,
       "norm_label": "loadimagesdata()"
     },
     {
@@ -12480,7 +12480,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_lazywithretry",
-      "community": 22,
+      "community": 17,
       "norm_label": "lazywithretry.tsx"
     },
     {
@@ -12490,7 +12490,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "utils_lazywithretry_lazywithretry",
-      "community": 22,
+      "community": 17,
       "norm_label": "lazywithretry()"
     },
     {
@@ -12700,7 +12700,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "utils_linestickeractivesheetstate_activesheetstateargs",
-      "community": 39,
+      "community": 2,
       "norm_label": "activesheetstateargs"
     },
     {
@@ -12720,7 +12720,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickercompose_test",
-      "community": 50,
+      "community": 60,
       "norm_label": "linestickercompose.test.ts"
     },
     {
@@ -12730,7 +12730,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "utils_linestickercompose_test_layout_presets",
-      "community": 50,
+      "community": 60,
       "norm_label": "layout_presets"
     },
     {
@@ -12740,7 +12740,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "utils_linestickercompose_test_makesubjectblob",
-      "community": 50,
+      "community": 60,
       "norm_label": "makesubjectblob()"
     },
     {
@@ -12750,7 +12750,7 @@
       "source_location": "L245",
       "_origin": "ast",
       "id": "utils_linestickercompose_test_captioninkwidth",
-      "community": 50,
+      "community": 60,
       "norm_label": "captioninkwidth()"
     },
     {
@@ -12767,7 +12767,7 @@
       "label": "ComposeStickerOptions",
       "file_type": "code",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L36",
+      "source_location": "L35",
       "_origin": "ast",
       "id": "utils_linestickercompose_composestickeroptions",
       "community": 141,
@@ -12777,17 +12777,17 @@
       "label": "shouldUseComposeLayout()",
       "file_type": "code",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L46",
+      "source_location": "L45",
       "_origin": "ast",
       "id": "utils_linestickercompose_shouldusecomposelayout",
-      "community": 50,
+      "community": 122,
       "norm_label": "shouldusecomposelayout()"
     },
     {
       "label": "asDomCanvasContext()",
       "file_type": "code",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L50",
+      "source_location": "L49",
       "_origin": "ast",
       "id": "utils_linestickercompose_asdomcanvascontext",
       "community": 50,
@@ -12797,7 +12797,7 @@
       "label": "measureOpaqueBounds()",
       "file_type": "code",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L54",
+      "source_location": "L53",
       "_origin": "ast",
       "id": "utils_linestickercompose_measureopaquebounds",
       "community": 50,
@@ -12807,7 +12807,7 @@
       "label": "PixelBounds",
       "file_type": "code",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L76",
+      "source_location": "L75",
       "_origin": "ast",
       "id": "utils_linestickercompose_pixelbounds",
       "community": 50,
@@ -12817,7 +12817,7 @@
       "label": "cropFrame()",
       "file_type": "code",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L83",
+      "source_location": "L82",
       "_origin": "ast",
       "id": "utils_linestickercompose_cropframe",
       "community": 50,
@@ -12827,7 +12827,7 @@
       "label": "sampleBilinear()",
       "file_type": "code",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L95",
+      "source_location": "L94",
       "_origin": "ast",
       "id": "utils_linestickercompose_samplebilinear",
       "community": 50,
@@ -12837,7 +12837,7 @@
       "label": "resampleRgba()",
       "file_type": "code",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L124",
+      "source_location": "L123",
       "_origin": "ast",
       "id": "utils_linestickercompose_resamplergba",
       "community": 50,
@@ -12847,7 +12847,7 @@
       "label": "drawRgbaFrameOnCanvas()",
       "file_type": "code",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L143",
+      "source_location": "L142",
       "_origin": "ast",
       "id": "utils_linestickercompose_drawrgbaframeoncanvas",
       "community": 50,
@@ -12857,7 +12857,7 @@
       "label": "readRgbaFromCanvas()",
       "file_type": "code",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L160",
+      "source_location": "L159",
       "_origin": "ast",
       "id": "utils_linestickercompose_readrgbafromcanvas",
       "community": 50,
@@ -12867,7 +12867,7 @@
       "label": "drawLineWithSpacing()",
       "file_type": "code",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L170",
+      "source_location": "L169",
       "_origin": "ast",
       "id": "utils_linestickercompose_drawlinewithspacing",
       "community": 50,
@@ -12877,7 +12877,7 @@
       "label": "drawGlyph()",
       "file_type": "code",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L198",
+      "source_location": "L197",
       "_origin": "ast",
       "id": "utils_linestickercompose_drawglyph",
       "community": 50,
@@ -12887,7 +12887,7 @@
       "label": "verticalCaptionHeight()",
       "file_type": "code",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L214",
+      "source_location": "L213",
       "_origin": "ast",
       "id": "utils_linestickercompose_verticalcaptionheight",
       "community": 50,
@@ -12897,7 +12897,7 @@
       "label": "resolveCaptionLayout()",
       "file_type": "code",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L225",
+      "source_location": "L224",
       "_origin": "ast",
       "id": "utils_linestickercompose_resolvecaptionlayout",
       "community": 50,
@@ -12907,7 +12907,7 @@
       "label": "composeStickerFrame()",
       "file_type": "code",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L314",
+      "source_location": "L313",
       "_origin": "ast",
       "id": "utils_linestickercompose_composestickerframe",
       "community": 50,
@@ -12920,7 +12920,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickercomposecaption_test",
-      "community": 36,
+      "community": 50,
       "norm_label": "linestickercomposecaption.test.ts"
     },
     {
@@ -12930,7 +12930,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "utils_linestickercomposecaption_test_makesubjectblob",
-      "community": 36,
+      "community": 50,
       "norm_label": "makesubjectblob()"
     },
     {
@@ -13060,7 +13060,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_mapbandlabeltocomposepreset",
-      "community": 50,
+      "community": 60,
       "norm_label": "mapbandlabeltocomposepreset()"
     },
     {
@@ -13070,7 +13070,7 @@
       "source_location": "L135",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_resolveeffectivecomposepreset",
-      "community": 50,
+      "community": 60,
       "norm_label": "resolveeffectivecomposepreset()"
     },
     {
@@ -13380,7 +13380,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickerphrasesetformat",
-      "community": 23,
+      "community": 53,
       "norm_label": "linestickerphrasesetformat.ts"
     },
     {
@@ -13390,7 +13390,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "utils_linestickerphrasesetformat_phrase_set_format",
-      "community": 23,
+      "community": 53,
       "norm_label": "phrase_set_format"
     },
     {
@@ -13400,7 +13400,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "utils_linestickerphrasesetformat_linestickerphrasesetjson",
-      "community": 23,
+      "community": 53,
       "norm_label": "linestickerphrasesetjson"
     },
     {
@@ -13410,7 +13410,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "utils_linestickerphrasesetformat_isnonnegativeinteger",
-      "community": 23,
+      "community": 53,
       "norm_label": "isnonnegativeinteger()"
     },
     {
@@ -13420,7 +13420,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "utils_linestickerphrasesetformat_isstringarray",
-      "community": 23,
+      "community": 53,
       "norm_label": "isstringarray()"
     },
     {
@@ -13430,7 +13430,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "utils_linestickerphrasesetformat_parsephrasesetjson",
-      "community": 23,
+      "community": 53,
       "norm_label": "parsephrasesetjson()"
     },
     {
@@ -13530,7 +13530,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "utils_linestickerpresets_theme_presets",
-      "community": 42,
+      "community": 8,
       "norm_label": "theme_presets"
     },
     {
@@ -13790,7 +13790,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "utils_linestickerprompt_expandthemephrasesforframes",
-      "community": 42,
+      "community": 8,
       "norm_label": "expandthemephrasesforframes()"
     },
     {
@@ -13870,7 +13870,7 @@
       "source_location": "L238",
       "_origin": "ast",
       "id": "utils_linestickerprompt_getactionhint",
-      "community": 42,
+      "community": 8,
       "norm_label": "getactionhint()"
     },
     {
@@ -14290,7 +14290,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickersheetaspect_test",
-      "community": 118,
+      "community": 8,
       "norm_label": "linestickersheetaspect.test.ts"
     },
     {
@@ -14300,7 +14300,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickersheetaspect",
-      "community": 118,
+      "community": 8,
       "norm_label": "linestickersheetaspect.ts"
     },
     {
@@ -14310,7 +14310,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "utils_linestickersheetaspect_supported_aspect_ratios",
-      "community": 118,
+      "community": 8,
       "norm_label": "supported_aspect_ratios"
     },
     {
@@ -14320,7 +14320,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "utils_linestickersheetaspect_canvas_aspect_labels",
-      "community": 118,
+      "community": 8,
       "norm_label": "canvas_aspect_labels"
     },
     {
@@ -14330,7 +14330,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "utils_linestickersheetaspect_line_sticker_sprite_sheet_aspect_ratio",
-      "community": 118,
+      "community": 8,
       "norm_label": "line_sticker_sprite_sheet_aspect_ratio"
     },
     {
@@ -14340,7 +14340,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "utils_linestickersheetaspect_getbestaspectratio",
-      "community": 118,
+      "community": 8,
       "norm_label": "getbestaspectratio()"
     },
     {
@@ -14350,7 +14350,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "utils_linestickersheetaspect_getlinestickerspritesheetaspectratio",
-      "community": 118,
+      "community": 8,
       "norm_label": "getlinestickerspritesheetaspectratio()"
     },
     {
@@ -14360,7 +14360,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "utils_linestickersheetaspect_getlinestickercanvasaspectprompt",
-      "community": 118,
+      "community": 8,
       "norm_label": "getlinestickercanvasaspectprompt()"
     },
     {
@@ -14370,7 +14370,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "utils_linestickersheetaspect_getlinestickercellpixelsize",
-      "community": 118,
+      "community": 8,
       "norm_label": "getlinestickercellpixelsize()"
     },
     {
@@ -14450,7 +14450,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_test",
-      "community": 36,
+      "community": 3,
       "norm_label": "linestickertextoverlay.test.ts"
     },
     {
@@ -14460,7 +14460,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_test_asdomcanvascontext",
-      "community": 36,
+      "community": 3,
       "norm_label": "asdomcanvascontext()"
     },
     {
@@ -14470,34 +14470,34 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay",
-      "community": 36,
+      "community": 3,
       "norm_label": "linestickertextoverlay.ts"
     },
     {
       "label": "FontPresetKey",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L65",
+      "source_location": "L62",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_fontpresetkey",
-      "community": 36,
+      "community": 3,
       "norm_label": "fontpresetkey"
     },
     {
       "label": "TextColorPresetKey",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L66",
+      "source_location": "L63",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_textcolorpresetkey",
-      "community": 36,
+      "community": 3,
       "norm_label": "textcolorpresetkey"
     },
     {
       "label": "getEffectiveProgrammaticPlacementMode()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L71",
+      "source_location": "L68",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_geteffectiveprogrammaticplacementmode",
       "community": 122,
@@ -14507,7 +14507,7 @@
       "label": "resolveProgrammaticPlacementLabel()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L83",
+      "source_location": "L80",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_resolveprogrammaticplacementlabel",
       "community": 122,
@@ -14517,7 +14517,7 @@
       "label": "extractFillHexFromTextColorPreset()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L100",
+      "source_location": "L97",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_extractfillhexfromtextcolorpreset",
       "community": 122,
@@ -14527,67 +14527,67 @@
       "label": "luminance()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L106",
+      "source_location": "L103",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_luminance",
-      "community": 36,
+      "community": 3,
       "norm_label": "luminance()"
     },
     {
       "label": "strokeColorForFill()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L116",
+      "source_location": "L113",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_strokecolorforfill",
-      "community": 36,
+      "community": 122,
       "norm_label": "strokecolorforfill()"
     },
     {
       "label": "fontCssStackForPreset()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L126",
+      "source_location": "L123",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_fontcssstackforpreset",
-      "community": 36,
+      "community": 3,
       "norm_label": "fontcssstackforpreset()"
     },
     {
       "label": "resolveCanvasFontNumericWeight()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L154",
+      "source_location": "L151",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_resolvecanvasfontnumericweight",
-      "community": 50,
+      "community": 122,
       "norm_label": "resolvecanvasfontnumericweight()"
     },
     {
       "label": "resolveProgrammaticFontFamilyCss()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L166",
+      "source_location": "L163",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_resolveprogrammaticfontfamilycss",
-      "community": 36,
+      "community": 122,
       "norm_label": "resolveprogrammaticfontfamilycss()"
     },
     {
       "label": "LineStickerTextOverlayOptions",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L176",
+      "source_location": "L173",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_linestickertextoverlayoptions",
-      "community": 36,
+      "community": 3,
       "norm_label": "linestickertextoverlayoptions"
     },
     {
       "label": "overlayLineStickerTextOnFrame()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L192",
+      "source_location": "L189",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_overlaylinestickertextonframe",
       "community": 122,
@@ -14597,10 +14597,10 @@
       "label": "overlayPhrasesOnStickerFrames()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L315",
+      "source_location": "L312",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_overlayphrasesonstickerframes",
-      "community": 12,
+      "community": 14,
       "norm_label": "overlayphrasesonstickerframes()"
     },
     {
@@ -14610,54 +14610,54 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry",
-      "community": 36,
+      "community": 3,
       "norm_label": "linestickertextoverlaygeometry.ts"
     },
     {
       "label": "TextPlacementLayout",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L14",
+      "source_location": "L10",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_textplacementlayout",
-      "community": 36,
+      "community": 3,
       "norm_label": "textplacementlayout"
     },
     {
       "label": "LayoutFromPlacementOptions",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L22",
+      "source_location": "L18",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_layoutfromplacementoptions",
-      "community": 36,
+      "community": 3,
       "norm_label": "layoutfromplacementoptions"
     },
     {
       "label": "preferredNudgeDirectionForPlacementLabel()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L30",
+      "source_location": "L26",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_preferrednudgedirectionforplacementlabel",
-      "community": 36,
+      "community": 3,
       "norm_label": "preferrednudgedirectionforplacementlabel()"
     },
     {
       "label": "layoutFromPlacementLabel()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L53",
+      "source_location": "L49",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_layoutfromplacementlabel",
-      "community": 36,
+      "community": 3,
       "norm_label": "layoutfromplacementlabel()"
     },
     {
       "label": "captionBandPixelRectForLabel()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L141",
+      "source_location": "L137",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_captionbandpixelrectforlabel",
       "community": 3,
@@ -14667,7 +14667,7 @@
       "label": "centerSearchBoundsForTextBoxInBand()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L234",
+      "source_location": "L230",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_centersearchboundsfortextboxinband",
       "community": 3,
@@ -14677,37 +14677,37 @@
       "label": "textStartYFromAnchor()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L255",
+      "source_location": "L251",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_textstartyfromanchor",
-      "community": 36,
+      "community": 3,
       "norm_label": "textstartyfromanchor()"
     },
     {
       "label": "lineWidthWithSpacing()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L271",
+      "source_location": "L267",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_linewidthwithspacing",
-      "community": 36,
+      "community": 50,
       "norm_label": "linewidthwithspacing()"
     },
     {
       "label": "wrapLinesWithSpacing()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L282",
+      "source_location": "L278",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_wraplineswithspacing",
-      "community": 36,
+      "community": 50,
       "norm_label": "wraplineswithspacing()"
     },
     {
       "label": "wrapLines()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L313",
+      "source_location": "L309",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_wraplines",
       "community": 3,
@@ -14717,7 +14717,7 @@
       "label": "PixelRect",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L354",
+      "source_location": "L350",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_pixelrect",
       "community": 60,
@@ -14727,7 +14727,7 @@
       "label": "rectangleIntersectionArea()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L356",
+      "source_location": "L352",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_rectangleintersectionarea",
       "community": 60,
@@ -14737,47 +14737,47 @@
       "label": "inflatePixelRect()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L364",
+      "source_location": "L360",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_inflatepixelrect",
-      "community": 36,
+      "community": 3,
       "norm_label": "inflatepixelrect()"
     },
     {
       "label": "shiftPixelRect()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L380",
+      "source_location": "L376",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_shiftpixelrect",
-      "community": 36,
+      "community": 3,
       "norm_label": "shiftpixelrect()"
     },
     {
       "label": "textBoxFitsFrameInset()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L389",
+      "source_location": "L385",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_textboxfitsframeinset",
-      "community": 36,
+      "community": 3,
       "norm_label": "textboxfitsframeinset()"
     },
     {
       "label": "correctionToFitTextBoxInFrame()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L404",
+      "source_location": "L400",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_correctiontofittextboxinframe",
-      "community": 36,
+      "community": 3,
       "norm_label": "correctiontofittextboxinframe()"
     },
     {
       "label": "textOverlayAvoidancePadPx()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L429",
+      "source_location": "L424",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_textoverlayavoidancepadpx",
       "community": 3,
@@ -14787,30 +14787,30 @@
       "label": "rectangleMinSeparation()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L442",
+      "source_location": "L437",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_rectangleminseparation",
-      "community": 36,
+      "community": 3,
       "norm_label": "rectangleminseparation()"
     },
     {
       "label": "estimateTextBlockBox()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L456",
+      "source_location": "L451",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_estimatetextblockbox",
-      "community": 36,
+      "community": 3,
       "norm_label": "estimatetextblockbox()"
     },
     {
       "label": "estimateTextBlockBoxFromMeasuredLines()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L504",
+      "source_location": "L499",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_estimatetextblockboxfrommeasuredlines",
-      "community": 36,
+      "community": 3,
       "norm_label": "estimatetextblockboxfrommeasuredlines()"
     },
     {
@@ -15034,20 +15034,10 @@
       "norm_label": "programmatictextoverlaytuning"
     },
     {
-      "label": "programmaticTextStrokeWidthPx()",
-      "file_type": "code",
-      "source_file": "utils/lineStickerTextOverlayTypes.ts",
-      "source_location": "L58",
-      "_origin": "ast",
-      "id": "utils_linestickertextoverlaytypes_programmatictextstrokewidthpx",
-      "community": 122,
-      "norm_label": "programmatictextstrokewidthpx()"
-    },
-    {
       "label": "DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayTypes.ts",
-      "source_location": "L62",
+      "source_location": "L55",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_default_programmatic_text_overlay_tuning",
       "community": 141,
@@ -15057,17 +15047,17 @@
       "label": "mergeProgrammaticTextTuning()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayTypes.ts",
-      "source_location": "L78",
+      "source_location": "L71",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_mergeprogrammatictexttuning",
-      "community": 50,
+      "community": 21,
       "norm_label": "mergeprogrammatictexttuning()"
     },
     {
       "label": "ProgrammaticComposeConfig",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayTypes.ts",
-      "source_location": "L94",
+      "source_location": "L87",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_programmaticcomposeconfig",
       "community": 141,
@@ -15077,7 +15067,7 @@
       "label": "DEFAULT_PROGRAMMATIC_COMPOSE_CONFIG",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayTypes.ts",
-      "source_location": "L111",
+      "source_location": "L104",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_default_programmatic_compose_config",
       "community": 141,
@@ -15087,7 +15077,7 @@
       "label": "resolvePhraseAdaptiveCaptionTuning()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayTypes.ts",
-      "source_location": "L127",
+      "source_location": "L120",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_resolvephraseadaptivecaptiontuning",
       "community": 50,
@@ -15097,10 +15087,10 @@
       "label": "mergeProgrammaticComposeConfig()",
       "file_type": "code",
       "source_file": "utils/lineStickerTextOverlayTypes.ts",
-      "source_location": "L148",
+      "source_location": "L141",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_mergeprogrammaticcomposeconfig",
-      "community": 54,
+      "community": 21,
       "norm_label": "mergeprogrammaticcomposeconfig()"
     },
     {
@@ -15130,7 +15120,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "utils_linestickeruploadspec_line_sticker_upload",
-      "community": 50,
+      "community": 28,
       "norm_label": "line_sticker_upload"
     },
     {
@@ -15270,7 +15260,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_loadbundledimage",
-      "community": 48,
+      "community": 0,
       "norm_label": "loadbundledimage.ts"
     },
     {
@@ -15280,7 +15270,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_loadbundledimage_loadbundledimageasdataurl",
-      "community": 48,
+      "community": 0,
       "norm_label": "loadbundledimageasdataurl()"
     },
     {
@@ -15290,7 +15280,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_logger",
-      "community": 0,
+      "community": 2,
       "norm_label": "logger.ts"
     },
     {
@@ -15300,7 +15290,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "utils_logger_logger",
-      "community": 0,
+      "community": 2,
       "norm_label": "logger"
     },
     {
@@ -15360,7 +15350,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_test",
-      "community": 44,
+      "community": 49,
       "norm_label": "optimizeslicesettings.test.ts"
     },
     {
@@ -15370,7 +15360,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_test_fillbackground",
-      "community": 44,
+      "community": 49,
       "norm_label": "fillbackground()"
     },
     {
@@ -15380,7 +15370,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_test_setpixel",
-      "community": 44,
+      "community": 49,
       "norm_label": "setpixel()"
     },
     {
@@ -15390,7 +15380,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings",
-      "community": 44,
+      "community": 49,
       "norm_label": "optimizeslicesettings.ts"
     },
     {
@@ -15410,7 +15400,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_optimizesliceoptions",
-      "community": 44,
+      "community": 49,
       "norm_label": "optimizesliceoptions"
     },
     {
@@ -15420,7 +15410,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_mergeoptimizedpadding",
-      "community": 2,
+      "community": 10,
       "norm_label": "mergeoptimizedpadding()"
     },
     {
@@ -15430,7 +15420,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_contentmargins",
-      "community": 44,
+      "community": 49,
       "norm_label": "contentmargins"
     },
     {
@@ -15440,7 +15430,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_rowhascontent",
-      "community": 44,
+      "community": 49,
       "norm_label": "rowhascontent()"
     },
     {
@@ -15450,7 +15440,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_columnhascontent",
-      "community": 44,
+      "community": 49,
       "norm_label": "columnhascontent()"
     },
     {
@@ -15460,7 +15450,7 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_measurecontentmargins",
-      "community": 44,
+      "community": 49,
       "norm_label": "measurecontentmargins()"
     },
     {
@@ -15470,7 +15460,7 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_computeoptimizedslicefrommargins",
-      "community": 44,
+      "community": 49,
       "norm_label": "computeoptimizedslicefrommargins()"
     },
     {
@@ -15480,7 +15470,7 @@
       "source_location": "L207",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_optimizeslicesettings",
-      "community": 44,
+      "community": 10,
       "norm_label": "optimizeslicesettings()"
     },
     {
@@ -16430,7 +16420,7 @@
       "source_location": "L335",
       "_origin": "ast",
       "id": "utils_sheetwhitedividerdetection_shouldusewhitedividerslice",
-      "community": 24,
+      "community": 33,
       "norm_label": "shouldusewhitedividerslice()"
     },
     {
@@ -16490,7 +16480,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_slicebycellrects",
-      "community": 126,
+      "community": 39,
       "norm_label": "slicebycellrects.ts"
     },
     {
@@ -16500,7 +16490,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "utils_slicebycellrects_slicespritesheetbycellrects",
-      "community": 2,
+      "community": 39,
       "norm_label": "slicespritesheetbycellrects()"
     },
     {
@@ -16640,7 +16630,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "utils_spriteslicing_slicesettings",
-      "community": 39,
+      "community": 2,
       "norm_label": "slicesettings"
     },
     {
@@ -16650,7 +16640,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "utils_spriteslicing_frameoverride",
-      "community": 39,
+      "community": 2,
       "norm_label": "frameoverride"
     },
     {
@@ -16990,7 +16980,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "workers_chromakeyworker",
-      "community": 4,
+      "community": 17,
       "norm_label": "chromakeyworker.ts"
     },
     {
@@ -17000,7 +16990,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "workers_chromakeyworker_chromakeyworkerprocessmessage",
-      "community": 4,
+      "community": 17,
       "norm_label": "chromakeyworkerprocessmessage"
     },
     {
@@ -17010,7 +17000,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "workers_chromakeyworker_chromakeyworkercancelmessage",
-      "community": 4,
+      "community": 17,
       "norm_label": "chromakeyworkercancelmessage"
     },
     {
@@ -17020,7 +17010,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "workers_chromakeyworker_chromakeyworkermessage",
-      "community": 4,
+      "community": 17,
       "norm_label": "chromakeyworkermessage"
     },
     {
@@ -17030,7 +17020,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "workers_chromakeyworker_chromakeyworkerresponse",
-      "community": 4,
+      "community": 17,
       "norm_label": "chromakeyworkerresponse"
     },
     {
@@ -22950,7 +22940,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "utils_constants_default_skill_sticker_model",
-      "community": 34,
+      "community": 53,
       "norm_label": "default_skill_sticker_model"
     },
     {
@@ -28621,7 +28611,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L35",
+      "source_location": "L34",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "claude_skills_line_sticker_maker_scripts_nodeimage",
@@ -28698,7 +28688,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L35",
+      "source_location": "L34",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "claude_skills_line_sticker_maker_scripts_nodeimage_rgbaimage",
@@ -29866,7 +29856,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L48",
+      "source_location": "L47",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_blitrgbaontocanvas",
@@ -29876,7 +29866,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L44",
+      "source_location": "L43",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_composeoverlayoptions",
@@ -29886,7 +29876,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L142",
+      "source_location": "L141",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_composephraseonrgbaframe",
@@ -29896,7 +29886,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L165",
+      "source_location": "L164",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_composephrasesonrgbaframes",
@@ -29906,7 +29896,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L32",
+      "source_location": "L31",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_fontpresetkey",
@@ -29916,7 +29906,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L67",
+      "source_location": "L66",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphraseonrgbaframe",
@@ -29926,7 +29916,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L176",
+      "source_location": "L175",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphrasesonrgbaframes",
@@ -29936,7 +29926,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L37",
+      "source_location": "L36",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_programmaticoverlayoptions",
@@ -29946,7 +29936,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L57",
+      "source_location": "L56",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_readrgbafromcanvas",
@@ -29956,7 +29946,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L33",
+      "source_location": "L32",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_textcolorpresetkey",
@@ -29967,7 +29957,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L26",
+      "source_location": "L25",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "utils_linestickercompose",
@@ -29978,7 +29968,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L26",
+      "source_location": "L25",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "utils_linestickercompose_composestickerframe",
@@ -29989,7 +29979,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L26",
+      "source_location": "L25",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "utils_linestickercompose_shouldusecomposelayout",
@@ -30044,7 +30034,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L18",
+      "source_location": "L17",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "utils_linestickertextoverlay",
@@ -30055,7 +30045,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L18",
+      "source_location": "L17",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "utils_linestickertextoverlay_extractfillhexfromtextcolorpreset",
@@ -30066,7 +30056,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L18",
+      "source_location": "L17",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "utils_linestickertextoverlay_geteffectiveprogrammaticplacementmode",
@@ -30077,7 +30067,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L18",
+      "source_location": "L17",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "utils_linestickertextoverlay_resolvecanvasfontnumericweight",
@@ -30088,7 +30078,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L18",
+      "source_location": "L17",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "utils_linestickertextoverlay_resolveprogrammaticfontfamilycss",
@@ -30099,7 +30089,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L18",
+      "source_location": "L17",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "utils_linestickertextoverlay_resolveprogrammaticplacementlabel",
@@ -30110,7 +30100,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L18",
+      "source_location": "L17",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "utils_linestickertextoverlay_strokecolorforfill",
@@ -30121,7 +30111,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L17",
+      "source_location": "L16",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "utils_linestickertextoverlaysubject",
@@ -30132,7 +30122,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L17",
+      "source_location": "L16",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "utils_linestickertextoverlaysubject_computeautocaptionlayout",
@@ -30143,7 +30133,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L27",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "utils_linestickertextoverlaytypes",
@@ -30165,7 +30155,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L27",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "utils_linestickertextoverlaytypes_mergeprogrammaticcomposeconfig",
@@ -30176,7 +30166,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L27",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "utils_linestickertextoverlaytypes_programmaticcomposeconfig",
@@ -30191,17 +30181,6 @@
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
       "target": "utils_linestickertextoverlaytypes_programmatictextoverlaytuning",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L12",
-      "weight": 1.0,
-      "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
-      "target": "utils_linestickertextoverlaytypes_programmatictextstrokewidthpx",
       "confidence_score": 1.0
     },
     {
@@ -30231,7 +30210,7 @@
       "context": "type",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L44",
+      "source_location": "L43",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_composeoverlayoptions",
       "target": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_programmaticoverlayoptions",
@@ -30242,7 +30221,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L40",
+      "source_location": "L39",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_programmaticoverlayoptions",
       "target": "utils_linestickertextoverlaytypes_programmatictextoverlaytuning",
@@ -30253,7 +30232,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L45",
+      "source_location": "L44",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_composeoverlayoptions",
       "target": "utils_linestickertextoverlaytypes_programmaticcomposeconfig",
@@ -30264,7 +30243,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L91",
+      "source_location": "L90",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphraseonrgbaframe",
       "target": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_blitrgbaontocanvas",
@@ -30275,7 +30254,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L138",
+      "source_location": "L137",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphraseonrgbaframe",
       "target": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_readrgbafromcanvas",
@@ -30286,7 +30265,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L149",
+      "source_location": "L148",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_composephraseonrgbaframe",
       "target": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphraseonrgbaframe",
@@ -30298,7 +30277,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L98",
+      "source_location": "L97",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphraseonrgbaframe",
       "target": "utils_linestickerprompt_getreservedcaptionbandlabelforframe"
@@ -30309,7 +30288,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L116",
+      "source_location": "L115",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphraseonrgbaframe",
       "target": "utils_linestickertextoverlay_extractfillhexfromtextcolorpreset"
@@ -30320,7 +30299,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L95",
+      "source_location": "L94",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphraseonrgbaframe",
       "target": "utils_linestickertextoverlay_geteffectiveprogrammaticplacementmode"
@@ -30331,7 +30310,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L94",
+      "source_location": "L93",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphraseonrgbaframe",
       "target": "utils_linestickertextoverlay_resolvecanvasfontnumericweight"
@@ -30342,7 +30321,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L93",
+      "source_location": "L92",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphraseonrgbaframe",
       "target": "utils_linestickertextoverlay_resolveprogrammaticfontfamilycss"
@@ -30353,7 +30332,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L99",
+      "source_location": "L98",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphraseonrgbaframe",
       "target": "utils_linestickertextoverlay_resolveprogrammaticplacementlabel"
@@ -30364,7 +30343,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L117",
+      "source_location": "L116",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphraseonrgbaframe",
       "target": "utils_linestickertextoverlay_strokecolorforfill"
@@ -30375,7 +30354,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L101",
+      "source_location": "L100",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphraseonrgbaframe",
       "target": "utils_linestickertextoverlaysubject_computeautocaptionlayout"
@@ -30384,19 +30363,8 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L118",
-      "weight": 1.0,
-      "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphraseonrgbaframe",
-      "target": "utils_linestickertextoverlaytypes_programmatictextstrokewidthpx"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L182",
+      "source_location": "L181",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphrasesonrgbaframes",
       "target": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphraseonrgbaframe",
@@ -30419,7 +30387,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L154",
+      "source_location": "L153",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_composephraseonrgbaframe",
       "target": "utils_linestickercompose_composestickerframe"
@@ -30430,7 +30398,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L151",
+      "source_location": "L150",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_composephraseonrgbaframe",
       "target": "utils_linestickercompose_shouldusecomposelayout"
@@ -30441,7 +30409,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L147",
+      "source_location": "L146",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_composephraseonrgbaframe",
       "target": "utils_linestickertextoverlaytypes_mergeprogrammaticcomposeconfig"
@@ -30451,7 +30419,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts",
-      "source_location": "L171",
+      "source_location": "L170",
       "weight": 1.0,
       "source": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_composephrasesonrgbaframes",
       "target": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_composephraseonrgbaframe",
@@ -63597,7 +63565,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L50",
+      "source_location": "L49",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercompose_asdomcanvascontext",
@@ -63607,7 +63575,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L314",
+      "source_location": "L313",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercompose_composestickerframe",
@@ -63617,7 +63585,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L36",
+      "source_location": "L35",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercompose_composestickeroptions",
@@ -63627,7 +63595,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L83",
+      "source_location": "L82",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercompose_cropframe",
@@ -63637,7 +63605,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L198",
+      "source_location": "L197",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercompose_drawglyph",
@@ -63647,7 +63615,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L170",
+      "source_location": "L169",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercompose_drawlinewithspacing",
@@ -63657,7 +63625,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L143",
+      "source_location": "L142",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercompose_drawrgbaframeoncanvas",
@@ -63667,7 +63635,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L54",
+      "source_location": "L53",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercompose_measureopaquebounds",
@@ -63677,7 +63645,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L76",
+      "source_location": "L75",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercompose_pixelbounds",
@@ -63687,7 +63655,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L160",
+      "source_location": "L159",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercompose_readrgbafromcanvas",
@@ -63697,7 +63665,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L124",
+      "source_location": "L123",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercompose_resamplergba",
@@ -63707,7 +63675,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L225",
+      "source_location": "L224",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercompose_resolvecaptionlayout",
@@ -63717,7 +63685,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L95",
+      "source_location": "L94",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercompose_samplebilinear",
@@ -63727,7 +63695,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L46",
+      "source_location": "L45",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercompose_shouldusecomposelayout",
@@ -63737,7 +63705,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L214",
+      "source_location": "L213",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercompose_verticalcaptionheight",
@@ -63748,7 +63716,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L16",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercomposelayout",
@@ -63759,7 +63727,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L16",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercomposelayout_captionfontsizepx",
@@ -63770,7 +63738,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L16",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercomposelayout_composeslots",
@@ -63781,7 +63749,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L16",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercomposelayout_fitsubjectplacement",
@@ -63792,7 +63760,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L16",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercomposelayout_resolvecomposeslots",
@@ -63803,7 +63771,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L16",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickercomposelayout_resolveeffectivecomposepreset",
@@ -63836,7 +63804,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L28",
+      "source_location": "L27",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickertextoverlay",
@@ -63847,7 +63815,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L28",
+      "source_location": "L27",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickertextoverlay_extractfillhexfromtextcolorpreset",
@@ -63858,7 +63826,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L28",
+      "source_location": "L27",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickertextoverlay_resolvecanvasfontnumericweight",
@@ -63869,7 +63837,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L28",
+      "source_location": "L27",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickertextoverlay_resolveprogrammaticfontfamilycss",
@@ -63880,7 +63848,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L28",
+      "source_location": "L27",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickertextoverlay_strokecolorforfill",
@@ -63891,7 +63859,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L34",
+      "source_location": "L33",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickertextoverlaygeometry",
@@ -63902,7 +63870,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L34",
+      "source_location": "L33",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickertextoverlaygeometry_linewidthwithspacing",
@@ -63982,17 +63950,6 @@
       "source_location": "L8",
       "weight": 1.0,
       "source": "utils_linestickercompose",
-      "target": "utils_linestickertextoverlaytypes_programmatictextstrokewidthpx",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L8",
-      "weight": 1.0,
-      "source": "utils_linestickercompose",
       "target": "utils_linestickertextoverlaytypes_resolvephraseadaptivecaptiontuning",
       "confidence_score": 1.0
     },
@@ -64001,7 +63958,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L27",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickeruploadspec",
@@ -64012,7 +63969,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L27",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickeruploadspec_computefitdimensions",
@@ -64023,7 +63980,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L27",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_linestickeruploadspec_toevendimension",
@@ -64034,7 +63991,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L26",
+      "source_location": "L25",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_sheetcomponentslicer",
@@ -64045,7 +64002,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L25",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_sheetcomponentslicer_rgbaframebuffer",
@@ -64056,7 +64013,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L26",
+      "source_location": "L25",
       "weight": 1.0,
       "source": "utils_linestickercompose",
       "target": "utils_sheetcomponentslicer_trimframetocontent",
@@ -64078,7 +64035,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L39",
+      "source_location": "L38",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickeroptions",
       "target": "utils_linestickertextoverlaytypes_programmaticcomposeconfig",
@@ -64089,7 +64046,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L40",
+      "source_location": "L39",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickeroptions",
       "target": "utils_linestickertextoverlaytypes_programmatictextoverlaytuning",
@@ -64100,7 +64057,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L328",
+      "source_location": "L327",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickercompose_shouldusecomposelayout",
@@ -64111,7 +64068,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L362",
+      "source_location": "L361",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickercompose_asdomcanvascontext",
@@ -64122,7 +64079,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L367",
+      "source_location": "L366",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickercompose_measureopaquebounds",
@@ -64133,7 +64090,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L369",
+      "source_location": "L368",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickercompose_cropframe",
@@ -64144,7 +64101,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L132",
+      "source_location": "L131",
       "weight": 1.0,
       "source": "utils_linestickercompose_resamplergba",
       "target": "utils_linestickercompose_samplebilinear",
@@ -64155,7 +64112,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L386",
+      "source_location": "L385",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickercompose_resamplergba",
@@ -64166,7 +64123,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L125",
+      "source_location": "L124",
       "weight": 1.0,
       "source": "utils_linestickercompose_resamplergba",
       "target": "utils_linestickeruploadspec_toevendimension",
@@ -64177,7 +64134,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L387",
+      "source_location": "L386",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickercompose_drawrgbaframeoncanvas",
@@ -64188,7 +64145,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L484",
+      "source_location": "L483",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickercompose_readrgbafromcanvas",
@@ -64199,7 +64156,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L458",
+      "source_location": "L457",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickercompose_drawlinewithspacing",
@@ -64210,7 +64167,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L439",
+      "source_location": "L438",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickercompose_drawglyph",
@@ -64221,7 +64178,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L429",
+      "source_location": "L428",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickercompose_verticalcaptionheight",
@@ -64232,7 +64189,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L264",
+      "source_location": "L263",
       "weight": 1.0,
       "source": "utils_linestickercompose_resolvecaptionlayout",
       "target": "utils_linestickercompose_verticalcaptionheight",
@@ -64243,7 +64200,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L395",
+      "source_location": "L394",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickercompose_resolvecaptionlayout",
@@ -64254,7 +64211,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L247",
+      "source_location": "L246",
       "weight": 1.0,
       "source": "utils_linestickercompose_resolvecaptionlayout",
       "target": "utils_linestickercomposelayout_captionfontsizepx",
@@ -64265,7 +64222,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L252",
+      "source_location": "L251",
       "weight": 1.0,
       "source": "utils_linestickercompose_resolvecaptionlayout",
       "target": "utils_linestickertextoverlay_resolvecanvasfontnumericweight",
@@ -64276,7 +64233,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L252",
+      "source_location": "L251",
       "weight": 1.0,
       "source": "utils_linestickercompose_resolvecaptionlayout",
       "target": "utils_linestickertextoverlay_resolveprogrammaticfontfamilycss",
@@ -64287,7 +64244,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L279",
+      "source_location": "L278",
       "weight": 1.0,
       "source": "utils_linestickercompose_resolvecaptionlayout",
       "target": "utils_linestickertextoverlaygeometry_linewidthwithspacing",
@@ -64298,7 +64255,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L276",
+      "source_location": "L275",
       "weight": 1.0,
       "source": "utils_linestickercompose_resolvecaptionlayout",
       "target": "utils_linestickertextoverlaygeometry_wraplineswithspacing",
@@ -64310,7 +64267,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L357",
+      "source_location": "L356",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickercomposelayout_captionfontsizepx"
@@ -64321,7 +64278,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L376",
+      "source_location": "L375",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickercomposelayout_fitsubjectplacement"
@@ -64332,7 +64289,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L356",
+      "source_location": "L355",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickercomposelayout_resolvecomposeslots"
@@ -64343,7 +64300,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L350",
+      "source_location": "L349",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickercomposelayout_resolveeffectivecomposepreset"
@@ -64354,7 +64311,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L353",
+      "source_location": "L352",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickerprompt_getreservedcaptionbandlabelforframe"
@@ -64365,7 +64322,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L417",
+      "source_location": "L416",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickertextoverlay_extractfillhexfromtextcolorpreset"
@@ -64376,7 +64333,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L392",
+      "source_location": "L391",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickertextoverlay_resolvecanvasfontnumericweight"
@@ -64387,7 +64344,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L391",
+      "source_location": "L390",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickertextoverlay_resolveprogrammaticfontfamilycss"
@@ -64398,7 +64355,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L418",
+      "source_location": "L417",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickertextoverlay_strokecolorforfill"
@@ -64409,7 +64366,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L318",
+      "source_location": "L317",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickertextoverlaytypes_mergeprogrammaticcomposeconfig"
@@ -64420,7 +64377,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L319",
+      "source_location": "L318",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickertextoverlaytypes_mergeprogrammatictexttuning"
@@ -64431,18 +64388,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L419",
-      "weight": 1.0,
-      "source": "utils_linestickercompose_composestickerframe",
-      "target": "utils_linestickertextoverlaytypes_programmatictextstrokewidthpx"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L337",
+      "source_location": "L336",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickertextoverlaytypes_resolvephraseadaptivecaptiontuning"
@@ -64453,7 +64399,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L485",
+      "source_location": "L484",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickeruploadspec_computefitdimensions"
@@ -64464,7 +64410,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L491",
+      "source_location": "L490",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_linestickeruploadspec_toevendimension"
@@ -64475,7 +64421,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "utils/lineStickerCompose.ts",
-      "source_location": "L490",
+      "source_location": "L489",
       "weight": 1.0,
       "source": "utils_linestickercompose_composestickerframe",
       "target": "utils_sheetcomponentslicer_trimframetocontent"
@@ -64872,7 +64818,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayTypes.ts",
-      "source_location": "L96",
+      "source_location": "L89",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaytypes_programmaticcomposeconfig",
       "target": "utils_linestickercomposelayout_composelayoutpreset",
@@ -66719,7 +66665,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L250",
+      "source_location": "L247",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay_overlaylinestickertextonframe",
       "target": "utils_linestickerprompt_getreservedcaptionbandlabelforframe"
@@ -66730,7 +66676,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L89",
+      "source_location": "L86",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay_resolveprogrammaticplacementlabel",
       "target": "utils_linestickerprompt_getreservedcaptionbandlabelforframe"
@@ -68056,7 +68002,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L100",
+      "source_location": "L97",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlay_extractfillhexfromtextcolorpreset",
@@ -68066,7 +68012,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L126",
+      "source_location": "L123",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlay_fontcssstackforpreset",
@@ -68076,7 +68022,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L65",
+      "source_location": "L62",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlay_fontpresetkey",
@@ -68086,7 +68032,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L71",
+      "source_location": "L68",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlay_geteffectiveprogrammaticplacementmode",
@@ -68096,7 +68042,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L176",
+      "source_location": "L173",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlay_linestickertextoverlayoptions",
@@ -68106,7 +68052,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L106",
+      "source_location": "L103",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlay_luminance",
@@ -68116,7 +68062,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L192",
+      "source_location": "L189",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlay_overlaylinestickertextonframe",
@@ -68126,7 +68072,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L315",
+      "source_location": "L312",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlay_overlayphrasesonstickerframes",
@@ -68136,7 +68082,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L154",
+      "source_location": "L151",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlay_resolvecanvasfontnumericweight",
@@ -68146,7 +68092,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L166",
+      "source_location": "L163",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlay_resolveprogrammaticfontfamilycss",
@@ -68156,7 +68102,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L83",
+      "source_location": "L80",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlay_resolveprogrammaticplacementlabel",
@@ -68166,7 +68112,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L116",
+      "source_location": "L113",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlay_strokecolorforfill",
@@ -68176,7 +68122,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L66",
+      "source_location": "L63",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlay_textcolorpresetkey",
@@ -68187,7 +68133,7 @@
       "context": "export",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L52",
+      "source_location": "L49",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlaygeometry",
@@ -68198,7 +68144,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L27",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlaygeometry_correctiontofittextboxinframe",
@@ -68209,7 +68155,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L27",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlaygeometry_estimatetextblockbox",
@@ -68220,7 +68166,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L27",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlaygeometry_estimatetextblockboxfrommeasuredlines",
@@ -68231,7 +68177,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L27",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlaygeometry_inflatepixelrect",
@@ -68242,7 +68188,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L27",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlaygeometry_layoutfromplacementlabel",
@@ -68253,7 +68199,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L37",
+      "source_location": "L34",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlaygeometry_layoutfromplacementoptions",
@@ -68264,7 +68210,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L37",
+      "source_location": "L34",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlaygeometry_pixelrect",
@@ -68275,7 +68221,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L27",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlaygeometry_rectangleintersectionarea",
@@ -68286,7 +68232,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L27",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlaygeometry_rectangleminseparation",
@@ -68297,7 +68243,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L27",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlaygeometry_textoverlayavoidancepadpx",
@@ -68308,7 +68254,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L37",
+      "source_location": "L34",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlaygeometry_textplacementlayout",
@@ -68319,7 +68265,7 @@
       "context": "export",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L63",
+      "source_location": "L60",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlaysubject",
@@ -68330,7 +68276,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L43",
+      "source_location": "L40",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlaysubject_computeautocaptionlayout",
@@ -68341,7 +68287,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L43",
+      "source_location": "L40",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlaysubject_frameinsetpx",
@@ -68352,7 +68298,7 @@
       "context": "export",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L46",
+      "source_location": "L43",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay",
       "target": "utils_linestickertextoverlaytypes",
@@ -68403,22 +68349,11 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L22",
-      "weight": 1.0,
-      "source": "utils_linestickertextoverlay",
-      "target": "utils_linestickertextoverlaytypes_programmatictextstrokewidthpx",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L247",
+      "source_location": "L244",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay_overlaylinestickertextonframe",
       "target": "utils_linestickertextoverlay_geteffectiveprogrammaticplacementmode",
@@ -68429,7 +68364,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L87",
+      "source_location": "L84",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay_resolveprogrammaticplacementlabel",
       "target": "utils_linestickertextoverlay_geteffectiveprogrammaticplacementmode",
@@ -68440,7 +68375,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L251",
+      "source_location": "L248",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay_overlaylinestickertextonframe",
       "target": "utils_linestickertextoverlay_resolveprogrammaticplacementlabel",
@@ -68451,7 +68386,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L245",
+      "source_location": "L242",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay_overlaylinestickertextonframe",
       "target": "utils_linestickertextoverlay_extractfillhexfromtextcolorpreset",
@@ -68462,7 +68397,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L117",
+      "source_location": "L114",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay_strokecolorforfill",
       "target": "utils_linestickertextoverlay_luminance",
@@ -68473,7 +68408,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L246",
+      "source_location": "L243",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay_overlaylinestickertextonframe",
       "target": "utils_linestickertextoverlay_strokecolorforfill",
@@ -68484,7 +68419,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L173",
+      "source_location": "L170",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay_resolveprogrammaticfontfamilycss",
       "target": "utils_linestickertextoverlay_fontcssstackforpreset",
@@ -68495,7 +68430,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L244",
+      "source_location": "L241",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay_overlaylinestickertextonframe",
       "target": "utils_linestickertextoverlay_resolvecanvasfontnumericweight",
@@ -68506,7 +68441,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L243",
+      "source_location": "L240",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay_overlaylinestickertextonframe",
       "target": "utils_linestickertextoverlay_resolveprogrammaticfontfamilycss",
@@ -68517,7 +68452,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L181",
+      "source_location": "L178",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay_linestickertextoverlayoptions",
       "target": "utils_linestickertextoverlaytypes_programmatictextoverlaytuning",
@@ -68529,7 +68464,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L253",
+      "source_location": "L250",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay_overlaylinestickertextonframe",
       "target": "utils_linestickertextoverlaysubject_computeautocaptionlayout"
@@ -68538,19 +68473,8 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L275",
-      "weight": 1.0,
-      "source": "utils_linestickertextoverlay_overlaylinestickertextonframe",
-      "target": "utils_linestickertextoverlaytypes_programmatictextstrokewidthpx"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "utils/lineStickerTextOverlay.ts",
-      "source_location": "L329",
+      "source_location": "L326",
       "weight": 1.0,
       "source": "utils_linestickertextoverlay_overlayphrasesonstickerframes",
       "target": "utils_linestickertextoverlay_overlaylinestickertextonframe",
@@ -68560,7 +68484,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L141",
+      "source_location": "L137",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_captionbandpixelrectforlabel",
@@ -68570,7 +68494,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L234",
+      "source_location": "L230",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_centersearchboundsfortextboxinband",
@@ -68580,7 +68504,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L404",
+      "source_location": "L400",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_correctiontofittextboxinframe",
@@ -68590,7 +68514,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L456",
+      "source_location": "L451",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_estimatetextblockbox",
@@ -68600,7 +68524,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L504",
+      "source_location": "L499",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_estimatetextblockboxfrommeasuredlines",
@@ -68610,7 +68534,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L364",
+      "source_location": "L360",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_inflatepixelrect",
@@ -68620,7 +68544,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L53",
+      "source_location": "L49",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_layoutfromplacementlabel",
@@ -68630,7 +68554,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L22",
+      "source_location": "L18",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_layoutfromplacementoptions",
@@ -68640,7 +68564,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L271",
+      "source_location": "L267",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_linewidthwithspacing",
@@ -68650,7 +68574,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L354",
+      "source_location": "L350",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_pixelrect",
@@ -68660,7 +68584,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L30",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_preferrednudgedirectionforplacementlabel",
@@ -68670,7 +68594,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L356",
+      "source_location": "L352",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_rectangleintersectionarea",
@@ -68680,7 +68604,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L442",
+      "source_location": "L437",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_rectangleminseparation",
@@ -68690,7 +68614,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L380",
+      "source_location": "L376",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_shiftpixelrect",
@@ -68700,7 +68624,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L389",
+      "source_location": "L385",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_textboxfitsframeinset",
@@ -68710,7 +68634,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L429",
+      "source_location": "L424",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_textoverlayavoidancepadpx",
@@ -68720,7 +68644,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L14",
+      "source_location": "L10",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_textplacementlayout",
@@ -68730,7 +68654,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L255",
+      "source_location": "L251",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_textstartyfromanchor",
@@ -68740,7 +68664,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L313",
+      "source_location": "L309",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_wraplines",
@@ -68750,32 +68674,10 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L282",
+      "source_location": "L278",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry",
       "target": "utils_linestickertextoverlaygeometry_wraplineswithspacing",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L9",
-      "weight": 1.0,
-      "source": "utils_linestickertextoverlaygeometry",
-      "target": "utils_linestickertextoverlaytypes",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L9",
-      "weight": 1.0,
-      "source": "utils_linestickertextoverlaygeometry",
-      "target": "utils_linestickertextoverlaytypes_programmatictextstrokewidthpx",
       "confidence_score": 1.0
     },
     {
@@ -68838,7 +68740,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L291",
+      "source_location": "L287",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaygeometry_wraplineswithspacing",
       "target": "utils_linestickertextoverlaygeometry_linewidthwithspacing",
@@ -68865,17 +68767,6 @@
       "source": "utils_linestickertextoverlaysubject_layoutatfontsize",
       "target": "utils_linestickertextoverlaygeometry_wraplines",
       "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "utils/lineStickerTextOverlayGeometry.ts",
-      "source_location": "L433",
-      "weight": 1.0,
-      "source": "utils_linestickertextoverlaygeometry_textoverlayavoidancepadpx",
-      "target": "utils_linestickertextoverlaytypes_programmatictextstrokewidthpx"
     },
     {
       "relation": "imports",
@@ -69228,7 +69119,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayTypes.ts",
-      "source_location": "L111",
+      "source_location": "L104",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaytypes",
       "target": "utils_linestickertextoverlaytypes_default_programmatic_compose_config",
@@ -69238,7 +69129,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayTypes.ts",
-      "source_location": "L62",
+      "source_location": "L55",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaytypes",
       "target": "utils_linestickertextoverlaytypes_default_programmatic_text_overlay_tuning",
@@ -69248,7 +69139,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayTypes.ts",
-      "source_location": "L148",
+      "source_location": "L141",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaytypes",
       "target": "utils_linestickertextoverlaytypes_mergeprogrammaticcomposeconfig",
@@ -69258,7 +69149,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayTypes.ts",
-      "source_location": "L78",
+      "source_location": "L71",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaytypes",
       "target": "utils_linestickertextoverlaytypes_mergeprogrammatictexttuning",
@@ -69268,7 +69159,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayTypes.ts",
-      "source_location": "L94",
+      "source_location": "L87",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaytypes",
       "target": "utils_linestickertextoverlaytypes_programmaticcomposeconfig",
@@ -69318,17 +69209,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "utils/lineStickerTextOverlayTypes.ts",
-      "source_location": "L58",
-      "weight": 1.0,
-      "source": "utils_linestickertextoverlaytypes",
-      "target": "utils_linestickertextoverlaytypes_programmatictextstrokewidthpx",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "utils/lineStickerTextOverlayTypes.ts",
-      "source_location": "L127",
+      "source_location": "L120",
       "weight": 1.0,
       "source": "utils_linestickertextoverlaytypes",
       "target": "utils_linestickertextoverlaytypes_resolvephraseadaptivecaptiontuning",

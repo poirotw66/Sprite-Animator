@@ -500,8 +500,16 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     }
   }
 
-  if (!programmaticCompose.enabled || programmaticCompose.trimAfterCompose) {
+  if (!programmaticCompose.enabled) {
     frames = frames.map((frame) => trimFrameToContent(frame));
+  } else if (programmaticCompose.trimAfterCompose) {
+    frames = frames.map((frame, i) => {
+      const phrase = sheet.phrases[i] ?? '';
+      if (shouldUseComposeLayout(programmaticCompose, phrase)) {
+        return frame;
+      }
+      return trimFrameToContent(frame);
+    });
   } else {
     frames = frames.map((frame, i) => {
       const phrase = sheet.phrases[i] ?? '';

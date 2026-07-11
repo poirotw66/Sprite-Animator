@@ -178,11 +178,6 @@ const LAYOUT_PROTECTION_RULES = `
 export const LINE_STICKER_TEXT_PLACEMENT_PRESETS: readonly string[] = [
     'Top center',
     'Bottom center',
-    'Top left',
-    'Top right',
-    'Bottom left',
-    'Bottom right',
-    'Slight diagonal offset (top-left to bottom-right)',
     'Beside head (left)',
     'Beside head (right)',
 ];
