@@ -35,7 +35,9 @@ import {
 import { DEFAULT_SKILL_STICKER_MODEL, DEFAULT_CHROMA_KEY_ALGORITHM } from '../../../../utils/constants.ts';
 import type { ChromaKeyColorType, ChromaKeyAlgorithm } from '../../../../types.ts';
 import {
+  mergeProgrammaticComposeConfig,
   mergeProgrammaticTextTuning,
+  type ProgrammaticComposeConfig,
   type ProgrammaticTextOverlayTuning,
 } from '../../../../utils/lineStickerTextOverlayTypes.ts';
 
@@ -75,6 +77,8 @@ interface StickerConfig {
   textColorKey?: keyof typeof TEXT_COLOR_PRESETS;
   /** Programmatic overlay tuning (font size, placement, etc.). */
   programmaticTextTuning?: Partial<ProgrammaticTextOverlayTuning>;
+  /** Canvas-compose layout (disjoint caption/subject slots). */
+  programmaticCompose?: Partial<ProgrammaticComposeConfig>;
   scope?: 'set' | 'single'; // default: set
   stickerCount?: number; // set mode only: 40 (LINE default) or 48 (legacy)
   cols?: number; // single mode only (default 4)
@@ -408,6 +412,7 @@ async function main() {
   const fontKey = config.fontKey ?? 'round';
   const textColorKey = config.textColorKey ?? 'black';
   const programmaticTextTuning = mergeProgrammaticTextTuning(config.programmaticTextTuning);
+  const programmaticCompose = mergeProgrammaticComposeConfig(config.programmaticCompose);
 
   async function loadExistingSheet(sheet: SheetPlan, sheetFolder: string): Promise<void> {
     console.log(`\n▶ ${sheet.label}: keeping existing stickers...`);
@@ -465,6 +470,7 @@ async function main() {
       fontKey,
       textColorKey,
       programmaticTextTuning,
+      programmaticCompose,
       maxSheetRetries,
       minGridAlignmentScore,
       extraSheetRegenAttempts,

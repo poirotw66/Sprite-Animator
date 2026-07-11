@@ -1,0 +1,411 @@
+/**
+ * Compose LINE sticker frames on a fixed work canvas: disjoint caption + subject slots.
+ */
+
+import { createCanvas } from '@napi-rs/canvas';
+import { getReservedCaptionBandLabelForFrame } from './lineStickerPrompt';
+import {
+  mergeProgrammaticComposeConfig,
+  mergeProgrammaticTextTuning,
+  type ProgrammaticComposeConfig,
+  type ProgrammaticTextOverlayTuning,
+} from './lineStickerTextOverlayTypes';
+import {
+  extractFillHexFromTextColorPreset,
+  resolveCanvasFontNumericWeight,
+  resolveProgrammaticFontFamilyCss,
+  strokeColorForFill,
+} from './lineStickerTextOverlay';
+import { wrapLines } from './lineStickerTextOverlayGeometry';
+import {
+  captionFontSizePx,
+  fitSubjectPlacement,
+  resolveComposeSlots,
+  resolveEffectiveComposePreset,
+  WORK_CANVAS_HEIGHT,
+  WORK_CANVAS_WIDTH,
+  type ComposeSlots,
+} from './lineStickerComposeLayout';
+import type { RgbaFrameBuffer } from './sheetComponentSlicer';
+import { computeFitDimensions, toEvenDimension } from './lineStickerUploadSpec';
+
+export interface ComposeStickerOptions {
+  phrase: string;
+  frameIndex?: number;
+  compose?: ProgrammaticComposeConfig;
+  tuning?: ProgrammaticTextOverlayTuning;
+  fontKey?: 'round' | 'handwritten' | 'bold' | 'gothic' | 'poster';
+  colorKey?: 'black' | 'white' | 'navy' | 'red' | 'pink';
+}
+
+/** Compose layout applies only when enabled and the frame has caption text. */
+export function shouldUseComposeLayout(compose: ProgrammaticComposeConfig, phrase: string): boolean {
+  return compose.enabled && phrase.trim().length > 0;
+}
+
+function asDomCanvasContext(ctx: unknown): CanvasRenderingContext2D {
+  return ctx as CanvasRenderingContext2D;
+}
+
+function measureOpaqueBounds(frame: RgbaFrameBuffer): PixelBounds | null {
+  const { data, width, height } = frame;
+  let minX = width;
+  let minY = height;
+  let maxX = -1;
+  let maxY = -1;
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      if (data[(y * width + x) * 4 + 3]! > 8) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX < minX || maxY < minY) {
+    return null;
+  }
+  return { minX, minY, maxX: maxX + 1, maxY: maxY + 1 };
+}
+
+interface PixelBounds {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+
+function cropFrame(frame: RgbaFrameBuffer, bounds: PixelBounds): RgbaFrameBuffer {
+  const outW = bounds.maxX - bounds.minX;
+  const outH = bounds.maxY - bounds.minY;
+  const out = new Uint8ClampedArray(outW * outH * 4);
+  for (let y = bounds.minY; y < bounds.maxY; y += 1) {
+    const srcRow = (y * frame.width + bounds.minX) * 4;
+    const dstRow = (y - bounds.minY) * outW * 4;
+    out.set(frame.data.subarray(srcRow, srcRow + outW * 4), dstRow);
+  }
+  return { data: out, width: outW, height: outH };
+}
+
+function sampleBilinear(
+  src: RgbaFrameBuffer,
+  srcX: number,
+  srcY: number
+): [number, number, number, number] {
+  const x0 = Math.max(0, Math.min(src.width - 1, Math.floor(srcX)));
+  const y0 = Math.max(0, Math.min(src.height - 1, Math.floor(srcY)));
+  const x1 = Math.min(src.width - 1, x0 + 1);
+  const y1 = Math.min(src.height - 1, y0 + 1);
+  const tx = srcX - x0;
+  const ty = srcY - y0;
+  const sample = (x: number, y: number) => {
+    const i = (y * src.width + x) * 4;
+    return [src.data[i]!, src.data[i + 1]!, src.data[i + 2]!, src.data[i + 3]!] as const;
+  };
+  const c00 = sample(x0, y0);
+  const c10 = sample(x1, y0);
+  const c01 = sample(x0, y1);
+  const c11 = sample(x1, y1);
+  const channel = (index: number) =>
+    Math.round(
+      c00[index]! * (1 - tx) * (1 - ty) +
+        c10[index]! * tx * (1 - ty) +
+        c01[index]! * (1 - tx) * ty +
+        c11[index]! * tx * ty
+    );
+  return [channel(0), channel(1), channel(2), channel(3)];
+}
+
+function resampleRgba(src: RgbaFrameBuffer, dstW: number, dstH: number): RgbaFrameBuffer {
+  const width = toEvenDimension(dstW);
+  const height = toEvenDimension(dstH);
+  const data = new Uint8ClampedArray(width * height * 4);
+  for (let y = 0; y < height; y += 1) {
+    const srcY = ((y + 0.5) / height) * src.height - 0.5;
+    for (let x = 0; x < width; x += 1) {
+      const srcX = ((x + 0.5) / width) * src.width - 0.5;
+      const [r, g, b, a] = sampleBilinear(src, srcX, srcY);
+      const offset = (y * width + x) * 4;
+      data[offset] = r;
+      data[offset + 1] = g;
+      data[offset + 2] = b;
+      data[offset + 3] = a;
+    }
+  }
+  return { data, width, height };
+}
+
+function drawRgbaFrameOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  frame: RgbaFrameBuffer,
+  offsetX: number,
+  offsetY: number
+): void {
+  const layer = createCanvas(frame.width, frame.height);
+  const layerCtx = layer.getContext('2d');
+  if (!layerCtx) {
+    return;
+  }
+  const imgData = layerCtx.createImageData(frame.width, frame.height);
+  imgData.data.set(frame.data);
+  layerCtx.putImageData(imgData, 0, 0);
+  ctx.drawImage(layer, offsetX, offsetY);
+}
+
+function readRgbaFromCanvas(canvas: ReturnType<typeof createCanvas>): RgbaFrameBuffer {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('Canvas 2D context unavailable');
+  }
+  const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  return { data: new Uint8ClampedArray(data), width, height };
+}
+
+/** Width of one line including inter-character tracking. */
+function lineWidthWithSpacing(
+  ctx: CanvasRenderingContext2D,
+  line: string,
+  spacingPx: number
+): number {
+  const chars = Array.from(line);
+  const glyphs = chars.reduce((w, c) => w + ctx.measureText(c).width, 0);
+  return glyphs + spacingPx * Math.max(0, chars.length - 1);
+}
+
+/** Stroke+fill one line char by char so CJK captions get visible letter spacing. */
+function drawLineWithSpacing(
+  ctx: CanvasRenderingContext2D,
+  line: string,
+  centerX: number,
+  y: number,
+  spacingPx: number,
+  strokeHex: string,
+  fillHex: string,
+  strokeW: number
+): void {
+  const chars = Array.from(line);
+  const widths = chars.map((c) => ctx.measureText(c).width);
+  const total =
+    widths.reduce((a, b) => a + b, 0) + spacingPx * Math.max(0, chars.length - 1);
+  let x = centerX - total / 2;
+  const prevAlign = ctx.textAlign;
+  ctx.textAlign = 'left';
+  chars.forEach((ch, i) => {
+    ctx.strokeStyle = strokeHex;
+    ctx.lineWidth = strokeW * 2;
+    ctx.strokeText(ch, x, y);
+    ctx.fillStyle = fillHex;
+    ctx.fillText(ch, x, y);
+    x += widths[i]! + spacingPx;
+  });
+  ctx.textAlign = prevAlign;
+}
+
+function resolveCaptionLayout(
+  ctx: CanvasRenderingContext2D,
+  phrase: string,
+  slots: ComposeSlots,
+  tuning: ProgrammaticTextOverlayTuning,
+  canvasWidth: number,
+  canvasHeight: number,
+  fontKey: ComposeStickerOptions['fontKey'],
+  letterSpacingEm: number
+): { lines: string[]; fontSize: number; lineHeight: number; centerX: number; centerY: number; letterSpacingPx: number } {
+  const { captionSlot, captionAlign, captionOrientation } = slots;
+  const slotW = captionSlot.maxX - captionSlot.minX;
+  const slotH = captionSlot.maxY - captionSlot.minY;
+  const maxWidth = Math.max(8, slotW * 0.92);
+  let fontSize = captionFontSizePx(canvasWidth, canvasHeight, tuning.fontSizePercent);
+  const minFont = 16;
+  const lineMult = Math.max(1.02, Math.min(1.8, tuning.lineHeightMultiplier));
+  const key = fontKey ?? 'round';
+  const applyFont = (px: number) => {
+    ctx.font = `${resolveCanvasFontNumericWeight(key, tuning)} ${px}px ${resolveProgrammaticFontFamilyCss(key, tuning)}`;
+  };
+
+  let lines: string[] = [];
+  let lineHeight = fontSize * lineMult;
+  let letterSpacingPx = fontSize * letterSpacingEm;
+
+  if (captionOrientation === 'vertical') {
+    // Vertical CJK stacking: one glyph per line down the strip.
+    lines = Array.from(phrase);
+    while (fontSize >= minFont) {
+      lineHeight = fontSize * lineMult;
+      if (fontSize <= slotW * 0.94 && lines.length * lineHeight <= slotH * 0.96) {
+        break;
+      }
+      fontSize -= 1;
+    }
+    applyFont(fontSize);
+    letterSpacingPx = 0;
+  } else {
+    while (fontSize >= minFont) {
+      applyFont(fontSize);
+      letterSpacingPx = fontSize * letterSpacingEm;
+      lines = wrapLines(ctx, phrase, maxWidth);
+      lineHeight = fontSize * lineMult;
+      const widest = lines.reduce(
+        (w, line) => Math.max(w, lineWidthWithSpacing(ctx, line, letterSpacingPx)),
+        0
+      );
+      if (lines.length * lineHeight <= slotH * 0.92 && widest <= maxWidth) {
+        break;
+      }
+      fontSize -= 1;
+    }
+  }
+
+  let centerX = (captionSlot.minX + captionSlot.maxX) / 2;
+  if (captionOrientation === 'horizontal' && captionAlign !== 'center') {
+    const widest = lines.reduce(
+      (w, line) => Math.max(w, lineWidthWithSpacing(ctx, line, letterSpacingPx)),
+      0
+    );
+    const pad = slotW * 0.04;
+    centerX =
+      captionAlign === 'left'
+        ? captionSlot.minX + pad + widest / 2
+        : captionSlot.maxX - pad - widest / 2;
+  }
+  const centerY = (captionSlot.minY + captionSlot.maxY) / 2;
+  return { lines, fontSize, lineHeight, centerX, centerY, letterSpacingPx };
+}
+
+/** Compose one sticker: subject + caption on a fixed work canvas, then fit to LINE limits. */
+export function composeStickerFrame(
+  subjectFrame: RgbaFrameBuffer,
+  options: ComposeStickerOptions
+): RgbaFrameBuffer {
+  const compose = mergeProgrammaticComposeConfig(options.compose);
+  const tuning = mergeProgrammaticTextTuning({
+    ...options.tuning,
+    ...compose.tuning,
+    fontSizeMode: compose.tuning?.fontSizeMode ?? options.tuning?.fontSizeMode ?? 'fixed',
+  });
+  const fontKey = options.fontKey ?? 'round';
+  const colorKey = options.colorKey ?? 'black';
+  const frameIndex = options.frameIndex ?? 0;
+  const phrase = options.phrase.trim();
+  if (!shouldUseComposeLayout(compose, phrase)) {
+    return subjectFrame;
+  }
+
+  const canvasW = compose.workCanvas?.width ?? WORK_CANVAS_WIDTH;
+  const canvasH = compose.workCanvas?.height ?? WORK_CANVAS_HEIGHT;
+  const marginRatio = Math.max(0.02, Math.min(0.18, tuning.edgeMarginPercent / 100));
+  const layout = compose.layout ?? 'top_caption_bottom_subject';
+  const preset = resolveEffectiveComposePreset(
+    layout,
+    frameIndex,
+    getReservedCaptionBandLabelForFrame
+  );
+  const lineMult = Math.max(1.02, Math.min(1.8, tuning.lineHeightMultiplier));
+  const slots = resolveComposeSlots(preset, canvasW, canvasH, marginRatio, {
+    fontSizePx: captionFontSizePx(canvasW, canvasH, tuning.fontSizePercent),
+    lineHeightMultiplier: lineMult,
+  });
+
+  const canvas = createCanvas(canvasW, canvasH);
+  const ctx = asDomCanvasContext(canvas.getContext('2d'));
+  ctx.clearRect(0, 0, canvasW, canvasH);
+
+  let subject = subjectFrame;
+  if (compose.subjectTrim === 'content') {
+    const bounds = measureOpaqueBounds(subjectFrame);
+    if (bounds) {
+      subject = cropFrame(subjectFrame, bounds);
+    }
+  }
+
+  const bounds = measureOpaqueBounds(subject);
+  if (bounds) {
+    const cropped = cropFrame(subject, bounds);
+    const placement = fitSubjectPlacement(
+      cropped.width,
+      cropped.height,
+      slots.subjectSlot,
+      slots.subjectAnchor,
+      slots.subjectScale ?? compose.subjectScale ?? 1.12
+    );
+    const scaled =
+      placement.drawWidth === cropped.width && placement.drawHeight === cropped.height
+        ? cropped
+        : resampleRgba(cropped, placement.drawWidth, placement.drawHeight);
+    drawRgbaFrameOnCanvas(ctx, scaled, placement.offsetX, placement.offsetY);
+  }
+
+  {
+    const fontFamily = resolveProgrammaticFontFamilyCss(fontKey, tuning);
+    const numericWeight = resolveCanvasFontNumericWeight(fontKey, tuning);
+    const strokeMult = Math.max(0.5, Math.min(2.5, tuning.strokeScale));
+    const letterSpacingEm = Math.max(0, Math.min(0.4, compose.captionLetterSpacingEm ?? 0.16));
+    const layoutResult = resolveCaptionLayout(
+      ctx,
+      phrase,
+      slots,
+      tuning,
+      canvasW,
+      canvasH,
+      fontKey,
+      letterSpacingEm
+    );
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(
+      slots.captionSlot.minX,
+      slots.captionSlot.minY,
+      slots.captionSlot.maxX - slots.captionSlot.minX,
+      slots.captionSlot.maxY - slots.captionSlot.minY
+    );
+    ctx.clip();
+
+    ctx.font = `${numericWeight} ${layoutResult.fontSize}px ${fontFamily}`;
+    const fillHex = extractFillHexFromTextColorPreset(colorKey);
+    const strokeHex = strokeColorForFill(fillHex);
+    const strokeW = Math.max(1.5, layoutResult.fontSize * 0.12 * strokeMult);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.miterLimit = 2;
+
+    const offsetX = (canvasW * tuning.offsetXPercent) / 100;
+    const offsetY = (canvasH * tuning.offsetYPercent) / 100;
+    const firstLineY =
+      layoutResult.centerY +
+      offsetY -
+      ((layoutResult.lines.length - 1) / 2) * layoutResult.lineHeight;
+
+    layoutResult.lines.forEach((line, i) => {
+      const y = firstLineY + i * layoutResult.lineHeight;
+      if (layoutResult.letterSpacingPx > 0 && Array.from(line).length > 1) {
+        drawLineWithSpacing(
+          ctx,
+          line,
+          layoutResult.centerX + offsetX,
+          y,
+          layoutResult.letterSpacingPx,
+          strokeHex,
+          fillHex,
+          strokeW
+        );
+      } else {
+        ctx.strokeStyle = strokeHex;
+        ctx.lineWidth = strokeW * 2;
+        ctx.strokeText(line, layoutResult.centerX + offsetX, y);
+        ctx.fillStyle = fillHex;
+        ctx.fillText(line, layoutResult.centerX + offsetX, y);
+      }
+    });
+    ctx.restore();
+  }
+
+  let output = readRgbaFromCanvas(canvas);
+  const fit = computeFitDimensions(output.width, output.height, WORK_CANVAS_WIDTH, WORK_CANVAS_HEIGHT);
+  if (fit.width !== output.width || fit.height !== output.height) {
+    output = resampleRgba(output, fit.width, fit.height);
+  }
+  return output;
+}

@@ -13,7 +13,9 @@ import { resolve } from 'node:path';
 
 import { parsePhraseSetJson } from '../../../../utils/lineStickerPhraseSetFormat.ts';
 import {
+  mergeProgrammaticComposeConfig,
   mergeProgrammaticTextTuning,
+  type ProgrammaticComposeConfig,
   type ProgrammaticTextOverlayTuning,
 } from '../../../../utils/lineStickerTextOverlayTypes.ts';
 import { FONT_PRESETS, TEXT_COLOR_PRESETS } from '../../../../utils/lineStickerPrompt.ts';
@@ -23,7 +25,8 @@ import {
   sliceSheet,
 } from './nodeImage.mts';
 import { buildEqualGridBounds } from '../../../../utils/gridSheetTemplate.ts';
-import { overlayPhraseOnRgbaFrame } from './programmaticTextOverlay.mts';
+import { composePhraseOnRgbaFrame, overlayPhraseOnRgbaFrame } from './programmaticTextOverlay.mts';
+import { shouldUseComposeLayout } from '../../../../utils/lineStickerCompose.ts';
 import { trimFrameToContent } from '../../../../utils/sheetComponentSlicer.ts';
 
 const argv = process.argv.slice(2);
@@ -59,26 +62,38 @@ if (!existsSync(processedPath)) {
   throw new Error(`Missing ${processedPath}`);
 }
 
-async function loadOverlayTuning(): Promise<ProgrammaticTextOverlayTuning> {
+async function loadOverlayConfig(): Promise<{
+  tuning: ProgrammaticTextOverlayTuning;
+  compose: ProgrammaticComposeConfig;
+}> {
   const configPath = jobConfigPath
     ? resolve(jobConfigPath)
     : resolve(sheetDir, '..', 'job.config.json');
   let partial: Partial<ProgrammaticTextOverlayTuning> | undefined;
+  let composePartial: Partial<ProgrammaticComposeConfig> | undefined;
   if (existsSync(configPath)) {
     const config = JSON.parse(await readFile(configPath, 'utf8')) as {
       programmaticTextTuning?: Partial<ProgrammaticTextOverlayTuning>;
+      programmaticCompose?: Partial<ProgrammaticComposeConfig>;
       fontKey?: keyof typeof FONT_PRESETS;
       textColorKey?: keyof typeof TEXT_COLOR_PRESETS;
     };
     partial = config.programmaticTextTuning;
+    composePartial = config.programmaticCompose;
     if (fontSizePercent != null) {
       partial = { ...partial, fontSizePercent };
     }
-    return mergeProgrammaticTextTuning(partial);
+    return {
+      tuning: mergeProgrammaticTextTuning(partial),
+      compose: mergeProgrammaticComposeConfig(composePartial),
+    };
   }
-  return mergeProgrammaticTextTuning(
-    fontSizePercent != null ? { fontSizePercent } : undefined
-  );
+  return {
+    tuning: mergeProgrammaticTextTuning(
+      fontSizePercent != null ? { fontSizePercent } : undefined
+    ),
+    compose: mergeProgrammaticComposeConfig(),
+  };
 }
 
 let phrases: string[] = [];
@@ -96,8 +111,11 @@ if (phrasesPath) {
   }
 }
 
-const tuning = await loadOverlayTuning();
-console.log(`Programmatic tuning: fontSizePercent=${tuning.fontSizePercent}`);
+const { tuning, compose } = await loadOverlayConfig();
+console.log(
+  `Programmatic tuning: fontSizePercent=${tuning.fontSizePercent}` +
+    (compose.enabled ? ` | compose=${compose.layout ?? 'top_caption_bottom_subject'}` : '')
+);
 
 const image = decodeImage(new Uint8Array(await readFile(processedPath)));
 const useGuided = existsSync(resolve(sheetDir, '_grid-template-guided.png'));
@@ -109,14 +127,20 @@ let frames = sliceSheet(image, cols, rows, {
   templateBounds: useGuided ? templateBounds : undefined,
 });
 
-frames = frames.map((frame, i) =>
-  trimFrameToContent(
-    overlayPhraseOnRgbaFrame(frame, phrases[i] ?? '', {
-      frameIndex: phraseOffset + i,
-      tuning,
-    })
-  )
-);
+frames = frames.map((frame, i) => {
+  const phrase = phrases[i] ?? '';
+  const frameIndex = phraseOffset + i;
+  const overlaid = compose.enabled
+    ? composePhraseOnRgbaFrame(frame, phrase, { frameIndex, tuning, compose })
+    : overlayPhraseOnRgbaFrame(frame, phrase, { frameIndex, tuning });
+  if (!compose.enabled || compose.trimAfterCompose) {
+    return trimFrameToContent(overlaid);
+  }
+  if (shouldUseComposeLayout(compose, phrase)) {
+    return overlaid;
+  }
+  return trimFrameToContent(overlaid);
+});
 
 for (let i = 0; i < frames.length; i++) {
   const name = `sticker-${String(i + 1).padStart(2, '0')}.png`;

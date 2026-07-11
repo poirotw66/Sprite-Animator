@@ -351,10 +351,21 @@ Cycle preserves existing phrase-to-band variety without re-running Gemini.
 
 ## 11. Open Questions (resolve before or during spike)
 
-1. **Subject trim default:** `none` vs `content` for school-daily set?
-2. **Middle center band:** separate preset `middle_band` or fold into F only?
-3. **Post-compose trim:** keep strict 370×320 for LINE preview consistency, or trim transparent edges for smaller file size?
-4. **Browser parity:** required for v1 or headless-only first?
+1. **Subject trim default:** `none` vs `content` for school-daily set? → **Resolved: `none` for v1**
+2. **Middle center band:** separate preset `middle_band` or fold into F only? → Deferred
+3. **Post-compose trim:** keep strict 370×320 for LINE preview consistency, or trim transparent edges for smaller file size? → **Resolved: `trimAfterCompose: false`**
+4. **Browser parity:** required for v1 or headless-only first? → **Resolved: headless-only v1**
+
+## 12. Implementation Status (2026-07-11)
+
+- [x] `utils/lineStickerComposeLayout.ts` — presets A–E + `generation_aligned` mapper
+- [x] `utils/lineStickerCompose.ts` — `composeStickerFrame`
+- [x] `utils/lineStickerCompose.test.ts` — 14 tests passing
+- [x] Pipeline: `sheetGeneration.mts`, `reoverlay-sheet.mts`, `generate.mts`
+- [x] `job.config.json` for `twice-1-school-daily` — Preset A, 22%, compose enabled
+- [x] Re-overlaid sheet-1 + sheet-2 (40 stickers)
+- [ ] Browser preview hook (deferred)
+- [ ] Switch to `generation_aligned` after visual review (optional)
 
 ---
 

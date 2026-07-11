@@ -22,16 +22,26 @@ import {
   getEffectiveProgrammaticPlacementMode,
   strokeColorForFill,
 } from '../../../../utils/lineStickerTextOverlay.ts';
-import type { RgbaImage } from './nodeImage.mts';
+import { composeStickerFrame, shouldUseComposeLayout } from '../../../../utils/lineStickerCompose.ts';
+import {
+  mergeProgrammaticComposeConfig,
+  type ProgrammaticComposeConfig,
+} from '../../../../utils/lineStickerTextOverlayTypes.ts';
 
 type FontPresetKey = keyof typeof FONT_PRESETS;
 type TextColorPresetKey = keyof typeof TEXT_COLOR_PRESETS;
+
+import type { RgbaImage } from './nodeImage.mts';
 
 export interface ProgrammaticOverlayOptions {
   fontKey?: FontPresetKey;
   colorKey?: TextColorPresetKey;
   tuning?: ProgrammaticTextOverlayTuning;
   frameIndex?: number;
+}
+
+export interface ComposeOverlayOptions extends ProgrammaticOverlayOptions {
+  compose?: ProgrammaticComposeConfig;
 }
 
 function blitRgbaOntoCanvas(
@@ -125,6 +135,40 @@ export function overlayPhraseOnRgbaFrame(
   });
 
   return readRgbaFromCanvas(canvas);
+}
+
+/** Compose phrase + subject on a fixed work canvas (disjoint slots). */
+export function composePhraseOnRgbaFrame(
+  frame: RgbaImage,
+  phrase: string,
+  options: ComposeOverlayOptions = {}
+): RgbaImage {
+  const compose = mergeProgrammaticComposeConfig(options.compose);
+  if (!compose.enabled) {
+    return overlayPhraseOnRgbaFrame(frame, phrase, options);
+  }
+  if (!shouldUseComposeLayout(compose, phrase)) {
+    return frame;
+  }
+  return composeStickerFrame(frame, {
+    phrase,
+    frameIndex: options.frameIndex,
+    compose,
+    tuning: options.tuning,
+    fontKey: options.fontKey,
+    colorKey: options.colorKey,
+  });
+}
+
+/** Apply canvas-compose captions to every frame in a sheet slice batch. */
+export function composePhrasesOnRgbaFrames(
+  frames: RgbaImage[],
+  phrases: string[],
+  options: Omit<ComposeOverlayOptions, 'frameIndex'> = {}
+): RgbaImage[] {
+  return frames.map((frame, i) =>
+    composePhraseOnRgbaFrame(frame, phrases[i] ?? '', { ...options, frameIndex: i })
+  );
 }
 
 /** Apply programmatic captions to every frame in a sheet slice batch. */

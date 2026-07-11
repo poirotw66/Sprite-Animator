@@ -4,6 +4,8 @@
  * import the config shape without pulling in the heavy canvas rendering code.
  */
 
+import type { ComposeLayoutPreset } from './lineStickerComposeLayout';
+
 /** How to pick text anchor when compositing programmatically. */
 export type ProgrammaticTextPlacementMode =
   | 'cycle'
@@ -78,5 +80,48 @@ export function mergeProgrammaticTextTuning(
     placementModeOverrides: partial.placementModeOverrides
       ? [...partial.placementModeOverrides]
       : DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING.placementModeOverrides,
+  };
+}
+
+/** Canvas-compose layout: disjoint caption/subject slots on a fixed work canvas. */
+export interface ProgrammaticComposeConfig {
+  enabled: boolean;
+  layout?: ComposeLayoutPreset;
+  workCanvas?: { width: number; height: number };
+  subjectTrim?: 'none' | 'content';
+  /** Extra scale for subject inside its slot (1 = contain max; default 1.12). */
+  subjectScale?: number;
+  /** Letter spacing between caption glyphs, in em of the caption font size (default 0.08). */
+  captionLetterSpacingEm?: number;
+  trimAfterCompose?: boolean;
+  tuning?: Partial<ProgrammaticTextOverlayTuning>;
+}
+
+export const DEFAULT_PROGRAMMATIC_COMPOSE_CONFIG: ProgrammaticComposeConfig = {
+  enabled: false,
+  layout: 'generation_aligned',
+  subjectTrim: 'none',
+  subjectScale: 1.12,
+  captionLetterSpacingEm: 0.16,
+  trimAfterCompose: false,
+  tuning: {
+    fontSizePercent: 20,
+    fontSizeMode: 'fixed',
+  },
+};
+
+export function mergeProgrammaticComposeConfig(
+  partial?: Partial<ProgrammaticComposeConfig>
+): ProgrammaticComposeConfig {
+  if (!partial) {
+    return { ...DEFAULT_PROGRAMMATIC_COMPOSE_CONFIG };
+  }
+  return {
+    ...DEFAULT_PROGRAMMATIC_COMPOSE_CONFIG,
+    ...partial,
+    workCanvas: partial.workCanvas ? { ...partial.workCanvas } : DEFAULT_PROGRAMMATIC_COMPOSE_CONFIG.workCanvas,
+    tuning: partial.tuning
+      ? { ...DEFAULT_PROGRAMMATIC_COMPOSE_CONFIG.tuning, ...partial.tuning }
+      : DEFAULT_PROGRAMMATIC_COMPOSE_CONFIG.tuning,
   };
 }

@@ -37,10 +37,13 @@ import {
   sliceSheet,
   type RgbaImage,
 } from './nodeImage.mts';
-import { overlayPhrasesOnRgbaFrames } from './programmaticTextOverlay.mts';
+import { composePhrasesOnRgbaFrames, overlayPhrasesOnRgbaFrames } from './programmaticTextOverlay.mts';
+import { shouldUseComposeLayout } from '../../../../utils/lineStickerCompose.ts';
 import { trimFrameToContent } from '../../../../utils/sheetComponentSlicer.ts';
 import {
+  mergeProgrammaticComposeConfig,
   mergeProgrammaticTextTuning,
+  type ProgrammaticComposeConfig,
   type ProgrammaticTextOverlayTuning,
 } from '../../../../utils/lineStickerTextOverlayTypes.ts';
 
@@ -83,6 +86,7 @@ export interface GenerateOneSheetParams {
   fontKey?: keyof typeof FONT_PRESETS;
   textColorKey?: keyof typeof TEXT_COLOR_PRESETS;
   programmaticTextTuning?: ProgrammaticTextOverlayTuning;
+  programmaticCompose?: ProgrammaticComposeConfig;
   maxSheetRetries: number;
   minGridAlignmentScore: number;
   /** Extra Gemini attempts when grid score stays below minGridAlignmentScore. Default 3. */
@@ -213,6 +217,7 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     fontKey = 'round',
     textColorKey = 'black',
     programmaticTextTuning = mergeProgrammaticTextTuning(),
+    programmaticCompose = mergeProgrammaticComposeConfig(),
     maxSheetRetries,
     minGridAlignmentScore,
     extraSheetRegenAttempts = 3,
@@ -477,17 +482,35 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
   });
 
   if (textRendering === 'programmatic' && includeText) {
-    log(logPrefix, 'applying programmatic text overlay...');
-    frames = overlayPhrasesOnRgbaFrames(frames, sheet.phrases, {
-      fontKey,
-      colorKey: textColorKey,
-      tuning: programmaticTextTuning,
-    });
+    if (programmaticCompose.enabled) {
+      log(logPrefix, 'applying canvas-compose programmatic text...');
+      frames = composePhrasesOnRgbaFrames(frames, sheet.phrases, {
+        fontKey,
+        colorKey: textColorKey,
+        tuning: programmaticTextTuning,
+        compose: programmaticCompose,
+      });
+    } else {
+      log(logPrefix, 'applying programmatic text overlay...');
+      frames = overlayPhrasesOnRgbaFrames(frames, sheet.phrases, {
+        fontKey,
+        colorKey: textColorKey,
+        tuning: programmaticTextTuning,
+      });
+    }
   }
 
-  // Frames keep full cell space through overlay (caption placement needs it);
-  // trim to content only after text is drawn.
-  frames = frames.map((frame) => trimFrameToContent(frame));
+  if (!programmaticCompose.enabled || programmaticCompose.trimAfterCompose) {
+    frames = frames.map((frame) => trimFrameToContent(frame));
+  } else {
+    frames = frames.map((frame, i) => {
+      const phrase = sheet.phrases[i] ?? '';
+      if (shouldUseComposeLayout(programmaticCompose, phrase)) {
+        return frame;
+      }
+      return trimFrameToContent(frame);
+    });
+  }
 
   const manifestEntries: SheetManifestEntry[] = [];
   for (let i = 0; i < frames.length; i++) {
