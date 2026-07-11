@@ -27,6 +27,7 @@ import { trimFrameToContent } from './sheetComponentSlicer';
 import { computeFitDimensions, toEvenDimension } from './lineStickerUploadSpec';
 import type { LineStickerFontKey } from './lineStickerPresets';
 import { TEXT_COLOR_PRESETS } from './lineStickerPresets';
+import { ensureBundledStickerFontsRegistered } from './lineStickerBundledFonts';
 import {
   extractFillHexFromTextColorPreset,
   resolveCanvasFontNumericWeight,
@@ -319,6 +320,7 @@ export function composeStickerFrame(
   subjectFrame: RgbaFrameBuffer,
   options: ComposeStickerOptions
 ): RgbaFrameBuffer {
+  ensureBundledStickerFontsRegistered();
   const compose = mergeProgrammaticComposeConfig(options.compose);
   const tuning = mergeProgrammaticTextTuning({
     ...options.tuning,
@@ -382,7 +384,7 @@ export function composeStickerFrame(
       cropped.height,
       slots.subjectSlot,
       slots.subjectAnchor,
-      slots.subjectScale ?? compose.subjectScale ?? 1.12
+      compose.subjectScale ?? slots.subjectScale ?? 1.28
     );
     const scaled =
       placement.drawWidth === cropped.width && placement.drawHeight === cropped.height

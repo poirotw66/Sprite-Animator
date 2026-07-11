@@ -96,7 +96,7 @@ export interface ProgrammaticComposeConfig {
   layout?: ComposeLayoutPreset;
   workCanvas?: { width: number; height: number };
   subjectTrim?: 'none' | 'content';
-  /** Extra scale for subject inside its slot (1 = contain max; default 1.12). */
+  /** Extra scale for subject inside its slot (1 = contain max; default 1.28). */
   subjectScale?: number;
   /** Letter spacing between caption glyphs, in em of the caption font size (default 0.08). */
   captionLetterSpacingEm?: number;
@@ -112,7 +112,7 @@ export const DEFAULT_PROGRAMMATIC_COMPOSE_CONFIG: ProgrammaticComposeConfig = {
   enabled: false,
   layout: 'generation_aligned',
   subjectTrim: 'none',
-  subjectScale: 1.12,
+  subjectScale: 1.28,
   captionLetterSpacingEm: 0.16,
   phraseLengthAdaptive: true,
   trimMarginRatio: 0.06,

@@ -15,8 +15,14 @@ describe('resolveFontStylePromptDesc', () => {
 
 describe('FONT_PRESET_ORDER', () => {
   it('keeps built-in presets plus custom last', () => {
-    expect(FONT_PRESET_ORDER).toHaveLength(9);
+    expect(FONT_PRESET_ORDER).toHaveLength(19);
+    expect(FONT_PRESET_ORDER).toContain('mochiRound');
+    expect(FONT_PRESET_ORDER).toContain('bubblePop');
     expect(FONT_PRESET_ORDER).toContain('kidDoodle');
+    expect(FONT_PRESET_ORDER).toContain('liyushoushu');
+    expect(FONT_PRESET_ORDER).toContain('fashionBitmap16');
+    expect(FONT_PRESET_ORDER).toContain('kanaka');
+    expect(FONT_PRESET_ORDER).toContain('naikai');
     expect(FONT_PRESET_ORDER.at(-1)).toBe('custom');
   });
 });

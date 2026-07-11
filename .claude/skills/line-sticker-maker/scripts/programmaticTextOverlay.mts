@@ -23,6 +23,7 @@ import {
   getEffectiveProgrammaticPlacementMode,
   strokeColorForFill,
 } from '../../../../utils/lineStickerTextOverlay.ts';
+import { ensureBundledStickerFontsRegistered } from '../../../../utils/lineStickerBundledFonts.ts';
 import { composeStickerFrame, shouldUseComposeLayout } from '../../../../utils/lineStickerCompose.ts';
 import {
   mergeProgrammaticComposeConfig,
@@ -73,6 +74,8 @@ export function overlayPhraseOnRgbaFrame(
   if (!trimmed) {
     return frame;
   }
+
+  ensureBundledStickerFontsRegistered();
 
   const fontKey = options.fontKey ?? 'round';
   const colorKey = options.colorKey ?? 'black';

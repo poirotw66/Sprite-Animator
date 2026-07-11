@@ -1,1 +1,33 @@
 @import "tailwindcss";
+
+@font-face {
+  font-family: "Liyu Shoushu";
+  src: url("./fonts/LiyuShoushu.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "FashionBitmap16";
+  src: url("./fonts/FashionBitmap16_0.092.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "073 TEGUSE  Kanaka Font";
+  src: url("./fonts/073 TEGUSE - Kanaka Font_240705.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "NaikaiFont";
+  src: url("./fonts/NaikaiFont-Regular-Lite.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

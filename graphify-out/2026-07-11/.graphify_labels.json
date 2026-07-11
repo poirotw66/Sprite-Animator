@@ -139,7 +139,6 @@
   "137": "v1.1.0 — 精確洋紅色去背 (2026-01-25)",
   "138": "專案優化路線圖與功能建議",
   "139": "PartingPage.tsx",
-  "140": "despillForgeGreenFringe",
   "141": "sync-upload-input.mts",
   "142": "English",
   "143": "English",
@@ -151,7 +150,6 @@
   "149": "parsePhraseSetJson",
   "150": "💡 創新功能建議",
   "151": "🚀 推薦實施順序",
-  "152": "🚀 Deploy to GitHub Pages",
   "153": "rgbaScale.ts",
   "154": "7. **高級功能**",
   "155": "🎯 成功指標",
@@ -178,8 +176,7 @@
   "176": "Giraffe Daily Sprite Sheet 2",
   "177": "Meerkat Banter Sprite Sheet 1",
   "178": "Meerkat Banter Sprite Sheet 2",
-  "179": "throwIfAborted",
-  "180": "alphaEdgeFeather.ts",
-  "182": "comicDownloadFilenames.ts",
-  "184": "💡 常見問題 (FAQ)"
+  "184": "💡 常見問題 (FAQ)",
+  "185": "🚀 部署到 GitHub Pages",
+  "187": "🎯 最佳實踐 (Best Practices)"
 }

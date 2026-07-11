@@ -189,7 +189,7 @@ export function resolveComposeSlots(
         subjectAnchor: 'bottom_center',
         captionAlign: 'center',
         captionOrientation: 'horizontal',
-        subjectScale: 1.12,
+        subjectScale: 1.22,
       });
     case 'bottom_caption_top_subject':
       return snapSlots({
@@ -198,7 +198,7 @@ export function resolveComposeSlots(
         subjectAnchor: 'bottom_center',
         captionAlign: 'center',
         captionOrientation: 'horizontal',
-        subjectScale: 1.18,
+        subjectScale: 1.28,
       });
     case 'corner_top_left_subject_bottom_right':
       return snapSlots({
@@ -207,7 +207,7 @@ export function resolveComposeSlots(
         subjectAnchor: 'bottom_center',
         captionAlign: 'left',
         captionOrientation: 'horizontal',
-        subjectScale: 1.12,
+        subjectScale: 1.22,
       });
     case 'corner_top_right_subject_bottom_left':
       return snapSlots({
@@ -216,7 +216,7 @@ export function resolveComposeSlots(
         subjectAnchor: 'bottom_center',
         captionAlign: 'right',
         captionOrientation: 'horizontal',
-        subjectScale: 1.12,
+        subjectScale: 1.22,
       });
     case 'corner_bottom_left_subject_top':
       return snapSlots({
@@ -225,7 +225,7 @@ export function resolveComposeSlots(
         subjectAnchor: 'bottom_center',
         captionAlign: 'left',
         captionOrientation: 'horizontal',
-        subjectScale: 1.18,
+        subjectScale: 1.28,
       });
     case 'corner_bottom_right_subject_top':
       return snapSlots({
@@ -234,7 +234,7 @@ export function resolveComposeSlots(
         subjectAnchor: 'bottom_center',
         captionAlign: 'right',
         captionOrientation: 'horizontal',
-        subjectScale: 1.18,
+        subjectScale: 1.28,
       });
     case 'side_caption_left_subject_right':
       return snapSlots({
@@ -253,7 +253,7 @@ export function resolveComposeSlots(
         subjectAnchor: 'center_right',
         captionAlign: 'center',
         captionOrientation: 'vertical',
-        subjectScale: 1.12,
+        subjectScale: 1.22,
       });
     case 'side_caption_right_subject_left':
       return snapSlots({
@@ -272,7 +272,7 @@ export function resolveComposeSlots(
         subjectAnchor: 'center_left',
         captionAlign: 'center',
         captionOrientation: 'vertical',
-        subjectScale: 1.12,
+        subjectScale: 1.22,
       });
     default: {
       const _exhaustive: never = preset;
@@ -316,7 +316,7 @@ export function fitSubjectPlacement(
   const slotH = Math.max(1, Math.round(slot.maxY) - slotY);
   const scale =
     Math.min(slotW / subjectWidth, slotH / subjectHeight) *
-    Math.max(1, Math.min(1.2, subjectScale));
+    Math.max(1, Math.min(1.35, subjectScale)); // ponytail: ceiling 1.35; raise compose.subjectScale to grow subject
   let drawWidth = Math.max(1, Math.round(subjectWidth * scale));
   let drawHeight = Math.max(1, Math.round(subjectHeight * scale));
   drawWidth = Math.min(drawWidth, slotW);

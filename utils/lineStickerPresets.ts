@@ -30,6 +30,51 @@ export const FONT_PRESETS: Record<string, { label: string; promptDesc: string }>
         promptDesc:
             'Playful rounded sticker font, bouncy rhythm, chunky friendly curves, bold weight, crisp white outline, optimized for chat stickers',
     },
+    mochiRound: {
+        label: '麻糬圓體',
+        promptDesc:
+            'Ultra-soft mochi-round sticker font, pillowy curves, gentle bounce, medium-bold weight, friendly and sweet, high legibility at small size',
+    },
+    bubblePop: {
+        label: '泡泡體',
+        promptDesc:
+            'Cute bubble-pop sticker font, inflated round letters, playful comic energy, bold outline, cheerful and bouncy, chat-sticker readable',
+    },
+    sweetChalk: {
+        label: '甜美粉筆',
+        promptDesc:
+            'Sweet chalkboard sticker font, soft chalk texture feel, rounded hand-drawn edges, medium weight, cozy cute tone, clear white stroke',
+    },
+    candyScript: {
+        label: '糖果手寫',
+        promptDesc:
+            'Candy-sweet script sticker font, flowing hand-lettered curves, light-medium weight, romantic cute vibe, reinforced outer stroke for clarity',
+    },
+    liyushoushu: {
+        label: '烈焰手書',
+        promptDesc:
+            'Liyu Shoushu brush hand-lettered sticker font, flowing Chinese calligraphy strokes, medium weight, clear white outline, high legibility at chat size',
+    },
+    fashionBitmap16: {
+        label: '時尚點陣16',
+        promptDesc:
+            'Fashion Bitmap 16 pixel sticker font, blocky retro digital glyphs, crisp 16px-style edges, high contrast white outline, readable at LINE chat size',
+    },
+    kanaka: {
+        label: 'Kanaka手寫',
+        promptDesc:
+            'TEGUSE Kanaka casual handwritten sticker font, friendly rounded Chinese strokes, medium weight, clear white outline, cute and readable at chat size',
+    },
+    naikai: {
+        label: '內海楷書',
+        promptDesc:
+            'Naikai light kaishu sticker font, gentle regular-script Chinese strokes, clean elegant handwriting feel, reinforced white outline for legibility',
+    },
+    fluffy: {
+        label: '鬆軟圓體',
+        promptDesc:
+            'Fluffy cloud-like round sticker font, extra-soft corners, chunky sans, bold friendly weight, cozy kawaii feel, optimized for LINE stickers',
+    },
     pinkBubble: { label: '粉嫩泡泡風', promptDesc: 'Pink bubble sticker font, thick white and dark outer stroke, soft highlights only, keep glyphs crisp' },
     thinHandwritten: { label: '簡約手繪風', promptDesc: 'Clean minimal hand-drawn sticker font, slightly thin but reinforced with clear outer stroke for readability' },
     kidDoodle: {
@@ -40,7 +85,7 @@ export const FONT_PRESETS: Record<string, { label: string; promptDesc: string }>
     custom: { label: '自訂字體', promptDesc: '' },
 };
 
-/** Display order for font dropdown: classic presets first, then custom. */
+/** Display order for font dropdown: classic presets first, cute variants grouped, then custom. */
 export const FONT_PRESET_ORDER: (keyof typeof FONT_PRESETS)[] = [
     'handwritten',
     'round',
@@ -48,6 +93,15 @@ export const FONT_PRESET_ORDER: (keyof typeof FONT_PRESETS)[] = [
     'cute',
     'pop',
     'playful',
+    'mochiRound',
+    'bubblePop',
+    'sweetChalk',
+    'candyScript',
+    'liyushoushu',
+    'fashionBitmap16',
+    'kanaka',
+    'naikai',
+    'fluffy',
     'pinkBubble',
     'thinHandwritten',
     'kidDoodle',

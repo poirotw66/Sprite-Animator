@@ -118,7 +118,7 @@ describe('mapBandLabelToComposePreset', () => {
         lineHeightMultiplier: 1.25,
       });
       expect(slots.subjectAnchor).toBe('bottom_center');
-      expect(slots.subjectScale).toBe(1.18);
+      expect(slots.subjectScale).toBe(1.28);
     }
   });
 

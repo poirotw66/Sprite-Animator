@@ -75,8 +75,8 @@
     "semantic_hash": "b5df491e92e8c18cb0d6a0482735789b"
   },
   ".claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts": {
-    "mtime": 1783779565.6354222,
-    "ast_hash": "adba9a7d902a76314122a06c6b087a0d",
+    "mtime": 1783783462.820218,
+    "ast_hash": "b8a692ab2a8ee54e626250993c40296e",
     "semantic_hash": ""
   },
   ".claude/skills/line-sticker-maker/scripts/rebuild-line-upload.mts": {
@@ -980,9 +980,9 @@
     "semantic_hash": "9bc67ce401a7826c2615b65f87d63ee6"
   },
   "utils/lineStickerFont.test.ts": {
-    "mtime": 1783518094.393469,
-    "ast_hash": "fba6a4df5a0c77bfdd27be5c39107822",
-    "semantic_hash": "fba6a4df5a0c77bfdd27be5c39107822"
+    "mtime": 1783783960.8414793,
+    "ast_hash": "79f643fca80a52bd1201bc68e0613415",
+    "semantic_hash": ""
   },
   "utils/lineStickerPhraseLength.test.ts": {
     "mtime": 1778855598.9574058,
@@ -1010,8 +1010,8 @@
     "semantic_hash": "334fa0fca7e938cea11b642ab5eb4ccf"
   },
   "utils/lineStickerPresets.ts": {
-    "mtime": 1783779834.1299202,
-    "ast_hash": "59aba897bcdbf2fc13e83b9ea97e63ab",
+    "mtime": 1783783949.309922,
+    "ast_hash": "843d72c52764e55afc4ca65c50ac74e4",
     "semantic_hash": ""
   },
   "utils/lineStickerProgrammaticOverlaySchedule.test.ts": {
@@ -1060,13 +1060,13 @@
     "semantic_hash": "6e44e638ffbd357e214253c295f6dd1c"
   },
   "utils/lineStickerTextOverlay.test.ts": {
-    "mtime": 1783763280.1855924,
-    "ast_hash": "fcbd087f4825a1c54cf73e554ab912f1",
+    "mtime": 1783783965.8022752,
+    "ast_hash": "2234275fd17d9b86c6b358df0bd1032b",
     "semantic_hash": ""
   },
   "utils/lineStickerTextOverlay.ts": {
-    "mtime": 1783779833.2534533,
-    "ast_hash": "f49efd87d13fce13a6c7bfea990059f2",
+    "mtime": 1783783943.3704119,
+    "ast_hash": "f29d6a00488c9cc7ff1e041ff29eee9c",
     "semantic_hash": ""
   },
   "utils/lineStickerTextOverlayGeometry.ts": {
@@ -1080,8 +1080,8 @@
     "semantic_hash": ""
   },
   "utils/lineStickerTextOverlayTypes.ts": {
-    "mtime": 1783779737.3011312,
-    "ast_hash": "65f74a1db1cbb13f98c8e049a96c2b19",
+    "mtime": 1783782354.360066,
+    "ast_hash": "2d442fa15fb5bf0be00c667cbcd5aef5",
     "semantic_hash": ""
   },
   "utils/lineStickerUploadSpec.test.ts": {
@@ -1300,13 +1300,13 @@
     "semantic_hash": ""
   },
   "utils/lineStickerCompose.test.ts": {
-    "mtime": 1783778463.5344708,
-    "ast_hash": "19ef67f9e5b595cd9d648b9c10065ff0",
+    "mtime": 1783782361.1299934,
+    "ast_hash": "e6c1f91cd9820ee6be00c403f3242998",
     "semantic_hash": ""
   },
   "utils/lineStickerCompose.ts": {
-    "mtime": 1783779833.6436076,
-    "ast_hash": "74a1a72917a380106ec69f9c526b68f4",
+    "mtime": 1783783459.307752,
+    "ast_hash": "0d6c263c4f1f7fe47529b5b3f6406e3d",
     "semantic_hash": ""
   },
   "utils/lineStickerComposeCaption.test.ts": {
@@ -1315,8 +1315,8 @@
     "semantic_hash": ""
   },
   "utils/lineStickerComposeLayout.ts": {
-    "mtime": 1783778463.4865627,
-    "ast_hash": "9ade8494ba0acee854d31b1f07bffcbe",
+    "mtime": 1783782361.515007,
+    "ast_hash": "7b787a29b5990ad9f8d0e8f32cdd260e",
     "semantic_hash": ""
   },
   "utils/lineStickerSheetPhrases.ts": {
@@ -1877,6 +1877,11 @@
   "utils/normalizeChromaBackgroundLegacy.ts": {
     "mtime": 1783781790.7850227,
     "ast_hash": "79b718f90a0337b31f2601b180b4ccbd",
+    "semantic_hash": ""
+  },
+  "utils/lineStickerBundledFonts.ts": {
+    "mtime": 1783783929.914261,
+    "ast_hash": "f46f81cc2dbddda8eb818dcf8ab7071a",
     "semantic_hash": ""
   }
 }

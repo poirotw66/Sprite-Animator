@@ -117,34 +117,56 @@ export function strokeColorForFill(fillHex: string): string {
   return luminance(fillHex) > 0.55 ? '#1a1a1a' : '#ffffff';
 }
 
+/** PostScript / CSS family name for fonts/LiyuShoushu.ttf (also @font-face in index.css). */
+export const LIYU_SHOUSHU_FAMILY = 'Liyu Shoushu';
+
+/** PostScript / CSS family name for fonts/FashionBitmap16_0.092.ttf (also @font-face in index.css). */
+export const FASHION_BITMAP16_FAMILY = 'FashionBitmap16';
+
+/** PostScript / CSS family name for fonts/073 TEGUSE - Kanaka Font_240705.ttf (also @font-face in index.css). */
+export const KANAKA_FONT_FAMILY = '073 TEGUSE  Kanaka Font';
+
+/** PostScript / CSS family name for fonts/NaikaiFont-Regular-Lite.ttf (also @font-face in index.css). */
+export const NAIKAI_FONT_FAMILY = 'NaikaiFont';
+
 /**
- * System font stacks for canvas. The browser uses the first installed family.
- * Stacks are chosen to approximate each FONT_PRESETS prompt (not decorative
- * model-only effects). Several "rounded bubble" styles share the same nearest
- * system round sans; they stay honest to that limit rather than forcing odd faces.
+ * System font stacks for canvas. The renderer uses the first installed family
+ * that has glyphs for the phrase (per-glyph fallback on some platforms).
+ *
+ * Order: Windows zh-TW faces first (DFKai-SB, JhengHei UI, Yu Gothic UI, …),
+ * then macOS equivalents, then Latin-only accents. Keeps each preset distinct
+ * on Windows instead of collapsing to Microsoft JhengHei.
  */
+const WIN_KAI = '"DFKai-SB", "BiauKai"';
+const WIN_ROUND = '"Yu Gothic UI", "Microsoft JhengHei UI", "Microsoft YaHei UI"';
+const WIN_GOTHIC = '"Microsoft JhengHei", "Microsoft JhengHei UI"';
+const WIN_PLAY = '"Comic Sans MS", "Ink Free"';
+const MAC_KAI = '"Kaiti TC"';
+const MAC_ROUND = '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "PingFang TC"';
+const MAC_CHALK = '"Chalkboard SE", "Marker Felt"';
+const MAC_GOTHIC = '"Heiti TC", "STHeiti", "PingFang TC", "Hiragino Sans"';
+
 export function fontCssStackForPreset(fontKey: FontPresetKey): string {
   const stacks: Record<FontPresetKey, string> = {
-    handwritten:
-      '"Kaiti TC", "DFKai-SB", "BiauKai", "Bradley Hand ITC", "Microsoft JhengHei", sans-serif',
-    round:
-      '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "Yu Gothic UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif',
-    bold:
-      '"Heiti TC", "STHeiti", "PingFang TC", "Microsoft JhengHei", "Hiragino Sans", "Noto Sans TC", sans-serif',
-    cute:
-      '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "Chalkboard SE", "Microsoft JhengHei", "PingFang TC", sans-serif',
-    pop:
-      '"PingFang TC", "Hiragino Sans", "Microsoft JhengHei", "Helvetica Neue", "Segoe UI", sans-serif',
-    playful:
-      '"Arial Rounded MT Bold", "Hiragino Maru Gothic ProN", "Yu Gothic UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif',
-    pinkBubble:
-      '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "Yu Gothic UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif',
-    thinHandwritten:
-      '"Bradley Hand ITC", "Snell Roundhand", "Kaiti TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif',
-    kidDoodle:
-      '"Comic Sans MS", "Marker Felt", "Chalkboard SE", "Bradley Hand ITC", "Microsoft JhengHei", "PingFang TC", sans-serif',
-    custom:
-      '"Hiragino Maru Gothic ProN", "Arial Rounded MT Bold", "Yu Gothic UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif',
+    handwritten: `${WIN_KAI}, ${MAC_KAI}, "Bradley Hand ITC", ${WIN_GOTHIC}, sans-serif`,
+    round: `${WIN_ROUND}, ${MAC_ROUND}, sans-serif`,
+    bold: `${WIN_GOTHIC}, ${MAC_GOTHIC}, "Noto Sans TC", sans-serif`,
+    cute: `${WIN_ROUND}, ${MAC_ROUND}, ${MAC_CHALK}, sans-serif`,
+    pop: `${WIN_GOTHIC}, "PingFang TC", "Hiragino Sans", "Helvetica Neue", "Segoe UI", sans-serif`,
+    playful: `${WIN_ROUND}, "Arial Rounded MT Bold", ${MAC_ROUND}, sans-serif`,
+    mochiRound: `${WIN_ROUND}, ${MAC_ROUND}, sans-serif`,
+    bubblePop: `${WIN_PLAY}, ${WIN_ROUND}, ${MAC_CHALK}, ${MAC_ROUND}, sans-serif`,
+    sweetChalk: `${WIN_ROUND}, ${WIN_PLAY}, ${MAC_CHALK}, ${WIN_KAI}, "Bradley Hand ITC", sans-serif`,
+    candyScript: `${WIN_KAI}, "Gabriola", "Segoe Script", "Ink Free", ${MAC_KAI}, "Snell Roundhand", "Bradley Hand ITC", "Microsoft JhengHei Light", sans-serif`,
+    liyushoushu: `"${LIYU_SHOUSHU_FAMILY}", ${WIN_KAI}, ${MAC_KAI}, sans-serif`,
+    fashionBitmap16: `"${FASHION_BITMAP16_FAMILY}", "MS Gothic", "MS Mincho", ${WIN_GOTHIC}, sans-serif`,
+    kanaka: `"${KANAKA_FONT_FAMILY}", ${WIN_KAI}, ${MAC_KAI}, "Bradley Hand ITC", sans-serif`,
+    naikai: `"${NAIKAI_FONT_FAMILY}", ${WIN_KAI}, ${MAC_KAI}, sans-serif`,
+    fluffy: `${WIN_ROUND}, "Segoe UI", ${MAC_ROUND}, sans-serif`,
+    pinkBubble: `${WIN_ROUND}, ${MAC_ROUND}, sans-serif`,
+    thinHandwritten: `"Ink Free", "Segoe Print", ${WIN_KAI}, ${MAC_KAI}, "Bradley Hand ITC", "Snell Roundhand", "Microsoft JhengHei Light", sans-serif`,
+    kidDoodle: `${WIN_PLAY}, ${WIN_KAI}, ${MAC_CHALK}, "Bradley Hand ITC", ${WIN_ROUND}, sans-serif`,
+    custom: `${WIN_ROUND}, ${MAC_ROUND}, sans-serif`,
   };
   return stacks[fontKey] ?? stacks.round;
 }
@@ -158,8 +180,23 @@ export function resolveCanvasFontNumericWeight(
   tuning: ProgrammaticTextOverlayTuning
 ): number {
   const w = tuning.fontWeight;
+  if (fontKey === 'liyushoushu' || fontKey === 'fashionBitmap16' || fontKey === 'naikai') {
+    return Math.min(w, 400);
+  }
+  if (fontKey === 'kanaka') {
+    return Math.min(w, 500);
+  }
   if (fontKey === 'thinHandwritten') {
+    return Math.min(w, 500);
+  }
+  if (fontKey === 'sweetChalk') {
+    return Math.min(w, 550);
+  }
+  if (fontKey === 'candyScript') {
     return Math.min(w, 600);
+  }
+  if (fontKey === 'fluffy' || fontKey === 'bubblePop' || fontKey === 'mochiRound') {
+    return Math.max(w, 700);
   }
   return w;
 }

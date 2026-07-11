@@ -76,20 +76,58 @@ describe('resolveProgrammaticFontFamilyCss', () => {
 
 describe('fontCssStackForPreset', () => {
   it('matches broad style families (hand / round / gothic / poster)', () => {
+    expect(fontCssStackForPreset('handwritten')).toMatch(/DFKai-SB/);
     expect(fontCssStackForPreset('handwritten')).toMatch(/Kaiti TC/);
+    expect(fontCssStackForPreset('round')).toMatch(/Yu Gothic UI/);
     expect(fontCssStackForPreset('round')).toMatch(/Hiragino Maru Gothic ProN/);
+    expect(fontCssStackForPreset('bold')).toMatch(/Microsoft JhengHei/);
     expect(fontCssStackForPreset('bold')).toMatch(/Heiti TC/);
-    expect(fontCssStackForPreset('pop')).toMatch(/^"PingFang TC"/);
-    expect(fontCssStackForPreset('thinHandwritten')).toMatch(/Bradley Hand ITC/);
+    expect(fontCssStackForPreset('pop')).toMatch(/Microsoft JhengHei/);
+    expect(fontCssStackForPreset('thinHandwritten')).toMatch(/DFKai-SB/);
+    expect(fontCssStackForPreset('thinHandwritten')).toMatch(/Ink Free/);
     expect(fontCssStackForPreset('kidDoodle')).toMatch(/Comic Sans MS/);
-    expect(fontCssStackForPreset('custom')).toMatch(/Hiragino Maru Gothic ProN/);
+    expect(fontCssStackForPreset('mochiRound')).toMatch(/Yu Gothic UI/);
+    expect(fontCssStackForPreset('bubblePop')).toMatch(/Comic Sans MS/);
+    expect(fontCssStackForPreset('sweetChalk')).toMatch(/Yu Gothic UI/);
+    expect(fontCssStackForPreset('sweetChalk')).toMatch(/Chalkboard SE/);
+    expect(fontCssStackForPreset('candyScript')).toMatch(/DFKai-SB/);
+    expect(fontCssStackForPreset('candyScript')).toMatch(/Segoe Script/);
+    expect(fontCssStackForPreset('liyushoushu')).toMatch(/Liyu Shoushu/);
+    expect(fontCssStackForPreset('fashionBitmap16')).toMatch(/FashionBitmap16/);
+    expect(fontCssStackForPreset('kanaka')).toMatch(/Kanaka Font/);
+    expect(fontCssStackForPreset('naikai')).toMatch(/NaikaiFont/);
+    expect(fontCssStackForPreset('fluffy')).toMatch(/Yu Gothic UI/);
+    expect(fontCssStackForPreset('custom')).toMatch(/Yu Gothic UI/);
+  });
+
+  it('lists Windows zh-TW faces before macOS-only families', () => {
+    const winBeforeMac: Array<{ key: Parameters<typeof fontCssStackForPreset>[0]; win: string; mac: string }> = [
+      { key: 'handwritten', win: 'DFKai-SB', mac: 'Kaiti TC' },
+      { key: 'candyScript', win: 'DFKai-SB', mac: 'Kaiti TC' },
+      { key: 'sweetChalk', win: 'Yu Gothic UI', mac: 'Chalkboard SE' },
+      { key: 'playful', win: 'Yu Gothic UI', mac: 'Hiragino Maru Gothic ProN' },
+      { key: 'thinHandwritten', win: 'DFKai-SB', mac: 'Kaiti TC' },
+    ];
+    for (const { key, win, mac } of winBeforeMac) {
+      const stack = fontCssStackForPreset(key);
+      expect(stack.indexOf(win)).toBeGreaterThanOrEqual(0);
+      expect(stack.indexOf(win)).toBeLessThan(stack.indexOf(mac));
+    }
   });
 });
 
 describe('resolveCanvasFontNumericWeight', () => {
-  it('caps thinHandwritten so bold slider does not defeat the light style', () => {
+  it('caps script/chalk presets and boosts fluffy cute presets', () => {
     const tuning = { ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING, fontWeight: 700 as const };
-    expect(resolveCanvasFontNumericWeight('thinHandwritten', tuning)).toBe(600);
+    expect(resolveCanvasFontNumericWeight('thinHandwritten', tuning)).toBe(500);
+    expect(resolveCanvasFontNumericWeight('sweetChalk', tuning)).toBe(550);
+    expect(resolveCanvasFontNumericWeight('candyScript', tuning)).toBe(600);
+    expect(resolveCanvasFontNumericWeight('liyushoushu', tuning)).toBe(400);
+    expect(resolveCanvasFontNumericWeight('fashionBitmap16', tuning)).toBe(400);
+    expect(resolveCanvasFontNumericWeight('naikai', tuning)).toBe(400);
+    expect(resolveCanvasFontNumericWeight('kanaka', tuning)).toBe(500);
+    expect(resolveCanvasFontNumericWeight('bubblePop', tuning)).toBe(700);
+    expect(resolveCanvasFontNumericWeight('fluffy', tuning)).toBe(700);
     expect(resolveCanvasFontNumericWeight('bold', tuning)).toBe(700);
   });
 });

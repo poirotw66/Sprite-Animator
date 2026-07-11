@@ -50,3 +50,4 @@ output/
 
 # Python bytecode cache
 __pycache__/
+fonts/
