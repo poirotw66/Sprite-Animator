@@ -130,6 +130,123 @@ export function layoutFromPlacementLabel(
   return { anchorX, anchorY, textAlign, textBaseline, maxWidth };
 }
 
+/**
+ * Pixel region matching the generation prompt's reserved caption band for a label.
+ * Text box center search should stay inside this zone when possible.
+ */
+export function captionBandPixelRectForLabel(
+  label: string,
+  width: number,
+  height: number,
+  marginRatio: number
+): PixelRect {
+  const margin = Math.max(0.02, Math.min(0.22, marginRatio));
+  const marginX = width * margin;
+  const marginY = height * margin;
+  const bandH = height * RESERVED_CAPTION_BAND_HEIGHT_RATIO;
+  const sideStripW = width * 0.22;
+  const lower = label.toLowerCase();
+
+  if (lower.includes('top left')) {
+    return {
+      minX: marginX,
+      minY: marginY,
+      maxX: marginX + width * 0.55,
+      maxY: marginY + bandH,
+    };
+  }
+  if (lower.includes('top right')) {
+    return {
+      minX: width - marginX - width * 0.55,
+      minY: marginY,
+      maxX: width - marginX,
+      maxY: marginY + bandH,
+    };
+  }
+  if (lower.includes('top center') || (lower.includes('top') && !lower.includes('beside'))) {
+    return { minX: marginX, minY: marginY, maxX: width - marginX, maxY: marginY + bandH };
+  }
+  if (lower.includes('bottom left')) {
+    return {
+      minX: marginX,
+      minY: height - marginY - bandH,
+      maxX: marginX + width * 0.55,
+      maxY: height - marginY,
+    };
+  }
+  if (lower.includes('bottom right')) {
+    return {
+      minX: width - marginX - width * 0.55,
+      minY: height - marginY - bandH,
+      maxX: width - marginX,
+      maxY: height - marginY,
+    };
+  }
+  if (lower.includes('bottom')) {
+    return {
+      minX: marginX,
+      minY: height - marginY - bandH,
+      maxX: width - marginX,
+      maxY: height - marginY,
+    };
+  }
+  if (lower.includes('beside head (left)')) {
+    return {
+      minX: marginX,
+      minY: height * 0.28,
+      maxX: marginX + sideStripW,
+      maxY: height * 0.56,
+    };
+  }
+  if (lower.includes('beside head (right)')) {
+    return {
+      minX: width - marginX - sideStripW,
+      minY: height * 0.28,
+      maxX: width - marginX,
+      maxY: height * 0.56,
+    };
+  }
+  if (lower.includes('diagonal')) {
+    return {
+      minX: width * 0.38,
+      minY: height * 0.62,
+      maxX: width - marginX,
+      maxY: height - marginY,
+    };
+  }
+  if (lower.includes('middle center')) {
+    const bandTop = (height - bandH) / 2;
+    return { minX: marginX, minY: bandTop, maxX: width - marginX, maxY: bandTop + bandH };
+  }
+  return {
+    minX: marginX,
+    minY: height - marginY - bandH,
+    maxX: width - marginX,
+    maxY: height - marginY,
+  };
+}
+
+/** Valid center-X/Y range so a text box of boxW×boxH fits inside band and frame inset. */
+export function centerSearchBoundsForTextBoxInBand(
+  band: PixelRect,
+  boxW: number,
+  boxH: number,
+  width: number,
+  height: number,
+  insetPx: number
+): { minCx: number; maxCx: number; minCy: number; maxCy: number } | null {
+  const halfW = boxW / 2;
+  const halfH = boxH / 2;
+  const minCx = Math.max(insetPx + halfW, band.minX + halfW);
+  const maxCx = Math.min(width - insetPx - halfW, band.maxX - halfW);
+  const minCy = Math.max(insetPx + halfH, band.minY + halfH);
+  const maxCy = Math.min(height - insetPx - halfH, band.maxY - halfH);
+  if (maxCx < minCx || maxCy < minCy) {
+    return null;
+  }
+  return { minCx, maxCx, minCy, maxCy };
+}
+
 /** First line Y for multi-line draw given anchor and canvas baseline. */
 export function textStartYFromAnchor(
   anchorY: number,

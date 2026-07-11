@@ -1,17 +1,14 @@
 /**
  * Caption auto-placement for LINE sticker overlay.
  *
- * One pass builds a downsampled foreground occupancy grid plus a summed-area
- * table, then a dense grid search finds the caption box center with the least
- * foreground overlap (O(1) overlap query per candidate). Font size shrinks in
- * steps only when no overlap-free spot exists at the current size.
- *
- * Replaces the previous stack of per-label band searches, anchor nudging, and
- * refinement loops with a single scoring pass shared by the browser and node
- * render pipelines.
+ * Builds a downsampled foreground occupancy grid + summed-area table, searches
+ * for the least-overlap caption center (band-first, then full frame), and
+ * binary-searches the largest overlap-free font size.
  */
 
 import {
+  captionBandPixelRectForLabel,
+  centerSearchBoundsForTextBoxInBand,
   wrapLines,
   textOverlayAvoidancePadPx,
 } from './lineStickerTextOverlayGeometry';
@@ -63,7 +60,6 @@ export function buildForegroundOverlapIndex(
     }
   }
 
-  // 1-cell dilation approximates the caption stroke halo without a distance transform.
   const dilated = new Uint8Array(occupied);
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
@@ -152,6 +148,13 @@ export interface CaptionCenterSearch {
   preferredY: number;
 }
 
+export interface CaptionCenterSearchBounds {
+  minCx: number;
+  maxCx: number;
+  minCy: number;
+  maxCy: number;
+}
+
 export interface CaptionCenterResult {
   centerX: number;
   centerY: number;
@@ -159,14 +162,15 @@ export interface CaptionCenterResult {
 }
 
 /**
- * Dense grid search over the whole frame for the caption box center with the
- * least foreground overlap; ties resolve toward the preferred center.
+ * Dense grid search for the caption box center with least foreground overlap.
+ * Optional bounds restrict the search (caption band); ties resolve toward preferred center.
  */
 export function findLeastOverlapCaptionCenter(
   index: ForegroundOverlapIndex,
   boxW: number,
   boxH: number,
-  search: CaptionCenterSearch
+  search: CaptionCenterSearch,
+  bounds?: CaptionCenterSearchBounds
 ): CaptionCenterResult {
   const { width, height, insetPx, preferredX, preferredY } = search;
   const halfW = boxW / 2;
@@ -175,6 +179,12 @@ export function findLeastOverlapCaptionCenter(
   let maxCx = width - insetPx - halfW;
   let minCy = insetPx + halfH;
   let maxCy = height - insetPx - halfH;
+  if (bounds) {
+    minCx = Math.max(minCx, bounds.minCx);
+    maxCx = Math.min(maxCx, bounds.maxCx);
+    minCy = Math.max(minCy, bounds.minCy);
+    maxCy = Math.min(maxCy, bounds.maxCy);
+  }
   if (maxCx < minCx) minCx = maxCx = width / 2;
   if (maxCy < minCy) minCy = maxCy = height / 2;
 
@@ -197,18 +207,55 @@ export function findLeastOverlapCaptionCenter(
   return best;
 }
 
+/** Band-first placement: search caption band, expand to full frame only if overlap improves. */
+export function findCaptionCenterBandFirst(
+  index: ForegroundOverlapIndex,
+  boxW: number,
+  boxH: number,
+  search: CaptionCenterSearch,
+  preferredLabel: string,
+  marginRatio: number
+): CaptionCenterResult {
+  const bandRect = captionBandPixelRectForLabel(
+    preferredLabel,
+    search.width,
+    search.height,
+    marginRatio
+  );
+  const bandBounds = centerSearchBoundsForTextBoxInBand(
+    bandRect,
+    boxW,
+    boxH,
+    search.width,
+    search.height,
+    search.insetPx
+  );
+
+  if (!bandBounds) {
+    return findLeastOverlapCaptionCenter(index, boxW, boxH, search);
+  }
+
+  const inBand = findLeastOverlapCaptionCenter(index, boxW, boxH, search, bandBounds);
+  if (inBand.overlapCells === 0) {
+    return inBand;
+  }
+
+  const fullFrame = findLeastOverlapCaptionCenter(index, boxW, boxH, search);
+  if (fullFrame.overlapCells < inBand.overlapCells) {
+    return fullFrame;
+  }
+  return inBand;
+}
+
 export interface AutoCaptionLayoutParams {
   width: number;
   height: number;
   text: string;
-  /** Placement label whose zone is preferred when several spots are overlap-free. */
   preferredLabel: string;
   marginRatio: number;
   lineHeightMultiplier: number;
   strokeScale: number;
-  /** Font size in px at scale 1. Shrinks stepwise if no overlap-free spot fits. */
   baseFontSizePx: number;
-  /** Applies a font size to ctx.font (caller owns family/weight resolution). */
   applyFont: (fontSizePx: number) => void;
 }
 
@@ -221,61 +268,94 @@ export interface AutoCaptionLayout {
   overlapCells: number;
 }
 
-const CAPTION_FONT_SCALE_STEPS = [1, 0.85, 0.72] as const;
+const MIN_CAPTION_FONT_PX = 9;
+
+function layoutAtFontSize(
+  ctx: CanvasRenderingContext2D,
+  index: ForegroundOverlapIndex,
+  params: AutoCaptionLayoutParams,
+  fontSize: number
+): AutoCaptionLayout {
+  const { width, height, text, preferredLabel, marginRatio } = params;
+  const insetPx = frameInsetPx(width, height, marginRatio);
+  const maxLineWidth = Math.min(width * 0.92, width - insetPx * 2);
+
+  params.applyFont(fontSize);
+  const lineHeight = fontSize * params.lineHeightMultiplier;
+  const lines = wrapLines(ctx, text, maxLineWidth);
+  const { padX, padY } = textOverlayAvoidancePadPx(fontSize, params.strokeScale);
+  const maxLineW = Math.max(...lines.map((line) => ctx.measureText(line || ' ').width), 1);
+  const boxW = maxLineW + padX * 2;
+  const boxH = lines.length * lineHeight + padY * 2;
+  const preferred = preferredCaptionCenterForLabel(
+    preferredLabel,
+    width,
+    height,
+    boxW,
+    boxH,
+    marginRatio
+  );
+  const center = findCaptionCenterBandFirst(index, boxW, boxH, {
+    width,
+    height,
+    insetPx,
+    preferredX: preferred.x,
+    preferredY: preferred.y,
+  }, preferredLabel, marginRatio);
+
+  return {
+    centerX: center.centerX,
+    centerY: center.centerY,
+    lines,
+    fontSize,
+    lineHeight,
+    overlapCells: center.overlapCells,
+  };
+}
 
 /**
- * Full auto layout: wrap text, search the least-overlap center, shrink font
- * only while overlap remains. Draw the result with textAlign='center' and
- * textBaseline='middle'; line i sits at centerY + (i - (n-1)/2) * lineHeight.
+ * Full auto layout: band-first center search + binary search for the largest
+ * overlap-free font size (falls back to largest font with minimum overlap).
  */
 export function computeAutoCaptionLayout(
   ctx: CanvasRenderingContext2D,
   params: AutoCaptionLayoutParams
 ): AutoCaptionLayout {
-  const { width, height, text, preferredLabel, marginRatio } = params;
-  const index = buildForegroundOverlapIndex(ctx, width, height);
-  const insetPx = frameInsetPx(width, height, marginRatio);
-  const maxLineWidth = Math.min(width * 0.92, width - insetPx * 2);
+  const index = buildForegroundOverlapIndex(ctx, params.width, params.height);
+  const maxFont = Math.max(MIN_CAPTION_FONT_PX, Math.round(params.baseFontSizePx));
+
+  let lo = MIN_CAPTION_FONT_PX;
+  let hi = maxFont;
+  let bestClear: AutoCaptionLayout | null = null;
+
+  while (lo <= hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    const candidate = layoutAtFontSize(ctx, index, params, mid);
+    if (candidate.overlapCells === 0) {
+      bestClear = candidate;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+
+  if (bestClear) {
+    params.applyFont(bestClear.fontSize);
+    return bestClear;
+  }
 
   let best: AutoCaptionLayout | null = null;
-  for (const scale of CAPTION_FONT_SCALE_STEPS) {
-    const fontSize = Math.max(9, Math.round(params.baseFontSizePx * scale));
-    params.applyFont(fontSize);
-    const lineHeight = fontSize * params.lineHeightMultiplier;
-    const lines = wrapLines(ctx, text, maxLineWidth);
-    const { padX, padY } = textOverlayAvoidancePadPx(fontSize, params.strokeScale);
-    const maxLineW = Math.max(...lines.map((line) => ctx.measureText(line || ' ').width), 1);
-    const boxW = maxLineW + padX * 2;
-    const boxH = lines.length * lineHeight + padY * 2;
-    const preferred = preferredCaptionCenterForLabel(
-      preferredLabel,
-      width,
-      height,
-      boxW,
-      boxH,
-      marginRatio
-    );
-    const center = findLeastOverlapCaptionCenter(index, boxW, boxH, {
-      width,
-      height,
-      insetPx,
-      preferredX: preferred.x,
-      preferredY: preferred.y,
-    });
-    const candidate: AutoCaptionLayout = {
-      centerX: center.centerX,
-      centerY: center.centerY,
-      lines,
-      fontSize,
-      lineHeight,
-      overlapCells: center.overlapCells,
-    };
-    if (best === null || candidate.overlapCells < best.overlapCells) {
+  for (let fontSize = maxFont; fontSize >= MIN_CAPTION_FONT_PX; fontSize--) {
+    const candidate = layoutAtFontSize(ctx, index, params, fontSize);
+    if (
+      best === null ||
+      candidate.overlapCells < best.overlapCells ||
+      (candidate.overlapCells === best.overlapCells && candidate.fontSize > best.fontSize)
+    ) {
       best = candidate;
     }
-    if (best.overlapCells === 0) break;
   }
-  // best is always assigned: the scale loop runs at least once.
+
   const layout = best!;
   params.applyFont(layout.fontSize);
   return layout;
