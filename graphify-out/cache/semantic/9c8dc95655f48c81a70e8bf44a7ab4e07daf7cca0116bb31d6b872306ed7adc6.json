@@ -1,1 +1,0 @@
-{"nodes": [{"id": "md_chroma_key", "label": "Chroma Key Improvement Record", "file_type": "document", "source_file": "md/CHROMA_KEY.md"}], "edges": [{"source": "md_chroma_key", "target": "md_background_color_normalization", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "md/CHROMA_KEY.md"}], "hyperedges": []}
