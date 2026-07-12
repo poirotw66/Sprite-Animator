@@ -25,6 +25,12 @@ import {
   upsertEntry,
   type StickerRegistryEntry,
 } from '../../../../utils/stickerRegistry.ts';
+import {
+  mergeRegistriesForPlanning,
+  resolveRegistryAssetPath,
+  resolveVaultRoot,
+  vaultRegistryPath,
+} from '../../../../utils/stickerVault.ts';
 import { loadGeminiApiKey } from '../../shared/loadGeminiApiKey.mts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
@@ -86,6 +92,7 @@ async function loadOrCreatePlan(
     count: number;
     ratio: string;
     registryPath: string;
+    vaultRoot?: string;
   }
 ): Promise<DailyPackPlan> {
   if (existsSync(planPath)) {
@@ -93,13 +100,19 @@ async function loadOrCreatePlan(
     return JSON.parse(raw) as DailyPackPlan;
   }
 
-  const registry = await loadRegistry(params.registryPath);
+  const localRegistry = await loadRegistry(params.registryPath);
+  const vaultRegistry = params.vaultRoot
+    ? await loadRegistry(vaultRegistryPath(params.vaultRoot))
+    : undefined;
+  const registry = mergeRegistriesForPlanning(localRegistry, vaultRegistry);
+
   const plan = planDailyPack({
     date: params.date,
     count: params.count,
     ratio: params.ratio,
     registry,
     repoRoot: ROOT,
+    vaultRoot: params.vaultRoot,
     outputBaseRel: relative(ROOT, dayDir).replace(/\\/g, '/'),
   });
 
@@ -123,7 +136,8 @@ function slotIsCompleted(slot: DailyPackSlot, registryPath: string, registry: { 
 async function executeSlot(
   slot: DailyPackSlot,
   registryPath: string,
-  logPath: string
+  logPath: string,
+  vaultRoot?: string
 ): Promise<void> {
   const outDir = resolve(ROOT, slot.outputDir);
   await mkdir(outDir, { recursive: true });
@@ -183,9 +197,9 @@ async function executeSlot(
         refImagePath,
       ]);
     } else {
-      const srcRef = resolve(ROOT, slot.refImagePath!);
+      const srcRef = resolveRegistryAssetPath(slot.refImagePath!, ROOT, vaultRoot);
       if (!existsSync(srcRef)) {
-        throw new Error(`A-plan ref image missing: ${slot.refImagePath}`);
+        throw new Error(`A-plan ref image missing: ${slot.refImagePath} (resolved ${srcRef})`);
       }
       await copyFile(srcRef, refOut);
     }
@@ -281,6 +295,16 @@ async function main(): Promise<void> {
     ROOT,
     typeof args.registry === 'string' ? args.registry : DEFAULT_REGISTRY_REL_PATH
   );
+  const useVault = !args['no-vault'];
+  const vaultRoot = useVault
+    ? resolveVaultRoot(ROOT, typeof args.vault === 'string' ? args.vault : undefined)
+    : undefined;
+  if (useVault && vaultRoot) {
+    console.log(`▶ Vault registry: ${relative(ROOT, vaultRegistryPath(vaultRoot))}`);
+  } else if (useVault) {
+    console.warn('⚠ Vault not found — A slots use local registry only (pass --vault or clone line-sticker-vault)');
+  }
+
   const dayDir = resolve(ROOT, 'output', date);
   const planPath = resolve(dayDir, 'batch-plan.json');
   const logPath = resolve(dayDir, 'batch-log.jsonl');
@@ -290,7 +314,13 @@ async function main(): Promise<void> {
     runTsx(BACKFILL_SCRIPT, ['--merge']);
   }
 
-  const plan = await loadOrCreatePlan(dayDir, planPath, { date, count, ratio, registryPath });
+  const plan = await loadOrCreatePlan(dayDir, planPath, {
+    date,
+    count,
+    ratio,
+    registryPath,
+    vaultRoot,
+  });
 
   if (planOnly) {
     console.log('\nPlan summary:');
@@ -327,7 +357,7 @@ async function main(): Promise<void> {
     }
 
     try {
-      await executeSlot(slot, registryPath, logPath);
+      await executeSlot(slot, registryPath, logPath, vaultRoot);
       completed++;
     } catch {
       failed++;

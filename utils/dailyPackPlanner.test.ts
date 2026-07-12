@@ -80,4 +80,35 @@ describe('planDailyPack', () => {
     expect(plan.slots.every((s) => s.batchType === 'B')).toBe(true);
     expect(plan.warnings.some((w) => w.includes('downgrading'))).toBe(true);
   });
+
+  it('plans A slots from vault character refs', () => {
+    const vaultEntry: StickerRegistryEntry = {
+      id: 'SET-20260701-001',
+      date: '2026-07-01',
+      batchType: 'B',
+      characterName: 'VaultFox',
+      characterConcept: '圓潤狐狸',
+      style: 'chibi',
+      theme: 'meme',
+      voice: 'nishimura',
+      refImagePath: 'characters/vault-fox/character-ref.png',
+      outputDir: 'sets/SET-20260701-001',
+      status: 'completed',
+    };
+
+    const plan = planDailyPack({
+      date,
+      count: 3,
+      ratio: '1:2',
+      registry: upsertEntry(emptyRegistry(), vaultEntry),
+      repoRoot,
+      vaultRoot: '/vault',
+      rng: () => 0,
+      fileExists: (path) => path.replace(/\\/g, '/').endsWith('characters/vault-fox/character-ref.png'),
+    });
+
+    const aSlots = plan.slots.filter((s) => s.batchType === 'A');
+    expect(aSlots.length).toBeGreaterThan(0);
+    expect(aSlots[0]!.refImagePath).toBe('characters/vault-fox/character-ref.png');
+  });
 });

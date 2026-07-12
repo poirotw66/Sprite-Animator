@@ -53,6 +53,7 @@ export interface PlanDailyPackParams {
   registry: StickerRegistryFile;
   repoRoot: string;
   outputBaseRel?: string;
+  vaultRoot?: string;
   rng?: () => number;
   fileExists?: (path: string) => boolean;
 }
@@ -105,7 +106,8 @@ export function planDailyPack(params: PlanDailyPackParams): DailyPackPlan {
   const verified = listVerifiedCharacters(
     params.registry,
     params.repoRoot,
-    params.fileExists
+    params.fileExists,
+    params.vaultRoot
   );
   const excludeConcepts = recentConcepts(params.registry, 50);
 

@@ -4,7 +4,7 @@
  */
 
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rename, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
 export type {
@@ -31,6 +31,7 @@ export {
 
 import type { StickerRegistryFile } from './stickerRegistryFormat';
 import { emptyRegistry, parseRegistryJson } from './stickerRegistryFormat';
+import { resolveRegistryAssetPath } from './stickerVault';
 
 export async function loadRegistry(registryPath: string): Promise<StickerRegistryFile> {
   if (!existsSync(registryPath)) {
@@ -58,7 +59,8 @@ export interface VerifiedCharacter {
 export function listVerifiedCharacters(
   registry: StickerRegistryFile,
   repoRoot: string,
-  fileExists: (path: string) => boolean = existsSync
+  fileExists: (path: string) => boolean = existsSync,
+  vaultRoot?: string
 ): VerifiedCharacter[] {
   const seen = new Set<string>();
   const result: VerifiedCharacter[] = [];
@@ -68,7 +70,7 @@ export function listVerifiedCharacters(
     if (entry.batchType !== 'B') continue;
     if (seen.has(entry.characterName)) continue;
 
-    const absRef = resolve(repoRoot, entry.refImagePath);
+    const absRef = resolveRegistryAssetPath(entry.refImagePath, repoRoot, vaultRoot);
     if (!fileExists(absRef)) continue;
 
     seen.add(entry.characterName);
@@ -101,4 +103,35 @@ export function isCompletedStickerSet(outputDir: string): boolean {
   const manifest = join(outputDir, 'manifest.json');
   const sticker = join(outputDir, 'stickers', 'sticker-01.png');
   return existsSync(manifest) && existsSync(sticker);
+}
+
+/** Walk output/ and return absolute paths of completed sticker set directories. */
+export async function collectCompletedOutputDirs(outputRoot: string): Promise<string[]> {
+  const results: string[] = [];
+
+  async function walk(dir: string): Promise<void> {
+    let entries;
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    if (isCompletedStickerSet(dir)) {
+      results.push(dir);
+      return;
+    }
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      if (entry.name === 'stickers' || entry.name === '.env.batch') continue;
+      await walk(join(dir, entry.name));
+    }
+  }
+
+  if (!existsSync(outputRoot)) {
+    return results;
+  }
+  await walk(outputRoot);
+  return results;
 }

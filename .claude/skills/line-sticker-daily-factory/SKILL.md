@@ -68,6 +68,20 @@ output/
       stickers/ manifest.json …
 ```
 
+## Vault archive (line-sticker-vault)
+
+Sibling repo for long-term storage of character refs + phrase-set JSON.
+
+```bash
+# Archive completed output/ sets into ../line-sticker-vault
+npx tsx .claude/skills/line-sticker-maker/scripts/archive-sync.mts --sync
+
+# daily-pack merges vault registry for A-slot character rotation (auto-detects sibling vault)
+npx tsx .claude/skills/line-sticker-maker/scripts/daily-pack.mts --backfill --plan-only
+```
+
+Disable vault: `--no-vault`. Custom path: `--vault /path/to/line-sticker-vault` or `STICKER_VAULT_ROOT`.
+
 ## Registry entry
 
 ```json
