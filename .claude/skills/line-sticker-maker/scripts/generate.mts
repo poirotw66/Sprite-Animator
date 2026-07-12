@@ -1,7 +1,7 @@
 /**
  * LINE sticker generator — headless entry point for the skill.
  *
- *   npx tsx generate.mts --config <config.json> --out <dir> [--sheet sheet-1] [--sheet-dir sheet-1-flash] [--model gemini-3.1-flash-lite-image] [--dry-run]
+ *   npx tsx generate.mts --config <config.json> --out <dir> [--sheet sheet-1] [--sheet-dir sheet-1-flash] [--model gemini-3.1-flash-image] [--dry-run]
  *
  * Pipeline per sheet:
  *   config -> buildLineStickerPrompt (reused) -> Gemini sheet image
@@ -34,7 +34,7 @@ import {
   type LineStickerTextRendering,
   type LineStickerPromptVersion,
 } from '../../../../utils/lineStickerPrompt.ts';
-import { DEFAULT_SKILL_STICKER_MODEL, DEFAULT_CHROMA_KEY_ALGORITHM } from '../../../../utils/constants.ts';
+import { DEFAULT_SKILL_STICKER_MODEL, DEFAULT_CHROMA_KEY_ALGORITHM, defaultResolutionForModel } from '../../../../utils/constants.ts';
 import type { ChromaKeyColorType, ChromaKeyAlgorithm } from '../../../../types.ts';
 import {
   mergeProgrammaticComposeConfig,
@@ -85,8 +85,8 @@ interface StickerConfig {
   stickerCount?: number; // set mode only: 40 (LINE default) or 48 (legacy)
   cols?: number; // single mode only (default 4)
   rows?: number; // single mode only (default 6)
-  model?: string; // default: gemini-3.1-flash-lite-image (DEFAULT_SKILL_STICKER_MODEL)
-  resolution?: string; // output resolution, default: 1K (model-dependent)
+  model?: string; // default: gemini-3.1-flash-image (DEFAULT_SKILL_STICKER_MODEL)
+  resolution?: string; // output resolution, default: 2K for flash-image (model-dependent)
   /** Repo-local upload layout (replaces legacy line-upload/ when enabled). */
   upload?: UploadConfig;
   lineS?: UploadConfig & { syncToLineS?: boolean };
@@ -341,7 +341,7 @@ async function main() {
     (typeof args.model === 'string' ? args.model : undefined) ??
     config.model ??
     DEFAULT_SKILL_STICKER_MODEL;
-  const resolution = config.resolution ?? '1K';
+  const resolution = config.resolution ?? defaultResolutionForModel(model);
   const maxSheetRetries = Math.max(1, config.maxSheetRetries ?? 3);
   const extraSheetRegenAttempts = config.extraSheetRegenAttempts ?? 3;
   const minGridAlignmentScore = config.minGridAlignmentScore ?? 0.8;

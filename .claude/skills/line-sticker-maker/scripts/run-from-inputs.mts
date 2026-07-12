@@ -19,7 +19,7 @@ import { spawnSync } from 'node:child_process';
 import {
   parsePhraseSetJson,
 } from '../../../../utils/lineStickerPhraseSetFormat.ts';
-import { DEFAULT_SKILL_STICKER_MODEL } from '../../../../utils/constants.ts';
+import { DEFAULT_SKILL_STICKER_MODEL, defaultResolutionForModel } from '../../../../utils/constants.ts';
 import {
   defaultTitleZhFromPhraseSet,
   suggestSetNameEn,
@@ -187,7 +187,7 @@ async function main(): Promise<void> {
         ? { cols: phraseSet.gridCols ?? 4, rows: phraseSet.gridRows ?? 5 }
         : {}),
       model: DEFAULT_SKILL_STICKER_MODEL,
-      resolution: '1K',
+      resolution: defaultResolutionForModel(DEFAULT_SKILL_STICKER_MODEL),
       lineUpload: scope === 'set',
       lineUploadSubmit: true,
       maxSheetRetries: 3,

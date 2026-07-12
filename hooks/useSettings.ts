@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DEFAULT_MODEL, MODEL_RESOLUTIONS, SUPPORTED_MODELS } from '../utils/constants';
+import { DEFAULT_MODEL, DEFAULT_OUTPUT_RESOLUTION, MODEL_RESOLUTIONS, SUPPORTED_MODELS, defaultResolutionForModel } from '../utils/constants';
 import type { ImageResolution } from '../utils/constants';
 
 const API_KEY_STORAGE_KEY = 'gemini_api_key';
@@ -46,7 +46,7 @@ function resolveStoredModel(storedModel: string | null): string {
 export const useSettings = () => {
   const [apiKey, setApiKey] = useState('');
   const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL);
-  const [outputResolution, setOutputResolution] = useState<ImageResolution>('1K');
+  const [outputResolution, setOutputResolution] = useState<ImageResolution>(DEFAULT_OUTPUT_RESOLUTION);
   const [stylePreviewResolution, setStylePreviewResolution] =
     useState<ImageResolution>('1K');
   const [hfToken, setHfToken] = useState('');
@@ -74,7 +74,7 @@ export const useSettings = () => {
 
     // Output resolution: must be allowed for current model (2.5 Flash = 1K only; 3 Pro = 1K/2K/4K)
     const allowed = MODEL_RESOLUTIONS[model] ?? ['1K'];
-    const resolution = storedResolution && allowed.includes(storedResolution) ? storedResolution : (allowed[0] as ImageResolution);
+    const resolution = storedResolution && allowed.includes(storedResolution) ? storedResolution : defaultResolutionForModel(model);
     setOutputResolution(resolution);
     if (!storedResolution || !allowed.includes(storedResolution)) {
       localStorage.setItem(OUTPUT_RESOLUTION_STORAGE_KEY, resolution);
@@ -106,8 +106,9 @@ export const useSettings = () => {
   useEffect(() => {
     const allowed = MODEL_RESOLUTIONS[selectedModel] ?? ['1K'];
     if (!allowed.includes(outputResolution)) {
-      setOutputResolution(allowed[0] as ImageResolution);
-      localStorage.setItem(OUTPUT_RESOLUTION_STORAGE_KEY, allowed[0]);
+      const fallback = defaultResolutionForModel(selectedModel);
+      setOutputResolution(fallback);
+      localStorage.setItem(OUTPUT_RESOLUTION_STORAGE_KEY, fallback);
     }
     if (!allowed.includes(stylePreviewResolution)) {
       setStylePreviewResolution('1K');
@@ -125,7 +126,7 @@ export const useSettings = () => {
     const trimmedKey = key.trim();
     const trimmedToken = token.trim();
     const allowed = MODEL_RESOLUTIONS[model] ?? ['1K'];
-    const res = resolution != null && allowed.includes(resolution) ? resolution : (allowed[0] as ImageResolution);
+    const res = resolution != null && allowed.includes(resolution) ? resolution : defaultResolutionForModel(model);
     const previewRes =
       previewResolution != null && allowed.includes(previewResolution)
         ? previewResolution

@@ -269,5 +269,5 @@ Details: `.claude/skills/line-sticker-maker/SKILL.md`
 
 - Set mode: 40 stickers = 2× 4×5 sheets (parallel by default).
 - Default: `textRendering: model` (Gemini draws captions); `programmatic` optional for stable zh-TW overlay.
-- Default image model: `gemini-3.1-flash-lite-image` (1K). Use `gemini-3.1-flash-image` if 4×5 grid alignment struggles.
+- Default image model: `gemini-3.1-flash-image` (2K). Chroma key: `legacy` (`DEFAULT_CHROMA_KEY_ALGORITHM`).
 - Upload needs the repo-local upload skill deps from `.claude/skills/line-sticker-upload/`.

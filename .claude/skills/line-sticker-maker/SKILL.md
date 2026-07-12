@@ -118,13 +118,14 @@ Legacy job configs with `lineS` / `syncToLineS` are still accepted when reading.
 | `customPhrases` | `[]` | overrides theme phrases when non-empty |
 | `language` | `zh-TW` | `zh-TW`, `zh-CN`, `en`, `ja` |
 | `chromaKeyColor` | `green` | `magenta` or `green` |
+| `chromaKeyAlgorithm` | `legacy` | `legacy` (default), `core`, or `forge` |
 | `includeText` | `true` | when `textRendering` is `model`, Gemini draws phrase text |
 | `textRendering` | `model` | **`model`** = Gemini draws text on stickers (skill default); `programmatic` = canvas overlay after slice (more stable zh-TW) |
 | `fontKey` / `textColorKey` | `round` / `black` | used when `textRendering` is `programmatic` |
 | `scope` | `set` | `set` = full LINE set; `single` = one sheet |
 | `stickerCount` | `40` | 40 = 2×4×5 (LINE standard); 48 = legacy 3×4×4 |
-| `model` | `gemini-3.1-flash-lite-image` | skill default (`DEFAULT_SKILL_STICKER_MODEL`); 1K only — use `gemini-3.1-flash-image` if grid alignment struggles |
-| `resolution` | `1K` | `0.5K`/`1K`/`2K`/`4K` (model-dependent) |
+| `model` | `gemini-3.1-flash-image` | skill default (`DEFAULT_SKILL_STICKER_MODEL`) |
+| `resolution` | `2K` | `0.5K`/`1K`/`2K`/`4K` (model-dependent; default `2K` for flash-image) |
 | `maxSheetRetries` | `3` | Gemini retries when grid validation fails |
 | `minGridAlignmentScore` | `0.72` | 0–1; reject sheet below this score |
 | `promptVersion` | `v3compact` | `v3compact` = shorter per-cell lines; `v3` = verbose legacy |

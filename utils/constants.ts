@@ -44,13 +44,16 @@ export const SUPPORTED_MODELS = [
   'gemini-3.1-flash-image',
 ] as const;
 
-export const DEFAULT_MODEL = 'gemini-3.1-flash-lite-image';
+export const DEFAULT_MODEL = 'gemini-3.1-flash-image';
 
 /** Headless sticker skill: sprite sheets (4×5 grids, model-drawn text). */
 export const DEFAULT_SKILL_STICKER_MODEL = DEFAULT_MODEL;
 
 /** Output resolution for image generation. 2.5-flash / 3.1-flash-lite = 1K only; 3-pro = 1K/2K/4K; 3.1-flash = 0.5K/1K/2K/4K */
 export type ImageResolution = '0.5K' | '1K' | '2K' | '4K';
+
+/** Default output resolution when the selected model supports it (else first allowed). */
+export const DEFAULT_OUTPUT_RESOLUTION: ImageResolution = '2K';
 
 /** Resolutions supported per model */
 export const MODEL_RESOLUTIONS: Record<string, ImageResolution[]> = {
@@ -59,6 +62,14 @@ export const MODEL_RESOLUTIONS: Record<string, ImageResolution[]> = {
   'gemini-3-pro-image': ['1K', '2K', '4K'],
   'gemini-3.1-flash-image': ['0.5K', '1K', '2K', '4K'],
 };
+
+/** Pick DEFAULT_OUTPUT_RESOLUTION when supported, otherwise the model's minimum. */
+export function defaultResolutionForModel(model: string): ImageResolution {
+  const allowed = MODEL_RESOLUTIONS[model] ?? ['1K'];
+  return allowed.includes(DEFAULT_OUTPUT_RESOLUTION)
+    ? DEFAULT_OUTPUT_RESOLUTION
+    : (allowed[0] as ImageResolution);
+}
 
 /** Model for text-only tasks (e.g. generating sticker phrases) */
 export const PHRASE_GENERATION_MODEL = 'gemini-3.1-flash-lite';

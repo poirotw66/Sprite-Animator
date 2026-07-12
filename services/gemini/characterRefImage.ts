@@ -4,7 +4,7 @@
 
 import { GoogleGenAI } from '@google/genai';
 
-import { DEFAULT_MODEL } from '../../utils/constants';
+import { DEFAULT_MODEL, defaultResolutionForModel } from '../../utils/constants';
 import { retryOperation, wait } from './retry';
 
 function isImageSizeRejection(err: unknown): boolean {
@@ -40,7 +40,7 @@ export async function generateCharacterRefImage(
     identityRefBase64,
     identityRefMimeType,
     model = DEFAULT_MODEL,
-    resolution = '1K',
+    resolution = defaultResolutionForModel(model),
     aspectRatio = '1:1',
     onStatus,
   } = params;

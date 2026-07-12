@@ -9,6 +9,11 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import {
+  DEFAULT_CHROMA_KEY_ALGORITHM,
+  DEFAULT_SKILL_STICKER_MODEL,
+  defaultResolutionForModel,
+} from '../../../../utils/constants.ts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(SCRIPT_DIR, '../../../..');
@@ -70,12 +75,13 @@ function buildJobConfig(manifest: BatchManifest, job: BatchJob): Record<string, 
     style: 'matchUploaded',
     language: 'en',
     chromaKeyColor: 'green',
+    chromaKeyAlgorithm: DEFAULT_CHROMA_KEY_ALGORITHM,
     includeText: true,
     textRendering: 'model',
     scope: 'set',
     stickerCount: 40,
-    model: 'gemini-3.1-flash-image',
-    resolution: '1K',
+    model: DEFAULT_SKILL_STICKER_MODEL,
+    resolution: defaultResolutionForModel(DEFAULT_SKILL_STICKER_MODEL),
     lineUpload: true,
     lineUploadSubmit: manifest.lineUploadSubmit !== false,
     maxSheetRetries: 3,
