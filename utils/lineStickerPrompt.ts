@@ -24,6 +24,8 @@ import {
     CHARACTER_PRESETS,
     DEFAULT_CHARACTER_SLOT,
     TEXT_PRESETS,
+    resolveFontKeyForStyle,
+    resolveCanvasFontPresetKey,
 } from './lineStickerPresets';
 import type {
     LineStickerFontKey,
@@ -45,6 +47,8 @@ export {
     CHARACTER_PRESETS,
     DEFAULT_CHARACTER_SLOT,
     TEXT_PRESETS,
+    resolveFontKeyForStyle,
+    resolveCanvasFontPresetKey,
 };
 export type { LineStickerFontKey, ThemeOption, LineStickerStyleOption };
 
@@ -124,19 +128,54 @@ export interface TextSlot {
     };
 }
 
+/** Prompt note: on-sticker text should feel drawn in the same family as the illustration. */
+export function buildFontArtHarmonyNote(styleKey?: string): string {
+    if (!styleKey || styleKey === 'custom') {
+        return 'CRITICAL: Match the on-sticker text font to the illustration art style so text and character look like one cohesive sticker set (same line softness, weight, and medium).';
+    }
+    if (styleKey === 'matchUploaded') {
+        return 'CRITICAL: Match the on-sticker text font to the uploaded reference illustration — if the reference is soft hand-drawn, use rounded hand lettering; if pixel art, use pixel glyphs; if clean flat vector, use bold geometric type.';
+    }
+    const preset = STYLE_PRESETS[styleKey as keyof typeof STYLE_PRESETS];
+    if (!preset) {
+        return '';
+    }
+    const fontHint = preset.recommendedFontKey
+        ? ` Recommended pairing: ${FONT_PRESETS[preset.recommendedFontKey].promptDesc}`
+        : '';
+    return `CRITICAL: On-sticker text font must visually harmonize with the ${preset.label} art style — same line weight, softness, texture, and mood as the character drawing.${fontHint}`;
+}
+
 /** Resolve font style text for image-generation prompts (model-drawn sticker text). */
 export function resolveFontStylePromptDesc(
     fontKey: LineStickerFontKey,
-    customFontText: string
+    customFontText: string,
+    styleKey?: string
 ): string {
+    if (fontKey === 'matchUploaded') {
+        let base = FONT_PRESETS.matchUploaded.promptDesc;
+        if (styleKey && styleKey !== 'matchUploaded' && styleKey !== 'custom') {
+            base = `${base} ${buildFontArtHarmonyNote(styleKey)}`;
+        } else {
+            base = `${base} Letter each phrase as if the same artist who drew the reference wrote it — infer typography only from the reference image.`;
+        }
+        return base;
+    }
+
+    let base: string;
     if (fontKey === 'custom') {
         const trimmed = customFontText.trim();
         if (!trimmed) {
-            return 'Custom sticker font style (user did not specify). Use a clear readable font with thick outline and high contrast for tiny chat stickers.';
+            base =
+                'Custom sticker font style (user did not specify). Use a clear readable font with thick outline and high contrast for tiny chat stickers.';
+        } else {
+            base = `${trimmed}. Render as sticker text with thick outline, high contrast, and legibility at small chat preview size.`;
         }
-        return `${trimmed}. Render as sticker text with thick outline, high contrast, and legibility at small chat preview size.`;
+    } else {
+        base = FONT_PRESETS[fontKey].promptDesc;
     }
-    return FONT_PRESETS[fontKey].promptDesc;
+    const harmony = buildFontArtHarmonyNote(styleKey);
+    return harmony ? `${base} ${harmony}` : base;
 }
 
 // Global-to-local order: Layout → Style → Subject → Lighting/Background → Per-cell → Text → Final
@@ -315,7 +354,7 @@ export function buildLineStickerPrompt(
 
 [1. Layout] ${canvasAspect}, ${totalFrames} equal cells (${cellWidthPct}%×${cellHeightPct}%). Logical grid only — NO visible dividers. Continuous ${bgHex}. One subject per cell, ~10% chroma margin.
 
-[2. Style] Match uploaded reference only. ${slots.style.styleType}. ${slots.style.drawingMethod}. Flat shading; same artist across all cells.
+[2. Style] Match uploaded reference only. ${slots.style.styleType}. ${slots.style.drawingMethod}. Flat shading; same artist across all cells. On-sticker text font must match this art style.
 
 [3. Character] Same character(s) as reference in every cell. Consistent face, hair, outfit. Vary pose/expression only.
 

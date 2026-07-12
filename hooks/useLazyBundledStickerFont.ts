@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import type { LineStickerFontKey } from '../utils/lineStickerPresets';
+import { resolveCanvasFontPresetKey } from '../utils/lineStickerPresets';
 import { isBundledStickerFontPresetKey } from '../utils/lineStickerBundledFontCatalog';
 
 /** Preload a bundled sticker font when the user picks a preset (fire-and-forget). */
@@ -8,11 +9,12 @@ export function useLazyBundledStickerFont(
   enabled = true
 ): void {
   useEffect(() => {
-    if (!enabled || !isBundledStickerFontPresetKey(fontKey)) {
+    const canvasKey = resolveCanvasFontPresetKey(fontKey);
+    if (!enabled || !isBundledStickerFontPresetKey(canvasKey)) {
       return;
     }
     void import('../utils/lineStickerBrowserFonts').then((mod) =>
-      mod.ensureBundledStickerFontForPreset(fontKey)
+      mod.ensureBundledStickerFontForPreset(canvasKey)
     );
   }, [enabled, fontKey]);
 }

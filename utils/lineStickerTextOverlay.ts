@@ -12,6 +12,7 @@ import {
   FONT_PRESETS,
   TEXT_COLOR_PRESETS,
   getReservedCaptionBandLabelForFrame,
+  resolveCanvasFontPresetKey,
 } from './lineStickerPrompt';
 
 import type {
@@ -46,6 +47,7 @@ import {
   KANAKA_FONT_FAMILY,
   LIYU_SHOUSHU_FAMILY,
   NAIKAI_FONT_FAMILY,
+  isBundledStickerFontPresetKey,
 } from './lineStickerBundledFontCatalog';
 
 // Re-export so existing importers of './lineStickerTextOverlay' keep working.
@@ -136,8 +138,12 @@ export { KANAKA_FONT_FAMILY } from './lineStickerBundledFontCatalog';
 export { NAIKAI_FONT_FAMILY } from './lineStickerBundledFontCatalog';
 
 async function ensureBundledFontForOverlay(fontKey: FontPresetKey): Promise<void> {
+  const canvasKey = resolveCanvasFontPresetKey(fontKey);
+  if (!isBundledStickerFontPresetKey(canvasKey)) {
+    return;
+  }
   const { ensureBundledStickerFontForPreset } = await import('./lineStickerBrowserFonts');
-  await ensureBundledStickerFontForPreset(fontKey);
+  await ensureBundledStickerFontForPreset(canvasKey);
 }
 
 /**
@@ -158,7 +164,9 @@ const MAC_CHALK = '"Chalkboard SE", "Marker Felt"';
 const MAC_GOTHIC = '"Heiti TC", "STHeiti", "PingFang TC", "Hiragino Sans"';
 
 export function fontCssStackForPreset(fontKey: FontPresetKey): string {
+  const canvasKey = resolveCanvasFontPresetKey(fontKey);
   const stacks: Record<FontPresetKey, string> = {
+    matchUploaded: '', // resolved via resolveCanvasFontPresetKey
     handwritten: `${WIN_KAI}, ${MAC_KAI}, "Bradley Hand ITC", ${WIN_GOTHIC}, sans-serif`,
     round: `${WIN_ROUND}, ${MAC_ROUND}, sans-serif`,
     bold: `${WIN_GOTHIC}, ${MAC_GOTHIC}, "Noto Sans TC", sans-serif`,
@@ -179,7 +187,7 @@ export function fontCssStackForPreset(fontKey: FontPresetKey): string {
     kidDoodle: `${WIN_PLAY}, ${WIN_KAI}, ${MAC_CHALK}, "Bradley Hand ITC", ${WIN_ROUND}, sans-serif`,
     custom: `${WIN_ROUND}, ${MAC_ROUND}, sans-serif`,
   };
-  return stacks[fontKey] ?? stacks.round;
+  return stacks[canvasKey] ?? stacks.round;
 }
 
 /**
@@ -187,6 +195,13 @@ export function fontCssStackForPreset(fontKey: FontPresetKey): string {
  * the prompt (e.g. thin hand-drawn) without ignoring the user's weight control.
  */
 export function resolveCanvasFontNumericWeight(
+  fontKey: FontPresetKey,
+  tuning: ProgrammaticTextOverlayTuning
+): number {
+  return canvasFontNumericWeightForPreset(resolveCanvasFontPresetKey(fontKey), tuning);
+}
+
+function canvasFontNumericWeightForPreset(
   fontKey: FontPresetKey,
   tuning: ProgrammaticTextOverlayTuning
 ): number {

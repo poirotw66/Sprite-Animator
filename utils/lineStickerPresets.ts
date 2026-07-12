@@ -20,6 +20,11 @@ export const TEXT_COLOR_PRESETS: Record<string, { label: string; promptDesc: str
 };
 
 export const FONT_PRESETS: Record<string, { label: string; promptDesc: string }> = {
+    matchUploaded: {
+        label: '與上傳角色一致',
+        promptDesc:
+            'On-sticker text typography must be derived from the uploaded reference illustration only — match its line quality, stroke weight, hand-drawn vs geometric vs pixel character, outline treatment, and overall mood. Do not default to a generic sticker font.',
+    },
     handwritten: { label: '手寫風格', promptDesc: 'Readable bold hand-written font, thick white outline, high contrast, solid color, sticker vector style' },
     round: { label: '圓體', promptDesc: 'Round soft sticker font, thick strokes, balanced spacing, high contrast, easy to read at small size' },
     bold: { label: '黑體', promptDesc: 'Bold sans-serif sticker font, heavy weight, clear edges, strong contrast, optimized for tiny chat previews' },
@@ -87,6 +92,7 @@ export const FONT_PRESETS: Record<string, { label: string; promptDesc: string }>
 
 /** Display order for font dropdown: classic presets first, cute variants grouped, then custom. */
 export const FONT_PRESET_ORDER: (keyof typeof FONT_PRESETS)[] = [
+    'matchUploaded',
     'handwritten',
     'round',
     'bold',
@@ -108,8 +114,24 @@ export const FONT_PRESET_ORDER: (keyof typeof FONT_PRESETS)[] = [
     'custom',
 ];
 
-/** Preset keys for programmatic canvas font (excludes custom — use CSS font-family instead). */
-export const FONT_PRESET_CANVAS_ORDER = FONT_PRESET_ORDER.filter((key) => key !== 'custom');
+/** Preset keys for programmatic canvas font (excludes custom and reference-adaptive). */
+export const FONT_PRESET_CANVAS_ORDER = FONT_PRESET_ORDER.filter(
+    (key) => key !== 'custom' && key !== 'matchUploaded'
+);
+
+/** Neutral hand-drawn canvas fallback when font follows the reference image (programmatic overlay only). */
+export const MATCH_UPLOADED_CANVAS_FONT_FALLBACK: LineStickerFontKey = 'kanaka';
+
+/** Map UI/prompt font key to a concrete canvas preset (programmatic overlay has no reference vision). */
+export function resolveCanvasFontPresetKey(fontKey: LineStickerFontKey): LineStickerFontKey {
+    if (fontKey === 'matchUploaded') {
+        return MATCH_UPLOADED_CANVAS_FONT_FALLBACK;
+    }
+    if (fontKey === 'custom') {
+        return 'round';
+    }
+    return fontKey;
+}
 
 export type LineStickerFontKey = keyof typeof FONT_PRESETS;
 
@@ -251,68 +273,80 @@ export const THEME_PRESETS: Record<string, ThemeSlot & { label: string }> = {
 export type ThemeOption = keyof typeof THEME_PRESETS | 'custom';
 
 // label: for UI (zh-TW); styleType / drawingMethod: English for image model
-export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
+export const STYLE_PRESETS: Record<string, { label: string; recommendedFontKey?: LineStickerFontKey } & StyleSlot> = {
     matchUploaded: {
         label: '與上傳角色一致',
+        recommendedFontKey: 'matchUploaded',
         styleType: "STRICT: Use only the visual style of the uploaded reference image. Do not apply any other art style, genre, or aesthetic. The reference image defines the only acceptable style.",
         drawingMethod: "Match the reference image exactly: same line weight, same coloring method (flat or shaded), same proportions, same level of detail, same medium (digital, paint, etc.). Do not reinterpret or stylize; preserve the character's existing look. All cells must look like they were drawn in the same style as the reference.",
         outlinePreference: 'style',
     },
     chibi: {
         label: 'Q 版可愛',
+        recommendedFontKey: 'playful',
         styleType: "Chibi, 2-head body ratio, LINE sticker art style, versatile for any character type",
         drawingMethod: "Soft hand-drawn, thick clean outlines, soft cell shading",
     },
     pixel: {
         label: '像素藝術',
+        recommendedFontKey: 'fashionBitmap16',
         styleType: "16-bit Retro Pixel Art, SNES/GBA style, pixel-perfect",
         drawingMethod: "Precise pixel placement, sharp edges no anti-aliasing, clear grid texture and clean lines",
     },
     minimalist: {
         label: '極簡線條',
+        recommendedFontKey: 'round',
         styleType: "Minimalist flat illustration, Kanahei style, cute healing sticker look",
         drawingMethod: "Soft thick outlines, simple flat color fill, dot eyes and soft cheek detail, rounded simplified shapes",
         outlinePreference: 'style',
     },
     anime: {
         label: "日系動漫",
+        recommendedFontKey: 'bold',
         styleType: "Modern anime style, cell-shaded, high-quality 2D render",
         drawingMethod: "Clean precise lines, two-tone shadows, detailed eyes and hair highlights",
     },
     cartoon: {
         label: "美式卡通",
+        recommendedFontKey: 'pop',
         styleType: "Vibrant cartoon style, strong motion, exaggerated expressions",
         drawingMethod: "Thick dark outlines, saturated color blocks, geometric simplification, commercial illustration feel",
         outlinePreference: 'style',
     },
     watercolor: {
         label: "手繪水彩",
+        recommendedFontKey: 'sweetChalk',
         styleType: "Soft watercolor style, healing illustration, natural bleed at edges",
         drawingMethod: "Wet-on-wet technique, hand-drawn brush edges, soft outlines, organic paint flow",
         lightingPreference: 'soft',
     },
     yurukawa: {
         label: "慵懶軟懶風",
+        recommendedFontKey: 'fluffy',
         styleType: "Yuru-kawa style, kawaii aesthetic, chibi, Japanese healing and lazy atmosphere, relaxed and lazy vibe, funny expression, suitable for personified characters (tired, lazy, cute)",
         drawingMethod: "Simple line art, marker coloring style, low saturation, simple vector art. Avoid: photorealistic, highly detailed, volumetric lighting, glossy finish, complex background, serious tone.",
     },
     pastel: {
         label: "蠟筆粉彩",
+        recommendedFontKey: 'sweetChalk',
         styleType: "Soft pastel and crayon style, dreamy and gentle, kawaii sticker look",
         drawingMethod: "Pastel or wax crayon texture, soft edges, low saturation, rounded shapes, gentle shading",
     },
     flat: {
         label: "扁平時尚",
+        recommendedFontKey: 'bold',
         styleType: "Flat design illustration, modern app and icon style, geometric simplification",
         drawingMethod: "Solid flat color blocks, minimal or no gradients, clean vector shapes, no soft shadows",
     },
     doodle: {
         label: "塗鴉手繪",
+        recommendedFontKey: 'thinHandwritten',
         styleType: "Casual doodle and sketch style, hand-drawn feel, playful and loose",
         drawingMethod: "Sketchy or marker-like lines, slightly imperfect outlines, simple fills, notebook or memo vibe",
     },
     kidDoodle: {
         label: "五歲塗鴉",
+        recommendedFontKey: 'kidDoodle',
         styleType:
             "Create a clumsy kid-doodle rendition: redraw-like awkwardness that is intentionally confused and embarrassing. Use a white background so it looks like it was drawn with a mouse inside an old computer drawing program. It should feel like it almost matches the intended character, but not really—like everything is slightly off. Make it look like low-quality, pixel-by-pixel tracing that feels slow and step-by-step. Exaggerate how ridiculously bad it is while keeping the subject recognizable enough to be “almost right.”",
         drawingMethod:
@@ -321,17 +355,33 @@ export const STYLE_PRESETS: Record<string, { label: string } & StyleSlot> = {
     },
     gouache: {
         label: "不透明水彩",
+        recommendedFontKey: 'naikai',
         styleType: "Gouache and opaque watercolor style, matte and soft, picture-book illustration feel",
         drawingMethod: "Flat opaque color layers, soft brush edges, minimal blending",
         lightingPreference: 'soft',
     },
     lineChibi: {
         label: "日系貼圖暖色",
+        recommendedFontKey: 'mochiRound',
         styleType: "Cute chibi character in Japanese LINE sticker style, suitable for animals and mascots. Hand-drawn digital illustration with thick dark outlines and flat colors. Round, squishy body, tiny paws, minimalist expressive facial expressions.",
         drawingMethod: "High contrast, minimalist and cozy aesthetic. Isolated character, clean and readable for stickers. Avoid: photorealistic, complex shading, busy details.",
         outlinePreference: 'style',
     },
 };
+
+/** Default sticker caption font for an art-style preset (unless the job explicitly sets fontKey). */
+export function resolveFontKeyForStyle(
+    styleKey?: string,
+    explicitFontKey?: LineStickerFontKey
+): LineStickerFontKey {
+    if (explicitFontKey) {
+        return explicitFontKey;
+    }
+    const key =
+        styleKey && styleKey !== 'custom' && styleKey in STYLE_PRESETS ? styleKey : 'matchUploaded';
+    const preset = STYLE_PRESETS[key as keyof typeof STYLE_PRESETS];
+    return preset.recommendedFontKey ?? 'round';
+}
 
 /** Style key: preset key or 'custom' for user-defined style. */
 export type LineStickerStyleOption = keyof typeof STYLE_PRESETS | 'custom';

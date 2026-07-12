@@ -18,10 +18,11 @@
  * { "format": "line-sticker-phrase-set", "version": 1, "mode": "set", "phrases": [...set items], "actionDescs": [...] }
  */
 
-import { LINE_STICKER_TOTAL_SET_FRAMES } from './lineStickerSetSchema';
-
 export const PHRASE_SET_FORMAT = 'line-sticker-phrase-set' as const;
 export const PHRASE_SET_VERSION = 1;
+
+/** Standard LINE sticker pack size (40 stickers per set). */
+export const LINE_STICKER_PHRASE_SET_SIZE = 40;
 
 /** Exported/imported phrase set (single sheet or one full sticker set). */
 export interface LineStickerPhraseSetJson {
@@ -73,34 +74,22 @@ export function parsePhraseSetJson(json: string): LineStickerPhraseSetJson | nul
     if (!isNonNegativeInteger(rows) || rows < 1 || rows > 8) return null;
     if (phrases.length !== cols * rows) return null;
   } else {
-    if (phrases.length > LINE_STICKER_TOTAL_SET_FRAMES) return null;
+    if (phrases.length !== LINE_STICKER_PHRASE_SET_SIZE) return null;
   }
   const actionDescs = o.actionDescs;
   if (actionDescs !== undefined) {
     if (!isStringArray(actionDescs)) return null;
-    if (mode === 'set' && actionDescs.length > phrases.length) return null;
+    if (mode === 'set' && actionDescs.length !== LINE_STICKER_PHRASE_SET_SIZE) return null;
     if (mode === 'single' && actionDescs.length !== phrases.length) return null;
   }
   const name = o.name;
   if (mode === 'set') {
-    const basePhrases =
-      phrases.length < LINE_STICKER_TOTAL_SET_FRAMES
-        ? [...phrases, ...Array(LINE_STICKER_TOTAL_SET_FRAMES - phrases.length).fill('')]
-        : phrases;
-    let normalizedActionDescs: string[] | undefined;
-    if (actionDescs !== undefined) {
-      const limited = actionDescs.slice(0, basePhrases.length);
-      normalizedActionDescs =
-        limited.length < basePhrases.length
-          ? [...limited, ...Array(basePhrases.length - limited.length).fill('')]
-          : limited;
-    }
     return {
       format: PHRASE_SET_FORMAT,
       version: PHRASE_SET_VERSION,
       mode,
-      phrases: basePhrases,
-      actionDescs: normalizedActionDescs,
+      phrases,
+      actionDescs: actionDescs as string[] | undefined,
       name: typeof name === 'string' ? name : undefined,
     };
   }
@@ -129,20 +118,19 @@ export function buildPhraseSetExport(params: {
 }): LineStickerPhraseSetJson {
   const { mode, gridCols, gridRows, phrases, actionDescs, name } = params;
   if (mode === 'set') {
-    const p = phrases.slice(0, LINE_STICKER_TOTAL_SET_FRAMES);
-    const a = actionDescs.slice(0, LINE_STICKER_TOTAL_SET_FRAMES);
+    const p = phrases.slice(0, LINE_STICKER_PHRASE_SET_SIZE);
+    const a = actionDescs.slice(0, LINE_STICKER_PHRASE_SET_SIZE);
+    if (p.length !== LINE_STICKER_PHRASE_SET_SIZE || a.length !== LINE_STICKER_PHRASE_SET_SIZE) {
+      throw new Error(
+        `Set mode requires exactly ${LINE_STICKER_PHRASE_SET_SIZE} phrases and actionDescs`
+      );
+    }
     return {
       format: PHRASE_SET_FORMAT,
       version: PHRASE_SET_VERSION,
       mode: 'set',
-      phrases:
-        p.length < LINE_STICKER_TOTAL_SET_FRAMES
-          ? [...p, ...Array(LINE_STICKER_TOTAL_SET_FRAMES - p.length).fill('')]
-          : p,
-      actionDescs:
-        a.length < LINE_STICKER_TOTAL_SET_FRAMES
-          ? [...a, ...Array(LINE_STICKER_TOTAL_SET_FRAMES - a.length).fill('')]
-          : a,
+      phrases: p,
+      actionDescs: a,
       name,
     };
   }

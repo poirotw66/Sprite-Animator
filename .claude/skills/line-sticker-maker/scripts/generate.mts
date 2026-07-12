@@ -26,6 +26,8 @@ import {
   DEFAULT_CHARACTER_SLOT,
   FONT_PRESETS,
   TEXT_COLOR_PRESETS,
+  resolveFontKeyForStyle,
+  resolveFontStylePromptDesc,
   type PromptSlots,
   type StyleSlot,
   type ThemeSlot,
@@ -143,7 +145,11 @@ function mimeFromPath(p: string): string {
   return 'image/jpeg';
 }
 
-function buildSlots(config: StickerConfig, phrases: string[]): PromptSlots {
+function buildSlots(
+  config: StickerConfig,
+  phrases: string[],
+  fontKey: keyof typeof FONT_PRESETS
+): PromptSlots {
   const styleKey = config.style ?? 'matchUploaded';
   const stylePreset = STYLE_PRESETS[styleKey] ?? STYLE_PRESETS.matchUploaded;
   const style: StyleSlot = {
@@ -154,7 +160,13 @@ function buildSlots(config: StickerConfig, phrases: string[]): PromptSlots {
   };
 
   const langKey = config.language ?? 'zh-TW';
-  const text = TEXT_PRESETS[langKey] ?? TEXT_PRESETS['zh-TW'];
+  const textBase = TEXT_PRESETS[langKey] ?? TEXT_PRESETS['zh-TW'];
+  const textColorKey = config.textColorKey ?? 'black';
+  const text = {
+    ...textBase,
+    textStyle: resolveFontStylePromptDesc(fontKey, '', styleKey),
+    textColor: TEXT_COLOR_PRESETS[textColorKey]?.promptDesc ?? textBase.textColor,
+  };
 
   const themeKey = config.theme ?? 'daily';
   const themePreset = THEME_PRESETS[themeKey] ?? THEME_PRESETS.daily;
@@ -352,18 +364,19 @@ async function main() {
   }
   const iterationSheets = isolatedSheetRun ? sheetsToGenerate : sheets;
   const stickerTotal = sheets.reduce((sum, sheet) => sum + sheet.cols * sheet.rows, 0);
+  const fontKey = resolveFontKeyForStyle(config.style, config.fontKey);
 
   console.log(
     `▶ LINE sticker job: scope=${config.scope ?? 'set'}, stickers=${stickerTotal}, sheets=${sheets.length}` +
       (sheetFilter ? `, regenerating=${sheetFilter}` : '') +
       (sheetDirOverride ? `, outputDir=${sheetDirOverride}` : '') +
       (isolatedSheetRun ? ', isolated=true' : '') +
-      `, chroma=${chromaKeyColor}, chromaAlgo=${chromaKeyAlgorithm}, text=${textRendering === 'programmatic' ? 'programmatic' : effectiveIncludeText ? 'model-drawn' : 'none'}, model=${model}, resolution=${resolution}`
+      `, chroma=${chromaKeyColor}, chromaAlgo=${chromaKeyAlgorithm}, text=${textRendering === 'programmatic' ? 'programmatic' : effectiveIncludeText ? 'model-drawn' : 'none'}, font=${fontKey}, model=${model}, resolution=${resolution}`
   );
 
   if (dryRun) {
     for (const sheet of sheets) {
-      const slots = buildSlots(config, sheet.phrases);
+      const slots = buildSlots(config, sheet.phrases, fontKey);
       const reserveForProgrammaticOverlay = includeText && textRendering === 'programmatic';
       const prompt = buildLineStickerPrompt(
         slots,
@@ -409,7 +422,6 @@ async function main() {
   const usedSheetFolders: string[] = [];
   const gridScores: Record<string, number> = {};
 
-  const fontKey = config.fontKey ?? 'round';
   const textColorKey = config.textColorKey ?? 'black';
   const programmaticTextTuning = mergeProgrammaticTextTuning(config.programmaticTextTuning);
   const programmaticCompose = mergeProgrammaticComposeConfig(config.programmaticCompose);
@@ -449,7 +461,7 @@ async function main() {
     priorSheetFolder?: string
   ): Promise<{ folder: string; entries: Array<Record<string, unknown>>; frames: RgbaImage[]; score: number }> {
     console.log(`\n▶ ${sheetFolder}:`);
-    const slots = buildSlots(config, sheet.phrases);
+    const slots = buildSlots(config, sheet.phrases, fontKey);
     const result = await generateOneSheet({
       sheet,
       sheetFolder,

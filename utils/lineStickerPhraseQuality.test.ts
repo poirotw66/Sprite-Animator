@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   auditStickerPhrases,
   getStickerPhraseIssues,
+  isLineSendablePhrase,
   isVisualOnlyStickerPhrase,
   normalizeStickerPhrase,
   parseStickerPhraseLine,
@@ -29,6 +30,20 @@ describe('getStickerPhraseIssues', () => {
   it('flags corporate written forms', () => {
     const issues = getStickerPhraseIssues('請查收', 'Traditional Chinese');
     expect(issues.some((i) => i.code === 'written_form')).toBe(true);
+  });
+
+  it('rejects work-memo phrases that are not tap-to-send chat lines', () => {
+    expect(isLineSendablePhrase('謝謝你')).toBe(true);
+    expect(isLineSendablePhrase('辛苦了')).toBe(true);
+    expect(isLineSendablePhrase('開會中')).toBe(true);
+    expect(isLineSendablePhrase('加班中')).toBe(true);
+    expect(isLineSendablePhrase('房租進度呢')).toBe(false);
+    expect(isLineSendablePhrase('巡邏早安')).toBe(false);
+    expect(isLineSendablePhrase('案情不單純')).toBe(false);
+    expect(isLineSendablePhrase('巡邏中')).toBe(false);
+
+    const issues = getStickerPhraseIssues('紀錄了', 'Traditional Chinese');
+    expect(issues.some((i) => i.code === 'not_sendable')).toBe(true);
   });
 
   it('allows visual-only empty slots', () => {

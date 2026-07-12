@@ -28,6 +28,11 @@ function stripForbiddenChars(text: string, language: string): string {
 const ZH_WRITTEN_FORM_RE =
   /^(請查收|敬請|茲|本公司|已完成|進行中|敬請見諒|如有疑問)/;
 
+/** Work memo / status report — not a tap-to-send LINE chat line. */
+const ZH_NON_SENDABLE_RE =
+  /進度|提醒|警報|合約|排程|補件|備份|完畢|表單|單純|膠著|嫌疑|確鑿|頭緒|案情|放大鏡|檢查完|確認完|紀錄了|巡邏|水電費|房租費|請確認|請補|請繳|報告|修繕|滯留|簽好沒|重談|簽到|已閱|試味中|學妹來|將軍巡|合約簽|合約重|進件|回報|查核|稽核|送審|立案|辦案|推理中|證據鏈|水電表|房租進|確認中|通知|紀錄進|已排程|先備份|表單呢|水電費|修繕|案情不|沒頭緒|嫌疑嗎|證據確/;
+const ZH_STATUS_REPORT_RE = /(巡邏|辦案|確認完|試味|備份|排程|查房|繳租|辦理|紀錄)中$/;
+
 const WHITESPACE_RE = /\s+/g;
 
 export type StickerPhraseIssueCode =
@@ -37,6 +42,7 @@ export type StickerPhraseIssueCode =
   | 'forbidden_char'
   | 'english_too_wordy'
   | 'written_form'
+  | 'not_sendable'
   | 'whitespace';
 
 /** True when the sticker cell has no on-image caption (expression-only). */
@@ -56,6 +62,7 @@ export const STICKER_PHRASE_HARD_REJECT_CODES: StickerPhraseIssueCode[] = [
   'emoji',
   'forbidden_char',
   'english_too_wordy',
+  'not_sendable',
 ];
 
 export interface StickerPhraseIssue {
@@ -137,7 +144,32 @@ export function getStickerPhraseIssues(
     issues.push({ code: 'written_form', message: 'reads like formal text, not a sticker caption' });
   }
 
+  if (!isEnglishPhraseLanguage(language) && !isLineSendablePhrase(raw)) {
+    issues.push({
+      code: 'not_sendable',
+      message: 'reads like a work memo or scene caption, not a LINE chat line you would tap to send',
+    });
+  }
+
   return issues;
+}
+
+/** True when the phrase is short enough to send in a LINE chat (not a status report). */
+export function isLineSendablePhrase(phrase: string): boolean {
+  const raw = phrase.trim();
+  if (!raw || isVisualOnlyStickerPhrase(raw)) {
+    return true;
+  }
+  if (ZH_WRITTEN_FORM_RE.test(raw)) {
+    return false;
+  }
+  if (ZH_NON_SENDABLE_RE.test(raw)) {
+    return false;
+  }
+  if (ZH_STATUS_REPORT_RE.test(raw)) {
+    return false;
+  }
+  return true;
 }
 
 export function polishStickerPhrases(phrases: string[], language: string): string[] {

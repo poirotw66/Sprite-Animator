@@ -95,6 +95,7 @@ describe('fontCssStackForPreset', () => {
     expect(fontCssStackForPreset('liyushoushu')).toMatch(/Liyu Shoushu/);
     expect(fontCssStackForPreset('fashionBitmap16')).toMatch(/FashionBitmap16/);
     expect(fontCssStackForPreset('kanaka')).toMatch(/Kanaka Font/);
+    expect(fontCssStackForPreset('matchUploaded')).toMatch(/Kanaka Font/);
     expect(fontCssStackForPreset('naikai')).toMatch(/NaikaiFont/);
     expect(fontCssStackForPreset('fluffy')).toMatch(/Yu Gothic UI/);
     expect(fontCssStackForPreset('custom')).toMatch(/Yu Gothic UI/);

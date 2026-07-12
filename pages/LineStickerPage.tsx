@@ -62,6 +62,7 @@ import {
     DEFAULT_CHARACTER_SLOT,
     STYLE_PRESETS,
     buildLineStickerStylePreviewPrompt,
+    resolveFontKeyForStyle,
     type ThemeOption,
     type LineStickerStyleOption,
     type LineStickerPromptVersion,
@@ -141,7 +142,9 @@ const LineStickerPage: React.FC = () => {
     const [actionDedupeStrength, setActionDedupeStrength] =
         useState<ActionDedupeStrength>('balanced');
     const [selectedTextColor, setSelectedTextColor] = useState<keyof typeof TEXT_COLOR_PRESETS>('black');
-    const [selectedFont, setSelectedFont] = useState<keyof typeof FONT_PRESETS>('round');
+    const [selectedFont, setSelectedFont] = useState<keyof typeof FONT_PRESETS>(() =>
+        resolveFontKeyForStyle('matchUploaded')
+    );
     const [singlePhrasesList, setSinglePhrasesList] = useState<string[]>([]);
     const [stylePreviewImage, setStylePreviewImage] = useState<string | null>(null);
     const [isGeneratingStylePreview, setIsGeneratingStylePreview] = useState(false);
@@ -478,6 +481,10 @@ const LineStickerPage: React.FC = () => {
     useEffect(() => {
         setStylePreviewImage(null);
     }, [selectedStyle, customStyleText, sourceImage]);
+
+    useEffect(() => {
+        setSelectedFont(resolveFontKeyForStyle(selectedStyle));
+    }, [selectedStyle]);
 
     const handleGenerateStylePreview = useCallback(async () => {
         const key = getEffectiveApiKey();

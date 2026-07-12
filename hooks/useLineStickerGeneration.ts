@@ -117,7 +117,7 @@ export const useLineStickerGeneration = ({
             text: {
                 ...TEXT_PRESETS[selectedLanguage],
                 textColor: TEXT_COLOR_PRESETS[selectedTextColor].promptDesc,
-                textStyle: resolveFontStylePromptDesc(selectedFont, customFontText),
+                textStyle: resolveFontStylePromptDesc(selectedFont, customFontText, selectedStyle),
             },
         };
 
