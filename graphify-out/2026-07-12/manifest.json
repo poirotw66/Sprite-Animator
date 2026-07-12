@@ -560,8 +560,8 @@
     "semantic_hash": "c31aff3595a6e9d5b99fa8a46966afbd"
   },
   "i18n/en.ts": {
-    "mtime": 1783840068.1182172,
-    "ast_hash": "5b76c1ae6ac3a1b10bf3bcc4df2baef3",
+    "mtime": 1783840432.864781,
+    "ast_hash": "ebee9b452c1fae8ec1c965a478f86c01",
     "semantic_hash": ""
   },
   "i18n/index.ts": {
@@ -570,13 +570,13 @@
     "semantic_hash": "fe3d3c9265445a428cf53c91a555e168"
   },
   "i18n/types.ts": {
-    "mtime": 1783840064.5057714,
-    "ast_hash": "c190f9c596e61274dd120a90c5dfd10d",
+    "mtime": 1783840430.458149,
+    "ast_hash": "59efee7875621bdc8d7947dc8743a3ea",
     "semantic_hash": ""
   },
   "i18n/zh-TW.ts": {
-    "mtime": 1783840066.609191,
-    "ast_hash": "df66e23006915e4c3a79215e61d0e525",
+    "mtime": 1783840431.7322533,
+    "ast_hash": "9d6d490e66a4e400d7ac89a57d0141bf",
     "semantic_hash": ""
   },
   "index.tsx": {
@@ -1680,8 +1680,8 @@
     "semantic_hash": ""
   },
   "pages/DailyStickerRegistryPage.tsx": {
-    "mtime": 1783840064.38761,
-    "ast_hash": "645c64e4662c6512cb2b1b512fb38100",
+    "mtime": 1783840464.9563663,
+    "ast_hash": "58f04fa3c08ab1069046fedec6fae893",
     "semantic_hash": ""
   },
   "utils/dailyPackPlanFormat.ts": {
@@ -1695,13 +1695,13 @@
     "semantic_hash": ""
   },
   "utils/stickerRegistryView.test.ts": {
-    "mtime": 1783840082.4141393,
-    "ast_hash": "4611ff074d9963af44cd6ac5926c7dd1",
+    "mtime": 1783840462.354345,
+    "ast_hash": "6841a8ffc6f7e5d494984be09b99cf4c",
     "semantic_hash": ""
   },
   "utils/stickerRegistryView.ts": {
-    "mtime": 1783840041.4024084,
-    "ast_hash": "73062e57ce4158a9406c0ff808bf7af5",
+    "mtime": 1783840429.6900508,
+    "ast_hash": "4e31fb4d53b862b67dd7480c2fd3502a",
     "semantic_hash": ""
   }
 }

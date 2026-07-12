@@ -590,9 +590,9 @@
     "semantic_hash": "feb4d50810d3309d5e8ae5ec4369d606"
   },
   "package.json": {
-    "mtime": 1783298330.505036,
-    "ast_hash": "fed400117809d75ad0aaf1ad28b43072",
-    "semantic_hash": "fed400117809d75ad0aaf1ad28b43072"
+    "mtime": 1783841192.8494735,
+    "ast_hash": "700e4decc7702bccfe5448ca09d1ca01",
+    "semantic_hash": ""
   },
   "pages/HomePage.tsx": {
     "mtime": 1783840073.4383044,
@@ -895,8 +895,8 @@
     "semantic_hash": "f9a429ced1f90894d2ec76bd19ee1d75"
   },
   "utils/constants.ts": {
-    "mtime": 1783782018.0618694,
-    "ast_hash": "04171e70892671ec6aba408010351abf",
+    "mtime": 1783841188.6237495,
+    "ast_hash": "73f37ea39d9cd5969f74a75ebeeefaaa",
     "semantic_hash": ""
   },
   "utils/dataUrl.test.ts": {
@@ -955,9 +955,9 @@
     "semantic_hash": "a91fd2ad18ec0c8bd82a1c9e0a3dd5a1"
   },
   "utils/imageUtils.ts": {
-    "mtime": 1779210926.10836,
-    "ast_hash": "eadf8ab18a69de2ef7376df3c636970b",
-    "semantic_hash": "eadf8ab18a69de2ef7376df3c636970b"
+    "mtime": 1783841187.7438128,
+    "ast_hash": "47dcd080d86784eaff0d913b429aa199",
+    "semantic_hash": ""
   },
   "utils/lazyWithRetry.tsx": {
     "mtime": 1772025816.4764934,
@@ -1103,11 +1103,6 @@
     "mtime": 1783830000.9337494,
     "ast_hash": "117597073fc1229c9b4ad96fcc3de222",
     "semantic_hash": ""
-  },
-  "utils/loadBundledImage.ts": {
-    "mtime": 1783619282.4760804,
-    "ast_hash": "712297a6a93fcb63f826d105032c68fd",
-    "semantic_hash": "712297a6a93fcb63f826d105032c68fd"
   },
   "utils/logger.ts": {
     "mtime": 1783263556.5326183,
@@ -1597,11 +1592,6 @@
   "public/style-previews/yurukawa.png": {
     "mtime": 1777652664.7744215,
     "ast_hash": "1fa3ec1ecf1e40ba6cc50ecfbd7df8d7",
-    "semantic_hash": ""
-  },
-  "reference/comic/model-sheet-layout.png": {
-    "mtime": 1783619282.4656358,
-    "ast_hash": "700eaf0778adfb84fa087561f3058200",
     "semantic_hash": ""
   },
   ".claude/skills/line-sticker-maker/scripts/reslice-core-preview.mts": {

@@ -139,12 +139,9 @@
   "137": "v1.1.0 — 精確洋紅色去背 (2026-01-25)",
   "138": "專案優化路線圖與功能建議",
   "139": "stickerPhrases.ts",
-  "140": "chromaForgeGreenFringe.ts",
-  "141": "ErrorBoundary",
   "142": "English",
   "143": "useLineStickerProgrammaticOverlay.ts",
   "144": "uploadConfig.self-check.mts",
-  "145": "🚀 Deploy to GitHub Pages",
   "146": "精靈圖切分與校正流程（目前實作）",
   "149": "parsePhraseSetJson",
   "150": "💡 創新功能建議",
@@ -174,6 +171,5 @@
   "175": "Giraffe Daily Sprite Sheet 1",
   "176": "Giraffe Daily Sprite Sheet 2",
   "177": "Meerkat Banter Sprite Sheet 1",
-  "178": "Meerkat Banter Sprite Sheet 2",
-  "184": "💡 常見問題 (FAQ)"
+  "178": "Meerkat Banter Sprite Sheet 2"
 }

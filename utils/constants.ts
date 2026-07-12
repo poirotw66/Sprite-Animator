@@ -52,8 +52,6 @@ export const DEFAULT_SKILL_STICKER_MODEL = DEFAULT_MODEL;
 /** Output resolution for image generation. 2.5-flash / 3.1-flash-lite = 1K only; 3-pro = 1K/2K/4K; 3.1-flash = 0.5K/1K/2K/4K */
 export type ImageResolution = '0.5K' | '1K' | '2K' | '4K';
 
-export const IMAGE_RESOLUTION_OPTIONS: ImageResolution[] = ['0.5K', '1K', '2K', '4K'];
-
 /** Resolutions supported per model */
 export const MODEL_RESOLUTIONS: Record<string, ImageResolution[]> = {
   'gemini-3.1-flash-lite-image': ['1K'],
@@ -77,8 +75,6 @@ export const CHROMA_KEY_COLORS = {
   green: { r: 0, g: 255, b: 0, hex: '#00FF00', name: '綠幕 (Neon Green)' },
 } as const;
 
-// Legacy - kept for compatibility
-export const CHROMA_KEY_COLOR = CHROMA_KEY_COLORS.magenta;
 /** @deprecated Prefer chromaSimilarity CHROMA_LIKE_*; still mapped via fuzzPercentToKeyMax. */
 export const CHROMA_KEY_FUZZ = 35;
 
@@ -97,7 +93,6 @@ export const CHROMA_KEY_FORGE_EDGE_THRESHOLD = 150;
 // Frame interpolation settings for smooth GIF export
 export const DEFAULT_INTERPOLATION_FRAMES = 2; // Number of frames to insert between keyframes
 export const GIF_TARGET_FPS = 24; // Target FPS for smooth GIF output
-export const ENABLE_FRAME_INTERPOLATION = true; // Enable frame blending for smoother animations
 
 export const GRID_PATTERN_URL = 'https://bg-patterns.com/wp-content/uploads/2021/04/check-pattern-d01.png';
 

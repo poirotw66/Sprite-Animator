@@ -42,7 +42,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_character_ref_scripts_geminicharacterref",
-      "community": 48,
+      "community": 21,
       "norm_label": "geminicharacterref.mts"
     },
     {
@@ -1032,7 +1032,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_finalizejob_jobconfig",
-      "community": 61,
+      "community": 9,
       "norm_label": "jobconfig"
     },
     {
@@ -1702,7 +1702,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage",
-      "community": 19,
+      "community": 32,
       "norm_label": "nodeimage.mts"
     },
     {
@@ -1722,7 +1722,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_ispng",
-      "community": 12,
+      "community": 32,
       "norm_label": "ispng()"
     },
     {
@@ -1732,7 +1732,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_isjpeg",
-      "community": 12,
+      "community": 32,
       "norm_label": "isjpeg()"
     },
     {
@@ -1752,7 +1752,7 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_decodeimage",
-      "community": 12,
+      "community": 32,
       "norm_label": "decodeimage()"
     },
     {
@@ -1772,7 +1772,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_encodepng",
-      "community": 1,
+      "community": 12,
       "norm_label": "encodepng()"
     },
     {
@@ -1822,7 +1822,7 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_extractcellframe",
-      "community": 19,
+      "community": 32,
       "norm_label": "extractcellframe()"
     },
     {
@@ -1832,7 +1832,7 @@
       "source_location": "L236",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_slicemode",
-      "community": 19,
+      "community": 32,
       "norm_label": "slicemode"
     },
     {
@@ -1842,7 +1842,7 @@
       "source_location": "L237",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_templateslicestrategy",
-      "community": 19,
+      "community": 32,
       "norm_label": "templateslicestrategy"
     },
     {
@@ -1852,7 +1852,7 @@
       "source_location": "L239",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_templategridbounds",
-      "community": 19,
+      "community": 32,
       "norm_label": "templategridbounds"
     },
     {
@@ -1862,7 +1862,7 @@
       "source_location": "L244",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_slicesheetoptions",
-      "community": 19,
+      "community": 32,
       "norm_label": "slicesheetoptions"
     },
     {
@@ -1872,7 +1872,7 @@
       "source_location": "L270",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_optimizesliceforimage",
-      "community": 2,
+      "community": 17,
       "norm_label": "optimizesliceforimage()"
     },
     {
@@ -1882,7 +1882,7 @@
       "source_location": "L289",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_scoregridlayout",
-      "community": 19,
+      "community": 32,
       "norm_label": "scoregridlayout()"
     },
     {
@@ -1892,7 +1892,7 @@
       "source_location": "L294",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_detectbestgridlayout",
-      "community": 19,
+      "community": 32,
       "norm_label": "detectbestgridlayout()"
     },
     {
@@ -1912,7 +1912,7 @@
       "source_location": "L480",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_samplebilinear",
-      "community": 19,
+      "community": 32,
       "norm_label": "samplebilinear()"
     },
     {
@@ -1922,7 +1922,7 @@
       "source_location": "L517",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_nodeimage_resamplergba",
-      "community": 19,
+      "community": 32,
       "norm_label": "resamplergba()"
     },
     {
@@ -2202,7 +2202,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay",
-      "community": 50,
+      "community": 4,
       "norm_label": "programmatictextoverlay.mts"
     },
     {
@@ -2212,7 +2212,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_fontpresetkey",
-      "community": 50,
+      "community": 4,
       "norm_label": "fontpresetkey"
     },
     {
@@ -2222,7 +2222,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_textcolorpresetkey",
-      "community": 50,
+      "community": 4,
       "norm_label": "textcolorpresetkey"
     },
     {
@@ -2232,7 +2232,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_programmaticoverlayoptions",
-      "community": 50,
+      "community": 4,
       "norm_label": "programmaticoverlayoptions"
     },
     {
@@ -2242,7 +2242,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_composeoverlayoptions",
-      "community": 50,
+      "community": 4,
       "norm_label": "composeoverlayoptions"
     },
     {
@@ -2252,7 +2252,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_blitrgbaontocanvas",
-      "community": 50,
+      "community": 4,
       "norm_label": "blitrgbaontocanvas()"
     },
     {
@@ -2262,7 +2262,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_readrgbafromcanvas",
-      "community": 50,
+      "community": 4,
       "norm_label": "readrgbafromcanvas()"
     },
     {
@@ -2272,7 +2272,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_programmatictextoverlay_overlayphraseonrgbaframe",
-      "community": 50,
+      "community": 4,
       "norm_label": "overlayphraseonrgbaframe()"
     },
     {
@@ -2492,7 +2492,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_reoverlay_sheet",
-      "community": 12,
+      "community": 124,
       "norm_label": "reoverlay-sheet.mts"
     },
     {
@@ -2502,7 +2502,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_reoverlay_sheet_argv",
-      "community": 12,
+      "community": 124,
       "norm_label": "argv"
     },
     {
@@ -2512,7 +2512,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_reoverlay_sheet_sheetdir",
-      "community": 12,
+      "community": 124,
       "norm_label": "sheetdir"
     },
     {
@@ -2522,7 +2522,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_reoverlay_sheet_cols",
-      "community": 12,
+      "community": 124,
       "norm_label": "cols"
     },
     {
@@ -2532,7 +2532,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_reoverlay_sheet_rows",
-      "community": 12,
+      "community": 124,
       "norm_label": "rows"
     },
     {
@@ -2542,7 +2542,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_reoverlay_sheet_processedpath",
-      "community": 12,
+      "community": 124,
       "norm_label": "processedpath"
     },
     {
@@ -2552,7 +2552,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_reoverlay_sheet_loadoverlayconfig",
-      "community": 12,
+      "community": 124,
       "norm_label": "loadoverlayconfig()"
     },
     {
@@ -2562,7 +2562,7 @@
       "source_location": "L131",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_reoverlay_sheet_image",
-      "community": 12,
+      "community": 124,
       "norm_label": "image"
     },
     {
@@ -2572,7 +2572,7 @@
       "source_location": "L132",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_reoverlay_sheet_useguided",
-      "community": 12,
+      "community": 124,
       "norm_label": "useguided"
     },
     {
@@ -2582,7 +2582,7 @@
       "source_location": "L133",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_reoverlay_sheet_templatebounds",
-      "community": 12,
+      "community": 124,
       "norm_label": "templatebounds"
     },
     {
@@ -2592,7 +2592,7 @@
       "source_location": "L135",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_reoverlay_sheet_frames",
-      "community": 12,
+      "community": 124,
       "norm_label": "frames"
     },
     {
@@ -3022,7 +3022,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_from_inputs",
-      "community": 34,
+      "community": 61,
       "norm_label": "run-from-inputs.mts"
     },
     {
@@ -3032,7 +3032,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_from_inputs_script_dir",
-      "community": 34,
+      "community": 61,
       "norm_label": "script_dir"
     },
     {
@@ -3042,7 +3042,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_from_inputs_root",
-      "community": 34,
+      "community": 61,
       "norm_label": "root"
     },
     {
@@ -3052,7 +3052,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_from_inputs_parseargs",
-      "community": 34,
+      "community": 61,
       "norm_label": "parseargs()"
     },
     {
@@ -3062,7 +3062,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_from_inputs_run",
-      "community": 34,
+      "community": 61,
       "norm_label": "run()"
     },
     {
@@ -3072,7 +3072,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_from_inputs_slugsetname",
-      "community": 34,
+      "community": 61,
       "norm_label": "slugsetname()"
     },
     {
@@ -3082,7 +3082,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_from_inputs_main",
-      "community": 34,
+      "community": 61,
       "norm_label": "main()"
     },
     {
@@ -3092,7 +3092,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_generate_and_upload",
-      "community": 117,
+      "community": 35,
       "norm_label": "run-generate-and-upload.mts"
     },
     {
@@ -3102,7 +3102,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_generate_and_upload_script_dir",
-      "community": 117,
+      "community": 35,
       "norm_label": "script_dir"
     },
     {
@@ -3112,7 +3112,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_generate_and_upload_root",
-      "community": 117,
+      "community": 35,
       "norm_label": "root"
     },
     {
@@ -3122,7 +3122,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_generate_and_upload_parseargs",
-      "community": 117,
+      "community": 35,
       "norm_label": "parseargs()"
     },
     {
@@ -3132,7 +3132,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_generate_and_upload_run",
-      "community": 117,
+      "community": 35,
       "norm_label": "run()"
     },
     {
@@ -3142,7 +3142,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_generate_and_upload_args",
-      "community": 117,
+      "community": 35,
       "norm_label": "args"
     },
     {
@@ -3152,7 +3152,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_generate_and_upload_configpath",
-      "community": 117,
+      "community": 35,
       "norm_label": "configpath"
     },
     {
@@ -3162,7 +3162,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_generate_and_upload_outdir",
-      "community": 117,
+      "community": 35,
       "norm_label": "outdir"
     },
     {
@@ -3172,7 +3172,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_generate_and_upload_job",
-      "community": 117,
+      "community": 35,
       "norm_label": "job"
     },
     {
@@ -3182,7 +3182,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_generate_and_upload_upload",
-      "community": 117,
+      "community": 35,
       "norm_label": "upload"
     },
     {
@@ -3192,7 +3192,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_generate_and_upload_envbase",
-      "community": 117,
+      "community": 35,
       "norm_label": "envbase"
     },
     {
@@ -3202,7 +3202,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_generate_and_upload_batchpath",
-      "community": 117,
+      "community": 35,
       "norm_label": "batchpath"
     },
     {
@@ -3212,7 +3212,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_run_generate_and_upload_final",
-      "community": 117,
+      "community": 35,
       "norm_label": "final"
     },
     {
@@ -3572,7 +3572,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input",
-      "community": 61,
+      "community": 9,
       "norm_label": "sync-upload-input.mts"
     },
     {
@@ -3582,7 +3582,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_skill_root",
-      "community": 61,
+      "community": 9,
       "norm_label": "skill_root"
     },
     {
@@ -3592,7 +3592,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_project_root",
-      "community": 61,
+      "community": 9,
       "norm_label": "project_root"
     },
     {
@@ -3602,7 +3602,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_default_upload_root",
-      "community": 61,
+      "community": 9,
       "norm_label": "default_upload_root"
     },
     {
@@ -3612,7 +3612,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_syncuploadoptions",
-      "community": 61,
+      "community": 9,
       "norm_label": "syncuploadoptions"
     },
     {
@@ -3622,7 +3622,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_envfilebasename",
-      "community": 61,
+      "community": 9,
       "norm_label": "envfilebasename()"
     },
     {
@@ -3632,7 +3632,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_resolveuploadroot",
-      "community": 61,
+      "community": 9,
       "norm_label": "resolveuploadroot()"
     },
     {
@@ -3642,7 +3642,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_resolveuploadinputdest",
-      "community": 61,
+      "community": 9,
       "norm_label": "resolveuploadinputdest()"
     },
     {
@@ -3652,7 +3652,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_syncpacktouploadroot",
-      "community": 61,
+      "community": 9,
       "norm_label": "syncpacktouploadroot()"
     },
     {
@@ -3672,7 +3672,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_parseargs",
-      "community": 61,
+      "community": 9,
       "norm_label": "parseargs()"
     },
     {
@@ -3682,7 +3682,7 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_main",
-      "community": 61,
+      "community": 9,
       "norm_label": "main()"
     },
     {
@@ -3692,7 +3692,7 @@
       "source_location": "L139",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_sync_upload_input_iscli",
-      "community": 61,
+      "community": 9,
       "norm_label": "iscli"
     },
     {
@@ -3722,7 +3722,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_uploadconfig_uploadconfig",
-      "community": 61,
+      "community": 9,
       "norm_label": "uploadconfig"
     },
     {
@@ -3752,7 +3752,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_uploadconfig_resolveuploadconfig",
-      "community": 34,
+      "community": 61,
       "norm_label": "resolveuploadconfig()"
     },
     {
@@ -3852,7 +3852,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_uploadconfig_self_check",
-      "community": 144,
+      "community": 9,
       "norm_label": "uploadconfig.self-check.mts"
     },
     {
@@ -3862,7 +3862,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_uploadconfig_self_check_legacy",
-      "community": 144,
+      "community": 9,
       "norm_label": "legacy"
     },
     {
@@ -3872,7 +3872,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_uploadconfig_self_check_modern",
-      "community": 144,
+      "community": 9,
       "norm_label": "modern"
     },
     {
@@ -3882,7 +3882,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_uploadconfig_self_check_batch",
-      "community": 144,
+      "community": 9,
       "norm_label": "batch"
     },
     {
@@ -3892,7 +3892,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_uploadconfig_self_check_batchnosubmit",
-      "community": 144,
+      "community": 9,
       "norm_label": "batchnosubmit"
     },
     {
@@ -4032,7 +4032,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_maker_scripts_uploadcredentials_buildbatchenvcontent",
-      "community": 35,
+      "community": 9,
       "norm_label": "buildbatchenvcontent()"
     },
     {
@@ -4132,7 +4132,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_line_sticker_phrase_design_scripts_apikey",
-      "community": 23,
+      "community": 117,
       "norm_label": "apikey.mts"
     },
     {
@@ -6012,7 +6012,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude_skills_shared_loadgeminiapikey",
-      "community": 23,
+      "community": 117,
       "norm_label": "loadgeminiapikey.mts"
     },
     {
@@ -6022,7 +6022,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "claude_skills_shared_loadgeminiapikey_shared_dir",
-      "community": 23,
+      "community": 117,
       "norm_label": "shared_dir"
     },
     {
@@ -6032,7 +6032,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "claude_skills_shared_loadgeminiapikey_repo_root",
-      "community": 23,
+      "community": 117,
       "norm_label": "repo_root"
     },
     {
@@ -6042,7 +6042,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "claude_skills_shared_loadgeminiapikey_readkeyfromfile",
-      "community": 23,
+      "community": 117,
       "norm_label": "readkeyfromfile()"
     },
     {
@@ -6052,7 +6052,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "claude_skills_shared_loadgeminiapikey_loadgeminiapikey",
-      "community": 23,
+      "community": 117,
       "norm_label": "loadgeminiapikey()"
     },
     {
@@ -6182,7 +6182,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "components_animationconfig_animationconfigpanel",
-      "community": 46,
+      "community": 49,
       "norm_label": "animationconfigpanel"
     },
     {
@@ -6222,7 +6222,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_comic_comiccharactersheetstep",
-      "community": 119,
+      "community": 8,
       "norm_label": "comiccharactersheetstep.tsx"
     },
     {
@@ -6242,7 +6242,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "components_comic_comiccharactersheetstep_resolvestylemeta",
-      "community": 119,
+      "community": 8,
       "norm_label": "resolvestylemeta()"
     },
     {
@@ -6292,7 +6292,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_comic_comicsourcestep",
-      "community": 119,
+      "community": 41,
       "norm_label": "comicsourcestep.tsx"
     },
     {
@@ -6332,7 +6332,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_comic_comicstoryboardstep",
-      "community": 119,
+      "community": 41,
       "norm_label": "comicstoryboardstep.tsx"
     },
     {
@@ -6342,7 +6342,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "components_comic_comicstoryboardstep_comicstoryboardstepprops",
-      "community": 0,
+      "community": 62,
       "norm_label": "comicstoryboardstepprops"
     },
     {
@@ -6772,7 +6772,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_linesticker_linestickerprogrammaticstylecontrols",
-      "community": 44,
+      "community": 53,
       "norm_label": "linestickerprogrammaticstylecontrols.tsx"
     },
     {
@@ -6792,7 +6792,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "components_linesticker_linestickerprogrammaticstylecontrols_linestickerprogrammaticstylecontrols",
-      "community": 5,
+      "community": 53,
       "norm_label": "linestickerprogrammaticstylecontrols()"
     },
     {
@@ -6862,7 +6862,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "components_linesticker_linestickerresultpanel_linestickerresultpanelsheetviewmodel",
-      "community": 17,
+      "community": 5,
       "norm_label": "linestickerresultpanelsheetviewmodel"
     },
     {
@@ -6882,7 +6882,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "components_linesticker_linestickerresultpanel_linestickerresultsidephraseedit",
-      "community": 17,
+      "community": 5,
       "norm_label": "linestickerresultsidephraseedit"
     },
     {
@@ -6982,7 +6982,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_linesticker_linestickersetoverviewpanel",
-      "community": 17,
+      "community": 5,
       "norm_label": "linestickersetoverviewpanel.tsx"
     },
     {
@@ -6992,7 +6992,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "components_linesticker_linestickersetoverviewpanel_linestickersetoverviewitem",
-      "community": 17,
+      "community": 5,
       "norm_label": "linestickersetoverviewitem"
     },
     {
@@ -7002,7 +7002,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "components_linesticker_linestickersetoverviewpanel_linestickersetoverviewpanelprops",
-      "community": 17,
+      "community": 5,
       "norm_label": "linestickersetoverviewpanelprops"
     },
     {
@@ -7012,7 +7012,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "components_linesticker_linestickersetoverviewpanel_isactivestage",
-      "community": 17,
+      "community": 5,
       "norm_label": "isactivestage()"
     },
     {
@@ -7212,7 +7212,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_renderprofiler",
-      "community": 40,
+      "community": 5,
       "norm_label": "renderprofiler.tsx"
     },
     {
@@ -7222,7 +7222,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "components_renderprofiler_renderprofilerprops",
-      "community": 40,
+      "community": 5,
       "norm_label": "renderprofilerprops"
     },
     {
@@ -7232,7 +7232,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "components_renderprofiler_renderprofiler",
-      "community": 40,
+      "community": 5,
       "norm_label": "renderprofiler()"
     },
     {
@@ -7292,7 +7292,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "components_settingsmodal_settingsmodal",
-      "community": 46,
+      "community": 49,
       "norm_label": "settingsmodal"
     },
     {
@@ -7302,7 +7302,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_sheetsliceprogrammaticoverlaypanel",
-      "community": 62,
+      "community": 143,
       "norm_label": "sheetsliceprogrammaticoverlaypanel.tsx"
     },
     {
@@ -7312,7 +7312,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "components_sheetsliceprogrammaticoverlaypanel_sheetsliceprogrammaticoverlaypanelprops",
-      "community": 62,
+      "community": 143,
       "norm_label": "sheetsliceprogrammaticoverlaypanelprops"
     },
     {
@@ -7322,7 +7322,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "components_sheetsliceprogrammaticoverlaypanel_focusring",
-      "community": 62,
+      "community": 143,
       "norm_label": "focusring"
     },
     {
@@ -7332,7 +7332,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "components_sheetsliceprogrammaticoverlaypanel_sheetsliceprogrammaticoverlaypanel",
-      "community": 62,
+      "community": 41,
       "norm_label": "sheetsliceprogrammaticoverlaypanel()"
     },
     {
@@ -7342,7 +7342,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_spritesheeterasermodal",
-      "community": 56,
+      "community": 41,
       "norm_label": "spritesheeterasermodal.tsx"
     },
     {
@@ -7352,7 +7352,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "components_spritesheeterasermodal_spritesheeterasermodalprops",
-      "community": 56,
+      "community": 41,
       "norm_label": "spritesheeterasermodalprops"
     },
     {
@@ -7362,7 +7362,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "components_spritesheeterasermodal_getcanvaspoint",
-      "community": 56,
+      "community": 41,
       "norm_label": "getcanvaspoint()"
     },
     {
@@ -7372,7 +7372,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "components_spritesheeterasermodal_erasecircle",
-      "community": 56,
+      "community": 41,
       "norm_label": "erasecircle()"
     },
     {
@@ -7382,7 +7382,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "components_spritesheeterasermodal_eraseline",
-      "community": 56,
+      "community": 41,
       "norm_label": "eraseline()"
     },
     {
@@ -7392,7 +7392,7 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "components_spritesheeterasermodal_spritesheeterasermodal",
-      "community": 56,
+      "community": 41,
       "norm_label": "spritesheeterasermodal()"
     },
     {
@@ -7402,7 +7402,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_spritesheetslicecontrols",
-      "community": 56,
+      "community": 41,
       "norm_label": "spritesheetslicecontrols.tsx"
     },
     {
@@ -7412,7 +7412,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "components_spritesheetslicecontrols_slicecellinfo",
-      "community": 56,
+      "community": 41,
       "norm_label": "slicecellinfo"
     },
     {
@@ -7422,7 +7422,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "components_spritesheetslicecontrols_spritesheetslicecontrolsprops",
-      "community": 56,
+      "community": 41,
       "norm_label": "spritesheetslicecontrolsprops"
     },
     {
@@ -7432,7 +7432,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "components_spritesheetslicecontrols_spritesheetslicecontrols",
-      "community": 56,
+      "community": 41,
       "norm_label": "spritesheetslicecontrols()"
     },
     {
@@ -7442,7 +7442,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_spritesheetviewer",
-      "community": 56,
+      "community": 41,
       "norm_label": "spritesheetviewer.tsx"
     },
     {
@@ -7452,7 +7452,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "components_spritesheetviewer_spritesheetviewerprops",
-      "community": 56,
+      "community": 41,
       "norm_label": "spritesheetviewerprops"
     },
     {
@@ -7462,7 +7462,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "components_spritesheetviewer_spritesheetviewer",
-      "community": 56,
+      "community": 41,
       "norm_label": "spritesheetviewer"
     },
     {
@@ -7482,7 +7482,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_linestickersheetgenerationtypes",
-      "community": 17,
+      "community": 2,
       "norm_label": "linestickersheetgenerationtypes.ts"
     },
     {
@@ -7492,7 +7492,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "hooks_linestickersheetgenerationtypes_linestickersheetstage",
-      "community": 17,
+      "community": 2,
       "norm_label": "linestickersheetstage"
     },
     {
@@ -7502,7 +7502,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "hooks_linestickersheetgenerationtypes_linestickersheetstatus",
-      "community": 17,
+      "community": 5,
       "norm_label": "linestickersheetstatus"
     },
     {
@@ -7512,7 +7512,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "hooks_linestickersheetgenerationtypes_isactivesheetstage",
-      "community": 17,
+      "community": 2,
       "norm_label": "isactivesheetstage()"
     },
     {
@@ -7522,7 +7522,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "hooks_linestickersheetgenerationtypes_createinitialsheetstatuses",
-      "community": 17,
+      "community": 2,
       "norm_label": "createinitialsheetstatuses()"
     },
     {
@@ -7532,7 +7532,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "hooks_linestickersheetgenerationtypes_linestickergenerationtexts",
-      "community": 17,
+      "community": 2,
       "norm_label": "linestickergenerationtexts"
     },
     {
@@ -7542,7 +7542,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "hooks_linestickersheetgenerationtypes_linestickergenerationsetters",
-      "community": 17,
+      "community": 2,
       "norm_label": "linestickergenerationsetters"
     },
     {
@@ -7552,7 +7552,7 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "hooks_linestickersheetgenerationtypes_uselinestickersheetgenerationoptions",
-      "community": 17,
+      "community": 2,
       "norm_label": "uselinestickersheetgenerationoptions"
     },
     {
@@ -7562,7 +7562,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_useanimation",
-      "community": 46,
+      "community": 49,
       "norm_label": "useanimation.ts"
     },
     {
@@ -7572,7 +7572,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "hooks_useanimation_useanimation",
-      "community": 46,
+      "community": 41,
       "norm_label": "useanimation()"
     },
     {
@@ -7602,7 +7602,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_usecomicpagegeneration",
-      "community": 0,
+      "community": 48,
       "norm_label": "usecomicpagegeneration.ts"
     },
     {
@@ -7612,7 +7612,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "hooks_usecomicpagegeneration_usecomicpagegeneration",
-      "community": 0,
+      "community": 48,
       "norm_label": "usecomicpagegeneration()"
     },
     {
@@ -7652,7 +7652,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_usecomicstoryboard",
-      "community": 0,
+      "community": 48,
       "norm_label": "usecomicstoryboard.ts"
     },
     {
@@ -7662,7 +7662,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "hooks_usecomicstoryboard_usecomicstoryboard",
-      "community": 0,
+      "community": 48,
       "norm_label": "usecomicstoryboard()"
     },
     {
@@ -7702,7 +7702,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_uselanguage",
-      "community": 119,
+      "community": 41,
       "norm_label": "uselanguage.tsx"
     },
     {
@@ -7712,7 +7712,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "hooks_uselanguage_languagecontexttype",
-      "community": 5,
+      "community": 41,
       "norm_label": "languagecontexttype"
     },
     {
@@ -7722,7 +7722,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "hooks_uselanguage_languagecontext",
-      "community": 119,
+      "community": 41,
       "norm_label": "languagecontext"
     },
     {
@@ -7732,7 +7732,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "hooks_uselanguage_navigatorwithuserlanguage",
-      "community": 119,
+      "community": 41,
       "norm_label": "navigatorwithuserlanguage"
     },
     {
@@ -7742,7 +7742,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "hooks_uselanguage_detectbrowserlanguage",
-      "community": 119,
+      "community": 41,
       "norm_label": "detectbrowserlanguage()"
     },
     {
@@ -7752,7 +7752,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "hooks_uselanguage_languageproviderprops",
-      "community": 119,
+      "community": 41,
       "norm_label": "languageproviderprops"
     },
     {
@@ -7762,7 +7762,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "hooks_uselanguage_languageprovider",
-      "community": 119,
+      "community": 41,
       "norm_label": "languageprovider()"
     },
     {
@@ -7832,7 +7832,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_uselinestickergeneration",
-      "community": 8,
+      "community": 44,
       "norm_label": "uselinestickergeneration.ts"
     },
     {
@@ -7852,7 +7852,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "hooks_uselinestickergeneration_generatesinglesheetoptions",
-      "community": 8,
+      "community": 44,
       "norm_label": "generatesinglesheetoptions"
     },
     {
@@ -7862,7 +7862,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "hooks_uselinestickergeneration_uselinestickergeneration",
-      "community": 8,
+      "community": 10,
       "norm_label": "uselinestickergeneration()"
     },
     {
@@ -7942,7 +7942,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_uselinestickerphrasegrid",
-      "community": 143,
+      "community": 10,
       "norm_label": "uselinestickerphrasegrid.ts"
     },
     {
@@ -7952,7 +7952,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "hooks_uselinestickerphrasegrid_uselinestickerphrasegridparams",
-      "community": 143,
+      "community": 5,
       "norm_label": "uselinestickerphrasegridparams"
     },
     {
@@ -7962,7 +7962,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "hooks_uselinestickerphrasegrid_ensurelength",
-      "community": 143,
+      "community": 10,
       "norm_label": "ensurelength()"
     },
     {
@@ -7972,7 +7972,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "hooks_uselinestickerphrasegrid_uselinestickerphrasegrid",
-      "community": 143,
+      "community": 10,
       "norm_label": "uselinestickerphrasegrid()"
     },
     {
@@ -8012,7 +8012,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "hooks_uselinestickerprogrammaticoverlay_linestickerprogrammaticoverlaystyle",
-      "community": 44,
+      "community": 143,
       "norm_label": "linestickerprogrammaticoverlaystyle"
     },
     {
@@ -8072,7 +8072,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "hooks_uselinestickerprogrammaticoverlay_uselinestickerprogrammaticoverlaycomposeparams",
-      "community": 44,
+      "community": 143,
       "norm_label": "uselinestickerprogrammaticoverlaycomposeparams"
     },
     {
@@ -8102,7 +8102,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_uselinestickerpromptpreview",
-      "community": 17,
+      "community": 10,
       "norm_label": "uselinestickerpromptpreview.ts"
     },
     {
@@ -8112,7 +8112,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "hooks_uselinestickerpromptpreview_uselinestickerpromptpreviewparams",
-      "community": 17,
+      "community": 5,
       "norm_label": "uselinestickerpromptpreviewparams"
     },
     {
@@ -8132,7 +8132,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_uselinestickerresultpanelviewmodel",
-      "community": 17,
+      "community": 5,
       "norm_label": "uselinestickerresultpanelviewmodel.ts"
     },
     {
@@ -8142,7 +8142,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "hooks_uselinestickerresultpanelviewmodel_uselinestickerresultpanelviewmodelparams",
-      "community": 17,
+      "community": 5,
       "norm_label": "uselinestickerresultpanelviewmodelparams"
     },
     {
@@ -8162,7 +8162,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_uselinestickerselection",
-      "community": 17,
+      "community": 10,
       "norm_label": "uselinestickerselection.ts"
     },
     {
@@ -8172,7 +8172,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "hooks_uselinestickerselection_uselinestickerselectionparams",
-      "community": 17,
+      "community": 5,
       "norm_label": "uselinestickerselectionparams"
     },
     {
@@ -8222,7 +8222,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_uselinestickersheetgeneration",
-      "community": 17,
+      "community": 2,
       "norm_label": "uselinestickersheetgeneration.ts"
     },
     {
@@ -8232,7 +8232,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "hooks_uselinestickersheetgeneration_sheetindex",
-      "community": 17,
+      "community": 2,
       "norm_label": "sheetindex"
     },
     {
@@ -8422,7 +8422,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "hooks_userenderprofiler_userenderprofiler",
-      "community": 40,
+      "community": 5,
       "norm_label": "userenderprofiler()"
     },
     {
@@ -8452,7 +8452,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "hooks_usesettings_resolvestoredmodel",
-      "community": 41,
+      "community": 49,
       "norm_label": "resolvestoredmodel()"
     },
     {
@@ -8472,7 +8472,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "hooks_usesheetsliceprogrammaticoverlay",
-      "community": 62,
+      "community": 143,
       "norm_label": "usesheetsliceprogrammaticoverlay.ts"
     },
     {
@@ -8482,7 +8482,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "hooks_usesheetsliceprogrammaticoverlay_sheetsliceoverlayfontkey",
-      "community": 62,
+      "community": 143,
       "norm_label": "sheetsliceoverlayfontkey"
     },
     {
@@ -8492,7 +8492,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "hooks_usesheetsliceprogrammaticoverlay_sheetsliceoverlaycolorkey",
-      "community": 62,
+      "community": 143,
       "norm_label": "sheetsliceoverlaycolorkey"
     },
     {
@@ -8502,7 +8502,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "hooks_usesheetsliceprogrammaticoverlay_buildphrasesfrommultiline",
-      "community": 62,
+      "community": 143,
       "norm_label": "buildphrasesfrommultiline()"
     },
     {
@@ -8512,7 +8512,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "hooks_usesheetsliceprogrammaticoverlay_usesheetsliceprogrammaticoverlay",
-      "community": 62,
+      "community": 41,
       "norm_label": "usesheetsliceprogrammaticoverlay()"
     },
     {
@@ -8652,7 +8652,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "i18n_index_gettranslation",
-      "community": 119,
+      "community": 41,
       "norm_label": "gettranslation()"
     },
     {
@@ -8682,7 +8682,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "i18n_types_language",
-      "community": 53,
+      "community": 41,
       "norm_label": "language"
     },
     {
@@ -8942,7 +8942,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "package_dependencies_jszip",
-      "community": 19,
+      "community": 41,
       "norm_label": "jszip"
     },
     {
@@ -9216,10 +9216,30 @@
       "norm_label": "dailystickerregistrypage.tsx"
     },
     {
+      "label": "RegistryTab",
+      "file_type": "code",
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L30",
+      "_origin": "ast",
+      "id": "pages_dailystickerregistrypage_registrytab",
+      "community": 36,
+      "norm_label": "registrytab"
+    },
+    {
+      "label": "UploadedPhraseSet",
+      "file_type": "code",
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L32",
+      "_origin": "ast",
+      "id": "pages_dailystickerregistrypage_uploadedphraseset",
+      "community": 23,
+      "norm_label": "uploadedphraseset"
+    },
+    {
       "label": "statusBadgeClass()",
       "file_type": "code",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L22",
+      "source_location": "L38",
       "_origin": "ast",
       "id": "pages_dailystickerregistrypage_statusbadgeclass",
       "community": 36,
@@ -9229,17 +9249,37 @@
       "label": "batchBadgeClass()",
       "file_type": "code",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L28",
+      "source_location": "L44",
       "_origin": "ast",
       "id": "pages_dailystickerregistrypage_batchbadgeclass",
       "community": 36,
       "norm_label": "batchbadgeclass()"
     },
     {
+      "label": "tabButtonClass()",
+      "file_type": "code",
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L48",
+      "_origin": "ast",
+      "id": "pages_dailystickerregistrypage_tabbuttonclass",
+      "community": 36,
+      "norm_label": "tabbuttonclass()"
+    },
+    {
+      "label": "countNonEmptyPhrases()",
+      "file_type": "code",
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L54",
+      "_origin": "ast",
+      "id": "pages_dailystickerregistrypage_countnonemptyphrases",
+      "community": 36,
+      "norm_label": "countnonemptyphrases()"
+    },
+    {
       "label": "DailyStickerRegistryPage()",
       "file_type": "code",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L32",
+      "source_location": "L58",
       "_origin": "ast",
       "id": "pages_dailystickerregistrypage_dailystickerregistrypage",
       "community": 36,
@@ -9302,7 +9342,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "pages_onepagecomicpage",
-      "community": 0,
+      "community": 119,
       "norm_label": "onepagecomicpage.tsx"
     },
     {
@@ -9312,7 +9352,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "pages_onepagecomicpage_downloaddataurl",
-      "community": 0,
+      "community": 119,
       "norm_label": "downloaddataurl()"
     },
     {
@@ -9322,7 +9362,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "pages_onepagecomicpage_onepagecomicpage",
-      "community": 0,
+      "community": 119,
       "norm_label": "onepagecomicpage()"
     },
     {
@@ -9372,7 +9412,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "pages_removebackgroundpage",
-      "community": 41,
+      "community": 39,
       "norm_label": "removebackgroundpage.tsx"
     },
     {
@@ -9392,7 +9432,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "pages_spriteanimatorpage",
-      "community": 46,
+      "community": 41,
       "norm_label": "spriteanimatorpage.tsx"
     },
     {
@@ -9402,7 +9442,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "pages_spriteanimatorpage_spritesheetviewer",
-      "community": 46,
+      "community": 41,
       "norm_label": "spritesheetviewer"
     },
     {
@@ -9412,7 +9452,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "pages_spriteanimatorpage_animationpreview",
-      "community": 46,
+      "community": 41,
       "norm_label": "animationpreview"
     },
     {
@@ -9422,7 +9462,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "pages_spriteanimatorpage_framegrid",
-      "community": 46,
+      "community": 41,
       "norm_label": "framegrid"
     },
     {
@@ -9432,7 +9472,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "pages_spriteanimatorpage_spriteanimatorpage",
-      "community": 46,
+      "community": 41,
       "norm_label": "spriteanimatorpage()"
     },
     {
@@ -9452,7 +9492,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice",
-      "community": 47,
+      "community": 56,
       "norm_label": "diagnose-sheet-slice.mts"
     },
     {
@@ -9462,7 +9502,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_sheetdir",
-      "community": 47,
+      "community": 56,
       "norm_label": "sheetdir"
     },
     {
@@ -9472,7 +9512,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_cols",
-      "community": 47,
+      "community": 56,
       "norm_label": "cols"
     },
     {
@@ -9482,7 +9522,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_rows",
-      "community": 47,
+      "community": 56,
       "norm_label": "rows"
     },
     {
@@ -9492,7 +9532,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_equalbounds",
-      "community": 47,
+      "community": 56,
       "norm_label": "equalbounds()"
     },
     {
@@ -9502,7 +9542,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_bleedratio",
-      "community": 47,
+      "community": 56,
       "norm_label": "bleedratio()"
     },
     {
@@ -9512,7 +9552,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_loadprocessed",
-      "community": 12,
+      "community": 32,
       "norm_label": "loadprocessed()"
     },
     {
@@ -9522,7 +9562,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_detected",
-      "community": 47,
+      "community": 56,
       "norm_label": "detected"
     },
     {
@@ -9532,7 +9572,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_equalx",
-      "community": 47,
+      "community": 56,
       "norm_label": "equalx"
     },
     {
@@ -9542,7 +9582,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_equaly",
-      "community": 47,
+      "community": 56,
       "norm_label": "equaly"
     },
     {
@@ -9552,7 +9592,7 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_score",
-      "community": 47,
+      "community": 56,
       "norm_label": "score"
     },
     {
@@ -9562,7 +9602,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "scripts_diagnose_sheet_slice_bleedforbounds",
-      "community": 47,
+      "community": 56,
       "norm_label": "bleedforbounds()"
     },
     {
@@ -9622,7 +9662,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "services_gemini_actiondescriptions_action_dedupe_threshold_by_strength",
-      "community": 42,
+      "community": 44,
       "norm_label": "action_dedupe_threshold_by_strength"
     },
     {
@@ -9742,7 +9782,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_animationframes",
-      "community": 48,
+      "community": 21,
       "norm_label": "animationframes.ts"
     },
     {
@@ -9752,7 +9792,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "services_gemini_animationframes_generateanimationframes",
-      "community": 48,
+      "community": 21,
       "norm_label": "generateanimationframes()"
     },
     {
@@ -9832,7 +9872,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_characterrefimage",
-      "community": 48,
+      "community": 21,
       "norm_label": "characterrefimage.ts"
     },
     {
@@ -9842,7 +9882,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "services_gemini_characterrefimage_isimagesizerejection",
-      "community": 48,
+      "community": 21,
       "norm_label": "isimagesizerejection()"
     },
     {
@@ -9852,7 +9892,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "services_gemini_characterrefimage_generatecharacterrefparams",
-      "community": 48,
+      "community": 21,
       "norm_label": "generatecharacterrefparams"
     },
     {
@@ -9862,7 +9902,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "services_gemini_characterrefimage_generatecharacterrefimage",
-      "community": 48,
+      "community": 21,
       "norm_label": "generatecharacterrefimage()"
     },
     {
@@ -9882,7 +9922,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "services_gemini_comiccharactersheet_generatecomiccharactersheet",
-      "community": 21,
+      "community": 0,
       "norm_label": "generatecomiccharactersheet()"
     },
     {
@@ -9932,7 +9972,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_comicpageprompt_test",
-      "community": 21,
+      "community": 62,
       "norm_label": "comicpageprompt.test.ts"
     },
     {
@@ -9942,7 +9982,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "services_gemini_comicpageprompt_test_panels",
-      "community": 21,
+      "community": 62,
       "norm_label": "panels"
     },
     {
@@ -9952,7 +9992,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_comicpageprompt",
-      "community": 21,
+      "community": 62,
       "norm_label": "comicpageprompt.ts"
     },
     {
@@ -9962,7 +10002,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "services_gemini_comicpageprompt_buildcomicpagepromptparams",
-      "community": 21,
+      "community": 62,
       "norm_label": "buildcomicpagepromptparams"
     },
     {
@@ -9972,7 +10012,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "services_gemini_comicpageprompt_panelblock",
-      "community": 21,
+      "community": 62,
       "norm_label": "panelblock()"
     },
     {
@@ -9982,7 +10022,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "services_gemini_comicpageprompt_buildcomicpageprompt",
-      "community": 21,
+      "community": 62,
       "norm_label": "buildcomicpageprompt()"
     },
     {
@@ -9992,7 +10032,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_comicstoryboard_test",
-      "community": 0,
+      "community": 144,
       "norm_label": "comicstoryboard.test.ts"
     },
     {
@@ -10002,7 +10042,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_comicstoryboard",
-      "community": 0,
+      "community": 144,
       "norm_label": "comicstoryboard.ts"
     },
     {
@@ -10012,7 +10052,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "services_gemini_comicstoryboard_storyboardentry",
-      "community": 0,
+      "community": 144,
       "norm_label": "storyboardentry"
     },
     {
@@ -10022,7 +10062,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "services_gemini_comicstoryboard_parsecomicstoryboardjson",
-      "community": 0,
+      "community": 144,
       "norm_label": "parsecomicstoryboardjson()"
     },
     {
@@ -10032,7 +10072,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "services_gemini_comicstoryboard_generatecomicstoryboard",
-      "community": 0,
+      "community": 48,
       "norm_label": "generatecomicstoryboard()"
     },
     {
@@ -10062,7 +10102,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_retry_test",
-      "community": 48,
+      "community": 21,
       "norm_label": "retry.test.ts"
     },
     {
@@ -10072,7 +10112,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_retry",
-      "community": 48,
+      "community": 21,
       "norm_label": "retry.ts"
     },
     {
@@ -10082,7 +10122,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "services_gemini_retry_wait",
-      "community": 48,
+      "community": 21,
       "norm_label": "wait()"
     },
     {
@@ -10092,7 +10132,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "services_gemini_retry_isquotaerror",
-      "community": 48,
+      "community": 21,
       "norm_label": "isquotaerror()"
     },
     {
@@ -10102,7 +10142,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "services_gemini_retry_retryoperation",
-      "community": 48,
+      "community": 21,
       "norm_label": "retryoperation()"
     },
     {
@@ -10232,7 +10272,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_gemini_storyboard",
-      "community": 48,
+      "community": 21,
       "norm_label": "storyboard.ts"
     },
     {
@@ -10242,7 +10282,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "services_gemini_storyboard_getanimationstoryboard",
-      "community": 48,
+      "community": 21,
       "norm_label": "getanimationstoryboard()"
     },
     {
@@ -10602,7 +10642,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "types",
-      "community": 46,
+      "community": 49,
       "norm_label": "types.ts"
     },
     {
@@ -10632,7 +10672,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "types_bgremovalmethod",
-      "community": 17,
+      "community": 44,
       "norm_label": "bgremovalmethod"
     },
     {
@@ -10652,7 +10692,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "types_generationresult",
-      "community": 46,
+      "community": 49,
       "norm_label": "generationresult"
     },
     {
@@ -10672,7 +10712,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "types_savedframeoverride",
-      "community": 46,
+      "community": 49,
       "norm_label": "savedframeoverride"
     },
     {
@@ -10682,7 +10722,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "types_savedslicesettings",
-      "community": 46,
+      "community": 49,
       "norm_label": "savedslicesettings"
     },
     {
@@ -10712,7 +10752,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "types_errors",
-      "community": 2,
+      "community": 48,
       "norm_label": "errors.ts"
     },
     {
@@ -10722,7 +10762,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "types_errors_apierror",
-      "community": 2,
+      "community": 48,
       "norm_label": "apierror"
     },
     {
@@ -10732,7 +10772,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "types_errors_quotaerror",
-      "community": 2,
+      "community": 48,
       "norm_label": "quotaerror"
     },
     {
@@ -10742,7 +10782,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "types_errors_isapierror",
-      "community": 2,
+      "community": 48,
       "norm_label": "isapierror()"
     },
     {
@@ -10752,7 +10792,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "types_errors_isquotaerror",
-      "community": 2,
+      "community": 48,
       "norm_label": "isquotaerror()"
     },
     {
@@ -10762,7 +10802,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "types_errors_geterrormessage",
-      "community": 2,
+      "community": 48,
       "norm_label": "geterrormessage()"
     },
     {
@@ -10872,7 +10912,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "types_modules_d_gifencoder",
-      "community": 122,
+      "community": 120,
       "norm_label": "gifencoder"
     },
     {
@@ -10882,7 +10922,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "types_modules_d_gifencoder_constructor",
-      "community": 122,
+      "community": 120,
       "norm_label": ".constructor()"
     },
     {
@@ -10892,7 +10932,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "types_modules_d_gifencoder_writeframe",
-      "community": 122,
+      "community": 120,
       "norm_label": ".writeframe()"
     },
     {
@@ -10902,7 +10942,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "types_modules_d_gifencoder_finish",
-      "community": 122,
+      "community": 120,
       "norm_label": ".finish()"
     },
     {
@@ -10912,7 +10952,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "types_modules_d_gifencoder_bytes",
-      "community": 122,
+      "community": 120,
       "norm_label": ".bytes()"
     },
     {
@@ -10922,7 +10962,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "types_modules_d_gifencoder_bytesview",
-      "community": 122,
+      "community": 120,
       "norm_label": ".bytesview()"
     },
     {
@@ -12072,7 +12112,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_comicpageflow_test",
-      "community": 0,
+      "community": 54,
       "norm_label": "comicpageflow.test.ts"
     },
     {
@@ -12082,7 +12122,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_comicpageflow",
-      "community": 0,
+      "community": 54,
       "norm_label": "comicpageflow.ts"
     },
     {
@@ -12092,7 +12132,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "utils_comicpageflow_comicflowerrorkey",
-      "community": 0,
+      "community": 54,
       "norm_label": "comicflowerrorkey"
     },
     {
@@ -12102,7 +12142,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "utils_comicpageflow_comicflowstate",
-      "community": 0,
+      "community": 54,
       "norm_label": "comicflowstate"
     },
     {
@@ -12112,7 +12152,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "utils_comicpageflow_comicpagegenerationstate",
-      "community": 0,
+      "community": 54,
       "norm_label": "comicpagegenerationstate"
     },
     {
@@ -12122,7 +12162,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "utils_comicpageflow_getcomicnextstepstate",
-      "community": 0,
+      "community": 119,
       "norm_label": "getcomicnextstepstate()"
     },
     {
@@ -12132,7 +12172,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "utils_comicpageflow_getcomicpagegenerationstate",
-      "community": 0,
+      "community": 54,
       "norm_label": "getcomicpagegenerationstate()"
     },
     {
@@ -12152,7 +12192,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_comicpanelschema",
-      "community": 0,
+      "community": 54,
       "norm_label": "comicpanelschema.ts"
     },
     {
@@ -12172,7 +12212,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "utils_comicpanelschema_comicpanel",
-      "community": 0,
+      "community": 62,
       "norm_label": "comicpanel"
     },
     {
@@ -12212,7 +12252,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "utils_comicpanelschema_clampcomicdialogue",
-      "community": 0,
+      "community": 144,
       "norm_label": "clampcomicdialogue()"
     },
     {
@@ -12222,7 +12262,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "utils_comicpanelschema_validatepanelsforgeneration",
-      "community": 0,
+      "community": 54,
       "norm_label": "validatepanelsforgeneration()"
     },
     {
@@ -12372,7 +12412,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "utils_comicsheetinput_resolvecomicsheetreferenceimage",
-      "community": 21,
+      "community": 0,
       "norm_label": "resolvecomicsheetreferenceimage()"
     },
     {
@@ -12412,7 +12452,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "utils_constants_default_slice_settings",
-      "community": 17,
+      "community": 10,
       "norm_label": "default_slice_settings"
     },
     {
@@ -12462,7 +12502,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "utils_constants_chroma_key_colors",
-      "community": 41,
+      "community": 39,
       "norm_label": "chroma_key_colors"
     },
     {
@@ -12772,7 +12812,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_frameedgecleanup_test",
-      "community": 2,
+      "community": 6,
       "norm_label": "frameedgecleanup.test.ts"
     },
     {
@@ -12782,7 +12822,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "utils_frameedgecleanup_test_makedata",
-      "community": 2,
+      "community": 6,
       "norm_label": "makedata()"
     },
     {
@@ -12792,7 +12832,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "utils_frameedgecleanup_test_alphaat",
-      "community": 2,
+      "community": 6,
       "norm_label": "alphaat()"
     },
     {
@@ -12802,7 +12842,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_frameedgecleanup",
-      "community": 2,
+      "community": 6,
       "norm_label": "frameedgecleanup.ts"
     },
     {
@@ -12812,7 +12852,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "utils_frameedgecleanup_edgecleanupoptions",
-      "community": 2,
+      "community": 6,
       "norm_label": "edgecleanupoptions"
     },
     {
@@ -12832,7 +12872,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "utils_frameedgecleanup_smallislandcleanupoptions",
-      "community": 2,
+      "community": 6,
       "norm_label": "smallislandcleanupoptions"
     },
     {
@@ -12842,7 +12882,7 @@
       "source_location": "L105",
       "_origin": "ast",
       "id": "utils_frameedgecleanup_clearsmallopaqueislands",
-      "community": 2,
+      "community": 6,
       "norm_label": "clearsmallopaqueislands()"
     },
     {
@@ -13082,7 +13122,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_imagecontentanalysis",
-      "community": 2,
+      "community": 17,
       "norm_label": "imagecontentanalysis.ts"
     },
     {
@@ -13092,7 +13132,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "utils_imagecontentanalysis_isslicebackgroundpixel",
-      "community": 2,
+      "community": 17,
       "norm_label": "isslicebackgroundpixel()"
     },
     {
@@ -13102,7 +13142,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "utils_imagecontentanalysis_contentanalysis",
-      "community": 2,
+      "community": 17,
       "norm_label": "contentanalysis"
     },
     {
@@ -13112,7 +13152,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "utils_imagecontentanalysis_analyzeframecontent",
-      "community": 2,
+      "community": 17,
       "norm_label": "analyzeframecontent()"
     },
     {
@@ -13122,7 +13162,7 @@
       "source_location": "L214",
       "_origin": "ast",
       "id": "utils_imagecontentanalysis_smartautoalignoptions",
-      "community": 2,
+      "community": 17,
       "norm_label": "smartautoalignoptions"
     },
     {
@@ -13142,7 +13182,7 @@
       "source_location": "L355",
       "_origin": "ast",
       "id": "utils_imagecontentanalysis_getcontentcentroidoffset",
-      "community": 2,
+      "community": 17,
       "norm_label": "getcontentcentroidoffset()"
     },
     {
@@ -13202,7 +13242,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_imageinterpolation",
-      "community": 2,
+      "community": 122,
       "norm_label": "imageinterpolation.ts"
     },
     {
@@ -13212,7 +13252,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "utils_imageinterpolation_interpolationsettings",
-      "community": 2,
+      "community": 122,
       "norm_label": "interpolationsettings"
     },
     {
@@ -13222,7 +13262,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "utils_imageinterpolation_easingfunctions",
-      "community": 2,
+      "community": 122,
       "norm_label": "easingfunctions"
     },
     {
@@ -13232,7 +13272,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "utils_imageinterpolation_blendframes",
-      "community": 2,
+      "community": 122,
       "norm_label": "blendframes()"
     },
     {
@@ -13242,7 +13282,7 @@
       "source_location": "L120",
       "_origin": "ast",
       "id": "utils_imageinterpolation_interpolateframes",
-      "community": 2,
+      "community": 122,
       "norm_label": "interpolateframes()"
     },
     {
@@ -13252,7 +13292,7 @@
       "source_location": "L151",
       "_origin": "ast",
       "id": "utils_imageinterpolation_createloopinganimation",
-      "community": 2,
+      "community": 122,
       "norm_label": "createloopinganimation()"
     },
     {
@@ -13262,7 +13302,7 @@
       "source_location": "L163",
       "_origin": "ast",
       "id": "utils_imageinterpolation_generatesmoothanimation",
-      "community": 2,
+      "community": 122,
       "norm_label": "generatesmoothanimation()"
     },
     {
@@ -13302,7 +13342,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "utils_imageutils_removechromakey",
-      "community": 39,
+      "community": 2,
       "norm_label": "removechromakey()"
     },
     {
@@ -13322,7 +13362,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_lazywithretry",
-      "community": 22,
+      "community": 41,
       "norm_label": "lazywithretry.tsx"
     },
     {
@@ -13332,7 +13372,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "utils_lazywithretry_lazywithretry",
-      "community": 22,
+      "community": 41,
       "norm_label": "lazywithretry()"
     },
     {
@@ -13582,7 +13622,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickerbundledfonts",
-      "community": 50,
+      "community": 43,
       "norm_label": "linestickerbundledfonts.ts"
     },
     {
@@ -13592,7 +13632,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "utils_linestickerbundledfonts_project_root",
-      "community": 50,
+      "community": 43,
       "norm_label": "project_root"
     },
     {
@@ -13602,7 +13642,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "utils_linestickerbundledfonts_bundled_sticker_font_files",
-      "community": 50,
+      "community": 43,
       "norm_label": "bundled_sticker_font_files"
     },
     {
@@ -13612,7 +13652,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "utils_linestickerbundledfonts_ensurebundledstickerfontsregistered",
-      "community": 50,
+      "community": 43,
       "norm_label": "ensurebundledstickerfontsregistered()"
     },
     {
@@ -13622,7 +13662,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickercompose_test",
-      "community": 60,
+      "community": 43,
       "norm_label": "linestickercompose.test.ts"
     },
     {
@@ -13632,7 +13672,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "utils_linestickercompose_test_layout_presets",
-      "community": 60,
+      "community": 43,
       "norm_label": "layout_presets"
     },
     {
@@ -13642,7 +13682,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "utils_linestickercompose_test_makesubjectblob",
-      "community": 60,
+      "community": 43,
       "norm_label": "makesubjectblob()"
     },
     {
@@ -13652,7 +13692,7 @@
       "source_location": "L245",
       "_origin": "ast",
       "id": "utils_linestickercompose_test_captioninkwidth",
-      "community": 60,
+      "community": 43,
       "norm_label": "captioninkwidth()"
     },
     {
@@ -13682,7 +13722,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "utils_linestickercompose_composestickeroptions",
-      "community": 44,
+      "community": 143,
       "norm_label": "composestickeroptions"
     },
     {
@@ -13842,7 +13882,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickercomposecaption_test",
-      "community": 43,
+      "community": 149,
       "norm_label": "linestickercomposecaption.test.ts"
     },
     {
@@ -13852,7 +13892,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "utils_linestickercomposecaption_test_makesubjectblob",
-      "community": 43,
+      "community": 149,
       "norm_label": "makesubjectblob()"
     },
     {
@@ -13862,7 +13902,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout",
-      "community": 60,
+      "community": 43,
       "norm_label": "linestickercomposelayout.ts"
     },
     {
@@ -13872,7 +13912,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_composelayoutpreset",
-      "community": 129,
+      "community": 124,
       "norm_label": "composelayoutpreset"
     },
     {
@@ -13882,7 +13922,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_composesubjectanchor",
-      "community": 60,
+      "community": 43,
       "norm_label": "composesubjectanchor"
     },
     {
@@ -13892,7 +13932,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_composecaptionalign",
-      "community": 60,
+      "community": 43,
       "norm_label": "composecaptionalign"
     },
     {
@@ -13902,7 +13942,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_composecaptionorientation",
-      "community": 60,
+      "community": 43,
       "norm_label": "composecaptionorientation"
     },
     {
@@ -13912,7 +13952,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_composecaptionsizing",
-      "community": 60,
+      "community": 43,
       "norm_label": "composecaptionsizing"
     },
     {
@@ -13922,7 +13962,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_composeslots",
-      "community": 60,
+      "community": 43,
       "norm_label": "composeslots"
     },
     {
@@ -13932,7 +13972,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_marginpx",
-      "community": 60,
+      "community": 43,
       "norm_label": "marginpx()"
     },
     {
@@ -13942,7 +13982,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_horizontalbandheight",
-      "community": 60,
+      "community": 43,
       "norm_label": "horizontalbandheight()"
     },
     {
@@ -13952,7 +13992,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_verticalstripwidth",
-      "community": 60,
+      "community": 43,
       "norm_label": "verticalstripwidth()"
     },
     {
@@ -13962,7 +14002,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_snappixelrect",
-      "community": 60,
+      "community": 43,
       "norm_label": "snappixelrect()"
     },
     {
@@ -13972,7 +14012,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_snapslots",
-      "community": 60,
+      "community": 43,
       "norm_label": "snapslots()"
     },
     {
@@ -13982,7 +14022,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_mapbandlabeltocomposepreset",
-      "community": 60,
+      "community": 43,
       "norm_label": "mapbandlabeltocomposepreset()"
     },
     {
@@ -13992,7 +14032,7 @@
       "source_location": "L135",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_resolveeffectivecomposepreset",
-      "community": 60,
+      "community": 43,
       "norm_label": "resolveeffectivecomposepreset()"
     },
     {
@@ -14002,7 +14042,7 @@
       "source_location": "L146",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_resolvecomposeslots",
-      "community": 60,
+      "community": 43,
       "norm_label": "resolvecomposeslots()"
     },
     {
@@ -14012,7 +14052,7 @@
       "source_location": "L284",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_slotsaredisjoint",
-      "community": 60,
+      "community": 43,
       "norm_label": "slotsaredisjoint()"
     },
     {
@@ -14022,7 +14062,7 @@
       "source_location": "L288",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_captionfontsizepx",
-      "community": 60,
+      "community": 43,
       "norm_label": "captionfontsizepx()"
     },
     {
@@ -14032,7 +14072,7 @@
       "source_location": "L297",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_slotwidth",
-      "community": 60,
+      "community": 43,
       "norm_label": "slotwidth()"
     },
     {
@@ -14042,7 +14082,7 @@
       "source_location": "L301",
       "_origin": "ast",
       "id": "utils_linestickercomposelayout_slotheight",
-      "community": 60,
+      "community": 43,
       "norm_label": "slotheight()"
     },
     {
@@ -14112,7 +14152,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "utils_linestickerphraselength_clampstickerphrases",
-      "community": 26,
+      "community": 139,
       "norm_label": "clampstickerphrases()"
     },
     {
@@ -14272,7 +14312,7 @@
       "source_location": "L149",
       "_origin": "ast",
       "id": "utils_linestickerphrasequality_auditstickerphrases",
-      "community": 26,
+      "community": 23,
       "norm_label": "auditstickerphrases()"
     },
     {
@@ -14482,7 +14522,7 @@
       "source_location": "L337",
       "_origin": "ast",
       "id": "utils_linestickerpresets_linestickerstyleoption",
-      "community": 8,
+      "community": 44,
       "norm_label": "linestickerstyleoption"
     },
     {
@@ -14552,7 +14592,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "utils_linestickerprogrammaticoverlayschedule_overlaystyledigestinput",
-      "community": 44,
+      "community": 143,
       "norm_label": "overlaystyledigestinput"
     },
     {
@@ -14752,7 +14792,7 @@
       "source_location": "L186",
       "_origin": "ast",
       "id": "utils_linestickerprompt_getlinestickertextplacementlabel",
-      "community": 8,
+      "community": 4,
       "norm_label": "getlinestickertextplacementlabel()"
     },
     {
@@ -14762,7 +14802,7 @@
       "source_location": "L197",
       "_origin": "ast",
       "id": "utils_linestickerprompt_getreservedcaptionbandlabelforframe",
-      "community": 50,
+      "community": 4,
       "norm_label": "getreservedcaptionbandlabelforframe()"
     },
     {
@@ -15112,7 +15152,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickersetschema",
-      "community": 17,
+      "community": 10,
       "norm_label": "linestickersetschema.ts"
     },
     {
@@ -15122,7 +15162,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "utils_linestickersetschema_line_sticker_set_schema",
-      "community": 17,
+      "community": 10,
       "norm_label": "line_sticker_set_schema"
     },
     {
@@ -15132,7 +15172,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "utils_linestickersetschema_linestickersheetindex",
-      "community": 17,
+      "community": 5,
       "norm_label": "linestickersheetindex"
     },
     {
@@ -15142,7 +15182,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "utils_linestickersetschema_linestickersettextparams",
-      "community": 17,
+      "community": 10,
       "norm_label": "linestickersettextparams"
     },
     {
@@ -15152,7 +15192,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "utils_linestickersetschema_line_sticker_set_text_params",
-      "community": 17,
+      "community": 10,
       "norm_label": "line_sticker_set_text_params"
     },
     {
@@ -15182,7 +15222,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "utils_linestickersetschema_getlinestickerframerange",
-      "community": 17,
+      "community": 10,
       "norm_label": "getlinestickerframerange()"
     },
     {
@@ -15192,7 +15232,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "utils_linestickersetschema_slicelinestickersheetframes",
-      "community": 143,
+      "community": 10,
       "norm_label": "slicelinestickersheetframes()"
     },
     {
@@ -15212,7 +15252,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickersheetaspect_test",
-      "community": 118,
+      "community": 8,
       "norm_label": "linestickersheetaspect.test.ts"
     },
     {
@@ -15282,7 +15322,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "utils_linestickersheetaspect_getlinestickercanvasaspectprompt",
-      "community": 118,
+      "community": 8,
       "norm_label": "getlinestickercanvasaspectprompt()"
     },
     {
@@ -15392,7 +15432,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay",
-      "community": 129,
+      "community": 4,
       "norm_label": "linestickertextoverlay.ts"
     },
     {
@@ -15402,7 +15442,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_fontpresetkey",
-      "community": 129,
+      "community": 4,
       "norm_label": "fontpresetkey"
     },
     {
@@ -15412,7 +15452,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_textcolorpresetkey",
-      "community": 129,
+      "community": 4,
       "norm_label": "textcolorpresetkey"
     },
     {
@@ -15422,7 +15462,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_geteffectiveprogrammaticplacementmode",
-      "community": 50,
+      "community": 4,
       "norm_label": "geteffectiveprogrammaticplacementmode()"
     },
     {
@@ -15432,7 +15472,7 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_resolveprogrammaticplacementlabel",
-      "community": 50,
+      "community": 4,
       "norm_label": "resolveprogrammaticplacementlabel()"
     },
     {
@@ -15442,7 +15482,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_extractfillhexfromtextcolorpreset",
-      "community": 50,
+      "community": 4,
       "norm_label": "extractfillhexfromtextcolorpreset()"
     },
     {
@@ -15452,7 +15492,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_luminance",
-      "community": 129,
+      "community": 4,
       "norm_label": "luminance()"
     },
     {
@@ -15462,7 +15502,7 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_strokecolorforfill",
-      "community": 50,
+      "community": 4,
       "norm_label": "strokecolorforfill()"
     },
     {
@@ -15472,7 +15512,7 @@
       "source_location": "L149",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_fontcssstackforpreset",
-      "community": 129,
+      "community": 4,
       "norm_label": "fontcssstackforpreset()"
     },
     {
@@ -15482,7 +15522,7 @@
       "source_location": "L178",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_resolvecanvasfontnumericweight",
-      "community": 50,
+      "community": 4,
       "norm_label": "resolvecanvasfontnumericweight()"
     },
     {
@@ -15492,7 +15532,7 @@
       "source_location": "L205",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_resolveprogrammaticfontfamilycss",
-      "community": 50,
+      "community": 4,
       "norm_label": "resolveprogrammaticfontfamilycss()"
     },
     {
@@ -15502,7 +15542,7 @@
       "source_location": "L215",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_linestickertextoverlayoptions",
-      "community": 44,
+      "community": 143,
       "norm_label": "linestickertextoverlayoptions"
     },
     {
@@ -15512,7 +15552,7 @@
       "source_location": "L231",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_overlaylinestickertextonframe",
-      "community": 50,
+      "community": 4,
       "norm_label": "overlaylinestickertextonframe()"
     },
     {
@@ -15522,7 +15562,7 @@
       "source_location": "L354",
       "_origin": "ast",
       "id": "utils_linestickertextoverlay_overlayphrasesonstickerframes",
-      "community": 62,
+      "community": 143,
       "norm_label": "overlayphrasesonstickerframes()"
     },
     {
@@ -15532,7 +15572,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry",
-      "community": 129,
+      "community": 4,
       "norm_label": "linestickertextoverlaygeometry.ts"
     },
     {
@@ -15542,7 +15582,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_textplacementlayout",
-      "community": 129,
+      "community": 4,
       "norm_label": "textplacementlayout"
     },
     {
@@ -15552,7 +15592,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_layoutfromplacementoptions",
-      "community": 129,
+      "community": 4,
       "norm_label": "layoutfromplacementoptions"
     },
     {
@@ -15562,7 +15602,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_preferrednudgedirectionforplacementlabel",
-      "community": 129,
+      "community": 4,
       "norm_label": "preferrednudgedirectionforplacementlabel()"
     },
     {
@@ -15572,7 +15612,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_layoutfromplacementlabel",
-      "community": 129,
+      "community": 4,
       "norm_label": "layoutfromplacementlabel()"
     },
     {
@@ -15602,7 +15642,7 @@
       "source_location": "L255",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_textstartyfromanchor",
-      "community": 129,
+      "community": 4,
       "norm_label": "textstartyfromanchor()"
     },
     {
@@ -15642,7 +15682,7 @@
       "source_location": "L354",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_pixelrect",
-      "community": 60,
+      "community": 43,
       "norm_label": "pixelrect"
     },
     {
@@ -15652,7 +15692,7 @@
       "source_location": "L356",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_rectangleintersectionarea",
-      "community": 60,
+      "community": 4,
       "norm_label": "rectangleintersectionarea()"
     },
     {
@@ -15662,7 +15702,7 @@
       "source_location": "L364",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_inflatepixelrect",
-      "community": 129,
+      "community": 4,
       "norm_label": "inflatepixelrect()"
     },
     {
@@ -15672,7 +15712,7 @@
       "source_location": "L380",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_shiftpixelrect",
-      "community": 129,
+      "community": 4,
       "norm_label": "shiftpixelrect()"
     },
     {
@@ -15682,7 +15722,7 @@
       "source_location": "L389",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_textboxfitsframeinset",
-      "community": 129,
+      "community": 4,
       "norm_label": "textboxfitsframeinset()"
     },
     {
@@ -15692,7 +15732,7 @@
       "source_location": "L404",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_correctiontofittextboxinframe",
-      "community": 129,
+      "community": 4,
       "norm_label": "correctiontofittextboxinframe()"
     },
     {
@@ -15702,7 +15742,7 @@
       "source_location": "L429",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_textoverlayavoidancepadpx",
-      "community": 129,
+      "community": 4,
       "norm_label": "textoverlayavoidancepadpx()"
     },
     {
@@ -15712,7 +15752,7 @@
       "source_location": "L442",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_rectangleminseparation",
-      "community": 129,
+      "community": 4,
       "norm_label": "rectangleminseparation()"
     },
     {
@@ -15722,7 +15762,7 @@
       "source_location": "L456",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_estimatetextblockbox",
-      "community": 129,
+      "community": 4,
       "norm_label": "estimatetextblockbox()"
     },
     {
@@ -15732,7 +15772,7 @@
       "source_location": "L504",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaygeometry_estimatetextblockboxfrommeasuredlines",
-      "community": 129,
+      "community": 4,
       "norm_label": "estimatetextblockboxfrommeasuredlines()"
     },
     {
@@ -15912,7 +15952,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes",
-      "community": 129,
+      "community": 124,
       "norm_label": "linestickertextoverlaytypes.ts"
     },
     {
@@ -15922,7 +15962,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_programmatictextplacementmode",
-      "community": 129,
+      "community": 53,
       "norm_label": "programmatictextplacementmode"
     },
     {
@@ -15932,7 +15972,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_programmaticfontfamilysource",
-      "community": 129,
+      "community": 53,
       "norm_label": "programmaticfontfamilysource"
     },
     {
@@ -15952,7 +15992,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_programmatictextoverlaytuning",
-      "community": 44,
+      "community": 143,
       "norm_label": "programmatictextoverlaytuning"
     },
     {
@@ -15962,7 +16002,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_programmatictextstrokewidthpx",
-      "community": 129,
+      "community": 4,
       "norm_label": "programmatictextstrokewidthpx()"
     },
     {
@@ -15972,7 +16012,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_default_programmatic_text_overlay_tuning",
-      "community": 129,
+      "community": 143,
       "norm_label": "default_programmatic_text_overlay_tuning"
     },
     {
@@ -15982,7 +16022,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_mergeprogrammatictexttuning",
-      "community": 12,
+      "community": 124,
       "norm_label": "mergeprogrammatictexttuning()"
     },
     {
@@ -15992,7 +16032,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_programmaticcomposeconfig",
-      "community": 129,
+      "community": 124,
       "norm_label": "programmaticcomposeconfig"
     },
     {
@@ -16002,7 +16042,7 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "utils_linestickertextoverlaytypes_default_programmatic_compose_config",
-      "community": 129,
+      "community": 124,
       "norm_label": "default_programmatic_compose_config"
     },
     {
@@ -16052,7 +16092,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "utils_linestickeruploadspec_line_sticker_upload",
-      "community": 19,
+      "community": 28,
       "norm_label": "line_sticker_upload"
     },
     {
@@ -16282,7 +16322,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_normalizechromabackgroundlegacy",
-      "community": 19,
+      "community": 1,
       "norm_label": "normalizechromabackgroundlegacy.ts"
     },
     {
@@ -16292,7 +16332,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "utils_normalizechromabackgroundlegacy_rgbcolor",
-      "community": 19,
+      "community": 1,
       "norm_label": "rgbcolor"
     },
     {
@@ -16302,7 +16342,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "utils_normalizechromabackgroundlegacy_ischromabackgroundpixel",
-      "community": 19,
+      "community": 1,
       "norm_label": "ischromabackgroundpixel()"
     },
     {
@@ -16312,7 +16352,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "utils_normalizechromabackgroundlegacy_normalizechromabackgroundlegacyinplace",
-      "community": 19,
+      "community": 1,
       "norm_label": "normalizechromabackgroundlegacyinplace()"
     },
     {
@@ -16322,7 +16362,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_test",
-      "community": 2,
+      "community": 17,
       "norm_label": "optimizeslicesettings.test.ts"
     },
     {
@@ -16332,7 +16372,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_test_fillbackground",
-      "community": 2,
+      "community": 17,
       "norm_label": "fillbackground()"
     },
     {
@@ -16342,7 +16382,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_test_setpixel",
-      "community": 2,
+      "community": 17,
       "norm_label": "setpixel()"
     },
     {
@@ -16352,7 +16392,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings",
-      "community": 2,
+      "community": 17,
       "norm_label": "optimizeslicesettings.ts"
     },
     {
@@ -16362,7 +16402,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_optimizedsliceresult",
-      "community": 19,
+      "community": 32,
       "norm_label": "optimizedsliceresult"
     },
     {
@@ -16372,7 +16412,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_optimizesliceoptions",
-      "community": 2,
+      "community": 17,
       "norm_label": "optimizesliceoptions"
     },
     {
@@ -16392,7 +16432,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_contentmargins",
-      "community": 2,
+      "community": 17,
       "norm_label": "contentmargins"
     },
     {
@@ -16402,7 +16442,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_rowhascontent",
-      "community": 2,
+      "community": 17,
       "norm_label": "rowhascontent()"
     },
     {
@@ -16412,7 +16452,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_columnhascontent",
-      "community": 2,
+      "community": 17,
       "norm_label": "columnhascontent()"
     },
     {
@@ -16422,7 +16462,7 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_measurecontentmargins",
-      "community": 2,
+      "community": 17,
       "norm_label": "measurecontentmargins()"
     },
     {
@@ -16432,7 +16472,7 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "utils_optimizeslicesettings_computeoptimizedslicefrommargins",
-      "community": 2,
+      "community": 17,
       "norm_label": "computeoptimizedslicefrommargins()"
     },
     {
@@ -16762,7 +16802,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_sheetcellcrop_test",
-      "community": 2,
+      "community": 60,
       "norm_label": "sheetcellcrop.test.ts"
     },
     {
@@ -16772,7 +16812,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "utils_sheetcellcrop_test_fillgreen",
-      "community": 2,
+      "community": 60,
       "norm_label": "fillgreen()"
     },
     {
@@ -16782,7 +16822,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "utils_sheetcellcrop_test_paintrect",
-      "community": 2,
+      "community": 60,
       "norm_label": "paintrect()"
     },
     {
@@ -16792,7 +16832,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_sheetcellcrop",
-      "community": 2,
+      "community": 60,
       "norm_label": "sheetcellcrop.ts"
     },
     {
@@ -16802,7 +16842,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "utils_sheetcellcrop_cellcroprect",
-      "community": 2,
+      "community": 60,
       "norm_label": "cellcroprect"
     },
     {
@@ -16812,7 +16852,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "utils_sheetcellcrop_computecellcropoptions",
-      "community": 2,
+      "community": 60,
       "norm_label": "computecellcropoptions"
     },
     {
@@ -16822,7 +16862,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "utils_sheetcellcrop_pixelpoint",
-      "community": 2,
+      "community": 60,
       "norm_label": "pixelpoint"
     },
     {
@@ -16832,7 +16872,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "utils_sheetcellcrop_component",
-      "community": 2,
+      "community": 60,
       "norm_label": "component"
     },
     {
@@ -16842,7 +16882,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "utils_sheetcellcrop_fallbackcellrect",
-      "community": 2,
+      "community": 60,
       "norm_label": "fallbackcellrect()"
     },
     {
@@ -16852,7 +16892,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "utils_sheetcellcrop_findcomponents",
-      "community": 2,
+      "community": 60,
       "norm_label": "findcomponents()"
     },
     {
@@ -16862,7 +16902,7 @@
       "source_location": "L135",
       "_origin": "ast",
       "id": "utils_sheetcellcrop_computecellcroprect",
-      "community": 2,
+      "community": 60,
       "norm_label": "computecellcroprect()"
     },
     {
@@ -17012,7 +17052,7 @@
       "source_location": "L307",
       "_origin": "ast",
       "id": "utils_sheetcomponentslicer_trimframetocontent",
-      "community": 43,
+      "community": 12,
       "norm_label": "trimframetocontent()"
     },
     {
@@ -17082,7 +17122,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "utils_sheetgridvalidation_gridlayoutscore",
-      "community": 19,
+      "community": 32,
       "norm_label": "gridlayoutscore"
     },
     {
@@ -17272,7 +17312,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "utils_sheetwhitedividerdetection_whitedividergrid",
-      "community": 19,
+      "community": 32,
       "norm_label": "whitedividergrid"
     },
     {
@@ -17462,7 +17502,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_slicebycellrects",
-      "community": 2,
+      "community": 48,
       "norm_label": "slicebycellrects.ts"
     },
     {
@@ -18254,6 +18294,46 @@
       "id": "utils_stickerregistryview_stickerpreviewpath",
       "community": 36,
       "norm_label": "stickerpreviewpath()"
+    },
+    {
+      "label": "phraseSetPath()",
+      "file_type": "code",
+      "source_file": "utils/stickerRegistryView.ts",
+      "source_location": "L97",
+      "_origin": "ast",
+      "id": "utils_stickerregistryview_phrasesetpath",
+      "community": 36,
+      "norm_label": "phrasesetpath()"
+    },
+    {
+      "label": "CharacterProfile",
+      "file_type": "code",
+      "source_file": "utils/stickerRegistryView.ts",
+      "source_location": "L102",
+      "_origin": "ast",
+      "id": "utils_stickerregistryview_characterprofile",
+      "community": 36,
+      "norm_label": "characterprofile"
+    },
+    {
+      "label": "listCharacterProfiles()",
+      "file_type": "code",
+      "source_file": "utils/stickerRegistryView.ts",
+      "source_location": "L114",
+      "_origin": "ast",
+      "id": "utils_stickerregistryview_listcharacterprofiles",
+      "community": 36,
+      "norm_label": "listcharacterprofiles()"
+    },
+    {
+      "label": "filterCharacterProfiles()",
+      "file_type": "code",
+      "source_file": "utils/stickerRegistryView.ts",
+      "source_location": "L152",
+      "_origin": "ast",
+      "id": "utils_stickerregistryview_filtercharacterprofiles",
+      "community": 36,
+      "norm_label": "filtercharacterprofiles()"
     },
     {
       "label": "stickerStrokeWhite.test.ts",
@@ -19472,7 +19552,7 @@
       "source_location": "L186",
       "_origin": "ast",
       "id": "readme_\u90e8\u7f72\u5230_github_pages",
-      "community": 29,
+      "community": 129,
       "norm_label": "\ud83d\ude80 \u90e8\u7f72\u5230 github pages"
     },
     {
@@ -19482,7 +19562,7 @@
       "source_location": "L188",
       "_origin": "ast",
       "id": "readme_\u81ea\u52d5\u90e8\u7f72_\u63a8\u85a6",
-      "community": 29,
+      "community": 129,
       "norm_label": "\u81ea\u52d5\u90e8\u7f72(\u63a8\u85a6)"
     },
     {
@@ -19492,7 +19572,7 @@
       "source_location": "L209",
       "_origin": "ast",
       "id": "readme_\u624b\u52d5\u89f8\u767c\u90e8\u7f72",
-      "community": 29,
+      "community": 129,
       "norm_label": "\u624b\u52d5\u89f8\u767c\u90e8\u7f72"
     },
     {
@@ -19502,7 +19582,7 @@
       "source_location": "L216",
       "_origin": "ast",
       "id": "readme_\u624b\u52d5\u69cb\u5efa_\u672c\u5730\u6e2c\u8a66",
-      "community": 29,
+      "community": 129,
       "norm_label": "\u624b\u52d5\u69cb\u5efa(\u672c\u5730\u6e2c\u8a66)"
     },
     {
@@ -19512,7 +19592,7 @@
       "source_location": "L232",
       "_origin": "ast",
       "id": "readme_\u6ce8\u610f\u4e8b\u9805",
-      "community": 29,
+      "community": 129,
       "norm_label": "\u6ce8\u610f\u4e8b\u9805"
     },
     {
@@ -19762,7 +19842,7 @@
       "source_location": "L172",
       "_origin": "ast",
       "id": "readme_en_deploy_to_github_pages",
-      "community": 145,
+      "community": 59,
       "norm_label": "\ud83d\ude80 deploy to github pages"
     },
     {
@@ -19772,7 +19852,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "readme_en_automatic_deployment_recommended",
-      "community": 145,
+      "community": 59,
       "norm_label": "automatic deployment (recommended)"
     },
     {
@@ -19782,7 +19862,7 @@
       "source_location": "L195",
       "_origin": "ast",
       "id": "readme_en_manual_trigger",
-      "community": 145,
+      "community": 59,
       "norm_label": "manual trigger"
     },
     {
@@ -19792,7 +19872,7 @@
       "source_location": "L202",
       "_origin": "ast",
       "id": "readme_en_manual_build_local_testing",
-      "community": 145,
+      "community": 59,
       "norm_label": "manual build (local testing)"
     },
     {
@@ -19802,7 +19882,7 @@
       "source_location": "L218",
       "_origin": "ast",
       "id": "readme_en_important_notes",
-      "community": 145,
+      "community": 59,
       "norm_label": "important notes"
     },
     {
@@ -21792,7 +21872,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "md_chroma_key_\u89e3\u6c7a\u65b9\u6848_solutions",
-      "community": 55,
+      "community": 50,
       "norm_label": "\u89e3\u6c7a\u65b9\u6848 (solutions)"
     },
     {
@@ -21802,7 +21882,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "md_chroma_key_\u6539\u9032_1_\u66f4\u7a4d\u6975\u7684\u984f\u8272\u6a19\u6e96\u5316",
-      "community": 55,
+      "community": 50,
       "norm_label": "\u6539\u9032 1: \u66f4\u7a4d\u6975\u7684\u984f\u8272\u6a19\u6e96\u5316"
     },
     {
@@ -21812,7 +21892,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "md_chroma_key_\u589e\u52a0\u5bb9\u5dee\u503c",
-      "community": 55,
+      "community": 50,
       "norm_label": "\u589e\u52a0\u5bb9\u5dee\u503c"
     },
     {
@@ -21822,7 +21902,7 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "md_chroma_key_\u65b0\u589e\u7da0\u8272\u6aa2\u6e2c\u898f\u5247",
-      "community": 55,
+      "community": 50,
       "norm_label": "\u65b0\u589e\u7da0\u8272\u6aa2\u6e2c\u898f\u5247"
     },
     {
@@ -21832,7 +21912,7 @@
       "source_location": "L119",
       "_origin": "ast",
       "id": "md_chroma_key_\u65b0\u589e\u6d0b\u7d05\u8272\u908a\u7de3\u6aa2\u6e2c",
-      "community": 55,
+      "community": 50,
       "norm_label": "\u65b0\u589e\u6d0b\u7d05\u8272\u908a\u7de3\u6aa2\u6e2c"
     },
     {
@@ -21842,7 +21922,7 @@
       "source_location": "L125",
       "_origin": "ast",
       "id": "md_chroma_key_\u6539\u9032_2_\u4e09\u904d\u53bb\u80cc\u8655\u7406",
-      "community": 55,
+      "community": 50,
       "norm_label": "\u6539\u9032 2: \u4e09\u904d\u53bb\u80cc\u8655\u7406"
     },
     {
@@ -21852,7 +21932,7 @@
       "source_location": "L129",
       "_origin": "ast",
       "id": "md_chroma_key_pass_1_\u4e3b\u8981\u8272\u5ea6\u53bb\u80cc",
-      "community": 55,
+      "community": 50,
       "norm_label": "pass 1: \u4e3b\u8981\u8272\u5ea6\u53bb\u80cc"
     },
     {
@@ -21862,7 +21942,7 @@
       "source_location": "L133",
       "_origin": "ast",
       "id": "md_chroma_key_pass_2_\u908a\u7de3\u6e05\u7406_\u6539\u9032\u7248",
-      "community": 55,
+      "community": 50,
       "norm_label": "pass 2: \u908a\u7de3\u6e05\u7406 (\u6539\u9032\u7248)"
     },
     {
@@ -21872,7 +21952,7 @@
       "source_location": "L147",
       "_origin": "ast",
       "id": "md_chroma_key_pass_3_\u53bb\u8272\u8655\u7406_\u65b0\u589e",
-      "community": 55,
+      "community": 50,
       "norm_label": "pass 3: \u53bb\u8272\u8655\u7406 (\u65b0\u589e)"
     },
     {
@@ -21882,7 +21962,7 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "md_chroma_key_\u6539\u9032_3_\u589e\u5f37\u7da0\u8272\u6aa2\u6e2c\u7bc4\u570d",
-      "community": 55,
+      "community": 50,
       "norm_label": "\u6539\u9032 3: \u589e\u5f37\u7da0\u8272\u6aa2\u6e2c\u7bc4\u570d"
     },
     {
@@ -21892,7 +21972,7 @@
       "source_location": "L179",
       "_origin": "ast",
       "id": "md_chroma_key_\u6539\u9032_4_\u589e\u52a0_fuzz_\u5bb9\u5dee",
-      "community": 55,
+      "community": 50,
       "norm_label": "\u6539\u9032 4: \u589e\u52a0 fuzz \u5bb9\u5dee"
     },
     {
@@ -23122,7 +23202,7 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "md_quick_start_guide_\u6700\u4f73\u5be6\u8e10_best_practices",
-      "community": 52,
+      "community": 145,
       "norm_label": "\ud83c\udfaf \u6700\u4f73\u5be6\u8e10 (best practices)"
     },
     {
@@ -23132,7 +23212,7 @@
       "source_location": "L167",
       "_origin": "ast",
       "id": "md_quick_start_guide_1_\u9078\u64c7\u6b63\u78ba\u7684\u80cc\u666f\u984f\u8272",
-      "community": 52,
+      "community": 145,
       "norm_label": "1. \u9078\u64c7\u6b63\u78ba\u7684\u80cc\u666f\u984f\u8272"
     },
     {
@@ -23142,7 +23222,7 @@
       "source_location": "L179",
       "_origin": "ast",
       "id": "md_quick_start_guide_2_\u6aa2\u67e5\u751f\u6210\u7d50\u679c",
-      "community": 52,
+      "community": 145,
       "norm_label": "2. \u6aa2\u67e5\u751f\u6210\u7d50\u679c"
     },
     {
@@ -23152,7 +23232,7 @@
       "source_location": "L191",
       "_origin": "ast",
       "id": "md_quick_start_guide_3_\u512a\u5316\u751f\u6210\u54c1\u8cea",
-      "community": 52,
+      "community": 145,
       "norm_label": "3. \u512a\u5316\u751f\u6210\u54c1\u8cea"
     },
     {
@@ -23262,7 +23342,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "utils_constants_default_skill_sticker_model",
-      "community": 34,
+      "community": 61,
       "norm_label": "default_skill_sticker_model"
     },
     {
@@ -48534,12 +48614,12 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L33",
+      "source_location": "L59",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage_dailystickerregistrypage",
-      "target": "hooks_uselanguage_uselanguage",
-      "confidence_score": 1.0
+      "target": "hooks_uselanguage_uselanguage"
     },
     {
       "relation": "imports",
@@ -54214,7 +54294,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L28",
+      "source_location": "L44",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage",
       "target": "pages_dailystickerregistrypage_batchbadgeclass",
@@ -54224,7 +54304,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L32",
+      "source_location": "L54",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage",
+      "target": "pages_dailystickerregistrypage_countnonemptyphrases",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L58",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage",
       "target": "pages_dailystickerregistrypage_dailystickerregistrypage",
@@ -54234,10 +54324,40 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L22",
+      "source_location": "L30",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage",
+      "target": "pages_dailystickerregistrypage_registrytab",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L38",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage",
       "target": "pages_dailystickerregistrypage_statusbadgeclass",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L48",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage",
+      "target": "pages_dailystickerregistrypage_tabbuttonclass",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L32",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage",
+      "target": "pages_dailystickerregistrypage_uploadedphraseset",
       "confidence_score": 1.0
     },
     {
@@ -54281,7 +54401,7 @@
       "source_location": "L7",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage",
-      "target": "utils_stickerregistryformat",
+      "target": "utils_linestickerphrasesetformat",
       "confidence_score": 1.0
     },
     {
@@ -54292,7 +54412,7 @@
       "source_location": "L7",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage",
-      "target": "utils_stickerregistryformat_parseregistryjson",
+      "target": "utils_linestickerphrasesetformat_linestickerphrasesetjson",
       "confidence_score": 1.0
     },
     {
@@ -54301,6 +54421,39 @@
       "confidence": "EXTRACTED",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
       "source_location": "L7",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage",
+      "target": "utils_linestickerphrasesetformat_parsephrasesetjson",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage",
+      "target": "utils_stickerregistryformat",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage",
+      "target": "utils_stickerregistryformat_parseregistryjson",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L11",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage",
       "target": "utils_stickerregistryformat_stickerregistryentry",
@@ -54311,7 +54464,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L7",
+      "source_location": "L11",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage",
       "target": "utils_stickerregistryformat_stickerregistryfile",
@@ -54322,7 +54475,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L12",
+      "source_location": "L16",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage",
       "target": "utils_stickerregistryview",
@@ -54333,7 +54486,29 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L12",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage",
+      "target": "utils_stickerregistryview_characterprofile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage",
+      "target": "utils_stickerregistryview_filtercharacterprofiles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L16",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage",
       "target": "utils_stickerregistryview_filterregistryentries",
@@ -54344,7 +54519,29 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L12",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage",
+      "target": "utils_stickerregistryview_listcharacterprofiles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage",
+      "target": "utils_stickerregistryview_phrasesetpath",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L16",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage",
       "target": "utils_stickerregistryview_registryfilter",
@@ -54355,7 +54552,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L12",
+      "source_location": "L16",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage",
       "target": "utils_stickerregistryview_stickerpreviewpath",
@@ -54366,7 +54563,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L12",
+      "source_location": "L16",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage",
       "target": "utils_stickerregistryview_summarizeregistry",
@@ -54377,10 +54574,21 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L12",
+      "source_location": "L16",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage",
       "target": "utils_stickerregistryview_tooutputasseturl",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L35",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage_uploadedphraseset",
+      "target": "utils_linestickerphrasesetformat_linestickerphrasesetjson",
       "confidence_score": 1.0
     },
     {
@@ -54388,7 +54596,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L316",
+      "source_location": "L705",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage_dailystickerregistrypage",
       "target": "pages_dailystickerregistrypage_statusbadgeclass",
@@ -54399,7 +54607,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L215",
+      "source_location": "L489",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage_dailystickerregistrypage",
       "target": "pages_dailystickerregistrypage_batchbadgeclass",
@@ -54410,10 +54618,10 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L107",
+      "source_location": "L507",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage_dailystickerregistrypage",
-      "target": "utils_dailypackplanformat_parsebatchplanjson",
+      "target": "pages_dailystickerregistrypage_tabbuttonclass",
       "confidence_score": 1.0
     },
     {
@@ -54421,21 +54629,10 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L52",
+      "source_location": "L301",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage_dailystickerregistrypage",
-      "target": "utils_stickerregistryformat_parseregistryjson",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L70",
-      "weight": 1.0,
-      "source": "pages_dailystickerregistrypage_dailystickerregistrypage",
-      "target": "utils_stickerregistryview_filterregistryentries",
+      "target": "pages_dailystickerregistrypage_countnonemptyphrases",
       "confidence_score": 1.0
     },
     {
@@ -54444,7 +54641,84 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L368",
+      "source_location": "L203",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage_dailystickerregistrypage",
+      "target": "utils_dailypackplanformat_parsebatchplanjson"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L148",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage_dailystickerregistrypage",
+      "target": "utils_linestickerphrasesetformat_parsephrasesetjson"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L86",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage_dailystickerregistrypage",
+      "target": "utils_stickerregistryformat_parseregistryjson"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L109",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage_dailystickerregistrypage",
+      "target": "utils_stickerregistryview_filtercharacterprofiles"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L104",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage_dailystickerregistrypage",
+      "target": "utils_stickerregistryview_filterregistryentries"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L109",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage_dailystickerregistrypage",
+      "target": "utils_stickerregistryview_listcharacterprofiles"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L143",
+      "weight": 1.0,
+      "source": "pages_dailystickerregistrypage_dailystickerregistrypage",
+      "target": "utils_stickerregistryview_phrasesetpath"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pages/DailyStickerRegistryPage.tsx",
+      "source_location": "L737",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage_dailystickerregistrypage",
       "target": "utils_stickerregistryview_stickerpreviewpath"
@@ -54453,12 +54727,12 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L64",
+      "source_location": "L98",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage_dailystickerregistrypage",
-      "target": "utils_stickerregistryview_summarizeregistry",
-      "confidence_score": 1.0
+      "target": "utils_stickerregistryview_summarizeregistry"
     },
     {
       "relation": "calls",
@@ -54466,7 +54740,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "pages/DailyStickerRegistryPage.tsx",
-      "source_location": "L355",
+      "source_location": "L143",
       "weight": 1.0,
       "source": "pages_dailystickerregistrypage_dailystickerregistrypage",
       "target": "utils_stickerregistryview_tooutputasseturl"
@@ -76916,7 +77190,38 @@
       "source_location": "L3",
       "weight": 1.0,
       "source": "utils_stickerregistryview_test",
+      "target": "utils_stickerregistryview_listcharacterprofiles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "utils/stickerRegistryView.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "utils_stickerregistryview_test",
       "target": "utils_stickerregistryview_summarizeregistry",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "utils/stickerRegistryView.ts",
+      "source_location": "L102",
+      "weight": 1.0,
+      "source": "utils_stickerregistryview",
+      "target": "utils_stickerregistryview_characterprofile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "utils/stickerRegistryView.ts",
+      "source_location": "L152",
+      "weight": 1.0,
+      "source": "utils_stickerregistryview",
+      "target": "utils_stickerregistryview_filtercharacterprofiles",
       "confidence_score": 1.0
     },
     {
@@ -76927,6 +77232,26 @@
       "weight": 1.0,
       "source": "utils_stickerregistryview",
       "target": "utils_stickerregistryview_filterregistryentries",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "utils/stickerRegistryView.ts",
+      "source_location": "L114",
+      "weight": 1.0,
+      "source": "utils_stickerregistryview",
+      "target": "utils_stickerregistryview_listcharacterprofiles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "utils/stickerRegistryView.ts",
+      "source_location": "L97",
+      "weight": 1.0,
+      "source": "utils_stickerregistryview",
+      "target": "utils_stickerregistryview_phrasesetpath",
       "confidence_score": 1.0
     },
     {

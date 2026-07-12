@@ -6,7 +6,6 @@
  */
 
 import { logger } from './logger';
-import { removeChromaKeyWithWorker } from './chromaKeyProcessor';
 import {
   getEffectivePadding,
   type FrameOverride,
@@ -84,61 +83,4 @@ export const loadImagesData = async (
     });
   }
   return { imagesData, width, height };
-};
-
-/**
- * Removes the data URL prefix from a base64 encoded image string.
- */
-export const cleanBase64 = (base64: string): string => {
-  return base64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
-};
-
-/**
- * Chroma key removal: delegates to chromaKeyProcessor (HSL-based, Web Worker, progress support).
- */
-export const removeChromaKey = (
-  base64Image: string,
-  chromaKey: { r: number; g: number; b: number } = { r: 255, g: 0, b: 255 },
-  fuzzPercent: number = 10
-): Promise<string> => removeChromaKeyWithWorker(base64Image, chromaKey, fuzzPercent);
-
-/**
- * Removes white/light background from an image (legacy method).
- */
-export const removeWhiteBackground = async (
-  base64Image: string,
-  threshold: number = 230
-): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-      if (!ctx) {
-        reject(new Error('Canvas context failed'));
-        return;
-      }
-
-      ctx.drawImage(img, 0, 0);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-
-      for (let i = 0; i < data.length; i += 4) {
-        const red = data[i];
-        const green = data[i + 1];
-        const blue = data[i + 2];
-        if (red > threshold && green > threshold && blue > threshold) {
-          data[i + 3] = 0;
-        }
-      }
-
-      ctx.putImageData(imageData, 0, 0);
-      resolve(canvas.toDataURL('image/png'));
-    };
-    img.onerror = (e) => reject(e);
-    img.src = base64Image;
-  });
 };
