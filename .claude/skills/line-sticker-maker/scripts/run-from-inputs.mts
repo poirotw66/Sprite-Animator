@@ -22,7 +22,9 @@ import {
 import { DEFAULT_SKILL_STICKER_MODEL, DEFAULT_CHROMA_KEY_ALGORITHM, defaultResolutionForModel } from '../../../../utils/constants.ts';
 import {
   defaultTitleZhFromPhraseSet,
+  suggestPhraseSetNameZh,
   suggestSetNameEn,
+  characterSlugFromRefPath,
 } from '../../../../utils/lineStickerSetNaming.ts';
 import { prepareShopListing } from '../../../../utils/lineCreatorsListingText.ts';
 import { DEFAULT_LINE_STICKER_SET_COUNT } from './sheetPlan.ts';
@@ -131,10 +133,19 @@ async function main(): Promise<void> {
       typeof args.theme === 'string' && args.theme.trim() ? args.theme.trim() : 'daily';
     const voiceKey =
       typeof args.voice === 'string' && args.voice.trim() ? args.voice.trim() : 'nishimura';
+    const characterNameArg =
+      typeof args['character-name'] === 'string' ? args['character-name'].trim() : '';
+    const characterSlugArg =
+      typeof args['character-slug'] === 'string' ? args['character-slug'].trim() : '';
     const titleZh =
       typeof args['title-zh'] === 'string' && args['title-zh'].trim()
         ? args['title-zh'].trim()
-        : defaultTitleZhFromPhraseSet(phraseSet.name, phraseSet.phrases);
+        : characterNameArg
+          ? suggestPhraseSetNameZh({ themeKey, voiceKey, characterName: characterNameArg })
+          : defaultTitleZhFromPhraseSet(phraseSet.name, phraseSet.phrases);
+    const characterSlug =
+      characterSlugArg ||
+      (typeof imageArg === 'string' ? characterSlugFromRefPath(imageArg) : undefined);
     const setName =
       typeof args['set-name'] === 'string' && args['set-name'].trim()
         ? args['set-name'].trim()
@@ -142,6 +153,8 @@ async function main(): Promise<void> {
             titleZh,
             themeKey,
             voiceKey,
+            characterName: characterNameArg || undefined,
+            characterSlug,
           });
     const titleEnCandidate =
       typeof args['title-en'] === 'string' && args['title-en'].trim()

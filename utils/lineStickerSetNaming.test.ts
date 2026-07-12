@@ -48,6 +48,15 @@ describe('lineStickerSetNaming', () => {
         characterName: 'Cream Otter',
       })
     ).toBe('Cream Otter Daily Chat');
+
+    expect(
+      suggestSetNameEn({
+        titleZh: '蕾絲金辮少女·日常聊天',
+        themeKey: 'daily',
+        voiceKey: 'nishimura',
+        characterSlug: 'lace-braid-girl',
+      })
+    ).toBe('Lace Braid Girl Daily Chat');
   });
 
   it('defaults shop title from phrase-set name or first phrase', () => {

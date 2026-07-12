@@ -197,23 +197,68 @@ export function suggestPhraseSetNameZh(params: {
   return fitZhTitle(raw);
 }
 
-/** English filesystem slug for ZIP / upload folder when title is Chinese. */
+export function characterSlugFromRefPath(refImagePath: string): string | undefined {
+  const normalized = refImagePath.replace(/\\/g, '/');
+  const match = normalized.match(/characters\/([^/]+)\//);
+  return match?.[1];
+}
+
+export function slugToEnWords(slug: string): string {
+  return slug
+    .split('-')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+/** English shop / ZIP name from vault registry entry (character-specific, not series). */
 export function suggestSetNameEn(params: {
   titleZh: string;
   themeKey?: string;
   voiceKey: string;
   characterName?: string;
+  characterSlug?: string;
 }): string {
   if (!containsCjk(params.titleZh)) {
     return params.titleZh.trim();
   }
+  const themeEn = params.themeKey ? (THEME_EN_LABELS[params.themeKey] ?? 'Daily Chat') : 'Daily Chat';
   const character = params.characterName?.trim();
-  const themeEn = params.themeKey ? THEME_EN_LABELS[params.themeKey] : 'Sticker';
-  const voiceEn = VOICE_EN_LABELS[params.voiceKey] ?? 'Set';
   if (character && !containsCjk(character)) {
     return `${character} ${themeEn}`;
   }
-  return `${themeEn} ${voiceEn} Set`;
+  if (params.characterSlug) {
+    return `${slugToEnWords(params.characterSlug)} ${themeEn}`;
+  }
+  return `${themeEn} ${VOICE_EN_LABELS[params.voiceKey] ?? 'Set'} Set`;
+}
+
+/** Shop listing for one vault registry character (ZH title uses characterName, EN from slug). */
+export function suggestVaultShopListing(params: {
+  characterName: string;
+  refImagePath: string;
+  theme: string;
+  voice: string;
+  phrases?: string[];
+}) {
+  const titleZh = suggestPhraseSetNameZh({
+    themeKey: params.theme,
+    voiceKey: params.voice,
+    characterName: params.characterName,
+  });
+  const titleEnCandidate = suggestSetNameEn({
+    titleZh,
+    themeKey: params.theme,
+    voiceKey: params.voice,
+    characterName: params.characterName,
+    characterSlug: characterSlugFromRefPath(params.refImagePath),
+  });
+  return prepareShopListing({
+    titleZh,
+    titleEn: titleEnCandidate,
+    phrases: params.phrases,
+    themeKey: params.theme,
+  });
 }
 
 export function suggestDescZh(titleZh: string, phrases?: string[]): string {

@@ -94,7 +94,7 @@ function envFileBaseName(setName: string): string {
   return setName.replace(/[^\w]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
 }
 
-function buildMarkdown(upload: UploadConfig): string {
+export function buildUploadMarkdown(upload: UploadConfig): string {
   return `# Traditional Chinese (Taiwan)
 
 ## Title
@@ -148,7 +148,7 @@ export async function packUploadOutput(options: PackUploadOptions): Promise<{
     await copyFile(processed, destSprite);
   }
 
-  await writeFile(resolve(destDir, `${upload.setName}.md`), buildMarkdown(upload), 'utf8');
+  await writeFile(resolve(destDir, `${upload.setName}.md`), buildUploadMarkdown(upload), 'utf8');
 
   if (upload.writeEnvBatch === false) {
     return { destDir };
