@@ -241,6 +241,15 @@ export interface Translations {
   comicDesc: string;
   enterTool: string;
   backToHome: string;
+  pageLoading: string;
+  errorBoundaryTitle: string;
+  errorBoundarySubtitle: string;
+  errorBoundaryMessageLabel: string;
+  errorBoundaryChunkReload: string;
+  errorBoundaryStackSummary: string;
+  errorBoundaryRetry: string;
+  errorBoundaryReload: string;
+  errorBoundaryHint: string;
 
   // Daily sticker registry viewer
   registryTool: string;

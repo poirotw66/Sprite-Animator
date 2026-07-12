@@ -186,7 +186,6 @@ Without `upload`, legacy output is `<out>/line-upload/` + `line-upload.zip`.
 | `reoverlay-sheet.mts` | re-apply programmatic text after reslice |
 | `stickerQa` (via finalize) | auto `qa-report.json` — foreground, size, text, LINE limits, **green fringe** |
 | `organize-line-upload-input.mts` | standalone pack into upload layout (fallback) |
-| `rebuild-line-upload.mts` | legacy only; prefer `finalize.mts` |
 
 ### Re-slice after chroma changes (no Gemini)
 

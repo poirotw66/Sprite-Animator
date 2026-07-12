@@ -261,7 +261,7 @@ async function main(): Promise<void> {
   const planOnly = Boolean(args['plan-only']);
   const execute = Boolean(args.execute);
   const resume = Boolean(args.resume);
-  const backfill = !Boolean(args['no-backfill']);
+  const backfill = !args['no-backfill'];
   const date = typeof args.date === 'string' ? args.date : todayIso();
   const count = typeof args.count === 'string' ? Number.parseInt(args.count, 10) : 30;
   const ratio = typeof args.ratio === 'string' ? args.ratio : '2:1';

@@ -294,7 +294,7 @@ const SpriteAnimatorPage: React.FC = () => {
             },
           }));
           setStatusText(t.statusOptimized);
-        } catch (err) {
+        } catch (err: unknown) {
           // If optimization fails, continue with default settings
           logger.warn('Auto-optimization failed, using default settings:', err);
         }
@@ -438,7 +438,7 @@ const SpriteAnimatorPage: React.FC = () => {
   const wrappedDownloadApng = useCallback(async () => {
     try {
       await handleDownloadApng();
-    } catch (err) {
+    } catch (err: unknown) {
       handleExportError(new Error(getErrorMessage(err)));
     }
   }, [handleDownloadApng, handleExportError]);
@@ -446,7 +446,7 @@ const SpriteAnimatorPage: React.FC = () => {
   const wrappedDownloadGif = useCallback(async () => {
     try {
       await handleDownloadGif();
-    } catch (err) {
+    } catch (err: unknown) {
       handleExportError(new Error(getErrorMessage(err)));
     }
   }, [handleDownloadGif, handleExportError]);
@@ -454,7 +454,7 @@ const SpriteAnimatorPage: React.FC = () => {
   const wrappedDownloadZip = useCallback(async () => {
     try {
       await handleDownloadZip();
-    } catch (err) {
+    } catch (err: unknown) {
       handleExportError(new Error(getErrorMessage(err)));
     }
   }, [handleDownloadZip, handleExportError]);

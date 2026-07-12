@@ -372,7 +372,7 @@ const LineStickerPage: React.FC = () => {
                     return next;
                 });
                 return updated;
-            } catch (e) {
+            } catch (e: unknown) {
                 logger.warn('Auto slice optimization failed for set sheet', sheetIndex, e);
                 return undefined;
             }

@@ -250,8 +250,8 @@
     "semantic_hash": "866703c234af7d91d3d78a854d9362e7"
   },
   "App.tsx": {
-    "mtime": 1783840073.8680668,
-    "ast_hash": "9bed985dd4bda6c895117a3b85a779b3",
+    "mtime": 1783841721.8707314,
+    "ast_hash": "da8ec62c148edcb213476b83966a6391",
     "semantic_hash": ""
   },
   "components/AnimationConfig.tsx": {
@@ -295,9 +295,9 @@
     "semantic_hash": "0803717a2a2aa766224f7b577689d996"
   },
   "components/ErrorBoundary.tsx": {
-    "mtime": 1772025816.432496,
-    "ast_hash": "ddce9cf45ca971dab6edb2f8c863fc4a",
-    "semantic_hash": "ddce9cf45ca971dab6edb2f8c863fc4a"
+    "mtime": 1783841720.8177574,
+    "ast_hash": "a149c2989bf03cba36b45bb13a020afd",
+    "semantic_hash": ""
   },
   "components/ExampleSelector.tsx": {
     "mtime": 1770222011.2565703,
@@ -415,9 +415,9 @@
     "semantic_hash": "d4bcf3de739eeedaa8ef7034ab7a4b4a"
   },
   "eslint.config.js": {
-    "mtime": 1772025816.4364932,
-    "ast_hash": "d429450ee3f569b57b08169dd5f68b54",
-    "semantic_hash": "d429450ee3f569b57b08169dd5f68b54"
+    "mtime": 1783841776.9029026,
+    "ast_hash": "baacada8da61432f34eba8a943018bf0",
+    "semantic_hash": ""
   },
   "hooks/lineStickerSheetGenerationTypes.ts": {
     "mtime": 1783259192.801401,
@@ -560,8 +560,8 @@
     "semantic_hash": "c31aff3595a6e9d5b99fa8a46966afbd"
   },
   "i18n/en.ts": {
-    "mtime": 1783840432.864781,
-    "ast_hash": "ebee9b452c1fae8ec1c965a478f86c01",
+    "mtime": 1783841718.3212354,
+    "ast_hash": "959f8279507aee9d0eed42756ca30acf",
     "semantic_hash": ""
   },
   "i18n/index.ts": {
@@ -570,13 +570,13 @@
     "semantic_hash": "fe3d3c9265445a428cf53c91a555e168"
   },
   "i18n/types.ts": {
-    "mtime": 1783840430.458149,
-    "ast_hash": "59efee7875621bdc8d7947dc8743a3ea",
+    "mtime": 1783841713.2841249,
+    "ast_hash": "02841e43b3fad9483bcacc440d7eb415",
     "semantic_hash": ""
   },
   "i18n/zh-TW.ts": {
-    "mtime": 1783840431.7322533,
-    "ast_hash": "9d6d490e66a4e400d7ac89a57d0141bf",
+    "mtime": 1783841717.9674633,
+    "ast_hash": "53249727c357c3c859a6dcb3bcf58ae7",
     "semantic_hash": ""
   },
   "index.tsx": {
@@ -590,9 +590,9 @@
     "semantic_hash": "feb4d50810d3309d5e8ae5ec4369d606"
   },
   "package.json": {
-    "mtime": 1783298330.505036,
-    "ast_hash": "fed400117809d75ad0aaf1ad28b43072",
-    "semantic_hash": "fed400117809d75ad0aaf1ad28b43072"
+    "mtime": 1783841192.8494735,
+    "ast_hash": "700e4decc7702bccfe5448ca09d1ca01",
+    "semantic_hash": ""
   },
   "pages/HomePage.tsx": {
     "mtime": 1783840073.4383044,
@@ -600,9 +600,9 @@
     "semantic_hash": ""
   },
   "pages/LineStickerPage.tsx": {
-    "mtime": 1783259192.8099217,
-    "ast_hash": "9ac0b71ac8001ed9758bca2aa69d2352",
-    "semantic_hash": "9ac0b71ac8001ed9758bca2aa69d2352"
+    "mtime": 1783841722.0135875,
+    "ast_hash": "019a0f6c51519a05f69d6b80747387c6",
+    "semantic_hash": ""
   },
   "pages/OnePageComicPage.tsx": {
     "mtime": 1783619282.4544446,
@@ -620,9 +620,9 @@
     "semantic_hash": "21c30fc935bf5c4444a61f1de7612016"
   },
   "pages/SpriteAnimatorPage.tsx": {
-    "mtime": 1783259192.8099217,
-    "ast_hash": "bedaf14f9289d1ed8600914dd1e7caf7",
-    "semantic_hash": "bedaf14f9289d1ed8600914dd1e7caf7"
+    "mtime": 1783841722.9628606,
+    "ast_hash": "ab84353c63a7c446cd804c8bd171c6d9",
+    "semantic_hash": ""
   },
   "postcss.config.js": {
     "mtime": 1772025816.4654975,
@@ -895,8 +895,8 @@
     "semantic_hash": "f9a429ced1f90894d2ec76bd19ee1d75"
   },
   "utils/constants.ts": {
-    "mtime": 1783782018.0618694,
-    "ast_hash": "04171e70892671ec6aba408010351abf",
+    "mtime": 1783841188.6237495,
+    "ast_hash": "73f37ea39d9cd5969f74a75ebeeefaaa",
     "semantic_hash": ""
   },
   "utils/dataUrl.test.ts": {
@@ -955,9 +955,9 @@
     "semantic_hash": "a91fd2ad18ec0c8bd82a1c9e0a3dd5a1"
   },
   "utils/imageUtils.ts": {
-    "mtime": 1779210926.10836,
-    "ast_hash": "eadf8ab18a69de2ef7376df3c636970b",
-    "semantic_hash": "eadf8ab18a69de2ef7376df3c636970b"
+    "mtime": 1783841187.7438128,
+    "ast_hash": "47dcd080d86784eaff0d913b429aa199",
+    "semantic_hash": ""
   },
   "utils/lazyWithRetry.tsx": {
     "mtime": 1772025816.4764934,
@@ -1104,11 +1104,6 @@
     "ast_hash": "117597073fc1229c9b4ad96fcc3de222",
     "semantic_hash": ""
   },
-  "utils/loadBundledImage.ts": {
-    "mtime": 1783619282.4760804,
-    "ast_hash": "712297a6a93fcb63f826d105032c68fd",
-    "semantic_hash": "712297a6a93fcb63f826d105032c68fd"
-  },
   "utils/logger.ts": {
     "mtime": 1783263556.5326183,
     "ast_hash": "43f14c8c62f2121c5e6fba7a0cf2e6bd",
@@ -1240,8 +1235,8 @@
     "semantic_hash": ""
   },
   "vite.config.ts": {
-    "mtime": 1783840082.1081522,
-    "ast_hash": "ed26dc8c52f715a85c07e97b18e50699",
+    "mtime": 1783841709.3296204,
+    "ast_hash": "0533f76d3fe92d1f3887a9f43e25fdc2",
     "semantic_hash": ""
   },
   "vitest.config.ts": {
@@ -1305,13 +1300,13 @@
     "semantic_hash": ""
   },
   "utils/lineStickerCompose.ts": {
-    "mtime": 1783786305.8401165,
-    "ast_hash": "49fd45eedc350091c66534e65b5eeed7",
+    "mtime": 1783841742.5196288,
+    "ast_hash": "a445b7337f867fa664b1a01208814a1e",
     "semantic_hash": ""
   },
   "utils/lineStickerComposeCaption.test.ts": {
-    "mtime": 1783786253.9875674,
-    "ast_hash": "839b7844eca88fb09196ea44dde51e74",
+    "mtime": 1783841709.411302,
+    "ast_hash": "090376cdb484a75e797b565609e609bf",
     "semantic_hash": ""
   },
   "utils/lineStickerComposeLayout.ts": {
@@ -1405,8 +1400,8 @@
     "semantic_hash": ""
   },
   "docs/OPTIMIZATION_REPORT.md": {
-    "mtime": 1772025816.4364932,
-    "ast_hash": "11038ad77049f0bb18a87a21646e5f4d",
+    "mtime": 1783841728.5238802,
+    "ast_hash": "c22f8ffb28e3417ae1b63af2ea42d2b4",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-09-one-page-comic.md": {
@@ -1599,11 +1594,6 @@
     "ast_hash": "1fa3ec1ecf1e40ba6cc50ecfbd7df8d7",
     "semantic_hash": ""
   },
-  "reference/comic/model-sheet-layout.png": {
-    "mtime": 1783619282.4656358,
-    "ast_hash": "700eaf0778adfb84fa087561f3058200",
-    "semantic_hash": ""
-  },
   ".claude/skills/line-sticker-maker/scripts/reslice-core-preview.mts": {
     "mtime": 1783787673.7042103,
     "ast_hash": "cfb90daddcaf7899782b9e65b91a56cd",
@@ -1640,8 +1630,8 @@
     "semantic_hash": ""
   },
   ".claude/skills/line-sticker-maker/scripts/daily-pack.mts": {
-    "mtime": 1783830096.570205,
-    "ast_hash": "fc747027e2126bddf6a8b2d2f8b5394a",
+    "mtime": 1783841775.606218,
+    "ast_hash": "4e3705f24f1514eaf8c53e375e4a550e",
     "semantic_hash": ""
   },
   "services/gemini/characterConcept.ts": {

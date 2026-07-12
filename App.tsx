@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Loader2 } from './components/Icons';
+import { useLanguage } from './hooks/useLanguage';
 
 // Lazy load pages for code splitting
 const HomePage = lazyWithRetry(() => import('./pages/HomePage'));
@@ -13,14 +14,17 @@ const PartingPage = lazyWithRetry(() => import('./pages/PartingPage'));
 const DailyStickerRegistryPage = lazyWithRetry(() => import('./pages/DailyStickerRegistryPage'));
 
 // Loading fallback component
-const PageLoader: React.FC = () => (
-  <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 flex items-center justify-center">
-    <div className="flex flex-col items-center gap-4">
-      <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
-      <p className="text-slate-500 font-medium">Loading...</p>
+const PageLoader: React.FC = () => {
+  const { t } = useLanguage();
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
+        <p className="text-slate-500 font-medium">{t.pageLoading}</p>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const App: React.FC = () => {
   return (

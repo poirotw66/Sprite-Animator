@@ -38,6 +38,41 @@ import { lineWidthWithSpacing } from './lineStickerTextOverlayGeometry';
 
 type TextColorPresetKey = keyof typeof TEXT_COLOR_PRESETS;
 
+/** ponytail: @napi-rs/canvas 2D context is not DOM CanvasRenderingContext2D; narrow API surface for compose. */
+interface ComposeCanvas2D {
+  clearRect(x: number, y: number, w: number, h: number): void;
+  drawImage(image: unknown, dx: number, dy: number): void;
+  getImageData(sx: number, sy: number, sw: number, sh: number): ImageData;
+  createImageData(w: number, h: number): ImageData;
+  putImageData(data: ImageData, x: number, y: number): void;
+  measureText(text: string): TextMetrics;
+  fillText(text: string, x: number, y: number): void;
+  strokeText(text: string, x: number, y: number): void;
+  save(): void;
+  restore(): void;
+  font: string;
+  textAlign: CanvasTextAlign;
+  textBaseline: CanvasTextBaseline;
+  fillStyle: string | CanvasGradient | CanvasPattern;
+  strokeStyle: string | CanvasGradient | CanvasPattern;
+  lineWidth: number;
+  beginPath(): void;
+  rect(x: number, y: number, w: number, h: number): void;
+  clip(): void;
+  lineJoin: CanvasLineJoin;
+  miterLimit: number;
+}
+
+interface ComposeCanvasSurface {
+  width: number;
+  height: number;
+  getContext(contextId: '2d'): ComposeCanvas2D | null;
+}
+
+function asComposeContext(ctx: unknown): ComposeCanvas2D {
+  return ctx as ComposeCanvas2D;
+}
+
 export interface ComposeStickerOptions {
   phrase: string;
   frameIndex?: number;
@@ -50,10 +85,6 @@ export interface ComposeStickerOptions {
 /** Compose layout applies only when enabled and the frame has caption text. */
 export function shouldUseComposeLayout(compose: ProgrammaticComposeConfig, phrase: string): boolean {
   return compose.enabled && phrase.trim().length > 0;
-}
-
-function asDomCanvasContext(ctx: unknown): CanvasRenderingContext2D {
-  return ctx as CanvasRenderingContext2D;
 }
 
 function measureOpaqueBounds(frame: RgbaFrameBuffer): PixelBounds | null {
@@ -146,7 +177,7 @@ function resampleRgba(src: RgbaFrameBuffer, dstW: number, dstH: number): RgbaFra
 }
 
 function drawRgbaFrameOnCanvas(
-  ctx: CanvasRenderingContext2D,
+  ctx: ComposeCanvas2D,
   frame: RgbaFrameBuffer,
   offsetX: number,
   offsetY: number
@@ -162,12 +193,13 @@ function drawRgbaFrameOnCanvas(
   ctx.drawImage(layer, offsetX, offsetY);
 }
 
-function readRgbaFromCanvas(canvas: ReturnType<typeof createCanvas>): RgbaFrameBuffer {
-  const ctx = canvas.getContext('2d');
+function readRgbaFromCanvas(canvas: unknown): RgbaFrameBuffer {
+  const surface = canvas as ComposeCanvasSurface;
+  const ctx = surface.getContext('2d');
   if (!ctx) {
     throw new Error('Canvas 2D context unavailable');
   }
-  const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const { data, width, height } = ctx.getImageData(0, 0, surface.width, surface.height);
   return { data: new Uint8ClampedArray(data), width, height };
 }
 
@@ -209,7 +241,7 @@ export function ensureLandscapeStickerFrame(
   }
   ctx.clearRect(0, 0, targetW, targetH);
   drawRgbaFrameOnCanvas(
-    ctx,
+    asComposeContext(ctx),
     content,
     Math.floor((targetW - content.width) / 2),
     Math.floor((targetH - content.height) / 2)
@@ -219,7 +251,7 @@ export function ensureLandscapeStickerFrame(
 
 /** Stroke+fill one line char by char so CJK captions get visible letter spacing. */
 function drawLineWithSpacing(
-  ctx: CanvasRenderingContext2D,
+  ctx: ComposeCanvas2D,
   line: string,
   centerX: number,
   y: number,
@@ -247,7 +279,7 @@ function drawLineWithSpacing(
 }
 
 function drawGlyph(
-  ctx: CanvasRenderingContext2D,
+  ctx: ComposeCanvas2D,
   glyph: string,
   x: number,
   y: number,
@@ -274,7 +306,7 @@ function verticalCaptionHeight(
 }
 
 function resolveCaptionLayout(
-  ctx: CanvasRenderingContext2D,
+  ctx: ComposeCanvas2D,
   phrase: string,
   slots: ComposeSlots,
   tuning: ProgrammaticTextOverlayTuning,
@@ -324,10 +356,19 @@ function resolveCaptionLayout(
     while (fontSize >= minFont) {
       applyFont(fontSize);
       letterSpacingPx = fontSize * letterSpacingEm;
-      lines = wrapLinesWithSpacing(ctx, phrase, maxWidth, letterSpacingPx);
+      lines = wrapLinesWithSpacing(
+        ctx as unknown as CanvasRenderingContext2D,
+        phrase,
+        maxWidth,
+        letterSpacingPx
+      );
       lineHeight = fontSize * lineMult;
       const widest = lines.reduce(
-        (w, line) => Math.max(w, lineWidthWithSpacing(ctx, line, letterSpacingPx)),
+        (w, line) =>
+          Math.max(
+            w,
+            lineWidthWithSpacing(ctx as unknown as CanvasRenderingContext2D, line, letterSpacingPx)
+          ),
         0
       );
       if (lines.length * lineHeight <= slotH * 0.92 && widest <= maxWidth) {
@@ -340,7 +381,11 @@ function resolveCaptionLayout(
   let centerX = (captionSlot.minX + captionSlot.maxX) / 2;
   if (captionOrientation === 'horizontal' && captionAlign !== 'center') {
     const widest = lines.reduce(
-      (w, line) => Math.max(w, lineWidthWithSpacing(ctx, line, letterSpacingPx)),
+      (w, line) =>
+        Math.max(
+          w,
+          lineWidthWithSpacing(ctx as unknown as CanvasRenderingContext2D, line, letterSpacingPx)
+        ),
       0
     );
     const pad = slotW * 0.04;
@@ -411,7 +456,7 @@ export function composeStickerFrame(
   });
 
   const canvas = createCanvas(canvasW, canvasH);
-  const ctx = asDomCanvasContext(canvas.getContext('2d'));
+  const ctx = asComposeContext(canvas.getContext('2d'));
   ctx.clearRect(0, 0, canvasW, canvasH);
 
   let subject = subjectFrame;

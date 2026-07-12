@@ -9,6 +9,8 @@ export default tseslint.config(
     ignores: [
       'dist/**',
       'node_modules/**',
+      'output/**',
+      'graphify-out/**',
       'md/**',
       'docs/**',
       'example/**',
@@ -43,6 +45,24 @@ export default tseslint.config(
       'react-hooks/preserve-manual-memoization': 'off',
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/exhaustive-deps': 'warn',
+    },
+  },
+  {
+    files: ['**/*.mts'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-empty': 'off',
+      'no-useless-escape': 'off',
+      'prefer-const': 'off',
+      'no-extra-boolean-cast': 'off',
     },
   },
   {
