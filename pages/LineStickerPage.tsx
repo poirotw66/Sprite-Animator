@@ -74,6 +74,7 @@ import {
     useLineStickerProgrammaticOverlayCompose,
     useLineStickerProgrammaticOverlayCore,
 } from '../hooks/useLineStickerProgrammaticOverlay';
+import { useLazyBundledStickerFont } from '../hooks/useLazyBundledStickerFont';
 
 const LineStickerPage: React.FC = () => {
     const { t } = useLanguage();
@@ -169,6 +170,8 @@ const LineStickerPage: React.FC = () => {
     const [programmaticTextTuning, setProgrammaticTextTuning] = useState<ProgrammaticTextOverlayTuning>(
         () => ({ ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING })
     );
+
+    useLazyBundledStickerFont(selectedFont, textRendering === 'programmatic' && includeText);
 
     const lineStickerProgrammaticOverlayCore = useLineStickerProgrammaticOverlayCore({
         textRendering,

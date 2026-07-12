@@ -5,6 +5,7 @@ import {
   DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING,
   overlayPhrasesOnStickerFrames,
 } from '../utils/lineStickerTextOverlay';
+import { useLazyBundledStickerFont } from './useLazyBundledStickerFont';
 
 export type SheetSliceOverlayFontKey = keyof typeof FONT_PRESETS;
 export type SheetSliceOverlayColorKey = keyof typeof TEXT_COLOR_PRESETS;
@@ -30,6 +31,8 @@ export function useSheetSliceProgrammaticOverlay() {
   const [overlayTuning, setOverlayTuning] = useState<ProgrammaticTextOverlayTuning>(() => ({
     ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING,
   }));
+
+  useLazyBundledStickerFont(overlayFontKey, overlayEnabled);
 
   const mapFramesAfterSlice = useCallback(
     async (frames: string[]) => {

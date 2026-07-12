@@ -41,6 +41,12 @@ import type {
 } from './lineStickerTextOverlayGeometry';
 
 import { computeAutoCaptionLayout, frameInsetPx } from './lineStickerTextOverlaySubject';
+import {
+  FASHION_BITMAP16_FAMILY,
+  KANAKA_FONT_FAMILY,
+  LIYU_SHOUSHU_FAMILY,
+  NAIKAI_FONT_FAMILY,
+} from './lineStickerBundledFontCatalog';
 
 // Re-export so existing importers of './lineStickerTextOverlay' keep working.
 export type {
@@ -117,17 +123,22 @@ export function strokeColorForFill(fillHex: string): string {
   return luminance(fillHex) > 0.55 ? '#1a1a1a' : '#ffffff';
 }
 
-/** PostScript / CSS family name for fonts/LiyuShoushu.ttf (also @font-face in index.css). */
-export const LIYU_SHOUSHU_FAMILY = 'Liyu Shoushu';
+/** PostScript / CSS family name for fonts/LiyuShoushu.ttf (lazy-loaded in the browser). */
+export { LIYU_SHOUSHU_FAMILY } from './lineStickerBundledFontCatalog';
 
-/** PostScript / CSS family name for fonts/FashionBitmap16_0.092.ttf (also @font-face in index.css). */
-export const FASHION_BITMAP16_FAMILY = 'FashionBitmap16';
+/** PostScript / CSS family name for fonts/FashionBitmap16_0.092.ttf (lazy-loaded in the browser). */
+export { FASHION_BITMAP16_FAMILY } from './lineStickerBundledFontCatalog';
 
-/** PostScript / CSS family name for fonts/073 TEGUSE - Kanaka Font_240705.ttf (also @font-face in index.css). */
-export const KANAKA_FONT_FAMILY = '073 TEGUSE  Kanaka Font';
+/** PostScript / CSS family name for fonts/073 TEGUSE - Kanaka Font_240705.ttf (lazy-loaded in the browser). */
+export { KANAKA_FONT_FAMILY } from './lineStickerBundledFontCatalog';
 
-/** PostScript / CSS family name for fonts/NaikaiFont-Regular-Lite.ttf (also @font-face in index.css). */
-export const NAIKAI_FONT_FAMILY = 'NaikaiFont';
+/** PostScript / CSS family name for fonts/NaikaiFont-Regular-Lite.ttf (lazy-loaded in the browser). */
+export { NAIKAI_FONT_FAMILY } from './lineStickerBundledFontCatalog';
+
+async function ensureBundledFontForOverlay(fontKey: FontPresetKey): Promise<void> {
+  const { ensureBundledStickerFontForPreset } = await import('./lineStickerBrowserFonts');
+  await ensureBundledStickerFontForPreset(fontKey);
+}
 
 /**
  * System font stacks for canvas. The renderer uses the first installed family
@@ -228,19 +239,21 @@ export interface LineStickerTextOverlayOptions {
 /**
  * Draw phrase on a sticker frame image. Resolves to the same data URL if phrase is empty or not in browser.
  */
-export function overlayLineStickerTextOnFrame(
+export async function overlayLineStickerTextOnFrame(
   frameDataUrl: string,
   phrase: string,
   options: LineStickerTextOverlayOptions
 ): Promise<string> {
   if (typeof document === 'undefined' || typeof Image === 'undefined') {
-    return Promise.resolve(frameDataUrl);
+    return frameDataUrl;
   }
 
   const trimmed = phrase.trim();
   if (!trimmed) {
-    return Promise.resolve(frameDataUrl);
+    return frameDataUrl;
   }
+
+  await ensureBundledFontForOverlay(options.fontKey);
 
   const tuning = options.tuning ?? DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING;
   const sizeRatio = Math.max(0.04, Math.min(0.2, tuning.fontSizePercent / 100));
@@ -363,6 +376,7 @@ export async function overlayPhrasesOnStickerFrames(
 ): Promise<string[]> {
   const tuning = opts.tuning ?? DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING;
   const previewMaxLongestSide = opts.previewMaxLongestSide;
+  await ensureBundledFontForOverlay(opts.fontKey);
   const out = await Promise.all(
     frames.map((frame, i) =>
       overlayLineStickerTextOnFrame(frame, phrases[i] ?? '', {
