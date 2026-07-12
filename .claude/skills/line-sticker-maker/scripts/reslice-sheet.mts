@@ -22,6 +22,7 @@ import {
   validateSheetGrid,
 } from '../../../../utils/sheetGridValidation.ts';
 import { buildEqualGridBounds } from '../../../../utils/gridSheetTemplate.ts';
+import { resolveSliceTemplateBounds } from '../../../../utils/lineStickerGridTemplate.ts';
 import { trimFrameToContent } from '../../../../utils/sheetComponentSlicer.ts';
 import { DEFAULT_CHROMA_KEY_ALGORITHM } from '../../../../utils/constants.ts';
 import type { ChromaKeyAlgorithm } from '../../../../types.ts';
@@ -77,11 +78,12 @@ async function findRawSheet(): Promise<string> {
   return resolve(sheetDir, raw);
 }
 
+const hasGuidedTemplateFile = existsSync(resolve(sheetDir, '_grid-template-guided.png'));
 const useGuidedTemplate =
   sliceModeArg === 'template' ||
   (sliceModeArg !== 'detect' &&
     sliceModeArg !== 'divider' &&
-    existsSync(resolve(sheetDir, '_grid-template-guided.png')));
+    hasGuidedTemplateFile);
 const useDetect = sliceModeArg === 'detect';
 
 const rawPath = await findRawSheet();
@@ -123,23 +125,34 @@ if (!expected.ok) {
   );
 }
 
-const templateBounds = buildEqualGridBounds(image.width, cols, rows);
+const guidedTemplateBounds = hasGuidedTemplateFile
+  ? buildEqualGridBounds(image.width, cols, rows)
+  : null;
+const sliceBounds = resolveSliceTemplateBounds(
+  image.data,
+  image.width,
+  image.height,
+  cols,
+  rows,
+  guidedTemplateBounds
+);
+const useTemplateSlice = useDetect ? false : useGuidedTemplate || sliceBounds.source === 'detected';
 console.log(
   useDetect
     ? 'Slice mode: detect (per-cell content crop)'
-    : useGuidedTemplate
-      ? `Slice mode: template + ownership (guided grid${
-          preserveCellAlphaThreshold ? ', preserve cell alpha' : ''
-        })`
+    : useTemplateSlice
+      ? `Slice mode: template + ownership (${
+          sliceBounds.source === 'guided-template' ? 'guided grid' : 'detected grid'
+        }${preserveCellAlphaThreshold ? ', preserve cell alpha' : ''})`
       : 'Slice mode: divider (white grid lines excluded when detected)'
 );
 
 // ponytail: reslice writes final stickers with no overlay step after it, so trim here.
 const frames = sliceSheet(image, cols, rows, {
-  sliceMode: useDetect ? 'detect' : useGuidedTemplate ? 'template' : 'divider',
+  sliceMode: useDetect ? 'detect' : useTemplateSlice ? 'template' : 'divider',
   preserveCellAlphaThreshold,
   guidedContentCrop: useGuidedTemplate,
-  templateBounds: useGuidedTemplate ? templateBounds : undefined,
+  templateBounds: useTemplateSlice ? sliceBounds : undefined,
   detectBoundaries: useDetect,
 }).map((frame) => trimFrameToContent(frame));
 for (let i = 0; i < frames.length; i++) {

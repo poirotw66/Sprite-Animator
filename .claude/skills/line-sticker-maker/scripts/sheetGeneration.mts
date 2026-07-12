@@ -26,6 +26,11 @@ import {
 } from '../../../../utils/sheetGridValidation.ts';
 import { buildGridSheetTemplate, type GridTemplateMode } from '../../../../utils/gridSheetTemplate.ts';
 import { DEFAULT_CHROMA_KEY_ALGORITHM } from '../../../../utils/constants.ts';
+import {
+  resolveEffectiveGridTemplate,
+  modelSkipsGridTemplateAttachment,
+  resolveSliceTemplateBounds,
+} from '../../../../utils/lineStickerGridTemplate.ts';
 import { detectWhiteDividerGrid, shouldUseWhiteDividerSlice } from '../../../../utils/sheetWhiteDividerDetection.ts';
 
 import { generateSheetImage, type StyleAnchorImage } from './geminiSheet.mts';
@@ -254,7 +259,8 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
 
   log(logPrefix, `generating ${sheet.cols}x${sheet.rows} sheet...`);
 
-  const templateMode = resolveGridTemplateMode(gridTemplate);
+  const effectiveGridTemplate = resolveEffectiveGridTemplate(model, gridTemplate);
+  const templateMode = resolveGridTemplateMode(effectiveGridTemplate);
   const sheetTemplate = templateMode
     ? buildGridSheetTemplate(sheet.cols, sheet.rows, { chromaKeyColor, mode: templateMode })
     : null;
@@ -271,17 +277,14 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
         height: sheetTemplate.height,
       })
     );
-    await writeFile(resolve(sheetDirEarly, '_grid-template.png'), encodePng({
-      data: sheetTemplate.data,
-      width: sheetTemplate.width,
-      height: sheetTemplate.height,
-    }));
     log(
       logPrefix,
       sheetTemplate.mode === 'guided'
         ? 'using guided grid layout reference (paint on template)'
         : 'using chroma grid template (fixed equal-split slice)'
     );
+  } else if (gridTemplate && modelSkipsGridTemplateAttachment(model)) {
+    log(logPrefix, 'grid template skipped (flash-image uses prompt-only layout)');
   }
 
   const gridTemplateImage = sheetTemplate
@@ -452,13 +455,25 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
   }
 
   const useGuidedTemplateSlice = sheetTemplate?.mode === 'guided';
+  const sliceBounds = resolveSliceTemplateBounds(
+    image.data,
+    image.width,
+    image.height,
+    sheet.cols,
+    sheet.rows,
+    sheetTemplate
+  );
   log(
     logPrefix,
     useGuidedTemplateSlice
       ? `slicing into ${sheet.cols * sheet.rows} stickers (guided template bounds, ownership${
           textRendering === 'model' ? ', preserve cell alpha' : ''
         })...`
-      : `slicing into ${sheet.cols * sheet.rows} stickers (white-divider mode)...`
+      : sliceBounds.source === 'detected'
+        ? `slicing into ${sheet.cols * sheet.rows} stickers (detected grid bounds, ownership${
+            textRendering === 'model' ? ', preserve cell alpha' : ''
+          })...`
+        : `slicing into ${sheet.cols * sheet.rows} stickers (white-divider mode)...`
   );
 
   const rawForDivide = decodeImage(rawPng);
@@ -471,17 +486,19 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
   );
 
   let frames = sliceSheet(image, sheet.cols, sheet.rows, {
-    sliceMode: useGuidedTemplateSlice ? 'template' : 'divider',
+    sliceMode: useGuidedTemplateSlice || !sheetTemplate ? 'template' : 'divider',
     preserveCellAlphaThreshold: textRendering === 'model' ? 8 : undefined,
     guidedContentCrop: useGuidedTemplateSlice,
     dividerGrid:
       !useGuidedTemplateSlice &&
+      sheetTemplate &&
       shouldUseWhiteDividerSlice(dividerGridFromRaw, sheet.cols, sheet.rows)
         ? dividerGridFromRaw
         : undefined,
-    templateBounds: sheetTemplate
-      ? { xBounds: sheetTemplate.xBounds, yBounds: sheetTemplate.yBounds }
-      : undefined,
+    templateBounds: {
+      xBounds: sliceBounds.xBounds,
+      yBounds: sliceBounds.yBounds,
+    },
   });
 
   if (textRendering === 'programmatic' && includeText) {

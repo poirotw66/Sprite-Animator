@@ -130,7 +130,7 @@ Legacy job configs with `lineS` / `syncToLineS` are still accepted when reading.
 | `minGridAlignmentScore` | `0.72` | 0–1; reject sheet below this score |
 | `promptVersion` | `v3compact` | `v3compact` = shorter per-cell lines; `v3` = verbose legacy |
 | `styleAnchorFromPriorSheet` | `false` | opt-in: attach sheet-1 `_processed-sheet.png` for sheet-2+ (disables parallel) |
-| `gridTemplate` | `"guided"` | `run-from-inputs` / batch default: visible grid layout ref + template-bound slice; `true` = blank chroma only |
+| `gridTemplate` | `false` | `true` = blank chroma template; `"guided"` = layout ref (flash-lite only — **flash-image skips template attachment**) |
 | `qaEnabled` | `true` | write `qa-report.json` at finalize (warn-only) |
 | `lineUpload` | `true` | build upload ZIP at end of full run |
 | `mainStickerIndex` / `tabStickerIndex` | random | optional 1-based overrides; default picks two distinct stickers from the set |

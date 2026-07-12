@@ -19,7 +19,7 @@ import { spawnSync } from 'node:child_process';
 import {
   parsePhraseSetJson,
 } from '../../../../utils/lineStickerPhraseSetFormat.ts';
-import { DEFAULT_SKILL_STICKER_MODEL, defaultResolutionForModel } from '../../../../utils/constants.ts';
+import { DEFAULT_SKILL_STICKER_MODEL, DEFAULT_CHROMA_KEY_ALGORITHM, defaultResolutionForModel } from '../../../../utils/constants.ts';
 import {
   defaultTitleZhFromPhraseSet,
   suggestSetNameEn,
@@ -127,6 +127,10 @@ async function main(): Promise<void> {
       referenceImage2 = basename(image2Out);
     }
 
+    const themeKey =
+      typeof args.theme === 'string' && args.theme.trim() ? args.theme.trim() : 'daily';
+    const voiceKey =
+      typeof args.voice === 'string' && args.voice.trim() ? args.voice.trim() : 'nishimura';
     const titleZh =
       typeof args['title-zh'] === 'string' && args['title-zh'].trim()
         ? args['title-zh'].trim()
@@ -136,8 +140,8 @@ async function main(): Promise<void> {
         ? args['set-name'].trim()
         : suggestSetNameEn({
             titleZh,
-            themeKey: 'daily',
-            voiceKey: 'nishimura',
+            themeKey,
+            voiceKey,
           });
     const titleEnCandidate =
       typeof args['title-en'] === 'string' && args['title-en'].trim()
@@ -149,7 +153,7 @@ async function main(): Promise<void> {
       descZh: typeof args['desc-zh'] === 'string' ? args['desc-zh'] : undefined,
       descEn: typeof args['desc-en'] === 'string' ? args['desc-en'] : undefined,
       phrases: phraseSet.phrases,
-      themeKey: 'daily',
+      themeKey,
     });
     for (const warning of listing.warnings) {
       console.warn(`   listing: ${warning}`);
@@ -176,9 +180,14 @@ async function main(): Promise<void> {
           }
         : {}),
       phraseSetFile: 'phrase-set.json',
+      ...(typeof args['character-concept'] === 'string' && args['character-concept'].trim()
+        ? { characterDescription: args['character-concept'].trim() }
+        : {}),
       style: 'matchUploaded',
+      fontKey: 'matchUploaded',
       language: 'zh-TW',
       chromaKeyColor: 'green',
+      chromaKeyAlgorithm: DEFAULT_CHROMA_KEY_ALGORITHM,
       includeText: true,
       textRendering: 'model',
       scope,
@@ -193,7 +202,7 @@ async function main(): Promise<void> {
       maxSheetRetries: 3,
       minGridAlignmentScore: 0.8,
       promptVersion: 'v3compact',
-      gridTemplate: 'guided',
+      gridTemplate: false,
       upload: {
         syncToUploadRoot: true,
         creatorId: '706',
