@@ -36,7 +36,7 @@ Summary of findings and recommended improvements across the codebase.
 - `reslice-core-preview.mts`
 - `scripts/diagnose-sheet-slice.mts`
 
-**Still optional:** `graphify-out/` gitignore.
+**Still optional:** none for graphify gitignore (added 2026-07-12).
 
 ### 1.3 Typecheck / CI
 
@@ -94,7 +94,6 @@ Summary of findings and recommended improvements across the codebase.
 
 | Priority | Item | Effort |
 |----------|------|--------|
-| High | `graphify-out/` → `.gitignore` | Low |
 | Medium | Tighten preset select types (LineStickerPage) | Low |
 | Low | Split LineStickerPage into smaller components | Medium |
 | Low | daily-pack backfill theme/voice + `--replan` | Medium |

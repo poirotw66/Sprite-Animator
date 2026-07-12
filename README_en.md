@@ -157,6 +157,8 @@ Sprite-Animator/
 
 ## 🔧 Development
 
+After your first clone, run `graphify update .` to build the local code knowledge graph (writes to `graphify-out/`, ~15s, not versioned).
+
 ### Build Production Version
 
 ```bash

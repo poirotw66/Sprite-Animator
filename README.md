@@ -171,6 +171,8 @@ Sprite-Animator/
 
 ## 🔧 開發
 
+首次 clone 請執行 `graphify update .` 建立本地程式碼知識圖（產出至 `graphify-out/`，約 15 秒，不進版控）。
+
 ### 構建生產版本
 
 ```bash
