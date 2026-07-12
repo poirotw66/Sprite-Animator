@@ -10,7 +10,7 @@ import { STICKER_REGISTRY_VERSION } from './stickerRegistryFormat';
 
 export const VAULT_DIR_NAME = 'line-sticker-vault';
 export const VAULT_REGISTRY_REL_PATH = 'registry/sticker-registry.json';
-export const VAULT_CHARACTER_REF_FILENAME = 'character-ref.png';
+export const VAULT_CHARACTER_REF_FILENAME = 'character-ref.webp';
 export const VAULT_PHRASE_SET_FILENAME = 'phrase-set.json';
 
 export const CHARACTER_META_FORMAT = 'line-sticker-character' as const;

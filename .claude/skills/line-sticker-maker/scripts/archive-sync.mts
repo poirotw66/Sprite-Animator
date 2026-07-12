@@ -39,6 +39,7 @@ import {
   type VaultCharacterMeta,
   type VaultSetMeta,
 } from '../../../../utils/stickerVault.ts';
+import { writeVaultCharacterRef } from '../../../../utils/vaultCharacterRef.ts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(SCRIPT_DIR, '../../../..');
@@ -255,7 +256,7 @@ async function writeArchive(
 
     if (!existsSync(charRefDest)) {
       await mkdir(charDirAbs, { recursive: true });
-      await copyFile(draft.refAbs, charRefDest);
+      await writeVaultCharacterRef(draft.refAbs, charRefDest);
       await writeFile(charMetaDest, `${JSON.stringify(charMeta, null, 2)}\n`, 'utf8');
     }
   }

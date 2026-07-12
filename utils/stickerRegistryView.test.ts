@@ -4,8 +4,8 @@ import { filterRegistryEntries, listCharacterProfiles, summarizeRegistry, toVaul
 
 describe('stickerRegistryView', () => {
   it('builds vault asset URLs', () => {
-    expect(toVaultAssetUrl('characters/fox/character-ref.png', '/')).toBe(
-      '/vault/characters/fox/character-ref.png'
+    expect(toVaultAssetUrl('characters/fox/character-ref.webp', '/')).toBe(
+      '/vault/characters/fox/character-ref.webp'
     );
     expect(vaultRegistryFetchUrl('/app/')).toBe('/app/vault/registry/sticker-registry.json');
   });

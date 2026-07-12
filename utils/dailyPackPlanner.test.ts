@@ -91,7 +91,7 @@ describe('planDailyPack', () => {
       style: 'chibi',
       theme: 'meme',
       voice: 'nishimura',
-      refImagePath: 'characters/vault-fox/character-ref.png',
+      refImagePath: 'characters/vault-fox/character-ref.webp',
       outputDir: 'sets/SET-20260701-001',
       status: 'completed',
     };
@@ -104,11 +104,11 @@ describe('planDailyPack', () => {
       repoRoot,
       vaultRoot: '/vault',
       rng: () => 0,
-      fileExists: (path) => path.replace(/\\/g, '/').endsWith('characters/vault-fox/character-ref.png'),
+      fileExists: (path) => path.replace(/\\/g, '/').endsWith('characters/vault-fox/character-ref.webp'),
     });
 
     const aSlots = plan.slots.filter((s) => s.batchType === 'A');
     expect(aSlots.length).toBeGreaterThan(0);
-    expect(aSlots[0]!.refImagePath).toBe('characters/vault-fox/character-ref.png');
+    expect(aSlots[0]!.refImagePath).toBe('characters/vault-fox/character-ref.webp');
   });
 });

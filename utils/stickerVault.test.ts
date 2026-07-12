@@ -10,17 +10,17 @@ import {
 
 describe('stickerVault', () => {
   it('detects vault-relative asset paths', () => {
-    expect(isVaultRelativeAssetPath('characters/fox/character-ref.png')).toBe(true);
+    expect(isVaultRelativeAssetPath('characters/fox/character-ref.webp')).toBe(true);
     expect(isVaultRelativeAssetPath('output/set-01/character-ref.png')).toBe(false);
   });
 
   it('resolves vault character refs against vault root', () => {
     const abs = resolveRegistryAssetPath(
-      'characters/fox/character-ref.png',
+      'characters/fox/character-ref.webp',
       '/repo',
       '/vault'
     );
-    expect(abs.replace(/\\/g, '/')).toMatch(/\/vault\/characters\/fox\/character-ref\.png$/);
+    expect(abs.replace(/\\/g, '/')).toMatch(/\/vault\/characters\/fox\/character-ref\.webp$/);
   });
 
   it('resolves output refs against repo root', () => {
@@ -48,7 +48,7 @@ describe('stickerVault', () => {
       style: 'chibi',
       theme: 'meme',
       voice: 'nishimura',
-      refImagePath: 'characters/vault-fox/character-ref.png',
+      refImagePath: 'characters/vault-fox/character-ref.webp',
       outputDir: 'sets/SET-20260701-001',
       status: 'completed',
     };

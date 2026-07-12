@@ -70,11 +70,16 @@ output/
 
 ## Vault archive (line-sticker-vault)
 
-Sibling repo for long-term storage of character refs + phrase-set JSON.
+Sibling repo for long-term storage of character refs + phrase-set JSON. **Character refs are stored as `character-ref.webp`** (PNG/JPG from `output/` are converted on sync).
 
 ```bash
-# Archive completed output/ sets into ../line-sticker-vault
+# Archive completed output/ sets into ../line-sticker-vault (refs → WebP)
 npx tsx .claude/skills/line-sticker-maker/scripts/archive-sync.mts --sync
+
+# Import one character ref directly into vault (e.g. after generate-character-ref)
+npx tsx .claude/skills/line-sticker-maker/scripts/vault-import-character.mts \
+  --source output/temp/character-ref.png \
+  --slug bloom-calico --name "星願花貓" --concept "…" --style watercolor
 
 # daily-pack merges vault registry for A-slot character rotation (auto-detects sibling vault)
 npx tsx .claude/skills/line-sticker-maker/scripts/daily-pack.mts --backfill --plan-only

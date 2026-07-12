@@ -87,10 +87,11 @@ export function listVerifiedCharacters(
 
 export function resolveRefImageInDir(outputDir: string): string | undefined {
   const candidates = [
+    'character-ref.webp',
     'character-ref.png',
+    'reference-image.webp',
     'reference-image.png',
     'reference-image.jpg',
-    'reference-image.webp',
   ];
   for (const name of candidates) {
     const full = join(outputDir, name);

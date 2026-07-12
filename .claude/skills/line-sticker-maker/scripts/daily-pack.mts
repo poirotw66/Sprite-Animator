@@ -169,7 +169,6 @@ async function executeSlot(
     let characterName = slot.characterName ?? '';
     let characterConcept = slot.characterConcept ?? '';
     let refImagePath = slot.refImagePath ?? `${slot.outputDir}/character-ref.png`;
-    const refOut = resolve(ROOT, refImagePath);
 
     if (slot.batchType === 'B') {
       const apiKey = loadGeminiApiKey();
@@ -201,7 +200,11 @@ async function executeSlot(
       if (!existsSync(srcRef)) {
         throw new Error(`A-plan ref image missing: ${slot.refImagePath} (resolved ${srcRef})`);
       }
-      await copyFile(srcRef, refOut);
+      const refFileName = srcRef.toLowerCase().endsWith('.webp')
+        ? 'character-ref.webp'
+        : 'character-ref.png';
+      refImagePath = `${slot.outputDir}/${refFileName}`;
+      await copyFile(srcRef, resolve(ROOT, refImagePath));
     }
 
     const phraseOut = `${slot.outputDir}/phrase-set.json`;
