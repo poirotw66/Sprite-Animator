@@ -6,7 +6,7 @@
 
 import { copyFileSync, existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 
 import { parseEnv } from './uploadCredentials.mts';
 
@@ -16,6 +16,14 @@ const UPLOAD_SCRIPTS = resolve(ROOT, '.claude/skills/line-sticker-upload/scripts
 const MASTER_PLAYWRIGHT = resolve(UPLOAD_SCRIPTS, 'playwright_line_state.json');
 
 type UploadStep = 'all' | 'provision' | 'zip' | 'submit';
+
+type ReviewStatus = 'waiting_for_review' | 'editing' | 'unknown';
+
+interface ReviewStatusResult {
+  status: ReviewStatus;
+  reason?: string;
+  sticker_id?: string;
+}
 
 interface UploadJob {
   id: string;
@@ -47,6 +55,50 @@ function ensureWorkerPlaywrightState(workerId: number): void {
   }
 }
 
+const CHECK_STATUS_SCRIPT = resolve(UPLOAD_SCRIPTS, 'check_sticker_status.py');
+
+function checkReviewStatus(envRel: string, workerId: number): ReviewStatusResult {
+  ensureWorkerPlaywrightState(workerId);
+  const envPath = resolve(ROOT, envRel);
+  if (!existsSync(CHECK_STATUS_SCRIPT)) {
+    return { status: 'unknown', reason: 'missing_script' };
+  }
+
+  const result = spawnSync(
+    'python',
+    [CHECK_STATUS_SCRIPT, '--env', envPath, '--headless'],
+    {
+      cwd: ROOT,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        PYTHONUTF8: '1',
+        PYTHONIOENCODING: 'utf-8',
+        LINE_PLAYWRIGHT_STATE: workerPlaywrightState(workerId),
+      },
+    }
+  );
+
+  if (result.status !== 0) {
+    return { status: 'unknown', reason: 'check_failed' };
+  }
+
+  const lastLine = result.stdout.trim().split(/\r?\n/).pop() ?? '';
+  try {
+    const parsed = JSON.parse(lastLine) as ReviewStatusResult;
+    if (parsed.status === 'waiting_for_review' || parsed.status === 'editing') {
+      return parsed;
+    }
+    return { status: 'unknown', reason: parsed.reason ?? 'unrecognized_status' };
+  } catch {
+    return { status: 'unknown', reason: 'parse_failed' };
+  }
+}
+
+function shouldSkipUploadSteps(steps: UploadStep[]): boolean {
+  return steps.some((step) => step === 'zip' || step === 'submit' || step === 'all');
+}
+
 function runUpload(envRel: string, step: UploadStep, workerId: number): Promise<number> {
   ensureWorkerPlaywrightState(workerId);
   return new Promise((resolveExit) => {
@@ -70,6 +122,22 @@ function runUpload(envRel: string, step: UploadStep, workerId: number): Promise<
 
 async function runJob(job: UploadJob, workerId: number): Promise<boolean> {
   console.log(`\n[worker ${workerId}] ▶ ${job.id} (${job.steps.join(' → ')})`);
+
+  if (shouldSkipUploadSteps(job.steps)) {
+    const review = checkReviewStatus(job.envRel, workerId);
+    if (review.status === 'waiting_for_review') {
+      console.log(
+        `[worker ${workerId}] ⊘ ${job.id} already 等待審核` +
+          (review.sticker_id ? ` (sticker ${review.sticker_id})` : '') +
+          ' — skipping zip/submit'
+      );
+      return true;
+    }
+    if (review.reason && review.status === 'unknown') {
+      console.log(`[worker ${workerId}] … ${job.id} status check inconclusive (${review.reason}), continuing`);
+    }
+  }
+
   for (const step of job.steps) {
     const code = await runUpload(job.envRel, step, workerId);
     if (code !== 0) {
