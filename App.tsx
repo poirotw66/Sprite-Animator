@@ -10,6 +10,7 @@ const LineStickerPage = lazyWithRetry(() => import('./pages/LineStickerPage'));
 const OnePageComicPage = lazyWithRetry(() => import('./pages/OnePageComicPage'));
 const RemoveBackgroundPage = lazyWithRetry(() => import('./pages/RemoveBackgroundPage'));
 const PartingPage = lazyWithRetry(() => import('./pages/PartingPage'));
+const DailyStickerRegistryPage = lazyWithRetry(() => import('./pages/DailyStickerRegistryPage'));
 
 // Loading fallback component
 const PageLoader: React.FC = () => (
@@ -32,6 +33,7 @@ const App: React.FC = () => {
           <Route path="/one-page-comic" element={<OnePageComicPage />} />
           <Route path="/rmbg" element={<RemoveBackgroundPage />} />
           <Route path="/parting" element={<PartingPage />} />
+          <Route path="/daily-sticker-registry" element={<DailyStickerRegistryPage />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

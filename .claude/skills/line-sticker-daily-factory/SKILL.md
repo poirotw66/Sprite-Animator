@@ -20,6 +20,8 @@ backfill registry  →  plan batch  →  per slot:
 
 ## Quick start
 
+**Web UI:** Home → **貼圖產出履歷** (`/daily-sticker-registry`) — auto-loads `output/sticker-registry.json` in local dev; upload JSON manually otherwise.
+
 ```bash
 # 1. Backfill existing output/ + preview today's plan (zero image API)
 npx tsx .claude/skills/line-sticker-maker/scripts/daily-pack.mts \

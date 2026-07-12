@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, MessageCircle, ArrowRight, Eraser, Grid, BookOpen } from 'lucide-react';
+import { Zap, MessageCircle, ArrowRight, Eraser, Grid, BookOpen, Factory } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 
@@ -35,6 +35,14 @@ const HomePage: React.FC = () => {
             hoverGlow: 'hover:shadow-green-200/50',
         },
         {
+            id: 'daily-sticker-registry',
+            path: '/daily-sticker-registry',
+            icon: <Factory className="w-10 h-10 md:w-12 md:h-12 text-white" />,
+            gradient: 'from-rose-500 to-pink-600',
+            borderColor: 'border-rose-200 hover:border-rose-300',
+            hoverGlow: 'hover:shadow-rose-200/50',
+        },
+        {
             id: 'one-page-comic',
             path: '/one-page-comic',
             icon: <BookOpen className="w-10 h-10 md:w-12 md:h-12 text-white" />,
@@ -66,6 +74,8 @@ const HomePage: React.FC = () => {
                 return { title: t.spriteAnimatorTool, desc: t.spriteAnimatorDesc };
             case 'line-sticker':
                 return { title: t.lineStickerTool, desc: t.lineStickerDesc };
+            case 'daily-sticker-registry':
+                return { title: t.registryTool, desc: t.registryToolDesc };
             case 'one-page-comic':
                 return { title: t.comicTool, desc: t.comicDesc };
             case 'rmbg':
