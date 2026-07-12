@@ -23,6 +23,11 @@ export const VOICE_SHORT_LABELS: Record<string, string> = {
   penguin: '企鵝療癒風',
   capoo: '咖波風',
   kana: '卡娜風',
+  tsundere: '傲嬌風',
+  positive: '正能量風',
+  lieFlat: '躺平風',
+  nihilistic: '厭世風',
+  troll: '白爛風',
 };
 
 export const VOICE_PRIMARY_ZH_ALIAS: Record<string, string> = {
@@ -35,6 +40,11 @@ export const VOICE_PRIMARY_ZH_ALIAS: Record<string, string> = {
   penguin: '企鵝',
   capoo: '咖波',
   kana: '卡娜',
+  tsundere: '傲嬌',
+  positive: '正能量',
+  lieFlat: '躺平',
+  nihilistic: '厭世',
+  troll: '白爛',
 };
 
 /** Accept Chinese aliases on the CLI instead of English keys like `penguin`. */
@@ -61,6 +71,11 @@ export const VOICE_ZH_ALIASES: Record<string, string> = {
   企鵝家族心情日常: 'penguin',
   咖波: 'capoo',
   卡娜: 'kana',
+  傲嬌: 'tsundere',
+  正能量: 'positive',
+  躺平: 'lieFlat',
+  厭世: 'nihilistic',
+  白爛: 'troll',
 };
 
 export const THEME_ZH_ALIASES: Record<string, string> = {
@@ -75,6 +90,10 @@ export const THEME_ZH_ALIASES: Record<string, string> = {
   迷因主題: 'meme',
   美食: 'food',
   美食饕客: 'food',
+  情侶: 'couple',
+  情侶日常: 'couple',
+  貓奴: 'catSlaves',
+  貓奴日常: 'catSlaves',
 };
 
 const THEME_EN_LABELS: Record<string, string> = {
@@ -84,6 +103,8 @@ const THEME_EN_LABELS: Record<string, string> = {
   emotion: 'Emotion',
   meme: 'Meme',
   food: 'Food',
+  couple: 'Couple',
+  catSlaves: 'Cat Slave',
 };
 
 const VOICE_EN_LABELS: Record<string, string> = {
@@ -96,6 +117,11 @@ const VOICE_EN_LABELS: Record<string, string> = {
   penguin: 'Penguin Mood',
   capoo: 'Capoo',
   kana: 'Kana',
+  tsundere: 'Tsundere',
+  positive: 'Positive',
+  lieFlat: 'Lie Flat',
+  nihilistic: 'Nihilistic',
+  troll: 'Troll',
 };
 
 export function containsCjk(text: string): boolean {

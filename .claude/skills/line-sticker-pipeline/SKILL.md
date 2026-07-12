@@ -36,6 +36,9 @@ Design phrase-set first: **`.claude/skills/line-sticker-phrase-design/SKILL.md`*
 3. line-sticker-upload         →  (optional) LINE Creators Market
 ```
 
+**Daily mass production (30 sets):** see **`.claude/skills/line-sticker-daily-factory/SKILL.md`**
+(`daily-pack.mts` + `output/sticker-registry.json`).
+
 ```json
 {
   "format": "line-sticker-phrase-set",
@@ -149,12 +152,12 @@ Spot-check 2–3 stickers and `manifest.json` → `gridScores` (target ≥ 0.8).
 | check | what to look for |
 |---|---|
 | Enclosed pockets | green between arms / hair gaps (`pocketGreenCount` in `qa-report.json`) |
-| Outer edge | green halo on hair / shirt (`edgeGreenCount`) |
+| Outer edge | `edgeGreenCount` is recorded for debugging only — not used for QA warnings |
 | Black lines | speed lines / ink must stay — **never erase neutral gray `(R≈G≈B)`** |
 | Floaters | tiny crumbs disconnected from subject |
 
-`qa-report.json` entries now include `edgeGreenCount`, `pocketGreenCount`, `oliveFringeCount`.
-Warn thresholds: edge green ≥ 10, pocket green ≥ 8. Summary lists flagged sticker IDs.
+`qa-report.json` entries include `edgeGreenCount`, `pocketGreenCount`, `oliveFringeCount`.
+**Actionable** summary warnings: pocket green ≥ 8, olive fringe ≥ 12. `edgeGreenCount` is informational.
 
 ### Step 5b — Re-slice after chroma fixes (no Gemini)
 
@@ -256,6 +259,7 @@ Details: `.claude/skills/line-sticker-maker/SKILL.md`
 
 | skill | when |
 |---|---|
+| `line-sticker-daily-factory` | daily 30-set batch (`daily-pack.mts` + registry) |
 | `line-sticker-character-ref` | generate character model-sheet reference image |
 | `line-sticker-phrase-design` | design phrase-set JSON before generation |
 | `line-sticker-maker` | low-level script reference, config fields, manifest |

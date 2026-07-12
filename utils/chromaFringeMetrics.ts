@@ -80,5 +80,6 @@ export function measureChromaFringe(
 }
 
 export const CHROMA_FRINGE_WARN_EDGE_GREEN = 10;
+/** Informational only — not used for QA warnings (see stickerFrameQa scoreChromaFringe). */
 export const CHROMA_FRINGE_WARN_POCKET_GREEN = 8;
 export const CHROMA_FRINGE_WARN_OLIVE = 12;

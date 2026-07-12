@@ -198,6 +198,52 @@ export const THEME_PRESETS: Record<string, ThemeSlot & { label: string }> = {
             '熱量炸',
         ],
         specialStickers: { description: '角色幸福地吃著大餐的樣子', texts: ['大滿足', '還要吃'] }
+    },
+    couple: {
+        label: '情侶日常',
+        chatContext: 'Couple daily chat — sweet, teasing, missing you, small fights',
+        examplePhrases: [
+            '想你了',
+            '抱抱',
+            '晚安',
+            '早安',
+            '吃醋',
+            '哼',
+            '對不起',
+            '原諒我',
+            '約會',
+            '等你',
+            '好乖',
+            '想見你',
+            '別生氣',
+            '愛你',
+            '想你',
+            '陪陪我',
+        ],
+        specialStickers: { description: '角色害羞比心或牽手', texts: ['愛你', '想你'] }
+    },
+    catSlaves: {
+        label: '貓奴日常',
+        chatContext: 'Cat owner life — worshipping cats, being ignored, feeding, litter box',
+        examplePhrases: [
+            '主子',
+            '奴才',
+            '餵了',
+            '不理我',
+            '踩我',
+            '好可愛',
+            '又拆家',
+            '鏟屎官',
+            '摸摸',
+            '睡我床',
+            '傲嬌',
+            '呼喚',
+            '罐罐',
+            '貓砂',
+            '被嫌',
+            '投降',
+        ],
+        specialStickers: { description: '角色被貓踩在臉上仍一臉幸福', texts: ['主子', '奴才'] }
     }
 };
 

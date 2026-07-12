@@ -71,7 +71,7 @@ use `manifest.json` → `activeSheets`, or fall back to `sheet-1`, `sheet-2`.
 3. **`--dry-run`** to verify prompt + phrases.
 4. **Run for real** → one command produces debug output + repo-local upload folder.
 5. **Spot-check** a few `stickers/sticker-NN.png` and `manifest.json` grid scores.
-   Read `qa-report.json` → `edgeGreenCount` / `pocketGreenCount` per sticker.
+   Read `qa-report.json` → `pocketGreenCount` / `oliveFringeCount` per sticker (`edgeGreenCount` is debug-only).
 6. Tell the user the **`--out` folder** and, when `syncToUploadRoot` is on, the synced
    **`.line-upload/input/706/{Set Name}/`** path + upload command.
 
@@ -176,6 +176,8 @@ Without `upload`, legacy output is `<out>/line-upload/` + `line-upload.zip`.
 
 | script | purpose |
 |---|---|
+| `daily-pack.mts` | daily 30-set factory (plan / execute / registry) |
+| `backfill-sticker-registry.mts` | scan `output/` → `sticker-registry.json` |
 | `generate.mts` | full pipeline: Gemini → slice → finalize → sync upload root |
 | `finalize.mts` | merge `activeSheets` → stickers + upload pack + sync |
 | `sync-upload-input.mts` | copy local pack → `.line-upload/input/706/` |

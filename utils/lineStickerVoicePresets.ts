@@ -111,6 +111,51 @@ export const STICKER_VOICE_PRESETS: Record<string, StickerVoicePreset> = {
     goodExamples: ['嘿嘿', '好嘛', '討厭', '加油', '抱抱', '委屈', '真的', '哼', '開心', '不老實'],
     badExamples: ['請查收', '已完成', '沒問題的', '我就爛'],
   },
+  tsundere: {
+    label: '傲嬌',
+    intro: 'Tsundere tone — denies caring while clearly caring (嘴硬心軟、才不是、別誤會).',
+    rules: `- **嘴硬心軟**：表面否認、底裡在意——才不是、才沒有、別誤會。
+- **可愛不惡**：傲嬌是撒嬌變體，不人身攻擊。
+- **情緒反差**：適合臉紅、別過頭、小聲補一句。`,
+    goodExamples: ['才不是', '才沒有', '別誤會', '隨便啦', '哼', '才不想', '勉強啦', '好啦'],
+    badExamples: ['請查收', '已完成', '去死', '滾'],
+  },
+  positive: {
+    label: '正能量',
+    intro: 'Cheerful upbeat encouragement — sunny support without toxic positivity.',
+    rules: `- **真誠打氣**：加油、你可以、沒問題——溫暖但不雞湯公告。
+- **具體鼓勵**：適合比讚、握拳、燦笑表情。
+- **避免空話**：不寫長篇座右銘，一行一個鼓勵。`,
+    goodExamples: ['加油', '你可以', '沒問題', '好棒', '相信自己', '撐住', '會好的', '衝啊'],
+    badExamples: ['請查收', '已完成', '我就爛', '太扯了'],
+  },
+  lieFlat: {
+    label: '躺平',
+    intro: 'Lie-flat / low-effort life — tired, done trying, cozy burnout (躺平、不想動、隨便).',
+    rules: `- **廢但可愛**：不想動、躺了、隨便——身體感強，不頹廢到不能送。
+- **共鳴耍廢**：加班後、週一、被催——具體處境。
+- **語氣軟爛**：啦、欸、喔——像真的累垮。`,
+    goodExamples: ['躺平', '不想動', '隨便', '累了', '先躺', '擺爛', '算了', '明天說'],
+    badExamples: ['請查收', '感謝來信', '已完成', '加油加油'],
+  },
+  nihilistic: {
+    label: '厭世',
+    intro: 'Mild nihilistic deadpan — world-weary, empty stare, dry sigh (厭世、無語、隨便啦).',
+    rules: `- **冷淡厭世**：無語、隨便、算了——像翻白眼但不太兇。
+- **共鳴疲勞**：對荒謬日常的無力感，不是真的絕望。
+- **適合放空表情**：發呆、嘆氣、眼神死。`,
+    goodExamples: ['無語', '隨便', '算了', '好累', '眼神死', '麻了', '嗯', '喔'],
+    badExamples: ['請查收', '去死', '辭了', '感謝支持'],
+  },
+  troll: {
+    label: '白爛',
+    intro: 'Playful troll / 白爛 humor — silly provocation, fake serious, absurd comebacks.',
+    rules: `- **白爛不惡**：裝傻、假正經、無厘頭——讓人想回嘴但不想封鎖。
+- **有梗反應**：蛤？、真的假的、你認真——適合誇張表情。
+- **台灣聊天感**：像好友互嘴，不是公告。`,
+    goodExamples: ['蛤', '真的假', '你認真', '太扯', '笑死', '有夠', '離譜', '騙我'],
+    badExamples: ['請查收', '已完成', '感謝來信', '敬請見諒'],
+  },
 };
 
 export function listStickerVoiceKeys(): string[] {

@@ -95,7 +95,7 @@
     "semantic_hash": ""
   },
   ".claude/skills/line-sticker-maker/scripts/run-batch-jobs.mts": {
-    "mtime": 1783775843.7993746,
+    "mtime": 1783824120.5974057,
     "ast_hash": "7518ff11cafd5b7efd87f1703cebc2cc",
     "semantic_hash": "7518ff11cafd5b7efd87f1703cebc2cc"
   },
@@ -110,7 +110,7 @@
     "semantic_hash": "592bd8cc2797aa30362821e56745986a"
   },
   ".claude/skills/line-sticker-maker/scripts/run-line-upload.mts": {
-    "mtime": 1783780308.8049142,
+    "mtime": 1783824120.5899503,
     "ast_hash": "82625b4174396e9b989a728a9073ca34",
     "semantic_hash": ""
   },
@@ -205,7 +205,7 @@
     "semantic_hash": "434898a16930cb6aa304dadc1e9173a2"
   },
   ".claude/skills/line-sticker-upload/scripts/provision_line_sticker.py": {
-    "mtime": 1783775843.7993746,
+    "mtime": 1783824120.6014702,
     "ast_hash": "b65bf7e444938d96bd94e5b06e37bda0",
     "semantic_hash": "b65bf7e444938d96bd94e5b06e37bda0"
   },
@@ -795,9 +795,9 @@
     "semantic_hash": "606a5ced1e9d5bf31d11181b9005473e"
   },
   "utils/chromaFringeMetrics.ts": {
-    "mtime": 1783646521.4414973,
-    "ast_hash": "e9f589e918e200bd81f64a7fcd197857",
-    "semantic_hash": "e9f589e918e200bd81f64a7fcd197857"
+    "mtime": 1783832520.5234983,
+    "ast_hash": "b7b7919a92b83d14ba24f0c4638b5038",
+    "semantic_hash": ""
   },
   "utils/chromaGuidedDetect.test.ts": {
     "mtime": 1783624624.0205452,
@@ -1010,8 +1010,8 @@
     "semantic_hash": "334fa0fca7e938cea11b642ab5eb4ccf"
   },
   "utils/lineStickerPresets.ts": {
-    "mtime": 1783784650.790275,
-    "ast_hash": "d89caa868f8e2ce0b52e33d9c9182015",
+    "mtime": 1783829995.6036081,
+    "ast_hash": "331b2e39c547ec60be33a1c5fcc84c42",
     "semantic_hash": ""
   },
   "utils/lineStickerProgrammaticOverlaySchedule.test.ts": {
@@ -1040,9 +1040,9 @@
     "semantic_hash": "ef534e711a0a28f5231bcc2320e00998"
   },
   "utils/lineStickerSetNaming.ts": {
-    "mtime": 1783518094.3964698,
-    "ast_hash": "335dd2bd5763e8d10e38476a404f7ad9",
-    "semantic_hash": "335dd2bd5763e8d10e38476a404f7ad9"
+    "mtime": 1783830007.2810068,
+    "ast_hash": "58474b4a38f4d6f35e2b8a80fc609509",
+    "semantic_hash": ""
   },
   "utils/lineStickerSetSchema.ts": {
     "mtime": 1777605057.7345126,
@@ -1100,9 +1100,9 @@
     "semantic_hash": "96148b97287497e494d46b595b8f5df1"
   },
   "utils/lineStickerVoicePresets.ts": {
-    "mtime": 1783433054.9789732,
-    "ast_hash": "b3d2837e96103218902c5498276324c3",
-    "semantic_hash": "b3d2837e96103218902c5498276324c3"
+    "mtime": 1783830000.9337494,
+    "ast_hash": "117597073fc1229c9b4ad96fcc3de222",
+    "semantic_hash": ""
   },
   "utils/loadBundledImage.ts": {
     "mtime": 1783619282.4760804,
@@ -1220,14 +1220,14 @@
     "semantic_hash": "020bf56a8104e5cf41cadd07ea68b8fb"
   },
   "utils/stickerFrameQa.test.ts": {
-    "mtime": 1783646521.4414973,
-    "ast_hash": "bf7e2d1c08c79f4e08095e6dff1485a9",
-    "semantic_hash": "bf7e2d1c08c79f4e08095e6dff1485a9"
+    "mtime": 1783832535.5612788,
+    "ast_hash": "d546c3aeb09d04f8d5bef1c811027b87",
+    "semantic_hash": ""
   },
   "utils/stickerFrameQa.ts": {
-    "mtime": 1783646521.421092,
-    "ast_hash": "0f52db8a26c60b4d5e44906671329e07",
-    "semantic_hash": "0f52db8a26c60b4d5e44906671329e07"
+    "mtime": 1783832520.1548305,
+    "ast_hash": "94e06a99294668af6fb0bb71432cb31a",
+    "semantic_hash": ""
   },
   "utils/stickerStrokeWhite.test.ts": {
     "mtime": 1783666781.7944033,
@@ -1350,8 +1350,8 @@
     "semantic_hash": ""
   },
   ".claude/skills/line-sticker-maker/SKILL.md": {
-    "mtime": 1783788050.877162,
-    "ast_hash": "11b395183c984d9616a941bf699aa129",
+    "mtime": 1783832536.4671466,
+    "ast_hash": "1b908467aa48f70449369591f46444c8",
     "semantic_hash": ""
   },
   ".claude/skills/line-sticker-phrase-design/SKILL.md": {
@@ -1360,8 +1360,8 @@
     "semantic_hash": ""
   },
   ".claude/skills/line-sticker-pipeline/SKILL.md": {
-    "mtime": 1783646521.4414973,
-    "ast_hash": "ea2c5d38e239775430592e32f46a5b2f",
+    "mtime": 1783832536.0391092,
+    "ast_hash": "0082694652afdcc974d5a38ba10ef0ec",
     "semantic_hash": ""
   },
   ".claude/skills/line-sticker-upload/SKILL.md": {
@@ -1632,6 +1632,51 @@
   ".claude/skills/line-sticker-upload/scripts/debug_snapshots/School_Daily_Playful_Chat.png": {
     "mtime": 1783788454.5109403,
     "ast_hash": "1b121c8c22b66673e5776328df92e80c",
+    "semantic_hash": ""
+  },
+  ".claude/skills/line-sticker-maker/scripts/backfill-sticker-registry.mts": {
+    "mtime": 1783830096.5522048,
+    "ast_hash": "99abb1af7eeed3bdcac3d82a38665d5d",
+    "semantic_hash": ""
+  },
+  ".claude/skills/line-sticker-maker/scripts/daily-pack.mts": {
+    "mtime": 1783830096.570205,
+    "ast_hash": "fc747027e2126bddf6a8b2d2f8b5394a",
+    "semantic_hash": ""
+  },
+  "services/gemini/characterConcept.ts": {
+    "mtime": 1783830020.9134362,
+    "ast_hash": "da5386a0c9056342bc4bdf7288669272",
+    "semantic_hash": ""
+  },
+  "utils/dailyPackPlanner.test.ts": {
+    "mtime": 1783830052.876509,
+    "ast_hash": "4fbce730d6ee5ca3b7dc1a035a301608",
+    "semantic_hash": ""
+  },
+  "utils/dailyPackPlanner.ts": {
+    "mtime": 1783830076.16724,
+    "ast_hash": "a07443ab982716d26885bf63c9bb59d0",
+    "semantic_hash": ""
+  },
+  "utils/dailyPackPresets.ts": {
+    "mtime": 1783830003.1917531,
+    "ast_hash": "e06d56c2499880b84054654158f1c9a4",
+    "semantic_hash": ""
+  },
+  "utils/stickerRegistry.test.ts": {
+    "mtime": 1783830028.3289347,
+    "ast_hash": "f34a428ccced7cd57450e79f115eef0d",
+    "semantic_hash": ""
+  },
+  "utils/stickerRegistry.ts": {
+    "mtime": 1783830051.7570574,
+    "ast_hash": "528a134f3919c525226a61de72103f4f",
+    "semantic_hash": ""
+  },
+  ".claude/skills/line-sticker-daily-factory/SKILL.md": {
+    "mtime": 1783830067.5424864,
+    "ast_hash": "440ad88191bd0153f805da0b67655057",
     "semantic_hash": ""
   }
 }

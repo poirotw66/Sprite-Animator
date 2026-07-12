@@ -73,4 +73,31 @@ describe('stickerFrameQa', () => {
     expect(report.entries[0]!.edgeGreenCount).toBeGreaterThanOrEqual(1);
     expect(report.entries[0]!.pocketGreenCount).toBeGreaterThanOrEqual(1);
   });
+
+  it('does not summarize edge-only green fringe (informational count only)', () => {
+    const frame = solidFrame(32, 32, (i) => {
+      const x = (i / 4) % 32;
+      const y = Math.floor(i / 4 / 32);
+      if (x === 5 && y === 4) return [10, 40, 8, 255];
+      if (x >= 10 && x <= 18 && y >= 10 && y <= 18) return [80, 50, 40, 255];
+      return [0, 0, 0, 0];
+    });
+    const report = auditStickerFrames([{ globalIndex: 1, frame }]);
+    expect(report.entries[0]!.edgeGreenCount).toBeGreaterThanOrEqual(1);
+    expect(report.entries[0]!.pocketGreenCount).toBe(0);
+    expect(report.summaryWarnings.join(' ')).not.toMatch(/edgeGreen|green edge fringe/i);
+  });
+
+  it('summarizes enclosed pocket green above threshold', () => {
+    const frame = solidFrame(32, 32, (i) => {
+      const x = (i / 4) % 32;
+      const y = Math.floor(i / 4 / 32);
+      if (x >= 13 && x <= 17 && y >= 13 && y <= 17) return [19, 29, 13, 255];
+      if (x >= 10 && x <= 18 && y >= 10 && y <= 18) return [80, 50, 40, 255];
+      return [0, 0, 0, 0];
+    });
+    const report = auditStickerFrames([{ globalIndex: 1, frame }]);
+    expect(report.entries[0]!.pocketGreenCount).toBeGreaterThanOrEqual(8);
+    expect(report.summaryWarnings.some((w) => w.includes('actionable chroma residue'))).toBe(true);
+  });
 });

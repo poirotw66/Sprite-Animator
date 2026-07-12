@@ -6,7 +6,6 @@
 import { isSliceBackgroundPixel } from './imageContentAnalysis';
 import {
   measureChromaFringe,
-  CHROMA_FRINGE_WARN_EDGE_GREEN,
   CHROMA_FRINGE_WARN_OLIVE,
   CHROMA_FRINGE_WARN_POCKET_GREEN,
 } from './chromaFringeMetrics';
@@ -205,7 +204,6 @@ function scoreForegroundRatio(ratio: number): { score: number; warnings: string[
 }
 
 function scoreChromaFringe(
-  edgeGreenCount: number,
   pocketGreenCount: number,
   oliveFringeCount: number
 ): { score: number; warnings: string[] } {
@@ -217,12 +215,8 @@ function scoreChromaFringe(
   } else if (pocketGreenCount > 0) {
     score = Math.min(score, 0.85);
   }
-  if (edgeGreenCount >= CHROMA_FRINGE_WARN_EDGE_GREEN) {
-    score = Math.min(score, 0.6);
-    warnings.push(`green edge fringe (${edgeGreenCount} px)`);
-  } else if (edgeGreenCount > 0) {
-    score = Math.min(score, 0.9);
-  }
+  // ponytail: edgeGreenCount is recorded per entry but not scored — green-screen AA
+  // routinely yields 1k+ edge pixels on ~200px stickers without visible defects.
   if (oliveFringeCount >= CHROMA_FRINGE_WARN_OLIVE) {
     score = Math.min(score, 0.75);
     warnings.push(`olive edge fringe (${oliveFringeCount} px)`);
@@ -268,7 +262,6 @@ export function auditStickerFrame(
 
   const fringe = measureChromaFringe(frame.data, frame.width, frame.height);
   const fringeScore = scoreChromaFringe(
-    fringe.edgeGreenCount,
     fringe.pocketGreenCount,
     fringe.oliveFringeCount
   );
@@ -327,17 +320,17 @@ export function auditStickerFrames(
   const lowEntries = entries.filter((e) => e.overallScore < warnThreshold);
   const fringeEntries = entries.filter(
     (e) =>
-      e.edgeGreenCount >= CHROMA_FRINGE_WARN_EDGE_GREEN ||
-      e.pocketGreenCount >= CHROMA_FRINGE_WARN_POCKET_GREEN
+      e.pocketGreenCount >= CHROMA_FRINGE_WARN_POCKET_GREEN ||
+      e.oliveFringeCount >= CHROMA_FRINGE_WARN_OLIVE
   );
   const summaryWarnings: string[] = [];
   if (fringeEntries.length > 0) {
     summaryWarnings.push(
-      `${fringeEntries.length}/${entries.length} stickers have notable green fringe (see edgeGreenCount / pocketGreenCount)`
+      `${fringeEntries.length}/${entries.length} stickers have actionable chroma residue (pocketGreen / oliveFringe)`
     );
     for (const e of fringeEntries.slice(0, 6)) {
       summaryWarnings.push(
-        `sticker-${String(e.globalIndex).padStart(2, '0')}: edgeGreen=${e.edgeGreenCount}, pocketGreen=${e.pocketGreenCount}`
+        `sticker-${String(e.globalIndex).padStart(2, '0')}: pocketGreen=${e.pocketGreenCount}, oliveFringe=${e.oliveFringeCount}`
       );
     }
   }
