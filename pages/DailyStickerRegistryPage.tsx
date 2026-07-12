@@ -19,13 +19,13 @@ import {
   listCharacterProfiles,
   phraseSetPath,
   summarizeRegistry,
-  stickerPreviewPath,
-  toOutputAssetUrl,
+  toVaultAssetUrl,
+  vaultRegistryFetchUrl,
   type CharacterProfile,
   type RegistryFilter,
 } from '../utils/stickerRegistryView';
 
-const DEFAULT_REGISTRY_URL = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/output/sticker-registry.json`;
+const DEFAULT_REGISTRY_URL = vaultRegistryFetchUrl();
 
 type RegistryTab = 'characters' | 'themes';
 
@@ -84,11 +84,11 @@ const DailyStickerRegistryPage: React.FC = () => {
       if (!res.ok) throw new Error('not found');
       const raw = await res.text();
       setRegistry(parseRegistryJson(raw));
-      setLoadHint(t.registryLoadedFromOutput);
+      setLoadHint(t.registryLoadedFromVault);
     } catch {
-      setLoadHint(t.registryLoadOutputHint);
+      setLoadHint(t.registryLoadVaultHint);
     }
-  }, [t.registryLoadedFromOutput, t.registryLoadOutputHint]);
+  }, [t.registryLoadedFromVault, t.registryLoadVaultHint]);
 
   useEffect(() => {
     void loadRegistryFromUrl();
@@ -140,7 +140,7 @@ const DailyStickerRegistryPage: React.FC = () => {
     setPhraseSetError(null);
     setPhraseSetData(null);
 
-    const url = toOutputAssetUrl(phraseSetPath(selectedEntry.outputDir));
+    const url = toVaultAssetUrl(phraseSetPath(selectedEntry.outputDir));
     void fetch(url)
       .then(async (res) => {
         if (!res.ok) throw new Error('not found');
@@ -366,7 +366,7 @@ const DailyStickerRegistryPage: React.FC = () => {
         <div>
           <p className="text-xs font-semibold text-slate-500 mb-2">{t.registryDetailRef}</p>
           <img
-            src={toOutputAssetUrl(profile.refImagePath)}
+            src={toVaultAssetUrl(profile.refImagePath)}
             alt={profile.characterName}
             className="w-full rounded-lg border border-slate-200 bg-slate-50 object-contain max-h-64"
             onError={(e) => {
@@ -550,7 +550,7 @@ const DailyStickerRegistryPage: React.FC = () => {
                           <div className="aspect-square bg-slate-50 flex items-center justify-center p-2">
                             {profile.refImagePath ? (
                               <img
-                                src={toOutputAssetUrl(profile.refImagePath)}
+                                src={toVaultAssetUrl(profile.refImagePath)}
                                 alt={profile.characterName}
                                 className="max-w-full max-h-full object-contain"
                                 onError={(e) => {
@@ -729,19 +729,6 @@ const DailyStickerRegistryPage: React.FC = () => {
                         phraseSetData,
                         phraseSetLoading,
                         phraseSetError
-                      )}
-                      {selectedEntry.outputDir && (
-                        <div className="mt-4 pt-4 border-t border-slate-100">
-                          <p className="text-xs font-semibold text-slate-500 mb-2">{t.registryDetailSticker}</p>
-                          <img
-                            src={toOutputAssetUrl(stickerPreviewPath(selectedEntry.outputDir))}
-                            alt="sticker-01"
-                            className="w-24 h-24 rounded-lg border border-slate-200 bg-[repeating-conic-gradient(#e2e8f0_0%_25%,#fff_0%_50%)] bg-[length:12px_12px] object-contain"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
-                        </div>
                       )}
                     </div>
                   ) : selectedUpload ? (

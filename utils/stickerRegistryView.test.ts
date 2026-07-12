@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { parseRegistryJson } from './stickerRegistryFormat';
-import { filterRegistryEntries, listCharacterProfiles, summarizeRegistry } from './stickerRegistryView';
+import { filterRegistryEntries, listCharacterProfiles, summarizeRegistry, toVaultAssetUrl, vaultRegistryFetchUrl } from './stickerRegistryView';
 
 describe('stickerRegistryView', () => {
+  it('builds vault asset URLs', () => {
+    expect(toVaultAssetUrl('characters/fox/character-ref.png', '/')).toBe(
+      '/vault/characters/fox/character-ref.png'
+    );
+    expect(vaultRegistryFetchUrl('/app/')).toBe('/app/vault/registry/sticker-registry.json');
+  });
+
   it('summarizes registry counts', () => {
     const registry = parseRegistryJson(
       JSON.stringify({

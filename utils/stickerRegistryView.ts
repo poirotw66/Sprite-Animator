@@ -79,7 +79,19 @@ export function filterRegistryEntries(
   });
 }
 
-/** Build a dev-server URL for files under output/ (local vite middleware). */
+/** Build a dev-server URL for files under line-sticker-vault (vite /vault/ middleware). */
+export function toVaultAssetUrl(relPath: string, baseUrl?: string): string {
+  const normalized = relPath.replace(/\\/g, '/').replace(/^\//, '');
+  const base = (baseUrl ?? import.meta.env.BASE_URL).replace(/\/$/, '');
+  return `${base}/vault/${normalized}`;
+}
+
+/** Default fetch URL for vault registry in local dev. */
+export function vaultRegistryFetchUrl(baseUrl?: string): string {
+  return toVaultAssetUrl('registry/sticker-registry.json', baseUrl);
+}
+
+/** @deprecated Use toVaultAssetUrl for sticker registry UI. */
 export function toOutputAssetUrl(relPath: string): string {
   const normalized = relPath.replace(/\\/g, '/').replace(/^\//, '');
   const base = import.meta.env.BASE_URL.replace(/\/$/, '');

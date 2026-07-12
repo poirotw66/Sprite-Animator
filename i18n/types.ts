@@ -259,8 +259,8 @@ export interface Translations {
   registryUploadRegistry: string;
   registryUploadBatchPlan: string;
   registryReloadOutput: string;
-  registryLoadedFromOutput: string;
-  registryLoadOutputHint: string;
+  registryLoadedFromVault: string;
+  registryLoadVaultHint: string;
   registryParseError: string;
   registryStatTotal: string;
   registryStatB: string;
