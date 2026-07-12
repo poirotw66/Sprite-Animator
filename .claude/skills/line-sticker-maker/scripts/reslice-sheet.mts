@@ -1,9 +1,13 @@
 /**
  * Re-slice an existing sheet folder without calling Gemini again.
- * Usage: npx tsx .claude/skills/line-sticker-maker/scripts/reslice-sheet.mts <sheet-dir> [cols] [rows]
+ *
+ *   npx tsx reslice-sheet.mts <sheet-dir> [cols] [rows] [template|detect|divider]
+ *     [--algorithm core|forge|legacy] [--out-dir <path>]
+ *
+ * --out-dir writes stickers + _processed-sheet.png to a separate folder (does not overwrite source stickers).
  */
 
-import { readFile, writeFile, readdir } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, writeFile, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
@@ -19,15 +23,50 @@ import {
 } from '../../../../utils/sheetGridValidation.ts';
 import { buildEqualGridBounds } from '../../../../utils/gridSheetTemplate.ts';
 import { trimFrameToContent } from '../../../../utils/sheetComponentSlicer.ts';
+import { DEFAULT_CHROMA_KEY_ALGORITHM } from '../../../../utils/constants.ts';
+import type { ChromaKeyAlgorithm } from '../../../../types.ts';
 
-const sheetDir = resolve(process.argv[2] ?? '');
-const cols = Number(process.argv[3] ?? 4);
-const rows = Number(process.argv[4] ?? 5);
-const sliceModeArg = process.argv[5] ?? '';
+function parseArgs(argv: string[]): {
+  sheetDir: string;
+  cols: number;
+  rows: number;
+  sliceModeArg: string;
+  algorithm: ChromaKeyAlgorithm;
+  outDir?: string;
+} {
+  const positional: string[] = [];
+  let algorithm: ChromaKeyAlgorithm = DEFAULT_CHROMA_KEY_ALGORITHM;
+  let outDir: string | undefined;
+
+  for (let i = 0; i < argv.length; i++) {
+    const token = argv[i]!;
+    if (token === '--algorithm' && argv[i + 1]) {
+      algorithm = argv[++i]! as ChromaKeyAlgorithm;
+    } else if (token === '--out-dir' && argv[i + 1]) {
+      outDir = resolve(argv[++i]!);
+    } else if (!token.startsWith('--')) {
+      positional.push(token);
+    }
+  }
+
+  return {
+    sheetDir: resolve(positional[0] ?? ''),
+    cols: Number(positional[1] ?? 4),
+    rows: Number(positional[2] ?? 5),
+    sliceModeArg: positional[3] ?? '',
+    algorithm,
+    outDir,
+  };
+}
+
+const { sheetDir, cols, rows, sliceModeArg, algorithm, outDir } = parseArgs(process.argv.slice(2));
 const chromaKeyColor = 'green' as const;
+const writeDir = outDir ?? sheetDir;
 
 if (!sheetDir) {
-  console.error('Usage: reslice-sheet.mts <sheet-dir> [cols] [rows]');
+  console.error(
+    'Usage: reslice-sheet.mts <sheet-dir> [cols] [rows] [template] [--algorithm core|forge|legacy] [--out-dir <path>]'
+  );
   process.exit(1);
 }
 
@@ -55,8 +94,14 @@ const config = existsSync(jobConfigPath)
   : {};
 const preserveCellAlphaThreshold = config.textRendering === 'model' ? 8 : undefined;
 
-processSheetChromaKey(image, chromaKeyColor, { guided: useGuidedTemplate });
-await writeFile(resolve(sheetDir, '_processed-sheet.png'), encodePng(image));
+await mkdir(writeDir, { recursive: true });
+
+processSheetChromaKey(image, chromaKeyColor, { guided: useGuidedTemplate, algorithm });
+await writeFile(resolve(writeDir, '_processed-sheet.png'), encodePng(image));
+console.log(`Chroma algorithm: ${algorithm}${useGuidedTemplate ? ' + guided' : ''}`);
+if (outDir) {
+  console.log(`Output dir: ${writeDir} (source stickers untouched)`);
+}
 
 const expected = validateSheetGrid(image.data, image.width, image.height, cols, rows, {
   minScore: 0,
@@ -99,6 +144,17 @@ const frames = sliceSheet(image, cols, rows, {
 }).map((frame) => trimFrameToContent(frame));
 for (let i = 0; i < frames.length; i++) {
   const name = `sticker-${String(i + 1).padStart(2, '0')}.png`;
-  await writeFile(resolve(sheetDir, name), encodePng(frames[i]!));
+  await writeFile(resolve(writeDir, name), encodePng(frames[i]!));
   console.log(`  ✓ ${name} (${frames[i]!.width}×${frames[i]!.height})`);
+}
+
+if (outDir) {
+  const rawName = rawPath.split(/[/\\]/).pop()!;
+  await copyFile(rawPath, resolve(writeDir, rawName));
+  for (const gridName of ['_grid-template-guided.png', '_grid-template.png']) {
+    const src = resolve(sheetDir, gridName);
+    if (existsSync(src)) {
+      await copyFile(src, resolve(writeDir, gridName));
+    }
+  }
 }
