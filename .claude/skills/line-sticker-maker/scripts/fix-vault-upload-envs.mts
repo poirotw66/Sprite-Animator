@@ -116,7 +116,7 @@ for (const entry of registry.entries) {
       descZh: upload.descZh,
       titleEn: upload.titleEn,
       descEn: upload.descEn,
-      submitForReview: true,
+      submitForReview: false,
     },
     rel
   );

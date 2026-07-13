@@ -211,7 +211,7 @@ async function main(): Promise<void> {
       model: DEFAULT_SKILL_STICKER_MODEL,
       resolution: defaultResolutionForModel(DEFAULT_SKILL_STICKER_MODEL),
       lineUpload: scope === 'set',
-      lineUploadSubmit: true,
+      lineUploadSubmit: false,
       maxSheetRetries: 3,
       minGridAlignmentScore: 0.8,
       promptVersion: 'v3compact',
@@ -271,7 +271,7 @@ async function main(): Promise<void> {
     }
     const envBase = slugSetName(setName);
     const envRel = `${outRel.replace(/\\/g, '/')}/.env.batch/${envBase}.env`;
-    const submitArg = job.lineUploadSubmit === false ? 'false' : 'true';
+    const submitArg = job.lineUploadSubmit === true ? 'true' : 'false';
     console.log('\n▶ upload...');
     run('npx', [
       'tsx',

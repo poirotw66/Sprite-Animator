@@ -59,7 +59,7 @@ export interface JobConfig {
   upload?: UploadConfig;
   lineS?: UploadConfig & { syncToLineS?: boolean };
   lineUpload?: boolean;
-  /** When false, upload pipeline stops after ZIP (no submit-for-review). Default true. */
+  /** When true, upload pipeline also submits for review after ZIP import. Default false. */
   lineUploadSubmit?: boolean;
   scope?: string;
   includeText?: boolean;
@@ -296,7 +296,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
       upload: normalizedUpload,
       sheetDirs,
       zipBytes,
-      submitForReview: mergedConfig.lineUploadSubmit !== false,
+      submitForReview: mergedConfig.lineUploadSubmit === true,
     });
     uploadPackPath = destDir;
     console.log(`   ✓ upload pack → ${destDir}`);
@@ -309,7 +309,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
       const sync = await syncPackToUploadRoot({
         sourceDir: outDir,
         upload: normalizedUpload,
-        submitForReview: mergedConfig.lineUploadSubmit !== false,
+        submitForReview: mergedConfig.lineUploadSubmit === true,
       });
       uploadSyncPath = sync.destDir;
       uploadEnvFile = sync.envFilePath;
@@ -317,7 +317,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
       console.log(`   ✓ ${sync.envFilePath}`);
       const envRel = relative(FINALIZE_PROJECT_ROOT, sync.envFilePath).replace(/\\/g, '/');
       const submitHint =
-        mergedConfig.lineUploadSubmit === false ? ' --submit false' : '';
+        mergedConfig.lineUploadSubmit === true ? ' --submit true' : ' --submit false';
       console.log(
         `   · upload: npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts --env ${envRel}${submitHint}`
       );

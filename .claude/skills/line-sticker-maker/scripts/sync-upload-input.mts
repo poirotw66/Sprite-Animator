@@ -126,7 +126,7 @@ export async function main() {
   const result = await syncPackToUploadRoot({
     sourceDir: resolve(PROJECT_ROOT, sourceDir),
     upload,
-    submitForReview: config.lineUploadSubmit !== false,
+    submitForReview: config.lineUploadSubmit === true,
   });
 
   console.log(`✓ Synced → ${result.destDir}`);

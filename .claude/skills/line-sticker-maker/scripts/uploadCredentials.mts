@@ -61,7 +61,7 @@ export interface BatchEnvFields {
   descZh: string;
   titleEn: string;
   descEn: string;
-  /** When false, upload pipeline skips the final submit-for-review step. Default true. */
+  /** When true, upload pipeline runs submit-for-review after ZIP import. Default false. */
   submitForReview?: boolean;
 }
 
@@ -116,7 +116,7 @@ SALE_START=auto
 STICKER_COUNT=40
 SALE_REGION=all
 JOIN_CAMPAIGNS=false
-LINE_UPLOAD_SUBMIT=${fields.submitForReview === false ? 'false' : 'true'}
+LINE_UPLOAD_SUBMIT=${fields.submitForReview === true ? 'true' : 'false'}
 
 SOURCE_ZIP=${rel}/${fields.setName}.zip
 UPLOAD_ZIP=${rel}/${fields.setName}.zip

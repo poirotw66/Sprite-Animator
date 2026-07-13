@@ -12,7 +12,7 @@
   "model": "gemini-3.1-flash-image",
   "resolution": "2K",
   "lineUpload": true,
-  "lineUploadSubmit": true,
+  "lineUploadSubmit": false,
   "maxSheetRetries": 3,
   "minGridAlignmentScore": 0.8,
   "promptVersion": "v3compact",

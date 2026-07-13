@@ -83,7 +83,7 @@ function buildJobConfig(manifest: BatchManifest, job: BatchJob): Record<string, 
     model: DEFAULT_SKILL_STICKER_MODEL,
     resolution: defaultResolutionForModel(DEFAULT_SKILL_STICKER_MODEL),
     lineUpload: true,
-    lineUploadSubmit: manifest.lineUploadSubmit !== false,
+    lineUploadSubmit: manifest.lineUploadSubmit === true,
     maxSheetRetries: 3,
     extraSheetRegenAttempts: 3,
     promptVersion: 'v3compact',
@@ -111,7 +111,7 @@ const manifestAbs = resolve(ROOT, manifestPath);
 const manifestDir = dirname(manifestAbs);
 const manifest = JSON.parse(await readFile(manifestAbs, 'utf8')) as BatchManifest;
 const runAuto = args.auto !== 'false';
-const submitArg = manifest.lineUploadSubmit === false ? 'false' : 'true';
+const submitArg = manifest.lineUploadSubmit === true ? 'true' : 'false';
 const onlyOut = new Set(
   [
     ...(args.only ? args.only.split(',') : []),

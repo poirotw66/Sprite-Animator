@@ -174,16 +174,15 @@ function tryAcceptViaReslice(
   validation: GridValidationResult,
   cols: number,
   rows: number,
-  minScore: number
+  resliceScoreMin = 0.68
 ): boolean {
   if (!validation.resliceCandidate) {
     return false;
   }
-  if (validation.expected.score < minScore) {
+  if (validation.expected.score < resliceScoreMin) {
     return false;
   }
-  const layoutMatches = validation.detected.cols === cols && validation.detected.rows === rows;
-  return layoutMatches;
+  return validation.detected.cols === cols && validation.detected.rows === rows;
 }
 
 async function loadPriorSheetStyleAnchor(
@@ -391,7 +390,7 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
       break;
     }
 
-    if (tryAcceptViaReslice(validation, sheet.cols, sheet.rows, minGridAlignmentScore)) {
+    if (tryAcceptViaReslice(validation, sheet.cols, sheet.rows)) {
       warn(
         logPrefix,
         `${validation.reason ?? 'marginal grid'} — accepting via reslice (score ${validation.expected.score.toFixed(2)})`

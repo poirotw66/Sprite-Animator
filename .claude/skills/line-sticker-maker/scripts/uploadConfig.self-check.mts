@@ -34,8 +34,22 @@ const batch = buildBatchEnvContent(
   '.line-upload/input/706/Test'
 );
 if (batch.includes('LINE_EMAIL=')) throw new Error('batch template must not include account secrets');
-if (!batch.includes('LINE_UPLOAD_SUBMIT=true')) {
-  throw new Error('batch template should default LINE_UPLOAD_SUBMIT=true');
+if (!batch.includes('LINE_UPLOAD_SUBMIT=false')) {
+  throw new Error('batch template should default LINE_UPLOAD_SUBMIT=false');
+}
+const batchSubmit = buildBatchEnvContent(
+  {
+    setName: 'Test',
+    titleZh: '測',
+    descZh: '述',
+    titleEn: 'T',
+    descEn: 'D',
+    submitForReview: true,
+  },
+  '.line-upload/input/706/Test'
+);
+if (!batchSubmit.includes('LINE_UPLOAD_SUBMIT=true')) {
+  throw new Error('batch template should honor submitForReview=true');
 }
 const batchNoSubmit = buildBatchEnvContent(
   {

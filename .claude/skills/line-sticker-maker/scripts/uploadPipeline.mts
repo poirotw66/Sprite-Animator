@@ -18,7 +18,7 @@ export function resolveSubmitEnabled(options: {
   envSubmit?: string;
   defaultValue?: boolean;
 }): boolean {
-  const { step, cliSubmit, envSubmit, defaultValue = true } = options;
+  const { step, cliSubmit, envSubmit, defaultValue = false } = options;
   if (step === 'submit') return true;
   if (cliSubmit !== undefined) return parseBoolFlag(cliSubmit, defaultValue);
   if (envSubmit !== undefined && envSubmit !== '') {

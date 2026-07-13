@@ -65,7 +65,7 @@ await assertOutDirGridGate(outDir);
 await ensureBatchEnvReady(batchPath);
 
 const envRel = `${out.replace(/\\/g, '/')}/.env.batch/${envBase}.env`;
-const submitArg = job.lineUploadSubmit === false ? 'false' : 'true';
+const submitArg = job.lineUploadSubmit === true ? 'true' : 'false';
 console.log('\n▶ upload (gdrive → provision → zip → optional submit)...');
 run('npx', [
   'tsx',

@@ -10,7 +10,11 @@ describe('uploadPipeline', () => {
   it('parseBoolFlag accepts common truthy/falsy strings', () => {
     expect(parseBoolFlag('true', false)).toBe(true);
     expect(parseBoolFlag('false', true)).toBe(false);
-    expect(parseBoolFlag(undefined, true)).toBe(true);
+    expect(parseBoolFlag(undefined, false)).toBe(false);
+  });
+
+  it('resolveSubmitEnabled defaults to no submit', () => {
+    expect(resolveSubmitEnabled({ step: 'all' })).toBe(false);
   });
 
   it('resolveSubmitEnabled honors CLI over env', () => {

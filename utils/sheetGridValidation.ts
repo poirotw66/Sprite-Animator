@@ -15,7 +15,7 @@ export interface GridLayoutScore {
 export interface GridValidationOptions {
   /** Minimum boundary-alignment score for the expected grid (0–1). Default 0.80. */
   minScore?: number;
-  /** When another grid ties within this margin, prefer the expected cols×rows. Default 0.03. */
+  /** When another grid ties within this margin, prefer the expected cols×rows. Default 0.18. */
   scoreTieMargin?: number;
   /** Reject when best-fit layout differs from expected cols×rows (default: true). */
   requireExactLayout?: boolean;
@@ -176,7 +176,7 @@ export function validateSheetGrid(
   options: GridValidationOptions = {}
 ): GridValidationResult {
   const minScore = options.minScore ?? 0.8;
-  const scoreTieMargin = options.scoreTieMargin ?? 0.03;
+  const scoreTieMargin = options.scoreTieMargin ?? 0.18;
   const requireExactLayout = options.requireExactLayout !== false;
   const maxColumnWidthCv = options.maxColumnWidthCv ?? 0.12;
   const resliceScoreMin = options.resliceScoreMin ?? 0.68;
@@ -189,7 +189,15 @@ export function validateSheetGrid(
     rows,
     score: scoreGridLayoutFromRgba(data, width, height, cols, rows),
   };
-  const detected = detectBestGridLayoutFromRgba(data, width, height, colCandidates, rowCandidates);
+  const rawDetected = detectBestGridLayoutFromRgba(data, width, height, colCandidates, rowCandidates);
+  // ponytail: coarser grids (e.g. 3×4 vs 4×5) can score higher on chroma seam heuristics even when
+  // the sheet is the intended layout — trust expected when its score is within margin of the best fit.
+  const detected =
+    (rawDetected.cols !== cols || rawDetected.rows !== rows) &&
+    expected.score >= resliceScoreMin &&
+    expected.score >= rawDetected.score - scoreTieMargin
+      ? { cols, rows, score: expected.score }
+      : rawDetected;
   const columnWidthCv = measureColumnUniformityFromRgba(data, width, height, cols, rows);
   const layoutMatches = detected.cols === cols && detected.rows === rows;
 

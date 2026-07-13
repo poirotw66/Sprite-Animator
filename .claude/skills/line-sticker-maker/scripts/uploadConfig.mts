@@ -45,7 +45,7 @@ export interface PackUploadOptions {
   upload: UploadConfig;
   sheetDirs: string[];
   zipBytes: Uint8Array;
-  /** When false, batch env sets LINE_UPLOAD_SUBMIT=false (skip review submit). Default true. */
+  /** When true, batch env sets LINE_UPLOAD_SUBMIT=true (run review submit). Default false. */
   submitForReview?: boolean;
 }
 

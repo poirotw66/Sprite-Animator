@@ -12,12 +12,19 @@ import {
 const FIXTURE_PATH =
   'output/couple-set-lite-debug/sheet-1/attempts/attempt-01-processed.png';
 
+const SET014_ATTEMPTS = [
+  'output/vault-production/SET-20260712-014/sheet-1/attempts/attempt-01-processed.png',
+  'output/vault-production/SET-20260712-014/sheet-1/attempts/attempt-02-processed.png',
+  'output/vault-production/SET-20260712-014/sheet-1/attempts/attempt-03-processed.png',
+] as const;
+
 function loadAttemptImage(relativePath: string) {
   const path = resolve(process.cwd(), relativePath);
   return decodePng(new Uint8Array(readFileSync(path)));
 }
 
 const hasFixture = existsSync(resolve(process.cwd(), FIXTURE_PATH));
+const set014Fixtures = SET014_ATTEMPTS.filter((rel) => existsSync(resolve(process.cwd(), rel)));
 
 describe.skipIf(!hasFixture)('sheetGridValidation real-world attempts', () => {
   it('detects the saved 4x5 couple sheet as 4x5', () => {
@@ -43,5 +50,17 @@ describe.skipIf(!hasFixture)('sheetGridValidation real-world attempts', () => {
     });
 
     expect(result.detected).toMatchObject({ cols: 4, rows: 5 });
+  });
+});
+
+describe.skipIf(set014Fixtures.length === 0)('sheetGridValidation SET-20260712-014 attempts', () => {
+  it.each(set014Fixtures)('accepts visually correct 4x5 sheet: %s', (relativePath) => {
+    const image = loadAttemptImage(relativePath);
+    const result = validateSheetGrid(image.data, image.width, image.height, 4, 5, {
+      minScore: 0.8,
+    });
+
+    expect(result.detected).toMatchObject({ cols: 4, rows: 5 });
+    expect(result.ok || result.resliceCandidate).toBe(true);
   });
 });

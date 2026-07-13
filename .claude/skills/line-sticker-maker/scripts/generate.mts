@@ -92,7 +92,7 @@ interface StickerConfig {
   lineS?: UploadConfig & { syncToLineS?: boolean };
   /** When true (default for set scope), emit LINE Creators Market upload pack + ZIP. */
   lineUpload?: boolean;
-  /** When false, upload pipeline skips submit-for-review (default true). */
+  /** When true, upload pipeline also submits for review after ZIP import. Default false. */
   lineUploadSubmit?: boolean;
   /** 1-based sticker index used for main.png (default: 1). */
   mainStickerIndex?: number;
