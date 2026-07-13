@@ -12,20 +12,26 @@ export interface SliceTemplateBounds {
   source: 'guided-template' | 'detected';
 }
 
-/** `gemini-3.1-flash-image` aligns 4×5 grids from prompt; template PNG is optional. */
-export function modelSkipsGridTemplateAttachment(model: string): boolean {
+/** Solid chroma canvas is optional for flash-image; guided layout ref is still attached. */
+export function modelSkipsSolidGridTemplate(model: string): boolean {
   const normalized = model.replace(/-preview$/i, '');
   return normalized === 'gemini-3.1-flash-image';
 }
 
-/** User/config request after model capability gate (no template file for flash-image). */
+/** @deprecated Use modelSkipsSolidGridTemplate — name kept for callers that mean solid-only skip. */
+export function modelSkipsGridTemplateAttachment(model: string): boolean {
+  return modelSkipsSolidGridTemplate(model);
+}
+
+/** User/config request after model capability gate. */
 export function resolveEffectiveGridTemplate(
   model: string,
   gridTemplate: GridTemplateRequest
 ): false | true | 'guided' {
   if (!gridTemplate) return false;
-  if (modelSkipsGridTemplateAttachment(model)) return false;
-  return gridTemplate === 'guided' ? 'guided' : true;
+  if (gridTemplate === 'guided') return 'guided';
+  if (modelSkipsSolidGridTemplate(model)) return false;
+  return true;
 }
 
 /** Fixed guided template bounds, or seam-detected bounds when no template was attached. */

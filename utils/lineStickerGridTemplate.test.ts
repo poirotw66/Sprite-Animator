@@ -1,20 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import {
   modelSkipsGridTemplateAttachment,
+  modelSkipsSolidGridTemplate,
   resolveEffectiveGridTemplate,
   resolveSliceTemplateBounds,
 } from './lineStickerGridTemplate';
 
 describe('lineStickerGridTemplate', () => {
-  it('skips template attachment for gemini-3.1-flash-image only', () => {
-    expect(modelSkipsGridTemplateAttachment('gemini-3.1-flash-image')).toBe(true);
-    expect(modelSkipsGridTemplateAttachment('gemini-3.1-flash-image-preview')).toBe(true);
-    expect(modelSkipsGridTemplateAttachment('gemini-3.1-flash-lite-image')).toBe(false);
-    expect(modelSkipsGridTemplateAttachment('gemini-3-pro-image')).toBe(false);
+  it('skips solid template for gemini-3.1-flash-image only', () => {
+    expect(modelSkipsSolidGridTemplate('gemini-3.1-flash-image')).toBe(true);
+    expect(modelSkipsSolidGridTemplate('gemini-3.1-flash-image-preview')).toBe(true);
+    expect(modelSkipsSolidGridTemplate('gemini-3.1-flash-lite-image')).toBe(false);
+    expect(modelSkipsSolidGridTemplate('gemini-3-pro-image')).toBe(false);
   });
 
-  it('drops guided request for flash-image', () => {
-    expect(resolveEffectiveGridTemplate('gemini-3.1-flash-image', 'guided')).toBe(false);
+  it('keeps guided template for flash-image', () => {
+    expect(resolveEffectiveGridTemplate('gemini-3.1-flash-image', 'guided')).toBe('guided');
+    expect(resolveEffectiveGridTemplate('gemini-3.1-flash-image', true)).toBe(false);
     expect(resolveEffectiveGridTemplate('gemini-3.1-flash-lite-image', 'guided')).toBe('guided');
   });
 

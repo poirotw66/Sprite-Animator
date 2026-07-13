@@ -215,7 +215,7 @@ async function main(): Promise<void> {
       maxSheetRetries: 3,
       minGridAlignmentScore: 0.8,
       promptVersion: 'v3compact',
-      gridTemplate: false,
+      gridTemplate: 'guided',
       upload: {
         syncToUploadRoot: true,
         creatorId: '706',

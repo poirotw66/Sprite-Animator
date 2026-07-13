@@ -28,7 +28,6 @@ import { buildGridSheetTemplate, type GridTemplateMode } from '../../../../utils
 import { DEFAULT_CHROMA_KEY_ALGORITHM } from '../../../../utils/constants.ts';
 import {
   resolveEffectiveGridTemplate,
-  modelSkipsGridTemplateAttachment,
   resolveSliceTemplateBounds,
 } from '../../../../utils/lineStickerGridTemplate.ts';
 import {
@@ -286,8 +285,8 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
         ? 'using guided grid layout reference (paint on template)'
         : 'using chroma grid template (fixed equal-split slice)'
     );
-  } else if (gridTemplate && modelSkipsGridTemplateAttachment(model)) {
-    log(logPrefix, 'grid template skipped (flash-image uses prompt-only layout)');
+  } else if (gridTemplate && !effectiveGridTemplate) {
+    log(logPrefix, 'solid grid template skipped for this model (use gridTemplate: "guided")');
   }
 
   const gridTemplateImage = sheetTemplate

@@ -9,13 +9,14 @@ import { resolve } from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 
 import { parseEnv } from './uploadCredentials.mts';
+import { resolveSubmitEnabled, resolveUploadStepsFromEnv } from './uploadPipeline.mts';
 
 const ROOT = resolve(import.meta.dirname, '../../../..');
 const RUN_UPLOAD = resolve(import.meta.dirname, 'run-line-upload.mts');
 const UPLOAD_SCRIPTS = resolve(ROOT, '.claude/skills/line-sticker-upload/scripts');
 const MASTER_PLAYWRIGHT = resolve(UPLOAD_SCRIPTS, 'playwright_line_state.json');
 
-type UploadStep = 'all' | 'provision' | 'zip' | 'submit';
+type UploadStep = 'all' | 'provision' | 'zip' | 'submit' | 'gdrive';
 
 type ReviewStatus = 'waiting_for_review' | 'editing' | 'unknown';
 
@@ -166,11 +167,17 @@ function buildJobs(from: number, to: number): UploadJob[] {
     }
     const envRel = `output/vault-production/${id}/.env.batch/${envFile}`;
     const env = parseEnv(readFileSync(resolve(envDir, envFile), 'utf8'));
-    const steps: UploadStep[] = env.LINE_STICKER_ID?.trim()
-      ? ['zip', 'submit']
-      : env.GDRIVE_FOLDER_ID?.trim()
-        ? ['provision', 'zip', 'submit']
-        : ['all'];
+    const submitEnabled = resolveSubmitEnabled({
+      step: 'all',
+      envSubmit: env.LINE_UPLOAD_SUBMIT,
+    });
+    const steps = resolveUploadStepsFromEnv(
+      {
+        lineStickerId: env.LINE_STICKER_ID,
+        gdriveFolderId: env.GDRIVE_FOLDER_ID,
+      },
+      submitEnabled
+    ) as UploadStep[];
     jobs.push({ id, envRel, steps });
   }
   return jobs;

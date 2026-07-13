@@ -36,3 +36,26 @@ export function resolvePipelineSteps(
   if (submitEnabled) pipeline.push('submit');
   return pipeline;
 }
+
+export interface UploadEnvState {
+  lineStickerId?: string;
+  gdriveFolderId?: string;
+}
+
+/** Skip completed upload stages when batch env already has runtime IDs. */
+export function resolveUploadStepsFromEnv(
+  env: UploadEnvState,
+  submitEnabled: boolean
+): UploadStepName[] {
+  if (env.lineStickerId?.trim()) {
+    const steps: UploadStepName[] = ['zip'];
+    if (submitEnabled) steps.push('submit');
+    return steps;
+  }
+  if (env.gdriveFolderId?.trim()) {
+    const steps: UploadStepName[] = ['provision', 'zip'];
+    if (submitEnabled) steps.push('submit');
+    return steps;
+  }
+  return resolvePipelineSteps('all', submitEnabled);
+}

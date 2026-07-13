@@ -4,6 +4,7 @@ import {
   parseBoolFlag,
   resolvePipelineSteps,
   resolveSubmitEnabled,
+  resolveUploadStepsFromEnv,
 } from './uploadPipeline.mts';
 
 describe('uploadPipeline', () => {
@@ -36,5 +37,19 @@ describe('uploadPipeline', () => {
       'submit',
     ]);
     expect(resolvePipelineSteps('submit', false)).toEqual(['submit']);
+  });
+
+  it('resolveUploadStepsFromEnv skips completed stages', () => {
+    expect(
+      resolveUploadStepsFromEnv({ lineStickerId: '12345', gdriveFolderId: 'abc' }, false)
+    ).toEqual(['zip']);
+    expect(
+      resolveUploadStepsFromEnv({ lineStickerId: '12345', gdriveFolderId: 'abc' }, true)
+    ).toEqual(['zip', 'submit']);
+    expect(resolveUploadStepsFromEnv({ gdriveFolderId: 'abc' }, false)).toEqual([
+      'provision',
+      'zip',
+    ]);
+    expect(resolveUploadStepsFromEnv({}, false)).toEqual(['gdrive', 'provision', 'zip']);
   });
 });

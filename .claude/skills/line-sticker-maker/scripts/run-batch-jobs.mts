@@ -87,7 +87,7 @@ function buildJobConfig(manifest: BatchManifest, job: BatchJob): Record<string, 
     maxSheetRetries: 3,
     extraSheetRegenAttempts: 3,
     promptVersion: 'v3compact',
-    gridTemplate: false,
+    gridTemplate: 'guided',
     lineS: {
       syncToLineS: true,
       creatorId: '706',

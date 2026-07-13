@@ -17,6 +17,7 @@ import { ensureBatchEnvReady, parseEnv } from './uploadCredentials.mts';
 import {
   resolvePipelineSteps,
   resolveSubmitEnabled,
+  resolveUploadStepsFromEnv,
   type UploadStepName,
 } from './uploadPipeline.mts';
 
@@ -107,13 +108,27 @@ const submitEnabled = resolveSubmitEnabled({
   cliSubmit: args.submit,
   envSubmit: batchEnv.LINE_UPLOAD_SUBMIT,
 });
-const steps = resolvePipelineSteps(step, submitEnabled);
-/** Default: unattended pipeline (no Enter prompts, headless Playwright). */
-const runInteractive = args.interactive === 'true' || args.auto === 'false';
+const steps =
+  step === 'all'
+    ? resolveUploadStepsFromEnv(
+        {
+          lineStickerId: batchEnv.LINE_STICKER_ID,
+          gdriveFolderId: batchEnv.GDRIVE_FOLDER_ID,
+        },
+        submitEnabled
+      )
+    : resolvePipelineSteps(step, submitEnabled);
 
 if (step === 'all' && !submitEnabled) {
   console.log('▶ Submit skipped (--submit false / LINE_UPLOAD_SUBMIT=false)');
 }
+if (step === 'all' && batchEnv.LINE_STICKER_ID?.trim()) {
+  console.log('▶ Upload shortcut: LINE_STICKER_ID present — zip only' + (submitEnabled ? ' + submit' : ''));
+} else if (step === 'all' && batchEnv.GDRIVE_FOLDER_ID?.trim()) {
+  console.log('▶ Upload shortcut: GDRIVE_FOLDER_ID present — skipping gdrive');
+}
+/** Default: unattended pipeline (no Enter prompts, headless Playwright). */
+const runInteractive = args.interactive === 'true' || args.auto === 'false';
 if (!runInteractive) {
   console.log('▶ Unattended upload (headless, no Enter prompts). Pass --interactive true to review in browser.');
 }
