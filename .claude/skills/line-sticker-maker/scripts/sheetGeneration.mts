@@ -31,7 +31,11 @@ import {
   modelSkipsGridTemplateAttachment,
   resolveSliceTemplateBounds,
 } from '../../../../utils/lineStickerGridTemplate.ts';
-import { detectWhiteDividerGrid, shouldUseWhiteDividerSlice } from '../../../../utils/sheetWhiteDividerDetection.ts';
+import {
+  clearDetectedSheetGridDividers,
+  detectWhiteDividerGrid,
+  shouldUseWhiteDividerSlice,
+} from '../../../../utils/sheetWhiteDividerDetection.ts';
 
 import { generateSheetImage, type StyleAnchorImage } from './geminiSheet.mts';
 import {
@@ -443,6 +447,19 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
   const { rawPng, image, validation, acceptedViaReslice } = chosen;
   const sheetDir = resolve(outDir, sheetFolder);
   await mkdir(sheetDir, { recursive: true });
+  const dividerCleanup = clearDetectedSheetGridDividers(
+    image.data,
+    image.width,
+    image.height,
+    sheet.cols,
+    sheet.rows
+  );
+  if (dividerCleanup.applied) {
+    log(
+      logPrefix,
+      `cleared ${dividerCleanup.cleared} vertical grid divider pixels (${dividerCleanup.verticalBands} band(s))`
+    );
+  }
   await writeFile(resolve(sheetDir, `_raw-sheet.${extForBytes(rawPng)}`), rawPng);
   await writeFile(resolve(sheetDir, '_processed-sheet.png'), encodePng(image));
 

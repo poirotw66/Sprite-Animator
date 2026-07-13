@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  clearDetectedSheetGridDividers,
   clearNearWhiteEdgeArtifacts,
   computeDividerCellRect,
   detectWhiteDividerGrid,
@@ -120,6 +121,30 @@ describe('detectWhiteDividerGrid', () => {
     if (grid.verticalBands[0]) {
       expect(topLeft.x1).toBeLessThanOrEqual(202);
     }
+  });
+
+  it('clears detected vertical black divider bands from a processed sheet', () => {
+    const width = 800;
+    const height = 500;
+    const cols = 4;
+    const rows = 2;
+    const data = new Uint8ClampedArray(width * height * 4);
+    for (const center of [200, 400, 600]) {
+      for (let x = center - 1; x <= center + 1; x++) {
+        for (let y = 0; y < height; y++) {
+          const offset = (y * width + x) * 4;
+          data[offset] = 20;
+          data[offset + 1] = 20;
+          data[offset + 2] = 20;
+          data[offset + 3] = 255;
+        }
+      }
+    }
+
+    const result = clearDetectedSheetGridDividers(data, width, height, cols, rows);
+    expect(result.applied).toBe(true);
+    expect(result.cleared).toBeGreaterThan(0);
+    expect(data[((height / 2) | 0) * width * 4 + 200 * 4 + 3]).toBe(0);
   });
 
   it('clears edge-connected near-white seam pixels from a frame', () => {

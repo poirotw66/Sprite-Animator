@@ -24,6 +24,7 @@ import {
 import { buildEqualGridBounds } from '../../../../utils/gridSheetTemplate.ts';
 import { resolveSliceTemplateBounds } from '../../../../utils/lineStickerGridTemplate.ts';
 import { trimFrameToContent } from '../../../../utils/sheetComponentSlicer.ts';
+import { clearDetectedSheetGridDividers } from '../../../../utils/sheetWhiteDividerDetection.ts';
 import { DEFAULT_CHROMA_KEY_ALGORITHM } from '../../../../utils/constants.ts';
 import type { ChromaKeyAlgorithm } from '../../../../types.ts';
 
@@ -99,6 +100,18 @@ const preserveCellAlphaThreshold = config.textRendering === 'model' ? 8 : undefi
 await mkdir(writeDir, { recursive: true });
 
 processSheetChromaKey(image, chromaKeyColor, { guided: useGuidedTemplate, algorithm });
+const dividerCleanup = clearDetectedSheetGridDividers(
+  image.data,
+  image.width,
+  image.height,
+  cols,
+  rows
+);
+if (dividerCleanup.applied) {
+  console.log(
+    `Cleared ${dividerCleanup.cleared} vertical grid divider pixels (${dividerCleanup.verticalBands} band(s))`
+  );
+}
 await writeFile(resolve(writeDir, '_processed-sheet.png'), encodePng(image));
 console.log(`Chroma algorithm: ${algorithm}${useGuidedTemplate ? ' + guided' : ''}`);
 if (outDir) {

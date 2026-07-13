@@ -41,12 +41,12 @@ export function isDividerDarkPixel(
   options: Pick<DetectWhiteDividerOptions, 'darkMaxChannel' | 'darkMeanMax'> = {}
 ): boolean {
   if (a <= 20) return false;
-  if (isSliceBackgroundPixel(r, g, b, a)) return false;
   const darkMaxChannel = options.darkMaxChannel ?? 90;
   const darkMeanMax = options.darkMeanMax ?? 75;
   const min = Math.min(r, g, b);
   const max = Math.max(r, g, b);
   const mean = (r + g + b) / 3;
+  // ponytail: opaque near-black grid seams must not be classified as letterbox padding.
   return max < darkMaxChannel && mean < darkMeanMax && max - min < 40;
 }
 
@@ -468,4 +468,79 @@ export function clearNearWhiteEdgeArtifacts(
   }
 
   return cleared;
+}
+
+export interface ClearSheetGridDividersResult {
+  cleared: number;
+  applied: boolean;
+  verticalBands: number;
+}
+
+/**
+ * Erase detected vertical grid divider bands on a processed sprite sheet.
+ * Runs after chroma key when divider seams survived as opaque black/gray lines.
+ */
+export function clearDetectedSheetGridDividers(
+  data: Uint8ClampedArray | Uint8Array | number[],
+  width: number,
+  height: number,
+  cols: number,
+  rows: number,
+  options: DetectWhiteDividerOptions = {}
+): ClearSheetGridDividersResult {
+  const grid = detectWhiteDividerGrid(data, width, height, cols, rows, options);
+  const verticalBands = grid.verticalBands.filter(Boolean);
+  const minVertical = Math.max(1, Math.ceil((cols - 1) * 0.5));
+  if (verticalBands.length < minVertical) {
+    return { cleared: 0, applied: false, verticalBands: verticalBands.length };
+  }
+
+  let cleared = 0;
+  const clearPixel = (offset: number): void => {
+    if (
+      data[offset]! !== 0 ||
+      data[offset + 1]! !== 0 ||
+      data[offset + 2]! !== 0 ||
+      data[offset + 3]! !== 0
+    ) {
+      data[offset] = 0;
+      data[offset + 1] = 0;
+      data[offset + 2] = 0;
+      data[offset + 3] = 0;
+      cleared++;
+    }
+  };
+
+  for (const band of verticalBands) {
+    if (!band) continue;
+    for (let x = band.start; x <= band.end; x++) {
+      for (let y = 0; y < height; y++) {
+        const offset = (y * width + x) * 4;
+        clearPixel(offset);
+      }
+    }
+  }
+
+  for (let row = 0; row < rows - 1; row++) {
+    const bands = grid.horizontalBandsPerColumn
+      .map((colBands) => colBands[row])
+      .filter((band): band is WhiteDividerBand => band !== null);
+    if (bands.length === 0) continue;
+    const y0 = Math.min(...bands.map((band) => band.start));
+    const y1 = Math.max(...bands.map((band) => band.end));
+    for (let y = y0; y <= y1; y++) {
+      for (let x = 0; x < width; x++) {
+        const offset = (y * width + x) * 4;
+        clearPixel(offset);
+      }
+    }
+  }
+
+  for (let offset = 0; offset < data.length; offset += 4) {
+    if (data[offset + 3]! <= 20) {
+      clearPixel(offset);
+    }
+  }
+
+  return { cleared, applied: true, verticalBands: verticalBands.length };
 }
