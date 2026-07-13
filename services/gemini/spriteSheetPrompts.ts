@@ -4,6 +4,7 @@
 
 import type { ChromaKeyColorType } from '../../types';
 import { LINE_STICKER_STYLE_PREVIEW_MARKER } from '../../utils/lineStickerPrompt';
+import { buildGuidedSuffixLayoutBlock } from '../../utils/lineStickerGuidedPrompt';
 
 export function isStylePreviewPrompt(prompt: string): boolean {
   return prompt.includes(LINE_STICKER_STYLE_PREVIEW_MARKER);
@@ -105,6 +106,8 @@ export function buildLineStickerPromptSuffix(
     chromaKeyColor: ChromaKeyColorType;
     /** When false, no text/labels in image; layout and a strict no-text rule are applied. */
     includeText?: boolean;
+    /** When true: guided grid edit — omit NO VISIBLE DIVIDERS and require in-cell placement. */
+    guidedMode?: boolean;
   }
 ): string {
   const {
@@ -115,6 +118,7 @@ export function buildLineStickerPromptSuffix(
     bgColorRGB,
     chromaKeyColor,
     includeText = true,
+    guidedMode = false,
   } = opts;
 
   const bgColorRequirement = `
@@ -144,7 +148,9 @@ Every background pixel MUST be EXACTLY ${bgColorHex}.
     ? `2. **Fill**: In each cell, character and text must occupy most of the area (character ~70–85% of cell height). Minimal internal padding only. Forbidden: tiny character with large empty space around.`
     : `2. **Fill**: In each cell, character must occupy most of the area (character ~70–85% of cell height). Minimal internal padding only. Forbidden: tiny character with large empty space. Do NOT draw any text, numbers, or labels in the image.`;
 
-  const layoutEnforcement = `
+  const layoutEnforcement = guidedMode
+    ? buildGuidedSuffixLayoutBlock(cols, rows, totalFrames, includeText)
+    : `
 ---
 
 ### [Output Format — MUST FOLLOW]

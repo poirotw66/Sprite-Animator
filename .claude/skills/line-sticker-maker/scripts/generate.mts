@@ -378,6 +378,7 @@ async function main() {
     for (const sheet of sheets) {
       const slots = buildSlots(config, sheet.phrases, fontKey);
       const reserveForProgrammaticOverlay = includeText && textRendering === 'programmatic';
+      const guidedMode = config.gridTemplate === 'guided';
       const prompt = buildLineStickerPrompt(
         slots,
         sheet.cols,
@@ -386,7 +387,8 @@ async function main() {
         effectiveIncludeText,
         sheet.actionDescs,
         promptVersion,
-        reserveForProgrammaticOverlay
+        reserveForProgrammaticOverlay,
+        guidedMode
       );
       console.log(`\n===== ${sheet.label} (${sheet.cols}x${sheet.rows}) prompt preview =====`);
       console.log(prompt.slice(0, 1200) + (prompt.length > 1200 ? '\n... [truncated]' : ''));

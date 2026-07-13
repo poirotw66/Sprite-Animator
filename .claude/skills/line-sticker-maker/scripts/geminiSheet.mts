@@ -339,6 +339,7 @@ export async function generateSheetImage(
       bgColorRGB: `RGB(${bg.r}, ${bg.g}, ${bg.b})`,
       chromaKeyColor,
       includeText,
+      guidedMode: guidedCanvas,
     }) +
     guidedOverrideBlock +
     buildSafeFramingInstruction(cols, rows, guidedCanvas, indices.gridTemplate) +

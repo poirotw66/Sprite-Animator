@@ -10,6 +10,11 @@
  */
 
 import { clampStickerPhrase } from './lineStickerPhraseLength';
+import {
+    buildGuidedCompactLayoutBlock,
+    buildGuidedCompactOutputBlock,
+    formatGuidedCompactCellLine,
+} from './lineStickerGuidedPrompt';
 import { getLineStickerCanvasAspectPrompt } from './lineStickerSheetAspect';
 import {
     TEXT_COLOR_PRESETS,
@@ -313,7 +318,9 @@ export function buildLineStickerPrompt(
     actionDescs?: string[],
     promptVersion: LineStickerPromptVersion = 'v3',
     /** When true with includeText false: add composition-only instructions for browser-side caption overlay. */
-    reserveForProgrammaticOverlay = false
+    reserveForProgrammaticOverlay = false,
+    /** When true: prompt for in-place edit of attached guided grid template (no NO DIVIDERS wording). */
+    guidedMode = false
 ): string {
     const totalFrames = cols * rows;
     const bgColorText = bgColor === 'magenta' ? 'Pure Magenta #FF00FF' : 'Neon Green #00FF00';
@@ -330,19 +337,24 @@ export function buildLineStickerPrompt(
             slots.text.language
         );
         const perCellLines = phrasesForFrames.map((phrase, index) => {
-            const n = index + 1;
             const rawAction =
                 actionDescs && actionDescs[index]?.trim()
                     ? actionDescs[index].trim()
                     : getActionHint(phrase);
             const action = compactEnglishAction(rawAction);
+            if (guidedMode) {
+                const band = !includeText && reserveForProgrammaticOverlay
+                    ? ` [band:${compactCaptionBandTag(index)}]`
+                    : '';
+                return formatGuidedCompactCellLine(index, cols, phrase, action, includeText, band);
+            }
             if (!includeText) {
                 const band = reserveForProgrammaticOverlay
                     ? ` [band:${compactCaptionBandTag(index)}]`
                     : '';
-                return `${n}|${action}${band}`;
+                return `${index + 1}|${action}${band}`;
             }
-            return `${n}|"${phrase}"|${action}`;
+            return `${index + 1}|"${phrase}"|${action}`;
         });
 
         const programmaticNote =
@@ -350,9 +362,21 @@ export function buildLineStickerPrompt(
                 ? `\n[5b. Caption bands]\nKeep tagged bands empty (chroma only); text is added after slicing.\n`
                 : '';
 
-        return `🎨 LINE Sticker Sheet (${cols}×${rows}, compact)
+        const layoutBlock = guidedMode
+            ? buildGuidedCompactLayoutBlock(cols, rows, totalFrames, cellWidthPct, cellHeightPct, bgHex)
+            : `[1. Layout] ${canvasAspect}, ${totalFrames} equal cells (${cellWidthPct}%×${cellHeightPct}%). Logical grid only — NO visible dividers. Continuous ${bgHex}. One subject per cell, ~10% chroma margin.`;
 
-[1. Layout] ${canvasAspect}, ${totalFrames} equal cells (${cellWidthPct}%×${cellHeightPct}%). Logical grid only — NO visible dividers. Continuous ${bgHex}. One subject per cell, ~10% chroma margin.
+        const cellsHeader = guidedMode
+            ? `[5. Cells] Place each sticker in its labeled cell (row, col). One subject per cell — fully inside cell boundaries:`
+            : `[5. Cells] Row-major. Format: N|"text"|action OR N|action [band:tag]`;
+
+        const outputBlock = guidedMode
+            ? buildGuidedCompactOutputBlock(cols, rows, totalFrames)
+            : `[7. Output] One ${canvasAspect.toLowerCase()} image, ${cols}×${rows}, splittable into ${totalFrames} equal rectangles.`;
+
+        return `🎨 LINE Sticker Sheet (${cols}×${rows}, compact${guidedMode ? ', guided grid' : ''})
+
+${layoutBlock}
 
 [2. Style] Match uploaded reference only. ${slots.style.styleType}. ${slots.style.drawingMethod}. Flat shading; same artist across all cells. On-sticker text font must match this art style.
 
@@ -360,7 +384,7 @@ export function buildLineStickerPrompt(
 
 [4. Background] Solid ${bgColorText} (${bgHex}), uniform, no gradient or texture.
 
-[5. Cells] Row-major. Format: N|"text"|action OR N|action [band:tag]
+${cellsHeader}
 ${perCellLines.join('\n')}${programmaticNote}
 [6. Text] ${
             includeText
@@ -368,7 +392,7 @@ ${perCellLines.join('\n')}${programmaticNote}
                 : 'NO text in image.'
         }
 
-[7. Output] One ${canvasAspect.toLowerCase()} image, ${cols}×${rows}, splittable into ${totalFrames} equal rectangles.`;
+${outputBlock}`;
     }
 
     if (promptVersion === 'v2' || promptVersion === 'v3') {
@@ -420,7 +444,19 @@ ${buildProgrammaticOverlayCompositionBullets(bgHex)}
 `
                 : '';
 
-        const globalLayoutBlock = hardenedLayout
+        const guidedGlobalLayoutBlock = `[1. Global Layout — GUIDED GRID]
+- ${canvasAspect}, high resolution
+- EXACTLY ${cols}×${rows} sprite sheet (${totalFrames} stickers); each cell ${cellWidthPct}% of width × ${cellHeightPct}% of height
+- Edit the provided grid template **in place** — same dimensions, same seam positions
+- Place **one sticker per cell**, fully inside that cell's grid grooves; never cross a seam into a neighboring cell
+- Keep the template's faint groove lines intact — they mark exact cell boundaries
+- Each horizontal row contains exactly ${cols} stickers (never ${cols + 1})
+- ~10–15% internal chroma margin inside every cell
+- The image MUST be perfectly splittable at the template seams into ${totalFrames} equal rectangles`;
+
+        const globalLayoutBlock = guidedMode
+            ? guidedGlobalLayoutBlock
+            : hardenedLayout
             ? `[1. Global Layout — CRITICAL]
 - ${canvasAspect}, high resolution
 - EXACTLY ${cols}×${rows} sprite sheet (${totalFrames} stickers) — NOT ${cols + 1}×${rows}, NOT ${cols + 1}×${cols + 1}; each cell ${cellWidthPct}% of width × ${cellHeightPct}% of height
@@ -479,9 +515,15 @@ ${textRules}
 [7. Final Output]
 - One single image: ${canvasAspect.toLowerCase()}
 - ${cols}×${rows} layout (${totalFrames} stickers)
-- No visible grid lines${hardenedLayout ? ', borders, seams, or divider lines of any color — cell boundaries fully invisible' : ''}
+${
+            guidedMode
+                ? `- Edit the provided grid template in place; one sticker per cell, fully contained
+- Keep template groove lines; do not add new divider lines
+- Cleanly splittable at template seams into ${totalFrames} equal rectangles`
+                : `- No visible grid lines${hardenedLayout ? ', borders, seams, or divider lines of any color — cell boundaries fully invisible' : ''}
 - Continuous ${bgHex} background${hardenedLayout ? ' that bleeds uniformly across every cell boundary' : ''}
-- Cleanly splittable into ${totalFrames} equal rectangles`;
+- Cleanly splittable into ${totalFrames} equal rectangles`
+        }`;
     }
 
     // 1. Global Layout (basePrompt)

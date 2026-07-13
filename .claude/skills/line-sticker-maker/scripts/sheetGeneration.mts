@@ -240,6 +240,9 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
 
   const effectiveIncludeText = getEffectiveLineStickerIncludeText(includeText, textRendering);
   const reserveForProgrammaticOverlay = includeText && textRendering === 'programmatic';
+  const effectiveGridTemplate = resolveEffectiveGridTemplate(model, gridTemplate);
+  const templateMode = resolveGridTemplateMode(effectiveGridTemplate);
+  const guidedMode = templateMode === 'guided';
   const prompt = buildLineStickerPrompt(
     slots,
     sheet.cols,
@@ -248,7 +251,8 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     effectiveIncludeText,
     sheet.actionDescs,
     promptVersion,
-    reserveForProgrammaticOverlay
+    reserveForProgrammaticOverlay,
+    guidedMode
   );
 
   let styleAnchor: StyleAnchorImage | undefined;
@@ -261,8 +265,6 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
 
   log(logPrefix, `generating ${sheet.cols}x${sheet.rows} sheet...`);
 
-  const effectiveGridTemplate = resolveEffectiveGridTemplate(model, gridTemplate);
-  const templateMode = resolveGridTemplateMode(effectiveGridTemplate);
   const sheetTemplate = templateMode
     ? buildGridSheetTemplate(sheet.cols, sheet.rows, { chromaKeyColor, mode: templateMode })
     : null;

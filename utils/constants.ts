@@ -53,7 +53,7 @@ export const DEFAULT_SKILL_STICKER_MODEL = DEFAULT_MODEL;
 export type ImageResolution = '0.5K' | '1K' | '2K' | '4K';
 
 /** Default output resolution when the selected model supports it (else first allowed). */
-export const DEFAULT_OUTPUT_RESOLUTION: ImageResolution = '2K';
+export const DEFAULT_OUTPUT_RESOLUTION: ImageResolution = '1K';
 
 /** Resolutions supported per model */
 export const MODEL_RESOLUTIONS: Record<string, ImageResolution[]> = {
