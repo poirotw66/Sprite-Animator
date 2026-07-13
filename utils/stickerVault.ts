@@ -2,7 +2,8 @@
  * line-sticker-vault path helpers, slug rules, and registry merge for daily-pack.
  */
 
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { resolve } from 'node:path';
 
 import type { StickerRegistryEntry, StickerRegistryFile } from './stickerRegistryFormat';
@@ -44,14 +45,34 @@ export interface VaultSetMeta {
   sourceOutputDir: string;
 }
 
-/** Resolve vault root: --vault / STICKER_VAULT_ROOT / sibling ../line-sticker-vault */
+function expandHomePath(inputPath: string): string {
+  const trimmed = inputPath.trim();
+  if (trimmed.startsWith('~/')) {
+    return resolve(homedir(), trimmed.slice(2));
+  }
+  return resolve(trimmed);
+}
+
+function readEnvVarFromRepoFiles(repoRoot: string, key: string): string {
+  for (const name of ['.env', '.env.local']) {
+    const filePath = resolve(repoRoot, name);
+    if (!existsSync(filePath)) continue;
+    for (const line of readFileSync(filePath, 'utf8').split('\n')) {
+      const match = line.match(new RegExp(`^\\s*${key}\\s*=\\s*(.+?)\\s*$`));
+      if (match) return match[1]!.replace(/^["']|["']$/g, '');
+    }
+  }
+  return '';
+}
+
+/** Resolve vault root: --vault / STICKER_VAULT_ROOT / repo .env / sibling ../line-sticker-vault */
 export function resolveVaultRoot(repoRoot: string, explicitPath?: string): string | undefined {
   if (explicitPath?.trim()) {
-    return resolve(explicitPath.trim());
+    return expandHomePath(explicitPath);
   }
-  const fromEnv = process.env.STICKER_VAULT_ROOT?.trim();
+  const fromEnv = process.env.STICKER_VAULT_ROOT?.trim() || readEnvVarFromRepoFiles(repoRoot, 'STICKER_VAULT_ROOT');
   if (fromEnv) {
-    return resolve(fromEnv);
+    return expandHomePath(fromEnv);
   }
   const sibling = resolve(repoRoot, '..', VAULT_DIR_NAME);
   if (existsSync(sibling)) {
