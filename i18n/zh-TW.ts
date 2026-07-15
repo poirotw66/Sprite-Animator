@@ -95,6 +95,9 @@ export const zhTW: Translations = {
   autoOptimized: '自動優化',
   center: '居中',
   dragHint: '拖動邊框調整大小 · 拖動網格內移動位置',
+  sliceModeOwnership: '智慧切分',
+  sliceModeOwnershipHint:
+    '跨格的尾巴／動線會歸還原格，鄰格不會切到別人的身體。建議先去背；淺色紙底也可試。',
   downloadProcessed: '下載精靈圖（已去背）',
   downloadOriginal: '下載原圖',
   processing: '處理中',

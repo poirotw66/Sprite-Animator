@@ -95,6 +95,9 @@ export const en: Translations = {
   autoOptimized: 'Auto Optimized',
   center: 'Center',
   dragHint: 'Drag border to resize · Drag inside to move',
+  sliceModeOwnership: 'Smart slice',
+  sliceModeOwnershipHint:
+    'Assigns overlapping art to its owner cell (tails/motion lines stay with the main pose). Best after background removal; also handles light paper sheets.',
   downloadProcessed: 'Download (Processed)',
   downloadOriginal: 'Download (Original)',
   processing: 'Processing',

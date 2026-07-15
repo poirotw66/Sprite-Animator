@@ -28,6 +28,9 @@ export { optimizeSliceSettings } from './optimizeSliceSettings';
 export type { OptimizedSliceResult, OptimizeSliceOptions } from './optimizeSliceSettings';
 export { mergeOptimizedPadding } from './optimizeSliceSettings';
 export { sliceSpriteSheetByCellRects } from './sliceByCellRects';
+export { sliceSpriteSheetByOwnership } from './sliceSpriteSheetByOwnership';
+export { sliceSheetWithSettings } from './sliceSheetWithSettings';
+export type { DispatchSheetSliceOptions } from './sliceSheetWithSettings';
 export {
   analyzeFrameContent,
   smartAutoAlignFrames,

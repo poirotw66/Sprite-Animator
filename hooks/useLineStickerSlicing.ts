@@ -1,10 +1,8 @@
 import { useCallback, useEffect } from 'react';
 import type { Dispatch, SetStateAction, SyntheticEvent } from 'react';
 import {
-  getEffectivePadding,
-  sliceSpriteSheet,
+  sliceSheetWithSettings,
   type FrameOverride,
-  type PaddingFour,
   type SliceSettings,
 } from '../utils/imageUtils';
 import type { ChromaKeyColorType } from '../types';
@@ -48,6 +46,14 @@ interface SliceProcessedSheetOptions {
   sheetIndex?: LineStickerSheetIndex;
   /** Use when slice settings were just optimized and React state may not have flushed yet. */
   sliceSettingsOverride?: SliceSettings;
+}
+
+function withGridSize(
+  settings: SliceSettings,
+  cols: number,
+  rows: number
+): SliceSettings {
+  return { ...settings, cols, rows };
 }
 
 export function useLineStickerSlicing({
@@ -103,22 +109,15 @@ export function useLineStickerSlicing({
         : frameOverrides;
       const cols = stickerSetMode ? settings.cols : gridCols;
       const rows = stickerSetMode ? settings.rows : gridRows;
-      const pad: PaddingFour = getEffectivePadding(settings);
 
-      const raw = await sliceSpriteSheet(
+      const raw = await sliceSheetWithSettings(
         processedImage,
-        cols,
-        rows,
-        settings.paddingX,
-        settings.paddingY,
-        settings.shiftX,
-        settings.shiftY,
-        false,
-        230,
-        overrides,
-        chromaKeyColor,
-        pad,
-        LINE_STICKER_CELL_INSET_RATIO
+        withGridSize(settings, cols, rows),
+        {
+          frameOverrides: overrides,
+          chromaKeyColor,
+          cellInsetRatio: LINE_STICKER_CELL_INSET_RATIO,
+        }
       );
       const sheetIdx = targetSheetIndex;
       const phraseSlice = stickerSetMode
@@ -147,21 +146,14 @@ export function useLineStickerSlicing({
     let cancelled = false;
     const run = async () => {
       try {
-        const pad: PaddingFour = getEffectivePadding(sliceSettings);
-        const raw = await sliceSpriteSheet(
+        const raw = await sliceSheetWithSettings(
           processedSpriteSheet,
-          gridCols,
-          gridRows,
-          sliceSettings.paddingX,
-          sliceSettings.paddingY,
-          sliceSettings.shiftX,
-          sliceSettings.shiftY,
-          false,
-          230,
-          frameOverrides,
-          chromaKeyColor,
-          pad,
-          LINE_STICKER_CELL_INSET_RATIO
+          withGridSize(sliceSettings, gridCols, gridRows),
+          {
+            frameOverrides,
+            chromaKeyColor,
+            cellInsetRatio: LINE_STICKER_CELL_INSET_RATIO,
+          }
         );
         const phraseSlice = stickerSetMode
           ? sliceLineStickerSheetFrames(setPhrasesList, currentSheetIndex)
@@ -204,24 +196,13 @@ export function useLineStickerSlicing({
     const overrides = sheetFrameOverrides[currentSheetIndex] || [];
     const settings = sheetSliceSettings[currentSheetIndex] ?? createLineStickerSetSliceSettings();
     let cancelled = false;
-    const pad: PaddingFour = getEffectivePadding(settings);
     const run = async () => {
       try {
-        const raw = await sliceSpriteSheet(
-          processed,
-          settings.cols,
-          settings.rows,
-          settings.paddingX,
-          settings.paddingY,
-          settings.shiftX,
-          settings.shiftY,
-          false,
-          230,
-          overrides,
+        const raw = await sliceSheetWithSettings(processed, settings, {
+          frameOverrides: overrides,
           chromaKeyColor,
-          pad,
-          LINE_STICKER_CELL_INSET_RATIO
-        );
+          cellInsetRatio: LINE_STICKER_CELL_INSET_RATIO,
+        });
         const phraseSlice = sliceLineStickerSheetFrames(setPhrasesList, currentSheetIndex);
         const frames = await passThroughOrCaptureRaw(raw, phraseSlice, currentSheetIndex);
         if (!cancelled) {

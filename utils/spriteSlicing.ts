@@ -20,7 +20,11 @@ export interface SliceSettings {
     shiftX?: boolean;
     shiftY?: boolean;
   };
-  sliceMode?: 'equal' | 'inferred';
+  /**
+   * `equal` = fixed cell crops; `inferred` = detected rects;
+   * `ownership` = equal grid + connected-component owner masking (cross-cell bleed safe).
+   */
+  sliceMode?: 'equal' | 'inferred' | 'ownership';
   inferredCellRects?: Array<{ x: number; y: number; width: number; height: number }>;
 }
 

@@ -6,9 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Dispatch, SetStateAction, SyntheticEvent } from 'react';
 import {
-  sliceSpriteSheet,
-  sliceSpriteSheetByCellRects,
-  getEffectivePadding,
+  sliceSheetWithSettings,
   type SliceSettings,
   type FrameOverride,
 } from '../utils/imageUtils';
@@ -229,45 +227,18 @@ export function useSpriteSheetFlow(
     let cancelled = false;
     const run = async () => {
       try {
-        if (
-          sliceSettings.sliceMode === 'inferred' &&
-          sliceSettings.inferredCellRects?.length
-        ) {
-          let result = await sliceSpriteSheetByCellRects(
-            source,
-            sliceSettings.inferredCellRects
-          );
-          if (!cancelled && mapFramesAfterSlice) {
-            result = await mapFramesAfterSlice(result);
-          }
-          if (!cancelled) {
-            setFrames(result);
-            setFrameIncluded(new Array(result.length).fill(true));
-          }
-        } else {
-          const padding = getEffectivePadding(sliceSettings);
-          let result = await sliceSpriteSheet(
-            source,
-            sliceSettings.cols,
-            sliceSettings.rows,
-            sliceSettings.paddingX,
-            sliceSettings.paddingY,
-            sliceSettings.shiftX,
-            sliceSettings.shiftY,
-            false,
-            BACKGROUND_REMOVAL_THRESHOLD,
-            frameOverrides,
-            chromaKeyColor,
-            padding,
-            cellInsetRatio
-          );
-          if (!cancelled && mapFramesAfterSlice) {
-            result = await mapFramesAfterSlice(result);
-          }
-          if (!cancelled) {
-            setFrames(result);
-            setFrameIncluded(new Array(result.length).fill(true));
-          }
+        let result = await sliceSheetWithSettings(source, sliceSettings, {
+          frameOverrides,
+          chromaKeyColor,
+          cellInsetRatio,
+          threshold: BACKGROUND_REMOVAL_THRESHOLD,
+        });
+        if (!cancelled && mapFramesAfterSlice) {
+          result = await mapFramesAfterSlice(result);
+        }
+        if (!cancelled) {
+          setFrames(result);
+          setFrameIncluded(new Array(result.length).fill(true));
         }
       } catch (e) {
         if (!cancelled) logger.error('Re-slice failed', e);
@@ -367,33 +338,12 @@ export function useSpriteSheetFlow(
 
   const sliceProcessedSheetToFrames = useCallback(
     async (processedImg: string): Promise<string[]> => {
-      let raw: string[];
-      if (
-        sliceSettings.sliceMode === 'inferred' &&
-        sliceSettings.inferredCellRects?.length
-      ) {
-        raw = await sliceSpriteSheetByCellRects(
-          processedImg,
-          sliceSettings.inferredCellRects
-        );
-      } else {
-        const padding = getEffectivePadding(sliceSettings);
-        raw = await sliceSpriteSheet(
-          processedImg,
-          sliceSettings.cols,
-          sliceSettings.rows,
-          sliceSettings.paddingX,
-          sliceSettings.paddingY,
-          sliceSettings.shiftX,
-          sliceSettings.shiftY,
-          false,
-          BACKGROUND_REMOVAL_THRESHOLD,
-          frameOverrides,
-          chromaKeyColor,
-          padding,
-          cellInsetRatio
-        );
-      }
+      const raw = await sliceSheetWithSettings(processedImg, sliceSettings, {
+        frameOverrides,
+        chromaKeyColor,
+        cellInsetRatio,
+        threshold: BACKGROUND_REMOVAL_THRESHOLD,
+      });
       if (mapFramesAfterSlice) {
         return mapFramesAfterSlice(raw);
       }

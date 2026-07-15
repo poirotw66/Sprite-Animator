@@ -97,6 +97,8 @@ export interface Translations {
   autoOptimized: string;
   center: string;
   dragHint: string;
+  sliceModeOwnership: string;
+  sliceModeOwnershipHint: string;
   downloadProcessed: string;
   downloadOriginal: string;
   processing: string;

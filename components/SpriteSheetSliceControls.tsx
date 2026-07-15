@@ -48,6 +48,7 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
   onReset,
 }) => {
   const { t } = useLanguage();
+  const ownershipOn = sliceSettings.sliceMode === 'ownership';
 
   return (
     <div className="mt-4 p-5 bg-gradient-to-br from-blue-50/80 to-indigo-50/60 border border-blue-200 rounded-xl flex flex-col gap-4 text-sm animate-in fade-in slide-in-from-top-2 shadow-md">
@@ -56,9 +57,32 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
         <div className="flex items-center gap-2 text-blue-900 font-bold">
           <Sliders className="w-5 h-5" />
           <span>{t.gridSliceSettings}</span>
-          <span className="text-xs font-normal text-blue-600 ml-1">(Manual Slicing)</span>
+          <span className="text-xs font-normal text-blue-600 ml-1">
+            {ownershipOn ? `(${t.sliceModeOwnership})` : '(Manual Slicing)'}
+          </span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() =>
+              setSliceSettings((prev) => ({
+                ...prev,
+                sliceMode: prev.sliceMode === 'ownership' ? 'equal' : 'ownership',
+                inferredCellRects:
+                  prev.sliceMode === 'ownership' ? prev.inferredCellRects : undefined,
+              }))
+            }
+            className={`text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border ${
+              ownershipOn
+                ? 'text-white bg-blue-600 border-blue-700 hover:bg-blue-700'
+                : 'text-blue-700 bg-blue-100 border-blue-300 hover:bg-blue-200'
+            }`}
+            title={t.sliceModeOwnershipHint}
+            aria-pressed={ownershipOn}
+            aria-label={t.sliceModeOwnership}
+          >
+            {t.sliceModeOwnership}
+          </button>
           <button
             onClick={onAutoCenter}
             className="text-xs flex items-center gap-1.5 text-blue-700 bg-blue-100 hover:bg-blue-200 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border border-blue-300 hover:shadow-sm"
@@ -79,6 +103,12 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
           </button>
         </div>
       </div>
+
+      {ownershipOn && (
+        <p className="text-xs text-blue-800 bg-blue-50/90 border border-blue-200 rounded-lg px-3 py-2 leading-relaxed">
+          {t.sliceModeOwnershipHint}
+        </p>
+      )}
 
       {/* Grid Size Controls */}
       <div className="bg-white/80 rounded-lg p-3 border border-blue-200/50">
