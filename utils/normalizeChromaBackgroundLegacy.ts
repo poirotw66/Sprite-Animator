@@ -9,6 +9,15 @@ export interface RgbColor {
   b: number;
 }
 
+/** Cyan/mint/teal caption ink must not be snapped to pure green. */
+function isCyanTealCaptionInk(r: number, g: number, b: number): boolean {
+  if (b <= r + 8 || g <= r + 10) return false;
+  const avg = (r + g + b) / 3;
+  if (b >= g * 0.72 && avg > 85) return true;
+  if (r < 45 && b >= g * 0.65 && g >= 70 && avg >= 50 && avg <= 140) return true;
+  return false;
+}
+
 /**
  * True when a pixel looks like AI-generated chroma background (green or magenta screen).
  * Shared by the web canvas normalizer and the headless LINE sticker skill.
@@ -34,6 +43,11 @@ export function isChromaBackgroundPixel(
       isNeonMagenta ||
       distance < tolerance
     );
+  }
+
+  // ponytail: 「青色」sticker captions look green-dominant but B tracks G — keep them.
+  if (isCyanTealCaptionInk(r, g, b)) {
+    return false;
   }
 
   const isPureGreen = g > 150 && r < 100 && b < 100;

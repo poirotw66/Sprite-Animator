@@ -1,8 +1,10 @@
 ﻿/**
- * Pre-refactor chroma key (ecf81e5): HSL RGB-distance detection, connectivity
- * masking, despill, halo removal. Frozen snapshot — use algorithm `legacy`.
+ * Legacy chroma key: HSL RGB-distance detection + connectivity masking.
+ * Green-fringe cleanup aligned with `core` (olive AA erase / hard G-cap / Pass 4c).
  * @module chromaKeyLegacy
  */
+
+import { isNeutralDarkInk } from './stickerStrokeWhite';
 
 /**
  * Convert RGB to HSL color space
@@ -48,6 +50,17 @@ const NEAR_WHITE_THRESHOLD = 240;
 
 function isNearWhite(r: number, g: number, b: number): boolean {
   return r >= NEAR_WHITE_THRESHOLD && g >= NEAR_WHITE_THRESHOLD && b >= NEAR_WHITE_THRESHOLD;
+}
+
+/** Cyan/mint/teal sticker captions (青色) — not chroma-green spill. */
+function isCyanTealCaptionInk(r: number, g: number, b: number): boolean {
+  if (b <= r + 8 || g <= r + 10) return false;
+  const avg = (r + g + b) / 3;
+  // Bright mint/cyan fills
+  if (b >= g * 0.72 && avg > 85) return true;
+  // Darker teal stroke interiors (low R, B tracks G)
+  if (r < 45 && b >= g * 0.65 && g >= 70 && avg >= 50 && avg <= 140) return true;
+  return false;
 }
 
 /**
@@ -189,7 +202,8 @@ export function processChromaKeyLegacy(
         // so this prevents cutting into character edges (blue shirt, anti-aliasing).
         isMatch = r > g * 1.1 && b > g * 1.1 && b <= r + 30 && g < 50;
       } else if (targetIsGreen) {
-        isMatch = g > r * 1.01 && g > b * 1.01;
+        // Exclude cyan/mint caption ink (青色) — high B with high G is not chroma green.
+        isMatch = g > r * 1.01 && g > b * 1.01 && !isCyanTealCaptionInk(r, g, b);
       }
     }
     // So middle cells with #E91E63 etc. are treated as background even when far from corner target
@@ -346,7 +360,10 @@ export function processChromaKeyLegacy(
           (r > g * 1.4 && b > g * 1.4 && (r + b) > 100) ||
           ((r > g * 3 || b > g * 3) && g < 80);
       } else if (targetIsGreen) {
-        isCertainHole = (g > r * 1.4 && g > b * 1.4 && g > 80) || (g > r * 2.5);
+        // Require stronger G-over-B than teal captions (青色字心 ~ B≈0.7G).
+        isCertainHole =
+          !isCyanTealCaptionInk(r, g, b) &&
+          ((g > r * 1.4 && g > b * 1.65 && g > 80) || (g > r * 2.5 && g > b * 1.5));
       }
 
       if (isCertainHole) {
@@ -380,7 +397,9 @@ export function processChromaKeyLegacy(
 
           let isSpill = false;
           if (targetIsMagenta) isSpill = r > g * 1.1 && b > g * 1.1 && b <= r + 30 && g < 100;
-          else if (targetIsGreen) isSpill = g > r * 1.1;
+          else if (targetIsGreen) {
+            isSpill = g > r * 1.1 && !isCyanTealCaptionInk(r, g, b);
+          }
 
           if (isSpill) {
             erodedAlpha[i] = 160;
@@ -413,24 +432,42 @@ export function processChromaKeyLegacy(
 
   onProgress(60);
 
+  // Wider ring than edgeBand: strong green that fails the key often sits 3–6px inside.
+  const strongSpillRadius = Math.max(radius + 3, 5);
+  const nearTransparentForSpill = new Uint8Array(totalPixels);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = y * width + x;
+      if (erodedAlpha[i]! >= 40) continue;
+      for (let dy = -strongSpillRadius; dy <= strongSpillRadius; dy++) {
+        for (let dx = -strongSpillRadius; dx <= strongSpillRadius; dx++) {
+          const ny = y + dy;
+          const nx = x + dx;
+          if (ny < 0 || ny >= height || nx < 0 || nx >= width) continue;
+          nearTransparentForSpill[ny * width + nx] = 1;
+        }
+      }
+    }
+  }
+
   // Pass 3: Final Decontamination (spill suppression) with full edge band
-  // Despill formulas: green g' = min(g, max(r,b)) style; magenta: pull R,B toward G (Wikipedia / industry)
-  // Skip color modification for near-white pixels (e.g. white borders) to avoid green/magenta residue.
+  // Skip color modification for near-white pixels (e.g. white borders) to avoid tint residue.
   for (let i = 0; i < data.length; i += 4) {
     const pixelIdx = i / 4;
-    const alpha = erodedAlpha[pixelIdx];
+    const alpha = erodedAlpha[pixelIdx]!;
     data[i + 3] = alpha;
 
     if (alpha === 0) continue;
 
-    let r = data[i];
-    let g = data[i + 1];
-    let b = data[i + 2];
-    if (isNearWhite(r, g, b)) continue; // preserve white borders; avoid tint residue from spill/blend
+    let r = data[i]!;
+    let g = data[i + 1]!;
+    let b = data[i + 2]!;
+    if (isNearWhite(r, g, b)) continue;
 
     const avg = (r + g + b) / 3;
     const isEdge = alpha < 255;
     const inEdgeBand = edgeBand[pixelIdx] === 1;
+    const nearTransparentSpill = nearTransparentForSpill[pixelIdx] === 1;
     const applyStrongDespill = isEdge || inEdgeBand;
 
     if (targetIsMagenta) {
@@ -443,42 +480,87 @@ export function processChromaKeyLegacy(
         data[i] = Math.round(r * (1 - decontamIntensity) + gray * decontamIntensity);
         data[i + 1] = Math.round(g * (1 - decontamIntensity) + gray * decontamIntensity);
         data[i + 2] = Math.round(b * (1 - decontamIntensity) + gray * decontamIntensity);
-      }
-      else if (applyStrongDespill && magContrast > 3) {
-        // Full-strength spill suppression on edge band (k=1.0); cap R,B at G to avoid overshoot
+      } else if (applyStrongDespill && magContrast > 3) {
         const spillK = inEdgeBand ? 1.0 : 0.95;
         const newR = Math.max(g, Math.round(r - (r - g) * spillK));
         const newB = Math.max(g, Math.round(b - (b - g) * spillK));
         data[i] = newR;
         data[i + 2] = newB;
-        const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
-        data[i] = Math.round(data[i] * 0.6 + gray * 0.4);
-        data[i + 1] = Math.round(data[i + 1] * 0.6 + gray * 0.4);
-        data[i + 2] = Math.round(data[i + 2] * 0.6 + gray * 0.4);
-      }
-      else if (!applyStrongDespill && magContrast > 20) {
+        const gray = (data[i]! + data[i + 1]! + data[i + 2]!) / 3;
+        data[i] = Math.round(data[i]! * 0.6 + gray * 0.4);
+        data[i + 1] = Math.round(data[i + 1]! * 0.6 + gray * 0.4);
+        data[i + 2] = Math.round(data[i + 2]! * 0.6 + gray * 0.4);
+      } else if (!applyStrongDespill && magContrast > 20) {
         const spillIntensity = Math.min(0.5, (magContrast - 15) / 40);
         data[i] = Math.round(r - (r - g) * spillIntensity);
         data[i + 2] = Math.round(b - (b - g) * spillIntensity);
       }
     } else if (targetIsGreen) {
       const greenContrast = g - (r + b) / 2;
-      if (avg < 100 && greenContrast > 4) {
-        const gray = avg;
-        data[i] = Math.round(r * 0.15 + gray * 0.85);
-        data[i + 1] = Math.round(g * 0.15 + gray * 0.85);
-        data[i + 2] = Math.round(b * 0.15 + gray * 0.85);
+      // Erase strong green spill spikes near transparency instead of graying them.
+      // Skip cyan/mint caption ink — thin「青色」strokes also look sparse near transparency.
+      if (
+        nearTransparentSpill &&
+        g > r &&
+        g > b &&
+        greenContrast > 32 &&
+        !isCyanTealCaptionInk(r, g, b)
+      ) {
+        let greenSpillNeighbors = 0;
+        const x = pixelIdx % width;
+        const y = (pixelIdx - x) / width;
+        for (let dy = -2; dy <= 2; dy++) {
+          for (let dx = -2; dx <= 2; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            const nx = x + dx;
+            const ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+            if (erodedAlpha[ny * width + nx]! <= 40) continue;
+            const ni = (ny * width + nx) * 4;
+            const nr = data[ni]!;
+            const ng = data[ni + 1]!;
+            const nb = data[ni + 2]!;
+            const nContrast = ng - (nr + nb) / 2;
+            if (ng > nr && ng > nb && nContrast > 32 && !isCyanTealCaptionInk(nr, ng, nb)) {
+              greenSpillNeighbors++;
+            }
+          }
+        }
+        if (greenSpillNeighbors < 3) {
+          data[i + 3] = 0;
+          erodedAlpha[pixelIdx] = 0;
+          continue;
+        }
       }
-      else if (applyStrongDespill && greenContrast > 3) {
-        // Despill: cap green at max(r,b) + small margin (Wikipedia: (r, min(g,b), b) style; we use max(r,b) for natural look)
+      if (avg < 100 && greenContrast > 4) {
+        if (isNeutralDarkInk(r, g, b) && greenContrast < 14) {
+          // ponytail: preserve hair/shoes; only gray obvious spill tint
+        } else if (isCyanTealCaptionInk(r, g, b)) {
+          // keep mint/cyan sticker captions intact
+        } else {
+          // Gray from R/B only — including G re-bakes olive fringes.
+          const spillFreeGray = (r + b) / 2;
+          data[i] = Math.round(r * 0.25 + spillFreeGray * 0.75);
+          data[i + 1] = Math.round(Math.min(g, Math.max(r, b)));
+          data[i + 2] = Math.round(b * 0.25 + spillFreeGray * 0.75);
+          if (inEdgeBand && greenContrast > 12) {
+            const gray = (data[i]! + data[i + 1]! + data[i + 2]!) / 3;
+            data[i] = Math.round(data[i]! * 0.55 + gray * 0.45);
+            data[i + 1] = Math.round(data[i + 1]! * 0.55 + gray * 0.45);
+            data[i + 2] = Math.round(data[i + 2]! * 0.55 + gray * 0.45);
+          }
+        }
+      } else if (applyStrongDespill && greenContrast > 3 && !isCyanTealCaptionInk(r, g, b)) {
+        // Edge band: hard-cap G at max(R,B). Interior keeps a small margin.
         const rbMax = Math.max(r, b);
-        const gCapped = Math.min(g, rbMax + 15);
-        data[i + 1] = Math.round(gCapped);
-        if (inEdgeBand && greenContrast > 10) {
-          const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
-          data[i] = Math.round(data[i] * 0.85 + gray * 0.15);
-          data[i + 1] = Math.round(data[i + 1] * 0.85 + gray * 0.15);
-          data[i + 2] = Math.round(data[i + 2] * 0.85 + gray * 0.15);
+        const gMargin = inEdgeBand ? 0 : 8;
+        data[i + 1] = Math.round(Math.min(g, rbMax + gMargin));
+        if (inEdgeBand && greenContrast > 8) {
+          const gray = (data[i]! + data[i + 1]! + data[i + 2]!) / 3;
+          const pull = greenContrast > 18 ? 0.45 : 0.28;
+          data[i] = Math.round(data[i]! * (1 - pull) + gray * pull);
+          data[i + 1] = Math.round(data[i + 1]! * (1 - pull) + gray * pull);
+          data[i + 2] = Math.round(data[i + 2]! * (1 - pull) + gray * pull);
         }
       }
     }
@@ -491,9 +573,8 @@ export function processChromaKeyLegacy(
 
   onProgress(90);
 
-  // Pass 4: Edge color sampling - blend edge band pixels toward opaque neighbor colors to reduce halo
-  // Pass 4b: Dark edge lift - stronger blend for pixels darker than neighbors (removes black/dark ring)
-  // Skip blending for near-white pixels so white borders are not tinted by neighbor average.
+  // Pass 4: Edge color sampling - blend toward opaque neighbors to reduce halo.
+  // Pass 4b: Dark edge lift - stronger blend for pixels darker than neighbors.
   const sampled = new Uint8ClampedArray(data.length);
   sampled.set(data);
   for (let y = 1; y < height - 1; y++) {
@@ -501,47 +582,100 @@ export function processChromaKeyLegacy(
       const i = (y * width + x) * 4;
       const pixelIdx = i / 4;
       if (edgeBand[pixelIdx] === 0) continue;
-      const alpha = sampled[i + 3];
+      const alpha = sampled[i + 3]!;
       if (alpha === 0) continue;
-      if (isNearWhite(sampled[i], sampled[i + 1], sampled[i + 2])) continue;
+      if (isNearWhite(sampled[i]!, sampled[i + 1]!, sampled[i + 2]!)) continue;
+      if (isNeutralDarkInk(sampled[i]!, sampled[i + 1]!, sampled[i + 2]!)) continue;
 
-      let sumR = 0, sumG = 0, sumB = 0;
+      let sumR = 0;
+      let sumG = 0;
+      let sumB = 0;
       let count = 0;
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
           if (dx === 0 && dy === 0) continue;
           const ni = ((y + dy) * width + (x + dx)) * 4;
-          if (sampled[ni + 3] >= 250) {
-            sumR += sampled[ni];
-            sumG += sampled[ni + 1];
-            sumB += sampled[ni + 2];
-            count++;
+          if (sampled[ni + 3]! < 250) continue;
+          const nR = sampled[ni]!;
+          const nG = sampled[ni + 1]!;
+          const nB = sampled[ni + 2]!;
+          // Skip spill-tinted neighbors so Pass 4 cannot reintroduce olive fringe.
+          if (
+            targetIsGreen &&
+            (nG - Math.max(nR, nB) > 4 ||
+              (Math.min(nR, nG) - nB > 4 && Math.abs(nR - nG) <= 16))
+          ) {
+            continue;
           }
+          if (targetIsMagenta && (nR + nB) / 2 - nG > 12) continue;
+          sumR += nR;
+          sumG += nG;
+          sumB += nB;
+          count++;
         }
       }
       if (count > 0) {
         const nR = sumR / count;
         const nG = sumG / count;
         const nB = sumB / count;
-        const lumP = (sampled[i] + sampled[i + 1] + sampled[i + 2]) / 3;
+        const lumP = (sampled[i]! + sampled[i + 1]! + sampled[i + 2]!) / 3;
         const lumN = (nR + nG + nB) / 3;
-        // Dark edge: pixel darker than foreground neighbors -> stronger blend to remove black ring / anti-alias tint
         const ratio = lumN > 15 ? lumP / lumN : 1;
         let effectiveBlend = blend;
         if (lumP < 75 && lumN > 60) {
-          effectiveBlend = Math.min(0.85, blend + 0.65); // near-black residue (e.g. black background bleed) -> very strong lift
+          effectiveBlend = Math.min(0.85, blend + 0.65);
         } else if (ratio < 0.82) {
-          effectiveBlend = Math.min(0.78, blend + 0.52); // clearly dark fringe
+          effectiveBlend = Math.min(0.78, blend + 0.52);
         } else if (ratio < 0.92) {
-          effectiveBlend = Math.min(0.65, blend + 0.38); // moderate dark halo
+          effectiveBlend = Math.min(0.65, blend + 0.38);
         } else if (ratio < 0.98) {
-          effectiveBlend = Math.min(0.52, blend + 0.24); // slight dark tint (anti-aliasing)
+          effectiveBlend = Math.min(0.52, blend + 0.24);
         } else if (ratio < 1.0) {
-          effectiveBlend = Math.min(0.40, blend + 0.14); // barely darker -> minimal extra pull
+          effectiveBlend = Math.min(0.40, blend + 0.14);
         }
-        data[i] = Math.round(sampled[i] * (1 - effectiveBlend) + nR * effectiveBlend);
-        data[i + 1] = Math.round(sampled[i + 1] * (1 - effectiveBlend) + nG * effectiveBlend);
-        data[i + 2] = Math.round(sampled[i + 2] * (1 - effectiveBlend) + nB * effectiveBlend);
+        data[i] = Math.round(sampled[i]! * (1 - effectiveBlend) + nR * effectiveBlend);
+        data[i + 1] = Math.round(sampled[i + 1]! * (1 - effectiveBlend) + nG * effectiveBlend);
+        data[i + 2] = Math.round(sampled[i + 2]! * (1 - effectiveBlend) + nB * effectiveBlend);
+      }
+    }
+  }
+
+  // Pass 4c: clamp green spill near transparency (olive AA often sits outside edgeBand).
+  if (targetIsGreen) {
+    const clampRadius = Math.max(radius + 6, 8);
+    const nearTransparent = new Uint8Array(totalPixels);
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = y * width + x;
+        if (data[i * 4 + 3]! >= 40) continue;
+        for (let dy = -clampRadius; dy <= clampRadius; dy++) {
+          for (let dx = -clampRadius; dx <= clampRadius; dx++) {
+            const ny = y + dy;
+            const nx = x + dx;
+            if (ny < 0 || ny >= height || nx < 0 || nx >= width) continue;
+            nearTransparent[ny * width + nx] = 1;
+          }
+        }
+      }
+    }
+    for (let i = 0; i < totalPixels; i++) {
+      if (nearTransparent[i] === 0) continue;
+      const idx = i * 4;
+      if (data[idx + 3]! === 0) continue;
+      let r = data[idx]!;
+      let g = data[idx + 1]!;
+      let b = data[idx + 2]!;
+      if (isCyanTealCaptionInk(r, g, b)) continue;
+      const rbMax = Math.max(r, b);
+      if (g > rbMax) {
+        g = rbMax;
+        data[idx + 1] = g;
+      }
+      const yellowGreenExcess = Math.min(r, g) - b;
+      if (yellowGreenExcess > 2 && g >= r - 4 && r - g <= 12) {
+        if (isNeutralDarkInk(r, g, b) && yellowGreenExcess < 6) continue;
+        data[idx] = b;
+        data[idx + 1] = Math.min(data[idx + 1]!, b);
       }
     }
   }

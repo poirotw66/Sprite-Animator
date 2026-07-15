@@ -62,6 +62,15 @@ function isNearWhite(r: number, g: number, b: number): boolean {
   return r >= NEAR_WHITE_THRESHOLD && g >= NEAR_WHITE_THRESHOLD && b >= NEAR_WHITE_THRESHOLD;
 }
 
+/** Cyan/mint/teal sticker captions (青色) — not chroma-green spill. */
+function isCyanTealCaptionInk(r: number, g: number, b: number): boolean {
+  if (b <= r + 8 || g <= r + 10) return false;
+  const avg = (r + g + b) / 3;
+  if (b >= g * 0.72 && avg > 85) return true;
+  if (r < 45 && b >= g * 0.65 && g >= 70 && avg >= 50 && avg <= 140) return true;
+  return false;
+}
+
 export interface ProcessChromaKeyOptions {
   /** true/false wins; undefined → auto-detect regular gutters. */
   guided?: boolean;
@@ -324,7 +333,9 @@ export function processChromaKey(
           (r > g * 1.4 && b > g * 1.4 && (r + b) > 100) ||
           ((r > g * 3 || b > g * 3) && g < 80);
       } else if (targetIsGreen) {
-        isCertainHole = (g > r * 1.4 && g > b * 1.4 && g > 80) || (g > r * 2.5);
+        isCertainHole =
+          !isCyanTealCaptionInk(r, g, b) &&
+          ((g > r * 1.4 && g > b * 1.65 && g > 80) || (g > r * 2.5 && g > b * 1.5));
       }
 
       if (isCertainHole) {
@@ -481,10 +492,12 @@ export function processChromaKey(
         nearTransparentSpill &&
         g > r &&
         g > b &&
-        greenContrast > 32
+        greenContrast > 32 &&
+        !isCyanTealCaptionInk(r, g, b)
       ) {
         // Only erase thin edge spikes — keep interior green props (4×4 block has
         // ≥3 same-class neighbors in 5×5; a lone hair AA pixel has 0–2).
+        // Skip cyan/mint caption ink — thin「青色」strokes are also sparse.
         let greenSpillNeighbors = 0;
         const x = pixelIdx % width;
         const y = (pixelIdx - x) / width;
@@ -500,7 +513,9 @@ export function processChromaKey(
             const ng = data[ni + 1]!;
             const nb = data[ni + 2]!;
             const nContrast = ng - (nr + nb) / 2;
-            if (ng > nr && ng > nb && nContrast > 32) greenSpillNeighbors++;
+            if (ng > nr && ng > nb && nContrast > 32 && !isCyanTealCaptionInk(nr, ng, nb)) {
+              greenSpillNeighbors++;
+            }
           }
         }
         if (greenSpillNeighbors < 3) {
