@@ -6,6 +6,7 @@ Technical docs are grouped by domain. Agent workflow guides live under `workflow
 
 - [LINE Sticker Pipeline](./workflows/line-sticker-pipeline.md) — image + phrase JSON → stickers
 - [LINE Sticker Daily Factory](./workflows/line-sticker-daily-factory.md) — 30-set/day batch orchestration
+- [ChatGPT Sheet Converter V2](./workflows/sheet-converter-v2.md) — additive Python flood-fill + smart cut (paper-bg sheets)
 
 ## Chroma / background
 
