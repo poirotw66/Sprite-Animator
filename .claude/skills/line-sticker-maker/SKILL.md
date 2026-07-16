@@ -17,11 +17,10 @@ It **reuses the app's own modules** (`utils/lineStickerPrompt.ts`,
 
 ## How to run
 
-**Simplest (image + phrase-set JSON):** use the pipeline wrapper — see
-**`.claude/skills/line-sticker-pipeline/SKILL.md`**.
+**Simplest (image + phrase-set JSON):** see [docs/workflows/line-sticker-pipeline.md](../../docs/workflows/line-sticker-pipeline.md) or `line-sticker-pipeline` skill.
 
 ```bash
-npx tsx .claude/skills/line-sticker-maker/scripts/run-from-inputs.mts \
+npx tsx scripts/line-sticker/run-from-inputs.mts \
   --image path/to/character.png \
   --phrase-set .claude/skills/line-sticker-phrase-design/example/daily-set-40.json \
   --out output/my-set
@@ -30,7 +29,7 @@ npx tsx .claude/skills/line-sticker-maker/scripts/run-from-inputs.mts \
 **Full control (job config):**
 
 ```bash
-npx tsx .claude/skills/line-sticker-maker/scripts/generate.mts \
+npx tsx scripts/line-sticker/generate.mts \
   --config .claude/skills/line-sticker-maker/examples/demo-job.config.json \
   --out output/my-set
 ```
@@ -96,7 +95,7 @@ cp .claude/skills/line-sticker-maker/credentials.env.example \
    .claude/skills/line-sticker-maker/credentials.env
 # fill LINE_EMAIL, LINE_PASSWORD, LINE_CREATOR_ID, GOOGLE_*
 
-npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts \
+npx tsx scripts/line-sticker/run-line-upload.mts \
   --env output/my-set/.env.batch/My_Set_Name.env
 ```
 
@@ -191,13 +190,13 @@ Without `upload`, legacy output is `<out>/line-upload/` + `line-upload.zip`.
 ### Re-slice after chroma changes (no Gemini)
 
 ```bash
-npx tsx .claude/skills/line-sticker-maker/scripts/reslice-sheet.mts <out>/sheet-1 4 5 template
-npx tsx .claude/skills/line-sticker-maker/scripts/reoverlay-sheet.mts <out>/sheet-1 4 5 \
+npx tsx scripts/line-sticker/reslice-sheet.mts <out>/sheet-1 4 5 template
+npx tsx scripts/line-sticker/reoverlay-sheet.mts <out>/sheet-1 4 5 \
   --phrases <out>/phrase-set.json --offset 0
-npx tsx .claude/skills/line-sticker-maker/scripts/reslice-sheet.mts <out>/sheet-2 4 5 template
-npx tsx .claude/skills/line-sticker-maker/scripts/reoverlay-sheet.mts <out>/sheet-2 4 5 \
+npx tsx scripts/line-sticker/reslice-sheet.mts <out>/sheet-2 4 5 template
+npx tsx scripts/line-sticker/reoverlay-sheet.mts <out>/sheet-2 4 5 \
   --phrases <out>/phrase-set.json --offset 20
-npx tsx .claude/skills/line-sticker-maker/scripts/finalize.mts \
+npx tsx scripts/line-sticker/finalize.mts \
   --out <out> --config <out>/job.config.json
 ```
 

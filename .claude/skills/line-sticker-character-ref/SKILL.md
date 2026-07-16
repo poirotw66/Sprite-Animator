@@ -120,7 +120,7 @@ Character ref:
 ### Example follow-up
 
 ```bash
-npx tsx .claude/skills/line-sticker-maker/scripts/run-from-inputs.mts \
+npx tsx scripts/line-sticker/run-from-inputs.mts \
   --image output/refs/cream-otter.png \
   --phrase-set output/cream-otter/phrases.json \
   --out output/cream-otter

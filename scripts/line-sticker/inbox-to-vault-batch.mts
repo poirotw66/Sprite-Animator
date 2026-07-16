@@ -12,15 +12,15 @@ import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-import { formatSetId, loadRegistry } from '../../../../utils/stickerRegistry.ts';
+import { formatSetId, loadRegistry } from '../../utils/registry/stickerRegistry.ts';
 import {
   collectUsedCharacterSlugs,
   resolveVaultRoot,
   vaultRegistryPath,
-} from '../../../../utils/registry/stickerVault.ts';
+} from '../../utils/registry/stickerVault.ts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(SCRIPT_DIR, '../../../..');
+const ROOT = resolve(SCRIPT_DIR, '../..');
 const INBOX_DIR = resolve(ROOT, 'inbox');
 const MANIFEST_PATH = resolve(INBOX_DIR, 'vault-batch.json');
 const CHAR_REF_SCRIPT = resolve(

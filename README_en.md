@@ -285,10 +285,11 @@ Issues and Pull Requests are welcome!
 
 ## 📚 Related Documentation
 
-- [Slice & Align Flow](./md/SLICE_AND_ALIGN_FLOW.md) - Slicing feature technical details
-- [Chroma Key Improvements](./md/CHROMA_KEY.md) - Background removal technical details
-- [Background Color Normalization](./md/BACKGROUND_COLOR_NORMALIZATION.md) - Background color unification
-- [Project Optimization Roadmap](./md/PROJECT_OPTIMIZATION_ROADMAP.md) - Future optimization plans
+- [Slice & Align Flow](./docs/animation/SLICE_AND_ALIGN_FLOW.md) - Slicing feature technical details
+- [Chroma Key Improvements](./docs/chroma/CHROMA_KEY.md) - Background removal technical details
+- [Background Color Normalization](./docs/chroma/BACKGROUND_COLOR_NORMALIZATION.md) - Background color unification
+- [Project Optimization Roadmap](./docs/PROJECT_OPTIMIZATION_ROADMAP.md) - Future optimization plans
+- [Documentation index](./docs/README.md) - Full technical docs catalog
 
 ---
 

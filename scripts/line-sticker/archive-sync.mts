@@ -11,7 +11,7 @@ import { copyFile, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { basename, dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { parsePhraseSetJson } from '../../../../utils/lineStickerPhraseSetFormat.ts';
+import { parsePhraseSetJson } from '../../utils/lineStickerPhraseSetFormat.ts';
 import {
   DEFAULT_REGISTRY_REL_PATH,
   collectCompletedOutputDirs,
@@ -22,7 +22,7 @@ import {
   saveRegistry,
   type StickerRegistryEntry,
   upsertEntry,
-} from '../../../../utils/stickerRegistry.ts';
+} from '../../utils/registry/stickerRegistry.ts';
 import {
   CHARACTER_META_FORMAT,
   SET_META_FORMAT,
@@ -38,11 +38,11 @@ import {
   vaultRegistryPath,
   type VaultCharacterMeta,
   type VaultSetMeta,
-} from '../../../../utils/stickerVault.ts';
-import { writeVaultCharacterRef } from '../../../../utils/registry/vaultCharacterRef.ts';
+} from '../../utils/registry/stickerVault.ts';
+import { writeVaultCharacterRef } from '../../utils/registry/vaultCharacterRef.ts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(SCRIPT_DIR, '../../../..');
+const ROOT = resolve(SCRIPT_DIR, '../..');
 
 function parseArgs(argv: string[]): Record<string, string | boolean> {
   const args: Record<string, string | boolean> = {};

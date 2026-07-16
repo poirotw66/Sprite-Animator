@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { decodePng } from '../.claude/skills/line-sticker-maker/scripts/nodeImage.mts';
+import { decodePng } from '../scripts/line-sticker/nodeImage.mts';
 import {
   buildGridCandidates,
   detectBestGridLayoutFromRgba,

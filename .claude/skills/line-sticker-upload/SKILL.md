@@ -63,7 +63,7 @@ line-sticker-maker (generate.mts)
 ### 1. Generate stickers
 
 ```bash
-npx tsx .claude/skills/line-sticker-maker/scripts/generate.mts \
+npx tsx scripts/line-sticker/generate.mts \
   --config .claude/skills/line-sticker-maker/examples/demo-job.config.json \
   --out output/my-set
 ```
@@ -71,7 +71,7 @@ npx tsx .claude/skills/line-sticker-maker/scripts/generate.mts \
 ### 2. Manual sync (if needed)
 
 ```bash
-npx tsx .claude/skills/line-sticker-maker/scripts/sync-upload-input.mts \
+npx tsx scripts/line-sticker/sync-upload-input.mts \
   --source output/my-set \
   --config .claude/skills/line-sticker-maker/examples/demo-job.config.json
 ```
@@ -79,7 +79,7 @@ npx tsx .claude/skills/line-sticker-maker/scripts/sync-upload-input.mts \
 ### 3. Upload to LINE
 
 ```bash
-npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts \
+npx tsx scripts/line-sticker/run-line-upload.mts \
   --env output/my-set/.env.batch/Set_Name.env
 ```
 

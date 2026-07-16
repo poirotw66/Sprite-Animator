@@ -8,13 +8,13 @@ import {
   FONT_PRESETS,
   TEXT_COLOR_PRESETS,
   getReservedCaptionBandLabelForFrame,
-} from '../../../../utils/lineStickerPrompt.ts';
+} from '../../utils/lineStickerPrompt.ts';
 import {
   DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING,
   programmaticTextStrokeWidthPx,
   type ProgrammaticTextOverlayTuning,
-} from '../../../../utils/lineStickerTextOverlayTypes.ts';
-import { computeAutoCaptionLayout } from '../../../../utils/lineStickerTextOverlaySubject.ts';
+} from '../../utils/lineStickerTextOverlayTypes.ts';
+import { computeAutoCaptionLayout } from '../../utils/lineStickerTextOverlaySubject.ts';
 import {
   extractFillHexFromTextColorPreset,
   resolveCanvasFontNumericWeight,
@@ -22,13 +22,13 @@ import {
   resolveProgrammaticPlacementLabel,
   getEffectiveProgrammaticPlacementMode,
   strokeColorForFill,
-} from '../../../../utils/lineStickerTextOverlay.ts';
-import { ensureBundledStickerFontsRegistered } from '../../../../utils/lineStickerBundledFonts.ts';
-import { composeStickerFrame, shouldUseComposeLayout } from '../../../../utils/lineStickerCompose.ts';
+} from '../../utils/lineStickerTextOverlay.ts';
+import { ensureBundledStickerFontsRegistered } from '../../utils/lineStickerBundledFonts.ts';
+import { composeStickerFrame, shouldUseComposeLayout } from '../../utils/lineStickerCompose.ts';
 import {
   mergeProgrammaticComposeConfig,
   type ProgrammaticComposeConfig,
-} from '../../../../utils/lineStickerTextOverlayTypes.ts';
+} from '../../utils/lineStickerTextOverlayTypes.ts';
 
 type FontPresetKey = keyof typeof FONT_PRESETS;
 type TextColorPresetKey = keyof typeof TEXT_COLOR_PRESETS;

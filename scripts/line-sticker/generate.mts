@@ -33,19 +33,19 @@ import {
   type ThemeSlot,
   type LineStickerTextRendering,
   type LineStickerPromptVersion,
-} from '../../../../utils/lineStickerPrompt.ts';
-import { DEFAULT_SKILL_STICKER_MODEL, DEFAULT_CHROMA_KEY_ALGORITHM, defaultResolutionForModel } from '../../../../utils/constants.ts';
-import type { ChromaKeyColorType, ChromaKeyAlgorithm } from '../../../../types.ts';
+} from '../../utils/lineStickerPrompt.ts';
+import { DEFAULT_SKILL_STICKER_MODEL, DEFAULT_CHROMA_KEY_ALGORITHM, defaultResolutionForModel } from '../../utils/constants.ts';
+import type { ChromaKeyColorType, ChromaKeyAlgorithm } from '../../types.ts';
 import {
   mergeProgrammaticComposeConfig,
   mergeProgrammaticTextTuning,
   type ProgrammaticComposeConfig,
   type ProgrammaticTextOverlayTuning,
-} from '../../../../utils/lineStickerTextOverlayTypes.ts';
+} from '../../utils/lineStickerTextOverlayTypes.ts';
 
 import { finalizeStickerJob } from './finalizeJob.mts';
 import type { UploadConfig } from './uploadConfig.mts';
-import { loadGeminiApiKey } from '../../shared/loadGeminiApiKey.mts';
+import { loadGeminiApiKey } from '../../.claude/skills/shared/loadGeminiApiKey.mts';
 import { generateOneSheet, type SheetPlan } from './sheetGeneration.mts';
 import { decodePng, type RgbaImage } from './nodeImage.mts';
 import {
@@ -55,7 +55,7 @@ import {
 } from './sheetPlan.ts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = resolve(SCRIPT_DIR, '../../../..');
+const ROOT_DIR = resolve(SCRIPT_DIR, '../..');
 
 interface StickerConfig {
   referenceImage: string;
@@ -609,7 +609,7 @@ async function main() {
     console.log(`  manifest: ${manifestPath}`);
     console.log('\n▶ Next: merge sheets and repack to the upload root:');
     console.log(
-      `  npx tsx .claude/skills/line-sticker-maker/scripts/finalize.mts --out "${outDir}" --config "${configArg}"` +
+      `  npx tsx scripts/line-sticker/finalize.mts --out "${outDir}" --config "${configArg}"` +
         (sheetDirOverride ? ` --sheets <sheet-1>,${sheetDirOverride}` : '')
     );
     return;

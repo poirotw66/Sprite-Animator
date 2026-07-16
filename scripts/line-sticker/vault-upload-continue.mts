@@ -11,7 +11,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { parseEnv } from './uploadCredentials.mts';
 import { resolveSubmitEnabled, resolveUploadStepsFromEnv } from './uploadPipeline.mts';
 
-const ROOT = resolve(import.meta.dirname, '../../../..');
+const ROOT = resolve(import.meta.dirname, '../..');
 const RUN_UPLOAD = resolve(import.meta.dirname, 'run-line-upload.mts');
 const UPLOAD_SCRIPTS = resolve(ROOT, '.claude/skills/line-sticker-upload/scripts');
 const MASTER_PLAYWRIGHT = resolve(UPLOAD_SCRIPTS, 'playwright_line_state.json');

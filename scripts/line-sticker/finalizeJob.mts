@@ -7,7 +7,7 @@ import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
 import { resolve, relative, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { decodePng, encodePng, prepareLineStickerFrame, type RgbaImage } from './nodeImage.mts';
-import { auditStickerFrames, type StickerQaReport } from '../../../../utils/stickerFrameQa.ts';
+import { auditStickerFrames, type StickerQaReport } from '../../utils/stickerFrameQa.ts';
 import {
   buildLineUploadZipBytes,
   writeLineUploadPack,
@@ -23,18 +23,15 @@ import {
 } from './uploadConfig.mts';
 import { shouldSyncToUploadRoot, syncPackToUploadRoot } from './sync-upload-input.mts';
 import { resolveSetLayout, DEFAULT_LINE_STICKER_SET_COUNT } from './sheetPlan.ts';
-import { validateSheetGrid, buildGridCandidates } from '../../../../utils/sheetGridValidation.ts';
+import { validateSheetGrid, buildGridCandidates } from '../../utils/sheetGridValidation.ts';
 import {
   assertGridScoresPass,
   DEFAULT_MIN_GRID_ALIGNMENT_SCORE,
   findGridScoreFailures,
   formatGridGateMessage,
-} from '../../../../utils/gridScoreGate.ts';
+} from '../../utils/gridScoreGate.ts';
 
-const FINALIZE_PROJECT_ROOT = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  '../../../..'
-);
+const FINALIZE_PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 export interface JobManifest {
   config?: JobConfig;
@@ -319,7 +316,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
       const submitHint =
         mergedConfig.lineUploadSubmit === true ? ' --submit true' : ' --submit false';
       console.log(
-        `   · upload: npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts --env ${envRel}${submitHint}`
+        `   · upload: npx tsx scripts/line-sticker/run-line-upload.mts --env ${envRel}${submitHint}`
       );
     }
   } else {

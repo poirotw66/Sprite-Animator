@@ -10,7 +10,7 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { parsePhraseSetJson } from '../../../../utils/lineStickerPhraseSetFormat.ts';
+import { parsePhraseSetJson } from '../../utils/lineStickerPhraseSetFormat.ts';
 import {
   DEFAULT_REGISTRY_REL_PATH,
   formatSetId,
@@ -21,10 +21,10 @@ import {
   saveRegistry,
   type StickerRegistryEntry,
   upsertEntry,
-} from '../../../../utils/stickerRegistry.ts';
+} from '../../utils/registry/stickerRegistry.ts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(SCRIPT_DIR, '../../../..');
+const ROOT = resolve(SCRIPT_DIR, '../..');
 
 function parseArgs(argv: string[]): Record<string, string | boolean> {
   const args: Record<string, string | boolean> = {};

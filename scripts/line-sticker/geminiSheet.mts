@@ -13,10 +13,10 @@ import {
   buildGridLayoutAnchorBlock,
   buildGridLayoutReminderBlock,
   buildLineStickerPromptSuffix,
-} from '../../../../services/gemini/spriteSheetPrompts.ts';
-import { getLineStickerSpriteSheetAspectRatio } from '../../../../utils/lineStickerSheetAspect.ts';
-import { CHROMA_KEY_COLORS } from '../../../../utils/constants.ts';
-import type { ChromaKeyColorType } from '../../../../types.ts';
+} from '../../services/gemini/spriteSheetPrompts.ts';
+import { getLineStickerSpriteSheetAspectRatio } from '../../utils/lineStickerSheetAspect.ts';
+import { CHROMA_KEY_COLORS } from '../../utils/constants.ts';
+import type { ChromaKeyColorType } from '../../types.ts';
 
 function isRetryable(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err);

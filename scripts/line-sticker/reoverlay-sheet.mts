@@ -16,18 +16,18 @@ import {
   mergeProgrammaticTextTuning,
   type ProgrammaticComposeConfig,
   type ProgrammaticTextOverlayTuning,
-} from '../../../../utils/lineStickerTextOverlayTypes.ts';
-import { FONT_PRESETS, TEXT_COLOR_PRESETS } from '../../../../utils/lineStickerPrompt.ts';
+} from '../../utils/lineStickerTextOverlayTypes.ts';
+import { FONT_PRESETS, TEXT_COLOR_PRESETS } from '../../utils/lineStickerPrompt.ts';
 import {
   decodeImage,
   encodePng,
   sliceSheet,
 } from './nodeImage.mts';
-import { buildEqualGridBounds } from '../../../../utils/gridSheetTemplate.ts';
+import { buildEqualGridBounds } from '../../utils/gridSheetTemplate.ts';
 import { composePhraseOnRgbaFrame, overlayPhraseOnRgbaFrame } from './programmaticTextOverlay.mts';
-import { shouldUseComposeLayout, ensureLandscapeStickerFrame } from '../../../../utils/lineStickerCompose.ts';
-import { trimFrameToContent } from '../../../../utils/sheetComponentSlicer.ts';
-import { loadSheetPhrases } from '../../../../utils/lineStickerSheetPhrases.ts';
+import { shouldUseComposeLayout, ensureLandscapeStickerFrame } from '../../utils/lineStickerCompose.ts';
+import { trimFrameToContent } from '../../utils/sheetComponentSlicer.ts';
+import { loadSheetPhrases } from '../../utils/lineStickerSheetPhrases.ts';
 
 const argv = process.argv.slice(2);
 const sheetDir = resolve(argv[0] ?? '');
