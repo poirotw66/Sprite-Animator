@@ -1,5 +1,5 @@
 {
-  "name": "角色幀動畫生成器 (Sprite Animator)",
-  "description": "上傳靜態角色圖片，利用 Gemini Image 模型生成連續動作幀並組合成動畫。",
+  "name": "Sprite Animator & Sticker Studio",
+  "description": "Multi-tool studio: Sprite Animator, LINE sticker builder (headless factory), One-Page Comic, AI background removal.",
   "requestFramePermissions": []
 }
