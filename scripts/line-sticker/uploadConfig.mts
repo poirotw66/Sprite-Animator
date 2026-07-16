@@ -6,9 +6,9 @@ import { copyFile, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildBatchEnvContent } from './uploadCredentials.mts';
-import { prepareShopListing } from '../../../../utils/lineCreatorsListingText.ts';
+import { prepareShopListing } from '../../utils/lineCreatorsListingText.ts';
 
-const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 export interface UploadConfig {
   /** When false, skip upload-root packaging. Default: true when block is present. */

@@ -14,8 +14,7 @@ import {
 } from './uploadConfig.mts';
 import { buildBatchEnvContent } from './uploadCredentials.mts';
 
-const SKILL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const PROJECT_ROOT = resolve(SKILL_ROOT, '../../..');
+const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 export const DEFAULT_UPLOAD_ROOT = resolve(PROJECT_ROOT, '.line-upload');
 
 export interface SyncUploadOptions {
@@ -132,7 +131,7 @@ export async function main() {
   console.log(`✓ Synced → ${result.destDir}`);
   console.log(`  batch env: ${result.envFilePath}`);
   console.log(
-    `  npx tsx .claude/skills/line-sticker-maker/scripts/run-line-upload.mts --env ${result.envFilePath}`
+    `  npx tsx scripts/line-sticker/run-line-upload.mts --env ${result.envFilePath}`
   );
 }
 

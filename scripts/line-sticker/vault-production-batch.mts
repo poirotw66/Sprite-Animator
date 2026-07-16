@@ -12,16 +12,16 @@ import { basename, dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-import { parseRegistryJson } from '../../../../utils/stickerRegistryFormat.ts';
+import { parseRegistryJson } from '../../utils/registry/stickerRegistryFormat.ts';
 import {
   resolveRegistryAssetPath,
   resolveVaultRoot,
   vaultRegistryPath,
   VAULT_PHRASE_SET_FILENAME,
-} from '../../../../utils/registry/stickerVault.ts';
+} from '../../utils/registry/stickerVault.ts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(SCRIPT_DIR, '../../../..');
+const ROOT = resolve(SCRIPT_DIR, '../..');
 const RUN_FROM_INPUTS = resolve(SCRIPT_DIR, 'run-from-inputs.mts');
 const DEFAULT_OUT_BASE = 'output/vault-production';
 

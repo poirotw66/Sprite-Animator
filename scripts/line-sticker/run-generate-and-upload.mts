@@ -14,7 +14,7 @@ import { resolveUploadConfig } from './uploadConfig.mts';
 import { assertOutDirGridGate } from './manifestGridGate.mts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(SCRIPT_DIR, '../../../..');
+const ROOT = resolve(SCRIPT_DIR, '../..');
 
 function parseArgs(argv: string[]): Record<string, string> {
   const args: Record<string, string> = {};
@@ -59,7 +59,7 @@ const batchPath = resolve(outDir, `.env.batch/${envBase}.env`);
 
 console.log(`\n========== ${upload.setName} ==========\n`);
 console.log('▶ generate...');
-run('npx', ['tsx', '.claude/skills/line-sticker-maker/scripts/generate.mts', '--config', config, '--out', out]);
+run('npx', ['tsx', 'scripts/line-sticker/generate.mts', '--config', config, '--out', out]);
 
 await assertOutDirGridGate(outDir);
 await ensureBatchEnvReady(batchPath);
@@ -69,7 +69,7 @@ const submitArg = job.lineUploadSubmit === true ? 'true' : 'false';
 console.log('\n▶ upload (gdrive → provision → zip → optional submit)...');
 run('npx', [
   'tsx',
-  '.claude/skills/line-sticker-maker/scripts/run-line-upload.mts',
+  'scripts/line-sticker/run-line-upload.mts',
   '--env',
   envRel,
   '--submit',

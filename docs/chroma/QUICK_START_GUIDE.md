@@ -203,7 +203,7 @@ open test-color-normalization.html
 如果遇到問題:
 
 1. **首先**: 查看 [FAQ](#-常見問題-faq) 章節
-2. **然後**: 使用 [測試工具](../test-color-normalization.html) 驗證
+2. **然後**: 使用 [測試工具](../../test-color-normalization.html) 驗證
 3. **最後**: 查閱 [Chroma Key 改進紀錄](./CHROMA_KEY.md) 的已知限制
 
 ## 🎉 總結 (Summary)

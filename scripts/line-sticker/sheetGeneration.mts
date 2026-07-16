@@ -15,26 +15,26 @@ import {
   type LineStickerTextRendering,
   type LineStickerPromptVersion,
   type PromptSlots,
-} from '../../../../utils/lineStickerPrompt.ts';
-import type { ChromaKeyColorType, ChromaKeyAlgorithm } from '../../../../types.ts';
+} from '../../utils/lineStickerPrompt.ts';
+import type { ChromaKeyColorType, ChromaKeyAlgorithm } from '../../types.ts';
 import {
   buildGridCandidates,
   buildGridRetryPromptSuffix,
   rankSheetAttempt,
   validateSheetGrid,
   type GridValidationResult,
-} from '../../../../utils/sheetGridValidation.ts';
-import { buildGridSheetTemplate, type GridTemplateMode } from '../../../../utils/gridSheetTemplate.ts';
-import { DEFAULT_CHROMA_KEY_ALGORITHM } from '../../../../utils/constants.ts';
+} from '../../utils/sheetGridValidation.ts';
+import { buildGridSheetTemplate, type GridTemplateMode } from '../../utils/gridSheetTemplate.ts';
+import { DEFAULT_CHROMA_KEY_ALGORITHM } from '../../utils/constants.ts';
 import {
   resolveEffectiveGridTemplate,
   resolveSliceTemplateBounds,
-} from '../../../../utils/lineStickerGridTemplate.ts';
+} from '../../utils/lineStickerGridTemplate.ts';
 import {
   clearDetectedSheetGridDividers,
   detectWhiteDividerGrid,
   shouldUseWhiteDividerSlice,
-} from '../../../../utils/sheetWhiteDividerDetection.ts';
+} from '../../utils/sheetWhiteDividerDetection.ts';
 
 import { generateSheetImage, type StyleAnchorImage } from './geminiSheet.mts';
 import {
@@ -46,14 +46,14 @@ import {
   type RgbaImage,
 } from './nodeImage.mts';
 import { composePhrasesOnRgbaFrames, overlayPhrasesOnRgbaFrames } from './programmaticTextOverlay.mts';
-import { shouldUseComposeLayout } from '../../../../utils/lineStickerCompose.ts';
-import { trimFrameToContent } from '../../../../utils/sheetComponentSlicer.ts';
+import { shouldUseComposeLayout } from '../../utils/lineStickerCompose.ts';
+import { trimFrameToContent } from '../../utils/sheetComponentSlicer.ts';
 import {
   mergeProgrammaticComposeConfig,
   mergeProgrammaticTextTuning,
   type ProgrammaticComposeConfig,
   type ProgrammaticTextOverlayTuning,
-} from '../../../../utils/lineStickerTextOverlayTypes.ts';
+} from '../../utils/lineStickerTextOverlayTypes.ts';
 
 export interface SheetPlan {
   label: string;

@@ -12,9 +12,9 @@ import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-import { generateCharacterConcept } from '../../../../services/gemini/characterConcept.ts';
-import { resolveDailyPackStyleKey } from '../../../../utils/dailyPackPresets.ts';
-import { planDailyPack, type DailyPackPlan, type DailyPackSlot } from '../../../../utils/dailyPackPlanner.ts';
+import { generateCharacterConcept } from '../../services/gemini/characterConcept.ts';
+import { resolveDailyPackStyleKey } from '../../utils/dailyPackPresets.ts';
+import { planDailyPack, type DailyPackPlan, type DailyPackSlot } from '../../utils/dailyPackPlanner.ts';
 import {
   DEFAULT_REGISTRY_REL_PATH,
   appendEntry,
@@ -24,17 +24,17 @@ import {
   updateEntryStatus,
   upsertEntry,
   type StickerRegistryEntry,
-} from '../../../../utils/stickerRegistry.ts';
+} from '../../utils/registry/stickerRegistry.ts';
 import {
   mergeRegistriesForPlanning,
   resolveRegistryAssetPath,
   resolveVaultRoot,
   vaultRegistryPath,
-} from '../../../../utils/registry/stickerVault.ts';
-import { loadGeminiApiKey } from '../../shared/loadGeminiApiKey.mts';
+} from '../../utils/registry/stickerVault.ts';
+import { loadGeminiApiKey } from '../../.claude/skills/shared/loadGeminiApiKey.mts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(SCRIPT_DIR, '../../../..');
+const ROOT = resolve(SCRIPT_DIR, '../..');
 
 const CHAR_REF_SCRIPT = resolve(
   ROOT,
@@ -44,8 +44,8 @@ const PHRASE_SCRIPT = resolve(
   ROOT,
   '.claude/skills/line-sticker-phrase-design/scripts/design-phrase-set.mts'
 );
-const PIPELINE_SCRIPT = resolve(ROOT, '.claude/skills/line-sticker-maker/scripts/run-from-inputs.mts');
-const BACKFILL_SCRIPT = resolve(ROOT, '.claude/skills/line-sticker-maker/scripts/backfill-sticker-registry.mts');
+const PIPELINE_SCRIPT = resolve(ROOT, 'scripts/line-sticker/run-from-inputs.mts');
+const BACKFILL_SCRIPT = resolve(ROOT, 'scripts/line-sticker/backfill-sticker-registry.mts');
 
 function parseArgs(argv: string[]): Record<string, string | boolean> {
   const args: Record<string, string | boolean> = {};

@@ -9,7 +9,7 @@ import {
   DEFAULT_MIN_GRID_ALIGNMENT_SCORE,
   findGridScoreFailures,
   formatGridGateMessage,
-} from '../../../../utils/gridScoreGate.ts';
+} from '../../utils/gridScoreGate.ts';
 
 export interface ManifestGridGateInput {
   gridScores?: Record<string, number>;

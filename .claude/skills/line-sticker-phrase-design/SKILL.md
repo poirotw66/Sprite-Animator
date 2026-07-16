@@ -251,7 +251,7 @@ Ask for theme/tone tweaks before running Gemini image generation.
 ### Step 5 — Pipeline
 
 ```bash
-npx tsx .claude/skills/line-sticker-maker/scripts/run-from-inputs.mts \
+npx tsx scripts/line-sticker/run-from-inputs.mts \
   --image path/to/character.png \
   --phrase-set output/my-set/phrases.json \
   --out output/my-set

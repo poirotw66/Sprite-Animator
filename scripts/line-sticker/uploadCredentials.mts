@@ -11,10 +11,10 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const SKILL_ROOT = resolve(SCRIPT_DIR, '..');
-const PROJECT_ROOT = resolve(SKILL_ROOT, '../../..');
+const PROJECT_ROOT = resolve(SCRIPT_DIR, '../..');
+const MAKER_SKILL_ROOT = resolve(PROJECT_ROOT, '.claude/skills/line-sticker-maker');
 
-export const CREDENTIALS_ENV = resolve(SKILL_ROOT, 'credentials.env');
+export const CREDENTIALS_ENV = resolve(MAKER_SKILL_ROOT, 'credentials.env');
 /** Legacy monolithic env; used only if credentials.env is missing or incomplete. */
 const LEGACY_UPLOAD_ENV = resolve(PROJECT_ROOT, '.claude/skills/line-sticker-upload/.env');
 

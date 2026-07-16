@@ -7,14 +7,14 @@
 import { existsSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { parseRegistryJson } from '../../../../utils/stickerRegistryFormat.ts';
-import { suggestVaultShopListing } from '../../../../utils/lineStickerSetNaming.ts';
-import { resolveVaultRoot, vaultRegistryPath } from '../../../../utils/registry/stickerVault.ts';
-import { parsePhraseSetJson } from '../../../../utils/lineStickerPhraseSetFormat.ts';
+import { parseRegistryJson } from '../../utils/registry/stickerRegistryFormat.ts';
+import { suggestVaultShopListing } from '../../utils/lineStickerSetNaming.ts';
+import { resolveVaultRoot, vaultRegistryPath } from '../../utils/registry/stickerVault.ts';
+import { parsePhraseSetJson } from '../../utils/lineStickerPhraseSetFormat.ts';
 import { buildUploadMarkdown, type UploadConfig } from './uploadConfig.mts';
 import { buildBatchEnvContent, parseEnv } from './uploadCredentials.mts';
 
-const ROOT = resolve(import.meta.dirname, '../../../..');
+const ROOT = resolve(import.meta.dirname, '../..');
 
 function parseArgs(argv: string[]): { from: number; to: number } {
   let from = 1;

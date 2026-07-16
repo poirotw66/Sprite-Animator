@@ -27,9 +27,9 @@
 | `utils/constants.ts` | **Modify** — comment / deprecate note for `CHROMA_KEY_FUZZ` (keep export) |
 | `utils/chromaKeyProcessor.ts` | **Modify** — pass optional `guided` through to core |
 | `workers/chromaKeyWorker.ts` | **Modify** — optional `guided` on message |
-| `.claude/skills/line-sticker-maker/scripts/nodeImage.mts` | **Modify** — `processSheetChromaKey(..., { guided? })` |
-| `.claude/skills/line-sticker-maker/scripts/sheetGeneration.mts` | **Modify** — pass `guided` when template is guided |
-| `.claude/skills/line-sticker-maker/scripts/reslice-sheet.mts` | **Modify** — pass guided when template present |
+| `scripts/line-sticker/nodeImage.mts` | **Modify** — `processSheetChromaKey(..., { guided? })` |
+| `scripts/line-sticker/sheetGeneration.mts` | **Modify** — pass `guided` when template is guided |
+| `scripts/line-sticker/reslice-sheet.mts` | **Modify** — pass guided when template present |
 
 ---
 
@@ -593,9 +593,9 @@ git commit -m "feat(chroma): guided simplify path with auto-detect"
 **Files:**
 - Modify: `utils/chromaKeyProcessor.ts`
 - Modify: `workers/chromaKeyWorker.ts`
-- Modify: `.claude/skills/line-sticker-maker/scripts/nodeImage.mts`
-- Modify: `.claude/skills/line-sticker-maker/scripts/sheetGeneration.mts`
-- Modify: `.claude/skills/line-sticker-maker/scripts/reslice-sheet.mts`
+- Modify: `scripts/line-sticker/nodeImage.mts`
+- Modify: `scripts/line-sticker/sheetGeneration.mts`
+- Modify: `scripts/line-sticker/reslice-sheet.mts`
 
 - [ ] **Step 1: Extend Worker message + processor**
 
@@ -672,9 +672,9 @@ Expected: all previously passing tests still pass; new chroma tests pass.
 
 ```bash
 git add utils/chromaKeyProcessor.ts workers/chromaKeyWorker.ts \
-  .claude/skills/line-sticker-maker/scripts/nodeImage.mts \
-  .claude/skills/line-sticker-maker/scripts/sheetGeneration.mts \
-  .claude/skills/line-sticker-maker/scripts/reslice-sheet.mts
+  scripts/line-sticker/nodeImage.mts \
+  scripts/line-sticker/sheetGeneration.mts \
+  scripts/line-sticker/reslice-sheet.mts
 git commit -m "feat(chroma): wire guided flag through worker and sheet pipeline"
 ```
 
@@ -689,7 +689,7 @@ git commit -m "feat(chroma): wire guided flag through worker and sheet pipeline"
 If `output/twice-7-school-daily/sheet-1/_raw-sheet.*` or `_processed-sheet.png` exists, write a tiny one-off or reuse reslice:
 
 ```bash
-npx tsx .claude/skills/line-sticker-maker/scripts/reslice-sheet.mts ^
+npx tsx scripts/line-sticker/reslice-sheet.mts ^
   "c:\Users\sora0\Desktop\Sprite-Animator\output\twice-7-school-daily\sheet-1" 4 5
 ```
 

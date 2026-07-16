@@ -20,13 +20,13 @@ import {
   buildGridCandidates,
   detectBestGridLayoutFromRgba,
   validateSheetGrid,
-} from '../../../../utils/sheetGridValidation.ts';
-import { buildEqualGridBounds } from '../../../../utils/gridSheetTemplate.ts';
-import { resolveSliceTemplateBounds } from '../../../../utils/lineStickerGridTemplate.ts';
-import { trimFrameToContent } from '../../../../utils/sheetComponentSlicer.ts';
-import { clearDetectedSheetGridDividers } from '../../../../utils/sheetWhiteDividerDetection.ts';
-import { DEFAULT_CHROMA_KEY_ALGORITHM } from '../../../../utils/constants.ts';
-import type { ChromaKeyAlgorithm } from '../../../../types.ts';
+} from '../../utils/sheetGridValidation.ts';
+import { buildEqualGridBounds } from '../../utils/gridSheetTemplate.ts';
+import { resolveSliceTemplateBounds } from '../../utils/lineStickerGridTemplate.ts';
+import { trimFrameToContent } from '../../utils/sheetComponentSlicer.ts';
+import { clearDetectedSheetGridDividers } from '../../utils/sheetWhiteDividerDetection.ts';
+import { DEFAULT_CHROMA_KEY_ALGORITHM } from '../../utils/constants.ts';
+import type { ChromaKeyAlgorithm } from '../../types.ts';
 
 function parseArgs(argv: string[]): {
   sheetDir: string;

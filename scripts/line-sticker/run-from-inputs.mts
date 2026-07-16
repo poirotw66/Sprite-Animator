@@ -18,21 +18,21 @@ import { spawnSync } from 'node:child_process';
 
 import {
   parsePhraseSetJson,
-} from '../../../../utils/lineStickerPhraseSetFormat.ts';
-import { DEFAULT_SKILL_STICKER_MODEL, DEFAULT_CHROMA_KEY_ALGORITHM, defaultResolutionForModel } from '../../../../utils/constants.ts';
+} from '../../utils/lineStickerPhraseSetFormat.ts';
+import { DEFAULT_SKILL_STICKER_MODEL, DEFAULT_CHROMA_KEY_ALGORITHM, defaultResolutionForModel } from '../../utils/constants.ts';
 import {
   defaultTitleZhFromPhraseSet,
   suggestPhraseSetNameZh,
   suggestSetNameEn,
   characterSlugFromRefPath,
-} from '../../../../utils/lineStickerSetNaming.ts';
-import { prepareShopListing } from '../../../../utils/lineCreatorsListingText.ts';
+} from '../../utils/lineStickerSetNaming.ts';
+import { prepareShopListing } from '../../utils/lineCreatorsListingText.ts';
 import { DEFAULT_LINE_STICKER_SET_COUNT } from './sheetPlan.ts';
 import { resolveUploadConfig } from './uploadConfig.mts';
 import { loadCredentials } from './uploadCredentials.mts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(SCRIPT_DIR, '../../../..');
+const ROOT = resolve(SCRIPT_DIR, '../..');
 
 function parseArgs(argv: string[]): Record<string, string | boolean> {
   const args: Record<string, string | boolean> = {};
@@ -244,7 +244,7 @@ async function main(): Promise<void> {
   const outRel = relative(ROOT, outDir);
   const generateArgs = [
     'tsx',
-    '.claude/skills/line-sticker-maker/scripts/generate.mts',
+    'scripts/line-sticker/generate.mts',
     '--config',
     configRel,
     '--out',
@@ -275,7 +275,7 @@ async function main(): Promise<void> {
     console.log('\n▶ upload...');
     run('npx', [
       'tsx',
-      '.claude/skills/line-sticker-maker/scripts/run-line-upload.mts',
+      'scripts/line-sticker/run-line-upload.mts',
       '--env',
       envRel,
       '--submit',

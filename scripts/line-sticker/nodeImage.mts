@@ -13,45 +13,45 @@
 
 import UPNG from 'upng-js';
 import jpeg from 'jpeg-js';
-import { applyChromaKey } from '../../../../utils/chromaKeyApply.ts';
-import { normalizeChromaBackgroundInPlace } from '../../../../utils/normalizeChromaBackground.ts';
-import { normalizeChromaBackgroundLegacyInPlace } from '../../../../utils/normalizeChromaBackgroundLegacy.ts';
+import { applyChromaKey } from '../../utils/chromaKeyApply.ts';
+import { normalizeChromaBackgroundInPlace } from '../../utils/normalizeChromaBackground.ts';
+import { normalizeChromaBackgroundLegacyInPlace } from '../../utils/normalizeChromaBackgroundLegacy.ts';
 import {
   CHROMA_KEY_COLORS,
   DEFAULT_CHROMA_KEY_ALGORITHM,
   LINE_STICKER_CELL_INSET_RATIO,
-} from '../../../../utils/constants.ts';
-import { repairStickerStrokeAfterChromaKey } from '../../../../utils/stickerChromaStrokeRepair.ts';
+} from '../../utils/constants.ts';
+import { repairStickerStrokeAfterChromaKey } from '../../utils/stickerChromaStrokeRepair.ts';
 import {
   computeOptimizedSliceFromMargins,
   measureContentMargins,
   type OptimizedSliceResult,
-} from '../../../../utils/optimizeSliceSettings.ts';
-import { clearEdgeConnectedResidue } from '../../../../utils/frameEdgeCleanup.ts';
-import { detectSheetGridBoundaries } from '../../../../utils/sheetBoundaryDetection.ts';
+} from '../../utils/optimizeSliceSettings.ts';
+import { clearEdgeConnectedResidue } from '../../utils/frameEdgeCleanup.ts';
+import { detectSheetGridBoundaries } from '../../utils/sheetBoundaryDetection.ts';
 import {
   computeDividerCellRect,
   clearNearWhiteEdgeArtifacts,
   detectWhiteDividerGrid,
   shouldUseWhiteDividerSlice,
   type WhiteDividerGrid,
-} from '../../../../utils/sheetWhiteDividerDetection.ts';
-import { computeCellCropRect } from '../../../../utils/sheetCellCrop.ts';
+} from '../../utils/sheetWhiteDividerDetection.ts';
+import { computeCellCropRect } from '../../utils/sheetCellCrop.ts';
 import {
   sliceSheetByComponentOwnership,
   sliceSheetByGridBounds,
-} from '../../../../utils/sheetComponentSlicer.ts';
+} from '../../utils/sheetComponentSlicer.ts';
 import {
   detectBestGridLayoutFromRgba,
   scoreGridLayoutFromRgba,
   type GridLayoutScore,
-} from '../../../../utils/sheetGridValidation.ts';
+} from '../../utils/sheetGridValidation.ts';
 import {
   LINE_STICKER_UPLOAD,
   computeFitDimensions,
   toEvenDimension,
-} from '../../../../utils/lineStickerUploadSpec.ts';
-import type { ChromaKeyColorType, ChromaKeyAlgorithm } from '../../../../types.ts';
+} from '../../utils/lineStickerUploadSpec.ts';
+import type { ChromaKeyColorType, ChromaKeyAlgorithm } from '../../types.ts';
 
 export interface RgbaImage {
   data: Uint8ClampedArray;
@@ -283,7 +283,7 @@ export function optimizeSliceForImage(
   );
 }
 
-export type { GridLayoutScore } from '../../../../utils/sheetGridValidation.ts';
+export type { GridLayoutScore } from '../../utils/sheetGridValidation.ts';
 
 /** Score how well a cols×rows grid aligns with background seams on a processed sheet. */
 export function scoreGridLayout(image: RgbaImage, cols: number, rows: number): number {

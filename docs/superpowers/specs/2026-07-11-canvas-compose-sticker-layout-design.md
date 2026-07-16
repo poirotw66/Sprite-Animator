@@ -89,7 +89,7 @@ Pure layout + metrics (no canvas I/O):
 
 Location: `utils/lineStickerCompose.ts` (shared) + thin wrappers in:
 
-- `.claude/skills/line-sticker-maker/scripts/programmaticTextOverlay.mts` (headless)
+- `scripts/line-sticker/programmaticTextOverlay.mts` (headless)
 - `utils/lineStickerTextOverlay.ts` (browser)
 
 Steps:

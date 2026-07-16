@@ -13,10 +13,10 @@ import {
   DEFAULT_CHROMA_KEY_ALGORITHM,
   DEFAULT_SKILL_STICKER_MODEL,
   defaultResolutionForModel,
-} from '../../../../utils/constants.ts';
+} from '../../utils/constants.ts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(SCRIPT_DIR, '../../../..');
+const ROOT = resolve(SCRIPT_DIR, '../..');
 
 interface BatchJob {
   out: string;
@@ -136,7 +136,7 @@ for (const job of jobs) {
   try {
     const manifestExists = existsSync(resolve(outDir, 'manifest.json'));
     if (!manifestExists || args['force-generate'] === 'true') {
-      run('npx', ['tsx', '.claude/skills/line-sticker-maker/scripts/generate.mts', '--config', configRel, '--out', outRel]);
+      run('npx', ['tsx', 'scripts/line-sticker/generate.mts', '--config', configRel, '--out', outRel]);
     } else {
       console.log(`▶ ${job.out}: manifest exists — skipping generate (use --force-generate true to rebuild)`);
     }
@@ -144,7 +144,7 @@ for (const job of jobs) {
     const envRel = `${outRel}/.env.batch/${slugSetName(job.setName)}.env`;
     const uploadArgs = [
       'tsx',
-      '.claude/skills/line-sticker-maker/scripts/run-line-upload.mts',
+      'scripts/line-sticker/run-line-upload.mts',
       '--env',
       envRel,
       '--submit',

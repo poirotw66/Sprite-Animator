@@ -5,7 +5,7 @@ import {
   LINE_STICKER_UPLOAD,
   lineUploadStickerFileName,
   resolveLineUploadStickerCount,
-} from '../../../../utils/lineStickerUploadSpec.ts';
+} from '../../utils/lineStickerUploadSpec.ts';
 import {
   encodePng,
   prepareLineMainImage,
