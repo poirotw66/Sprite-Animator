@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { splitBatchCounts } from './dailyPackPresets';
 import { planDailyPack } from './dailyPackPlanner';
-import { emptyRegistry, type StickerRegistryEntry, upsertEntry } from './stickerRegistry';
+import { emptyRegistry, type StickerRegistryEntry, upsertEntry } from './registry/stickerRegistry';
 
 describe('dailyPackPresets.splitBatchCounts', () => {
   it('splits 30 sets with 2:1 ratio into 20 B and 10 A', () => {

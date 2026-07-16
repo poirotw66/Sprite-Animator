@@ -30,7 +30,7 @@ import {
   resolveRegistryAssetPath,
   resolveVaultRoot,
   vaultRegistryPath,
-} from '../../../../utils/stickerVault.ts';
+} from '../../../../utils/registry/stickerVault.ts';
 import { loadGeminiApiKey } from '../../shared/loadGeminiApiKey.mts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));

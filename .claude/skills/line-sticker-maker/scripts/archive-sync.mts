@@ -39,7 +39,7 @@ import {
   type VaultCharacterMeta,
   type VaultSetMeta,
 } from '../../../../utils/stickerVault.ts';
-import { writeVaultCharacterRef } from '../../../../utils/vaultCharacterRef.ts';
+import { writeVaultCharacterRef } from '../../../../utils/registry/vaultCharacterRef.ts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(SCRIPT_DIR, '../../../..');

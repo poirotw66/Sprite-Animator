@@ -2,7 +2,7 @@
  * Browser-safe daily batch plan types and JSON parsing.
  */
 
-import type { StickerBatchType } from './stickerRegistryFormat';
+import type { StickerBatchType } from './registry/stickerRegistryFormat';
 
 export interface DailyPackPlanSlot {
   slotIndex: number;

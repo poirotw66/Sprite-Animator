@@ -9,7 +9,7 @@ import { resolve } from 'node:path';
 
 import { parseRegistryJson } from '../../../../utils/stickerRegistryFormat.ts';
 import { suggestVaultShopListing } from '../../../../utils/lineStickerSetNaming.ts';
-import { resolveVaultRoot, vaultRegistryPath } from '../../../../utils/stickerVault.ts';
+import { resolveVaultRoot, vaultRegistryPath } from '../../../../utils/registry/stickerVault.ts';
 import { parsePhraseSetJson } from '../../../../utils/lineStickerPhraseSetFormat.ts';
 import { buildUploadMarkdown, type UploadConfig } from './uploadConfig.mts';
 import { buildBatchEnvContent, parseEnv } from './uploadCredentials.mts';

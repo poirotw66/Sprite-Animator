@@ -29,8 +29,8 @@ import {
   resolveVaultRoot,
   vaultRegistryPath,
   type VaultCharacterMeta,
-} from '../../../../utils/stickerVault.ts';
-import { writeVaultCharacterRef } from '../../../../utils/vaultCharacterRef.ts';
+} from '../../../../utils/registry/stickerVault.ts';
+import { writeVaultCharacterRef } from '../../../../utils/registry/vaultCharacterRef.ts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(SCRIPT_DIR, '../../../..');

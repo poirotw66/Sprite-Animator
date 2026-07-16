@@ -12,7 +12,7 @@ import {
   parseRegistryJson,
   type StickerRegistryEntry,
   type StickerRegistryFile,
-} from '../utils/stickerRegistryFormat';
+} from '../utils/registry/stickerRegistryFormat';
 import {
   filterCharacterProfiles,
   filterRegistryEntries,
@@ -23,7 +23,7 @@ import {
   vaultRegistryFetchUrl,
   type CharacterProfile,
   type RegistryFilter,
-} from '../utils/stickerRegistryView';
+} from '../utils/registry/stickerRegistryView';
 
 const DEFAULT_REGISTRY_URL = vaultRegistryFetchUrl();
 

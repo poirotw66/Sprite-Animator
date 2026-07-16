@@ -17,7 +17,7 @@ import {
   collectUsedCharacterSlugs,
   resolveVaultRoot,
   vaultRegistryPath,
-} from '../../../../utils/stickerVault.ts';
+} from '../../../../utils/registry/stickerVault.ts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(SCRIPT_DIR, '../../../..');

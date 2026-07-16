@@ -19,7 +19,7 @@ import {
   usedThemeVoicePairs,
   type StickerRegistryFile,
   type StickerBatchType,
-} from './stickerRegistry';
+} from './registry/stickerRegistry';
 
 export interface DailyPackSlot {
   slotIndex: number;
