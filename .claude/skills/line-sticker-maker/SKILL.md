@@ -15,6 +15,18 @@ It **reuses the app's own modules** (`utils/lineStickerPrompt.ts`,
 `utils/lineStickerSetSchema.ts`, `utils/chromaKeyCore.ts`,
 `utils/lineStickerUploadSpec.ts`) so output matches the web app.
 
+### Additive: ChatGPT paper-bg sheets (V2)
+
+For **light-paper** 4×5 sheets (not Gemini green chroma), use the Python V2
+converter — it does **not** replace `legacy`/`core`/`forge` or TS slice modes:
+
+```bash
+npx tsx scripts/line-sticker/convert-sheet-v2.mts \
+  --sheet path/to/4x5.png --out output/my-set
+```
+
+See [docs/workflows/sheet-converter-v2.md](../../docs/workflows/sheet-converter-v2.md).
+
 ## How to run
 
 **Simplest (image + phrase-set JSON):** see [docs/workflows/line-sticker-pipeline.md](../../docs/workflows/line-sticker-pipeline.md) or `line-sticker-pipeline` skill.
