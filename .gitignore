@@ -42,6 +42,8 @@ line-stickers-out/
 .claude/skills/line-sticker-upload/scripts/gdrive_credentials.json
 .claude/skills/line-sticker-upload/scripts/gdrive_token.json
 .claude/skills/line-sticker-upload/scripts/playwright_line_state.json
+.claude/skills/line-sticker-upload/scripts/playwright_line_state.w*.json
+.claude/skills/line-sticker-upload/scripts/debug_snapshots/**
 .claude/skills/line-sticker-upload/.env
 .line-upload/
 

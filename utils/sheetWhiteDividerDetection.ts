@@ -488,7 +488,15 @@ export function clearDetectedSheetGridDividers(
   rows: number,
   options: DetectWhiteDividerOptions = {}
 ): ClearSheetGridDividersResult {
-  const grid = detectWhiteDividerGrid(data, width, height, cols, rows, options);
+  // ponytail: accept broader input, but the detector expects Uint8ClampedArray.
+  // Use a clamped view/copy for detection only; we still mutate the original `data` below.
+  const dataForDetect =
+    data instanceof Uint8ClampedArray
+      ? data
+      : data instanceof Uint8Array
+        ? new Uint8ClampedArray(data)
+        : new Uint8ClampedArray(data);
+  const grid = detectWhiteDividerGrid(dataForDetect, width, height, cols, rows, options);
   const verticalBands = grid.verticalBands.filter(Boolean);
   const minVertical = Math.max(1, Math.ceil((cols - 1) * 0.5));
   if (verticalBands.length < minVertical) {

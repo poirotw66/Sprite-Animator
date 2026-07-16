@@ -1,5 +1,12 @@
-# Sprite Animator
+# Sprite Animator & Sticker Studio (Sprite + LINE + Comic)
 [繁體中文](./README.md) | [English](./README_en.md)
+
+> Originally a “Sprite Animator”, this repo has grown into a multi-tool studio:
+> - Sprite Animator (frame-by-frame / sprite sheet)
+> - LINE Sticker Builder (phrases, layouts, headless upload factory)
+> - One-Page Comic wizard
+> - Remove Background (AI)
+> - Daily Sticker Registry for batch production
 
 ## ✨ Features
 
@@ -120,7 +127,7 @@ Use **Sprite Sheet Mode** or **Frame-by-Frame Mode**, enter an action prompt to 
 
 All GIFs above were generated from **gemini.png** using this tool with the Google Gemini API.
 
-## 🏗️ Project Structure
+## 🏗️ Project Structure (excerpt)
 
 ```
 Sprite-Animator/
@@ -154,6 +161,13 @@ Sprite-Animator/
 ├── index.tsx            # Entry Point
 └── vite.config.ts       # Vite Configuration
 ```
+
+More routes:
+- `/line-sticker`: Build a complete LINE sticker set in browser
+- `/daily-sticker-registry`: Registry/dashboard for batch production
+- `/one-page-comic`: One-page comic wizard
+- `/rmbg`: Background removal
+- `/parting`: Sprite sheet slicing tool
 
 ## 🔧 Development
 

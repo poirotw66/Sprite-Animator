@@ -37,7 +37,7 @@ describe('wrapLinesWithSpacing', () => {
     const ctx = canvas.getContext('2d') as unknown as CanvasRenderingContext2D;
     ctx.font = '700 64px sans-serif';
     const phrase = '哼才不理你';
-    const maxWidth = 280;
+    const maxWidth = 200; // ponytail: further tighten to force wrap across environments
     const spacingPx = 12;
     const spaced = wrapLinesWithSpacing(ctx, phrase, maxWidth, spacingPx);
     expect(spaced.length).toBeGreaterThan(1);

@@ -1,5 +1,12 @@
-# 角色幀動畫生成器 (Sprite Animator)
+# 角色幀動畫與貼圖工作室（Sprite Animator + LINE 貼圖 + Comic）
 [English](./README_en.md) | [繁體中文](./README.md)
+
+> 本專案最初為「角色幀動畫生成器」，現已擴充為多工具工作室：  
+> - Sprite Animator（逐幀 / 精靈圖）  
+> - LINE 貼圖製作（含文案、版面、自動上傳的 headless 工廠）  
+> - One-Page Comic（單頁漫畫嚮導）  
+> - Remove Background（AI 去背）  
+> - Daily Sticker Registry（批量生產登記盤點）  
 
 ## ✨ 功能特色
 
@@ -120,7 +127,7 @@
 
 以上 GIF 皆由 **gemini.png** 作為原圖，經本工具搭配 Google Gemini API 生成幀動畫後導出。
 
-## 🏗️ 專案結構
+## 🏗️ 專案結構（節錄）
 
 ```
 Sprite-Animator/
@@ -168,6 +175,13 @@ Sprite-Animator/
 ├── index.tsx            # 入口文件
 └── vite.config.ts       # Vite 配置
 ```
+
+更多功能頁面：
+- `/line-sticker`：瀏覽器內完成一整套 LINE 貼圖
+- `/daily-sticker-registry`：批量生產使用的登記與盤點
+- `/one-page-comic`：單頁漫畫嚮導
+- `/rmbg`：背景去除
+- `/parting`：精靈圖分割工具
 
 ## 🔧 開發
 
@@ -265,8 +279,7 @@ npm run preview
 - **適當的幀數**：4-8 幀通常足夠表現基本動作
 
 ## 🐛 故障排除
-
-如果遇到問題，請查看 [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
+遇到問題請先參考 [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
 
 常見問題：
 - **頁面空白**：檢查開發服務器是否運行，清除瀏覽器緩存
