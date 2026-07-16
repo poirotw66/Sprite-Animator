@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseCharacterConceptResponse } from '../services/gemini/characterConcept';
+import { parseCharacterConceptResponse } from '../../services/gemini/characterConcept';
 import {
   formatSetId,
   parseRegistryJson,

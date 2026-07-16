@@ -39,7 +39,7 @@ import {
   resolveVaultRoot,
   vaultRegistryPath,
   VAULT_PHRASE_SET_FILENAME,
-} from '../../../../utils/stickerVault.ts';
+} from '../../../../utils/registry/stickerVault.ts';
 import { loadApiKey, ROOT_DIR } from './apiKey.mts';
 
 const VISUAL_ONLY_TARGET = 7;

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
-import { resolveVaultRoot } from './utils/stickerVault';
+import { resolveVaultRoot } from './utils/registry/stickerVault';
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 const vaultRoot = resolveVaultRoot(projectRoot);
