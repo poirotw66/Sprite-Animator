@@ -253,6 +253,8 @@ export function useSpriteSheetFlow(
     processedImage,
     sliceSettings.sliceMode,
     sliceSettings.inferredCellRects,
+    sliceSettings.manualXBounds,
+    sliceSettings.manualYBounds,
     sliceSettings.cols,
     sliceSettings.rows,
     sliceSettings.paddingX,

@@ -1,0 +1,235 @@
+/**
+ * One-shot: slice two ChatGPT 4×5 crayon sheets into a LINE 40-sticker pack.
+ * ponytail: inbox hand-made sheets, white paper + blue grid — not chroma green.
+ */
+import { copyFile, mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import sharp from 'sharp';
+
+import { encodePng } from '../.claude/skills/line-sticker-maker/scripts/nodeImage.mts';
+import {
+  sliceSheetByComponentOwnership,
+  trimFrameToContent,
+  type RgbaFrameBuffer,
+} from '../utils/sheetComponentSlicer.ts';
+import { buildEqualGridBounds } from '../utils/sliceSpriteSheetByOwnership.ts';
+
+const SHEET1 = 'inbox/ChatGPT Image 2026年7月16日 上午01_32_58.png';
+const SHEET2 = 'inbox/ChatGPT Image 2026年7月16日 上午01_39_08.png';
+const SET_ID = 'SET-20260716-002';
+const OUT = join('output', 'vault-production', SET_ID);
+const COLS = 4;
+const ROWS = 5;
+
+const PHRASES = [
+  '蛤？',
+  '？？？',
+  '當機了',
+  '已讀',
+  '笑死',
+  '真假',
+  '裂開了',
+  '別找我',
+  '先裝死',
+  '躺平啦',
+  '先不要',
+  '可以啦',
+  '不會吧',
+  '真的假',
+  '好欸',
+  '救命',
+  '好累',
+  '社恐了',
+  '人生難',
+  '餓了',
+  '想睡',
+  '沒電了',
+  '放空',
+  '我好了',
+  '又是我',
+  '欸不是',
+  '拜託',
+  '沒救了',
+  '我看看',
+  '穩了',
+  '衝啊',
+  '舒服',
+  '想回家',
+  '下班啦',
+  '不要啦',
+  '再一下',
+  '等等',
+  '先閃',
+  '……',
+  '哈',
+];
+
+function prepareSheetRgba(
+  data: Buffer,
+  width: number,
+  height: number
+): Uint8ClampedArray {
+  const rgba = new Uint8ClampedArray(width * height * 4);
+  for (let p = 0, i = 0; p < width * height; p++, i += 3) {
+    const r = data[i]!;
+    const g = data[i + 1]!;
+    const b = data[i + 2]!;
+    const o = p * 4;
+    rgba[o] = r;
+    rgba[o + 1] = g;
+    rgba[o + 2] = b;
+    rgba[o + 3] = 255;
+
+    if (r >= 235 && g >= 232 && b >= 225 && Math.min(r, g, b) >= 220) {
+      rgba[o + 3] = 0;
+      continue;
+    }
+    // Light blue grid / badge residue
+    if (b > r + 25 && b > g + 15 && g > 140 && r < 210 && b > 180) {
+      rgba[o + 3] = 0;
+      continue;
+    }
+    if (r > 245 && g > 245 && b > 245) {
+      rgba[o + 3] = 0;
+    }
+  }
+  return rgba;
+}
+
+async function sliceOneSheet(
+  path: string,
+  sheetLabel: string
+): Promise<RgbaFrameBuffer[]> {
+  const { data, info } = await sharp(path)
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  if (info.channels !== 3) {
+    throw new Error(`expected RGB: ${path}`);
+  }
+  const width = info.width!;
+  const height = info.height!;
+  const rgba = prepareSheetRgba(data, width, height);
+
+  const inset = 5;
+  let { xBounds, yBounds } = buildEqualGridBounds(
+    width,
+    height,
+    COLS,
+    ROWS,
+    0,
+    0,
+    0,
+    0
+  );
+  xBounds = xBounds.map((v, i) => {
+    if (i === 0) return Math.min(width - 2, v + inset);
+    if (i === xBounds.length - 1) return Math.max(2, v - inset);
+    return v;
+  });
+  yBounds = yBounds.map((v, i) => {
+    if (i === 0) return Math.min(height - 2, v + inset);
+    if (i === yBounds.length - 1) return Math.max(2, v - inset);
+    return v;
+  });
+
+  const frames = sliceSheetByComponentOwnership(
+    rgba,
+    width,
+    height,
+    xBounds,
+    yBounds,
+    { overflowPaddingPx: 2, minComponentArea: 24 }
+  ).map((frame) => trimFrameToContent(frame, 8));
+
+  const sheetDir = join(OUT, sheetLabel);
+  await mkdir(sheetDir, { recursive: true });
+  await sharp(Buffer.from(rgba.buffer, rgba.byteOffset, rgba.byteLength), {
+    raw: { width, height, channels: 4 },
+  })
+    .png()
+    .toFile(join(sheetDir, '_processed-sheet.png'));
+  await copyFile(path, join(sheetDir, '_raw-sheet.png'));
+
+  for (let i = 0; i < frames.length; i++) {
+    const name = `sticker-${String(i + 1).padStart(2, '0')}.png`;
+    await writeFile(join(sheetDir, name), Buffer.from(encodePng(frames[i]!)));
+  }
+
+  console.log(`${sheetLabel}: ${width}x${height} → ${frames.length} frames`);
+  return frames;
+}
+
+async function main(): Promise<void> {
+  await mkdir(join(OUT, 'stickers'), { recursive: true });
+  const sheet1 = await sliceOneSheet(SHEET1, 'sheet-1');
+  const sheet2 = await sliceOneSheet(SHEET2, 'sheet-2');
+  const all = [...sheet1, ...sheet2];
+  if (all.length !== 40) {
+    throw new Error(`expected 40 stickers, got ${all.length}`);
+  }
+
+  for (let i = 0; i < all.length; i++) {
+    const name = `sticker-${String(i + 1).padStart(2, '0')}.png`;
+    await writeFile(join(OUT, 'stickers', name), Buffer.from(encodePng(all[i]!)));
+  }
+
+  const phraseSet = {
+    format: 'line-sticker-phrase-set',
+    version: 1,
+    mode: 'set',
+    name: '花花·蠟筆聊天',
+    phrases: PHRASES,
+    actionDescs: PHRASES.map(() => ''),
+  };
+  await writeFile(join(OUT, 'phrase-set.json'), `${JSON.stringify(phraseSet, null, 2)}\n`);
+
+  const job = {
+    referenceImage: 'sheet-1/_raw-sheet.png',
+    phraseSetFile: 'phrase-set.json',
+    characterDescription: '三花貓花花手繪蠟筆風貼圖',
+    style: 'matchUploaded',
+    fontKey: 'matchUploaded',
+    language: 'zh-TW',
+    chromaKeyColor: 'green',
+    includeText: true,
+    textRendering: 'model',
+    scope: 'set',
+    stickerCount: 40,
+    lineUpload: true,
+    lineUploadSubmit: false,
+    customPhrases: PHRASES,
+    customActionDescs: PHRASES.map(() => ''),
+    upload: {
+      syncToUploadRoot: true,
+      creatorId: '706',
+      setName: 'Huahua Calico Handdrawn Chat',
+      titleZh: '花花·蠟筆聊天',
+      descZh: '蛤？、笑死、沒電了——花花蠟筆風聊天貼圖，表情滿滿隨時接招！',
+      titleEn: 'HuaHua Crayon Chat',
+      descEn: 'HuaHua crayon-style chat stickers for everyday memes and reactions.',
+      writeEnvBatch: true,
+    },
+  };
+  await writeFile(join(OUT, 'job.config.json'), `${JSON.stringify(job, null, 2)}\n`);
+
+  const manifest = {
+    generatedAt: new Date().toISOString(),
+    activeSheets: ['sheet-1', 'sheet-2'],
+    gridScores: { 'sheet-1': 1, 'sheet-2': 1 },
+    stickers: all.map((frame, i) => ({
+      globalIndex: i + 1,
+      sheet: i < 20 ? 'sheet-1' : 'sheet-2',
+      index: (i % 20) + 1,
+      file: `${i < 20 ? 'sheet-1' : 'sheet-2'}/sticker-${String((i % 20) + 1).padStart(2, '0')}.png`,
+      uploadFile: `stickers/sticker-${String(i + 1).padStart(2, '0')}.png`,
+      phrase: PHRASES[i] ?? '',
+      width: frame.width,
+      height: frame.height,
+    })),
+  };
+  await writeFile(join(OUT, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+  console.log(`✓ ${SET_ID}: ${all.length} stickers → ${OUT}`);
+}
+
+await main();

@@ -2,6 +2,7 @@ import React from 'react';
 import { Sliders, RefreshCw, Move } from './Icons';
 import { SliceSettings } from '../utils/imageUtils';
 import { useLanguage } from '../hooks/useLanguage';
+import type { DrawLineTool } from './ManualSliceOverlay';
 
 /** Real-time grid metrics computed by the parent viewer. */
 export interface SliceCellInfo {
@@ -26,6 +27,11 @@ interface SpriteSheetSliceControlsProps {
   onShiftYChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onAutoCenter: () => void;
   onReset: () => void;
+  drawLineTool?: DrawLineTool;
+  onDrawLineToolChange?: (tool: DrawLineTool) => void;
+  onToggleManualDraw?: () => void;
+  onSeedEqualManual?: () => void;
+  onClearManualLines?: () => void;
 }
 
 /**
@@ -46,33 +52,62 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
   onShiftYChange,
   onAutoCenter,
   onReset,
+  drawLineTool = 'vertical',
+  onDrawLineToolChange,
+  onToggleManualDraw,
+  onSeedEqualManual,
+  onClearManualLines,
 }) => {
   const { t } = useLanguage();
   const ownershipOn = sliceSettings.sliceMode === 'ownership';
+  const manualOn = sliceSettings.sliceMode === 'manual';
+  const modeLabel = manualOn
+    ? t.sliceModeManual
+    : ownershipOn
+      ? t.sliceModeOwnership
+      : t.sliceModeEqual;
 
   return (
     <div className="mt-4 p-5 bg-gradient-to-br from-blue-50/80 to-indigo-50/60 border border-blue-200 rounded-xl flex flex-col gap-4 text-sm animate-in fade-in slide-in-from-top-2 shadow-md">
       {/* Header with Actions */}
-      <div className="flex items-center justify-between border-b border-blue-300 pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-300 pb-3">
         <div className="flex items-center gap-2 text-blue-900 font-bold">
           <Sliders className="w-5 h-5" />
           <span>{t.gridSliceSettings}</span>
-          <span className="text-xs font-normal text-blue-600 ml-1">
-            {ownershipOn ? `(${t.sliceModeOwnership})` : '(Manual Slicing)'}
-          </span>
+          <span className="text-xs font-normal text-blue-600 ml-1">({modeLabel})</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={onToggleManualDraw}
+            className={`text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border ${
+              manualOn
+                ? 'text-white bg-orange-600 border-orange-700 hover:bg-orange-700'
+                : 'text-orange-800 bg-orange-100 border-orange-300 hover:bg-orange-200'
+            }`}
+            title={t.sliceModeManualHint}
+            aria-pressed={manualOn}
+            aria-label={t.sliceModeManual}
+          >
+            {t.sliceModeManual}
+          </button>
           <button
             type="button"
             onClick={() =>
               setSliceSettings((prev) => ({
                 ...prev,
-                sliceMode: prev.sliceMode === 'ownership' ? 'equal' : 'ownership',
+                sliceMode:
+                  prev.sliceMode === 'ownership'
+                    ? 'equal'
+                    : prev.sliceMode === 'manual'
+                      ? 'manual'
+                      : 'ownership',
                 inferredCellRects:
                   prev.sliceMode === 'ownership' ? prev.inferredCellRects : undefined,
               }))
             }
-            className={`text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border ${
+            disabled={manualOn}
+            className={`text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border disabled:opacity-40 disabled:cursor-not-allowed ${
               ownershipOn
                 ? 'text-white bg-blue-600 border-blue-700 hover:bg-blue-700'
                 : 'text-blue-700 bg-blue-100 border-blue-300 hover:bg-blue-200'
@@ -85,7 +120,8 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
           </button>
           <button
             onClick={onAutoCenter}
-            className="text-xs flex items-center gap-1.5 text-blue-700 bg-blue-100 hover:bg-blue-200 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border border-blue-300 hover:shadow-sm"
+            disabled={manualOn}
+            className="text-xs flex items-center gap-1.5 text-blue-700 bg-blue-100 hover:bg-blue-200 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border border-blue-300 hover:shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
             title={t.autoCenter}
             aria-label={t.autoCenter}
           >
@@ -104,7 +140,67 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
         </div>
       </div>
 
-      {ownershipOn && (
+      {manualOn && (
+        <div className="rounded-lg border border-orange-200 bg-orange-50/90 px-3 py-2 space-y-2">
+          <p className="text-xs text-orange-900 leading-relaxed">{t.sliceModeManualHint}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-orange-900">{t.sliceModeManualDraw}</span>
+            <button
+              type="button"
+              onClick={() => onDrawLineToolChange?.('vertical')}
+              className={`text-xs px-2.5 py-1 rounded-md border font-medium ${
+                drawLineTool === 'vertical'
+                  ? 'bg-orange-600 text-white border-orange-700'
+                  : 'bg-white text-orange-800 border-orange-300'
+              }`}
+              aria-pressed={drawLineTool === 'vertical'}
+            >
+              {t.sliceModeManualVertical}
+            </button>
+            <button
+              type="button"
+              onClick={() => onDrawLineToolChange?.('horizontal')}
+              className={`text-xs px-2.5 py-1 rounded-md border font-medium ${
+                drawLineTool === 'horizontal'
+                  ? 'bg-orange-600 text-white border-orange-700'
+                  : 'bg-white text-orange-800 border-orange-300'
+              }`}
+              aria-pressed={drawLineTool === 'horizontal'}
+            >
+              {t.sliceModeManualHorizontal}
+            </button>
+            <button
+              type="button"
+              onClick={() => onDrawLineToolChange?.('delete')}
+              className={`text-xs px-2.5 py-1 rounded-md border font-medium ${
+                drawLineTool === 'delete'
+                  ? 'bg-red-600 text-white border-red-700'
+                  : 'bg-white text-red-700 border-red-300'
+              }`}
+              aria-pressed={drawLineTool === 'delete'}
+              title={t.sliceModeManualHintDelete}
+            >
+              {t.sliceModeManualDelete}
+            </button>
+            <button
+              type="button"
+              onClick={onClearManualLines}
+              className="text-xs px-2.5 py-1 rounded-md border border-orange-300 bg-white text-orange-800 font-medium hover:bg-orange-100"
+            >
+              {t.sliceModeManualClear}
+            </button>
+            <button
+              type="button"
+              onClick={onSeedEqualManual}
+              className="text-xs px-2.5 py-1 rounded-md border border-orange-300 bg-white text-orange-800 font-medium hover:bg-orange-100"
+            >
+              {t.sliceModeManualSeedEqual}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {ownershipOn && !manualOn && (
         <p className="text-xs text-blue-800 bg-blue-50/90 border border-blue-200 rounded-lg px-3 py-2 leading-relaxed">
           {t.sliceModeOwnershipHint}
         </p>
@@ -161,7 +257,9 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
         </div>
       </div>
 
-      {/* X Axis Controls */}
+      {/* X / Y padding & shift (equal / ownership grid only) */}
+      {!manualOn && (
+        <>
       <div className="bg-white/80 rounded-lg p-3 border border-blue-200/50">
         <div className="flex items-center gap-2 mb-2">
           <div className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded w-6 text-center">X</div>
@@ -378,6 +476,8 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
           </div>
         </div>
       </div>
+        </>
+      )}
 
       {/* Info Summary */}
       {cellInfo && (

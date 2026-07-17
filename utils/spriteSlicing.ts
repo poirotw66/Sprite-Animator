@@ -22,10 +22,15 @@ export interface SliceSettings {
   };
   /**
    * `equal` = fixed cell crops; `inferred` = detected rects;
-   * `ownership` = equal grid + connected-component owner masking (cross-cell bleed safe).
+   * `ownership` = equal grid + connected-component owner masking;
+   * `manual` = user-drawn divider lines (`manualXBounds` / `manualYBounds`).
    */
-  sliceMode?: 'equal' | 'inferred' | 'ownership';
+  sliceMode?: 'equal' | 'inferred' | 'ownership' | 'manual';
   inferredCellRects?: Array<{ x: number; y: number; width: number; height: number }>;
+  /** Full X edge list [0, ..., sheetWidth] when sliceMode is `manual`. */
+  manualXBounds?: number[];
+  /** Full Y edge list [0, ..., sheetHeight] when sliceMode is `manual`. */
+  manualYBounds?: number[];
 }
 
 export interface FrameOverride {

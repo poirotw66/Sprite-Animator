@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { sliceSpriteSheet, sliceSpriteSheetByCellRects, SliceSettings, FrameOverride, getEffectivePadding, getCellRectForFrame, smartAutoAlignFrames } from '../utils/imageUtils';
+import { SliceSettings, FrameOverride, getEffectivePadding, getCellRectForFrame, smartAutoAlignFrames } from '../utils/imageUtils';
+import { sliceSheetWithSettings } from '../utils/sliceSheetWithSettings';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { BACKGROUND_REMOVAL_THRESHOLD, DEBOUNCE_DELAY, CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ } from '../utils/constants';
 import { logger } from '../utils/logger';
@@ -102,36 +103,15 @@ export const useSpriteSheet = (
       const reSlice = async () => {
         try {
           const mapFrames = slicePipeline?.mapFramesAfterSlice;
-          if (sliceSettings.sliceMode === 'inferred' && sliceSettings.inferredCellRects?.length) {
-            let frames = await sliceSpriteSheetByCellRects(
-              processedSpriteSheet,
-              sliceSettings.inferredCellRects
-            );
-            if (mapFrames) {
-              frames = await mapFrames(frames);
-            }
-            setGeneratedFrames(frames);
-          } else {
-            const padding = getEffectivePadding(sliceSettings);
-            let frames = await sliceSpriteSheet(
-              processedSpriteSheet,
-              sliceSettings.cols,
-              sliceSettings.rows,
-              sliceSettings.paddingX,
-              sliceSettings.paddingY,
-              sliceSettings.shiftX,
-              sliceSettings.shiftY,
-              false,
-              BACKGROUND_REMOVAL_THRESHOLD,
-              frameOverrides,
-              chromaKeyColor,
-              padding
-            );
-            if (mapFrames) {
-              frames = await mapFrames(frames);
-            }
-            setGeneratedFrames(frames);
+          let frames = await sliceSheetWithSettings(processedSpriteSheet, sliceSettings, {
+            frameOverrides,
+            chromaKeyColor,
+            threshold: BACKGROUND_REMOVAL_THRESHOLD,
+          });
+          if (mapFrames) {
+            frames = await mapFrames(frames);
           }
+          setGeneratedFrames(frames);
         } catch (e) {
           logger.error('Re-slice failed', e);
         }
@@ -159,6 +139,8 @@ export const useSpriteSheet = (
     sliceSettings.shiftY,
     sliceSettings.sliceMode,
     sliceSettings.inferredCellRects,
+    sliceSettings.manualXBounds,
+    sliceSettings.manualYBounds,
     frameOverrides,
     mode,
     chromaKeyColor,
@@ -185,6 +167,7 @@ export const useSpriteSheet = (
       return;
     }
     if (sliceSettings.sliceMode === 'inferred') return; // Inferred grid uses explicit rects, skip smart align
+    if (sliceSettings.sliceMode === 'manual') return; // User-drawn bounds — don't auto-shift
     const opt = sliceSettings.autoOptimized;
     if (!opt?.paddingX || !opt?.paddingY || !opt?.shiftX || !opt?.shiftY) {
       return;

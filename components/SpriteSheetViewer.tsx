@@ -1,10 +1,17 @@
 import React, { useCallback, useMemo, useState, useRef } from 'react';
 import { Download, Grid3X3, Loader2, Eye, EyeOff, Eraser } from './Icons';
 import { SliceSettings, getEffectivePadding } from '../utils/imageUtils';
+import { cellRectsFromBounds } from '../utils/manualGridBounds';
 import { GRID_PATTERN_URL } from '../utils/constants';
 import { useLanguage } from '../hooks/useLanguage';
 import { SpriteSheetEraserModal } from './SpriteSheetEraserModal';
 import { SpriteSheetSliceControls } from './SpriteSheetSliceControls';
+import {
+  enableManualSliceMode,
+  ManualSliceOverlay,
+  seedEqualManualSliceMode,
+  type DrawLineTool,
+} from './ManualSliceOverlay';
 
 interface SpriteSheetViewerProps {
   spriteSheetImage: string | null;
@@ -40,12 +47,16 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   const { t } = useLanguage();
   const [showOriginal, setShowOriginal] = useState(false);
   const [openEraserModal, setOpenEraserModal] = useState(false);
+  const [drawLineTool, setDrawLineTool] = useState<DrawLineTool>('vertical');
+  const manualMode = sliceSettings.sliceMode === 'manual';
   const handleColsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSliceSettings((p) => ({ ...p, cols: Math.max(1, Number(e.target.value)) }));
+    const cols = Math.max(1, Number(e.target.value));
+    setSliceSettings((p) => ({ ...p, cols }));
   }, [setSliceSettings]);
 
   const handleRowsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSliceSettings((p) => ({ ...p, rows: Math.max(1, Number(e.target.value)) }));
+    const rows = Math.max(1, Number(e.target.value));
+    setSliceSettings((p) => ({ ...p, rows }));
   }, [setSliceSettings]);
 
   const handlePaddingXChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,6 +98,33 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
     if (sheetDimensions.width === 0 || sheetDimensions.height === 0) {
       return null;
     }
+    if (
+      manualMode &&
+      sliceSettings.manualXBounds &&
+      sliceSettings.manualYBounds
+    ) {
+      const rects = cellRectsFromBounds(
+        sliceSettings.manualXBounds,
+        sliceSettings.manualYBounds
+      );
+      const cols = Math.max(1, sliceSettings.manualXBounds.length - 1);
+      const rows = Math.max(1, sliceSettings.manualYBounds.length - 1);
+      const avgW =
+        rects.length > 0
+          ? Math.round(rects.reduce((s, r) => s + r.width, 0) / rects.length)
+          : 0;
+      const avgH =
+        rects.length > 0
+          ? Math.round(rects.reduce((s, r) => s + r.height, 0) / rects.length)
+          : 0;
+      return {
+        cellWidth: avgW,
+        cellHeight: avgH,
+        totalFrames: cols * rows,
+        effectiveWidth: sheetDimensions.width,
+        effectiveHeight: sheetDimensions.height,
+      };
+    }
     const effectiveWidth = sheetDimensions.width - padding.left - padding.right;
     const effectiveHeight = sheetDimensions.height - padding.top - padding.bottom;
     const cellWidth = Math.round(effectiveWidth / sliceSettings.cols);
@@ -100,9 +138,9 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
       effectiveWidth,
       effectiveHeight,
     };
-  }, [sheetDimensions, sliceSettings, padding]);
+  }, [sheetDimensions, sliceSettings, padding, manualMode]);
 
-  // Reset to default settings (clear four-edge and inferred mode)
+  // Reset to default settings (clear four-edge and inferred/manual mode)
   const handleReset = useCallback(() => {
     setSliceSettings({
       cols: sliceSettings.cols, // Keep grid size
@@ -117,8 +155,41 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
       shiftY: 0,
       sliceMode: 'equal',
       inferredCellRects: undefined,
+      manualXBounds: undefined,
+      manualYBounds: undefined,
     });
   }, [setSliceSettings, sliceSettings.cols, sliceSettings.rows]);
+
+  const handleToggleManualDraw = useCallback(() => {
+    setSliceSettings((prev) => {
+      if (prev.sliceMode === 'manual') {
+        return {
+          ...prev,
+          sliceMode: 'equal',
+          manualXBounds: undefined,
+          manualYBounds: undefined,
+        };
+      }
+      if (sheetDimensions.width <= 0 || sheetDimensions.height <= 0) {
+        return prev;
+      }
+      return enableManualSliceMode(prev, sheetDimensions.width, sheetDimensions.height);
+    });
+  }, [setSliceSettings, sheetDimensions.height, sheetDimensions.width]);
+
+  const handleSeedEqualManual = useCallback(() => {
+    if (sheetDimensions.width <= 0 || sheetDimensions.height <= 0) return;
+    setSliceSettings((prev) =>
+      seedEqualManualSliceMode(prev, sheetDimensions.width, sheetDimensions.height)
+    );
+  }, [setSliceSettings, sheetDimensions.height, sheetDimensions.width]);
+
+  const handleClearManualLines = useCallback(() => {
+    if (sheetDimensions.width <= 0 || sheetDimensions.height <= 0) return;
+    setSliceSettings((prev) =>
+      enableManualSliceMode(prev, sheetDimensions.width, sheetDimensions.height)
+    );
+  }, [setSliceSettings, sheetDimensions.height, sheetDimensions.width]);
 
   // Interactive grid editing state
   const [isDragging, setIsDragging] = useState(false);
@@ -464,7 +535,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
               />
 
               {/* Grid overlay for alignment - drawn behind SVG but visible */}
-              {sheetDimensions.width > 0 && gridPositions && (
+              {sheetDimensions.width > 0 && gridPositions && !manualMode && (
                 <svg
                   viewBox={`0 0 ${sheetDimensions.width} ${sheetDimensions.height}`}
                   className="absolute inset-0 w-full h-full pointer-events-none"
@@ -493,7 +564,23 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
               )}
 
               {/* SVG Overlay: Uses ViewBox to match image's natural dimensions. */}
-              {sheetDimensions.width > 0 && (
+              {sheetDimensions.width > 0 && manualMode && (
+                <ManualSliceOverlay
+                  sheetWidth={sheetDimensions.width}
+                  sheetHeight={sheetDimensions.height}
+                  sliceSettings={sliceSettings}
+                  setSliceSettings={setSliceSettings}
+                  drawTool={drawLineTool}
+                  hint={
+                    drawLineTool === 'delete'
+                      ? t.sliceModeManualHintDelete
+                      : drawLineTool === 'vertical'
+                        ? t.sliceModeManualHintVertical
+                        : t.sliceModeManualHintHorizontal
+                  }
+                />
+              )}
+              {sheetDimensions.width > 0 && !manualMode && (
                 <svg
                   ref={svgRef}
                   viewBox={`0 0 ${sheetDimensions.width} ${sheetDimensions.height}`}
@@ -727,6 +814,11 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
           onShiftYChange={handleShiftYChange}
           onAutoCenter={handleAutoCenter}
           onReset={handleReset}
+          drawLineTool={drawLineTool}
+          onDrawLineToolChange={setDrawLineTool}
+          onToggleManualDraw={handleToggleManualDraw}
+          onSeedEqualManual={handleSeedEqualManual}
+          onClearManualLines={handleClearManualLines}
         />
       )}
     </div>

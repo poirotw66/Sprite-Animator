@@ -3,6 +3,7 @@
  */
 
 import type { ChromaKeyColorType } from '../types';
+import { cellRectsFromBounds } from './manualGridBounds';
 import { sliceSpriteSheet } from './sliceSpriteSheet';
 import { sliceSpriteSheetByCellRects } from './sliceByCellRects';
 import { sliceSpriteSheetByOwnership } from './sliceSpriteSheetByOwnership';
@@ -30,6 +31,17 @@ export async function sliceSheetWithSettings(
 
   if (settings.sliceMode === 'inferred' && settings.inferredCellRects?.length) {
     return sliceSpriteSheetByCellRects(source, settings.inferredCellRects);
+  }
+
+  if (
+    settings.sliceMode === 'manual' &&
+    settings.manualXBounds &&
+    settings.manualYBounds &&
+    settings.manualXBounds.length >= 2 &&
+    settings.manualYBounds.length >= 2
+  ) {
+    const rects = cellRectsFromBounds(settings.manualXBounds, settings.manualYBounds);
+    return sliceSpriteSheetByCellRects(source, rects);
   }
 
   const padding = getEffectivePadding(settings);
