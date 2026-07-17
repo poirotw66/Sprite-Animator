@@ -27,6 +27,7 @@ graphify-out/
 *.sw?
 .shared/
 .cursor/
+.agents/
 .md/
 test/
 .worktrees/
