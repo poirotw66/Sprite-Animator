@@ -34,7 +34,10 @@ import {
   type LineStickerTextRendering,
   type LineStickerPromptVersion,
 } from '../../utils/lineStickerPrompt.ts';
-import { DEFAULT_SKILL_STICKER_MODEL, DEFAULT_CHROMA_KEY_ALGORITHM, defaultResolutionForModel } from '../../utils/constants.ts';
+import {
+  LINE_STICKER_PRODUCTION_PRESET,
+  productionStickerResolutionForModel,
+} from '../../utils/lineStickerProductionPreset.ts';
 import type { ChromaKeyColorType, ChromaKeyAlgorithm } from '../../types.ts';
 import {
   mergeProgrammaticComposeConfig,
@@ -70,9 +73,9 @@ interface StickerConfig {
   phraseSetFile?: string;
   language?: string; // TEXT_PRESETS key (default: zh-TW)
   chromaKeyColor?: ChromaKeyColorType; // default: green
-  /** `forge` (default) or `core` background removal. */
+  /** Background-removal implementation. Production default: `core`. */
   chromaKeyAlgorithm?: ChromaKeyAlgorithm;
-  includeText?: boolean; // default: true (model draws text)
+  includeText?: boolean; // production default: true
   /** 'model' = Gemini draws text; 'programmatic' = overlay after slice (more stable). */
   textRendering?: LineStickerTextRendering;
   fontKey?: keyof typeof FONT_PRESETS;
@@ -102,14 +105,18 @@ interface StickerConfig {
   lineUploadStickerCount?: number;
   /** Max Gemini retries when grid validation fails (default 3). */
   maxSheetRetries?: number;
+  /** Extra attempts after maxSheetRetries. Production default: 0. */
+  extraSheetRegenAttempts?: number;
   /** Minimum grid alignment score 0–1 to accept a sheet (default 0.80). */
   minGridAlignmentScore?: number;
   /** Prompt builder version (default v3compact — shorter per-cell lines). */
   promptVersion?: LineStickerPromptVersion;
-  /** When true, sheet-2+ also attaches sheet-1 _processed-sheet.png (disables parallel). Default false. */
+  /** When true, sheet-2+ also attaches sheet-1 _processed-sheet.png (disables parallel). Production default true. */
   styleAnchorFromPriorSheet?: boolean;
-  /** `true` = plan A solid chroma. `"guided"` = plan B visible layout ref. Default false. */
+  /** `true` = plan A solid chroma. `"guided"` = plan B visible layout ref. Production default guided. */
   gridTemplate?: boolean | 'guided';
+  /** Run post-generation QA. Reserved for the production/finalization layer. */
+  qaEnabled?: boolean;
 }
 
 function parseArgs(argv: string[]) {
@@ -331,22 +338,27 @@ async function main() {
 
   const outDir = resolve(process.cwd(), (args.out as string) ?? 'line-stickers-out');
   const sheetDirOverride = typeof args['sheet-dir'] === 'string' ? args['sheet-dir'] : undefined;
-  const includeText = config.includeText ?? true;
-  const textRendering: LineStickerTextRendering = config.textRendering ?? 'model';
+  const production = LINE_STICKER_PRODUCTION_PRESET;
+  const includeText = config.includeText ?? production.includeText;
+  const textRendering: LineStickerTextRendering = config.textRendering ?? production.textRendering;
   const effectiveIncludeText = getEffectiveLineStickerIncludeText(includeText, textRendering);
-  const chromaKeyColor: ChromaKeyColorType = config.chromaKeyColor ?? 'green';
+  const chromaKeyColor: ChromaKeyColorType = config.chromaKeyColor ?? production.chromaKeyColor;
   const chromaKeyAlgorithm: ChromaKeyAlgorithm =
-    config.chromaKeyAlgorithm ?? DEFAULT_CHROMA_KEY_ALGORITHM;
+    config.chromaKeyAlgorithm ?? production.chromaKeyAlgorithm;
   const model =
     (typeof args.model === 'string' ? args.model : undefined) ??
     config.model ??
-    DEFAULT_SKILL_STICKER_MODEL;
-  const resolution = config.resolution ?? defaultResolutionForModel(model);
-  const maxSheetRetries = Math.max(1, config.maxSheetRetries ?? 3);
-  const extraSheetRegenAttempts = config.extraSheetRegenAttempts ?? 3;
-  const minGridAlignmentScore = config.minGridAlignmentScore ?? 0.8;
-  const promptVersion = config.promptVersion ?? 'v3compact';
-  const styleAnchorFromPriorSheet = config.styleAnchorFromPriorSheet === true;
+    production.model;
+  const resolution = config.resolution ?? productionStickerResolutionForModel(model);
+  const maxSheetRetries = Math.max(1, config.maxSheetRetries ?? production.maxSheetRetries);
+  const extraSheetRegenAttempts =
+    config.extraSheetRegenAttempts ?? production.extraSheetRegenAttempts;
+  const minGridAlignmentScore =
+    config.minGridAlignmentScore ?? production.minGridAlignmentScore;
+  const promptVersion = config.promptVersion ?? production.promptVersion;
+  const styleAnchorFromPriorSheet =
+    config.styleAnchorFromPriorSheet ?? production.styleAnchorFromPriorSheet;
+  const gridTemplate = config.gridTemplate ?? production.gridTemplate;
 
   const sheets = planSheets(config);
   const sheetFilter = typeof args.sheet === 'string' ? args.sheet : undefined;
@@ -364,7 +376,7 @@ async function main() {
   }
   const iterationSheets = isolatedSheetRun ? sheetsToGenerate : sheets;
   const stickerTotal = sheets.reduce((sum, sheet) => sum + sheet.cols * sheet.rows, 0);
-  const fontKey = resolveFontKeyForStyle(config.style, config.fontKey);
+  const fontKey = resolveFontKeyForStyle(config.style, config.fontKey ?? production.fontKey);
 
   console.log(
     `▶ LINE sticker job: scope=${config.scope ?? 'set'}, stickers=${stickerTotal}, sheets=${sheets.length}` +
@@ -378,7 +390,7 @@ async function main() {
     for (const sheet of sheets) {
       const slots = buildSlots(config, sheet.phrases, fontKey);
       const reserveForProgrammaticOverlay = includeText && textRendering === 'programmatic';
-      const guidedMode = config.gridTemplate === 'guided';
+      const guidedMode = gridTemplate === 'guided';
       const prompt = buildLineStickerPrompt(
         slots,
         sheet.cols,
@@ -424,9 +436,11 @@ async function main() {
   const usedSheetFolders: string[] = [];
   const gridScores: Record<string, number> = {};
 
-  const textColorKey = config.textColorKey ?? 'black';
+  const textColorKey = config.textColorKey ?? production.textColorKey;
   const programmaticTextTuning = mergeProgrammaticTextTuning(config.programmaticTextTuning);
-  const programmaticCompose = mergeProgrammaticComposeConfig(config.programmaticCompose);
+  const programmaticCompose = mergeProgrammaticComposeConfig(
+    { ...production.programmaticCompose, ...config.programmaticCompose }
+  );
 
   async function loadExistingSheet(sheet: SheetPlan, sheetFolder: string): Promise<void> {
     console.log(`\n▶ ${sheet.label}: keeping existing stickers...`);
@@ -494,7 +508,7 @@ async function main() {
       styleAnchorFromPriorSheet,
       priorSheetFolder,
       logPrefix: '   · ',
-      gridTemplate: config.gridTemplate === 'guided' ? 'guided' : config.gridTemplate === true,
+      gridTemplate: gridTemplate === 'guided' ? 'guided' : gridTemplate === true,
     });
     gridScores[sheetFolder] = result.gridScore;
     return {
@@ -592,7 +606,26 @@ async function main() {
     usedSheetFolders.push(folder);
   }
 
-  const jobConfig = { ...config, model, textRendering, promptVersion };
+  const jobConfig = {
+    ...config,
+    model,
+    resolution,
+    chromaKeyColor,
+    chromaKeyAlgorithm,
+    includeText,
+    textRendering,
+    fontKey,
+    textColorKey,
+    programmaticCompose,
+    maxSheetRetries,
+    extraSheetRegenAttempts,
+    minGridAlignmentScore,
+    promptVersion,
+    styleAnchorFromPriorSheet,
+    gridTemplate,
+    qaEnabled: config.qaEnabled ?? production.qaEnabled,
+    lineUploadSubmit: config.lineUploadSubmit ?? production.lineUploadSubmit,
+  };
   const manifestPath = isolatedSheetRun
     ? resolve(outDir, sheetDirOverride!, 'manifest.json')
     : resolve(outDir, 'manifest.json');

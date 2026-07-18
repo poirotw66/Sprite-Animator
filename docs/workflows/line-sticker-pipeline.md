@@ -3,6 +3,21 @@
 Orchestrates the full **image + JSON → stickers** workflow in this repo.
 Headless only (no browser). Reuses app modules and scripts under `scripts/line-sticker/`.
 
+## Canonical paths and production defaults
+
+- `.claude/skills/` is the tracked source of truth for LINE sticker skills.
+- `.agents/skills/` is a generated Codex runtime mirror. Run
+  `npm run skills:sync:line-sticker` after changing a canonical skill.
+- `utils/lineStickerProductionPreset.ts` is the single source for headless defaults:
+  2K when supported, guided layout, `core` chroma removal, programmatic text with
+  canvas composition, sheet-1 style anchoring, grid score 0.8, and 3 total attempts.
+- A field explicitly provided in `job.config.json` overrides the production preset.
+
+The canonical full-config examples are:
+
+- `.claude/skills/line-sticker-maker/config.example.json`
+- `.claude/skills/line-sticker-maker/examples/demo-job.config.json`
+
 ## Inputs
 
 | Input | Required | Notes |

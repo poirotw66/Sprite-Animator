@@ -43,7 +43,8 @@ npx tsx scripts/line-sticker/daily-pack.mts \
 - **B (20 sets)**: new character concept → `generate-character-ref.mts` → `design-phrase-set.mts` → `run-from-inputs.mts`
 - **A (10 sets)**: pick completed B character from registry → new theme/voice phrases → pipeline with copied ref
 
-Each 40-sticker set = **2 parallel Gemini sheet calls** (unchanged from `line-sticker-maker`).
+Each 40-sticker set = **2 Gemini sheet calls**. The production preset runs them
+sequentially so sheet 2 can use sheet 1 as a character-style anchor.
 
 ## Output layout
 

@@ -10,10 +10,9 @@ import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import {
-  DEFAULT_CHROMA_KEY_ALGORITHM,
-  DEFAULT_SKILL_STICKER_MODEL,
-  defaultResolutionForModel,
-} from '../../utils/constants.ts';
+  LINE_STICKER_PRODUCTION_PRESET,
+  productionStickerResolutionForModel,
+} from '../../utils/lineStickerProductionPreset.ts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(SCRIPT_DIR, '../..');
@@ -68,26 +67,33 @@ function slugSetName(name: string): string {
 }
 
 function buildJobConfig(manifest: BatchManifest, job: BatchJob): Record<string, unknown> {
+  const production = LINE_STICKER_PRODUCTION_PRESET;
   return {
     referenceImage: job.referenceImage,
     phraseSetFile: manifest.phraseSetFile,
     characterDescription: job.characterDescription,
     style: 'matchUploaded',
     language: 'en',
-    chromaKeyColor: 'green',
-    chromaKeyAlgorithm: DEFAULT_CHROMA_KEY_ALGORITHM,
-    includeText: true,
-    textRendering: 'model',
+    chromaKeyColor: production.chromaKeyColor,
+    chromaKeyAlgorithm: production.chromaKeyAlgorithm,
+    includeText: production.includeText,
+    textRendering: production.textRendering,
+    fontKey: production.fontKey,
+    textColorKey: production.textColorKey,
+    programmaticCompose: production.programmaticCompose,
     scope: 'set',
     stickerCount: 40,
-    model: DEFAULT_SKILL_STICKER_MODEL,
-    resolution: defaultResolutionForModel(DEFAULT_SKILL_STICKER_MODEL),
+    model: production.model,
+    resolution: productionStickerResolutionForModel(production.model),
     lineUpload: true,
     lineUploadSubmit: manifest.lineUploadSubmit === true,
-    maxSheetRetries: 3,
-    extraSheetRegenAttempts: 3,
-    promptVersion: 'v3compact',
-    gridTemplate: 'guided',
+    maxSheetRetries: production.maxSheetRetries,
+    extraSheetRegenAttempts: production.extraSheetRegenAttempts,
+    minGridAlignmentScore: production.minGridAlignmentScore,
+    promptVersion: production.promptVersion,
+    styleAnchorFromPriorSheet: production.styleAnchorFromPriorSheet,
+    gridTemplate: production.gridTemplate,
+    qaEnabled: production.qaEnabled,
     lineS: {
       syncToLineS: true,
       creatorId: '706',

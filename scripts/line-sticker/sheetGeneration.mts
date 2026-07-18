@@ -25,7 +25,7 @@ import {
   type GridValidationResult,
 } from '../../utils/sheetGridValidation.ts';
 import { buildGridSheetTemplate, type GridTemplateMode } from '../../utils/gridSheetTemplate.ts';
-import { DEFAULT_CHROMA_KEY_ALGORITHM } from '../../utils/constants.ts';
+import { LINE_STICKER_PRODUCTION_PRESET } from '../../utils/lineStickerProductionPreset.ts';
 import {
   resolveEffectiveGridTemplate,
   resolveSliceTemplateBounds,
@@ -97,7 +97,7 @@ export interface GenerateOneSheetParams {
   programmaticCompose?: ProgrammaticComposeConfig;
   maxSheetRetries: number;
   minGridAlignmentScore: number;
-  /** Extra Gemini attempts when grid score stays below minGridAlignmentScore. Default 3. */
+  /** Extra Gemini attempts when grid score stays below minGridAlignmentScore. Production default 0. */
   extraSheetRegenAttempts?: number;
   isolatedSheetRun: boolean;
   globalIndexStart: number;
@@ -227,15 +227,15 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     programmaticCompose = mergeProgrammaticComposeConfig(),
     maxSheetRetries,
     minGridAlignmentScore,
-    extraSheetRegenAttempts = 3,
+    extraSheetRegenAttempts = LINE_STICKER_PRODUCTION_PRESET.extraSheetRegenAttempts,
     isolatedSheetRun,
     globalIndexStart,
     promptVersion = 'v3compact',
-    styleAnchorFromPriorSheet = false,
+    styleAnchorFromPriorSheet = LINE_STICKER_PRODUCTION_PRESET.styleAnchorFromPriorSheet,
     priorSheetFolder,
     logPrefix = '',
-    gridTemplate = false,
-    chromaKeyAlgorithm = DEFAULT_CHROMA_KEY_ALGORITHM,
+    gridTemplate = LINE_STICKER_PRODUCTION_PRESET.gridTemplate,
+    chromaKeyAlgorithm = LINE_STICKER_PRODUCTION_PRESET.chromaKeyAlgorithm,
   } = params;
 
   const effectiveIncludeText = getEffectiveLineStickerIncludeText(includeText, textRendering);

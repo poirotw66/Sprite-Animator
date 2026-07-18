@@ -119,6 +119,9 @@ Legacy job configs with `lineS` / `syncToLineS` are still accepted when reading.
 
 ## config.json fields
 
+The table below is the production preset used by both `run-from-inputs.mts` and
+`generate.mts`. Explicit job config fields still override these values.
+
 | field | default | notes |
 |---|---|---|
 | `referenceImage` | — | character reference (png/jpg/webp). Resolved relative to config file, cwd, or repo root. |
@@ -129,19 +132,21 @@ Legacy job configs with `lineS` / `syncToLineS` are still accepted when reading.
 | `customPhrases` | `[]` | overrides theme phrases when non-empty |
 | `language` | `zh-TW` | `zh-TW`, `zh-CN`, `en`, `ja` |
 | `chromaKeyColor` | `green` | `magenta` or `green` |
-| `chromaKeyAlgorithm` | `legacy` | `legacy` (default), `core`, or `forge` |
-| `includeText` | `true` | when `textRendering` is `model`, Gemini draws phrase text |
-| `textRendering` | `model` | **`model`** = Gemini draws text on stickers (skill default); `programmatic` = canvas overlay after slice (more stable zh-TW) |
-| `fontKey` / `textColorKey` | `round` / `black` | used when `textRendering` is `programmatic` |
+| `chromaKeyAlgorithm` | `core` | production default; `legacy` and `forge` remain explicit compatibility options |
+| `includeText` | `true` | include the phrase in the final sticker |
+| `textRendering` | `programmatic` | canvas overlay after slicing; use `model` only when model-drawn lettering is intentional |
+| `fontKey` / `textColorKey` | `round` / `black` | deterministic caption styling |
+| `programmaticCompose.enabled` | `true` | keeps caption and character in separate layout slots |
 | `scope` | `set` | `set` = full LINE set; `single` = one sheet |
 | `stickerCount` | `40` | 40 = 2×4×5 (LINE standard); 48 = legacy 3×4×4 |
 | `model` | `gemini-3.1-flash-image` | skill default (`DEFAULT_SKILL_STICKER_MODEL`) |
 | `resolution` | `2K` | `0.5K`/`1K`/`2K`/`4K` (model-dependent; default `2K` for flash-image) |
-| `maxSheetRetries` | `3` | Gemini retries when grid validation fails |
-| `minGridAlignmentScore` | `0.72` | 0–1; reject sheet below this score |
+| `maxSheetRetries` | `3` | maximum Gemini attempts per sheet |
+| `extraSheetRegenAttempts` | `0` | prevents an implicit second retry budget |
+| `minGridAlignmentScore` | `0.8` | 0–1; reject sheet below this score |
 | `promptVersion` | `v3compact` | `v3compact` = shorter per-cell lines; `v3` = verbose legacy |
-| `styleAnchorFromPriorSheet` | `false` | opt-in: attach sheet-1 `_processed-sheet.png` for sheet-2+ (disables parallel) |
-| `gridTemplate` | `false` | `true` = blank chroma template; `"guided"` = layout ref (flash-lite only — **flash-image skips template attachment**) |
+| `styleAnchorFromPriorSheet` | `true` | attach sheet-1 `_processed-sheet.png` for sheet-2+ to stabilize identity; sheets run sequentially |
+| `gridTemplate` | `"guided"` | visible layout reference used by supported Gemini image models, including flash-image |
 | `qaEnabled` | `true` | write `qa-report.json` at finalize (warn-only) |
 | `lineUpload` | `true` | build upload ZIP at end of full run |
 | `mainStickerIndex` / `tabStickerIndex` | random | optional 1-based overrides; default picks two distinct stickers from the set |
@@ -239,12 +244,12 @@ After a full run or `finalize.mts`:
 
 - Background normalization + chroma key use the **same shared rules** as the web app (`normalizeChromaBackground` → `processChromaKey`).
 - **Guided green pocket cleanup** (Pass 5): clears enclosed `G > max(R,B)` pockets only; never touches neutral gray / black line AA.
-- Sprite sheets: **1:1 @ 1K → 1024×1024 px** (4×5 → ~256×204 px per cell).
+- Sprite sheets: production default **1:1 @ 2K** when supported; unsupported models fall back to their first valid resolution.
 - Upload PNGs are scaled to LINE limits; `stickers/` keeps native resolution.
-- 40-sticker set = **2 Gemini calls in parallel** (both sheets use the same character reference image only).
+- 40-sticker set = **2 sequential Gemini sheet calls**; sheet 2 also receives sheet 1 as a style anchor.
 - **v3compact** prompts: `N|"phrase"|action` per cell (~25% shorter than v3).
 - Grid validation **hard-rejects** wrong layout (e.g. 5×5 instead of 4×5) and uneven column widths.
-- **Best attempt** kept across retries; **reslice-before-regenerate** accepts marginal scores (0.68–0.72) without a new API call when layout matches.
+- **Best attempt** is kept across at most 3 production attempts; re-slicing is preferred before spending another image call.
 - Gemini **empty-image response** is retried up to 3 times before failing.
 - Grid prompt includes `[0. GRID LAYOUT]` anchor to reduce 5×5 drift.
 - Not included: LINE account setup, review, or pricing.

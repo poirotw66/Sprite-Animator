@@ -19,7 +19,10 @@ import { spawnSync } from 'node:child_process';
 import {
   parsePhraseSetJson,
 } from '../../utils/lineStickerPhraseSetFormat.ts';
-import { DEFAULT_SKILL_STICKER_MODEL, DEFAULT_CHROMA_KEY_ALGORITHM, defaultResolutionForModel } from '../../utils/constants.ts';
+import {
+  LINE_STICKER_PRODUCTION_PRESET,
+  productionStickerResolutionForModel,
+} from '../../utils/lineStickerProductionPreset.ts';
 import {
   defaultTitleZhFromPhraseSet,
   suggestPhraseSetNameZh,
@@ -183,6 +186,7 @@ async function main(): Promise<void> {
           : 48
         : undefined;
 
+    const production = LINE_STICKER_PRODUCTION_PRESET;
     const job = {
       referenceImage: basename(imageOut),
       ...(referenceImage2 ? { referenceImage2 } : {}),
@@ -197,25 +201,30 @@ async function main(): Promise<void> {
         ? { characterDescription: args['character-concept'].trim() }
         : {}),
       style: 'matchUploaded',
-      fontKey: 'matchUploaded',
+      fontKey: production.fontKey,
+      textColorKey: production.textColorKey,
       language: 'zh-TW',
-      chromaKeyColor: 'green',
-      chromaKeyAlgorithm: DEFAULT_CHROMA_KEY_ALGORITHM,
-      includeText: true,
-      textRendering: 'model',
+      chromaKeyColor: production.chromaKeyColor,
+      chromaKeyAlgorithm: production.chromaKeyAlgorithm,
+      includeText: production.includeText,
+      textRendering: production.textRendering,
+      programmaticCompose: production.programmaticCompose,
       scope,
       ...(scope === 'set' ? { stickerCount } : {}),
       ...(scope === 'single'
         ? { cols: phraseSet.gridCols ?? 4, rows: phraseSet.gridRows ?? 5 }
         : {}),
-      model: DEFAULT_SKILL_STICKER_MODEL,
-      resolution: defaultResolutionForModel(DEFAULT_SKILL_STICKER_MODEL),
+      model: production.model,
+      resolution: productionStickerResolutionForModel(production.model),
       lineUpload: scope === 'set',
-      lineUploadSubmit: false,
-      maxSheetRetries: 3,
-      minGridAlignmentScore: 0.8,
-      promptVersion: 'v3compact',
-      gridTemplate: 'guided',
+      lineUploadSubmit: production.lineUploadSubmit,
+      maxSheetRetries: production.maxSheetRetries,
+      extraSheetRegenAttempts: production.extraSheetRegenAttempts,
+      minGridAlignmentScore: production.minGridAlignmentScore,
+      promptVersion: production.promptVersion,
+      styleAnchorFromPriorSheet: production.styleAnchorFromPriorSheet,
+      gridTemplate: production.gridTemplate,
+      qaEnabled: production.qaEnabled,
       upload: {
         syncToUploadRoot: true,
         creatorId: '706',

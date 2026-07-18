@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "skills:sync:line-sticker": "tsx scripts/line-sticker/sync-line-sticker-skills.mts",
+    "skills:check:line-sticker": "tsx scripts/line-sticker/sync-line-sticker-skills.mts --check",
     "ci": "npm run typecheck && npm run lint && npm run test && npm run build",
     "build": "vite build",
     "preview": "vite preview"
