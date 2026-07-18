@@ -1,22 +1,24 @@
-/**
- * Post-chroma fringe metrics for sticker QA (headless-safe).
- */
+/** Post-chroma fringe metrics for sticker QA (headless-safe). */
+
+import type { ChromaKeyColorType } from '../types';
 
 export interface ChromaFringeMetrics {
-  /** Opaque green-tinted pixels within a few px of transparency. */
+  chromaKeyColor: ChromaKeyColorType;
+  edgeChromaCount: number;
+  pocketChromaCount: number;
+  chromaFringeCount: number;
+  /** @deprecated Green-only compatibility aliases. */
   edgeGreenCount: number;
-  /** Opaque green-tinted pixels away from the outer edge (enclosed pockets). */
+  /** @deprecated Green-only compatibility aliases. */
   pocketGreenCount: number;
-  /** Olive / yellow-green AA pixels near transparency. */
+  /** @deprecated Green-only compatibility aliases. */
   oliveFringeCount: number;
 }
 
 const ALPHA_BG = 15;
 const NEAR_TRANSPARENT_RADIUS = 3;
-const GREEN_EXCESS_MIN = 6;
-// A 4-point gap classified warm anti-aliased black/crayon ink as olive spill.
-// Require a visible yellow-green separation while retaining true chroma residue.
-const OLIVE_YELLOW_GREEN_MIN = 8;
+const KEY_EXCESS_MIN = 6;
+const DESPILLED_KEY_MIN = 8;
 
 function isNearTransparent(
   data: Uint8ClampedArray | Uint8Array | number[],
@@ -37,15 +39,16 @@ function isNearTransparent(
   return false;
 }
 
-/** Count green / olive fringe pixels on a sliced sticker frame. */
+/** Count key-color and despilled fringe pixels on a sliced sticker frame. */
 export function measureChromaFringe(
   data: Uint8ClampedArray | Uint8Array | number[],
   width: number,
-  height: number
+  height: number,
+  chromaKeyColor: ChromaKeyColorType = 'green'
 ): ChromaFringeMetrics {
-  let edgeGreenCount = 0;
-  let pocketGreenCount = 0;
-  let oliveFringeCount = 0;
+  let edgeChromaCount = 0;
+  let pocketChromaCount = 0;
+  let chromaFringeCount = 0;
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -56,31 +59,49 @@ export function measureChromaFringe(
       const r = data[i]!;
       const g = data[i + 1]!;
       const b = data[i + 2]!;
-      const greenExcess = g - Math.max(r, b);
+      const keyExcess = chromaKeyColor === 'green'
+        ? g - Math.max(r, b)
+        : Math.min(r, b) - g;
       const atEdge = isNearTransparent(data, width, height, x, y, NEAR_TRANSPARENT_RADIUS);
 
-      if (greenExcess > GREEN_EXCESS_MIN) {
-        if (atEdge) edgeGreenCount++;
-        else pocketGreenCount++;
+      if (keyExcess > KEY_EXCESS_MIN) {
+        if (atEdge) edgeChromaCount++;
+        else pocketChromaCount++;
         continue;
       }
 
-      const yellowGreen = Math.min(r, g) - b;
+      // Detect darker, partially despilled key color left on an alpha edge.
+      const despilledKey = chromaKeyColor === 'green'
+        ? Math.min(r, g) - b
+        : Math.min(r, b) - g;
       if (
         atEdge &&
-        yellowGreen > OLIVE_YELLOW_GREEN_MIN &&
-        g >= r &&
+        despilledKey > DESPILLED_KEY_MIN &&
+        (chromaKeyColor === 'magenta' || g >= r) &&
         (r + g + b) / 3 < 140
       ) {
-        oliveFringeCount++;
+        chromaFringeCount++;
       }
     }
   }
 
-  return { edgeGreenCount, pocketGreenCount, oliveFringeCount };
+  return {
+    chromaKeyColor,
+    edgeChromaCount,
+    pocketChromaCount,
+    chromaFringeCount,
+    edgeGreenCount: chromaKeyColor === 'green' ? edgeChromaCount : 0,
+    pocketGreenCount: chromaKeyColor === 'green' ? pocketChromaCount : 0,
+    oliveFringeCount: chromaKeyColor === 'green' ? chromaFringeCount : 0,
+  };
 }
 
-export const CHROMA_FRINGE_WARN_EDGE_GREEN = 10;
-/** Informational only — not used for QA warnings (see stickerFrameQa scoreChromaFringe). */
-export const CHROMA_FRINGE_WARN_POCKET_GREEN = 8;
-export const CHROMA_FRINGE_WARN_OLIVE = 12;
+export const CHROMA_FRINGE_WARN_EDGE = 10;
+export const CHROMA_FRINGE_WARN_POCKET = 8;
+export const CHROMA_FRINGE_WARN_DESPILL = 12;
+/** @deprecated Green-only compatibility aliases. */
+export const CHROMA_FRINGE_WARN_EDGE_GREEN = CHROMA_FRINGE_WARN_EDGE;
+/** @deprecated Green-only compatibility aliases. */
+export const CHROMA_FRINGE_WARN_POCKET_GREEN = CHROMA_FRINGE_WARN_POCKET;
+/** @deprecated Green-only compatibility aliases. */
+export const CHROMA_FRINGE_WARN_OLIVE = CHROMA_FRINGE_WARN_DESPILL;

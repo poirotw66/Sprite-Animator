@@ -25,6 +25,7 @@ import {
   upsertEntry,
   type StickerRegistryEntry,
 } from '../../utils/registry/stickerRegistry.ts';
+import { isCompletedStickerSet } from '../../utils/registry/completedStickerSet.ts';
 import {
   mergeRegistriesForPlanning,
   resolveRegistryAssetPath,
@@ -125,12 +126,8 @@ async function loadOrCreatePlan(
   return plan;
 }
 
-function slotIsCompleted(slot: DailyPackSlot, registryPath: string, registry: { entries: StickerRegistryEntry[] }): boolean {
-  const entry = findEntryById(registry, slot.id);
-  if (entry?.status === 'completed') return true;
-  const manifest = resolve(ROOT, slot.outputDir, 'manifest.json');
-  const sticker = resolve(ROOT, slot.outputDir, 'stickers', 'sticker-01.png');
-  return existsSync(manifest) && existsSync(sticker);
+function slotIsCompleted(slot: DailyPackSlot): boolean {
+  return isCompletedStickerSet(resolve(ROOT, slot.outputDir));
 }
 
 async function executeSlot(
@@ -353,7 +350,7 @@ async function main(): Promise<void> {
       skipped++;
       continue;
     }
-    if (resume && slotIsCompleted(slot, registryPath, registry)) {
+    if (resume && slotIsCompleted(slot)) {
       console.log(`↷ skip ${slot.id} (already completed)`);
       skipped++;
       continue;

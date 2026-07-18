@@ -9,7 +9,7 @@ Headless only (no browser). Reuses app modules and scripts under `scripts/line-s
 - `.agents/skills/` is a generated Codex runtime mirror. Run
   `npm run skills:sync:line-sticker` after changing a canonical skill.
 - `utils/lineStickerProductionPreset.ts` is the single source for headless defaults:
-  2K when supported, guided layout, automatic green/magenta selection with `core` chroma removal, programmatic text with
+  2K when supported, guided layout, automatic green/magenta selection with `core` chroma removal, blocking chroma/content QA, programmatic text with
   canvas composition, sheet-1 style anchoring, grid score 0.8, and 3 total attempts.
 - A field explicitly provided in `job.config.json` overrides the production preset.
 
@@ -88,6 +88,7 @@ Pipeline:
 - [ ] 3. Dry-run: run-from-inputs.mts --dry-run
 - [ ] 4. Generate for real
 - [ ] 5. Spot-check stickers/ + manifest.json gridScores
+- [ ] 6. Confirm `manifest.json` has `completionStatus: "completed"` and `qaReport.pass: true`; failed QA is not packaged
 - [ ] 6. (Optional) Upload via line-sticker-upload skill
 ```
 

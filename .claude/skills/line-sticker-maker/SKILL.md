@@ -147,7 +147,8 @@ The table below is the production preset used by both `run-from-inputs.mts` and
 | `promptVersion` | `v3compact` | `v3compact` = shorter per-cell lines; `v3` = verbose legacy |
 | `styleAnchorFromPriorSheet` | `true` | attach sheet-1 `_processed-sheet.png` for sheet-2+ to stabilize identity; sheets run sequentially |
 | `gridTemplate` | `"guided"` | visible layout reference used by supported Gemini image models, including flash-image |
-| `qaEnabled` | `true` | write `qa-report.json` at finalize (warn-only) |
+| `qaEnabled` | `true` | enable post-slice grid/content/chroma QA |
+| `qaMode` | `"block"` | write `qa-report.json` and stop before upload packaging when QA fails (`report` keeps legacy warn-only behavior) |
 | `lineUpload` | `true` | build upload ZIP at end of full run |
 | `mainStickerIndex` / `tabStickerIndex` | random | optional 1-based overrides; default picks two distinct stickers from the set |
 | **`upload`** | — | **repo-local upload layout (recommended)** |
@@ -218,6 +219,8 @@ npx tsx scripts/line-sticker/finalize.mts \
 ```
 
 ### Chroma safety (guided chroma)
+
+Guided requests always attach the layout canvas, primary reference, optional companion reference, and optional prior-sheet style anchor in the same order described by the prompt. Post-slice chroma QA uses the resolved `green` or `magenta` key and reports generic `edgeChromaCount`, `pocketChromaCount`, and `chromaFringeCount` metrics.
 
 - `auto` scores green and magenta conflicts in the character reference, then uses the safer key.
 - **Do** clear enclosed key-color pockets using the selected chroma-distance threshold.

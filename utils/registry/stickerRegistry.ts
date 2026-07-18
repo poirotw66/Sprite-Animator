@@ -32,6 +32,8 @@ export {
 import type { StickerRegistryFile } from './stickerRegistryFormat';
 import { emptyRegistry, parseRegistryJson } from './stickerRegistryFormat';
 import { resolveRegistryAssetPath } from './stickerVault';
+import { isCompletedStickerSet } from './completedStickerSet';
+export { isCompletedStickerSet, validateCompletedStickerSet } from './completedStickerSet';
 
 export async function loadRegistry(registryPath: string): Promise<StickerRegistryFile> {
   if (!existsSync(registryPath)) {
@@ -98,12 +100,6 @@ export function resolveRefImageInDir(outputDir: string): string | undefined {
     if (existsSync(full)) return full;
   }
   return undefined;
-}
-
-export function isCompletedStickerSet(outputDir: string): boolean {
-  const manifest = join(outputDir, 'manifest.json');
-  const sticker = join(outputDir, 'stickers', 'sticker-01.png');
-  return existsSync(manifest) && existsSync(sticker);
 }
 
 /** Walk output/ and return absolute paths of completed sticker set directories. */

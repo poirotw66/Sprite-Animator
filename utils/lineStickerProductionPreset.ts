@@ -22,6 +22,7 @@ export const LINE_STICKER_PRODUCTION_PRESET = {
   styleAnchorFromPriorSheet: true,
   gridTemplate: 'guided' as const,
   qaEnabled: true,
+  qaMode: 'block' as const,
   lineUploadSubmit: false,
 } as const;
 

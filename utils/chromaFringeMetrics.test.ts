@@ -61,4 +61,19 @@ describe('measureChromaFringe', () => {
     data[p + 3] = 255;
     expect(measureChromaFringe(data, w, h).oliveFringeCount).toBe(1);
   });
+
+  it('detects magenta residue with generic counters', () => {
+    const w = 16;
+    const h = 16;
+    const data = new Uint8ClampedArray(w * h * 4);
+    const p = (4 * w + 4) * 4;
+    data[p] = 60;
+    data[p + 1] = 10;
+    data[p + 2] = 60;
+    data[p + 3] = 255;
+    const metrics = measureChromaFringe(data, w, h, 'magenta');
+    expect(metrics.chromaKeyColor).toBe('magenta');
+    expect(metrics.edgeChromaCount).toBe(1);
+    expect(metrics.edgeGreenCount).toBe(0);
+  });
 });

@@ -66,7 +66,12 @@ function resolveAttachmentIndices(
   hasStyleAnchor: boolean
 ): AttachmentIndices {
   if (gridTemplateMode === 'guided' && hasGridTemplate) {
-    return { gridTemplate: 1, characterPrimary: 2 };
+    let index = 1;
+    const gridTemplate = index++;
+    const characterPrimary = index++;
+    const characterCompanion = hasCompanion ? index++ : undefined;
+    const styleAnchor = hasStyleAnchor ? index++ : undefined;
+    return { gridTemplate, characterPrimary, characterCompanion, styleAnchor };
   }
   let index = 1;
   const characterPrimary = index++;
@@ -232,6 +237,35 @@ export interface StyleAnchorImage {
   mimeType: string;
 }
 
+export type GeminiSheetContentPart = {
+  inlineData?: { mimeType: string; data: string };
+  text?: string;
+};
+
+/** Keep request attachment order identical to the indices described in the prompt. */
+export function buildGeminiSheetContentParts(params: {
+  referenceBase64: string;
+  referenceMimeType: string;
+  companionReference?: StyleAnchorImage;
+  styleAnchor?: StyleAnchorImage;
+  gridTemplate?: StyleAnchorImage;
+  guidedCanvas: boolean;
+  prompt: string;
+}): GeminiSheetContentPart[] {
+  const parts: GeminiSheetContentPart[] = [];
+  const pushImage = (image: StyleAnchorImage) => {
+    parts.push({ inlineData: { mimeType: image.mimeType, data: image.base64 } });
+  };
+
+  if (params.guidedCanvas && params.gridTemplate) pushImage(params.gridTemplate);
+  pushImage({ base64: params.referenceBase64, mimeType: params.referenceMimeType });
+  if (params.companionReference) pushImage(params.companionReference);
+  if (params.styleAnchor) pushImage(params.styleAnchor);
+  if (!params.guidedCanvas && params.gridTemplate) pushImage(params.gridTemplate);
+  parts.push({ text: params.prompt });
+  return parts;
+}
+
 export interface GenerateSheetParams {
   /** Base64 of the reference character image (no data: prefix). */
   referenceBase64: string;
@@ -309,10 +343,8 @@ export async function generateSheetImage(
       ? buildGuidedGridReminderBlock(cols, rows, indices.gridTemplate)
       : buildGridLayoutReminderBlock(cols, rows);
   const styleAnchorBlock =
-    !guidedCanvas && styleAnchor && indices.styleAnchor
-      ? buildStyleAnchorBlock(indices.styleAnchor)
-      : '';
-  const companionBlock = guidedCanvas ? '' : buildCompanionBlock(indices);
+    styleAnchor && indices.styleAnchor ? buildStyleAnchorBlock(indices.styleAnchor) : '';
+  const companionBlock = buildCompanionBlock(indices);
   const characterRefBlock = guidedCanvas ? buildCharacterRefBlock(indices) : '';
   const gridTemplateBlock = gridTemplate
     ? buildGridTemplateInstruction(
@@ -348,32 +380,15 @@ export async function generateSheetImage(
     gridReminder +
     gridRetrySuffix;
 
-  const contentParts: Array<{ inlineData?: { mimeType: string; data: string }; text?: string }> = [];
-  if (guidedCanvas && gridTemplate) {
-    contentParts.push({
-      inlineData: { mimeType: gridTemplate.mimeType, data: gridTemplate.base64 },
-    });
-    contentParts.push({ inlineData: { mimeType: referenceMimeType, data: referenceBase64 } });
-    contentParts.push({ text: fullPrompt });
-  } else {
-    contentParts.push({ inlineData: { mimeType: referenceMimeType, data: referenceBase64 } });
-    if (companionReference) {
-      contentParts.push({
-        inlineData: { mimeType: companionReference.mimeType, data: companionReference.base64 },
-      });
-    }
-    if (styleAnchor) {
-      contentParts.push({
-        inlineData: { mimeType: styleAnchor.mimeType, data: styleAnchor.base64 },
-      });
-    }
-    if (gridTemplate) {
-      contentParts.push({
-        inlineData: { mimeType: gridTemplate.mimeType, data: gridTemplate.base64 },
-      });
-    }
-    contentParts.push({ text: fullPrompt });
-  }
+  const contentParts = buildGeminiSheetContentParts({
+    referenceBase64,
+    referenceMimeType,
+    companionReference,
+    styleAnchor,
+    gridTemplate,
+    guidedCanvas,
+    prompt: fullPrompt,
+  });
 
   const request = (includeImageSize: boolean) =>
     ai.models.generateContent({

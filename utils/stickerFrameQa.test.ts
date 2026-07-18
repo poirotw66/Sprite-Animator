@@ -4,6 +4,8 @@ import {
   measureForegroundRatio,
   scoreDimensionAgainstMedian,
   scoreModelDrawnTextContrast,
+  resolveStickerQaMode,
+  shouldBlockStickerQa,
 } from './stickerFrameQa';
 
 function solidFrame(
@@ -26,6 +28,13 @@ function solidFrame(
 }
 
 describe('stickerFrameQa', () => {
+  it('resolves blocking QA while preserving qaEnabled=false compatibility', () => {
+    expect(resolveStickerQaMode('block', true)).toBe('block');
+    expect(resolveStickerQaMode('block', false)).toBe('off');
+    expect(resolveStickerQaMode(undefined, true)).toBe('report');
+    expect(shouldBlockStickerQa('block', { pass: false } as never)).toBe(true);
+    expect(shouldBlockStickerQa('report', { pass: false } as never)).toBe(false);
+  });
   it('measureForegroundRatio is low on empty chroma frame', () => {
     const frame = solidFrame(64, 64, () => [0, 255, 0, 255]);
     expect(measureForegroundRatio(frame)).toBeLessThan(0.02);
@@ -99,5 +108,22 @@ describe('stickerFrameQa', () => {
     const report = auditStickerFrames([{ globalIndex: 1, frame }]);
     expect(report.entries[0]!.pocketGreenCount).toBeGreaterThanOrEqual(8);
     expect(report.summaryWarnings.some((w) => w.includes('actionable chroma residue'))).toBe(true);
+    expect(report.pass).toBe(false);
+  });
+
+  it('audits magenta sheets with generic chroma metrics', () => {
+    const frame = solidFrame(32, 32, (i) => {
+      const x = (i / 4) % 32;
+      const y = Math.floor(i / 4 / 32);
+      if (x >= 13 && x <= 17 && y >= 13 && y <= 17) return [50, 10, 50, 255];
+      if (x >= 10 && x <= 20 && y >= 10 && y <= 20) return [70, 70, 70, 255];
+      return [0, 0, 0, 0];
+    });
+    const report = auditStickerFrames([{ globalIndex: 1, frame }], {
+      chromaKeyColor: 'magenta',
+    });
+    expect(report.chromaKeyColor).toBe('magenta');
+    expect(report.entries[0]!.pocketChromaCount).toBeGreaterThanOrEqual(8);
+    expect(report.entries[0]!.pocketGreenCount).toBe(0);
   });
 });

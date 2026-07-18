@@ -225,6 +225,7 @@ async function main(): Promise<void> {
       styleAnchorFromPriorSheet: production.styleAnchorFromPriorSheet,
       gridTemplate: production.gridTemplate,
       qaEnabled: production.qaEnabled,
+      qaMode: production.qaMode,
       upload: {
         syncToUploadRoot: true,
         creatorId: '706',

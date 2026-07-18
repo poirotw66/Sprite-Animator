@@ -26,6 +26,7 @@
   "styleAnchorFromPriorSheet": true,
   "gridTemplate": "guided",
   "qaEnabled": true,
+  "qaMode": "block",
   "upload": {
     "syncToUploadRoot": true,
     "creatorId": "706",

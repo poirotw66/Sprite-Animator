@@ -40,6 +40,7 @@ import {
   productionStickerResolutionForModel,
 } from '../../utils/lineStickerProductionPreset.ts';
 import type { ChromaKeyColorType, ChromaKeyAlgorithm } from '../../types.ts';
+import type { StickerQaMode } from '../../utils/stickerFrameQa.ts';
 import {
   selectChromaKeyColor,
   type ChromaReferenceImage,
@@ -123,6 +124,8 @@ interface StickerConfig {
   gridTemplate?: boolean | 'guided';
   /** Run post-generation QA. Reserved for the production/finalization layer. */
   qaEnabled?: boolean;
+  /** `block` prevents packaging when QA fails; production default is block. */
+  qaMode?: StickerQaMode;
 }
 
 function parseArgs(argv: string[]) {
@@ -664,6 +667,7 @@ async function main() {
     styleAnchorFromPriorSheet,
     gridTemplate,
     qaEnabled: config.qaEnabled ?? production.qaEnabled,
+    qaMode: config.qaMode ?? production.qaMode,
     lineUploadSubmit: config.lineUploadSubmit ?? production.lineUploadSubmit,
   };
   const manifestPath = isolatedSheetRun

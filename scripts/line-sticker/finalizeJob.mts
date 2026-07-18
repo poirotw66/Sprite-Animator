@@ -7,7 +7,14 @@ import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
 import { resolve, relative, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { decodePng, encodePng, prepareLineStickerFrame, type RgbaImage } from './nodeImage.mts';
-import { auditStickerFrames, type StickerQaReport } from '../../utils/stickerFrameQa.ts';
+import {
+  auditStickerFrames,
+  resolveStickerQaMode,
+  shouldBlockStickerQa,
+  type StickerQaMode,
+  type StickerQaReport,
+} from '../../utils/stickerFrameQa.ts';
+import type { ChromaKeyColorType } from '../../types.ts';
 import {
   buildLineUploadZipBytes,
   writeLineUploadPack,
@@ -34,6 +41,7 @@ import {
 const FINALIZE_PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 export interface JobManifest {
+  completionStatus?: 'completed' | 'qa_failed';
   config?: JobConfig;
   activeSheets?: string[];
   gridScores?: Record<string, number>;
@@ -62,6 +70,8 @@ export interface JobConfig {
   includeText?: boolean;
   textRendering?: 'model' | 'programmatic';
   qaEnabled?: boolean;
+  qaMode?: StickerQaMode;
+  chromaKeyColor?: ChromaKeyColorType | 'auto';
   minGridAlignmentScore?: number;
 }
 
@@ -218,7 +228,10 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
     assertGridScoresPass(gridScores, minGridScore);
   }
 
-  const qaEnabled = mergedConfig.qaEnabled !== false;
+  const qaMode = resolveStickerQaMode(mergedConfig.qaMode, mergedConfig.qaEnabled);
+  const qaEnabled = qaMode !== 'off';
+  const qaChromaKeyColor: ChromaKeyColorType =
+    mergedConfig.chromaKeyColor === 'magenta' ? 'magenta' : 'green';
   let qaReport: StickerQaReport | undefined;
   if (qaEnabled && nativeFrames.length > 0) {
     console.log('\n▶ Running sticker QA...');
@@ -237,7 +250,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
           pngBytes: encodePng(uploadFrame).byteLength,
         };
       }),
-      { checkModelText }
+      { checkModelText, chromaKeyColor: qaChromaKeyColor }
     );
     await writeFile(resolve(outDir, 'qa-report.json'), JSON.stringify(qaReport, null, 2));
     console.log(
@@ -252,6 +265,37 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
         ...formatGridGateMessage(gridFailures, minGridScore)
       );
     }
+  }
+
+  if (shouldBlockStickerQa(qaMode, qaReport)) {
+    if (options.writeManifest !== false) {
+      await writeFile(
+        manifestPath,
+        JSON.stringify(
+          {
+            ...existingManifest,
+            completionStatus: 'qa_failed',
+            config: mergedConfig,
+            activeSheets: sheetDirs,
+            gridScores,
+            qaReport: {
+              overallScore: qaReport.overallScore,
+              pass: false,
+              summaryWarnings: qaReport.summaryWarnings,
+              gridPass: true,
+              gridMinScore: minGridScore,
+              gridFailures: [],
+            },
+            stickers: manifestStickers,
+          },
+          null,
+          2
+        )
+      );
+    }
+    throw new Error(
+      `Sticker QA blocked packaging: ${qaReport.summaryWarnings.join('; ') || `score ${qaReport.overallScore.toFixed(3)}`}`
+    );
   }
 
   console.log('\n▶ Building LINE upload pack...');
@@ -330,6 +374,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
       JSON.stringify(
         {
           ...existingManifest,
+          completionStatus: qaReport && !qaReport.pass ? 'qa_failed' : 'completed',
           config: mergedConfig,
           activeSheets: sheetDirs,
           gridScores,

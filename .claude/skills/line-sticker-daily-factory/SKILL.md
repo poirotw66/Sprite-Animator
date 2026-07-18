@@ -9,6 +9,8 @@ description: >-
 
 # LINE Sticker Daily Factory
 
+Resume/backfill considers a set completed only after the shared validator confirms all expected stickers, processed sheets, passing grid/chroma QA, and an upload ZIP.
+
 Thin agent entry point. Full architecture, flags, and agent checklist:
 
 **[docs/workflows/line-sticker-daily-factory.md](../../../docs/workflows/line-sticker-daily-factory.md)**

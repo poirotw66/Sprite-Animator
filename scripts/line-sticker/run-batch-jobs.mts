@@ -94,6 +94,7 @@ function buildJobConfig(manifest: BatchManifest, job: BatchJob): Record<string, 
     styleAnchorFromPriorSheet: production.styleAnchorFromPriorSheet,
     gridTemplate: production.gridTemplate,
     qaEnabled: production.qaEnabled,
+    qaMode: production.qaMode,
     lineS: {
       syncToLineS: true,
       creatorId: '706',

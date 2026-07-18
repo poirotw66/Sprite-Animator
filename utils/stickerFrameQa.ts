@@ -6,9 +6,10 @@
 import { isSliceBackgroundPixel } from './imageContentAnalysis';
 import {
   measureChromaFringe,
-  CHROMA_FRINGE_WARN_OLIVE,
-  CHROMA_FRINGE_WARN_POCKET_GREEN,
+  CHROMA_FRINGE_WARN_DESPILL,
+  CHROMA_FRINGE_WARN_POCKET,
 } from './chromaFringeMetrics';
+import type { ChromaKeyColorType } from '../types';
 import {
   LINE_STICKER_UPLOAD,
   computeFitDimensions,
@@ -47,6 +48,10 @@ export interface StickerFrameQaEntry {
   lineUploadBytes: number;
   lineUploadScore: number;
   overallScore: number;
+  chromaKeyColor: ChromaKeyColorType;
+  edgeChromaCount: number;
+  pocketChromaCount: number;
+  chromaFringeCount: number;
   edgeGreenCount: number;
   pocketGreenCount: number;
   oliveFringeCount: number;
@@ -57,6 +62,7 @@ export interface StickerQaReport {
   generatedAt: string;
   stickerCount: number;
   checkModelText: boolean;
+  chromaKeyColor: ChromaKeyColorType;
   medianWidth: number;
   medianHeight: number;
   overallScore: number;
@@ -67,6 +73,22 @@ export interface StickerQaReport {
 }
 
 export const DEFAULT_QA_WARN_THRESHOLD = 0.65;
+export type StickerQaMode = 'off' | 'report' | 'block';
+
+export function resolveStickerQaMode(
+  qaMode: StickerQaMode | undefined,
+  qaEnabled: boolean | undefined
+): StickerQaMode {
+  if (qaEnabled === false) return 'off';
+  return qaMode ?? 'report';
+}
+
+export function shouldBlockStickerQa(
+  mode: StickerQaMode,
+  report: StickerQaReport | undefined
+): report is StickerQaReport {
+  return mode === 'block' && report != null && !report.pass;
+}
 
 const FOREGROUND_MIN = 0.025;
 const FOREGROUND_MAX = 0.92;
@@ -204,22 +226,23 @@ function scoreForegroundRatio(ratio: number): { score: number; warnings: string[
 }
 
 function scoreChromaFringe(
-  pocketGreenCount: number,
-  oliveFringeCount: number
+  pocketChromaCount: number,
+  chromaFringeCount: number,
+  chromaKeyColor: ChromaKeyColorType
 ): { score: number; warnings: string[] } {
   const warnings: string[] = [];
   let score = 1;
-  if (pocketGreenCount >= CHROMA_FRINGE_WARN_POCKET_GREEN) {
+  if (pocketChromaCount >= CHROMA_FRINGE_WARN_POCKET) {
     score = Math.min(score, 0.55);
-    warnings.push(`enclosed green pocket residue (${pocketGreenCount} px)`);
-  } else if (pocketGreenCount > 0) {
+    warnings.push(`enclosed ${chromaKeyColor} chroma pocket residue (${pocketChromaCount} px)`);
+  } else if (pocketChromaCount > 0) {
     score = Math.min(score, 0.85);
   }
   // ponytail: edgeGreenCount is recorded per entry but not scored — green-screen AA
   // routinely yields 1k+ edge pixels on ~200px stickers without visible defects.
-  if (oliveFringeCount >= CHROMA_FRINGE_WARN_OLIVE) {
+  if (chromaFringeCount >= CHROMA_FRINGE_WARN_DESPILL) {
     score = Math.min(score, 0.75);
-    warnings.push(`olive edge fringe (${oliveFringeCount} px)`);
+    warnings.push(`${chromaKeyColor} despill edge fringe (${chromaFringeCount} px)`);
   }
   return { score, warnings };
 }
@@ -227,7 +250,8 @@ function scoreChromaFringe(
 export function auditStickerFrame(
   input: StickerFrameQaInput,
   medianWidth: number,
-  medianHeight: number
+  medianHeight: number,
+  chromaKeyColor: ChromaKeyColorType = 'green'
 ): StickerFrameQaEntry {
   const { frame, globalIndex, sheet, index, phrase = '', checkModelText = false } = input;
   const warnings: string[] = [];
@@ -260,10 +284,11 @@ export function auditStickerFrame(
   const line = scoreLineUploadFit(frame, pngBytes);
   warnings.push(...line.warnings);
 
-  const fringe = measureChromaFringe(frame.data, frame.width, frame.height);
+  const fringe = measureChromaFringe(frame.data, frame.width, frame.height, chromaKeyColor);
   const fringeScore = scoreChromaFringe(
-    fringe.pocketGreenCount,
-    fringe.oliveFringeCount
+    fringe.pocketChromaCount,
+    fringe.chromaFringeCount,
+    chromaKeyColor
   );
   warnings.push(...fringeScore.warnings);
 
@@ -286,6 +311,10 @@ export function auditStickerFrame(
     lineUploadBytes: pngBytes,
     lineUploadScore: line.score,
     overallScore,
+    chromaKeyColor,
+    edgeChromaCount: fringe.edgeChromaCount,
+    pocketChromaCount: fringe.pocketChromaCount,
+    chromaFringeCount: fringe.chromaFringeCount,
     edgeGreenCount: fringe.edgeGreenCount,
     pocketGreenCount: fringe.pocketGreenCount,
     oliveFringeCount: fringe.oliveFringeCount,
@@ -295,10 +324,15 @@ export function auditStickerFrame(
 
 export function auditStickerFrames(
   inputs: StickerFrameQaInput[],
-  options: { checkModelText?: boolean; warnThreshold?: number } = {}
+  options: {
+    checkModelText?: boolean;
+    warnThreshold?: number;
+    chromaKeyColor?: ChromaKeyColorType;
+  } = {}
 ): StickerQaReport {
   const checkModelText = options.checkModelText ?? false;
   const warnThreshold = options.warnThreshold ?? DEFAULT_QA_WARN_THRESHOLD;
+  const chromaKeyColor = options.chromaKeyColor ?? 'green';
   const widths = inputs.map((i) => i.frame.width);
   const heights = inputs.map((i) => i.frame.height);
   const medianWidth = median(widths);
@@ -308,7 +342,8 @@ export function auditStickerFrames(
     auditStickerFrame(
       { ...input, checkModelText: input.checkModelText ?? checkModelText },
       medianWidth,
-      medianHeight
+      medianHeight,
+      chromaKeyColor
     )
   );
 
@@ -320,17 +355,17 @@ export function auditStickerFrames(
   const lowEntries = entries.filter((e) => e.overallScore < warnThreshold);
   const fringeEntries = entries.filter(
     (e) =>
-      e.pocketGreenCount >= CHROMA_FRINGE_WARN_POCKET_GREEN ||
-      e.oliveFringeCount >= CHROMA_FRINGE_WARN_OLIVE
+      e.pocketChromaCount >= CHROMA_FRINGE_WARN_POCKET ||
+      e.chromaFringeCount >= CHROMA_FRINGE_WARN_DESPILL
   );
   const summaryWarnings: string[] = [];
   if (fringeEntries.length > 0) {
     summaryWarnings.push(
-      `${fringeEntries.length}/${entries.length} stickers have actionable chroma residue (pocketGreen / oliveFringe)`
+      `${fringeEntries.length}/${entries.length} stickers have actionable chroma residue (${chromaKeyColor}; pocketChroma / chromaFringe)`
     );
     for (const e of fringeEntries.slice(0, 6)) {
       summaryWarnings.push(
-        `sticker-${String(e.globalIndex).padStart(2, '0')}: pocketGreen=${e.pocketGreenCount}, oliveFringe=${e.oliveFringeCount}`
+        `sticker-${String(e.globalIndex).padStart(2, '0')}: pocketChroma=${e.pocketChromaCount}, chromaFringe=${e.chromaFringeCount}`
       );
     }
   }
@@ -352,10 +387,11 @@ export function auditStickerFrames(
     generatedAt: new Date().toISOString(),
     stickerCount: entries.length,
     checkModelText,
+    chromaKeyColor,
     medianWidth,
     medianHeight,
     overallScore,
-    pass: lowEntries.length === 0,
+    pass: lowEntries.length === 0 && fringeEntries.length === 0,
     warnThreshold,
     entries,
     summaryWarnings,

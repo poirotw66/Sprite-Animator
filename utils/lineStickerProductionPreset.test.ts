@@ -51,6 +51,7 @@ describe('LINE sticker production preset', () => {
       styleAnchorFromPriorSheet: LINE_STICKER_PRODUCTION_PRESET.styleAnchorFromPriorSheet,
       gridTemplate: LINE_STICKER_PRODUCTION_PRESET.gridTemplate,
       qaEnabled: LINE_STICKER_PRODUCTION_PRESET.qaEnabled,
+      qaMode: LINE_STICKER_PRODUCTION_PRESET.qaMode,
       lineUploadSubmit: LINE_STICKER_PRODUCTION_PRESET.lineUploadSubmit,
     });
     expect(existsSync(resolve(dirname(examplePath), example.phraseSetFile))).toBe(true);

@@ -19,6 +19,7 @@ import {
   vaultRegistryPath,
   VAULT_PHRASE_SET_FILENAME,
 } from '../../utils/registry/stickerVault.ts';
+import { isCompletedStickerSet } from '../../utils/registry/completedStickerSet.ts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(SCRIPT_DIR, '../..');
@@ -51,13 +52,6 @@ function runFromInputs(scriptArgs: string[]): void {
   if (result.status !== 0) {
     throw new Error(`run-from-inputs failed: ${scriptArgs.join(' ')}`);
   }
-}
-
-function isCompleted(outDir: string): boolean {
-  return (
-    existsSync(resolve(outDir, 'stickers', 'sticker-01.png')) &&
-    existsSync(resolve(outDir, 'manifest.json'))
-  );
 }
 
 function slotIndexFromId(id: string): number {
@@ -95,7 +89,7 @@ async function main(): Promise<void> {
 
   console.log(`Vault production: ${entries.length} set(s) → ${outBase}/`);
   console.log(`Vault: ${vaultRoot}`);
-  if (resume) console.log('Resume: skip sets with stickers/sticker-01.png + manifest.json\n');
+  if (resume) console.log('Resume: skip only fully packaged sets with passing grid/chroma QA\n');
 
   let ok = 0;
   let skipped = 0;
@@ -106,7 +100,7 @@ async function main(): Promise<void> {
     const outDir = resolve(ROOT, outBase, entry.id);
     const label = `[${i + 1}/${entries.length}] ${entry.id} ${entry.characterName}`;
 
-    if (resume && isCompleted(outDir)) {
+    if (resume && isCompletedStickerSet(outDir)) {
       console.log(`${label} — skip (completed)`);
       skipped += 1;
       continue;

@@ -107,7 +107,7 @@ Disable vault: `--no-vault`. Custom path: `--vault /path/to/line-sticker-vault` 
 | `--backfill` | on | scan `output/` → registry before plan |
 | `--plan-only` | off | write `batch-plan.json` only |
 | `--execute` | off | required for real API calls |
-| `--resume` | off | skip completed slots |
+| `--resume` | off | skip only fully packaged slots whose sticker count, sheets, grid scores, chroma QA, and ZIP all validate |
 | `--from-set` | 1 | start at set N |
 | `--no-backfill` | — | skip backfill step |
 
@@ -128,7 +128,7 @@ npx tsx scripts/line-sticker/backfill-sticker-registry.mts --dry-run
 npx tsx scripts/line-sticker/backfill-sticker-registry.mts --merge
 ```
 
-Detects completed sets (`manifest.json` + `stickers/sticker-01.png`). Earliest set per `characterName` → `batchType: B`; later sets → `A`.
+Detects completed sets with the shared strict validator: valid manifest, every expected sticker, active processed sheets, passing grid and chroma QA, and an upload ZIP. Earliest set per `characterName` → `batchType: B`; later sets → `A`.
 
 ## Agent workflow
 
