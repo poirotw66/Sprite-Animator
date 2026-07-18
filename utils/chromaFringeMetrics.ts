@@ -14,7 +14,9 @@ export interface ChromaFringeMetrics {
 const ALPHA_BG = 15;
 const NEAR_TRANSPARENT_RADIUS = 3;
 const GREEN_EXCESS_MIN = 6;
-const OLIVE_YELLOW_GREEN_MIN = 4;
+// A 4-point gap classified warm anti-aliased black/crayon ink as olive spill.
+// Require a visible yellow-green separation while retaining true chroma residue.
+const OLIVE_YELLOW_GREEN_MIN = 8;
 
 function isNearTransparent(
   data: Uint8ClampedArray | Uint8Array | number[],
@@ -67,8 +69,7 @@ export function measureChromaFringe(
       if (
         atEdge &&
         yellowGreen > OLIVE_YELLOW_GREEN_MIN &&
-        g >= r - 4 &&
-        r - g <= 12 &&
+        g >= r &&
         (r + g + b) / 3 < 140
       ) {
         oliveFringeCount++;

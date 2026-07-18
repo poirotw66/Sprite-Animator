@@ -30,7 +30,9 @@ def decontaminate_edges(
             shifted = np.roll(np.roll(transparent, dy, axis=0), dx, axis=1)
             near_edge |= shifted
 
-    fringe = near_edge & (alpha > 16) & (alpha < 250)
+    # The keyer starts with a binary 0/255 matte.  Restricting this pass to
+    # alpha < 250 made decontamination a no-op on the real opaque outline.
+    fringe = near_edge & (alpha > 16)
     if not np.any(fringe):
         return out
 

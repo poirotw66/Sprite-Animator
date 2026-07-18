@@ -40,13 +40,19 @@ def load_rgba(path: Path) -> np.ndarray:
     return np.asarray(image).copy()
 
 
-def key_sheet(rgba: np.ndarray) -> tuple[np.ndarray, tuple[int, int, int], float]:
+def key_sheet(
+    rgba: np.ndarray,
+    *,
+    morph_kernel: int = 3,
+) -> tuple[np.ndarray, tuple[int, int, int], float]:
     rgb = rgba[:, :, :3]
     estimate = estimate_background_rgb(rgb)
     bg_mask = flood_fill_background_mask(rgb, estimate)
     out = rgba.copy()
     out[bg_mask, 3] = 0
-    out[:, :, 3] = morphological_close_alpha(out[:, :, 3], kernel=3, iterations=1)
+    out[:, :, 3] = morphological_close_alpha(
+        out[:, :, 3], kernel=morph_kernel, iterations=1
+    )
     out = decontaminate_edges(out, estimate.rgb)
     return out, estimate.rgb, estimate.tolerance
 
@@ -58,7 +64,7 @@ def convert_sheet(
 ) -> ConvertResult:
     opts = options or ConvertOptions()
     rgba = load_rgba(sheet_path)
-    keyed, bg_rgb, tolerance = key_sheet(rgba)
+    keyed, bg_rgb, tolerance = key_sheet(rgba, morph_kernel=opts.morph_kernel)
     height, width = keyed.shape[:2]
 
     if opts.use_histogram_cuts:

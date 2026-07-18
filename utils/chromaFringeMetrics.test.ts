@@ -37,4 +37,28 @@ describe('measureChromaFringe', () => {
     const m = measureChromaFringe(data, w, h);
     expect(m.edgeGreenCount + m.pocketGreenCount).toBeGreaterThanOrEqual(2);
   });
+
+  it('does not classify warm neutral crayon black as olive fringe', () => {
+    const w = 9;
+    const h = 9;
+    const data = new Uint8ClampedArray(w * h * 4);
+    const p = (4 * w + 4) * 4;
+    data[p] = 24;
+    data[p + 1] = 21;
+    data[p + 2] = 16;
+    data[p + 3] = 255;
+    expect(measureChromaFringe(data, w, h).oliveFringeCount).toBe(0);
+  });
+
+  it('still detects visibly olive edge residue', () => {
+    const w = 9;
+    const h = 9;
+    const data = new Uint8ClampedArray(w * h * 4);
+    const p = (4 * w + 4) * 4;
+    data[p] = 40;
+    data[p + 1] = 45;
+    data[p + 2] = 20;
+    data[p + 3] = 255;
+    expect(measureChromaFringe(data, w, h).oliveFringeCount).toBe(1);
+  });
 });

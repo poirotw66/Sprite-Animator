@@ -1,6 +1,8 @@
 /**
  * Pack two ChatGPT 4×5 crayon sheets (#E8EEF7 paper) into a LINE 40-set.
- * Edge flood-fill ONLY — no hard-key / fringe peel (those ate white fur + outlines).
+ * Adaptive blue-paper removal.  The paper is a light blue gradient, so an
+ * exact RGB key leaves large opaque islands; hue + connectivity separates it
+ * from the cat's neutral white fur.
  */
 import { copyFile, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -8,22 +10,24 @@ import sharp from 'sharp';
 
 import { encodePng } from './line-sticker/nodeImage.mts';
 import {
-  sliceSheetByGridBounds,
+  sliceSheetByComponentOwnership,
   type RgbaFrameBuffer,
 } from '../utils/sheetComponentSlicer.ts';
-import { buildEqualGridBounds } from '../utils/sliceSpriteSheetByOwnership.ts';
+import { cleanPaperBackgroundMatte } from '../utils/paperBackgroundMatte.ts';
+import { detectSheetGridBoundaries } from '../utils/sheetBoundaryDetection.ts';
+import { clearEdgeConnectedResidue } from '../utils/frameEdgeCleanup.ts';
 
 /** 蛤？ sheet */
 const SHEET1 = 'inbox/ChatGPT Image 2026年7月17日 上午08_16_50.png';
 /** 想睡 sheet */
 const SHEET2 = 'inbox/ChatGPT Image 2026年7月17日 上午08_15_40.png';
-const SET_ID = 'SET-20260717-001';
+const SET_ID = 'SET-20260718-001';
 const OUT = join('output', 'vault-production', SET_ID);
 const COLS = 4;
 const ROWS = 5;
 
 const KEY = { r: 0xe8, g: 0xee, b: 0xf7 };
-/** Tight — crayon white fur must stay. Letter counters may keep a bit of paper. */
+/** Exact-key fallback for the darker parts of the generated paper texture. */
 const MAX_DIST = 14;
 
 const PHRASES = [
@@ -36,12 +40,35 @@ const PHRASES = [
 ];
 
 function nearKey(r: number, g: number, b: number): boolean {
-  // Never treat near-white fur as paper (flood was biting into cat body).
-  if (Math.min(r, g, b) >= 242) return false;
+  // The source paper ranges roughly from (226, 233, 246) to (234, 240, 250).
+  // Its stable feature is the cool blue bias, not its brightness.  White fur
+  // is neutral (B-R is small), so it remains foreground even when very bright.
+  const min = Math.min(r, g, b);
+  const max = Math.max(r, g, b);
+  const isBluePaper =
+    min >= 198 &&
+    b - r >= 7 &&
+    b - g >= 4 &&
+    max - min <= 38;
+  if (isBluePaper) return true;
+
   const dr = r - KEY.r;
   const dg = g - KEY.g;
   const db = b - KEY.b;
   return dr * dr + dg * dg + db * db <= MAX_DIST * MAX_DIST;
+}
+
+/** More permissive only when the pixel is connected to the outside paper. */
+function nearFloodPaper(r: number, g: number, b: number): boolean {
+  if (nearKey(r, g, b)) return true;
+  const min = Math.min(r, g, b);
+  const max = Math.max(r, g, b);
+  return (
+    min >= 178 &&
+    b - r >= 4 &&
+    b - g >= 2 &&
+    max - min <= 45
+  );
 }
 
 /** Transparentize paper connected to the sheet border only. */
@@ -63,7 +90,7 @@ function floodRemovePaperBg(
       queue.push(p);
       return;
     }
-    if (!nearKey(data[i]!, data[i + 1]!, data[i + 2]!)) return;
+    if (!nearFloodPaper(data[i]!, data[i + 1]!, data[i + 2]!)) return;
     visited[p] = 1;
     data[i + 3] = 0;
     cleared++;
@@ -98,12 +125,29 @@ function floodRemovePaperBg(
           queue.push(np);
           continue;
         }
-        if (!nearKey(data[i]!, data[i + 1]!, data[i + 2]!)) continue;
+        if (!nearFloodPaper(data[i]!, data[i + 1]!, data[i + 2]!)) continue;
         data[i + 3] = 0;
         cleared++;
         queue.push(np);
       }
     }
+  }
+  return cleared;
+}
+
+/** Clear paper-coloured holes enclosed by lettering or character poses. */
+function removeEnclosedPaper(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number
+): number {
+  let cleared = 0;
+  for (let p = 0; p < width * height; p++) {
+    const i = p * 4;
+    if (data[i + 3]! < 8) continue;
+    if (!nearKey(data[i]!, data[i + 1]!, data[i + 2]!)) continue;
+    data[i + 3] = 0;
+    cleared++;
   }
   return cleared;
 }
@@ -148,8 +192,20 @@ async function sliceSheet(path: string, label: string): Promise<RgbaFrameBuffer[
   const w = info.width!;
   const h = info.height!;
   const rgba = new Uint8ClampedArray(data);
-  const cleared = floodRemovePaperBg(rgba, w, h);
-  console.log(`${label}: cleared ${cleared} paper px (edge flood only)`);
+  const floodCleared = floodRemovePaperBg(rgba, w, h);
+  const enclosedCleared = removeEnclosedPaper(rgba, w, h);
+  const matteCleanup = cleanPaperBackgroundMatte(rgba, w, h, {
+    haloDepth: 2,
+    maxCrumbSize: 8,
+    maxTinyArtifactSize: 2,
+    whiteStrokePx: 2,
+  });
+  console.log(
+    `${label}: cleared ${floodCleared + enclosedCleared} paper px ` +
+      `(flood ${floodCleared}, enclosed ${enclosedCleared}); ` +
+      `halo ${matteCleanup.haloPixelsCleared}, crumbs ${matteCleanup.crumbPixelsCleared}, ` +
+      `dust ${matteCleanup.tinyArtifactPixelsCleared}, stroke ${matteCleanup.strokePixelsAdded}`
+  );
 
   const sheetDir = join(OUT, label);
   await mkdir(sheetDir, { recursive: true });
@@ -159,17 +215,31 @@ async function sliceSheet(path: string, label: string): Promise<RgbaFrameBuffer[
     Buffer.from(encodePng({ data: rgba, width: w, height: h }))
   );
 
-  const { xBounds, yBounds } = buildEqualGridBounds(w, h, COLS, ROWS, 0, 0, 0, 0);
-  const cells = sliceSheetByGridBounds(rgba, w, h, xBounds, yBounds);
+  const { xBounds, yBounds } = detectSheetGridBoundaries(rgba, w, h, COLS, ROWS, {
+    searchRadiusRatio: 0.12,
+    rowSearchRadiusRatio: 0.14,
+  });
+  console.log(`${label}: smart grid x=${xBounds.join(',')} y=${yBounds.join(',')}`);
+  const cells = sliceSheetByComponentOwnership(rgba, w, h, xBounds, yBounds, {
+    minComponentArea: 13,
+    overflowPaddingPx: 6,
+  });
 
   const frames: RgbaFrameBuffer[] = [];
+  let edgeResidueCleared = 0;
   for (let i = 0; i < cells.length; i++) {
+    edgeResidueCleared += clearEdgeConnectedResidue(
+      cells[i]!.data,
+      cells[i]!.width,
+      cells[i]!.height,
+      { maxDepthPx: 4 }
+    );
     const trimmed = trimOpaqueBBox(cells[i]!);
     frames.push(trimmed);
     const name = `sticker-${String(i + 1).padStart(2, '0')}.png`;
     await writeFile(join(sheetDir, name), Buffer.from(encodePng(trimmed)));
   }
-  console.log(`${label}: ${frames.length} frames`);
+  console.log(`${label}: ${frames.length} frames; edge residue ${edgeResidueCleared}`);
   return frames;
 }
 
@@ -213,11 +283,11 @@ async function main(): Promise<void> {
     upload: {
       syncToUploadRoot: true,
       creatorId: '706',
-      setName: 'Huahua Calico E8EEF7 Chat',
-      titleZh: '花花·蠟筆聊天3',
-      descZh: '蛤？、笑死、下班!!——花花蠟筆藍灰底聊天貼圖，表情滿滿隨時接招！',
-      titleEn: 'HuaHua Crayon Chat 3',
-      descEn: 'HuaHua crayon chat stickers — transparent bg, everyday memes and reactions.',
+      setName: 'Huahua Calico E8EEF7 Chat Preview',
+      titleZh: '花花·蠟筆聊天預覽',
+      descZh: '蛤？、笑死、下班!!——花花蠟筆藍灰底聊天貼圖預覽。',
+      titleEn: 'HuaHua Crayon Chat Preview',
+      descEn: 'HuaHua crayon chat stickers preview — transparent bg.',
       writeEnvBatch: true,
     },
   };

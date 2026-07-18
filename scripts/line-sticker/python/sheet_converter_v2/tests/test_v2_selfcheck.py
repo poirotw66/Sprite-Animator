@@ -17,7 +17,7 @@ if str(_PARENT) not in sys.path:
     sys.path.insert(0, str(_PARENT))
 
 from sheet_converter_v2.background import estimate_background_rgb, flood_fill_background_mask
-from sheet_converter_v2.cleanup import morphological_close_alpha
+from sheet_converter_v2.cleanup import decontaminate_edges, morphological_close_alpha
 from sheet_converter_v2.export import fit_line_sticker
 from sheet_converter_v2.grid_cut import detect_grid_cuts
 from sheet_converter_v2.pipeline import ConvertOptions, convert_sheet
@@ -62,6 +62,14 @@ def test_morph_close_fills_small_gap() -> None:
     assert closed[10, 10] > 0
 
 
+def test_decontaminate_processes_opaque_edge() -> None:
+    rgba = np.zeros((9, 9, 4), dtype=np.uint8)
+    rgba[2:7, 2:7] = (225, 235, 247, 255)
+    cleaned = decontaminate_edges(rgba, (230, 238, 249), radius=1)
+    assert cleaned[2, 2, 3] < 255
+    assert cleaned[4, 4, 3] == 255
+
+
 def test_convert_sheet_writes_expected_count(tmp_dir: Path) -> None:
     height, width = 400, 400
     rgb = np.full((height, width, 3), 245, dtype=np.uint8)
@@ -83,6 +91,7 @@ def main() -> None:
     test_histogram_cuts_find_four_cells()
     test_line_fit_respects_max_box()
     test_morph_close_fills_small_gap()
+    test_decontaminate_processes_opaque_edge()
     with tempfile.TemporaryDirectory() as tmp:
         test_convert_sheet_writes_expected_count(Path(tmp))
     print("all v2 self-checks passed")
