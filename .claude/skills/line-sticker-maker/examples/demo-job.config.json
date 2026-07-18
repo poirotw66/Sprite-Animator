@@ -4,7 +4,7 @@
   "characterDescription": "",
   "style": "matchUploaded",
   "language": "zh-TW",
-  "chromaKeyColor": "green",
+  "chromaKeyColor": "auto",
   "chromaKeyAlgorithm": "core",
   "includeText": true,
   "textRendering": "programmatic",

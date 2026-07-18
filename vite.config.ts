@@ -127,7 +127,8 @@ export default defineConfig(({ mode }) => {
             },
           },
         },
-        chunkSizeWarningLimit: 600,
+        // @huggingface/transformers alone is ~900 kB minified; pages already lazy-load it.
+        chunkSizeWarningLimit: 1000,
       }
     };
 });

@@ -11,6 +11,7 @@ describe('LINE sticker production preset', () => {
     expect(LINE_STICKER_PRODUCTION_PRESET).toMatchObject({
       model: 'gemini-3.1-flash-image',
       resolution: '2K',
+      chromaKeyColor: 'auto',
       chromaKeyAlgorithm: 'core',
       textRendering: 'programmatic',
       programmaticCompose: { enabled: true },

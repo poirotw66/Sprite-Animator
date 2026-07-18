@@ -25,11 +25,11 @@ npx tsx scripts/line-sticker/convert-sheet-v2.mts \
   --sheet path/to/4x5.png --out output/my-set
 ```
 
-See [docs/workflows/sheet-converter-v2.md](../../docs/workflows/sheet-converter-v2.md).
+See [docs/workflows/sheet-converter-v2.md](../../../docs/workflows/sheet-converter-v2.md).
 
 ## How to run
 
-**Simplest (image + phrase-set JSON):** see [docs/workflows/line-sticker-pipeline.md](../../docs/workflows/line-sticker-pipeline.md) or `line-sticker-pipeline` skill.
+**Simplest (image + phrase-set JSON):** see [docs/workflows/line-sticker-pipeline.md](../../../docs/workflows/line-sticker-pipeline.md) or `line-sticker-pipeline` skill.
 
 ```bash
 npx tsx scripts/line-sticker/run-from-inputs.mts \
@@ -131,7 +131,7 @@ The table below is the production preset used by both `run-from-inputs.mts` and
 | `theme` | `daily` | used when `customPhrases` is empty |
 | `customPhrases` | `[]` | overrides theme phrases when non-empty |
 | `language` | `zh-TW` | `zh-TW`, `zh-CN`, `en`, `ja` |
-| `chromaKeyColor` | `green` | `magenta` or `green` |
+| `chromaKeyColor` | `auto` | scans all character references and selects the less-conflicting `green` or `magenta`; explicit colors remain supported |
 | `chromaKeyAlgorithm` | `core` | production default; `legacy` and `forge` remain explicit compatibility options |
 | `includeText` | `true` | include the phrase in the final sticker |
 | `textRendering` | `programmatic` | canvas overlay after slicing; use `model` only when model-drawn lettering is intentional |
@@ -217,12 +217,14 @@ npx tsx scripts/line-sticker/finalize.mts \
   --out <out> --config <out>/job.config.json
 ```
 
-### Chroma safety (guided green)
+### Chroma safety (guided chroma)
 
-- **Do** clear enclosed green pockets (`G > max(R,B)`, chroma distance below threshold).
+- `auto` scores green and magenta conflicts in the character reference, then uses the safer key.
+- **Do** clear enclosed key-color pockets using the selected chroma-distance threshold.
 - **Do not** alpha-erase neutral gray / black line AA (`RGB spread < 12`) — original ink.
 - **Do not** use neutral-gray protrusion cleanup — it deletes speed lines / outlines.
-- `qa-report.json` fields: `edgeGreenCount`, `pocketGreenCount`, `oliveFringeCount`.
+- `reslice-sheet.mts` reads resolved chroma and algorithm from `manifest.json` / `job.config.json`; `--chroma` remains an explicit override.
+- `qa-report.json` fields retain the legacy names `edgeGreenCount`, `pocketGreenCount`, `oliveFringeCount`.
 
 ## manifest.json
 

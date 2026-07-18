@@ -15,6 +15,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, resolve, basename, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
 
 import {
   buildLineStickerPrompt,
@@ -39,6 +40,11 @@ import {
   productionStickerResolutionForModel,
 } from '../../utils/lineStickerProductionPreset.ts';
 import type { ChromaKeyColorType, ChromaKeyAlgorithm } from '../../types.ts';
+import {
+  selectChromaKeyColor,
+  type ChromaReferenceImage,
+  type RequestedChromaKeyColor,
+} from '../../utils/lineStickerChromaSelection.ts';
 import {
   mergeProgrammaticComposeConfig,
   mergeProgrammaticTextTuning,
@@ -72,7 +78,7 @@ interface StickerConfig {
   /** Load phrases/actionDescs from a line-sticker-phrase-set JSON export. */
   phraseSetFile?: string;
   language?: string; // TEXT_PRESETS key (default: zh-TW)
-  chromaKeyColor?: ChromaKeyColorType; // default: green
+  chromaKeyColor?: RequestedChromaKeyColor; // production default: auto
   /** Background-removal implementation. Production default: `core`. */
   chromaKeyAlgorithm?: ChromaKeyAlgorithm;
   includeText?: boolean; // production default: true
@@ -150,6 +156,18 @@ function mimeFromPath(p: string): string {
   if (ext === '.png') return 'image/png';
   if (ext === '.webp') return 'image/webp';
   return 'image/jpeg';
+}
+
+async function decodeChromaReference(bytes: Uint8Array): Promise<ChromaReferenceImage> {
+  const { data, info } = await sharp(bytes)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  return {
+    data: new Uint8ClampedArray(data),
+    width: info.width,
+    height: info.height,
+  };
 }
 
 function buildSlots(
@@ -342,7 +360,8 @@ async function main() {
   const includeText = config.includeText ?? production.includeText;
   const textRendering: LineStickerTextRendering = config.textRendering ?? production.textRendering;
   const effectiveIncludeText = getEffectiveLineStickerIncludeText(includeText, textRendering);
-  const chromaKeyColor: ChromaKeyColorType = config.chromaKeyColor ?? production.chromaKeyColor;
+  const requestedChromaKeyColor: RequestedChromaKeyColor =
+    config.chromaKeyColor ?? production.chromaKeyColor;
   const chromaKeyAlgorithm: ChromaKeyAlgorithm =
     config.chromaKeyAlgorithm ?? production.chromaKeyAlgorithm;
   const model =
@@ -378,6 +397,27 @@ async function main() {
   const stickerTotal = sheets.reduce((sum, sheet) => sum + sheet.cols * sheet.rows, 0);
   const fontKey = resolveFontKeyForStyle(config.style, config.fontKey ?? production.fontKey);
 
+  const imgPath = resolveImagePath(config.referenceImage, configDir);
+  const referenceBytes = new Uint8Array(await readFile(imgPath));
+  const referenceBase64 = Buffer.from(referenceBytes).toString('base64');
+  const referenceMimeType = mimeFromPath(imgPath);
+  const chromaReferences: ChromaReferenceImage[] = [
+    await decodeChromaReference(referenceBytes),
+  ];
+
+  let companionReferenceBase64: string | undefined;
+  let companionReferenceMimeType: string | undefined;
+  if (config.referenceImage2) {
+    const img2Path = resolveImagePath(config.referenceImage2, configDir);
+    const companionBytes = new Uint8Array(await readFile(img2Path));
+    companionReferenceBase64 = Buffer.from(companionBytes).toString('base64');
+    companionReferenceMimeType = mimeFromPath(img2Path);
+    chromaReferences.push(await decodeChromaReference(companionBytes));
+  }
+
+  const chromaSelection = selectChromaKeyColor(requestedChromaKeyColor, chromaReferences);
+  const chromaKeyColor: ChromaKeyColorType = chromaSelection.color;
+
   console.log(
     `▶ LINE sticker job: scope=${config.scope ?? 'set'}, stickers=${stickerTotal}, sheets=${sheets.length}` +
       (sheetFilter ? `, regenerating=${sheetFilter}` : '') +
@@ -385,6 +425,12 @@ async function main() {
       (isolatedSheetRun ? ', isolated=true' : '') +
       `, chroma=${chromaKeyColor}, chromaAlgo=${chromaKeyAlgorithm}, text=${textRendering === 'programmatic' ? 'programmatic' : effectiveIncludeText ? 'model-drawn' : 'none'}, font=${fontKey}, model=${model}, resolution=${resolution}`
   );
+  if (requestedChromaKeyColor === 'auto') {
+    console.log(
+      `   chroma auto-selection: ${chromaKeyColor} ` +
+        `(green conflict=${chromaSelection.green.toFixed(4)}, magenta conflict=${chromaSelection.magenta.toFixed(4)})`
+    );
+  }
 
   if (dryRun) {
     for (const sheet of sheets) {
@@ -413,17 +459,10 @@ async function main() {
   const apiKey = loadGeminiApiKey();
   if (!apiKey) throw new Error('GEMINI_API_KEY not found (env or .env.local).');
 
-  const imgPath = resolveImagePath(config.referenceImage, configDir);
-  const referenceBase64 = (await readFile(imgPath)).toString('base64');
-  const referenceMimeType = mimeFromPath(imgPath);
   console.log(`▶ reference: ${basename(imgPath)} (${referenceMimeType})`);
 
-  let companionReferenceBase64: string | undefined;
-  let companionReferenceMimeType: string | undefined;
   if (config.referenceImage2) {
     const img2Path = resolveImagePath(config.referenceImage2, configDir);
-    companionReferenceBase64 = (await readFile(img2Path)).toString('base64');
-    companionReferenceMimeType = mimeFromPath(img2Path);
     console.log(`▶ reference2: ${basename(img2Path)} (${companionReferenceMimeType})`);
   }
 
@@ -608,6 +647,7 @@ async function main() {
 
   const jobConfig = {
     ...config,
+    requestedChromaKeyColor,
     model,
     resolution,
     chromaKeyColor,

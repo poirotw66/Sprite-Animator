@@ -8,7 +8,7 @@ import {
 export const LINE_STICKER_PRODUCTION_PRESET = {
   model: DEFAULT_SKILL_STICKER_MODEL,
   resolution: '2K' as ImageResolution,
-  chromaKeyColor: 'green' as const,
+  chromaKeyColor: 'auto' as const,
   chromaKeyAlgorithm: 'core' as const,
   includeText: true,
   textRendering: 'programmatic' as const,

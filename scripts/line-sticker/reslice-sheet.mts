@@ -2,7 +2,7 @@
  * Re-slice an existing sheet folder without calling Gemini again.
  *
  *   npx tsx reslice-sheet.mts <sheet-dir> [cols] [rows] [template|detect|divider]
- *     [--algorithm core|forge|legacy] [--out-dir <path>]
+ *     [--algorithm core|forge|legacy] [--chroma auto|green|magenta] [--out-dir <path>]
  *
  * --out-dir writes stickers + _processed-sheet.png to a separate folder (does not overwrite source stickers).
  */
@@ -25,25 +25,41 @@ import { buildEqualGridBounds } from '../../utils/gridSheetTemplate.ts';
 import { resolveSliceTemplateBounds } from '../../utils/lineStickerGridTemplate.ts';
 import { trimFrameToContent } from '../../utils/sheetComponentSlicer.ts';
 import { clearDetectedSheetGridDividers } from '../../utils/sheetWhiteDividerDetection.ts';
-import { DEFAULT_CHROMA_KEY_ALGORITHM } from '../../utils/constants.ts';
-import type { ChromaKeyAlgorithm } from '../../types.ts';
+import { LINE_STICKER_PRODUCTION_PRESET } from '../../utils/lineStickerProductionPreset.ts';
+import {
+  detectSheetChromaKeyColor,
+  type RequestedChromaKeyColor,
+} from '../../utils/lineStickerChromaSelection.ts';
+import type { ChromaKeyAlgorithm, ChromaKeyColorType } from '../../types.ts';
 
 function parseArgs(argv: string[]): {
   sheetDir: string;
   cols: number;
   rows: number;
   sliceModeArg: string;
-  algorithm: ChromaKeyAlgorithm;
+  algorithm?: ChromaKeyAlgorithm;
+  chroma?: RequestedChromaKeyColor;
   outDir?: string;
 } {
   const positional: string[] = [];
-  let algorithm: ChromaKeyAlgorithm = DEFAULT_CHROMA_KEY_ALGORITHM;
+  let algorithm: ChromaKeyAlgorithm | undefined;
+  let chroma: RequestedChromaKeyColor | undefined;
   let outDir: string | undefined;
 
   for (let i = 0; i < argv.length; i++) {
     const token = argv[i]!;
     if (token === '--algorithm' && argv[i + 1]) {
-      algorithm = argv[++i]! as ChromaKeyAlgorithm;
+      const value = argv[++i]!;
+      if (value !== 'core' && value !== 'forge' && value !== 'legacy') {
+        throw new Error(`Invalid --algorithm: ${value}`);
+      }
+      algorithm = value;
+    } else if (token === '--chroma' && argv[i + 1]) {
+      const value = argv[++i]!;
+      if (value !== 'auto' && value !== 'green' && value !== 'magenta') {
+        throw new Error(`Invalid --chroma: ${value}`);
+      }
+      chroma = value;
     } else if (token === '--out-dir' && argv[i + 1]) {
       outDir = resolve(argv[++i]!);
     } else if (!token.startsWith('--')) {
@@ -57,17 +73,18 @@ function parseArgs(argv: string[]): {
     rows: Number(positional[2] ?? 5),
     sliceModeArg: positional[3] ?? '',
     algorithm,
+    chroma,
     outDir,
   };
 }
 
-const { sheetDir, cols, rows, sliceModeArg, algorithm, outDir } = parseArgs(process.argv.slice(2));
-const chromaKeyColor = 'green' as const;
+const { sheetDir, cols, rows, sliceModeArg, algorithm: algorithmArg, chroma, outDir } =
+  parseArgs(process.argv.slice(2));
 const writeDir = outDir ?? sheetDir;
 
 if (!sheetDir) {
   console.error(
-    'Usage: reslice-sheet.mts <sheet-dir> [cols] [rows] [template] [--algorithm core|forge|legacy] [--out-dir <path>]'
+    'Usage: reslice-sheet.mts <sheet-dir> [cols] [rows] [template] [--algorithm core|forge|legacy] [--chroma auto|green|magenta] [--out-dir <path>]'
   );
   process.exit(1);
 }
@@ -92,9 +109,26 @@ const rawBytes = new Uint8Array(await readFile(rawPath));
 const image = decodeImage(rawBytes);
 
 const jobConfigPath = resolve(sheetDir, '..', 'job.config.json');
-const config = existsSync(jobConfigPath)
-  ? (JSON.parse(await readFile(jobConfigPath, 'utf8')) as { textRendering?: 'model' | 'programmatic' })
+const manifestPath = resolve(sheetDir, '..', 'manifest.json');
+type PersistedConfig = {
+  textRendering?: 'model' | 'programmatic';
+  chromaKeyColor?: RequestedChromaKeyColor;
+  requestedChromaKeyColor?: RequestedChromaKeyColor;
+  chromaKeyAlgorithm?: ChromaKeyAlgorithm;
+};
+const jobConfig = existsSync(jobConfigPath)
+  ? (JSON.parse(await readFile(jobConfigPath, 'utf8')) as PersistedConfig)
   : {};
+const manifest = existsSync(manifestPath)
+  ? (JSON.parse(await readFile(manifestPath, 'utf8')) as { config?: PersistedConfig })
+  : {};
+const config: PersistedConfig = { ...jobConfig, ...manifest.config };
+const requestedChroma =
+  chroma ?? config.chromaKeyColor ?? config.requestedChromaKeyColor ?? 'auto';
+const chromaKeyColor: ChromaKeyColorType =
+  requestedChroma === 'auto' ? detectSheetChromaKeyColor(image) : requestedChroma;
+const algorithm =
+  algorithmArg ?? config.chromaKeyAlgorithm ?? LINE_STICKER_PRODUCTION_PRESET.chromaKeyAlgorithm;
 const preserveCellAlphaThreshold = config.textRendering === 'model' ? 8 : undefined;
 
 await mkdir(writeDir, { recursive: true });
@@ -113,7 +147,9 @@ if (dividerCleanup.applied) {
   );
 }
 await writeFile(resolve(writeDir, '_processed-sheet.png'), encodePng(image));
-console.log(`Chroma algorithm: ${algorithm}${useGuidedTemplate ? ' + guided' : ''}`);
+console.log(
+  `Chroma: ${chromaKeyColor}${requestedChroma === 'auto' ? ' (auto-detected)' : ''}; algorithm: ${algorithm}${useGuidedTemplate ? ' + guided' : ''}`
+);
 if (outDir) {
   console.log(`Output dir: ${writeDir} (source stickers untouched)`);
 }

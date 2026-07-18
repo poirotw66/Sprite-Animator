@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const CANONICAL_SKILL_DOCS = [
@@ -16,6 +16,17 @@ describe('LINE sticker skill paths', () => {
     for (const path of CANONICAL_SKILL_DOCS) {
       const source = readFileSync(path, 'utf8');
       expect(source).not.toContain('.Codex/skills');
+    }
+  });
+
+  it('keeps every relative Markdown link in canonical Skill docs valid', () => {
+    for (const path of CANONICAL_SKILL_DOCS) {
+      const source = readFileSync(path, 'utf8');
+      for (const match of source.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)) {
+        const href = match[1]!;
+        if (/^(?:https?:|#)/.test(href)) continue;
+        expect(existsSync(resolve(dirname(path), href)), `${path}: broken link ${href}`).toBe(true);
+      }
     }
   });
 });
