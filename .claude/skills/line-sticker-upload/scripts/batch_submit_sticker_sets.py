@@ -17,7 +17,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SCRIPT_DIR.parents[4]
+# scripts → line-sticker-upload → skills → .claude → <repo>
+PROJECT_ROOT = SCRIPT_DIR.parents[3]
 CREDENTIALS_ENV = PROJECT_ROOT / ".claude/skills/line-sticker-maker/credentials.env"
 DEFAULT_BATCH_ENV_DIR = PROJECT_ROOT / ".line-upload" / ".env.batch"
 MASTER_STORAGE = SCRIPT_DIR / "playwright_line_state.json"
@@ -85,16 +86,22 @@ def merge_credentials(batch_path: Path, credentials_path: Path) -> None:
 
 def update_env(env_path: Path, set_dir: Path, meta: dict[str, str], zip_path: Path) -> None:
     header = f"# LINE Creators Market — {set_dir.name}"
+    prev = load_env(env_path) if env_path.is_file() else {}
     updates = {
-        "LINE_STICKER_ID": "",
+        "LINE_STICKER_ID": prev.get("LINE_STICKER_ID", ""),
         "GDRIVE_SET_FOLDER": set_dir.name,
         "GDRIVE_STICKER_SUBFOLDER": "sticker-pack",
-        "GDRIVE_FOLDER_ID": "",
-        "GDRIVE_SHARE_URL": "",
+        # Preserve Drive IDs across retries (e.g. --skip-drive after a provision fail).
+        "GDRIVE_FOLDER_ID": prev.get("GDRIVE_FOLDER_ID", ""),
+        "GDRIVE_SHARE_URL": prev.get("GDRIVE_SHARE_URL", ""),
         "STICKER_TITLE_ZH": meta.get("STICKER_TITLE_ZH", ""),
         "STICKER_DESC_ZH": meta.get("STICKER_DESC_ZH", ""),
         "STICKER_TITLE_EN": meta.get("STICKER_TITLE_EN", ""),
         "STICKER_DESC_EN": meta.get("STICKER_DESC_EN", ""),
+        "COPYRIGHT": prev.get("COPYRIGHT") or "Copyright (c) Blo0m",
+        "USE_AI": prev.get("USE_AI") or "true",
+        "SALE_START": prev.get("SALE_START") or "auto",
+        "JOIN_CAMPAIGNS": prev.get("JOIN_CAMPAIGNS") or "false",
         "SOURCE_ZIP": rel_posix(zip_path),
         "UPLOAD_ZIP": rel_posix(zip_path),
         "SPRITE_SHEETS_DIR": rel_posix(set_dir / "sprite_sheets"),

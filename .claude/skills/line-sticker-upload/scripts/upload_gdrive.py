@@ -96,7 +96,7 @@ def load_env_file(env_path: Path) -> dict[str, str]:
 def project_root_from_arg(value: Path | None) -> Path:
     if value is not None:
         return value.resolve()
-    return SCRIPT_DIR.parents[4]
+    return SCRIPT_DIR.parents[3]
 
 
 def load_credentials(auth_only: bool) -> Credentials:

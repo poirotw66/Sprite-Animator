@@ -10,7 +10,8 @@ from pathlib import Path
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeout
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SCRIPT_DIR.parents[4]
+# scripts → line-sticker-upload → skills → .claude → <repo>
+PROJECT_ROOT = SCRIPT_DIR.parents[3]
 STORAGE = SCRIPT_DIR / "playwright_line_state.json"
 
 
