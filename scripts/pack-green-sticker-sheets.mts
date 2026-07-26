@@ -20,24 +20,44 @@ import { detectSheetGridBoundaries } from '../utils/sheetBoundaryDetection.ts';
 import {
   sliceSheetByComponentOwnership,
 } from '../utils/sheetComponentSlicer.ts';
-import { clearEdgeConnectedResidue } from '../utils/frameEdgeCleanup.ts';
+import { clearEdgeConnectedResidue, clearThinEdgeBleedFragments } from '../utils/frameEdgeCleanup.ts';
 import { addExteriorWhiteStroke } from '../utils/paperBackgroundMatte.ts';
 import { featherAlphaEdge } from '../utils/alphaEdgeFeather.ts';
 
-const COLS = 4;
-const ROWS = 5;
+const DEFAULT_COLS = 4;
+const DEFAULT_ROWS = 5;
 
-function parseArgs(argv: string[]): { sheets: [string, string]; out: string } {
+function parseArgs(argv: string[]): {
+  sheets: [string, string];
+  out: string;
+  cols: number;
+  rows: number;
+  bg: 'green' | 'white';
+} {
   const sheets: string[] = [];
   let out = '';
+  let cols = DEFAULT_COLS;
+  let rows = DEFAULT_ROWS;
+  let bg: 'green' | 'white' = 'green';
   for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === '--out' && argv[i + 1]) out = resolve(argv[++i]!);
-    else if (!argv[i]!.startsWith('--')) sheets.push(resolve(argv[i]!));
+    const token = argv[i]!;
+    if (token === '--out' && argv[i + 1]) out = resolve(argv[++i]!);
+    else if (token === '--cols' && argv[i + 1]) cols = Math.max(1, Number(argv[++i]));
+    else if (token === '--rows' && argv[i + 1]) rows = Math.max(1, Number(argv[++i]));
+    else if (token === '--bg' && argv[i + 1]) {
+      const value = String(argv[++i]).toLowerCase();
+      if (value !== 'green' && value !== 'white') {
+        throw new Error(`Invalid --bg: ${value} (use green|white)`);
+      }
+      bg = value;
+    } else if (!token.startsWith('--')) sheets.push(resolve(token));
   }
   if (sheets.length !== 2 || !out) {
-    throw new Error('Usage: npx tsx scripts/pack-green-sticker-sheets.mts <sheet1.png> <sheet2.png> --out <folder>');
+    throw new Error(
+      'Usage: npx tsx scripts/pack-green-sticker-sheets.mts <sheet1.png> <sheet2.png> --out <folder> [--cols 4] [--rows 5] [--bg green|white]'
+    );
   }
-  return { sheets: [sheets[0]!, sheets[1]!], out };
+  return { sheets: [sheets[0]!, sheets[1]!], out, cols, rows, bg };
 }
 
 function alphaStats(image: RgbaImage): { transparent: number; soft: number; opaque: number } {
@@ -109,6 +129,85 @@ function applySoftGreenMatte(image: RgbaImage): { keyDominance: number; softStar
   return { keyDominance, softStart, hardKey };
 }
 
+/** Edge-connected near-white paper removal (preserves enclosed white fills). */
+function applyWhitePaperMatte(image: RgbaImage): { cleared: number; maxDist: number } {
+  const maxDist = 18;
+  const { data, width, height } = image;
+  const nearWhite = (r: number, g: number, b: number): boolean => {
+    const min = Math.min(r, g, b);
+    const max = Math.max(r, g, b);
+    return min >= 235 && max - min <= 18;
+  };
+
+  const visited = new Uint8Array(width * height);
+  const queue: number[] = [];
+  let cleared = 0;
+
+  const trySeed = (x: number, y: number): void => {
+    const p = y * width + x;
+    if (visited[p]) return;
+    const i = p * 4;
+    if (data[i + 3]! < 8) {
+      visited[p] = 1;
+      queue.push(p);
+      return;
+    }
+    if (!nearWhite(data[i]!, data[i + 1]!, data[i + 2]!)) return;
+    visited[p] = 1;
+    data[i] = 0;
+    data[i + 1] = 0;
+    data[i + 2] = 0;
+    data[i + 3] = 0;
+    cleared++;
+    queue.push(p);
+  };
+
+  for (let x = 0; x < width; x++) {
+    trySeed(x, 0);
+    trySeed(x, height - 1);
+  }
+  for (let y = 0; y < height; y++) {
+    trySeed(0, y);
+    trySeed(width - 1, y);
+  }
+
+  let head = 0;
+  while (head < queue.length) {
+    const p = queue[head++]!;
+    const x = p % width;
+    const y = (p - x) / width;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        if (dx === 0 && dy === 0) continue;
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+        const np = ny * width + nx;
+        if (visited[np]) continue;
+        const i = np * 4;
+        if (data[i + 3]! < 8) {
+          visited[np] = 1;
+          queue.push(np);
+          continue;
+        }
+        if (!nearWhite(data[i]!, data[i + 1]!, data[i + 2]!)) {
+          visited[np] = 1;
+          continue;
+        }
+        visited[np] = 1;
+        data[i] = 0;
+        data[i + 1] = 0;
+        data[i + 2] = 0;
+        data[i + 3] = 0;
+        cleared++;
+        queue.push(np);
+      }
+    }
+  }
+
+  return { cleared, maxDist };
+}
+
 function trimWithoutDroppingDetails(frame: RgbaImage, marginRatio = 0.06): RgbaImage {
   const { data, width, height } = frame;
   let minX = width;
@@ -156,6 +255,8 @@ async function makeContactSheet(
   frames: RgbaImage[],
   outputPath: string,
   background: { r: number; g: number; b: number },
+  cols: number,
+  rows: number,
 ): Promise<void> {
   const cellWidth = 370;
   const cellHeight = 320;
@@ -170,14 +271,14 @@ async function makeContactSheet(
     const meta = await sharp(fitted).metadata();
     composites.push({
       input: fitted,
-      left: (i % COLS) * cellWidth + Math.floor((cellWidth - (meta.width ?? 0)) / 2),
-      top: Math.floor(i / COLS) * cellHeight + Math.floor((cellHeight - (meta.height ?? 0)) / 2),
+      left: (i % cols) * cellWidth + Math.floor((cellWidth - (meta.width ?? 0)) / 2),
+      top: Math.floor(i / cols) * cellHeight + Math.floor((cellHeight - (meta.height ?? 0)) / 2),
     });
   }
   await sharp({
     create: {
-      width: COLS * cellWidth,
-      height: ROWS * cellHeight,
+      width: cols * cellWidth,
+      height: rows * cellHeight,
       channels: 4,
       background: { ...background, alpha: 1 },
     },
@@ -208,18 +309,33 @@ async function makeLineSticker(frame: RgbaImage): Promise<Buffer> {
     .toBuffer();
 }
 
-async function processSheet(path: string, outputDir: string): Promise<RgbaImage[]> {
+async function processSheet(
+  path: string,
+  outputDir: string,
+  cols: number,
+  rows: number,
+  bg: 'green' | 'white',
+): Promise<RgbaImage[]> {
   await mkdir(outputDir, { recursive: true });
   const rawBytes = new Uint8Array(await readFile(path));
   const image = decodeImage(rawBytes);
 
-  const matte = applySoftGreenMatte(image);
+  if (bg === 'white') {
+    const matte = applyWhitePaperMatte(image);
+    console.log(`${basename(path)} ${image.width}x${image.height} grid=${cols}x${rows} bg=white`);
+    console.log(`  white matte cleared=${matte.cleared} maxDist=${matte.maxDist}`);
+  } else {
+    const matte = applySoftGreenMatte(image);
+    console.log(`${basename(path)} ${image.width}x${image.height} grid=${cols}x${rows} bg=green`);
+    console.log(`  green matte key=${matte.keyDominance.toFixed(1)} soft=${matte.softStart} hard=${matte.hardKey.toFixed(1)}`);
+  }
+
   const bounds = detectSheetGridBoundaries(
     image.data,
     image.width,
     image.height,
-    COLS,
-    ROWS,
+    cols,
+    rows,
     { searchRadiusRatio: 0.14, rowSearchRadiusRatio: 0.16 },
   );
   const cells = sliceSheetByComponentOwnership(
@@ -228,16 +344,30 @@ async function processSheet(path: string, outputDir: string): Promise<RgbaImage[
     image.height,
     bounds.xBounds,
     bounds.yBounds,
-    // Model-drawn captions are disconnected from the cat and often contain
-    // tiny strokes. Preserve all alpha inside the strict cell while ownership
-    // masking still prevents large neighbouring components from bleeding in.
-    { minComponentArea: 8, overflowPaddingPx: 5, preserveCellAlphaThreshold: 8 },
+    // Captions are often disconnected from the cat; keep in-cell alpha.
+    // Thin top/bottom crumbs from the neighboring row are scrubbed after slice.
+    { minComponentArea: 12, overflowPaddingPx: 2, preserveCellAlphaThreshold: 8 },
   );
 
   const frames = cells.map((cell) => {
-    clearEdgeConnectedResidue(cell.data, cell.width, cell.height, { maxDepthPx: 3 });
+    clearThinEdgeBleedFragments(cell.data, cell.width, cell.height, {
+      maxFragmentHeight: 16,
+      maxFragmentArea: 200,
+      alphaThreshold: 12,
+    });
+    clearEdgeConnectedResidue(cell.data, cell.width, cell.height, { maxDepthPx: 4 });
     const trimmed = trimWithoutDroppingDetails(cell, 0.07);
+    clearThinEdgeBleedFragments(trimmed.data, trimmed.width, trimmed.height, {
+      maxFragmentHeight: 16,
+      maxFragmentArea: 200,
+      alphaThreshold: 12,
+    });
     addLineSafeStroke(trimmed, 3);
+    clearThinEdgeBleedFragments(trimmed.data, trimmed.width, trimmed.height, {
+      maxFragmentHeight: 10,
+      maxFragmentArea: 120,
+      alphaThreshold: 12,
+    });
     return trimmed;
   });
 
@@ -249,21 +379,19 @@ async function processSheet(path: string, outputDir: string): Promise<RgbaImage[
       Buffer.from(encodePng(frames[i]!)),
     );
   }
-  await makeContactSheet(frames, join(outputDir, '_contact-dark.png'), { r: 32, g: 34, b: 36 });
-  await makeContactSheet(frames, join(outputDir, '_contact-light.png'), { r: 238, g: 238, b: 238 });
+  await makeContactSheet(frames, join(outputDir, '_contact-dark.png'), { r: 32, g: 34, b: 36 }, cols, rows);
+  await makeContactSheet(frames, join(outputDir, '_contact-light.png'), { r: 238, g: 238, b: 238 }, cols, rows);
 
-  console.log(`${basename(path)} ${image.width}x${image.height}`);
-  console.log(`  green matte key=${matte.keyDominance.toFixed(1)} soft=${matte.softStart} hard=${matte.hardKey.toFixed(1)}`);
   console.log(`  x=${bounds.xBounds.join(',')} y=${bounds.yBounds.join(',')}`);
   console.log(`  alpha=${JSON.stringify(alphaStats(image))}`);
   return frames;
 }
 
 async function main(): Promise<void> {
-  const { sheets, out } = parseArgs(process.argv.slice(2));
+  const { sheets, out, cols, rows, bg } = parseArgs(process.argv.slice(2));
   await mkdir(join(out, 'stickers'), { recursive: true });
-  const first = await processSheet(sheets[0], join(out, 'sheet-1'));
-  const second = await processSheet(sheets[1], join(out, 'sheet-2'));
+  const first = await processSheet(sheets[0], join(out, 'sheet-1'), cols, rows, bg);
+  const second = await processSheet(sheets[1], join(out, 'sheet-2'), cols, rows, bg);
   const all = [...first, ...second];
   for (let i = 0; i < all.length; i++) {
     const png = Buffer.from(encodePng(all[i]!));
@@ -284,10 +412,10 @@ async function main(): Promise<void> {
   }
   await writeFile(join(out, 'LINE_Stickers_40_GreenKey_V2.zip'), await zip.generateAsync({ type: 'nodebuffer' }));
 
-  await makeContactSheet(all.slice(0, 20), join(out, 'preview-sheet-1-dark.png'), { r: 32, g: 34, b: 36 });
-  await makeContactSheet(all.slice(20), join(out, 'preview-sheet-2-dark.png'), { r: 32, g: 34, b: 36 });
-  await makeContactSheet(all.slice(0, 20), join(out, 'preview-sheet-1-light.png'), { r: 238, g: 238, b: 238 });
-  await makeContactSheet(all.slice(20), join(out, 'preview-sheet-2-light.png'), { r: 238, g: 238, b: 238 });
+  await makeContactSheet(all.slice(0, 20), join(out, 'preview-sheet-1-dark.png'), { r: 32, g: 34, b: 36 }, cols, rows);
+  await makeContactSheet(all.slice(20), join(out, 'preview-sheet-2-dark.png'), { r: 32, g: 34, b: 36 }, cols, rows);
+  await makeContactSheet(all.slice(0, 20), join(out, 'preview-sheet-1-light.png'), { r: 238, g: 238, b: 238 }, cols, rows);
+  await makeContactSheet(all.slice(20), join(out, 'preview-sheet-2-light.png'), { r: 238, g: 238, b: 238 }, cols, rows);
   console.log(`Wrote ${all.length} transparent stickers to ${out}`);
 }
 

@@ -153,3 +153,84 @@ export function clearSmallOpaqueIslands(
 
   return cleared;
 }
+
+export interface ThinEdgeBleedOptions {
+  /** Max height (px) of a top/bottom-touching island to treat as divider bleed. Default 14. */
+  maxFragmentHeight?: number;
+  /** Max area (px) of such an island. Default 160. */
+  maxFragmentArea?: number;
+  /** Pixels with alpha <= this are background. Default 12. */
+  alphaThreshold?: number;
+}
+
+/**
+ * Erase only short crumb islands glued to the top or bottom edge.
+ * Captions sitting near the top stay (they are taller than maxFragmentHeight).
+ * Neighbor-row tips that crossed the divider are typically short and edge-touching.
+ */
+export function clearThinEdgeBleedFragments(
+  data: Uint8ClampedArray | Uint8Array | number[],
+  width: number,
+  height: number,
+  options: ThinEdgeBleedOptions = {}
+): number {
+  const maxFragmentHeight = Math.max(1, Math.floor(options.maxFragmentHeight ?? 14));
+  const maxFragmentArea = Math.max(1, Math.floor(options.maxFragmentArea ?? 160));
+  const alphaThreshold = options.alphaThreshold ?? 12;
+  if (width <= 0 || height <= 0) return 0;
+
+  const total = width * height;
+  const visited = new Uint8Array(total);
+  let cleared = 0;
+
+  for (let start = 0; start < total; start++) {
+    if (visited[start] || data[start * 4 + 3]! <= alphaThreshold) continue;
+
+    const island: number[] = [];
+    const queue = [start];
+    visited[start] = 1;
+    let head = 0;
+    let minY = height;
+    let maxY = -1;
+    let touchesTop = false;
+    let touchesBottom = false;
+
+    while (head < queue.length) {
+      const curr = queue[head++]!;
+      island.push(curr);
+      const x = curr % width;
+      const y = (curr - x) / width;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+      if (y === 0) touchesTop = true;
+      if (y === height - 1) touchesBottom = true;
+
+      const neighbors = [
+        x > 0 ? curr - 1 : -1,
+        x < width - 1 ? curr + 1 : -1,
+        y > 0 ? curr - width : -1,
+        y < height - 1 ? curr + width : -1,
+      ];
+      for (const next of neighbors) {
+        if (next < 0 || visited[next]) continue;
+        if (data[next * 4 + 3]! <= alphaThreshold) continue;
+        visited[next] = 1;
+        queue.push(next);
+      }
+    }
+
+    const fragmentHeight = maxY - minY + 1;
+    const isBleed =
+      (touchesTop || touchesBottom) &&
+      fragmentHeight <= maxFragmentHeight &&
+      island.length <= maxFragmentArea;
+    if (!isBleed) continue;
+
+    for (const p of island) {
+      data[p * 4 + 3] = 0;
+      cleared++;
+    }
+  }
+
+  return cleared;
+}

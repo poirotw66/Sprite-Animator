@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { clearEdgeConnectedResidue, clearSmallOpaqueIslands } from './frameEdgeCleanup';
+import {
+  clearEdgeConnectedResidue,
+  clearSmallOpaqueIslands,
+  clearThinEdgeBleedFragments,
+} from './frameEdgeCleanup';
 
 /** Build an RGBA buffer; `opaque(x,y)` decides alpha (255 vs 0), rgb = white. */
 function makeData(
@@ -89,5 +93,26 @@ describe('clearSmallOpaqueIslands', () => {
     const cleared = clearSmallOpaqueIslands(data, w, h, { maxIslandSize: 20 });
     expect(cleared).toBe(0);
     expect(alphaAt(data, w, 2, 2)).toBe(255);
+  });
+});
+
+describe('clearThinEdgeBleedFragments', () => {
+  it('clears a short top-edge crumb without touching a tall caption', () => {
+    const w = 20;
+    const h = 30;
+    // 3px-tall bleed on top + 12px-tall caption below with a gap.
+    const data = makeData(
+      w,
+      h,
+      (x, y) =>
+        (y <= 2 && x >= 8 && x <= 12) || (y >= 6 && y <= 17 && x >= 6 && x <= 14)
+    );
+    const cleared = clearThinEdgeBleedFragments(data, w, h, {
+      maxFragmentHeight: 8,
+      maxFragmentArea: 40,
+    });
+    expect(cleared).toBeGreaterThan(0);
+    expect(alphaAt(data, w, 10, 1)).toBe(0);
+    expect(alphaAt(data, w, 10, 10)).toBe(255);
   });
 });
