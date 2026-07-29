@@ -54,6 +54,10 @@ import {
   type ProgrammaticComposeConfig,
   type ProgrammaticTextOverlayTuning,
 } from '../../utils/lineStickerTextOverlayTypes.ts';
+import {
+  detectSheetChromaKey,
+  type SheetChromaDetection,
+} from '../../utils/lineStickerChromaSelection.ts';
 
 export interface SheetPlan {
   label: string;
@@ -117,6 +121,7 @@ export interface GenerateOneSheetResult {
   gridScore: number;
   gridValidation: GridValidationResult;
   acceptedViaReslice: boolean;
+  chromaDetection: SheetChromaDetection;
 }
 
 interface AttemptState {
@@ -125,6 +130,9 @@ interface AttemptState {
   validation: GridValidationResult;
   rank: number;
   acceptedViaReslice: boolean;
+  chromaDetection: SheetChromaDetection;
+  chromaMismatch: boolean;
+  expectedChromaKeyColor: ChromaKeyColorType;
 }
 
 function log(prefix: string, msg: string): void {
@@ -144,7 +152,14 @@ async function archiveGridAttempt(
 ): Promise<void> {
   const attemptsDir = resolve(outDir, sheetFolder, 'attempts');
   await mkdir(attemptsDir, { recursive: true });
-  const { rawPng, image, validation } = attemptState;
+  const {
+    rawPng,
+    image,
+    validation,
+    chromaDetection,
+    chromaMismatch,
+    expectedChromaKeyColor,
+  } = attemptState;
   const label = String(attempt).padStart(2, '0');
   await writeFile(resolve(attemptsDir, `attempt-${label}-raw.${extForBytes(rawPng)}`), rawPng);
   await writeFile(resolve(attemptsDir, `attempt-${label}-processed.png`), encodePng(image));
@@ -159,6 +174,10 @@ async function archiveGridAttempt(
         detected: validation.detected,
         columnWidthCv: validation.columnWidthCv,
         resliceCandidate: validation.resliceCandidate,
+        expectedChromaKeyColor,
+        detectedChromaKeyColor: chromaDetection.color,
+        chromaDetection,
+        chromaMismatch,
         sliceMode: sliceMeta.sliceMode,
         templateBounds: sliceMeta.templateBounds,
       },
@@ -309,6 +328,7 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
   let finalAttempt: AttemptState | null = null;
   let bestAttempt: AttemptState | null = null;
   let lastValidation: GridValidationResult | undefined;
+  let lastChromaMismatch: AttemptState | null = null;
 
   for (let attempt = 1; attempt <= hardMaxAttempts; attempt++) {
     if (attempt > 1) {
@@ -343,7 +363,11 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     });
 
     const image = decodeImage(rawPng);
-    processSheetChromaKey(image, chromaKeyColor, {
+    const chromaDetection = detectSheetChromaKey(image);
+    const chromaMismatch =
+      chromaDetection.reliable && chromaDetection.color !== chromaKeyColor;
+    const processingChromaKeyColor = chromaMismatch ? chromaDetection.color : chromaKeyColor;
+    processSheetChromaKey(image, processingChromaKeyColor, {
       guided: sheetTemplate?.mode === 'guided',
       algorithm: chromaKeyAlgorithm,
     });
@@ -362,6 +386,9 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
       validation,
       rank: rankSheetAttempt(validation, sheet.cols, sheet.rows),
       acceptedViaReslice: false,
+      chromaDetection,
+      chromaMismatch,
+      expectedChromaKeyColor: chromaKeyColor,
     };
     lastValidation = validation;
 
@@ -376,11 +403,25 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
       `saved attempt ${attempt} -> ${sheetFolder}/attempts/ (score ${validation.expected.score.toFixed(2)}, detected ${validation.detected.cols}×${validation.detected.rows})`
     );
 
-    if (!bestAttempt || attemptState.rank > bestAttempt.rank) {
+    if (chromaMismatch) {
+      lastChromaMismatch = attemptState;
+      warn(
+        logPrefix,
+        `generated border uses ${chromaDetection.color}, expected ${chromaKeyColor} ` +
+          `(confidence ${(chromaDetection.confidence * 100).toFixed(0)}%, strength ${chromaDetection.strength.toFixed(3)})` +
+          (attempt < hardMaxAttempts ? ' — retrying...' : '')
+      );
+    }
+
+    if (
+      !bestAttempt ||
+      (bestAttempt.chromaMismatch && !chromaMismatch) ||
+      (bestAttempt.chromaMismatch === chromaMismatch && attemptState.rank > bestAttempt.rank)
+    ) {
       bestAttempt = attemptState;
     }
 
-    if (validation.ok) {
+    if (!chromaMismatch && validation.ok) {
       if (attempt > 1) {
         log(
           logPrefix,
@@ -391,7 +432,7 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
       break;
     }
 
-    if (tryAcceptViaReslice(validation, sheet.cols, sheet.rows)) {
+    if (!chromaMismatch && tryAcceptViaReslice(validation, sheet.cols, sheet.rows)) {
       warn(
         logPrefix,
         `${validation.reason ?? 'marginal grid'} — accepting via reslice (score ${validation.expected.score.toFixed(2)})`
@@ -401,7 +442,9 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
       break;
     }
 
-    const detail = validation.reason ?? 'grid misaligned';
+    const detail = chromaMismatch
+      ? `chroma mismatch (${chromaDetection.color} instead of ${chromaKeyColor})`
+      : validation.reason ?? 'grid misaligned';
     if (attempt < hardMaxAttempts) {
       warn(logPrefix, `${detail} — retrying...`);
     } else if (model.includes('lite')) {
@@ -437,6 +480,12 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
       );
       warn(logPrefix, `all attempts failed — review ${sheetFolder}/attempts/`);
     }
+    if (lastChromaMismatch && !finalAttempt) {
+      throw new Error(
+        `${sheet.label}: generated ${lastChromaMismatch.chromaDetection.color} chroma instead of ` +
+          `${chromaKeyColor} after ${hardMaxAttempts} attempts`
+      );
+    }
     throw new Error(
       `${sheet.label}: grid score ${score.toFixed(3)} below minimum ${minGridAlignmentScore.toFixed(2)} after ${hardMaxAttempts} attempts`
     );
@@ -462,6 +511,19 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
   }
   await writeFile(resolve(sheetDir, `_raw-sheet.${extForBytes(rawPng)}`), rawPng);
   await writeFile(resolve(sheetDir, '_processed-sheet.png'), encodePng(image));
+  await writeFile(
+    resolve(sheetDir, 'chroma-detection.json'),
+    `${JSON.stringify(
+      {
+        expectedChromaKeyColor: chromaKeyColor,
+        detectedChromaKeyColor: chosen.chromaDetection.color,
+        ...chosen.chromaDetection,
+      },
+      null,
+      2
+    )}\n`,
+    'utf8'
+  );
 
   if (!validation.ok && !acceptedViaReslice) {
     warn(
@@ -589,5 +651,6 @@ export async function generateOneSheet(params: GenerateOneSheetParams): Promise<
     gridScore: validation.expected.score,
     gridValidation: validation,
     acceptedViaReslice,
+    chromaDetection: chosen.chromaDetection,
   };
 }

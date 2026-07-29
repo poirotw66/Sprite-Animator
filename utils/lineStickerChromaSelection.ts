@@ -19,6 +19,16 @@ export interface ChromaSelectionResult extends ChromaConflictScore {
   requested: RequestedChromaKeyColor;
 }
 
+export interface SheetChromaDetection extends ChromaConflictScore {
+  color: ChromaKeyColorType;
+  /** Winner separation in the 0..1 range. */
+  confidence: number;
+  /** Average key-color dominance on the sampled border. */
+  strength: number;
+  /** False when the border has too little saturated key color to enforce a mismatch retry. */
+  reliable: boolean;
+}
+
 function pixelConflict(r: number, g: number, b: number): { green: number; magenta: number } {
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
@@ -88,8 +98,8 @@ export function selectChromaKeyColor(
   return { requested, color, ...score };
 }
 
-/** Detect the dominant chroma on a generated sheet border for legacy `auto` configs. */
-export function detectSheetChromaKeyColor(image: ChromaReferenceImage): ChromaKeyColorType {
+/** Measure the dominant chroma on a generated sheet border. */
+export function detectSheetChromaKey(image: ChromaReferenceImage): SheetChromaDetection {
   const border = Math.max(1, Math.round(Math.min(image.width, image.height) * 0.025));
   let green = 0;
   let magenta = 0;
@@ -111,6 +121,35 @@ export function detectSheetChromaKeyColor(image: ChromaReferenceImage): ChromaKe
       sampled++;
     }
   }
-  if (sampled === 0) return 'green';
-  return magenta > green ? 'magenta' : 'green';
+  if (sampled === 0) {
+    return {
+      color: 'green',
+      green: 0,
+      magenta: 0,
+      sampledPixels: 0,
+      confidence: 0,
+      strength: 0,
+      reliable: false,
+    };
+  }
+  const greenAverage = green / sampled;
+  const magentaAverage = magenta / sampled;
+  const color = magentaAverage > greenAverage ? 'magenta' : 'green';
+  const winner = Math.max(greenAverage, magentaAverage);
+  const loser = Math.min(greenAverage, magentaAverage);
+  const confidence = winner > 0 ? (winner - loser) / winner : 0;
+  return {
+    color,
+    green: greenAverage,
+    magenta: magentaAverage,
+    sampledPixels: sampled,
+    confidence,
+    strength: winner,
+    reliable: winner >= 0.12 && confidence >= 0.35,
+  };
+}
+
+/** Detect the dominant chroma on a generated sheet border for legacy `auto` configs. */
+export function detectSheetChromaKeyColor(image: ChromaReferenceImage): ChromaKeyColorType {
+  return detectSheetChromaKey(image).color;
 }

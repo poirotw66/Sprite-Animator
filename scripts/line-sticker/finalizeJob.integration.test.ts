@@ -192,4 +192,111 @@ describe('finalizeStickerJob staging publication', () => {
     expect(validateCompletedStickerSet(outDir).complete).toBe(true);
     expect(stagingRuns(outDir)).toEqual([]);
   });
+
+  it('records packaging_failed, preserves published artifacts, and cleans abandoned staging on retry', async () => {
+    const outDir = makeJob();
+    await expect(
+      finalizeStickerJob({
+        outDir,
+        sheetDirs: ['sheet-1', 'sheet-2'],
+        config: {
+          stickerCount: 40,
+          lineUpload: true,
+          scope: 'set',
+          minGridAlignmentScore: -2,
+          qaMode: 'block',
+          resolvedChromaKeyColor: 'green',
+          upload: {
+            setName: 'Broken\u0000Pack',
+            titleZh: '故障注入',
+            descZh: '測試',
+            titleEn: 'Broken Pack',
+            descEn: 'test',
+            syncToUploadRoot: false,
+          },
+        },
+      })
+    ).rejects.toThrow();
+    const failed = JSON.parse(readFileSync(join(outDir, 'manifest.json'), 'utf8')) as {
+      completionStatus: string;
+      finalizeStage: string;
+      finalizeError: string;
+    };
+    expect(failed).toMatchObject({
+      completionStatus: 'packaging_failed',
+      finalizeStage: 'packaging',
+    });
+    expect(failed.finalizeError.length).toBeGreaterThan(0);
+    expect(readFileSync(join(outDir, 'stickers', 'sticker-01.png'), 'utf8')).toBe('old-sticker');
+    expect(readFileSync(join(outDir, 'line-upload.zip'), 'utf8')).toBe('old-zip');
+    expect(stagingRuns(outDir).length).toBe(1);
+
+    await finalizeStickerJob({
+      outDir,
+      sheetDirs: ['sheet-1', 'sheet-2'],
+      config: {
+        stickerCount: 40,
+        lineUpload: false,
+        minGridAlignmentScore: -2,
+        qaMode: 'block',
+        resolvedChromaKeyColor: 'green',
+      },
+    });
+    expect(stagingRuns(outDir)).toEqual([]);
+  });
+
+  it('publishes explicit external upload roots through a sibling staging directory', async () => {
+    const outDir = makeJob();
+    const externalRoot = mkdtempSync(join(tmpdir(), 'finalize-external-'));
+    dirs.push(externalRoot);
+    const target = join(externalRoot, 'input', '706', 'External Atomic Set');
+    mkdirSync(target, { recursive: true });
+    writeFileSync(join(target, 'old-marker.txt'), 'old');
+
+    await finalizeStickerJob({
+      outDir,
+      sheetDirs: ['sheet-1', 'sheet-2'],
+      config: {
+        stickerCount: 40,
+        lineUpload: true,
+        scope: 'set',
+        minGridAlignmentScore: -2,
+        qaMode: 'block',
+        resolvedChromaKeyColor: 'green',
+        upload: {
+          root: externalRoot,
+          setName: 'External Atomic Set',
+          titleZh: '外部原子發布',
+          descZh: '測試外部目錄',
+          titleEn: 'External Atomic Set',
+          descEn: 'Atomic external publishing',
+          syncToUploadRoot: false,
+        },
+      },
+    });
+
+    expect(existsSync(join(target, 'External Atomic Set.zip'))).toBe(true);
+    expect(existsSync(join(target, 'old-marker.txt'))).toBe(false);
+    expect(readdirSync(join(externalRoot, 'input', '706')).some((name) => name.includes('.staging-'))).toBe(false);
+  });
+
+  it('marks report-mode QA warnings as completed_with_warnings', async () => {
+    const outDir = makeJob(true);
+    await finalizeStickerJob({
+      outDir,
+      sheetDirs: ['sheet-1', 'sheet-2'],
+      config: {
+        stickerCount: 40,
+        lineUpload: false,
+        minGridAlignmentScore: -2,
+        qaMode: 'report',
+        resolvedChromaKeyColor: 'green',
+      },
+    });
+    const manifest = JSON.parse(readFileSync(join(outDir, 'manifest.json'), 'utf8')) as {
+      completionStatus: string;
+    };
+    expect(manifest.completionStatus).toBe('completed_with_warnings');
+    expect(validateCompletedStickerSet(outDir).complete).toBe(true);
+  });
 });

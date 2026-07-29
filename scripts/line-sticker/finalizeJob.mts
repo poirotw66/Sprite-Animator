@@ -3,8 +3,8 @@
  * Used by generate.mts (end of full run) and finalize.mts (after isolated sheet regen).
  */
 
-import { access, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
-import { resolve, relative, dirname } from 'node:path';
+import { access, mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
+import { resolve, relative, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { decodePng, encodePng, prepareLineStickerFrame, type RgbaImage } from './nodeImage.mts';
@@ -26,6 +26,7 @@ import {
   isUploadEnabled,
   normalizeUploadListing,
   packUploadOutput,
+  resolveUploadPackDir,
   resolveUploadConfig,
   type UploadConfig,
 } from './uploadConfig.mts';
@@ -45,14 +46,18 @@ export interface JobManifest {
   completionStatus?:
     | 'finalizing'
     | 'completed'
+    | 'completed_with_warnings'
     | 'grid_failed'
     | 'qa_failed'
     | 'unverified'
     | 'packaging_failed';
   runId?: string;
+  finalizeStage?: string;
+  finalizeError?: string;
   config?: JobConfig;
   activeSheets?: string[];
   gridScores?: Record<string, number>;
+  sheetChromaDetections?: Record<string, Record<string, unknown>>;
   uploadPackPath?: string;
   uploadSyncPath?: string;
   uploadEnvFile?: string;
@@ -94,6 +99,11 @@ export interface FinalizeJobOptions {
   writeManifest?: boolean;
 }
 
+interface InternalFinalizeJobOptions extends FinalizeJobOptions {
+  runId: string;
+  onStage: (stage: string) => void;
+}
+
 export interface FinalizeJobResult {
   stickerCount: number;
   activeSheets: string[];
@@ -121,6 +131,26 @@ async function pathExists(path: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export async function cleanupAbandonedFinalizeStaging(
+  outDir: string,
+  keepRunId?: string
+): Promise<string[]> {
+  const stagingBase = resolve(outDir, '.finalize-staging');
+  let entries: Array<{ name: string; isDirectory(): boolean }> = [];
+  try {
+    entries = await readdir(stagingBase, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const removed: string[] = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory() || entry.name === keepRunId) continue;
+    await rm(resolve(stagingBase, entry.name), { recursive: true, force: true });
+    removed.push(entry.name);
+  }
+  return removed;
 }
 
 async function writeJsonAtomic(path: string, value: unknown): Promise<void> {
@@ -156,6 +186,22 @@ async function publishStagedPath(stagedPath: string, targetPath: string, runId: 
     }
     throw error;
   }
+}
+
+async function cleanupSiblingStaging(targetPath: string): Promise<void> {
+  const parent = dirname(targetPath);
+  const prefix = `${basename(targetPath)}.staging-`;
+  let names: string[] = [];
+  try {
+    names = await readdir(parent);
+  } catch {
+    return;
+  }
+  await Promise.all(
+    names
+      .filter((name) => name.startsWith(prefix))
+      .map((name) => rm(resolve(parent, name), { recursive: true, force: true }))
+  );
 }
 
 function toZeroBased(oneBased: number | undefined, fallback: number): number {
@@ -216,7 +262,9 @@ export function resolveActiveSheets(
   return Array.from({ length: sheetCount }, (_, i) => `sheet-${i + 1}`);
 }
 
-export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<FinalizeJobResult> {
+async function finalizeStickerJobInternal(
+  options: InternalFinalizeJobOptions
+): Promise<FinalizeJobResult> {
   const { outDir, sheetDirs, config } = options;
   const stickerCount = config.stickerCount ?? DEFAULT_LINE_STICKER_SET_COUNT;
   const layouts = resolveSetLayout(stickerCount);
@@ -258,7 +306,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
     phrases.push(...existingManifest.stickers.map((entry) => (entry.phrase as string) ?? ''));
   }
 
-  const runId = createRunId();
+  const runId = options.runId;
   const stagingRoot = resolve(outDir, '.finalize-staging', runId);
   const stickersDir = resolve(stagingRoot, 'stickers');
   await rm(stagingRoot, { recursive: true, force: true });
@@ -268,14 +316,18 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
       ...existingManifest,
       completionStatus: 'finalizing',
       runId,
+      finalizeStage: 'preparing',
+      finalizeError: undefined,
       config: mergedConfig,
       activeSheets: sheetDirs,
     });
   }
+  options.onStage('loading');
 
   const nativeFrames: RgbaImage[] = [];
   const manifestStickers: Array<Record<string, unknown>> = [];
   const gridScores: Record<string, number> = {};
+  const sheetChromaDetections: Record<string, Record<string, unknown>> = {};
 
   let globalIndex = 0;
   for (let sheetIndex = 0; sheetIndex < sheetDirs.length; sheetIndex++) {
@@ -283,6 +335,12 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
     const layout = layouts[sheetIndex]!;
     const frameCount = layout.cols * layout.rows;
     const sheetDir = resolve(outDir, sheetFolder);
+    const chromaDetection = JSON.parse(
+      await readFile(resolve(sheetDir, 'chroma-detection.json'), 'utf8').catch(() => '{}')
+    ) as Record<string, unknown>;
+    if (Object.keys(chromaDetection).length > 0) {
+      sheetChromaDetections[sheetFolder] = chromaDetection;
+    }
     console.log(`▶ ${sheetFolder}: loading ${frameCount} stickers...`);
 
     gridScores[sheetFolder] = await scoreSheetGrid(outDir, sheetFolder, layout.cols, layout.rows);
@@ -326,6 +384,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
         config: mergedConfig,
         activeSheets: sheetDirs,
         gridScores,
+        sheetChromaDetections,
         qaReport: {
           pass: false,
           gridPass: false,
@@ -345,6 +404,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
   const qaChromaKeyColor = resolvedChromaKeyColor;
   let qaReport: StickerQaReport | undefined;
   if (qaEnabled && nativeFrames.length > 0) {
+    options.onStage('qa');
     console.log('\n▶ Running sticker QA...');
     const checkModelText =
       mergedConfig.textRendering !== 'programmatic' && mergedConfig.includeText !== false;
@@ -394,6 +454,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
             config: mergedConfig,
             activeSheets: sheetDirs,
             gridScores,
+            sheetChromaDetections,
             qaReport: {
               overallScore: qaReport.overallScore,
               pass: false,
@@ -413,6 +474,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
   }
 
   console.log('\n▶ Building LINE upload pack...');
+  options.onStage('packaging');
   const uploadPackOptions = buildUploadPackOptions(mergedConfig);
   const { pack: uploadPack, zipBytes } = await buildLineUploadZipBytes(
     nativeFrames,
@@ -464,6 +526,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
     console.log(`     sprite_sheets/ (${sheetDirs.length} sheets)`);
     if (envFilePath) console.log(`     ${envFilePath}`);
 
+    options.onStage('publishing-local');
     await publishStagedPath(resolve(stagingRoot, 'stickers'), resolve(outDir, 'stickers'), runId);
     await publishStagedPath(
       resolve(stagingRoot, 'qa-report.json'),
@@ -484,23 +547,48 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
 
     // Explicit external roots are populated only after the staged local pack passes QA.
     if (normalizedUpload.root?.trim()) {
+      options.onStage('publishing-external');
+      const externalDest = resolveUploadPackDir(normalizedUpload, outDir);
+      const externalStage = `${externalDest}.staging-${runId}`;
+      const externalEnvStage = resolve(
+        normalizedUpload.root,
+        `.env.batch-staging-${runId}`
+      );
+      await cleanupSiblingStaging(externalDest);
+      await rm(externalStage, { recursive: true, force: true });
+      await rm(externalEnvStage, { recursive: true, force: true });
       const external = await packUploadOutput({
         sourceDir: outDir,
         upload: normalizedUpload,
         sheetDirs,
         zipBytes,
         submitForReview: mergedConfig.lineUploadSubmit === true,
+        destDirOverride: externalStage,
+        envBatchDirOverride: externalEnvStage,
       });
-      uploadPackPath = external.destDir;
-      uploadEnvFile = external.envFilePath ?? uploadEnvFile;
+      await publishStagedPath(externalStage, externalDest, runId);
+      uploadPackPath = externalDest;
+      if (external.envFilePath) {
+        const externalEnvTarget = resolve(
+          normalizedUpload.root,
+          '.env.batch',
+          basename(external.envFilePath)
+        );
+        await mkdir(dirname(externalEnvTarget), { recursive: true });
+        await publishStagedPath(external.envFilePath, externalEnvTarget, runId);
+        uploadEnvFile = externalEnvTarget;
+      }
+      await rm(externalEnvStage, { recursive: true, force: true });
     }
 
     if (shouldSyncToUploadRoot(upload)) {
+      options.onStage('syncing-upload-root');
       console.log('\n▶ Syncing to upload root...');
       const sync = await syncPackToUploadRoot({
         sourceDir: outDir,
         upload: normalizedUpload,
         submitForReview: mergedConfig.lineUploadSubmit === true,
+        runId,
       });
       uploadSyncPath = sync.destDir;
       uploadEnvFile = sync.envFilePath;
@@ -535,15 +623,23 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
   }
 
   if (options.writeManifest !== false) {
+    options.onStage('committing-manifest');
     await writeJsonAtomic(
       manifestPath,
       {
           ...existingManifest,
-          completionStatus: qaReport ? (qaReport.pass ? 'completed' : 'qa_failed') : 'unverified',
+          completionStatus: qaReport
+            ? qaReport.pass
+              ? 'completed'
+              : 'completed_with_warnings'
+            : 'unverified',
           runId,
+          finalizeStage: 'completed',
+          finalizeError: undefined,
           config: mergedConfig,
           activeSheets: sheetDirs,
           gridScores,
+          sheetChromaDetections,
           qaReport: qaReport
             ? {
                 overallScore: qaReport.overallScore,
@@ -578,6 +674,42 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
     uploadPack,
     usedUploadPack,
   };
+}
+
+export async function finalizeStickerJob(
+  options: FinalizeJobOptions
+): Promise<FinalizeJobResult> {
+  const runId = createRunId();
+  let stage = 'preparing';
+  const removed = await cleanupAbandonedFinalizeStaging(options.outDir, runId);
+  if (removed.length > 0) {
+    console.warn(`▶ Removed ${removed.length} abandoned finalize staging run(s).`);
+  }
+  try {
+    return await finalizeStickerJobInternal({
+      ...options,
+      runId,
+      onStage: (nextStage) => {
+        stage = nextStage;
+      },
+    });
+  } catch (error) {
+    if (options.writeManifest !== false) {
+      const manifestPath = resolve(options.outDir, 'manifest.json');
+      const current = JSON.parse(
+        await readFile(manifestPath, 'utf8').catch(() => '{}')
+      ) as JobManifest;
+      if (current.runId === runId && current.completionStatus === 'finalizing') {
+        await writeJsonAtomic(manifestPath, {
+          ...current,
+          completionStatus: 'packaging_failed',
+          finalizeStage: stage,
+          finalizeError: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+    throw error;
+  }
 }
 
 export async function finalizeFromJob(options: {

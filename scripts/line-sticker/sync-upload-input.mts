@@ -4,8 +4,8 @@
  *   npx tsx sync-upload-input.mts --source output/my-set --config examples/demo-job.config.json
  */
 
-import { copyFile, cp, mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, relative, resolve } from 'node:path';
+import { access, copyFile, cp, mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
+import { basename, dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   type UploadConfig,
@@ -23,6 +23,8 @@ export interface SyncUploadOptions {
   /** Upload root (default: <repo>/.line-upload). */
   uploadRoot?: string;
   submitForReview?: boolean;
+  /** Finalize run identifier used for atomic upload-root publication. */
+  runId?: string;
 }
 
 function envFileBaseName(setName: string): string {
@@ -39,6 +41,51 @@ export function resolveUploadInputDest(uploadRoot: string, upload: UploadConfig)
   return resolve(uploadRoot, 'input', creatorId, upload.setName);
 }
 
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function publishDirectoryAtomic(
+  stagedPath: string,
+  targetPath: string,
+  runId: string
+): Promise<void> {
+  const backupPath = `${targetPath}.backup-${runId}`;
+  await rm(backupPath, { recursive: true, force: true });
+  const hadTarget = await pathExists(targetPath);
+  if (hadTarget) await rename(targetPath, backupPath);
+  try {
+    await rename(stagedPath, targetPath);
+    await rm(backupPath, { recursive: true, force: true });
+  } catch (error) {
+    if (hadTarget && (await pathExists(backupPath))) {
+      await rename(backupPath, targetPath);
+    }
+    throw error;
+  }
+}
+
+async function cleanupSiblingStaging(targetPath: string): Promise<void> {
+  const parent = dirname(targetPath);
+  const prefix = `${basename(targetPath)}.staging-`;
+  let names: string[] = [];
+  try {
+    names = await readdir(parent);
+  } catch {
+    return;
+  }
+  await Promise.all(
+    names
+      .filter((name) => name.startsWith(prefix))
+      .map((name) => rm(resolve(parent, name), { recursive: true, force: true }))
+  );
+}
+
 /** Copy Set Name.zip / .md / sprite_sheets + .env.batch into the repo-local upload root. */
 export async function syncPackToUploadRoot(options: SyncUploadOptions): Promise<{
   destDir: string;
@@ -52,16 +99,21 @@ export async function syncPackToUploadRoot(options: SyncUploadOptions): Promise<
   await mkdir(uploadRoot, { recursive: true });
 
   const destDir = resolveUploadInputDest(uploadRoot, upload);
-  const spriteDest = resolve(destDir, 'sprite_sheets');
+  const runId = options.runId ?? `${Date.now()}-${process.pid}`;
+  const stagingDir = `${destDir}.staging-${runId}`;
+  await cleanupSiblingStaging(destDir);
+  await rm(stagingDir, { recursive: true, force: true });
+  const spriteDest = resolve(stagingDir, 'sprite_sheets');
   await mkdir(spriteDest, { recursive: true });
 
   const zipSrc = resolve(sourceDir, `${upload.setName}.zip`);
   const mdSrc = resolve(sourceDir, `${upload.setName}.md`);
   const spritesSrc = resolve(sourceDir, 'sprite_sheets');
 
-  await copyFile(zipSrc, resolve(destDir, `${upload.setName}.zip`));
-  await copyFile(mdSrc, resolve(destDir, `${upload.setName}.md`));
+  await copyFile(zipSrc, resolve(stagingDir, `${upload.setName}.zip`));
+  await copyFile(mdSrc, resolve(stagingDir, `${upload.setName}.md`));
   await cp(spritesSrc, spriteDest, { recursive: true });
+  await publishDirectoryAtomic(stagingDir, destDir, runId);
 
   const relBase = relative(PROJECT_ROOT, destDir).replace(/\\/g, '/');
   const envContent = buildBatchEnvContent(

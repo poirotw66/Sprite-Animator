@@ -3,7 +3,7 @@
  * Mirrors the browser pipeline in lineStickerTextOverlay.ts using @napi-rs/canvas.
  */
 
-import { createCanvas } from '@napi-rs/canvas';
+import { createCanvas, type Canvas } from '@napi-rs/canvas';
 import {
   FONT_PRESETS,
   TEXT_COLOR_PRESETS,
@@ -55,7 +55,7 @@ function blitRgbaOntoCanvas(
   ctx.putImageData(imgData, 0, 0);
 }
 
-function readRgbaFromCanvas(canvas: ReturnType<typeof createCanvas>): RgbaImage {
+function readRgbaFromCanvas(canvas: Canvas): RgbaImage {
   const ctx = canvas.getContext('2d');
   if (!ctx) {
     throw new Error('Canvas 2D context unavailable');

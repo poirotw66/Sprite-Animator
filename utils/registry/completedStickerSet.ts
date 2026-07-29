@@ -9,6 +9,7 @@ import {
   lineUploadStickerFileName,
   resolveLineUploadStickerCount,
 } from '../lineStickerUploadSpec';
+import { decodePng } from '../../scripts/line-sticker/nodeImage.mts';
 
 export interface CompletedStickerSetValidation {
   complete: boolean;
@@ -29,6 +30,7 @@ interface CompletedManifest {
     stickerCount?: number;
     lineUploadStickerCount?: number;
     minGridAlignmentScore?: number;
+    qaMode?: string;
   };
   activeSheets?: string[];
   gridScores?: Record<string, number>;
@@ -43,6 +45,7 @@ interface PngInfo {
   width: number;
   height: number;
   hasAlpha: boolean;
+  hasTransparentPixels: boolean;
 }
 
 function inspectPng(bytes: Uint8Array): PngInfo | undefined {
@@ -60,7 +63,36 @@ function inspectPng(bytes: Uint8Array): PngInfo | undefined {
   const height = view.readUInt32BE(20);
   const colorType = view[25]!;
   const hasAlpha = colorType === 4 || colorType === 6 || view.includes(Buffer.from('tRNS'));
-  return { width, height, hasAlpha };
+  try {
+    const decoded = decodePng(bytes);
+    let hasTransparentPixels = false;
+    for (let i = 3; i < decoded.data.length; i += 4) {
+      if (decoded.data[i]! < 255) {
+        hasTransparentPixels = true;
+        break;
+      }
+    }
+    return { width, height, hasAlpha, hasTransparentPixels };
+  } catch {
+    return undefined;
+  }
+}
+
+const CRC32_TABLE = new Uint32Array(256);
+for (let n = 0; n < 256; n++) {
+  let value = n;
+  for (let k = 0; k < 8; k++) {
+    value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
+  }
+  CRC32_TABLE[n] = value >>> 0;
+}
+
+function crc32(bytes: Uint8Array): number {
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc = CRC32_TABLE[(crc ^ byte) & 0xff]! ^ (crc >>> 8);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
 }
 
 /** Minimal ZIP reader for validator use (stored/deflated entries, no filesystem extraction). */
@@ -83,17 +115,36 @@ function readZipEntries(bytes: Uint8Array): Map<string, Uint8Array> {
       throw new Error('invalid ZIP central directory');
     }
     const method = buffer.readUInt16LE(cursor + 10);
+    const expectedCrc = buffer.readUInt32LE(cursor + 16);
     const compressedSize = buffer.readUInt32LE(cursor + 20);
+    const uncompressedSize = buffer.readUInt32LE(cursor + 24);
     const nameLength = buffer.readUInt16LE(cursor + 28);
     const extraLength = buffer.readUInt16LE(cursor + 30);
     const commentLength = buffer.readUInt16LE(cursor + 32);
     const localOffset = buffer.readUInt32LE(cursor + 42);
     const name = buffer.subarray(cursor + 46, cursor + 46 + nameLength).toString('utf8');
+    const normalizedName = name.replaceAll('\\', '/');
+    if (
+      normalizedName.startsWith('/') ||
+      normalizedName.split('/').some((part) => part === '..')
+    ) {
+      throw new Error(`unsafe ZIP entry path ${name}`);
+    }
+    if (entries.has(normalizedName)) {
+      throw new Error(`duplicate ZIP entry ${normalizedName}`);
+    }
     if (buffer.readUInt32LE(localOffset) !== 0x04034b50) {
       throw new Error(`invalid ZIP local header for ${name}`);
     }
     const localNameLength = buffer.readUInt16LE(localOffset + 26);
     const localExtraLength = buffer.readUInt16LE(localOffset + 28);
+    const localName = buffer
+      .subarray(localOffset + 30, localOffset + 30 + localNameLength)
+      .toString('utf8')
+      .replaceAll('\\', '/');
+    if (localName !== normalizedName) {
+      throw new Error(`ZIP local/central name mismatch for ${normalizedName}`);
+    }
     const dataStart = localOffset + 30 + localNameLength + localExtraLength;
     const compressed = buffer.subarray(dataStart, dataStart + compressedSize);
     const decoded =
@@ -104,7 +155,13 @@ function readZipEntries(bytes: Uint8Array): Map<string, Uint8Array> {
           : (() => {
               throw new Error(`unsupported ZIP compression method ${method}`);
             })();
-    entries.set(name.replaceAll('\\', '/'), decoded);
+    if (decoded.byteLength !== uncompressedSize) {
+      throw new Error(`ZIP size mismatch for ${normalizedName}`);
+    }
+    if (crc32(decoded) !== expectedCrc) {
+      throw new Error(`ZIP CRC mismatch for ${normalizedName}`);
+    }
+    entries.set(normalizedName, decoded);
     cursor += 46 + nameLength + extraLength + commentLength;
   }
   return entries;
@@ -157,6 +214,9 @@ function validateUploadZip(
       continue;
     }
     if (!png.hasAlpha) reasons.push(`upload ZIP ${name} has no alpha channel`);
+    else if (!png.hasTransparentPixels) {
+      reasons.push(`upload ZIP ${name} has no transparent pixels`);
+    }
     if (bytes.byteLength > LINE_STICKER_UPLOAD.maxFileBytes) {
       reasons.push(`upload ZIP ${name} exceeds LINE file limit`);
     }
@@ -197,7 +257,10 @@ export function validateCompletedStickerSet(outputDir: string): CompletedSticker
 
   const expectedStickerCount = manifest.config?.stickerCount ?? 40;
   const actualStickerCount = Array.isArray(manifest.stickers) ? manifest.stickers.length : 0;
-  if (manifest.completionStatus !== 'completed') {
+  const completedWithWarnings =
+    manifest.completionStatus === 'completed_with_warnings' &&
+    manifest.config?.qaMode === 'report';
+  if (manifest.completionStatus !== 'completed' && !completedWithWarnings) {
     reasons.push(`completionStatus is ${manifest.completionStatus ?? 'missing'}`);
   }
   if (!manifest.runId?.trim()) reasons.push('missing runId');
@@ -227,6 +290,10 @@ export function validateCompletedStickerSet(outputDir: string): CompletedSticker
       reasons.push(`${expectedRel} has no alpha channel`);
       break;
     }
+    if (!png.hasTransparentPixels) {
+      reasons.push(`${expectedRel} has no transparent pixels`);
+      break;
+    }
   }
 
   if (!manifest.activeSheets?.length) {
@@ -246,7 +313,10 @@ export function validateCompletedStickerSet(outputDir: string): CompletedSticker
   } else if (Object.values(manifest.gridScores).some((score) => score < minGridScore)) {
     reasons.push(`grid score below ${minGridScore}`);
   }
-  if (manifest.qaReport?.pass !== true || manifest.qaReport.gridPass !== true) {
+  if (
+    manifest.qaReport?.gridPass !== true ||
+    (!completedWithWarnings && manifest.qaReport?.pass !== true)
+  ) {
     reasons.push('QA did not pass');
   }
 

@@ -39,8 +39,15 @@ export interface ForegroundOverlapIndex {
   sat: Int32Array;
 }
 
+interface CaptionCanvasContext {
+  getImageData(x: number, y: number, width: number, height: number): {
+    data: ArrayLike<number>;
+  };
+  measureText(text: string): { width: number };
+}
+
 export function buildForegroundOverlapIndex(
-  ctx: CanvasRenderingContext2D,
+  ctx: CaptionCanvasContext,
   width: number,
   height: number
 ): ForegroundOverlapIndex {
@@ -274,7 +281,7 @@ export interface AutoCaptionLayout {
 const MIN_CAPTION_FONT_PX = 9;
 
 function layoutAtFontSize(
-  ctx: CanvasRenderingContext2D,
+  ctx: CaptionCanvasContext,
   index: ForegroundOverlapIndex,
   params: AutoCaptionLayoutParams,
   fontSize: number
@@ -321,7 +328,7 @@ function layoutAtFontSize(
  * overlap-free font size (falls back to largest font with minimum overlap).
  */
 export function computeAutoCaptionLayout(
-  ctx: CanvasRenderingContext2D,
+  ctx: CaptionCanvasContext,
   params: AutoCaptionLayoutParams
 ): AutoCaptionLayout {
   const maxFont = Math.max(MIN_CAPTION_FONT_PX, Math.round(params.baseFontSizePx));

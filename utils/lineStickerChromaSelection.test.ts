@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { decodePng } from '../scripts/line-sticker/nodeImage.mts';
 import {
+  detectSheetChromaKey,
   detectSheetChromaKeyColor,
   selectChromaKeyColor,
   type ChromaReferenceImage,
@@ -46,6 +47,18 @@ describe('LINE sticker chroma selection', () => {
   it('detects generated sheet chroma from its border', () => {
     expect(detectSheetChromaKeyColor(solid(0, 255, 0))).toBe('green');
     expect(detectSheetChromaKeyColor(solid(255, 0, 255))).toBe('magenta');
+    expect(detectSheetChromaKey(solid(0, 255, 0))).toMatchObject({
+      color: 'green',
+      reliable: true,
+      confidence: 1,
+    });
+  });
+
+  it('does not enforce a mismatch when the generated border is neutral', () => {
+    expect(detectSheetChromaKey(solid(240, 240, 240))).toMatchObject({
+      reliable: false,
+      strength: 0,
+    });
   });
 
   it('selects green for the tracked real Huahua artwork fixture', () => {

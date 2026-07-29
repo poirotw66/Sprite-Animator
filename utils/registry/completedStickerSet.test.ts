@@ -24,6 +24,17 @@ function rgbaFrame(width = 32, height = 32): RgbaImage {
   return { data, width, height };
 }
 
+function opaqueFrame(width = 32, height = 32): RgbaImage {
+  const data = new Uint8ClampedArray(width * height * 4);
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = 240;
+    data[i + 1] = 120;
+    data[i + 2] = 40;
+    data[i + 3] = 255;
+  }
+  return { data, width, height };
+}
+
 async function fixture(qaPass = true): Promise<string> {
   const dir = mkdtempSync(join(tmpdir(), 'sticker-complete-'));
   dirs.push(dir);
@@ -84,6 +95,26 @@ describe('validateCompletedStickerSet', () => {
     expect(validateCompletedStickerSet(dir).reasons.join(' ')).toMatch(/invalid upload ZIP/i);
   });
 
+  it('rejects a ZIP whose entry data no longer matches its CRC', async () => {
+    const dir = await fixture();
+    const zipPath = join(dir, 'line-upload.zip');
+    const zip = Buffer.from(readFileSync(zipPath));
+    expect(zip.readUInt32LE(0)).toBe(0x04034b50);
+    const compressedSize = zip.readUInt32LE(18);
+    const nameLength = zip.readUInt16LE(26);
+    const extraLength = zip.readUInt16LE(28);
+    const dataStart = 30 + nameLength + extraLength;
+    zip[dataStart + Math.max(0, Math.floor(compressedSize / 2))] ^= 0x01;
+    writeFileSync(zipPath, zip);
+    const manifestPath = join(dir, 'manifest.json');
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+      uploadZipSha256: string;
+    };
+    manifest.uploadZipSha256 = createHash('sha256').update(zip).digest('hex');
+    writeFileSync(manifestPath, JSON.stringify(manifest));
+    expect(validateCompletedStickerSet(dir).reasons.join(' ')).toMatch(/invalid upload ZIP/i);
+  });
+
   it('requires completed status and a run id', async () => {
     const dir = await fixture();
     const manifestPath = join(dir, 'manifest.json');
@@ -92,5 +123,31 @@ describe('validateCompletedStickerSet', () => {
     manifest.completionStatus = 'finalizing';
     writeFileSync(manifestPath, JSON.stringify(manifest));
     expect(validateCompletedStickerSet(dir).reasons.join(' ')).toMatch(/runId|completionStatus/i);
+  });
+
+  it('rejects PNGs that declare alpha but contain no transparent pixels', async () => {
+    const dir = await fixture();
+    writeFileSync(
+      join(dir, 'stickers', 'sticker-01.png'),
+      encodePng(opaqueFrame())
+    );
+    expect(validateCompletedStickerSet(dir).reasons.join(' ')).toMatch(/no transparent pixels/i);
+  });
+
+  it('accepts completed_with_warnings only for explicit report mode', async () => {
+    const dir = await fixture(false);
+    const manifestPath = join(dir, 'manifest.json');
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+      completionStatus: string;
+      config: Record<string, unknown>;
+    };
+    manifest.completionStatus = 'completed_with_warnings';
+    manifest.config.qaMode = 'report';
+    writeFileSync(manifestPath, JSON.stringify(manifest));
+    expect(validateCompletedStickerSet(dir).complete).toBe(true);
+
+    manifest.config.qaMode = 'block';
+    writeFileSync(manifestPath, JSON.stringify(manifest));
+    expect(validateCompletedStickerSet(dir).reasons.join(' ')).toMatch(/completionStatus/i);
   });
 });

@@ -268,8 +268,12 @@ export function textStartYFromAnchor(
   return anchorY;
 }
 
+export interface TextMeasureContext {
+  measureText(text: string): { width: number };
+}
+
 export function lineWidthWithSpacing(
-  ctx: CanvasRenderingContext2D,
+  ctx: TextMeasureContext,
   line: string,
   letterSpacingPx: number
 ): number {
@@ -280,7 +284,7 @@ export function lineWidthWithSpacing(
 
 /** Wrap text using per-glyph width plus letter spacing (CJK-safe). */
 export function wrapLinesWithSpacing(
-  ctx: CanvasRenderingContext2D,
+  ctx: TextMeasureContext,
   text: string,
   maxWidth: number,
   letterSpacingPx: number
@@ -310,7 +314,7 @@ export function wrapLinesWithSpacing(
   return lines.length > 0 ? lines : [trimmed];
 }
 
-export function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+export function wrapLines(ctx: TextMeasureContext, text: string, maxWidth: number): string[] {
   const trimmed = text.trim();
   if (!trimmed) return [];
   const words = trimmed.split(/\s+/);

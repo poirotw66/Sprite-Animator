@@ -224,13 +224,17 @@ npx tsx scripts/line-sticker/finalize.mts \
 Guided requests always attach the layout canvas, primary reference, optional companion reference, and optional prior-sheet style anchor in the same order described by the prompt. Post-slice chroma QA uses the resolved `green` or `magenta` key and reports generic `edgeChromaCount`, `pocketChromaCount`, and `chromaFringeCount` metrics.
 
 - `auto` scores green and magenta conflicts in the character reference, then uses the safer key.
+- Every generated sheet re-detects border chroma before removal. A reliable green/magenta mismatch consumes the existing sheet retry budget and is never accepted as the best attempt.
+- Successful sheets write `chroma-detection.json`; finalize copies the per-sheet evidence into `manifest.json` → `sheetChromaDetections`.
 - **Do** clear enclosed key-color pockets using the selected chroma-distance threshold.
 - **Do not** alpha-erase neutral gray / black line AA (`RGB spread < 12`) — original ink.
 - **Do not** use neutral-gray protrusion cleanup — it deletes speed lines / outlines.
 - `reslice-sheet.mts` reads resolved chroma and algorithm from `manifest.json` / `job.config.json`; `--chroma` remains an explicit override.
 - Generic QA fields are `edgeChromaCount`, `pocketChromaCount`, and `chromaFringeCount`; legacy green-only aliases remain for compatibility.
-- Finalize writes to `.finalize-staging/<run-id>` and keeps `manifest.json` at `finalizing` until stickers, QA, and ZIP publication succeed.
-- Completed-set validation opens the ZIP and verifies all expected PNGs, Alpha, LINE dimensions, manifest mapping, grid QA, and chroma QA.
+- Finalize writes to `.finalize-staging/<run-id>` and keeps `manifest.json` at `finalizing` until stickers, QA, and ZIP publication succeed. Packaging/sync exceptions become `packaging_failed` with `finalizeStage` and `finalizeError`; abandoned staging is cleaned on the next run.
+- Explicit external upload roots and `.line-upload` are populated through sibling staging directories and directory rename, so a failed copy preserves the previous published set.
+- `qaMode: "report"` publishes with `completionStatus: "completed_with_warnings"`; the strict validator accepts that status only when report mode was explicitly selected.
+- Completed-set validation opens the ZIP and verifies CRC, safe/unique entry names, all expected PNGs, actual transparent pixels, LINE dimensions, manifest mapping, grid QA, and chroma QA.
 
 ## manifest.json
 
@@ -246,6 +250,13 @@ After a full run or `finalize.mts`:
     "chromaKeyColor": "magenta"
   },
   "activeSheets": ["sheet-1", "sheet-2"],
+  "sheetChromaDetections": {
+    "sheet-1": {
+      "expectedChromaKeyColor": "magenta",
+      "detectedChromaKeyColor": "magenta",
+      "reliable": true
+    }
+  },
   "gridScores": { "sheet-1": 0.85, "sheet-2": 0.84 },
   "qaReport": { "overallScore": 0.91, "pass": true, "summaryWarnings": [] },
   "uploadPackPath": "output/my-set",

@@ -88,12 +88,21 @@ Pipeline:
 - [ ] 3. Dry-run: run-from-inputs.mts --dry-run
 - [ ] 4. Generate for real
 - [ ] 5. Spot-check stickers/ + manifest.json gridScores
-- [ ] 6. Confirm `manifest.json` has `completionStatus: "completed"` and `qaReport.pass: true`; failed QA is not packaged
+- [ ] 6. Confirm `manifest.json` has `completionStatus: "completed"` and `qaReport.pass: true`; `qaMode: "report"` may intentionally produce `completed_with_warnings`
 - [ ] 7. Confirm requested/resolved chroma are recorded; reslice/finalize must use the resolved value
 
 Finalize uses `.finalize-staging/<run-id>` and publishes stickers, QA, and upload
-artifacts before committing the completed manifest. `grid_failed`, `qa_failed`,
-and `finalizing` outputs are never resumable as completed sets.
+artifacts before committing the completed manifest. Packaging/sync exceptions are
+recorded as `packaging_failed` with the failed stage and error; abandoned staging is
+removed on the next finalize run. `grid_failed`, `qa_failed`, `packaging_failed`,
+and `finalizing` outputs are never resumable as completed sets. Explicit report-mode
+outputs use `completed_with_warnings`.
+
+Each generated sheet verifies its actual border chroma before removal. A reliable
+green/magenta mismatch is retried within the existing generation budget, and accepted
+sheets persist `chroma-detection.json` plus `manifest.json.sheetChromaDetections`.
+Upload-root publication uses sibling staging directories, and completed validation
+checks ZIP CRC/name safety and decoded PNG transparency rather than only PNG headers.
 - [ ] 6. (Optional) Upload via line-sticker-upload skill
 ```
 
