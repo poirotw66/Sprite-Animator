@@ -5,9 +5,10 @@
 
 import { isSliceBackgroundPixel } from './imageContentAnalysis';
 import {
+  hasActionableChromaFringe,
   measureChromaFringe,
-  CHROMA_FRINGE_WARN_DESPILL,
-  CHROMA_FRINGE_WARN_POCKET,
+  resolveChromaFringeThresholds,
+  type ChromaFringeMetrics,
 } from './chromaFringeMetrics';
 import type { ChromaKeyColorType } from '../types';
 import {
@@ -52,6 +53,12 @@ export interface StickerFrameQaEntry {
   edgeChromaCount: number;
   pocketChromaCount: number;
   chromaFringeCount: number;
+  foregroundPixelCount: number;
+  alphaEdgePixelCount: number;
+  pocketChromaRatio: number;
+  chromaFringeRatio: number;
+  pocketChromaWarnPixels: number;
+  chromaFringeWarnPixels: number;
   edgeGreenCount: number;
   pocketGreenCount: number;
   oliveFringeCount: number;
@@ -226,23 +233,28 @@ function scoreForegroundRatio(ratio: number): { score: number; warnings: string[
 }
 
 function scoreChromaFringe(
-  pocketChromaCount: number,
-  chromaFringeCount: number,
-  chromaKeyColor: ChromaKeyColorType
+  metrics: ChromaFringeMetrics
 ): { score: number; warnings: string[] } {
   const warnings: string[] = [];
   let score = 1;
-  if (pocketChromaCount >= CHROMA_FRINGE_WARN_POCKET) {
+  const thresholds = resolveChromaFringeThresholds(metrics);
+  if (metrics.pocketChromaCount >= thresholds.pocketPixels) {
     score = Math.min(score, 0.55);
-    warnings.push(`enclosed ${chromaKeyColor} chroma pocket residue (${pocketChromaCount} px)`);
-  } else if (pocketChromaCount > 0) {
+    warnings.push(
+      `enclosed ${metrics.chromaKeyColor} chroma pocket residue ` +
+        `(${metrics.pocketChromaCount} px, ${(metrics.pocketChromaRatio * 100).toFixed(3)}% foreground)`
+    );
+  } else if (metrics.pocketChromaCount > 0) {
     score = Math.min(score, 0.85);
   }
   // ponytail: edgeGreenCount is recorded per entry but not scored — green-screen AA
   // routinely yields 1k+ edge pixels on ~200px stickers without visible defects.
-  if (chromaFringeCount >= CHROMA_FRINGE_WARN_DESPILL) {
+  if (metrics.chromaFringeCount >= thresholds.despillPixels) {
     score = Math.min(score, 0.75);
-    warnings.push(`${chromaKeyColor} despill edge fringe (${chromaFringeCount} px)`);
+    warnings.push(
+      `${metrics.chromaKeyColor} despill edge fringe ` +
+        `(${metrics.chromaFringeCount} px, ${(metrics.chromaFringeRatio * 100).toFixed(2)}% alpha edge)`
+    );
   }
   return { score, warnings };
 }
@@ -285,11 +297,8 @@ export function auditStickerFrame(
   warnings.push(...line.warnings);
 
   const fringe = measureChromaFringe(frame.data, frame.width, frame.height, chromaKeyColor);
-  const fringeScore = scoreChromaFringe(
-    fringe.pocketChromaCount,
-    fringe.chromaFringeCount,
-    chromaKeyColor
-  );
+  const fringeScore = scoreChromaFringe(fringe);
+  const fringeThresholds = resolveChromaFringeThresholds(fringe);
   warnings.push(...fringeScore.warnings);
 
   const parts = [fg.score, dimensionScore, line.score, fringeScore.score];
@@ -315,6 +324,12 @@ export function auditStickerFrame(
     edgeChromaCount: fringe.edgeChromaCount,
     pocketChromaCount: fringe.pocketChromaCount,
     chromaFringeCount: fringe.chromaFringeCount,
+    foregroundPixelCount: fringe.foregroundPixelCount,
+    alphaEdgePixelCount: fringe.alphaEdgePixelCount,
+    pocketChromaRatio: fringe.pocketChromaRatio,
+    chromaFringeRatio: fringe.chromaFringeRatio,
+    pocketChromaWarnPixels: fringeThresholds.pocketPixels,
+    chromaFringeWarnPixels: fringeThresholds.despillPixels,
     edgeGreenCount: fringe.edgeGreenCount,
     pocketGreenCount: fringe.pocketGreenCount,
     oliveFringeCount: fringe.oliveFringeCount,
@@ -356,10 +371,20 @@ export function auditStickerFrames(
   const invalidForegroundEntries = entries.filter(
     (e) => e.foregroundRatio < FOREGROUND_MIN || e.foregroundRatio > FOREGROUND_MAX
   );
-  const fringeEntries = entries.filter(
-    (e) =>
-      e.pocketChromaCount >= CHROMA_FRINGE_WARN_POCKET ||
-      e.chromaFringeCount >= CHROMA_FRINGE_WARN_DESPILL
+  const fringeEntries = entries.filter((e) =>
+    hasActionableChromaFringe({
+      chromaKeyColor: e.chromaKeyColor,
+      foregroundPixelCount: e.foregroundPixelCount,
+      alphaEdgePixelCount: e.alphaEdgePixelCount,
+      edgeChromaCount: e.edgeChromaCount,
+      pocketChromaCount: e.pocketChromaCount,
+      chromaFringeCount: e.chromaFringeCount,
+      pocketChromaRatio: e.pocketChromaRatio,
+      chromaFringeRatio: e.chromaFringeRatio,
+      edgeGreenCount: e.edgeGreenCount,
+      pocketGreenCount: e.pocketGreenCount,
+      oliveFringeCount: e.oliveFringeCount,
+    })
   );
   const summaryWarnings: string[] = [];
   if (invalidForegroundEntries.length > 0) {
@@ -373,7 +398,9 @@ export function auditStickerFrames(
     );
     for (const e of fringeEntries.slice(0, 6)) {
       summaryWarnings.push(
-        `sticker-${String(e.globalIndex).padStart(2, '0')}: pocketChroma=${e.pocketChromaCount}, chromaFringe=${e.chromaFringeCount}`
+        `sticker-${String(e.globalIndex).padStart(2, '0')}: ` +
+          `pocketChroma=${e.pocketChromaCount}/${e.pocketChromaWarnPixels}, ` +
+          `chromaFringe=${e.chromaFringeCount}/${e.chromaFringeWarnPixels}`
       );
     }
   }

@@ -103,6 +103,11 @@ green/magenta mismatch is retried within the existing generation budget, and acc
 sheets persist `chroma-detection.json` plus `manifest.json.sheetChromaDetections`.
 Upload-root publication uses sibling staging directories, and completed validation
 checks ZIP CRC/name safety and decoded PNG transparency rather than only PNG headers.
+
+Chroma QA thresholds scale with the actual sticker: enclosed chroma pockets use the
+foreground-pixel population, and despill fringe uses the Alpha-edge population.
+Small stickers retain absolute minimum thresholds, while `qa-report.json` records
+the ratios and resolved pixel thresholds used for every sticker.
 - [ ] 6. (Optional) Upload via line-sticker-upload skill
 ```
 

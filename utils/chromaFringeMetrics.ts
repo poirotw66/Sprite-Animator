@@ -4,9 +4,13 @@ import type { ChromaKeyColorType } from '../types';
 
 export interface ChromaFringeMetrics {
   chromaKeyColor: ChromaKeyColorType;
+  foregroundPixelCount: number;
+  alphaEdgePixelCount: number;
   edgeChromaCount: number;
   pocketChromaCount: number;
   chromaFringeCount: number;
+  pocketChromaRatio: number;
+  chromaFringeRatio: number;
   /** @deprecated Green-only compatibility aliases. */
   edgeGreenCount: number;
   /** @deprecated Green-only compatibility aliases. */
@@ -49,12 +53,15 @@ export function measureChromaFringe(
   let edgeChromaCount = 0;
   let pocketChromaCount = 0;
   let chromaFringeCount = 0;
+  let foregroundPixelCount = 0;
+  let alphaEdgePixelCount = 0;
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4;
       const a = data[i + 3]!;
       if (a <= ALPHA_BG) continue;
+      foregroundPixelCount++;
 
       const r = data[i]!;
       const g = data[i + 1]!;
@@ -63,6 +70,7 @@ export function measureChromaFringe(
         ? g - Math.max(r, b)
         : Math.min(r, b) - g;
       const atEdge = isNearTransparent(data, width, height, x, y, NEAR_TRANSPARENT_RADIUS);
+      if (atEdge) alphaEdgePixelCount++;
 
       if (keyExcess > KEY_EXCESS_MIN) {
         if (atEdge) edgeChromaCount++;
@@ -86,9 +94,15 @@ export function measureChromaFringe(
 
   return {
     chromaKeyColor,
+    foregroundPixelCount,
+    alphaEdgePixelCount,
     edgeChromaCount,
     pocketChromaCount,
     chromaFringeCount,
+    pocketChromaRatio:
+      foregroundPixelCount > 0 ? pocketChromaCount / foregroundPixelCount : 0,
+    chromaFringeRatio:
+      alphaEdgePixelCount > 0 ? chromaFringeCount / alphaEdgePixelCount : 0,
     edgeGreenCount: chromaKeyColor === 'green' ? edgeChromaCount : 0,
     pocketGreenCount: chromaKeyColor === 'green' ? pocketChromaCount : 0,
     oliveFringeCount: chromaKeyColor === 'green' ? chromaFringeCount : 0,
@@ -98,6 +112,37 @@ export function measureChromaFringe(
 export const CHROMA_FRINGE_WARN_EDGE = 10;
 export const CHROMA_FRINGE_WARN_POCKET = 8;
 export const CHROMA_FRINGE_WARN_DESPILL = 12;
+export const CHROMA_FRINGE_WARN_POCKET_RATIO = 0.00025;
+export const CHROMA_FRINGE_WARN_DESPILL_RATIO = 0.025;
+
+export interface ChromaFringeThresholds {
+  pocketPixels: number;
+  despillPixels: number;
+}
+
+/** Resolution-normalized thresholds with absolute floors for small stickers. */
+export function resolveChromaFringeThresholds(
+  metrics: Pick<ChromaFringeMetrics, 'foregroundPixelCount' | 'alphaEdgePixelCount'>
+): ChromaFringeThresholds {
+  return {
+    pocketPixels: Math.max(
+      CHROMA_FRINGE_WARN_POCKET,
+      Math.ceil(metrics.foregroundPixelCount * CHROMA_FRINGE_WARN_POCKET_RATIO)
+    ),
+    despillPixels: Math.max(
+      CHROMA_FRINGE_WARN_DESPILL,
+      Math.ceil(metrics.alphaEdgePixelCount * CHROMA_FRINGE_WARN_DESPILL_RATIO)
+    ),
+  };
+}
+
+export function hasActionableChromaFringe(metrics: ChromaFringeMetrics): boolean {
+  const thresholds = resolveChromaFringeThresholds(metrics);
+  return (
+    metrics.pocketChromaCount >= thresholds.pocketPixels ||
+    metrics.chromaFringeCount >= thresholds.despillPixels
+  );
+}
 /** @deprecated Green-only compatibility aliases. */
 export const CHROMA_FRINGE_WARN_EDGE_GREEN = CHROMA_FRINGE_WARN_EDGE;
 /** @deprecated Green-only compatibility aliases. */

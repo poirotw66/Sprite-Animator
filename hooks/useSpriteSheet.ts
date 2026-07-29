@@ -55,6 +55,8 @@ export const useSpriteSheet = (
   const [isProcessingChromaKey, setIsProcessingChromaKey] = useState<boolean>(false);
   const [frameOverrides, setFrameOverrides] = useState<FrameOverride[]>([]);
   const lastAlignedSheetRef = useRef<string | null>(null);
+  const sliceSettingsRef = useRef(sliceSettings);
+  sliceSettingsRef.current = sliceSettings;
 
   // Get the actual chroma key color based on selection
   const activeChromaKeyColor = CHROMA_KEY_COLORS[chromaKeyColor];
@@ -103,7 +105,7 @@ export const useSpriteSheet = (
       const reSlice = async () => {
         try {
           const mapFrames = slicePipeline?.mapFramesAfterSlice;
-          let frames = await sliceSheetWithSettings(processedSpriteSheet, sliceSettings, {
+          let frames = await sliceSheetWithSettings(processedSpriteSheet, sliceSettingsRef.current, {
             frameOverrides,
             chromaKeyColor,
             threshold: BACKGROUND_REMOVAL_THRESHOLD,
@@ -156,6 +158,7 @@ export const useSpriteSheet = (
 
   // Run smart align once after generation when slice settings were auto-optimized
   useEffect(() => {
+    const settings = sliceSettingsRef.current;
     if (
       mode !== 'sheet' ||
       !processedSpriteSheet ||
@@ -166,25 +169,25 @@ export const useSpriteSheet = (
     ) {
       return;
     }
-    if (sliceSettings.sliceMode === 'inferred') return; // Inferred grid uses explicit rects, skip smart align
-    if (sliceSettings.sliceMode === 'manual') return; // User-drawn bounds — don't auto-shift
-    const opt = sliceSettings.autoOptimized;
+    if (settings.sliceMode === 'inferred') return; // Inferred grid uses explicit rects, skip smart align
+    if (settings.sliceMode === 'manual') return; // User-drawn bounds — don't auto-shift
+    const opt = settings.autoOptimized;
     if (!opt?.paddingX || !opt?.paddingY || !opt?.shiftX || !opt?.shiftY) {
       return;
     }
-    const padding = getEffectivePadding(sliceSettings);
+    const padding = getEffectivePadding(settings);
     const cellRects: Array<{ x: number; y: number; width: number; height: number }> = [];
-    const n = sliceSettings.cols * sliceSettings.rows;
+    const n = settings.cols * settings.rows;
     for (let i = 0; i < n; i++) {
       const rect = getCellRectForFrame(
         sheetDimensions.width,
         sheetDimensions.height,
-        sliceSettings.cols,
-        sliceSettings.rows,
-        sliceSettings.paddingX,
-        sliceSettings.paddingY,
-        sliceSettings.shiftX,
-        sliceSettings.shiftY,
+        settings.cols,
+        settings.rows,
+        settings.paddingX,
+        settings.paddingY,
+        settings.shiftX,
+        settings.shiftY,
         i,
         padding
       );

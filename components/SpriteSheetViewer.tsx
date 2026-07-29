@@ -7,11 +7,13 @@ import { useLanguage } from '../hooks/useLanguage';
 import { SpriteSheetEraserModal } from './SpriteSheetEraserModal';
 import { SpriteSheetSliceControls } from './SpriteSheetSliceControls';
 import {
-  enableManualSliceMode,
   ManualSliceOverlay,
-  seedEqualManualSliceMode,
   type DrawLineTool,
 } from './ManualSliceOverlay';
+import {
+  enableManualSliceMode,
+  seedEqualManualSliceMode,
+} from '../utils/manualSliceMode';
 
 interface SpriteSheetViewerProps {
   spriteSheetImage: string | null;

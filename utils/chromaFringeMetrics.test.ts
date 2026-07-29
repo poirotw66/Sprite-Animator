@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { measureChromaFringe } from './chromaFringeMetrics';
+import {
+  hasActionableChromaFringe,
+  measureChromaFringe,
+  resolveChromaFringeThresholds,
+} from './chromaFringeMetrics';
 
 describe('measureChromaFringe', () => {
   it('counts edge green separately from enclosed pocket green', () => {
@@ -76,5 +80,47 @@ describe('measureChromaFringe', () => {
     expect(metrics.edgeChromaCount).toBe(1);
     expect(metrics.chromaFringeCount).toBe(1);
     expect(metrics.edgeGreenCount).toBe(0);
+  });
+
+  it('raises pixel thresholds with foreground area and alpha-edge length', () => {
+    expect(
+      resolveChromaFringeThresholds({
+        foregroundPixelCount: 1_000,
+        alphaEdgePixelCount: 100,
+      })
+    ).toEqual({ pocketPixels: 8, despillPixels: 12 });
+    expect(
+      resolveChromaFringeThresholds({
+        foregroundPixelCount: 1_000_000,
+        alphaEdgePixelCount: 100_000,
+      })
+    ).toEqual({ pocketPixels: 250, despillPixels: 2500 });
+  });
+
+  it('keeps equivalent residue ratios actionable across resolutions', () => {
+    const base = {
+      chromaKeyColor: 'green' as const,
+      foregroundPixelCount: 10_000,
+      alphaEdgePixelCount: 1_000,
+      edgeChromaCount: 0,
+      pocketChromaCount: 20,
+      chromaFringeCount: 30,
+      pocketChromaRatio: 0.002,
+      chromaFringeRatio: 0.03,
+      edgeGreenCount: 0,
+      pocketGreenCount: 20,
+      oliveFringeCount: 30,
+    };
+    const scaled = {
+      ...base,
+      foregroundPixelCount: base.foregroundPixelCount * 16,
+      alphaEdgePixelCount: base.alphaEdgePixelCount * 4,
+      pocketChromaCount: base.pocketChromaCount * 16,
+      chromaFringeCount: base.chromaFringeCount * 4,
+      pocketGreenCount: base.pocketGreenCount * 16,
+      oliveFringeCount: base.oliveFringeCount * 4,
+    };
+    expect(hasActionableChromaFringe(base)).toBe(true);
+    expect(hasActionableChromaFringe(scaled)).toBe(true);
   });
 });

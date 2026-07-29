@@ -231,6 +231,7 @@ Guided requests always attach the layout canvas, primary reference, optional com
 - **Do not** use neutral-gray protrusion cleanup — it deletes speed lines / outlines.
 - `reslice-sheet.mts` reads resolved chroma and algorithm from `manifest.json` / `job.config.json`; `--chroma` remains an explicit override.
 - Generic QA fields are `edgeChromaCount`, `pocketChromaCount`, and `chromaFringeCount`; legacy green-only aliases remain for compatibility.
+- Chroma QA is resolution-normalized: enclosed pockets are measured against foreground area, while despill fringe is measured against the Alpha-edge population. Absolute 8 px / 12 px floors remain for small stickers. Each QA entry records both ratios and its resolved pixel thresholds.
 - Finalize writes to `.finalize-staging/<run-id>` and keeps `manifest.json` at `finalizing` until stickers, QA, and ZIP publication succeed. Packaging/sync exceptions become `packaging_failed` with `finalizeStage` and `finalizeError`; abandoned staging is cleaned on the next run.
 - Explicit external upload roots and `.line-upload` are populated through sibling staging directories and directory rename, so a failed copy preserves the previous published set.
 - `qaMode: "report"` publishes with `completionStatus: "completed_with_warnings"`; the strict validator accepts that status only when report mode was explicitly selected.

@@ -3,7 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { LanguageProvider } from './hooks/useLanguage';
+import { LanguageProvider } from './hooks/LanguageProvider';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
