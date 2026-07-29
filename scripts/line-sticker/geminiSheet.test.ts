@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildGeminiSheetContentParts,
+  buildGuidedGridEditAnchorBlock,
+  buildGuidedGridReminderBlock,
   resolveModelForGuidedGridTemplate,
 } from './geminiSheet.mts';
 
@@ -22,6 +24,19 @@ describe('resolveModelForGuidedGridTemplate', () => {
     expect(resolveModelForGuidedGridTemplate('gemini-3.1-flash-lite-image', 'solid')).toBe(
       'gemini-3.1-flash-lite-image'
     );
+  });
+});
+
+describe('guided chroma prompt', () => {
+  it.each(['green', 'magenta'] as const)('uses the resolved %s key everywhere', (color) => {
+    const prompt = [
+      buildGuidedGridEditAnchorBlock(4, 5, 1, color),
+      buildGuidedGridReminderBlock(4, 5, 1, color),
+    ].join('\n');
+    expect(prompt).toContain(`${color} chroma`);
+    expect(prompt).toContain(`${color} background`);
+    expect(prompt).toContain(`${color} gutters`);
+    expect(prompt).not.toContain(color === 'green' ? 'magenta' : 'green');
   });
 });
 

@@ -91,7 +91,12 @@ function ordinal(n: number): string {
   return `${n}th`;
 }
 
-function buildGuidedGridEditAnchorBlock(cols: number, rows: number, templateImageIndex: number): string {
+export function buildGuidedGridEditAnchorBlock(
+  cols: number,
+  rows: number,
+  templateImageIndex: number,
+  chromaKeyColor: ChromaKeyColorType
+): string {
   const totalFrames = cols * rows;
   return `### [0. EDIT THE PROVIDED GRID CANVAS — IMAGE ${templateImageIndex}]
 
@@ -99,14 +104,14 @@ Using the provided grid canvas (**attached image ${templateImageIndex}**), add s
 This is an **image-edit** task — **do not** generate a new sheet layout from scratch.
 
 **CANVAS (already correct in image ${templateImageIndex}):**
-- Exactly **${cols} columns × ${rows} rows** = **${totalFrames} cells** on green chroma.
+- Exactly **${cols} columns × ${rows} rows** = **${totalFrames} cells** on ${chromaKeyColor} chroma.
 - Grid lines in image ${templateImageIndex} mark exact cell boundaries.
 - **Keep image ${templateImageIndex}'s grid geometry pixel-perfect** — same column widths, row heights, and seam positions.
 
 **FORBIDDEN:**
 - Redrawing, relocating, thickening, or adding new grid/divider lines (especially white or black).
 - Changing column or row count (never ${cols + 1} columns, never irregular panel sizes).
-- Replacing the green background with a new layout.
+- Replacing the ${chromaKeyColor} background with a new layout.
 
 ---
 `;
@@ -216,10 +221,11 @@ Match its character design, line weight, palette, proportions, and sticker frami
 Same artist, same set — only new poses/phrases for this batch.`;
 }
 
-function buildGuidedGridReminderBlock(
+export function buildGuidedGridReminderBlock(
   cols: number,
   rows: number,
-  templateImageIndex: number
+  templateImageIndex: number,
+  chromaKeyColor: ChromaKeyColorType
 ): string {
   const totalFrames = cols * rows;
   return `
@@ -228,7 +234,7 @@ function buildGuidedGridReminderBlock(
 
 ### [FINAL REMINDER — edit image ${templateImageIndex} in place]
 - Image ${templateImageIndex} already has **${cols} columns × ${rows} rows** = **${totalFrames} cells**. Do not invent a new layout.
-- Keep image ${templateImageIndex}'s grid lines and green gutters intact; only add sticker art inside each cell.
+- Keep image ${templateImageIndex}'s grid lines and ${chromaKeyColor} gutters intact; only add sticker art inside each cell.
 - Each row has **${cols}** stickers only. Count them before output.`;
 }
 
@@ -336,11 +342,11 @@ export async function generateSheetImage(
   );
 
   const gridAnchor = guidedCanvas && indices.gridTemplate
-    ? buildGuidedGridEditAnchorBlock(cols, rows, indices.gridTemplate)
+    ? buildGuidedGridEditAnchorBlock(cols, rows, indices.gridTemplate, chromaKeyColor)
     : buildGridLayoutAnchorBlock(cols, rows);
   const gridReminder =
     guidedCanvas && indices.gridTemplate
-      ? buildGuidedGridReminderBlock(cols, rows, indices.gridTemplate)
+      ? buildGuidedGridReminderBlock(cols, rows, indices.gridTemplate, chromaKeyColor)
       : buildGridLayoutReminderBlock(cols, rows);
   const styleAnchorBlock =
     styleAnchor && indices.styleAnchor ? buildStyleAnchorBlock(indices.styleAnchor) : '';

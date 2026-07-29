@@ -67,7 +67,6 @@ export function measureChromaFringe(
       if (keyExcess > KEY_EXCESS_MIN) {
         if (atEdge) edgeChromaCount++;
         else pocketChromaCount++;
-        continue;
       }
 
       // Detect darker, partially despilled key color left on an alpha edge.
@@ -77,7 +76,7 @@ export function measureChromaFringe(
       if (
         atEdge &&
         despilledKey > DESPILLED_KEY_MIN &&
-        (chromaKeyColor === 'magenta' || g >= r) &&
+        (chromaKeyColor === 'magenta' ? Math.abs(r - b) <= 70 : g >= r) &&
         (r + g + b) / 3 < 140
       ) {
         chromaFringeCount++;

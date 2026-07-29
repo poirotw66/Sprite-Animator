@@ -651,6 +651,7 @@ async function main() {
   const jobConfig = {
     ...config,
     requestedChromaKeyColor,
+    resolvedChromaKeyColor: chromaKeyColor,
     model,
     resolution,
     chromaKeyColor,

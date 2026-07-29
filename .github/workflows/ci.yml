@@ -22,6 +22,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check LINE sticker skill mirror
+        run: npm run skills:check:line-sticker
+
       - name: Type check
         run: npm run typecheck
 

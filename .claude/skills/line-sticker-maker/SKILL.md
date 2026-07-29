@@ -82,7 +82,7 @@ use `manifest.json` → `activeSheets`, or fall back to `sheet-1`, `sheet-2`.
 3. **`--dry-run`** to verify prompt + phrases.
 4. **Run for real** → one command produces debug output + repo-local upload folder.
 5. **Spot-check** a few `stickers/sticker-NN.png` and `manifest.json` grid scores.
-   Read `qa-report.json` → `pocketGreenCount` / `oliveFringeCount` per sticker (`edgeGreenCount` is debug-only).
+   Read `qa-report.json` → `pocketChromaCount` / `chromaFringeCount` per sticker (`edgeChromaCount` is debug-only).
 6. Tell the user the **`--out` folder** and, when `syncToUploadRoot` is on, the synced
    **`.line-upload/input/706/{Set Name}/`** path + upload command.
 
@@ -132,6 +132,7 @@ The table below is the production preset used by both `run-from-inputs.mts` and
 | `customPhrases` | `[]` | overrides theme phrases when non-empty |
 | `language` | `zh-TW` | `zh-TW`, `zh-CN`, `en`, `ja` |
 | `chromaKeyColor` | `auto` | scans all character references and selects the less-conflicting `green` or `magenta`; explicit colors remain supported |
+| `requestedChromaKeyColor` / `resolvedChromaKeyColor` | persisted | records user intent separately from the concrete key used by generation, reslice, finalize, and QA |
 | `chromaKeyAlgorithm` | `core` | production default; `legacy` and `forge` remain explicit compatibility options |
 | `includeText` | `true` | include the phrase in the final sticker |
 | `textRendering` | `programmatic` | canvas overlay after slicing; use `model` only when model-drawn lettering is intentional |
@@ -202,7 +203,7 @@ Without `upload`, legacy output is `<out>/line-upload/` + `line-upload.zip`.
 | `run-line-upload.mts` | run Drive + Playwright upload pipeline |
 | `reslice-sheet.mts` | re-slice existing `_raw-sheet.jpg` (no Gemini) |
 | `reoverlay-sheet.mts` | re-apply programmatic text after reslice |
-| `stickerQa` (via finalize) | auto `qa-report.json` — foreground, size, text, LINE limits, **green fringe** |
+| `stickerQa` (via finalize) | auto `qa-report.json` — foreground, size, text, LINE limits, green/magenta chroma fringe |
 | `organize-line-upload-input.mts` | standalone pack into upload layout (fallback) |
 
 ### Re-slice after chroma changes (no Gemini)
@@ -227,7 +228,9 @@ Guided requests always attach the layout canvas, primary reference, optional com
 - **Do not** alpha-erase neutral gray / black line AA (`RGB spread < 12`) — original ink.
 - **Do not** use neutral-gray protrusion cleanup — it deletes speed lines / outlines.
 - `reslice-sheet.mts` reads resolved chroma and algorithm from `manifest.json` / `job.config.json`; `--chroma` remains an explicit override.
-- `qa-report.json` fields retain the legacy names `edgeGreenCount`, `pocketGreenCount`, `oliveFringeCount`.
+- Generic QA fields are `edgeChromaCount`, `pocketChromaCount`, and `chromaFringeCount`; legacy green-only aliases remain for compatibility.
+- Finalize writes to `.finalize-staging/<run-id>` and keeps `manifest.json` at `finalizing` until stickers, QA, and ZIP publication succeed.
+- Completed-set validation opens the ZIP and verifies all expected PNGs, Alpha, LINE dimensions, manifest mapping, grid QA, and chroma QA.
 
 ## manifest.json
 
@@ -235,6 +238,13 @@ After a full run or `finalize.mts`:
 
 ```json
 {
+  "completionStatus": "completed",
+  "runId": "2026-07-30T00-00-00-000Z-1234",
+  "config": {
+    "requestedChromaKeyColor": "auto",
+    "resolvedChromaKeyColor": "magenta",
+    "chromaKeyColor": "magenta"
+  },
   "activeSheets": ["sheet-1", "sheet-2"],
   "gridScores": { "sheet-1": 0.85, "sheet-2": 0.84 },
   "qaReport": { "overallScore": 0.91, "pass": true, "summaryWarnings": [] },

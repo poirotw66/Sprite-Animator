@@ -74,6 +74,7 @@ describe('measureChromaFringe', () => {
     const metrics = measureChromaFringe(data, w, h, 'magenta');
     expect(metrics.chromaKeyColor).toBe('magenta');
     expect(metrics.edgeChromaCount).toBe(1);
+    expect(metrics.chromaFringeCount).toBe(1);
     expect(metrics.edgeGreenCount).toBe(0);
   });
 });

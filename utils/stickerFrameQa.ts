@@ -86,7 +86,7 @@ export function resolveStickerQaMode(
 export function shouldBlockStickerQa(
   mode: StickerQaMode,
   report: StickerQaReport | undefined
-): report is StickerQaReport {
+): boolean {
   return mode === 'block' && report != null && !report.pass;
 }
 
@@ -353,12 +353,20 @@ export function auditStickerFrames(
       : 1;
 
   const lowEntries = entries.filter((e) => e.overallScore < warnThreshold);
+  const invalidForegroundEntries = entries.filter(
+    (e) => e.foregroundRatio < FOREGROUND_MIN || e.foregroundRatio > FOREGROUND_MAX
+  );
   const fringeEntries = entries.filter(
     (e) =>
       e.pocketChromaCount >= CHROMA_FRINGE_WARN_POCKET ||
       e.chromaFringeCount >= CHROMA_FRINGE_WARN_DESPILL
   );
   const summaryWarnings: string[] = [];
+  if (invalidForegroundEntries.length > 0) {
+    summaryWarnings.push(
+      `${invalidForegroundEntries.length}/${entries.length} stickers have invalid foreground coverage`
+    );
+  }
   if (fringeEntries.length > 0) {
     summaryWarnings.push(
       `${fringeEntries.length}/${entries.length} stickers have actionable chroma residue (${chromaKeyColor}; pocketChroma / chromaFringe)`
@@ -391,7 +399,10 @@ export function auditStickerFrames(
     medianWidth,
     medianHeight,
     overallScore,
-    pass: lowEntries.length === 0 && fringeEntries.length === 0,
+    pass:
+      lowEntries.length === 0 &&
+      invalidForegroundEntries.length === 0 &&
+      fringeEntries.length === 0,
     warnThreshold,
     entries,
     summaryWarnings,

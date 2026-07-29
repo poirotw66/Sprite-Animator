@@ -89,6 +89,11 @@ Pipeline:
 - [ ] 4. Generate for real
 - [ ] 5. Spot-check stickers/ + manifest.json gridScores
 - [ ] 6. Confirm `manifest.json` has `completionStatus: "completed"` and `qaReport.pass: true`; failed QA is not packaged
+- [ ] 7. Confirm requested/resolved chroma are recorded; reslice/finalize must use the resolved value
+
+Finalize uses `.finalize-staging/<run-id>` and publishes stickers, QA, and upload
+artifacts before committing the completed manifest. `grid_failed`, `qa_failed`,
+and `finalizing` outputs are never resumable as completed sets.
 - [ ] 6. (Optional) Upload via line-sticker-upload skill
 ```
 

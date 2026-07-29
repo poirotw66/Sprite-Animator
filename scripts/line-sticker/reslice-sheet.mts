@@ -114,6 +114,7 @@ type PersistedConfig = {
   textRendering?: 'model' | 'programmatic';
   chromaKeyColor?: RequestedChromaKeyColor;
   requestedChromaKeyColor?: RequestedChromaKeyColor;
+  resolvedChromaKeyColor?: ChromaKeyColorType;
   chromaKeyAlgorithm?: ChromaKeyAlgorithm;
 };
 const jobConfig = existsSync(jobConfigPath)
@@ -124,7 +125,7 @@ const manifest = existsSync(manifestPath)
   : {};
 const config: PersistedConfig = { ...jobConfig, ...manifest.config };
 const requestedChroma =
-  chroma ?? config.chromaKeyColor ?? config.requestedChromaKeyColor ?? 'auto';
+  chroma ?? config.resolvedChromaKeyColor ?? config.chromaKeyColor ?? config.requestedChromaKeyColor ?? 'auto';
 const chromaKeyColor: ChromaKeyColorType =
   requestedChroma === 'auto' ? detectSheetChromaKeyColor(image) : requestedChroma;
 const algorithm =

@@ -3,9 +3,10 @@
  * Used by generate.mts (end of full run) and finalize.mts (after isolated sheet regen).
  */
 
-import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
+import { access, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { resolve, relative, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 import { decodePng, encodePng, prepareLineStickerFrame, type RgbaImage } from './nodeImage.mts';
 import {
   auditStickerFrames,
@@ -41,13 +42,22 @@ import {
 const FINALIZE_PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 export interface JobManifest {
-  completionStatus?: 'completed' | 'qa_failed';
+  completionStatus?:
+    | 'finalizing'
+    | 'completed'
+    | 'grid_failed'
+    | 'qa_failed'
+    | 'unverified'
+    | 'packaging_failed';
+  runId?: string;
   config?: JobConfig;
   activeSheets?: string[];
   gridScores?: Record<string, number>;
   uploadPackPath?: string;
   uploadSyncPath?: string;
   uploadEnvFile?: string;
+  uploadZipFile?: string;
+  uploadZipSha256?: string;
   /** @deprecated legacy manifest fields */
   lineSDest?: string;
   lineSSyncDest?: string;
@@ -72,6 +82,8 @@ export interface JobConfig {
   qaEnabled?: boolean;
   qaMode?: StickerQaMode;
   chromaKeyColor?: ChromaKeyColorType | 'auto';
+  requestedChromaKeyColor?: ChromaKeyColorType | 'auto';
+  resolvedChromaKeyColor?: ChromaKeyColorType;
   minGridAlignmentScore?: number;
 }
 
@@ -96,6 +108,54 @@ export interface FinalizeJobResult {
 
 function pad(n: number): string {
   return String(n).padStart(2, '0');
+}
+
+function createRunId(): string {
+  return `${new Date().toISOString().replace(/[:.]/g, '-')}-${process.pid}`;
+}
+
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function writeJsonAtomic(path: string, value: unknown): Promise<void> {
+  const temp = `${path}.tmp-${process.pid}`;
+  const backup = `${path}.backup-${process.pid}`;
+  await writeFile(temp, JSON.stringify(value, null, 2), 'utf8');
+  await rm(backup, { force: true });
+  const hadTarget = await pathExists(path);
+  if (hadTarget) await rename(path, backup);
+  try {
+    await rename(temp, path);
+    await rm(backup, { force: true });
+  } catch (error) {
+    await rm(temp, { force: true });
+    if (hadTarget && (await pathExists(backup))) await rename(backup, path);
+    throw error;
+  }
+}
+
+/** Replace one published artifact while retaining the previous version until rename succeeds. */
+async function publishStagedPath(stagedPath: string, targetPath: string, runId: string): Promise<void> {
+  if (!(await pathExists(stagedPath))) return;
+  const backupPath = `${targetPath}.backup-${runId}`;
+  await rm(backupPath, { recursive: true, force: true });
+  const hadTarget = await pathExists(targetPath);
+  if (hadTarget) await rename(targetPath, backupPath);
+  try {
+    await rename(stagedPath, targetPath);
+    await rm(backupPath, { recursive: true, force: true });
+  } catch (error) {
+    if (hadTarget && (await pathExists(backupPath))) {
+      await rename(backupPath, targetPath);
+    }
+    throw error;
+  }
 }
 
 function toZeroBased(oneBased: number | undefined, fallback: number): number {
@@ -172,17 +232,50 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
     await readFile(manifestPath, 'utf8').catch(() => '{}')
   ) as JobManifest;
 
-  const mergedConfig: JobConfig = { ...existingManifest.config, ...config };
+  const requestedChromaKeyColor =
+    config.requestedChromaKeyColor ??
+    config.chromaKeyColor ??
+    existingManifest.config?.requestedChromaKeyColor ??
+    existingManifest.config?.chromaKeyColor ??
+    'auto';
+  const resolvedChromaKeyColor: ChromaKeyColorType =
+    config.resolvedChromaKeyColor ??
+    (config.chromaKeyColor === 'green' || config.chromaKeyColor === 'magenta'
+      ? config.chromaKeyColor
+      : undefined) ??
+    existingManifest.config?.resolvedChromaKeyColor ??
+    (existingManifest.config?.chromaKeyColor === 'magenta' ? 'magenta' : 'green');
+  const mergedConfig: JobConfig = {
+    ...existingManifest.config,
+    ...config,
+    requestedChromaKeyColor,
+    resolvedChromaKeyColor,
+    // Legacy consumers read chromaKeyColor as the resolved value.
+    chromaKeyColor: resolvedChromaKeyColor,
+  };
   const phrases: string[] = [...(mergedConfig.customPhrases ?? [])];
   if (phrases.length === 0 && existingManifest.stickers?.length) {
     phrases.push(...existingManifest.stickers.map((entry) => (entry.phrase as string) ?? ''));
   }
 
+  const runId = createRunId();
+  const stagingRoot = resolve(outDir, '.finalize-staging', runId);
+  const stickersDir = resolve(stagingRoot, 'stickers');
+  await rm(stagingRoot, { recursive: true, force: true });
+  await mkdir(stickersDir, { recursive: true });
+  if (options.writeManifest !== false) {
+    await writeJsonAtomic(manifestPath, {
+      ...existingManifest,
+      completionStatus: 'finalizing',
+      runId,
+      config: mergedConfig,
+      activeSheets: sheetDirs,
+    });
+  }
+
   const nativeFrames: RgbaImage[] = [];
   const manifestStickers: Array<Record<string, unknown>> = [];
   const gridScores: Record<string, number> = {};
-  const stickersDir = resolve(outDir, 'stickers');
-  await mkdir(stickersDir, { recursive: true });
 
   let globalIndex = 0;
   for (let sheetIndex = 0; sheetIndex < sheetDirs.length; sheetIndex++) {
@@ -225,13 +318,31 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
     for (const message of formatGridGateMessage(gridFailures, minGridScore)) {
       console.warn(`   ✗ ${message}`);
     }
+    if (options.writeManifest !== false) {
+      await writeJsonAtomic(manifestPath, {
+        ...existingManifest,
+        completionStatus: 'grid_failed',
+        runId,
+        config: mergedConfig,
+        activeSheets: sheetDirs,
+        gridScores,
+        qaReport: {
+          pass: false,
+          gridPass: false,
+          gridMinScore: minGridScore,
+          gridFailures,
+          summaryWarnings: formatGridGateMessage(gridFailures, minGridScore),
+        },
+        stickers: manifestStickers,
+      });
+    }
+    await rm(stagingRoot, { recursive: true, force: true });
     assertGridScoresPass(gridScores, minGridScore);
   }
 
   const qaMode = resolveStickerQaMode(mergedConfig.qaMode, mergedConfig.qaEnabled);
   const qaEnabled = qaMode !== 'off';
-  const qaChromaKeyColor: ChromaKeyColorType =
-    mergedConfig.chromaKeyColor === 'magenta' ? 'magenta' : 'green';
+  const qaChromaKeyColor = resolvedChromaKeyColor;
   let qaReport: StickerQaReport | undefined;
   if (qaEnabled && nativeFrames.length > 0) {
     console.log('\n▶ Running sticker QA...');
@@ -252,7 +363,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
       }),
       { checkModelText, chromaKeyColor: qaChromaKeyColor }
     );
-    await writeFile(resolve(outDir, 'qa-report.json'), JSON.stringify(qaReport, null, 2));
+    await writeFile(resolve(stagingRoot, 'qa-report.json'), JSON.stringify(qaReport, null, 2));
     console.log(
       `   · QA score ${qaReport.overallScore.toFixed(3)} (${qaReport.pass ? 'pass' : 'warnings'}) → qa-report.json`
     );
@@ -267,14 +378,19 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
     }
   }
 
-  if (shouldBlockStickerQa(qaMode, qaReport)) {
+  if (qaReport && shouldBlockStickerQa(qaMode, qaReport)) {
+    await publishStagedPath(
+      resolve(stagingRoot, 'qa-report.json'),
+      resolve(outDir, 'qa-report.json'),
+      runId
+    );
     if (options.writeManifest !== false) {
-      await writeFile(
+      await writeJsonAtomic(
         manifestPath,
-        JSON.stringify(
-          {
+        {
             ...existingManifest,
             completionStatus: 'qa_failed',
+            runId,
             config: mergedConfig,
             activeSheets: sheetDirs,
             gridScores,
@@ -287,12 +403,10 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
               gridFailures: [],
             },
             stickers: manifestStickers,
-          },
-          null,
-          2
-        )
+          }
       );
     }
+    await rm(stagingRoot, { recursive: true, force: true });
     throw new Error(
       `Sticker QA blocked packaging: ${qaReport.summaryWarnings.join('; ') || `score ${qaReport.overallScore.toFixed(3)}`}`
     );
@@ -304,6 +418,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
     nativeFrames,
     uploadPackOptions
   );
+  const uploadZipSha256 = createHash('sha256').update(zipBytes).digest('hex');
   console.log(
     `   · shop images: main=sticker-${String(uploadPack.mainStickerIndex).padStart(2, '0')}, tab=sticker-${String(uploadPack.tabStickerIndex).padStart(2, '0')}`
   );
@@ -318,6 +433,7 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
   let uploadPackPath: string | undefined;
   let uploadSyncPath: string | undefined;
   let uploadEnvFile: string | undefined;
+  let uploadZipFile = 'line-upload.zip';
   if (usedUploadPack && upload) {
     const phraseSamples = phrases.length
       ? phrases
@@ -326,24 +442,58 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
       upload,
       phraseSamples
     );
+    uploadZipFile = `${normalizedUpload.setName}.zip`;
     for (const warning of listingWarnings) {
       console.warn(`   ! listing: ${warning}`);
     }
     console.log(`   · shop title: ${normalizedUpload.titleZh}`);
     console.log(`   · shop desc: ${normalizedUpload.descZh}`);
 
-    const { destDir, envFilePath } = await packUploadOutput({
+    const { envFilePath } = await packUploadOutput({
       sourceDir: outDir,
-      upload: normalizedUpload,
+      upload: { ...normalizedUpload, root: undefined },
       sheetDirs,
       zipBytes,
       submitForReview: mergedConfig.lineUploadSubmit === true,
+      destDirOverride: stagingRoot,
+      envBatchDirOverride: resolve(stagingRoot, '.env.batch'),
     });
-    uploadPackPath = destDir;
-    console.log(`   ✓ upload pack → ${destDir}`);
+    uploadPackPath = outDir;
+    console.log(`   ✓ staged upload pack → ${stagingRoot}`);
     console.log(`     ${normalizedUpload.setName}.zip (${uploadPack.stickerCount + 2} PNGs)`);
     console.log(`     sprite_sheets/ (${sheetDirs.length} sheets)`);
     if (envFilePath) console.log(`     ${envFilePath}`);
+
+    await publishStagedPath(resolve(stagingRoot, 'stickers'), resolve(outDir, 'stickers'), runId);
+    await publishStagedPath(
+      resolve(stagingRoot, 'qa-report.json'),
+      resolve(outDir, 'qa-report.json'),
+      runId
+    );
+    for (const name of [
+      `${normalizedUpload.setName}.zip`,
+      `${normalizedUpload.setName}.md`,
+      'sprite_sheets',
+      '.env.batch',
+    ]) {
+      await publishStagedPath(resolve(stagingRoot, name), resolve(outDir, name), runId);
+    }
+    uploadEnvFile = envFilePath
+      ? resolve(outDir, '.env.batch', envFilePath.split(/[\\/]/).pop()!)
+      : undefined;
+
+    // Explicit external roots are populated only after the staged local pack passes QA.
+    if (normalizedUpload.root?.trim()) {
+      const external = await packUploadOutput({
+        sourceDir: outDir,
+        upload: normalizedUpload,
+        sheetDirs,
+        zipBytes,
+        submitForReview: mergedConfig.lineUploadSubmit === true,
+      });
+      uploadPackPath = external.destDir;
+      uploadEnvFile = external.envFilePath ?? uploadEnvFile;
+    }
 
     if (shouldSyncToUploadRoot(upload)) {
       console.log('\n▶ Syncing to upload root...');
@@ -364,17 +514,33 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
       );
     }
   } else {
-    await writeLineUploadPack(outDir, nativeFrames, uploadPackOptions);
+    await writeLineUploadPack(stagingRoot, nativeFrames, uploadPackOptions);
+    await publishStagedPath(resolve(stagingRoot, 'stickers'), resolve(outDir, 'stickers'), runId);
+    await publishStagedPath(
+      resolve(stagingRoot, 'qa-report.json'),
+      resolve(outDir, 'qa-report.json'),
+      runId
+    );
+    await publishStagedPath(
+      resolve(stagingRoot, 'line-upload'),
+      resolve(outDir, 'line-upload'),
+      runId
+    );
+    await publishStagedPath(
+      resolve(stagingRoot, 'line-upload.zip'),
+      resolve(outDir, 'line-upload.zip'),
+      runId
+    );
     console.log(`   ✓ line-upload/ (${uploadPack.stickerCount + 2} PNGs) + line-upload.zip`);
   }
 
   if (options.writeManifest !== false) {
-    await writeFile(
+    await writeJsonAtomic(
       manifestPath,
-      JSON.stringify(
-        {
+      {
           ...existingManifest,
-          completionStatus: qaReport && !qaReport.pass ? 'qa_failed' : 'completed',
+          completionStatus: qaReport ? (qaReport.pass ? 'completed' : 'qa_failed') : 'unverified',
+          runId,
           config: mergedConfig,
           activeSheets: sheetDirs,
           gridScores,
@@ -391,15 +557,15 @@ export async function finalizeStickerJob(options: FinalizeJobOptions): Promise<F
           uploadPackPath,
           uploadSyncPath,
           uploadEnvFile,
+          uploadZipFile,
+          uploadZipSha256,
           mainStickerIndex: uploadPack.mainStickerIndex,
           tabStickerIndex: uploadPack.tabStickerIndex,
           stickers: manifestStickers,
-        },
-        null,
-        2
-      )
+        }
     );
   }
+  await rm(stagingRoot, { recursive: true, force: true });
 
   return {
     stickerCount: nativeFrames.length,

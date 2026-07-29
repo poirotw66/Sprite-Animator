@@ -47,6 +47,10 @@ export interface PackUploadOptions {
   zipBytes: Uint8Array;
   /** When true, batch env sets LINE_UPLOAD_SUBMIT=true (run review submit). Default false. */
   submitForReview?: boolean;
+  /** Internal finalize staging destination. Omit for normal behavior. */
+  destDirOverride?: string;
+  /** Internal finalize staging env directory. Omit for normal behavior. */
+  envBatchDirOverride?: string;
 }
 
 export function resolveUploadConfig(job: UploadJobFields): UploadConfig | undefined {
@@ -135,7 +139,9 @@ export async function packUploadOutput(options: PackUploadOptions): Promise<{
   const { sourceDir, upload, sheetDirs, zipBytes, submitForReview } = options;
   validateUploadConfig(upload);
 
-  const destDir = resolveUploadPackDir(upload, sourceDir);
+  const destDir = options.destDirOverride
+    ? resolve(options.destDirOverride)
+    : resolveUploadPackDir(upload, sourceDir);
   const spriteDir = resolve(destDir, 'sprite_sheets');
   await mkdir(spriteDir, { recursive: true });
 
@@ -155,7 +161,9 @@ export async function packUploadOutput(options: PackUploadOptions): Promise<{
   }
 
   const creatorId = upload.creatorId?.trim() || '706';
-  const envBatchDir = resolveEnvBatchDir(upload, sourceDir);
+  const envBatchDir = options.envBatchDirOverride
+    ? resolve(options.envBatchDirOverride)
+    : resolveEnvBatchDir(upload, sourceDir);
   const envFileName = `${envFileBaseName(upload.setName)}.env`;
   const envFilePath = resolve(envBatchDir, envFileName);
   await mkdir(envBatchDir, { recursive: true });

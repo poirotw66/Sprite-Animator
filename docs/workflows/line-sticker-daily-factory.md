@@ -107,7 +107,7 @@ Disable vault: `--no-vault`. Custom path: `--vault /path/to/line-sticker-vault` 
 | `--backfill` | on | scan `output/` → registry before plan |
 | `--plan-only` | off | write `batch-plan.json` only |
 | `--execute` | off | required for real API calls |
-| `--resume` | off | skip only fully packaged slots whose sticker count, sheets, grid scores, chroma QA, and ZIP all validate |
+| `--resume` | off | skip only `completed` slots with a run ID whose sticker count, sheets, grid/chroma QA, PNG Alpha, and parsed ZIP contents all validate |
 | `--from-set` | 1 | start at set N |
 | `--no-backfill` | — | skip backfill step |
 

@@ -1,29 +1,58 @@
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { buildLineUploadZipBytes } from '../../scripts/line-sticker/lineUploadPack.mts';
+import { encodePng, type RgbaImage } from '../../scripts/line-sticker/nodeImage.mts';
 import { validateCompletedStickerSet } from './completedStickerSet';
 
 const dirs: string[] = [];
 
-function fixture(qaPass = true): string {
+function rgbaFrame(width = 32, height = 32): RgbaImage {
+  const data = new Uint8ClampedArray(width * height * 4);
+  for (let y = 4; y < height - 4; y++) {
+    for (let x = 4; x < width - 4; x++) {
+      const i = (y * width + x) * 4;
+      data[i] = 240;
+      data[i + 1] = 120;
+      data[i + 2] = 40;
+      data[i + 3] = 255;
+    }
+  }
+  return { data, width, height };
+}
+
+async function fixture(qaPass = true): Promise<string> {
   const dir = mkdtempSync(join(tmpdir(), 'sticker-complete-'));
   dirs.push(dir);
   mkdirSync(join(dir, 'stickers'));
   mkdirSync(join(dir, 'sheet-1'));
-  writeFileSync(join(dir, 'sheet-1', '_processed-sheet.png'), 'png');
-  for (let i = 1; i <= 2; i++) {
-    writeFileSync(join(dir, 'stickers', `sticker-${String(i).padStart(2, '0')}.png`), 'png');
+  mkdirSync(join(dir, 'sheet-2'));
+  const frames = Array.from({ length: 40 }, () => rgbaFrame());
+  const png = encodePng(frames[0]!);
+  writeFileSync(join(dir, 'sheet-1', '_processed-sheet.png'), png);
+  writeFileSync(join(dir, 'sheet-2', '_processed-sheet.png'), png);
+  for (let i = 1; i <= 40; i++) {
+    writeFileSync(join(dir, 'stickers', `sticker-${String(i).padStart(2, '0')}.png`), png);
   }
-  writeFileSync(join(dir, 'line-upload.zip'), 'zip');
+  const { zipBytes } = await buildLineUploadZipBytes(frames);
+  writeFileSync(join(dir, 'line-upload.zip'), zipBytes);
+  const uploadZipSha256 = createHash('sha256').update(zipBytes).digest('hex');
   writeFileSync(join(dir, 'manifest.json'), JSON.stringify({
     completionStatus: qaPass ? 'completed' : 'qa_failed',
-    config: { stickerCount: 2, minGridAlignmentScore: 0.8 },
-    activeSheets: ['sheet-1'],
-    gridScores: { 'sheet-1': 0.9 },
+    runId: 'test-run',
+    config: { stickerCount: 40, minGridAlignmentScore: 0.8 },
+    activeSheets: ['sheet-1', 'sheet-2'],
+    gridScores: { 'sheet-1': 0.9, 'sheet-2': 0.9 },
     qaReport: { pass: qaPass, gridPass: true },
-    stickers: [{}, {}],
+    uploadZipFile: 'line-upload.zip',
+    uploadZipSha256,
+    stickers: Array.from({ length: 40 }, (_, index) => ({
+      globalIndex: index + 1,
+      uploadFile: `stickers/sticker-${String(index + 1).padStart(2, '0')}.png`,
+    })),
   }));
   return dir;
 }
@@ -33,19 +62,35 @@ afterEach(() => {
 });
 
 describe('validateCompletedStickerSet', () => {
-  it('accepts only a fully packaged, QA-passing set', () => {
-    expect(validateCompletedStickerSet(fixture()).complete).toBe(true);
+  it('accepts only a fully packaged, QA-passing set', async () => {
+    expect(validateCompletedStickerSet(await fixture()).complete).toBe(true);
   });
 
-  it('rejects QA failures', () => {
-    const result = validateCompletedStickerSet(fixture(false));
+  it('rejects QA failures', async () => {
+    const result = validateCompletedStickerSet(await fixture(false));
     expect(result.complete).toBe(false);
     expect(result.reasons.join(' ')).toMatch(/qa|completionStatus/i);
   });
 
-  it('rejects a partial sticker directory', () => {
-    const dir = fixture();
+  it('rejects a partial sticker directory', async () => {
+    const dir = await fixture();
     rmSync(join(dir, 'stickers', 'sticker-02.png'));
     expect(validateCompletedStickerSet(dir).reasons.join(' ')).toContain('sticker-02.png');
+  });
+
+  it('rejects a stale or malformed ZIP', async () => {
+    const dir = await fixture();
+    writeFileSync(join(dir, 'line-upload.zip'), 'not-a-zip');
+    expect(validateCompletedStickerSet(dir).reasons.join(' ')).toMatch(/invalid upload ZIP/i);
+  });
+
+  it('requires completed status and a run id', async () => {
+    const dir = await fixture();
+    const manifestPath = join(dir, 'manifest.json');
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, unknown>;
+    delete manifest.runId;
+    manifest.completionStatus = 'finalizing';
+    writeFileSync(manifestPath, JSON.stringify(manifest));
+    expect(validateCompletedStickerSet(dir).reasons.join(' ')).toMatch(/runId|completionStatus/i);
   });
 });
