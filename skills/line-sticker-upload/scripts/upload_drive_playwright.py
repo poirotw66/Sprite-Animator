@@ -9,7 +9,8 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-STORAGE = Path(__file__).resolve().parent / "playwright_drive_state.json"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+STORAGE = PROJECT_ROOT / ".line-upload" / "state" / "playwright_drive_state.json"
 
 
 def collect_files(local_dir: Path) -> list[str]:
@@ -27,6 +28,7 @@ def main() -> None:
     args = parser.parse_args()
 
     files = collect_files(args.local_dir)
+    STORAGE.parent.mkdir(parents=True, exist_ok=True)
     print(f"Uploading {len(files)} files from {args.local_dir}")
 
     with sync_playwright() as p:

@@ -1,0 +1,4 @@
+interface:
+  display_name: "LINE Sticker Pipeline"
+  short_description: "Run the complete reference-to-package sticker workflow"
+  default_prompt: "Use $line-sticker-pipeline to run the complete LINE sticker workflow from my reference and phrase set."

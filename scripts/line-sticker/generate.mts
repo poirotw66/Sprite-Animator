@@ -55,7 +55,7 @@ import {
 
 import { finalizeStickerJob } from './finalizeJob.mts';
 import type { UploadConfig } from './uploadConfig.mts';
-import { loadGeminiApiKey } from '../../.claude/skills/shared/loadGeminiApiKey.mts';
+import { loadGeminiApiKey } from '../../skills/shared/loadGeminiApiKey.mts';
 import { generateOneSheet, type SheetPlan } from './sheetGeneration.mts';
 import { decodePng, type RgbaImage } from './nodeImage.mts';
 import {

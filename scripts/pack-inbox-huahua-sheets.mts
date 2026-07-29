@@ -5,7 +5,7 @@ import { copyFile, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import sharp from 'sharp';
 
-import { encodePng } from '../.claude/skills/line-sticker-maker/scripts/nodeImage.mts';
+import { encodePng } from './line-sticker/nodeImage.mts';
 import type { RgbaFrameBuffer } from '../utils/sheetComponentSlicer.ts';
 import { buildEqualGridBounds } from '../utils/sliceSpriteSheetByOwnership.ts';
 

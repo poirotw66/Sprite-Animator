@@ -5,7 +5,7 @@
 import {
   generateCharacterRefImage as generateCharacterRefImageDataUrl,
   type GenerateCharacterRefParams,
-} from '../../../../services/gemini/characterRefImage.ts';
+} from '../../../services/gemini/characterRefImage.ts';
 
 export type { GenerateCharacterRefParams };
 

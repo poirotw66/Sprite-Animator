@@ -5,8 +5,8 @@ Headless only (no browser). Reuses app modules and scripts under `scripts/line-s
 
 ## Canonical paths and production defaults
 
-- `.claude/skills/` is the tracked source of truth for LINE sticker skills.
-- `.agents/skills/` is a generated Codex runtime mirror. Run
+- `skills/` is the tracked source of truth for LINE sticker skills.
+- `.agents/skills/` and `.claude/skills/` are generated runtime mirrors. Run
   `npm run skills:sync:line-sticker` after changing a canonical skill.
 - `utils/lineStickerProductionPreset.ts` is the single source for headless defaults:
   2K when supported, guided layout, automatic green/magenta selection with `core` chroma removal, blocking chroma/content QA, programmatic text with
@@ -15,8 +15,8 @@ Headless only (no browser). Reuses app modules and scripts under `scripts/line-s
 
 The canonical full-config examples are:
 
-- `.claude/skills/line-sticker-maker/config.example.json`
-- `.claude/skills/line-sticker-maker/examples/demo-job.config.json`
+- `skills/line-sticker-maker/config.example.json`
+- `skills/line-sticker-maker/examples/demo-job.config.json`
 
 ## Inputs
 
@@ -27,7 +27,7 @@ The canonical full-config examples are:
 | **Output folder** | yes | e.g. `output/my-cat-set` |
 | **Job config JSON** | alt | Full `job.config.json` instead of image + phrase-set |
 
-Design phrase-set first: **`.claude/skills/line-sticker-phrase-design/SKILL.md`**
+Design phrase-set first: **`skills/line-sticker-phrase-design/SKILL.md`**
 
 \* Or pass `--job` with an existing config that already points at both files.
 
@@ -84,7 +84,7 @@ Options:
 Pipeline:
 - [ ] 1. Confirm image path + phrase-set JSON (or job config)
 - [ ] 2. Ensure GEMINI_API_KEY (repo `.env` / `.env.local` / env var)
-- [ ] 2b. (Upload) Fill `line-sticker-maker/credentials.env` once
+- [ ] 2b. (Upload) Fill `.secrets/line-sticker/credentials.env` once
 - [ ] 3. Dry-run: run-from-inputs.mts --dry-run
 - [ ] 4. Generate for real
 - [ ] 5. Spot-check stickers/ + manifest.json gridScores
@@ -165,7 +165,7 @@ manifest. Use `--chroma green|magenta` only when an explicit override is needed.
 
 ### Step 6 — Upload (optional)
 
-See **`.claude/skills/line-sticker-upload/SKILL.md`**.
+See **`skills/line-sticker-upload/SKILL.md`**.
 
 ```bash
 npx tsx scripts/line-sticker/run-line-upload.mts \
@@ -182,4 +182,4 @@ npx tsx scripts/line-sticker/run-line-upload.mts \
 | `line-sticker-maker` | low-level script reference, config fields, manifest |
 | `line-sticker-upload` | Drive + Playwright LINE Creators Market upload |
 
-Details: `.claude/skills/line-sticker-maker/SKILL.md`
+Details: `skills/line-sticker-maker/SKILL.md`

@@ -27,7 +27,7 @@ Headless Gemini image generation; styles reuse **`utils/lineStickerPresets.ts`**
 ## Command
 
 ```bash
-npx tsx .claude/skills/line-sticker-character-ref/scripts/generate-character-ref.mts \
+npx tsx skills/line-sticker-character-ref/scripts/generate-character-ref.mts \
   --concept "圓潤奶油色水獺，頑皮愛撒嬌，短手短腳" \
   --style yurukawa \
   --name "奶油獺" \
@@ -37,7 +37,7 @@ npx tsx .claude/skills/line-sticker-character-ref/scripts/generate-character-ref
 With identity lock (match uploaded character appearance):
 
 ```bash
-npx tsx .claude/skills/line-sticker-character-ref/scripts/generate-character-ref.mts \
+npx tsx skills/line-sticker-character-ref/scripts/generate-character-ref.mts \
   --concept "長髮少女，白襯衫、佩斯利領帶" \
   --style matchUploaded \
   --identity-ref output/my-preview.png \

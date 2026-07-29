@@ -285,8 +285,8 @@ def save_button_state(page: Page) -> dict | None:
 
 
 def dump_provision_debug(page: Page, label: str) -> None:
-    debug_dir = SCRIPT_DIR / "debug_snapshots"
-    debug_dir.mkdir(exist_ok=True)
+    debug_dir = PROJECT_ROOT / "output" / "debug" / "line-sticker-upload"
+    debug_dir.mkdir(parents=True, exist_ok=True)
     safe = re.sub(r"[^\w.-]+", "_", label)[:80]
     shot = debug_dir / f"{safe}.png"
     page.screenshot(path=str(shot), full_page=True)

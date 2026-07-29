@@ -32,18 +32,18 @@ import {
   resolveVaultRoot,
   vaultRegistryPath,
 } from '../../utils/registry/stickerVault.ts';
-import { loadGeminiApiKey } from '../../.claude/skills/shared/loadGeminiApiKey.mts';
+import { loadGeminiApiKey } from '../../skills/shared/loadGeminiApiKey.mts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(SCRIPT_DIR, '../..');
 
 const CHAR_REF_SCRIPT = resolve(
   ROOT,
-  '.claude/skills/line-sticker-character-ref/scripts/generate-character-ref.mts'
+  'skills/line-sticker-character-ref/scripts/generate-character-ref.mts'
 );
 const PHRASE_SCRIPT = resolve(
   ROOT,
-  '.claude/skills/line-sticker-phrase-design/scripts/design-phrase-set.mts'
+  'skills/line-sticker-phrase-design/scripts/design-phrase-set.mts'
 );
 const PIPELINE_SCRIPT = resolve(ROOT, 'scripts/line-sticker/run-from-inputs.mts');
 const BACKFILL_SCRIPT = resolve(ROOT, 'scripts/line-sticker/backfill-sticker-registry.mts');

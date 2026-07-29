@@ -15,31 +15,31 @@ import { dirname, resolve } from 'node:path';
 
 import { GoogleGenAI } from '@google/genai';
 
-import { PHRASE_GENERATION_MODEL } from '../../../../utils/constants.ts';
+import { PHRASE_GENERATION_MODEL } from '../../../utils/constants.ts';
 import {
   auditStickerPhrases,
   isHardRejectStickerPhraseIssue,
   isLineSendablePhrase,
   polishStickerPhrases,
-} from '../../../../utils/lineStickerPhraseQuality.ts';
+} from '../../../utils/lineStickerPhraseQuality.ts';
 import {
   LINE_STICKER_PHRASE_SET_SIZE,
   PHRASE_SET_FORMAT,
   PHRASE_SET_VERSION,
   parsePhraseSetJson,
   type LineStickerPhraseSetJson,
-} from '../../../../utils/lineStickerPhraseSetFormat.ts';
+} from '../../../utils/lineStickerPhraseSetFormat.ts';
 import {
   STICKER_VOICE_PRESETS,
   DEFAULT_STICKER_VOICE_KEY,
-} from '../../../../utils/lineStickerVoicePresets.ts';
-import type { StickerRegistryEntry } from '../../../../utils/stickerRegistryFormat.ts';
-import { parseRegistryJson } from '../../../../utils/stickerRegistryFormat.ts';
+} from '../../../utils/lineStickerVoicePresets.ts';
+import type { StickerRegistryEntry } from '../../../utils/stickerRegistryFormat.ts';
+import { parseRegistryJson } from '../../../utils/stickerRegistryFormat.ts';
 import {
   resolveVaultRoot,
   vaultRegistryPath,
   VAULT_PHRASE_SET_FILENAME,
-} from '../../../../utils/registry/stickerVault.ts';
+} from '../../../utils/registry/stickerVault.ts';
 import { loadApiKey, ROOT_DIR } from './apiKey.mts';
 
 const VISUAL_ONLY_TARGET = 7;

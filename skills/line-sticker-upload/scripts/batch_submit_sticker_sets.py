@@ -17,11 +17,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-# scripts → line-sticker-upload → skills → .claude → <repo>
-PROJECT_ROOT = SCRIPT_DIR.parents[3]
-CREDENTIALS_ENV = PROJECT_ROOT / ".claude/skills/line-sticker-maker/credentials.env"
+# scripts → line-sticker-upload → skills → <repo>
+PROJECT_ROOT = SCRIPT_DIR.parents[2]
+CREDENTIALS_ENV = PROJECT_ROOT / ".secrets/line-sticker/credentials.env"
 DEFAULT_BATCH_ENV_DIR = PROJECT_ROOT / ".line-upload" / ".env.batch"
-MASTER_STORAGE = SCRIPT_DIR / "playwright_line_state.json"
+STATE_DIR = PROJECT_ROOT / ".line-upload" / "state"
+MASTER_STORAGE = STATE_DIR / "playwright_line_state.json"
 
 CREDENTIAL_KEYS = (
     "LINE_EMAIL",
@@ -171,7 +172,7 @@ class SetJob:
 
 
 def worker_storage_path(worker_id: int) -> Path:
-    return SCRIPT_DIR / f"playwright_line_state.w{worker_id}.json"
+    return STATE_DIR / f"playwright_line_state.w{worker_id}.json"
 
 
 def process_one_set(job: SetJob) -> tuple[str, str | None, bool]:
@@ -193,6 +194,7 @@ def process_one_set(job: SetJob) -> tuple[str, str | None, bool]:
     env_path = prepare_set_env(credentials_env, batch_env_dir, set_dir, meta, zip_path)
 
     worker_storage = worker_storage_path(job.worker_id)
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
     if MASTER_STORAGE.is_file():
         shutil.copy2(MASTER_STORAGE, worker_storage)
 

@@ -25,7 +25,7 @@ const INBOX_DIR = resolve(ROOT, 'inbox');
 const MANIFEST_PATH = resolve(INBOX_DIR, 'vault-batch.json');
 const CHAR_REF_SCRIPT = resolve(
   ROOT,
-  '.claude/skills/line-sticker-character-ref/scripts/generate-character-ref.mts'
+  'skills/line-sticker-character-ref/scripts/generate-character-ref.mts'
 );
 const VAULT_IMPORT_SCRIPT = resolve(SCRIPT_DIR, 'vault-import-character.mts');
 const BATCH_OUT_DIR = resolve(ROOT, 'output/inbox-batch');

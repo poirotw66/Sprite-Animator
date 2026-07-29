@@ -29,8 +29,8 @@ describe('LINE sticker production preset', () => {
   });
 
   it.each([
-    '.claude/skills/line-sticker-maker/config.example.json',
-    '.claude/skills/line-sticker-maker/examples/demo-job.config.json',
+    'skills/line-sticker-maker/config.example.json',
+    'skills/line-sticker-maker/examples/demo-job.config.json',
   ])('keeps %s aligned with the preset', (relativePath) => {
     const examplePath = resolve(process.cwd(), relativePath);
     const example = JSON.parse(readFileSync(examplePath, 'utf8'));

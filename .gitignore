@@ -28,6 +28,7 @@ graphify-out/
 .shared/
 .cursor/
 .agents/
+.claude/skills/
 .md/
 test/
 .worktrees/
@@ -39,13 +40,7 @@ test/
 line-stickers-out/
 
 # Local upload skill — secrets & generated input
-.claude/skills/line-sticker-maker/credentials.env
-.claude/skills/line-sticker-upload/scripts/gdrive_credentials.json
-.claude/skills/line-sticker-upload/scripts/gdrive_token.json
-.claude/skills/line-sticker-upload/scripts/playwright_line_state.json
-.claude/skills/line-sticker-upload/scripts/playwright_line_state.w*.json
-.claude/skills/line-sticker-upload/scripts/debug_snapshots/**
-.claude/skills/line-sticker-upload/.env
+.secrets/
 .line-upload/
 
 # Local secrets & machine-local config (never commit)

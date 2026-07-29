@@ -5,11 +5,11 @@ Upload sticker PNGs to Google Drive and return a public folder link.
 One-time setup:
   1. Google Cloud Console -> create project -> enable "Google Drive API"
   2. Credentials -> Create OAuth client ID -> Desktop app
-  3. Download JSON -> save as gdrive_credentials.json next to this script
+  3. Download JSON -> save as .secrets/line-sticker/gdrive_credentials.json
   4. Run: python upload_gdrive.py --auth-only
 
 Usage (from project root):
-  python .claude/skills/line-sticker-upload/scripts/upload_gdrive.py --stage
+  python skills/line-sticker-upload/scripts/upload_gdrive.py --stage
   # Reads SOURCE_ZIP + SPRITE_SHEETS_DIR from .env; uploads directly (no _gdrive_upload copy).
 
 Legacy disk staging (optional):
@@ -39,8 +39,10 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseUpload
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-TOKEN_PATH = SCRIPT_DIR / "gdrive_token.json"
-CREDENTIALS_PATH = SCRIPT_DIR / "gdrive_credentials.json"
+PROJECT_ROOT = SCRIPT_DIR.parents[2]
+SECRET_ROOT = PROJECT_ROOT / ".secrets" / "line-sticker"
+TOKEN_PATH = SECRET_ROOT / "gdrive_token.json"
+CREDENTIALS_PATH = SECRET_ROOT / "gdrive_credentials.json"
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 FOLDER_MIME = "application/vnd.google-apps.folder"
 DEFAULT_WORKERS = 10
@@ -96,7 +98,7 @@ def load_env_file(env_path: Path) -> dict[str, str]:
 def project_root_from_arg(value: Path | None) -> Path:
     if value is not None:
         return value.resolve()
-    return SCRIPT_DIR.parents[3]
+    return PROJECT_ROOT
 
 
 def load_credentials(auth_only: bool) -> Credentials:
@@ -121,6 +123,7 @@ def load_credentials(auth_only: bool) -> Credentials:
             )
         flow = InstalledAppFlow.from_client_secrets_file(str(CREDENTIALS_PATH), SCOPES)
         creds = flow.run_local_server(port=0)
+        TOKEN_PATH.parent.mkdir(parents=True, exist_ok=True)
         TOKEN_PATH.write_text(creds.to_json(), encoding="utf-8")
         print(f"Saved token: {TOKEN_PATH}")
     if auth_only:

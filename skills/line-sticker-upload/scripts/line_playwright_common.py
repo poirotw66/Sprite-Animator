@@ -10,16 +10,16 @@ from pathlib import Path
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeout
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-# scripts → line-sticker-upload → skills → .claude → <repo>
-PROJECT_ROOT = SCRIPT_DIR.parents[3]
-STORAGE = SCRIPT_DIR / "playwright_line_state.json"
+# scripts → line-sticker-upload → skills → <repo>
+PROJECT_ROOT = SCRIPT_DIR.parents[2]
+STORAGE = PROJECT_ROOT / ".line-upload" / "state" / "playwright_line_state.json"
 
 
 def get_storage() -> Path:
     override = os.environ.get("LINE_PLAYWRIGHT_STATE", "").strip()
-    if override:
-        return Path(override)
-    return STORAGE
+    storage = Path(override) if override else STORAGE
+    storage.parent.mkdir(parents=True, exist_ok=True)
+    return storage
 
 
 def load_env(path: Path | None = None) -> dict[str, str]:

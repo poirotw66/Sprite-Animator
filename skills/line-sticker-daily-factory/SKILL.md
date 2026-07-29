@@ -13,7 +13,7 @@ Resume/backfill considers a set completed only after the shared validator confir
 
 Thin agent entry point. Full architecture, flags, and agent checklist:
 
-**[docs/workflows/line-sticker-daily-factory.md](../../../docs/workflows/line-sticker-daily-factory.md)**
+Read repo-root `docs/workflows/line-sticker-daily-factory.md`.
 
 Quick start:
 

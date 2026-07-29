@@ -1,0 +1,4 @@
+interface:
+  display_name: "LINE Sticker Character Reference"
+  short_description: "Generate a reusable LINE sticker character model sheet"
+  default_prompt: "Use $line-sticker-character-ref to generate a character reference sheet from my image."

@@ -4,7 +4,7 @@
  *   npx tsx vault-upload-continue.mts --from 4 --to 13 --parallel 3
  */
 
-import { copyFileSync, existsSync, readFileSync, readdirSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 
@@ -13,8 +13,9 @@ import { resolveSubmitEnabled, resolveUploadStepsFromEnv } from './uploadPipelin
 
 const ROOT = resolve(import.meta.dirname, '../..');
 const RUN_UPLOAD = resolve(import.meta.dirname, 'run-line-upload.mts');
-const UPLOAD_SCRIPTS = resolve(ROOT, '.claude/skills/line-sticker-upload/scripts');
-const MASTER_PLAYWRIGHT = resolve(UPLOAD_SCRIPTS, 'playwright_line_state.json');
+const UPLOAD_SCRIPTS = resolve(ROOT, 'skills/line-sticker-upload/scripts');
+const PLAYWRIGHT_STATE_DIR = resolve(ROOT, '.line-upload/state');
+const MASTER_PLAYWRIGHT = resolve(PLAYWRIGHT_STATE_DIR, 'playwright_line_state.json');
 
 type UploadStep = 'all' | 'provision' | 'zip' | 'submit' | 'gdrive';
 
@@ -46,12 +47,13 @@ function parseArgs(argv: string[]): { from: number; to: number; parallel: number
 }
 
 function workerPlaywrightState(workerId: number): string {
-  return resolve(UPLOAD_SCRIPTS, `playwright_line_state.w${workerId}.json`);
+  return resolve(PLAYWRIGHT_STATE_DIR, `playwright_line_state.w${workerId}.json`);
 }
 
 function ensureWorkerPlaywrightState(workerId: number): void {
   const target = workerPlaywrightState(workerId);
   if (existsSync(MASTER_PLAYWRIGHT)) {
+    mkdirSync(PLAYWRIGHT_STATE_DIR, { recursive: true });
     copyFileSync(MASTER_PLAYWRIGHT, target);
   }
 }

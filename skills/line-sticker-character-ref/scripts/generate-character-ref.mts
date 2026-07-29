@@ -14,8 +14,8 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { STYLE_PRESETS } from '../../../../utils/lineStickerPresets.ts';
-import { DEFAULT_MODEL, defaultResolutionForModel } from '../../../../utils/constants.ts';
+import { STYLE_PRESETS } from '../../../utils/lineStickerPresets.ts';
+import { DEFAULT_MODEL, defaultResolutionForModel } from '../../../utils/constants.ts';
 import { loadGeminiApiKey } from '../../shared/loadGeminiApiKey.mts';
 import { buildCharacterRefPrompt, listStyleKeys } from './characterRefPrompt.ts';
 import { generateCharacterRefImage } from './geminiCharacterRef.mts';

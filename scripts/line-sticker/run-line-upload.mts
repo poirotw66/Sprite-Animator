@@ -22,7 +22,7 @@ import {
 } from './uploadPipeline.mts';
 
 const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const UPLOAD_SKILL_ROOT = resolve(PROJECT_ROOT, '.claude/skills/line-sticker-upload');
+const UPLOAD_SKILL_ROOT = resolve(PROJECT_ROOT, 'skills/line-sticker-upload');
 const UPLOAD_SCRIPTS = resolve(UPLOAD_SKILL_ROOT, 'scripts');
 
 type UploadStep = UploadStepName | 'all';

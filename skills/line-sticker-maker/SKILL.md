@@ -25,16 +25,17 @@ npx tsx scripts/line-sticker/convert-sheet-v2.mts \
   --sheet path/to/4x5.png --out output/my-set
 ```
 
-See [docs/workflows/sheet-converter-v2.md](../../../docs/workflows/sheet-converter-v2.md).
+Read repo-root `docs/workflows/sheet-converter-v2.md`.
 
 ## How to run
 
-**Simplest (image + phrase-set JSON):** see [docs/workflows/line-sticker-pipeline.md](../../../docs/workflows/line-sticker-pipeline.md) or `line-sticker-pipeline` skill.
+**Simplest (image + phrase-set JSON):** read repo-root
+`docs/workflows/line-sticker-pipeline.md` or use the `line-sticker-pipeline` skill.
 
 ```bash
 npx tsx scripts/line-sticker/run-from-inputs.mts \
   --image path/to/character.png \
-  --phrase-set .claude/skills/line-sticker-phrase-design/example/daily-set-40.json \
+  --phrase-set skills/line-sticker-phrase-design/example/daily-set-40.json \
   --out output/my-set
 ```
 
@@ -42,7 +43,7 @@ npx tsx scripts/line-sticker/run-from-inputs.mts \
 
 ```bash
 npx tsx scripts/line-sticker/generate.mts \
-  --config .claude/skills/line-sticker-maker/examples/demo-job.config.json \
+  --config skills/line-sticker-maker/examples/demo-job.config.json \
   --out output/my-set
 ```
 
@@ -88,14 +89,14 @@ use `manifest.json` → `activeSheets`, or fall back to `sheet-1`, `sheet-2`.
 
 ## Upload to LINE Creators Market
 
-Upload scripts live under `.claude/skills/line-sticker-upload/`.
-See **`.claude/skills/line-sticker-upload/SKILL.md`** for Drive / Playwright setup.
+Upload scripts live under `skills/line-sticker-upload/`.
+See **`skills/line-sticker-upload/SKILL.md`** for Drive / Playwright setup.
 
 ### Environment files (two layers)
 
 | File | Purpose | When |
 |------|---------|------|
-| `.claude/skills/line-sticker-maker/credentials.env` | Shared account secrets (`LINE_EMAIL`, `LINE_PASSWORD`, `LINE_CREATOR_ID`, Google Drive parent) | **Once** — copy from `credentials.env.example` |
+| `.secrets/line-sticker/credentials.env` | Shared account secrets (`LINE_EMAIL`, `LINE_PASSWORD`, `LINE_CREATOR_ID`, Google Drive parent) | **Once** — copy from `credentials.env.example` |
 | `<out>/.env.batch/{Set_Name}.env` | Per-set titles, paths, runtime IDs (`LINE_STICKER_ID`, `GDRIVE_*`) | **Auto** — written by `generate` / `finalize` / `sync-upload-input` |
 | Repo `.env` / `.env.local` | `GEMINI_API_KEY` only (image generation) | Optional |
 
@@ -103,8 +104,8 @@ See **`.claude/skills/line-sticker-upload/SKILL.md`** for Drive / Playwright set
 You do not copy secrets into `.env.batch` by hand.
 
 ```bash
-cp .claude/skills/line-sticker-maker/credentials.env.example \
-   .claude/skills/line-sticker-maker/credentials.env
+cp skills/line-sticker-maker/credentials.env.example \
+   .secrets/line-sticker/credentials.env
 # fill LINE_EMAIL, LINE_PASSWORD, LINE_CREATOR_ID, GOOGLE_*
 
 npx tsx scripts/line-sticker/run-line-upload.mts \

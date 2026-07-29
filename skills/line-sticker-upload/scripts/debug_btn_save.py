@@ -10,7 +10,7 @@ os.environ.setdefault("PYTHONUTF8", "1")
 
 from playwright.sync_api import sync_playwright
 
-from line_playwright_common import PROJECT_ROOT, STORAGE, dismiss_overlays, load_env
+from line_playwright_common import PROJECT_ROOT, dismiss_overlays, get_storage, load_env
 
 
 def main() -> None:
@@ -19,7 +19,7 @@ def main() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         ctx = browser.new_context(
-            storage_state=str(STORAGE),
+            storage_state=str(get_storage()),
             locale="zh-TW",
             viewport={"width": 1400, "height": 900},
         )

@@ -1,0 +1,4 @@
+interface:
+  display_name: "LINE Sticker Upload"
+  short_description: "Stage and upload stickers to LINE Creators Market"
+  default_prompt: "Use $line-sticker-upload to stage and upload my packaged sticker set to LINE Creators Market."

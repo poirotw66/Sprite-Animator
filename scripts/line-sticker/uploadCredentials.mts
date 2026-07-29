@@ -12,11 +12,11 @@ import { fileURLToPath } from 'node:url';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = resolve(SCRIPT_DIR, '../..');
-const MAKER_SKILL_ROOT = resolve(PROJECT_ROOT, '.claude/skills/line-sticker-maker');
+const LOCAL_SECRET_ROOT = resolve(PROJECT_ROOT, '.secrets/line-sticker');
 
-export const CREDENTIALS_ENV = resolve(MAKER_SKILL_ROOT, 'credentials.env');
+export const CREDENTIALS_ENV = resolve(LOCAL_SECRET_ROOT, 'credentials.env');
 /** Legacy monolithic env; used only if credentials.env is missing or incomplete. */
-const LEGACY_UPLOAD_ENV = resolve(PROJECT_ROOT, '.claude/skills/line-sticker-upload/.env');
+const LEGACY_UPLOAD_ENV = resolve(LOCAL_SECRET_ROOT, 'upload.env');
 
 const CREDENTIAL_KEYS = [
   'LINE_EMAIL',
@@ -96,7 +96,7 @@ export function extractSetNameFromBatch(text: string): string | null {
 export function buildBatchEnvContent(fields: BatchEnvFields, relBase: string): string {
   const rel = relBase.replace(/\\/g, '/');
   return `${envHeader(fields.setName)}
-# Account secrets: .claude/skills/line-sticker-maker/credentials.env (merged at upload time)
+# Account secrets: .secrets/line-sticker/credentials.env (merged at upload time)
 
 LINE_STICKER_ID=
 

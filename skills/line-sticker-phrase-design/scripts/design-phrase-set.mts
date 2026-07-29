@@ -18,34 +18,34 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 
-import { generateActionDescriptions } from '../../../../services/gemini/actionDescriptions.ts';
-import { generateStickerPhrases } from '../../../../services/gemini/stickerPhrases.ts';
+import { generateActionDescriptions } from '../../../services/gemini/actionDescriptions.ts';
+import { generateStickerPhrases } from '../../../services/gemini/stickerPhrases.ts';
 import {
   auditStickerPhrases,
   isHardRejectStickerPhraseIssue,
   polishStickerPhrases,
-} from '../../../../utils/lineStickerPhraseQuality.ts';
+} from '../../../utils/lineStickerPhraseQuality.ts';
 import {
   buildPhraseSetExport,
   parsePhraseSetJson,
   PHRASE_SET_FORMAT,
   PHRASE_SET_VERSION,
   type LineStickerPhraseSetJson,
-} from '../../../../utils/lineStickerPhraseSetFormat.ts';
+} from '../../../utils/lineStickerPhraseSetFormat.ts';
 import {
   expandThemePhrasesForFrames,
   getActionHint,
   TEXT_PRESETS,
   THEME_PRESETS,
   type ThemeOption,
-} from '../../../../utils/lineStickerPrompt.ts';
+} from '../../../utils/lineStickerPrompt.ts';
 import {
   listVoiceChoicesZh,
   resolveThemeKey,
   resolveVoiceKey,
   suggestPhraseSetNameZh,
-} from '../../../../utils/lineStickerSetNaming.ts';
-import { resolveStickerVoice } from '../../../../utils/lineStickerVoicePresets.ts';
+} from '../../../utils/lineStickerSetNaming.ts';
+import { resolveStickerVoice } from '../../../utils/lineStickerVoicePresets.ts';
 import { loadApiKey, ROOT_DIR } from './apiKey.mts';
 
 const THEME_KEYS = Object.keys(THEME_PRESETS);

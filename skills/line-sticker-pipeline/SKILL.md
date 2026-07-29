@@ -10,8 +10,9 @@ description: >-
 
 # LINE Sticker Pipeline
 
-Canonical skill sources live under `.claude/skills`. `.agents/skills` is a generated
-Codex runtime mirror; refresh it with `npm run skills:sync:line-sticker` after edits.
+Canonical skill sources live under `skills/`. `.agents/skills/` and
+`.claude/skills/` are generated runtime mirrors; refresh both with
+`npm run skills:sync:line-sticker` after edits.
 
 The shared production preset is defined in `utils/lineStickerProductionPreset.ts`:
 2K when supported, guided 4×5 layout with every character/style reference attached, automatic green/magenta selection with `core` chroma removal, blocking chroma/content QA, programmatic captions,
@@ -19,7 +20,7 @@ sheet-1 style anchoring, and at most 3 generation attempts per sheet.
 
 Thin agent entry point. Full workflow, commands, and checklists:
 
-**[docs/workflows/line-sticker-pipeline.md](../../../docs/workflows/line-sticker-pipeline.md)**
+Read repo-root `docs/workflows/line-sticker-pipeline.md`.
 
 Quick start (repo root):
 

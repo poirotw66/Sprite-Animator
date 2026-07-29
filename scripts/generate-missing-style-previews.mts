@@ -11,7 +11,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { loadGeminiApiKey } from '../.claude/skills/shared/loadGeminiApiKey.mts';
+import { loadGeminiApiKey } from '../skills/shared/loadGeminiApiKey.mts';
 import { generateSpriteSheet } from '../services/gemini/spriteSheet.ts';
 import { DEFAULT_MODEL, defaultResolutionForModel } from '../utils/constants.ts';
 import {

@@ -9,7 +9,7 @@ description: >-
 # LINE Sticker Upload
 
 Google Drive and Playwright scripts live at:
-`.claude/skills/line-sticker-upload/scripts/`
+`skills/line-sticker-upload/scripts/`
 
 ## Environment files
 
@@ -17,9 +17,9 @@ Three files, three roles — do not mix secrets into the batch env by hand.
 
 | File | Contains | Created by |
 |------|----------|------------|
-| `line-sticker-maker/credentials.env` | `LINE_EMAIL`, `LINE_PASSWORD`, `LINE_CREATOR_ID`, `GOOGLE_*`, `GDRIVE_PARENT_FOLDER` | You (once) — `credentials.env.example` |
+| `.secrets/line-sticker/credentials.env` | `LINE_EMAIL`, `LINE_PASSWORD`, `LINE_CREATOR_ID`, `GOOGLE_*`, `GDRIVE_PARENT_FOLDER` | You (once) — `credentials.env.example` |
 | `<out>/.env.batch/{Set_Name}.env` | Shop titles, ZIP/sprite paths, runtime `LINE_STICKER_ID`, `GDRIVE_FOLDER_ID`, `GDRIVE_SHARE_URL` | `generate` / `finalize` / `sync-upload-input` |
-| `line-sticker-upload/.env` | **Legacy** — all-in-one file for manual Python runs | Optional fallback if `credentials.env` missing |
+| `.secrets/line-sticker/upload.env` | **Legacy** — all-in-one file for manual Python runs | Optional fallback if `credentials.env` missing |
 
 **Normal flow:** fill `credentials.env` → run `run-line-upload.mts --env <batch>`.
 The wrapper merges credentials into the batch file automatically.
@@ -31,23 +31,24 @@ The wrapper merges credentials into the batch file automatically.
 
 OAuth / session artifacts (never commit):
 
-- `scripts/gdrive_credentials.json` — Google Desktop OAuth client
-- `scripts/gdrive_token.json` — Drive API token (auto-refreshed)
-- `scripts/playwright_line_state.json` — LINE login session (auto-created)
+- `.secrets/line-sticker/gdrive_credentials.json` — Google Desktop OAuth client
+- `.secrets/line-sticker/gdrive_token.json` — Drive API token (auto-refreshed)
+- `.line-upload/state/playwright_line_state.json` — LINE login session (auto-created)
 
 ## Setup (once)
 
 ```bash
-pip install -r .claude/skills/line-sticker-upload/scripts/requirements-gdrive.txt
-pip install -r .claude/skills/line-sticker-upload/scripts/requirements-playwright.txt
+pip install -r skills/line-sticker-upload/scripts/requirements-gdrive.txt
+pip install -r skills/line-sticker-upload/scripts/requirements-playwright.txt
 playwright install chromium
 
-cp .claude/skills/line-sticker-maker/credentials.env.example \
-   .claude/skills/line-sticker-maker/credentials.env
+cp skills/line-sticker-maker/credentials.env.example \
+   .secrets/line-sticker/credentials.env
 # fill LINE_EMAIL, LINE_PASSWORD, LINE_CREATOR_ID, GOOGLE_*
 ```
 
-Place `gdrive_credentials.json` in `scripts/` (Google Cloud Console → Desktop OAuth).
+Place `gdrive_credentials.json` at
+`.secrets/line-sticker/gdrive_credentials.json` (Google Cloud Console → Desktop OAuth).
 
 ## Workflow with line-sticker-maker
 
@@ -64,7 +65,7 @@ line-sticker-maker (generate.mts)
 
 ```bash
 npx tsx scripts/line-sticker/generate.mts \
-  --config .claude/skills/line-sticker-maker/examples/demo-job.config.json \
+  --config skills/line-sticker-maker/examples/demo-job.config.json \
   --out output/my-set
 ```
 
@@ -73,7 +74,7 @@ npx tsx scripts/line-sticker/generate.mts \
 ```bash
 npx tsx scripts/line-sticker/sync-upload-input.mts \
   --source output/my-set \
-  --config .claude/skills/line-sticker-maker/examples/demo-job.config.json
+  --config skills/line-sticker-maker/examples/demo-job.config.json
 ```
 
 ### 3. Upload to LINE
@@ -109,7 +110,7 @@ All Python scripts require `--env <out>/.env.batch/Set_Name.env` (credentials me
 ### Batch upload (multiple sets)
 
 ```bash
-python .claude/skills/line-sticker-upload/scripts/batch_submit_sticker_sets.py \
+python skills/line-sticker-upload/scripts/batch_submit_sticker_sets.py \
   .line-upload/input/706
 ```
 
@@ -127,7 +128,9 @@ Uses `credentials.env` + writes batch env files under `.line-upload/.env.batch/`
 
 ## Secrets (never commit)
 
-- `.claude/skills/line-sticker-maker/credentials.env`
-- `.claude/skills/line-sticker-upload/.env` (legacy)
+- `.secrets/line-sticker/credentials.env`
+- `.secrets/line-sticker/upload.env` (legacy)
 - `<out>/.env.batch/*.env` (may contain runtime IDs after provision)
-- `scripts/playwright_line_state.json`, `gdrive_token.json`, `gdrive_credentials.json`
+- `.line-upload/state/playwright_line_state*.json`
+- `.secrets/line-sticker/gdrive_token.json`
+- `.secrets/line-sticker/gdrive_credentials.json`

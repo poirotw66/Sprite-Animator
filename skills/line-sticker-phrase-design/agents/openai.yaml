@@ -1,0 +1,4 @@
+interface:
+  display_name: "LINE Sticker Phrase Design"
+  short_description: "Design validated phrases and actions for a sticker set"
+  default_prompt: "Use $line-sticker-phrase-design to design phrases and actions for my LINE sticker set."

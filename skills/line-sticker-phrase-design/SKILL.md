@@ -125,7 +125,7 @@ myVoice: {
 ### AI design (recommended)
 
 ```bash
-npx tsx .claude/skills/line-sticker-phrase-design/scripts/design-phrase-set.mts \
+npx tsx skills/line-sticker-phrase-design/scripts/design-phrase-set.mts \
   --theme daily \
   --mode set --count 40 \
   --language zh-TW \
@@ -257,7 +257,7 @@ npx tsx scripts/line-sticker/run-from-inputs.mts \
   --out output/my-set
 ```
 
-See **`.claude/skills/line-sticker-pipeline/SKILL.md`**.
+See **`skills/line-sticker-pipeline/SKILL.md`**.
 
 ## Flags reference
 
