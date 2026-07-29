@@ -56,7 +56,10 @@ export const useSpriteSheet = (
   const [frameOverrides, setFrameOverrides] = useState<FrameOverride[]>([]);
   const lastAlignedSheetRef = useRef<string | null>(null);
   const sliceSettingsRef = useRef(sliceSettings);
-  sliceSettingsRef.current = sliceSettings;
+
+  useEffect(() => {
+    sliceSettingsRef.current = sliceSettings;
+  }, [sliceSettings]);
 
   // Get the actual chroma key color based on selection
   const activeChromaKeyColor = CHROMA_KEY_COLORS[chromaKeyColor];

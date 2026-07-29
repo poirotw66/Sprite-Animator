@@ -2,7 +2,8 @@
 """Print LINE sticker project review status as one JSON line on stdout.
 
 Usage:
-    python check_sticker_status.py --env output/.../Set_Name.env [--headless]
+    uv run --locked python skills/line-sticker-upload/scripts/check_sticker_status.py \
+      --env output/.../Set_Name.env [--headless]
 """
 
 from __future__ import annotations

@@ -1,6 +1,6 @@
 """
 Assert-based self-check for sheet_converter_v2.
-Run: python tests/test_v2_selfcheck.py
+Run: uv run --locked python -B -m pytest
 """
 
 from __future__ import annotations
@@ -70,7 +70,7 @@ def test_decontaminate_processes_opaque_edge() -> None:
     assert cleaned[4, 4, 3] == 255
 
 
-def test_convert_sheet_writes_expected_count(tmp_dir: Path) -> None:
+def test_convert_sheet_writes_expected_count(tmp_path: Path) -> None:
     height, width = 400, 400
     rgb = np.full((height, width, 3), 245, dtype=np.uint8)
     for row in range(5):
@@ -78,9 +78,9 @@ def test_convert_sheet_writes_expected_count(tmp_dir: Path) -> None:
             y0 = int(row * height / 5) + 8
             x0 = int(col * width / 4) + 8
             rgb[y0 : y0 + 50, x0 : x0 + 60] = (180, 40, 40)
-    sheet = tmp_dir / "sheet.png"
+    sheet = tmp_path / "sheet.png"
     Image.fromarray(rgb, mode="RGB").save(sheet)
-    out = tmp_dir / "out"
+    out = tmp_path / "out"
     result = convert_sheet(sheet, out, ConvertOptions(cols=4, rows=5, fit_line_spec=True))
     assert len(result.sticker_paths) == 20
     assert all(path.exists() for path in result.sticker_paths)

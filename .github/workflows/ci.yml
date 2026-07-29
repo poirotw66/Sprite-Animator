@@ -5,6 +5,16 @@ on:
     branches:
       - main
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   quality-gate:
@@ -19,10 +29,22 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install Node dependencies
         run: npm ci
 
-      - name: Check LINE sticker skill mirror
+      - name: Setup uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: '0.11.32'
+          enable-cache: true
+
+      - name: Install locked Python environment
+        run: uv sync --locked --dev
+
+      - name: Security audit
+        run: npm run security:audit
+
+      - name: Check LINE sticker skill mirrors
         run: npm run skills:check:line-sticker
 
       - name: Type check
@@ -31,8 +53,35 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Test
+      - name: Test TypeScript
         run: npm run test
 
+      - name: Test Python
+        run: npm run python:check
+
       - name: Build
+        env:
+          GITHUB_PAGES: 'true'
         run: npm run build
+
+      - name: Setup Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: quality-gate
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

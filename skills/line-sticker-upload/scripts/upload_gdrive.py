@@ -6,14 +6,14 @@ One-time setup:
   1. Google Cloud Console -> create project -> enable "Google Drive API"
   2. Credentials -> Create OAuth client ID -> Desktop app
   3. Download JSON -> save as .secrets/line-sticker/gdrive_credentials.json
-  4. Run: python upload_gdrive.py --auth-only
+  4. Run: uv run --locked python skills/line-sticker-upload/scripts/upload_gdrive.py --auth-only
 
 Usage (from project root):
-  python skills/line-sticker-upload/scripts/upload_gdrive.py --stage
+  uv run --locked python skills/line-sticker-upload/scripts/upload_gdrive.py --stage
   # Reads SOURCE_ZIP + SPRITE_SHEETS_DIR from .env; uploads directly (no _gdrive_upload copy).
 
 Legacy disk staging (optional):
-  python upload_gdrive.py --use-staging --stage
+  uv run --locked python skills/line-sticker-upload/scripts/upload_gdrive.py --use-staging --stage
 """
 
 from __future__ import annotations

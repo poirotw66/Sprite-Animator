@@ -3,9 +3,9 @@
 CLI for ChatGPT Sticker Sheet Converter V2 (additive).
 
 Examples:
-  python convert.py --sheet path/to/sheet.png --out output/my-set
-  python convert.py --input input/ --output output/ --zip
-  python convert.py --self-check
+  uv run --locked python convert.py --sheet path/to/sheet.png --out output/my-set
+  uv run --locked python convert.py --input input/ --output output/ --zip
+  uv run --locked python convert.py --self-check
 """
 
 from __future__ import annotations

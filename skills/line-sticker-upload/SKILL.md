@@ -38,9 +38,8 @@ OAuth / session artifacts (never commit):
 ## Setup (once)
 
 ```bash
-pip install -r skills/line-sticker-upload/scripts/requirements-gdrive.txt
-pip install -r skills/line-sticker-upload/scripts/requirements-playwright.txt
-playwright install chromium
+uv sync --locked --dev
+uv run playwright install chromium
 
 cp skills/line-sticker-maker/credentials.env.example \
    .secrets/line-sticker/credentials.env
@@ -110,7 +109,7 @@ All Python scripts require `--env <out>/.env.batch/Set_Name.env` (credentials me
 ### Batch upload (multiple sets)
 
 ```bash
-python skills/line-sticker-upload/scripts/batch_submit_sticker_sets.py \
+uv run --locked python skills/line-sticker-upload/scripts/batch_submit_sticker_sets.py \
   .line-upload/input/706
 ```
 

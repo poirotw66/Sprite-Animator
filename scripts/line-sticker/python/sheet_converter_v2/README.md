@@ -24,22 +24,22 @@ headless slice modes (`template` / `detect` / `divider`).
 ## Install
 
 ```bash
-pip install -r scripts/line-sticker/python/sheet_converter_v2/requirements.txt
+uv sync --locked --dev
 ```
 
 ## Usage
 
 ```bash
 # Self-check
-python scripts/line-sticker/python/sheet_converter_v2/convert.py --self-check
+uv run --locked python scripts/line-sticker/python/sheet_converter_v2/convert.py --self-check
 
 # Single sheet → 20 PNGs
-python scripts/line-sticker/python/sheet_converter_v2/convert.py \
+uv run --locked python scripts/line-sticker/python/sheet_converter_v2/convert.py \
   --sheet path/to/4x5.png \
   --out output/my-set
 
 # Batch
-python scripts/line-sticker/python/sheet_converter_v2/convert.py \
+uv run --locked python scripts/line-sticker/python/sheet_converter_v2/convert.py \
   --input input/ \
   --output output/ \
   --zip

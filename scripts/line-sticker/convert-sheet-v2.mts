@@ -16,12 +16,11 @@ const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = resolve(SCRIPT_DIR, '../..');
 const CONVERT_PY = resolve(SCRIPT_DIR, 'python/sheet_converter_v2/convert.py');
 
-function resolvePython(): string {
-  for (const candidate of ['python3', 'python']) {
-    const probe = spawnSync(candidate, ['--version'], { encoding: 'utf8' });
-    if (probe.status === 0) return candidate;
+function assertUvAvailable(): void {
+  const probe = spawnSync('uv', ['--version'], { encoding: 'utf8' });
+  if (probe.status !== 0) {
+    throw new Error('uv not found — install uv, then run `uv sync --locked --dev`');
   }
-  throw new Error('python3/python not found — install Python 3 + pip deps from sheet_converter_v2/requirements.txt');
 }
 
 if (!existsSync(CONVERT_PY)) {
@@ -29,11 +28,15 @@ if (!existsSync(CONVERT_PY)) {
   process.exit(1);
 }
 
-const python = resolvePython();
-const result = spawnSync(python, [CONVERT_PY, ...process.argv.slice(2)], {
-  cwd: PROJECT_ROOT,
-  stdio: 'inherit',
-  env: process.env,
-});
+assertUvAvailable();
+const result = spawnSync(
+  'uv',
+  ['run', '--locked', 'python', CONVERT_PY, ...process.argv.slice(2)],
+  {
+    cwd: PROJECT_ROOT,
+    stdio: 'inherit',
+    env: process.env,
+  }
+);
 
 process.exit(result.status ?? 1);
