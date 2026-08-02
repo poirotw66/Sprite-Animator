@@ -10,15 +10,25 @@ import {
 } from './lineStickerBundledFontCatalog';
 import type { LineStickerFontKey } from './lineStickerPresets';
 
-const FONT_URL_BY_PRESET: Record<BundledStickerFontPresetKey, string> = {
-  liyushoushu: new URL('../fonts/LiyuShoushu.ttf', import.meta.url).href,
-  fashionBitmap16: new URL('../fonts/FashionBitmap16_0.092.ttf', import.meta.url).href,
-  kanaka: new URL('../fonts/073 TEGUSE - Kanaka Font_240705.ttf', import.meta.url).href,
-  naikai: new URL('../fonts/NaikaiFont-Regular-Lite.ttf', import.meta.url).href,
-};
+/**
+ * The glob remains empty in a clean checkout where the local font vault is
+ * intentionally absent. That keeps the browser on its existing CJK fallback
+ * stack without Vite emitting a broken TTF URL.
+ */
+const browserFontUrls = import.meta.glob('../fonts/*.woff2', {
+  eager: true,
+  import: 'default',
+  query: '?url',
+}) as Record<string, string>;
 
 const loadedFamilies = new Set<string>();
 const loadingByFamily = new Map<string, Promise<void>>();
+const unavailableFamilies = new Set<string>();
+
+function browserFontUrlForPreset(presetKey: BundledStickerFontPresetKey): string | undefined {
+  const { browserFile } = BUNDLED_STICKER_FONT_BY_PRESET[presetKey];
+  return browserFontUrls[`../fonts/${browserFile}`];
+}
 
 async function loadBundledFont(presetKey: BundledStickerFontPresetKey): Promise<void> {
   if (typeof document === 'undefined') {
@@ -26,7 +36,7 @@ async function loadBundledFont(presetKey: BundledStickerFontPresetKey): Promise<
   }
 
   const { family } = BUNDLED_STICKER_FONT_BY_PRESET[presetKey];
-  if (loadedFamilies.has(family)) {
+  if (loadedFamilies.has(family) || unavailableFamilies.has(family)) {
     return;
   }
 
@@ -37,15 +47,26 @@ async function loadBundledFont(presetKey: BundledStickerFontPresetKey): Promise<
   }
 
   const loadPromise = (async () => {
-    const url = FONT_URL_BY_PRESET[presetKey];
-    const face = new FontFace(family, `url("${url}")`, {
-      style: 'normal',
-      weight: '400',
-      display: 'swap',
-    });
-    await face.load();
-    document.fonts.add(face);
-    loadedFamilies.add(family);
+    const url = browserFontUrlForPreset(presetKey);
+    if (!url || typeof FontFace === 'undefined') {
+      unavailableFamilies.add(family);
+      return;
+    }
+
+    try {
+      const face = new FontFace(family, `url("${url}") format("woff2")`, {
+        style: 'normal',
+        weight: '400',
+        display: 'swap',
+      });
+      await face.load();
+      document.fonts.add(face);
+      loadedFamilies.add(family);
+    } catch {
+      // The CSS stack already contains CJK-capable system fallbacks. Do not turn
+      // an optional display font into a failed sticker render or repeat the request.
+      unavailableFamilies.add(family);
+    }
   })();
 
   loadingByFamily.set(family, loadPromise);

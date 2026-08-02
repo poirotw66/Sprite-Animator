@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
 import { SettingsModal } from '../components/SettingsModal';
 import { RenderProfilerDebugPanel } from '../components/RenderProfilerDebugPanel';
@@ -13,6 +13,8 @@ import { useLineStickerSheetGeneration } from '../hooks/useLineStickerSheetGener
 import { useLineStickerThemePresetSync } from '../hooks/useLineStickerThemePresetSync';
 import { useLineStickerSlicing } from '../hooks/useLineStickerSlicing';
 import { useLineStickerPromptPreview } from '../hooks/useLineStickerPromptPreview';
+import { useLineStickerPhraseSetTransfer } from '../hooks/useLineStickerPhraseSetTransfer';
+import { useLineStickerStylePreview } from '../hooks/useLineStickerStylePreview';
 import { useSpriteSheetFlow } from '../hooks/useSpriteSheetFlow';
 import { useLineStickerSettingsPanelViewModel } from '../hooks/useLineStickerSettingsPanelViewModel';
 import { useLineStickerResultPanelViewModel } from '../hooks/useLineStickerResultPanelViewModel';
@@ -25,7 +27,6 @@ import {
 import { logger } from '../utils/logger';
 import { ChromaKeyColorType, BgRemovalMethod } from '../types';
 import { DEFAULT_SLICE_SETTINGS, LINE_STICKER_CELL_INSET_RATIO } from '../utils/constants';
-import { buildPhraseSetExport, parsePhraseSetJson } from '../utils/lineStickerPhraseSetFormat';
 import {
     createLineStickerSetSliceSettings,
     DEFAULT_LINE_STICKER_SHEET_INDEX,
@@ -59,16 +60,12 @@ import {
     TEXT_PRESETS,
     TEXT_COLOR_PRESETS,
     FONT_PRESETS,
-    DEFAULT_CHARACTER_SLOT,
-    STYLE_PRESETS,
-    buildLineStickerStylePreviewPrompt,
     resolveFontKeyForStyle,
     type ThemeOption,
     type LineStickerStyleOption,
     type LineStickerPromptVersion,
     type LineStickerTextRendering,
 } from '../utils/lineStickerPrompt';
-import { generateSpriteSheet } from '../services/geminiService';
 import type { ActionDedupeStrength } from '../services/gemini/actionDescriptions';
 import { DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING, type ProgrammaticTextOverlayTuning } from '../utils/lineStickerTextOverlay';
 import {
@@ -147,8 +144,6 @@ const LineStickerPage: React.FC = () => {
     );
     const [singlePhrasesList, setSinglePhrasesList] = useState<string[]>([]);
     const [stylePreviewImage, setStylePreviewImage] = useState<string | null>(null);
-    const [isGeneratingStylePreview, setIsGeneratingStylePreview] = useState(false);
-
     // Set mode state
     const [stickerSetMode, setStickerSetMode] = useState(false);
     const [setPhrasesList, setSetPhrasesList] = useState<string[]>([]);
@@ -162,7 +157,6 @@ const LineStickerPage: React.FC = () => {
 
     const [spriteSheetImage, setSpriteSheetImage] = useState<string | null>(null);
     const [processedSpriteSheet, setProcessedSpriteSheet] = useState<string | null>(null);
-    const phraseSetFileInputRef = useRef<HTMLInputElement>(null);
     const [stickerFrames, setStickerFrames] = useState<string[]>([]);
     const [selectedFrames, setSelectedFrames] = useState<boolean[]>([]);
     const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('green');
@@ -478,90 +472,37 @@ const LineStickerPage: React.FC = () => {
         setIsGenerating(false);
     }, [cancelActiveGeneration, resetSetModeGeneratedOutputs, resetSingleModeGeneratedOutputs, lineStickerProgrammaticOverlayCore, setError, setIsGenerating, setStatusText]);
 
-    useEffect(() => {
-        setStylePreviewImage(null);
-    }, [selectedStyle, customStyleText, sourceImage]);
+    const handleUseStylePreview = useCallback((previewImage: string) => {
+        resetGeneratedOutputs();
+        setSourceImage(previewImage);
+    }, [resetGeneratedOutputs]);
+
+    const {
+        isGeneratingStylePreview,
+        handleGenerateStylePreview,
+        handleDownloadStylePreview,
+        handleUseStylePreviewAsReference,
+    } = useLineStickerStylePreview({
+        sourceImage,
+        stylePreviewImage,
+        setStylePreviewImage,
+        selectedStyle,
+        customStyleText,
+        chromaKeyColor,
+        selectedModel,
+        stylePreviewResolution,
+        getEffectiveApiKey,
+        setError,
+        setShowSettings,
+        errorApiKey: lineStickerT.errorApiKey,
+        errorNoImage: lineStickerT.errorNoImage,
+        errorGeneration: lineStickerT.errorGeneration,
+        onUseStylePreview: handleUseStylePreview,
+    });
 
     useEffect(() => {
         setSelectedFont(resolveFontKeyForStyle(selectedStyle));
     }, [selectedStyle]);
-
-    const handleGenerateStylePreview = useCallback(async () => {
-        const key = getEffectiveApiKey();
-        if (!key) {
-            setError(lineStickerT.errorApiKey);
-            setShowSettings(true);
-            return;
-        }
-        if (!sourceImage) {
-            setError(lineStickerT.errorNoImage);
-            return;
-        }
-
-        const styleSlot = selectedStyle === 'custom'
-            ? {
-                styleType: customStyleText.trim() || 'Custom style from user input.',
-                drawingMethod: customStyleText.trim()
-                    ? `Apply this style consistently: ${customStyleText.trim()}`
-                    : 'Follow the user-provided style description.',
-            }
-            : STYLE_PRESETS[selectedStyle];
-        const prompt = buildLineStickerStylePreviewPrompt({
-            style: styleSlot,
-            character: DEFAULT_CHARACTER_SLOT,
-        });
-
-        setError(null);
-        setIsGeneratingStylePreview(true);
-        try {
-            const preview = await generateSpriteSheet(
-                sourceImage,
-                prompt,
-                1,
-                1,
-                key,
-                selectedModel,
-                undefined,
-                chromaKeyColor,
-                stylePreviewResolution,
-                false
-            );
-            setStylePreviewImage(preview);
-        } catch (err: unknown) {
-            const fallbackMessage = err instanceof Error ? err.message : lineStickerT.errorGeneration;
-            setError(fallbackMessage);
-        } finally {
-            setIsGeneratingStylePreview(false);
-        }
-    }, [
-        chromaKeyColor,
-        customStyleText,
-        getEffectiveApiKey,
-        lineStickerT.errorApiKey,
-        lineStickerT.errorGeneration,
-        lineStickerT.errorNoImage,
-        stylePreviewResolution,
-        selectedModel,
-        selectedStyle,
-        setError,
-        setShowSettings,
-        sourceImage,
-    ]);
-
-    const handleDownloadStylePreview = useCallback(() => {
-        if (!stylePreviewImage) return;
-        const link = document.createElement('a');
-        link.href = stylePreviewImage;
-        link.download = 'line-sticker-style-preview.png';
-        link.click();
-    }, [stylePreviewImage]);
-
-    const handleUseStylePreviewAsReference = useCallback(() => {
-        if (!stylePreviewImage) return;
-        const nextSource = stylePreviewImage;
-        resetGeneratedOutputs();
-        setSourceImage(nextSource);
-    }, [resetGeneratedOutputs, setSourceImage, stylePreviewImage]);
 
     const handleStickerSetModeChange = useCallback((nextMode: boolean) => {
         if (nextMode === stickerSetMode) {
@@ -570,6 +511,29 @@ const LineStickerPage: React.FC = () => {
         resetGeneratedOutputs();
         setStickerSetMode(nextMode);
     }, [resetGeneratedOutputs, stickerSetMode]);
+
+    const {
+        phraseSetFileInputRef,
+        handleDownloadPhraseSet,
+        handleUploadPhraseSet,
+    } = useLineStickerPhraseSetTransfer({
+        stickerSetMode,
+        gridCols: effectiveGridCols,
+        gridRows: effectiveGridRows,
+        phrases: phrasesForHook,
+        actionDescs: actionDescsForHook,
+        onStickerSetModeChange: handleStickerSetModeChange,
+        setGridCols,
+        setGridRows,
+        setSingleSheetSliceSettings: singleSheetFlow.setSliceSettings,
+        setSinglePhrasesList,
+        setSetPhrasesList,
+        setActionDescsList,
+        setSheetSliceSettings,
+        setCurrentSheetIndex,
+        setError,
+        invalidFileMessage: lineStickerT.lineStickerPhraseSetUploadError,
+    });
 
     const {
         fileInputRef,
@@ -707,85 +671,6 @@ const LineStickerPage: React.FC = () => {
         updateActionDescAt,
         currentSheetIndex,
     ]);
-
-    const handleSpriteSheetUpload = useCallback(
-        (e: React.ChangeEvent<HTMLInputElement>) => {
-            const file = e.target.files?.[0];
-            if (!file || !file.type.startsWith('image/')) return;
-            const reader = new FileReader();
-            reader.onload = () => {
-                const dataUrl = reader.result as string;
-                if (stickerSetMode) {
-                    setSheetImages(prev => {
-                        const n = [...prev];
-                        n[currentSheetIndex] = dataUrl;
-                        return n;
-                    });
-                    setProcessedSheetImages(prev => {
-                        const n = [...prev];
-                        n[currentSheetIndex] = null;
-                        return n;
-                    });
-                } else {
-                    singleSheetFlow.setImage(dataUrl);
-                }
-            };
-            reader.readAsDataURL(file);
-            e.target.value = '';
-        },
-        [stickerSetMode, currentSheetIndex, singleSheetFlow]
-    );
-
-    const handleDownloadPhraseSet = useCallback(() => {
-        const payload = buildPhraseSetExport({
-            mode: stickerSetMode ? 'set' : 'single',
-            gridCols: effectiveGridCols,
-            gridRows: effectiveGridRows,
-            phrases: phrasesForHook,
-            actionDescs: actionDescsForHook,
-        });
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `line-sticker-phrase-set-${payload.mode}-${Date.now()}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-    }, [stickerSetMode, effectiveGridCols, effectiveGridRows, phrasesForHook, actionDescsForHook]);
-
-    const handleUploadPhraseSet = useCallback(
-        (e: React.ChangeEvent<HTMLInputElement>) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = () => {
-                const text = reader.result as string;
-                const data = parsePhraseSetJson(text);
-                if (!data) {
-                    setError(lineStickerT.lineStickerPhraseSetUploadError);
-                    return;
-                }
-                setError(null);
-                if (data.mode === 'single' && data.gridCols != null && data.gridRows != null) {
-                    handleStickerSetModeChange(false);
-                    setGridCols(data.gridCols);
-                    setGridRows(data.gridRows);
-                    singleSheetFlow.setSliceSettings(prev => ({ ...prev, cols: data.gridCols!, rows: data.gridRows! }));
-                    setSinglePhrasesList(data.phrases);
-                    setActionDescsList(data.actionDescs ?? data.phrases.map(() => ''));
-                } else {
-                    handleStickerSetModeChange(true);
-                    setSheetSliceSettings(createSetModeSliceSettingsList());
-                    setSetPhrasesList(data.phrases);
-                    setActionDescsList(data.actionDescs ?? data.phrases.map(() => ''));
-                    setCurrentSheetIndex(DEFAULT_LINE_STICKER_SHEET_INDEX);
-                }
-            };
-            reader.readAsText(file, 'UTF-8');
-            e.target.value = '';
-        },
-        [handleStickerSetModeChange, lineStickerT.lineStickerPhraseSetUploadError, setActionDescsList, setError, setGridCols, setGridRows, singleSheetFlow]
-    );
 
     const handleResetProgrammaticTextTuning = useCallback(() => {
         setProgrammaticTextTuning({ ...DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING });

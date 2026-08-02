@@ -45,8 +45,8 @@
 
 ### Requirements
 
-- Node.js 18+
-- npm or yarn
+- Node.js 20 or 22 (`>=20 <23`)
+- npm 10+ (the project is pinned to npm 10.9.2)
 
 ### Installation
 
@@ -57,13 +57,13 @@
    npm install
    ```
 
-3. **Set environment variables** (optional):
-   Create `.env.local` file:
+3. **Set a local development key** (optional):
+   When developing locally with `npm run dev`, create a `.env.local` file:
    ```env
    GEMINI_API_KEY=your_api_key_here
    ```
    
-   Or enter the API Key directly in the application settings.
+   Public deployments do not embed this key; enter your own API Key in the application settings instead.
 
 4. **Start development server**:
    ```bash
@@ -293,5 +293,5 @@ Issues and Pull Requests are welcome!
 
 ---
 
-**Last Updated**: 2026-01-26  
+**Last Updated**: 2026-08-03
 **Version**: v1.2.0

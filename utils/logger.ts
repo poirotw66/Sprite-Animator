@@ -5,10 +5,7 @@
  * @module logger
  */
 
-const isDev =
-  typeof import.meta !== 'undefined' &&
-  typeof import.meta.env !== 'undefined' &&
-  Boolean(import.meta.env.DEV);
+const isDev = import.meta.env.DEV;
 
 /**
  * Logger utility that conditionally logs based on environment.

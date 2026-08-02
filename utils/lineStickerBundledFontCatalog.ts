@@ -11,10 +11,28 @@ export const KANAKA_FONT_FAMILY = '073 TEGUSE  Kanaka Font';
 export const NAIKAI_FONT_FAMILY = 'NaikaiFont';
 
 export const BUNDLED_STICKER_FONT_BY_PRESET = {
-  liyushoushu: { family: LIYU_SHOUSHU_FAMILY, file: 'LiyuShoushu.ttf' },
-  fashionBitmap16: { family: FASHION_BITMAP16_FAMILY, file: 'FashionBitmap16_0.092.ttf' },
-  kanaka: { family: KANAKA_FONT_FAMILY, file: '073 TEGUSE - Kanaka Font_240705.ttf' },
-  naikai: { family: NAIKAI_FONT_FAMILY, file: 'NaikaiFont-Regular-Lite.ttf' },
+  // `file` is the local Node/headless TTF master. `browserFile` is its complete,
+  // generated WOFF2 counterpart; it intentionally is not a character subset.
+  liyushoushu: {
+    family: LIYU_SHOUSHU_FAMILY,
+    file: 'LiyuShoushu.ttf',
+    browserFile: 'LiyuShoushu.woff2',
+  },
+  fashionBitmap16: {
+    family: FASHION_BITMAP16_FAMILY,
+    file: 'FashionBitmap16_0.092.ttf',
+    browserFile: 'FashionBitmap16_0.092.woff2',
+  },
+  kanaka: {
+    family: KANAKA_FONT_FAMILY,
+    file: '073 TEGUSE - Kanaka Font_240705.ttf',
+    browserFile: '073 TEGUSE - Kanaka Font_240705.woff2',
+  },
+  naikai: {
+    family: NAIKAI_FONT_FAMILY,
+    file: 'NaikaiFont-Regular-Lite.ttf',
+    browserFile: 'NaikaiFont-Regular-Lite.woff2',
+  },
 } as const;
 
 export type BundledStickerFontPresetKey = keyof typeof BUNDLED_STICKER_FONT_BY_PRESET;

@@ -4,6 +4,7 @@ import { MODEL_RESOLUTIONS, SUPPORTED_MODELS } from '../utils/constants';
 import type { ImageResolution } from '../utils/constants';
 import { GoogleGenAI } from '@google/genai';
 import { useLanguage } from '../hooks/useLanguage';
+import { getLocalDevelopmentGeminiApiKey } from '../utils/localDevelopmentGeminiApiKey';
 
 interface SettingsModalProps {
   apiKey: string;
@@ -50,7 +51,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
   const modalRef = React.useRef<HTMLDivElement>(null);
 
   const hasCustomKey = !!apiKey.trim();
-  const hasEnvKey = !!import.meta.env.VITE_GEMINI_API_KEY;
+  const hasLocalDevelopmentKey = !!getLocalDevelopmentGeminiApiKey();
 
   // Validate API Key
   const validateApiKey = async (keyToValidate: string): Promise<boolean> => {
@@ -190,7 +191,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                 type="password"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder={hasEnvKey ? t.envKeyDetected : t.apiKeyPlaceholder}
+                placeholder={
+                  hasLocalDevelopmentKey
+                    ? t.localDevelopmentKeyDetected
+                    : t.apiKeyPlaceholder
+                }
                 className="w-full border border-slate-300 rounded-lg p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 outline-none pr-10 bg-white transition-all"
                 aria-label={t.apiKeyLabel}
                 aria-describedby="api-key-description"
@@ -209,9 +214,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                 <span className="text-green-700 flex items-center gap-1.5 bg-green-50 px-2.5 py-1.5 rounded-lg border border-green-200 font-medium">
                   <ShieldCheck className="w-3.5 h-3.5" /> {t.usingCustomKey}
                 </span>
-              ) : (
+              ) : hasLocalDevelopmentKey ? (
                 <span className="text-slate-600 flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200 font-medium">
-                  <ShieldAlert className="w-3.5 h-3.5" /> {t.usingSystemKey}
+                  <ShieldAlert className="w-3.5 h-3.5" /> {t.usingLocalDevelopmentKey}
+                </span>
+              ) : (
+                <span className="text-amber-700 flex items-center gap-1.5 bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-200 font-medium">
+                  <ShieldAlert className="w-3.5 h-3.5" /> {t.noApiKeyConfigured}
                 </span>
               )}
             </div>

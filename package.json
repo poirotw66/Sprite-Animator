@@ -1,7 +1,7 @@
 {
   "name": "sprite-animator",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "fonts:build": "tsx scripts/build-browser-fonts.mts",
+    "fonts:check": "tsx scripts/build-browser-fonts.mts --check",
     "python:sync": "uv sync --locked --dev",
     "python:test": "uv run --locked python -B -m pytest",
     "python:self-check": "uv run --locked python -B scripts/line-sticker/python/sheet_converter_v2/convert.py --self-check",
@@ -18,6 +20,8 @@
     "skills:sync:line-sticker": "tsx scripts/line-sticker/sync-line-sticker-skills.mts",
     "skills:check:line-sticker": "tsx scripts/line-sticker/sync-line-sticker-skills.mts --check",
     "ci": "npm run security:audit && npm run skills:check:line-sticker && npm run typecheck && npm run lint && npm run test && npm run python:check && npm run build",
+    "predev": "npm run fonts:build",
+    "prebuild": "npm run fonts:build && npm run fonts:check",
     "build": "vite build",
     "preview": "vite preview"
   },

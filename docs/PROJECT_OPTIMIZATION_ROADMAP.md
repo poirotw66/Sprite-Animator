@@ -1,311 +1,72 @@
-# 專案優化路線圖與功能建議
+# 專案優化路線圖
 
-## 📊 當前專案狀態評估
+*最後校準：2026-08-03。此文件描述目前程式碼，而非早期 Sprite Animator 原型的待辦清單。*
 
-### ✅ 已完成的核心功能
-- ✅ 精靈圖生成（精靈圖模式）
-- ✅ 逐幀生成（逐幀模式）
-- ✅ 精確去背（自動洋紅色去背）
-- ✅ 工業級切分（整數座標、邊界檢查）
-- ✅ 多格式導出（APNG, GIF, ZIP）
-- ✅ 性能優化（代碼分割、React 優化）
-- ✅ 錯誤處理（ErrorBoundary、統一錯誤處理）
+## 目前基線
 
-### 📈 專案健康度：85/100
-- **代碼質量**：90/100 ✅
-- **性能**：85/100 ✅
-- **用戶體驗**：80/100 ⚠️
-- **可維護性**：90/100 ✅
-- **功能完整性**：85/100 ⚠️
+- 執行環境：Node.js 20 或 22（`>=20 <23`）、npm 10+。
+- 核心工具：Sprite Animator、LINE 貼圖流程、單頁漫畫、AI 去背與每日貼圖登記。
+- 品質門檻：`npm run ci` 會執行安全檢查、SKILL mirror 檢查、TypeScript、lint、Vitest、Python 檢查與 production build。
+- 路由頁面已採 lazy loading；LINE 貼圖主流程也已拆成 settings/result view-model hooks。
+- Production build 採 BYOK，不注入 Gemini key；本機 `vite dev` 才可使用非公開的開發 fallback。
 
----
+## 已完成（不應再列為待辦）
 
-## 🎯 優化建議（按優先級）
+### Web Worker 去背與進度回饋
 
-### 🔴 高優先級（立即實施）
+色鍵去背預設透過 `utils/chromaKeyProcessor.ts` 啟動
+`workers/chromaKeyWorker.ts`，讓像素處理不佔用主 UI 執行緒；不支援 Worker 時才使用同一演算法的主執行緒 fallback。處理流程已有進度回呼。
 
-#### 1. **生產環境清理**
-**問題**：開發用的 `console.log` 仍在生產代碼中
-**影響**：性能輕微影響，控制台噪音
-**解決方案**：
-```typescript
-// 創建 utils/logger.ts
-const isDev = import.meta.env.DEV;
-export const logger = {
-  log: (...args: any[]) => isDev && console.log(...args),
-  error: (...args: any[]) => console.error(...args),
-  warn: (...args: any[]) => isDev && console.warn(...args),
-};
-```
+因此，舊版文件中「去背阻塞主執行緒」、「建立 chroma key Worker」與「新增去背進度條」均已完成，不能再作為優先工作。
 
-#### 2. **去背處理性能優化**
-**問題**：大圖片去背會阻塞主線程
-**影響**：UI 卡頓，用戶體驗差
-**解決方案**：
-- 使用 Web Worker 處理去背
-- 添加進度指示器
-- 分批處理像素（避免長時間阻塞）
+### 基礎工程品質
 
-#### 3. **錯誤處理增強**
-**問題**：某些錯誤訊息不夠友好
-**影響**：用戶困惑，難以排查問題
-**解決方案**：
-- 添加錯誤代碼系統
-- 提供解決建議
-- 記錄錯誤到本地存儲（可選）
+- TypeScript strict mode、ESLint 零 warning、Vitest 與 Python self-check 已納入 CI。
+- Error boundary 與主要 loading/error 字串已接上 i18n。
+- 精靈圖切分、色鍵修復、LINE 格式與文案格式已有單元測試。
+- `LineStickerPage` 已將風格預覽與 phrase-set 檔案傳輸拆至專責 hooks；後續可按流程繼續收斂 controller。
+- GitHub Actions 的 quality gate 與 deploy 已採最小權限分離；舊版曾注入公開 build 的 Gemini key 應視為可能暴露並輪替。
 
----
+## 優先工作
 
-### 🟡 中優先級（短期優化）
+| 優先級 | 工作 | 完成條件 |
+|---|---|---|
+| P0 | 舊 Gemini key 輪替與 release 驗證 | 輪替曾用於公開 build 的 key；每次 release 確認 production bundle 不含 key sentinel。 |
+| P1 | 靜態資產與 AI runtime 載入策略 | 字型採 WOFF2／subset，Transformers/WASM 在需要時才載入，並設定可追蹤的 bundle budget。 |
+| P1 | Browser-level 流程測試 | 以 Playwright 或等效工具涵蓋主要路由、上傳、切分、設定、LINE 匯出；Gemini 使用 mock。 |
+| P2 | LINE 貼圖 controller 模組化 | 依「來源輸入、生成、sheet state、下載」持續拆分，保持 hooks 的單一責任與既有 i18n 介面。 |
+| P2 | 文件與 SKILL 路由 | 補齊根目錄 `AGENTS.md`，說明 canonical `skills/`、mirror 同步、必要 CI 與敏感設定處理。 |
 
-#### 4. **用戶體驗改進**
+## 效能量測原則
 
-##### 4.1 進度指示器
-- 去背處理進度（0-100%）
-- 切分處理進度
-- 導出進度
+舊版的「主包 ~667 KB、三個動態元件 ~14 KB」是早期快照，已不具可比性；不得再把它作為目前基線。每次影響資產或 code splitting 的變更，應執行：
 
-##### 4.2 鍵盤快捷鍵
-```typescript
-// 建議快捷鍵
-- Space: 播放/暫停
-- R: 重置
-- S: 打開設定
-- Ctrl+S: 保存配置
-- Ctrl+E: 導出
-- ←/→: 切換幀
-```
-
-##### 4.3 視覺化切片調整
-- 拖拽調整切片邊界
-- 實時預覽切片效果
-- 網格吸附功能
-
-#### 5. **配置管理**
-
-##### 5.1 預設配置保存/載入
-```typescript
-// 功能
-- 保存常用配置（動作、參數）
-- 快速載入預設
-- 分享配置（導出/導入 JSON）
-```
-
-##### 5.2 歷史記錄
-- 保存最近生成的動畫
-- 快速重新生成
-- 本地存儲管理
-
-#### 6. **導出功能增強**
-
-##### 6.1 更多格式
-- WebP 動畫（更小文件）
-- SVG Sprite Sheet
-- JSON 元數據（幀信息、時間軸）
-
-##### 6.2 導出選項
-- 質量設置（GIF 質量、APNG 壓縮）
-- 尺寸調整（縮放導出）
-- 批量導出（多個動作）
-
----
-
-### 🟢 低優先級（長期規劃）
-
-#### 7. **高級功能**
-
-##### 7.1 動畫編輯
-- 幀順序調整
-- 幀刪除/複製
-- 時間軸編輯
-- 過渡效果
-
-##### 7.2 批量處理
-- 一次處理多個角色
-- 批量生成多個動作
-- 自動化工作流
-
-##### 7.3 AI 增強
-- 動作建議（基於角色類型）
-- 風格遷移
-- 動作補間（生成中間幀）
-
-#### 8. **開發工具**
-
-##### 8.1 測試框架
 ```bash
-# 添加測試
-npm install --save-dev vitest @testing-library/react
+npm run build
 ```
 
-##### 8.2 性能監控
-- Web Vitals 追蹤
-- 性能分析工具
-- 錯誤追蹤（Sentry 等）
+2026-08-03 本機 production build 基線：`dist` 合計 **63.58 MiB**；瀏覽器字型為 **13.26 MiB**（4 個 WOFF2、無 TTF）；最大的 JavaScript chunk 為 demand-loaded `vendor-transformers`，**568.19 kB raw / 164.85 kB gzip**。Transformers WASM 為 **23,567.05 kB raw / 5,757.04 kB gzip**，同樣僅在 AI 去背流程需要時載入。這些數字不可視為首屏傳輸量。
 
-##### 8.3 文檔生成
-- API 文檔（TypeDoc）
-- 組件文檔（Storybook）
+字型來源、產物與重建方式見 [瀏覽器字型資產說明](./BROWSER_FONT_ASSETS.md)。
 
----
+並在 PR／報告記錄：
 
-## 🚀 推薦實施順序
+1. 最大 JavaScript chunk 的 gzip 與原始大小。
+2. 首次路由所需資產，以及延遲載入的字型、WASM、AI runtime 的大小。
+3. 可重現的測量日期、Node/npm 版本與 build command。
 
-### 第一階段（1-2 週）
-1. ✅ 生產環境清理（console.log）
-2. ✅ 去背處理 Web Worker
-3. ✅ 進度指示器
+不要將可選 AI 模型、延遲字型或所有靜態檔加總後，誤標為「首屏 bundle」。Core Web Vitals 應以實際部署環境與代表性圖片流程量測。
 
-### 第二階段（2-3 週）
-4. ✅ 鍵盤快捷鍵
-5. ✅ 配置保存/載入
-6. ✅ 錯誤處理增強
+## 驗收清單
 
-### 第三階段（3-4 週）
-7. ✅ 視覺化切片調整
-8. ✅ 更多導出格式
-9. ✅ 歷史記錄
+- [ ] 公開網站沒有可重複使用的 Gemini 服務端金鑰。
+- [ ] 重要資產有明確 lazy-load 邊界與大小預算。
+- [ ] 主要互動流程有 browser smoke/E2E coverage。
+- [ ] `LineStickerPage` 的新增流程不再讓單一 controller 持續膨脹。
+- [ ] 文件、SKILL canonical source 與 generated mirrors 一致。
 
-### 第四階段（長期）
-10. ⚠️ 動畫編輯功能
-11. ⚠️ 批量處理
-12. ⚠️ 測試框架
+## 參考
 
----
-
-## 💡 創新功能建議
-
-### 1. **智能切片檢測**
-- 自動檢測精靈圖的網格大小
-- 使用圖像處理算法識別邊界
-- 自動調整 Cols/Rows
-
-### 2. **動作庫**
-- 預設動作模板（Run, Jump, Attack 等）
-- 用戶自定義動作庫
-- 動作組合（連擊動畫）
-
-### 3. **協作功能**
-- 分享動畫（生成分享鏈接）
-- 協作編輯（多人同時編輯）
-- 版本控制（動畫版本歷史）
-
-### 4. **集成功能**
-- 導出到遊戲引擎（Unity, Godot）
-- 導出到動畫工具（Aseprite, Spine）
-- API 接口（供其他工具調用）
-
----
-
-## 📊 性能優化機會
-
-### 當前性能指標
-- **初始加載**：~667 KB（主包）
-- **代碼分割**：3 個動態組件（~14 KB）
-- **去背處理**：阻塞主線程（大圖片）
-- **切分處理**：單線程處理
-
-### 優化目標
-- **初始加載**：< 500 KB（進一步優化）
-- **去背處理**：Web Worker（不阻塞 UI）
-- **切分處理**：批量處理（提高效率）
-- **內存使用**：優化圖片緩存策略
-
----
-
-## 🔧 技術債務
-
-### 需要改進的地方
-
-1. **類型定義**
-   - 某些地方使用 `any`
-   - 缺少更嚴格的類型檢查
-
-2. **錯誤處理**
-   - 統一錯誤類型
-   - 更好的錯誤恢復機制
-
-3. **測試覆蓋**
-   - 目前沒有單元測試
-   - 缺少集成測試
-
-4. **文檔**
-   - API 文檔不完整
-   - 缺少開發者指南
-
----
-
-## 📝 具體實施建議
-
-### 立即可以實施的（今天）
-
-1. **移除調試日誌**
-   ```typescript
-   // 創建 logger 工具
-   // 替換所有 console.log
-   ```
-
-2. **添加進度指示器**
-   ```typescript
-   // 在去背處理中添加進度回調
-   // 顯示處理進度
-   ```
-
-3. **鍵盤快捷鍵**
-   ```typescript
-   // 添加 useKeyboardShortcuts hook
-   // 實現基本快捷鍵
-   ```
-
-### 本週可以實施的
-
-4. **Web Worker 去背**
-   ```typescript
-   // 創建 worker/chromaKeyWorker.ts
-   // 將去背邏輯移到 Worker
-   ```
-
-5. **配置保存/載入**
-   ```typescript
-   // 擴展 useSettings hook
-   // 添加配置管理功能
-   ```
-
----
-
-## 🎯 成功指標
-
-### 用戶體驗
-- [ ] 去背處理不阻塞 UI（< 100ms 響應）
-- [ ] 所有操作都有視覺反饋
-- [ ] 錯誤訊息清晰易懂
-
-### 性能
-- [ ] 初始加載 < 500 KB
-- [ ] 去背處理 < 2 秒（1024x1024 圖片）
-- [ ] 切分處理 < 1 秒（16 幀）
-
-### 功能完整性
-- [ ] 支持所有常用導出格式
-- [ ] 配置可以保存和分享
-- [ ] 有完整的錯誤處理
-
----
-
-## 📚 參考資源
-
-### 最佳實踐
-- [Canvas Best Practices](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas)
-- [Web Workers Guide](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)
-- [React Performance](https://react.dev/learn/render-and-commit)
-
-### 工具和庫
-- **Web Workers**: 用於後台處理
-- **Zustand/Redux**: 狀態管理（如果需要）
-- **React Query**: 數據緩存（如果需要）
-- **Framer Motion**: 動畫庫（如果需要更複雜動畫）
-
----
-
-**最後更新**：2026-01-25
-**版本**：v1.0.0
+- [MDN: Using Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)
+- [MDN: Optimizing canvas](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas)
+- [React: Render and Commit](https://react.dev/learn/render-and-commit)
