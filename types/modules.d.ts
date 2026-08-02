@@ -72,7 +72,8 @@ declare module 'gifenc' {
 
 // Vite env types
 interface ImportMetaEnv {
-  readonly VITE_GEMINI_API_KEY?: string;
+  /** Defined by vite.config.ts for `vite dev` only; always empty in a build. */
+  readonly LOCAL_DEV_GEMINI_API_KEY?: string;
   readonly BASE_URL: string;
   readonly DEV: boolean;
   readonly PROD: boolean;

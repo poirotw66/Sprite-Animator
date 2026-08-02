@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DEFAULT_MODEL, DEFAULT_OUTPUT_RESOLUTION, MODEL_RESOLUTIONS, SUPPORTED_MODELS, defaultResolutionForModel } from '../utils/constants';
 import type { ImageResolution } from '../utils/constants';
+import { getLocalDevelopmentGeminiApiKey } from '../utils/localDevelopmentGeminiApiKey';
 
 const API_KEY_STORAGE_KEY = 'gemini_api_key';
 const MODEL_STORAGE_KEY = 'gemini_model';
@@ -27,7 +28,7 @@ function resolveStoredModel(storedModel: string | null): string {
 
 /**
  * Custom hook for managing application settings including API key and model selection.
- * Handles localStorage persistence and environment variable fallback.
+ * Handles localStorage persistence and a local-development-only fallback.
  * 
  * @returns Object containing settings state and management functions
  * 
@@ -96,8 +97,7 @@ export const useSettings = () => {
     }
 
     // If no key is found, show settings automatically
-    const envKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!storedKey && !envKey) {
+    if (!storedKey && !getLocalDevelopmentGeminiApiKey()) {
       setShowSettings(true);
     }
   }, []);
@@ -158,7 +158,7 @@ export const useSettings = () => {
 
   const getEffectiveApiKey = (): string => {
     const userKey = apiKey.trim();
-    return userKey || import.meta.env.VITE_GEMINI_API_KEY || '';
+    return userKey || getLocalDevelopmentGeminiApiKey();
   };
 
   return {

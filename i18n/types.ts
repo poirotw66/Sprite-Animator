@@ -162,9 +162,10 @@ export interface Translations {
   settingsTitle: string;
   apiKeyLabel: string;
   apiKeyPlaceholder: string;
-  envKeyDetected: string;
+  localDevelopmentKeyDetected: string;
   usingCustomKey: string;
-  usingSystemKey: string;
+  usingLocalDevelopmentKey: string;
+  noApiKeyConfigured: string;
   apiKeyHint: string;
   getApiKey: string;
   modelLabel: string;

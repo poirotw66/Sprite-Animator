@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import { resolveLocalDevelopmentGeminiApiKey } from './utils/geminiBrowserKeyBoundary';
 import { resolveVaultRoot } from './utils/registry/stickerVault';
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
@@ -87,8 +88,11 @@ function serveOutputFolderPlugin(): Plugin {
   };
 }
 
-export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
+export default defineConfig(({ command, mode }) => {
+    const localDevelopmentGeminiApiKey = resolveLocalDevelopmentGeminiApiKey(
+      command,
+      command === 'serve' ? loadEnv(mode, projectRoot, 'GEMINI_') : {},
+    );
     // Set base path for GitHub Pages deployment
     // If deploying to root, use '/', otherwise use '/repository-name/'
     const base = process.env.GITHUB_PAGES === 'true' ? '/Sprite-Animator/' : '/';
@@ -97,13 +101,16 @@ export default defineConfig(({ mode }) => {
       base,
       server: {
         port: 3000,
-        host: '0.0.0.0',
+        // Keep the development server local unless the developer explicitly passes --host.
+        host: 'localhost',
         // HMR uses the dev server's port automatically (do not set hmr.port so 3001 works when 3000 is in use)
-        hmr: { protocol: 'ws', host: 'localhost' },
+        hmr: { protocol: 'ws' },
       },
       plugins: [react(), serveVaultFolderPlugin(vaultRoot), serveOutputFolderPlugin()],
       define: {
-        'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY ?? env.GEMINI_API_KEY ?? '')
+        // Browser bundles never receive a deployment key. This optional fallback
+        // exists only while running `vite dev` on the local loopback interface.
+        'import.meta.env.LOCAL_DEV_GEMINI_API_KEY': JSON.stringify(localDevelopmentGeminiApiKey),
       },
       resolve: {
         alias: {

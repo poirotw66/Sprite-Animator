@@ -1,103 +1,68 @@
 # Project Optimization Report
 
-Summary of findings and recommended improvements across the codebase.
+*Last audited: 2026-08-03. This report supersedes the 2026-07-12 first-round cleanup snapshot.*
 
-*Last updated: 2026-07-12 — reflects first-round dead-code cleanup and CI/typecheck fixes.*
+## Current status
 
----
+- CI covers security checks, generated LINE sticker SKILL mirrors, TypeScript strict mode, ESLint, Vitest, Python checks, and a production build.
+- Route-level lazy loading is already in place.
+- Chroma key removal runs in `workers/chromaKeyWorker.ts` through `utils/chromaKeyProcessor.ts`, with progress reporting and a main-thread fallback only when Workers are unavailable.
+- `LineStickerPage.tsx` has been reduced from roughly 1,000 to roughly 840 lines by extracting the style-preview lifecycle and phrase-set file transfer into focused hooks.
+- Production builds use BYOK and do not inject Gemini keys; the local development fallback is limited to `vite dev`.
 
-## 1. TypeScript & Code Quality
+## Completed or no longer actionable
 
-### 1.1 Reduce `any` usage
+| Earlier finding | Current state |
+|---|---|
+| Add a Web Worker for chroma-key removal | Complete; worker and fallback share the core algorithm. |
+| Add a background-removal progress indicator | Complete. |
+| Split the initial LINE sticker page surface | Partially complete; settings/result view models plus preview and phrase-set transfer hooks are separate. |
+| Add a unit-test framework | Complete; the project uses Vitest and Python checks in CI. |
+| Error-boundary loading strings | Complete; the relevant strings use i18n. |
+| Expose a shared Gemini key through the browser build | Complete; production builds no longer inject a Gemini key. Rotate any key that was used by an older public build. |
 
-| File | Location | Suggestion |
-|------|----------|------------|
-| `LineStickerPage.tsx` | preset select `as any` (if any remain) | Use `keyof typeof STYLE_PRESETS` and validate option value before setState |
-| `aiBackgroundRemoval.ts` | `(env as any)`, `segmenter: any`, `config: any` | Use `@huggingface/transformers` env types if available |
+## Remaining engineering priorities
 
-**Done (2026-07-12):** `catch (err: unknown)` in `LineStickerPage`, `RemoveBackgroundPage`, `SpriteAnimatorPage` export paths.
+### P0 — Release credential verification
 
-### 1.2 Dead code
+Values embedded in a browser bundle are not secrets. Keep the current BYOK boundary in place, rotate any key previously used in a public build, and scan release artifacts with a synthetic sentinel before deployment. A future shared-key experience requires a protected server-side proxy with authentication, quota controls, and observability; a `VITE_*` environment variable is not secret storage.
 
-**Done (2026-07-12):**
+### P1 — Asset delivery and bundle budget
 
-- Removed `utils/loadBundledImage.ts`, unused `reference/comic/model-sheet-layout.png`
-- Removed `cleanBase64`, `removeChromaKey`, `removeWhiteBackground` from `utils/imageUtils.ts`
-- Removed unused `CHROMA_KEY_COLOR`, `IMAGE_RESOLUTION_OPTIONS`, `ENABLE_FRAME_INTERPOLATION` from `utils/constants.ts`
-- Removed unused `autoprefixer` devDependency
+The former figures for a `~667 KB` main bundle and `3` dynamic components are obsolete. The 2026-08-03 local production baseline is **63.58 MiB** for `dist`, including **13.26 MiB** of four browser WOFF2 fonts (no emitted TTF). The largest JavaScript asset is the demand-loaded `vendor-transformers` chunk at **568.19 kB raw / 164.85 kB gzip**. Its WASM resource is **23,567.05 kB raw / 5,757.04 kB gzip** and is likewise deferred until the AI removal flow needs it. These are deployment assets, not a first-route transfer total.
 
-**Done (2026-07-12):** removed legacy/debug/diagnose CLI entrypoints:
+See [browser font assets](./BROWSER_FONT_ASSETS.md) for the reproducible font build and validation process.
 
-- `rebuild-line-upload.mts`
-- `compare-chroma-forge.mts`
-- `debug-sticker-pipeline.mts`
-- `preview-programmatic-font-sizes.mts`
-- `audit-programmatic-overlay.mts`
-- `reslice-core-preview.mts`
-- `scripts/diagnose-sheet-slice.mts`
+Record a fresh `npm run build` baseline whenever those assets or code-splitting boundaries change; distinguish first-route assets from deferred resources.
 
-**Still optional:** none for graphify gitignore (added 2026-07-12).
+Suggested guardrails:
 
-### 1.3 Typecheck / CI
+- use WOFF2/subset fonts for browser delivery while preserving source fonts for tooling;
+- defer Transformers/WASM until AI background removal is requested;
+- set an explicit maximum chunk and asset-size budget in CI;
+- measure representative browser flows, not only the build manifest.
 
-**Done (2026-07-12):**
+### P1 — Browser interaction coverage
 
-- `utils/lineStickerCompose.ts`: narrow `ComposeCanvas2D` interface for `@napi-rs/canvas`
-- `vite.config.ts`: `Plugin` return type for dev middleware (fixes `pipe(res)` typing)
+The current test suite is strong for pure TypeScript and command-line flows, but it does not exercise the React UI in a browser. Add a small Playwright (or equivalent) smoke suite for routes, image input, slice settings, phrase-set import/export, and downloads. Gemini calls should be mocked.
 
----
+### P2 — Continue controller decomposition
 
-## 2. Error handling
+`LineStickerPage` remains the main orchestration surface. The next low-risk boundary is a dedicated generation/sheet-state controller; keep presentation in `components/LineSticker/` and expose narrow view models. Avoid a broad global store unless cross-route state actually requires it.
 
-- **Catch clauses**: Prefer `catch (err: unknown)` and `getErrorMessage` / `err instanceof Error` for user-facing messages.
-- **ErrorBoundary**: **Done** — UI strings moved to i18n (`errorBoundary*` keys); reads language from `localStorage`.
+### P2 — Type hygiene and observability
 
----
+- Replace remaining loose Transformers integration types in `utils/aiBackgroundRemoval.ts` where upstream types permit it.
+- Prefer `logger` for new application logs.
+- Capture reproducible bundle and browser performance measurements before tuning for a fixed number.
 
-## 3. i18n & Accessibility
+## Verification checklist for a change
 
-**Done (2026-07-12):**
+```bash
+npm run typecheck
+npm run lint
+npm run test
+npm run build
+```
 
-- `ErrorBoundary.tsx` — i18n via `getTranslation` + stored language
-- `App.tsx` `PageLoader` — `t.pageLoading`
-
----
-
-## 4. Build & Environment
-
-**Done (2026-07-12):** `vite.config.ts` `define` uses `env.VITE_GEMINI_API_KEY ?? env.GEMINI_API_KEY ?? ''`.
-
----
-
-## 5. Performance & Structure
-
-- **LineStickerPage.tsx**: Large (~990 lines). Consider splitting into sub-components or `useLineStickerSetState` hook.
-- **Lazy loading**: App already lazy-loads pages. No urgent change.
-- **Manual chunks**: Consider `jszip` in its own chunk if LINE download bundle is large.
-
----
-
-## 6. Logging
-
-- **aiBackgroundRemoval.ts**: Boot banner still uses `console.log`; optional `logger.info`.
-- **logger.ts**: Keep using for new code.
-
----
-
-## 7. Security & Best practices
-
-- API keys read from localStorage / env; not hardcoded. Good.
-
----
-
-## 8. Suggested priority (remaining)
-
-| Priority | Item | Effort |
-|----------|------|--------|
-| Medium | Tighten preset select types (LineStickerPage) | Low |
-| Low | Split LineStickerPage into smaller components | Medium |
-| Low | daily-pack backfill theme/voice + `--replan` | Medium |
-
----
-
-*Generated as a living audit; implement items as needed per sprint.*
+Run `npm run ci` before merging changes that touch build, scripts, skills, or release documentation.
