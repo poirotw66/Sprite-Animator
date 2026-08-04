@@ -19,7 +19,7 @@
     "security:audit": "tsx scripts/security-audit.mts",
     "skills:sync:line-sticker": "tsx scripts/line-sticker/sync-line-sticker-skills.mts",
     "skills:check:line-sticker": "tsx scripts/line-sticker/sync-line-sticker-skills.mts --check",
-    "ci": "npm run security:audit && npm run skills:check:line-sticker && npm run typecheck && npm run lint && npm run test && npm run python:check && npm run build",
+    "ci": "npm run security:audit && npm run skills:sync:line-sticker && npm run typecheck && npm run lint && npm run test && npm run python:check && npm run build",
     "predev": "npm run fonts:build",
     "prebuild": "npm run fonts:build && npm run fonts:check",
     "build": "vite build",
