@@ -226,7 +226,7 @@ npm run preview
 
 如果需要立即部署：
 - 前往 `Actions` 標籤頁
-- 選擇 `Deploy to GitHub Pages` 工作流
+- 選擇 `CI` 工作流（建置與部署已合併於此，不再有獨立的 deploy workflow）
 - 點擊 `Run workflow`
 
 ### 手動構建（本地測試）
@@ -256,13 +256,16 @@ npm run preview
 ## 📝 技術棧
 
 - **React 19** - UI 框架
+- **React Router 7** - 多工具路由（各頁面採 lazy loading）
 - **TypeScript** - 類型安全
-- **Vite** - 構建工具
-- **Tailwind CSS** - 樣式（通過 CDN）
+- **Vite 6** - 構建工具
+- **Tailwind CSS 4** - 樣式（透過 PostCSS 建置，非 CDN）
 - **Google Gemini API** - AI 圖像生成
+- **@huggingface/transformers** - AI 去背模型（需要時才載入）
 - **upng-js** - APNG 編碼
 - **gifenc** - GIF 編碼
 - **jszip** - ZIP 打包
+- **Python 3 + uv** - LINE 貼圖 sheet converter 與上傳自動化（見 `scripts/line-sticker/python/`）
 
 ## 🎯 最佳實踐
 
@@ -306,5 +309,5 @@ npm run preview
 
 ---
 
-**最後更新**：2026-08-03
+**最後更新**：2026-08-07
 **版本**：v1.2.0

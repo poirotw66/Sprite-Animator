@@ -212,7 +212,7 @@ The project is configured with GitHub Actions for automatic deployment. Simply:
 
 To deploy immediately:
 - Go to the `Actions` tab
-- Select the `Deploy to GitHub Pages` workflow
+- Select the `CI` workflow (build and deploy are merged there; there is no separate deploy workflow)
 - Click `Run workflow`
 
 ### Manual Build (Local Testing)
@@ -242,13 +242,16 @@ npm run preview
 ## 📝 Tech Stack
 
 - **React 19** - UI Framework
+- **React Router 7** - Multi-tool routing (routes are lazy loaded)
 - **TypeScript** - Type Safety
-- **Vite** - Build Tool
-- **Tailwind CSS** - Styling (via CDN)
+- **Vite 6** - Build Tool
+- **Tailwind CSS 4** - Styling (compiled through PostCSS, not a CDN)
 - **Google Gemini API** - AI Image Generation
+- **@huggingface/transformers** - AI background-removal model (loaded on demand)
 - **upng-js** - APNG Encoding
 - **gifenc** - GIF Encoding
 - **jszip** - ZIP Packaging
+- **Python 3 + uv** - LINE sticker sheet converter and upload automation (see `scripts/line-sticker/python/`)
 
 ## 🎯 Best Practices
 
@@ -293,5 +296,5 @@ Issues and Pull Requests are welcome!
 
 ---
 
-**Last Updated**: 2026-08-03
+**Last Updated**: 2026-08-07
 **Version**: v1.2.0

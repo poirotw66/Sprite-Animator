@@ -28,3 +28,14 @@ Technical docs are grouped by domain. Agent workflow guides live under `workflow
 
 - [Optimization Report](./OPTIMIZATION_REPORT.md)
 - [Optimization Roadmap](./PROJECT_OPTIMIZATION_ROADMAP.md)
+- [Browser Font Assets](./BROWSER_FONT_ASSETS.md) — WOFF2 build, sources, and validation
+
+## Design records
+
+Historical plans and specs kept for context. They describe the intent at the time of
+writing, not necessarily the current implementation.
+
+- [Auto-slice consistency design](./superpowers/specs/2026-04-21-auto-slice-consistency-design.md)
+- [One-page comic — design](./superpowers/specs/2026-07-09-one-page-comic-design.md) · [plan](./superpowers/plans/2026-07-09-one-page-comic.md)
+- [Chroma similarity unify — design](./superpowers/specs/2026-07-10-chroma-similarity-unify-design.md) · [plan](./superpowers/plans/2026-07-10-chroma-similarity-unify.md)
+- [Canvas compose sticker layout design](./superpowers/specs/2026-07-11-canvas-compose-sticker-layout-design.md)
