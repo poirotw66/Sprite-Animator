@@ -18,7 +18,7 @@ import {
 import type { ChromaKeyColorType } from '../../types.ts';
 import {
   buildLineUploadZipBytes,
-  writeLineUploadPack,
+  writeLineUploadPackBytes,
   type LineUploadPackOptions,
   type LineUploadPackResult,
 } from './lineUploadPack.mts';
@@ -602,7 +602,9 @@ async function finalizeStickerJobInternal(
       );
     }
   } else {
-    await writeLineUploadPack(stagingRoot, nativeFrames, uploadPackOptions);
+    // Write the bytes we hashed into uploadZipSha256 above — re-encoding here
+    // would stamp fresh JSZip timestamps and invalidate the manifest checksum.
+    await writeLineUploadPackBytes(stagingRoot, uploadPack, zipBytes);
     await publishStagedPath(resolve(stagingRoot, 'stickers'), resolve(outDir, 'stickers'), runId);
     await publishStagedPath(
       resolve(stagingRoot, 'qa-report.json'),

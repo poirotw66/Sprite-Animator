@@ -186,13 +186,20 @@ export async function writeLineUploadZip(
   return pack;
 }
 
-/** Legacy layout: `<outDir>/line-upload/` + `<outDir>/line-upload.zip`. */
-export async function writeLineUploadPack(
+/**
+ * Legacy layout from an ALREADY-BUILT pack: `<outDir>/line-upload/` +
+ * `<outDir>/line-upload.zip`.
+ *
+ * Callers that checksum the ZIP must hash and write the same bytes. JSZip
+ * stamps every entry with `new Date()` and the ZIP DOS timestamp has 2-second
+ * resolution, so re-encoding the same frames yields different bytes whenever
+ * the two builds land in different 2-second windows.
+ */
+export async function writeLineUploadPackBytes(
   outDir: string,
-  frames: RgbaImage[],
-  options: LineUploadPackOptions = {}
+  pack: LineUploadPackResult,
+  zipBytes: Uint8Array
 ): Promise<LineUploadPackResult> {
-  const { pack, zipBytes } = await buildLineUploadZipBytes(frames, options);
   const uploadDir = resolve(outDir, 'line-upload');
   await mkdir(uploadDir, { recursive: true });
 
@@ -202,4 +209,14 @@ export async function writeLineUploadPack(
   await writeFile(resolve(outDir, 'line-upload.zip'), zipBytes);
 
   return pack;
+}
+
+/** Legacy layout: build the pack, then write it. */
+export async function writeLineUploadPack(
+  outDir: string,
+  frames: RgbaImage[],
+  options: LineUploadPackOptions = {}
+): Promise<LineUploadPackResult> {
+  const { pack, zipBytes } = await buildLineUploadZipBytes(frames, options);
+  return writeLineUploadPackBytes(outDir, pack, zipBytes);
 }

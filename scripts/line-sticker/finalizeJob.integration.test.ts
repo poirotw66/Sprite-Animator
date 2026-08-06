@@ -7,9 +7,10 @@ import {
   rmSync,
   writeFileSync,
 } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { encodePng, type RgbaImage } from './nodeImage.mts';
 import { finalizeStickerJob } from './finalizeJob.mts';
@@ -96,6 +97,7 @@ describe('finalizeStickerJob staging publication', () => {
     const manifest = JSON.parse(readFileSync(join(outDir, 'manifest.json'), 'utf8')) as {
       completionStatus: string;
       runId: string;
+      uploadZipSha256: string;
       config: { requestedChromaKeyColor: string; resolvedChromaKeyColor: string };
     };
     expect(result.stickerCount).toBe(40);
@@ -109,8 +111,64 @@ describe('finalizeStickerJob staging publication', () => {
       'old-sticker'
     );
     expect(readFileSync(join(outDir, 'line-upload.zip')).toString()).not.toBe('old-zip');
+    // The manifest checksum must describe the ZIP actually on disk. Finalize
+    // hashes the ZIP once and must publish those same bytes; re-encoding drifts
+    // via JSZip timestamps and used to fail this run intermittently.
+    const publishedZipSha256 = createHash('sha256')
+      .update(readFileSync(join(outDir, 'line-upload.zip')))
+      .digest('hex');
+    expect(manifest.uploadZipSha256).toBe(publishedZipSha256);
     expect(validateCompletedStickerSet(outDir)).toMatchObject({ complete: true, reasons: [] });
     expect(stagingRuns(outDir)).toEqual([]);
+  });
+
+  it('publishes the ZIP it checksummed even when the clock moves between builds', async () => {
+    // The checksum mismatch this guards against was a 1-in-5 flake: JSZip stamps
+    // every entry with `new Date()` and the ZIP DOS timestamp has 2-second
+    // resolution, so a second encode of the same frames only diverges when the
+    // two builds straddle a boundary. Force every `new Date()` 5s further ahead
+    // so ANY re-encode diverges, making the regression deterministic.
+    const RealDate = Date;
+    let tick = 0;
+    // Proxy rather than a subclass: the construct trap can see a zero-arg call,
+    // and Date.now/parse keep forwarding to the real implementation.
+    vi.stubGlobal(
+      'Date',
+      new Proxy(RealDate, {
+        construct(target, args: unknown[]) {
+          if (args.length === 0) {
+            tick += 1;
+            return new target(RealDate.now() + tick * 5000);
+          }
+          return new target(...(args as ConstructorParameters<typeof RealDate>));
+        },
+      })
+    );
+
+    try {
+      const outDir = makeJob();
+      await finalizeStickerJob({
+        outDir,
+        sheetDirs: ['sheet-1', 'sheet-2'],
+        config: {
+          stickerCount: 40,
+          lineUpload: false,
+          minGridAlignmentScore: -2,
+          qaMode: 'block',
+          resolvedChromaKeyColor: 'green',
+        },
+      });
+      const manifest = JSON.parse(readFileSync(join(outDir, 'manifest.json'), 'utf8')) as {
+        uploadZipSha256: string;
+      };
+      const publishedZipSha256 = createHash('sha256')
+        .update(readFileSync(join(outDir, 'line-upload.zip')))
+        .digest('hex');
+      expect(manifest.uploadZipSha256).toBe(publishedZipSha256);
+      expect(validateCompletedStickerSet(outDir)).toMatchObject({ complete: true, reasons: [] });
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('keeps previously published artifacts when blocking QA fails', async () => {
