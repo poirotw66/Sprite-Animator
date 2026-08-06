@@ -13,7 +13,7 @@ import {
   CHROMA_LIKE_SOFT_EXTRA,
 } from './chromaSimilarity';
 import { shouldUseGuidedChromaPath } from './chromaGuidedDetect';
-import { clearGuidedGreenPockets } from './chromaPocketCleanup';
+import { clearGuidedChromaPockets } from './chromaPocketCleanup';
 import { isNeutralDarkInk } from './stickerStrokeWhite';
 
 /**
@@ -68,6 +68,41 @@ function isCyanTealCaptionInk(r: number, g: number, b: number): boolean {
   const avg = (r + g + b) / 3;
   if (b >= g * 0.72 && avg > 85) return true;
   if (r < 45 && b >= g * 0.65 && g >= 70 && avg >= 50 && avg <= 140) return true;
+  return false;
+}
+
+/**
+ * Magenta-path constants, the counterparts of the green heuristics below.
+ *
+ * The green values were tuned against named real failures ("sticker-09 mark2
+ * gray hair spike", "ponytail"). There are no equivalent magenta failure cases
+ * yet, so every constant here is derived by analogy and deliberately set equal
+ * to or MORE conservative than its green counterpart — the magenta path errs
+ * toward keeping pixels. Retune only against real magenta hard cases.
+ */
+/** Green counterpart: greenContrast > 32 in the Pass 3 thin-spike test. */
+const MAGENTA_SPIKE_CONTRAST = 40;
+/** Two-channel dominance ratio, taken from passesDirectionGate (r > g*1.2 && b > g*1.2). */
+const MAGENTA_SPILL_RATIO = 1.2;
+/** Green counterpart: Pass 4c clamps g > max(r,b) with zero margin. */
+const MAGENTA_CLAMP_EXCESS = 4;
+/** Ink guard, warm side: mirrors the `b <= r + 40` magenta direction gate. */
+const MAGENTA_INK_WARM_SKEW = 40;
+/** Ink guard, cool side: mirrors the non-guided `b > r + 30` despill skip. */
+const MAGENTA_INK_COOL_SKEW = 30;
+
+/**
+ * Pink/rose/red captions, lips, blush and violet hair (粉紅／紫) — not
+ * chroma-magenta spill. The magenta counterpart of isCyanTealCaptionInk.
+ *
+ * Real magenta spill inherits the (255,0,255) key, so R and B stay roughly
+ * balanced; warm inks (rose text, lips, blush) lean red and violet inks (purple
+ * hair) lean blue. Anything outside that balance band is treated as artwork.
+ */
+function isWarmPinkCaptionInk(r: number, g: number, b: number): boolean {
+  if (r <= g && b <= g) return false; // not magenta-directed at all
+  if (r - b > MAGENTA_INK_WARM_SKEW) return true; // rose / red text, lips, blush
+  if (b - r > MAGENTA_INK_COOL_SKEW) return true; // violet / purple hair
   return false;
 }
 
@@ -385,9 +420,12 @@ export function processChromaKey(
       let isCertainHole = false;
       if (targetIsMagenta) {
         // Magenta-shaped only; exclude strong red (blush/lips) via g < 80 on extreme clause.
+        // Skip pink/rose/red and violet ink — the R/B-balance guard catches the
+        // single-channel casts the ratio clauses above would otherwise punch.
         isCertainHole =
-          (r > g * 1.4 && b > g * 1.4 && (r + b) > 100) ||
-          ((r > g * 3 || b > g * 3) && g < 80);
+          !isWarmPinkCaptionInk(r, g, b) &&
+          ((r > g * 1.4 && b > g * 1.4 && (r + b) > 100) ||
+            ((r > g * 3 || b > g * 3) && g < 80));
       } else if (targetIsGreen) {
         isCertainHole =
           !isCyanTealCaptionInk(r, g, b) &&
@@ -459,12 +497,16 @@ export function processChromaKey(
   }
   dilateMaskBox(nearTransparentForSpill, width, height, strongSpillRadius, dilateScratch);
 
-  // Pass 2b (guided green key only): clear enclosed pockets before despill grays them.
-  if (useGuided && targetIsGreen) {
+  // Pass 2b (guided key path): clear enclosed pockets before despill grays them.
+  if (useGuided && (targetIsGreen || targetIsMagenta)) {
     for (let p = 0; p < totalPixels; p++) {
       data[p * 4 + 3] = erodedAlpha[p]!;
     }
-    clearGuidedGreenPockets(data, width, height, { key: targetColor, keyMax });
+    clearGuidedChromaPockets(data, width, height, {
+      key: targetColor,
+      keyMax,
+      target: targetIsGreen ? 'green' : 'magenta',
+    });
     for (let p = 0; p < totalPixels; p++) {
       erodedAlpha[p] = data[p * 4 + 3]!;
     }
@@ -502,6 +544,59 @@ export function processChromaKey(
       // Non-guided: skip despill on blue-dominant pixels (character blue edges).
       // Guided: rely on shared similarity + generic edge-band despill only.
       if (!useGuided && b > r + 30) continue;
+
+      // Magenta counterpart of the green thin-spike erasure below: strong spill
+      // that fails the YCbCr key stays opaque and despill only grays it, leaving
+      // a spike welded to hair/cloth. Read the pre-pass snapshot so the decision
+      // is identical regardless of scan order.
+      const sr = preDespill[i]!;
+      const sg = preDespill[i + 1]!;
+      const sb = preDespill[i + 2]!;
+      // Two-channel form: BOTH R and B must clear G, so use min() (stricter than
+      // the (r+b)/2 mean used for recoloring) plus the direction-gate ratio.
+      const sMagContrast = Math.min(sr, sb) - sg;
+      if (
+        nearTransparentSpill &&
+        sr > sg * MAGENTA_SPILL_RATIO &&
+        sb > sg * MAGENTA_SPILL_RATIO &&
+        sMagContrast > MAGENTA_SPIKE_CONTRAST &&
+        !isWarmPinkCaptionInk(sr, sg, sb)
+      ) {
+        // Only erase thin edge spikes — interior magenta props keep >= 3 same-class
+        // neighbors in 5×5; a lone AA pixel has 0–2. Counted off the snapshot, so
+        // the result is scan-order independent. Pink/violet ink is skipped above.
+        let magentaSpillNeighbors = 0;
+        const x = pixelIdx % width;
+        const y = (pixelIdx - x) / width;
+        for (let dy = -2; dy <= 2; dy++) {
+          for (let dx = -2; dx <= 2; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            const nx = x + dx;
+            const ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+            if (preDespillAlpha[ny * width + nx]! <= 40) continue;
+            const ni = (ny * width + nx) * 4;
+            const nr = preDespill[ni]!;
+            const ng = preDespill[ni + 1]!;
+            const nb = preDespill[ni + 2]!;
+            const nContrast = Math.min(nr, nb) - ng;
+            if (
+              nr > ng * MAGENTA_SPILL_RATIO &&
+              nb > ng * MAGENTA_SPILL_RATIO &&
+              nContrast > MAGENTA_SPIKE_CONTRAST &&
+              !isWarmPinkCaptionInk(nr, ng, nb)
+            ) {
+              magentaSpillNeighbors++;
+            }
+          }
+        }
+        if (magentaSpillNeighbors < 3) {
+          data[i + 3] = 0;
+          erodedAlpha[pixelIdx] = 0;
+          continue;
+        }
+      }
+
       const magContrast = (r + b) / 2 - g;
       if (avg < 100 && magContrast > 4) {
         const decontamIntensity = applyStrongDespill ? 1.0 : 0.85;
@@ -714,6 +809,40 @@ export function processChromaKey(
         if (isNeutralDarkInk(r, g, b) && yellowGreenExcess < 6) continue;
         data[idx] = b;
         data[idx + 1] = Math.min(data[idx + 1], b);
+      }
+    }
+  }
+
+  // Pass 4c (magenta): counterpart of the green clamp above. Magenta AA also
+  // survives outside the radius-2 edgeBand, so scan the same wider ring and pull
+  // the two dominant channels (R and B) down to G. Unlike green there is no
+  // second "olive" clause: clamping both dominant channels onto the single
+  // minority channel already leaves a neutral pixel, and a residue where only
+  // one of R/B stays elevated is plain red or violet artwork, not magenta spill.
+  if (targetIsMagenta) {
+    const clampRadius = Math.max(radius + 6, 8);
+    const nearTransparent = new Uint8Array(totalPixels);
+    for (let i = 0; i < totalPixels; i++) {
+      if (data[i * 4 + 3] < 40) nearTransparent[i] = 1;
+    }
+    dilateMaskBox(nearTransparent, width, height, clampRadius, dilateScratch);
+    for (let i = 0; i < totalPixels; i++) {
+      if (nearTransparent[i] === 0) continue;
+      const idx = i * 4;
+      if (data[idx + 3] === 0) continue;
+      const r = data[idx];
+      const g = data[idx + 1];
+      const b = data[idx + 2];
+      // Pink/rose/red ink and violet hair keep their hue; only balanced R≈B casts clamp.
+      if (isWarmPinkCaptionInk(r, g, b)) continue;
+      // Dark line art is skipped outright (green only skips it in its olive clause) —
+      // extra caution while these thresholds are untuned.
+      if (isNeutralDarkInk(r, g, b)) continue;
+      // Green clamps with zero margin; magenta needs a real excess first so faint
+      // warm/cool tints in skin and cloth are left alone.
+      if (Math.min(r, b) - g > MAGENTA_CLAMP_EXCESS) {
+        data[idx] = g;
+        data[idx + 2] = g;
       }
     }
   }

@@ -278,6 +278,24 @@ describe('processChromaKey hard cases', () => {
   });
 });
 
+const MAGENTA_KEY = { r: 255, g: 0, b: 255 } as const;
+
+/** Fill a w*h RGBA buffer: magenta background with a solid green square in the center. */
+function makeMagentaWithGreenCenter(w: number, h: number, inset: number) {
+  const data = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      const isCenter = x >= inset && x < w - inset && y >= inset && y < h - inset;
+      data[i] = isCenter ? 40 : 255; // R
+      data[i + 1] = isCenter ? 190 : 0; // G
+      data[i + 2] = isCenter ? 60 : 255; // B
+      data[i + 3] = 255; // A
+    }
+  }
+  return data;
+}
+
 function paint(data: Uint8ClampedArray, w: number, x: number, y: number, rgb: readonly number[]) {
   const i = (y * w + x) * 4;
   data[i] = rgb[0]!;
@@ -286,12 +304,156 @@ function paint(data: Uint8ClampedArray, w: number, x: number, y: number, rgb: re
   data[i + 3] = 255;
 }
 
+/** Interior prop RGB: chroma-like to magenta key, distance just above keyMax*0.95. */
+const INTERIOR_MAGENTA_PROP_RGB = { r: 95, g: 10, b: 95 } as const;
+
+describe('processChromaKey (magenta screen)', () => {
+  it('clears the magenta background and keeps the green subject opaque', () => {
+    const w = 40, h = 40, inset = 12;
+    const data = makeMagentaWithGreenCenter(w, h, inset);
+    processChromaKey(data, w, h, MAGENTA_KEY, 35, () => {});
+
+    expect(alphaAt(data, w, 0, 0)).toBe(0);
+    expect(alphaAt(data, w, w - 1, h - 1)).toBe(0);
+    expect(alphaAt(data, w, w / 2, h / 2)).toBe(255);
+  });
+
+  it('keeps an interior magenta prop that is not edge-connected', () => {
+    const w = 40, h = 40, inset = 8;
+    const keyMax = fuzzPercentToKeyMax(35);
+    const { r, g, b } = INTERIOR_MAGENTA_PROP_RGB;
+    expect(isChromaLike(r, g, b, MAGENTA_KEY, 'key', keyMax)).toBe(true);
+    expect(chromaDistanceToKey(r, g, b, MAGENTA_KEY)).toBeGreaterThanOrEqual(keyMax * 0.95);
+
+    const data = makeMagentaWithGreenCenter(w, h, inset);
+    const x0 = inset + 4;
+    const y0 = inset + 4;
+    for (let y = y0; y < y0 + 4; y++) {
+      for (let x = x0; x < x0 + 4; x++) paint(data, w, x, y, [r, g, b]);
+    }
+    processChromaKey(data, w, h, MAGENTA_KEY, 35, () => {});
+    expect(alphaAt(data, w, 0, 0)).toBe(0);
+    expect(alphaAt(data, w, x0 + 1, y0 + 1)).toBeGreaterThan(200);
+  });
+
+  it('non-guided certain-hole punches disconnected interior magenta', () => {
+    const w = 40, h = 40, inset = 8;
+    const data = makeMagentaWithGreenCenter(w, h, inset);
+    const px = inset + 6;
+    const py = inset + 6;
+    paint(data, w, px, py, [255, 0, 255]);
+    processChromaKey(data, w, h, MAGENTA_KEY, 35, () => {}, 2, 0.22, { guided: false });
+    expect(alphaAt(data, w, 0, 0)).toBe(0);
+    expect(alphaAt(data, w, px, py)).toBeLessThanOrEqual(15);
+  });
+
+  it('guided: true does not certain-hole-punch a pure magenta interior pocket', () => {
+    const w = 40, h = 40, inset = 8;
+    const data = makeMagentaWithGreenCenter(w, h, inset);
+    const px = inset + 6;
+    const py = inset + 6;
+    paint(data, w, px, py, [255, 0, 255]);
+    processChromaKey(data, w, h, MAGENTA_KEY, 35, () => {}, 2, 0.22, { guided: true });
+    expect(alphaAt(data, w, 0, 0)).toBe(0);
+    expect(alphaAt(data, w, px, py)).toBeGreaterThan(200);
+  });
+
+  it('erases a thin magenta spill spike near transparency', () => {
+    // Magenta counterpart of the sticker-09 mark2 green spike: R and B both well
+    // clear of G, balanced, distance ≫ keyMax so it survives the key untouched.
+    const w = 40, h = 40, inset = 12;
+    const data = makeMagentaWithGreenCenter(w, h, inset);
+    const fx = inset;
+    const fy = Math.floor(h / 2);
+    paint(data, w, fx, fy, [150, 40, 145]);
+
+    processChromaKey(data, w, h, MAGENTA_KEY, 35, () => {}, 2, 0.22, { guided: true });
+
+    expect(alphaAt(data, w, 0, 0)).toBe(0);
+    expect(alphaAt(data, w, fx, fy)).toBe(0);
+  });
+
+  it('clamps balanced magenta cast near transparency to a neutral pixel', () => {
+    // Pass 4c magenta: R and B a few levels above G survive despill; the wider
+    // clamp ring pulls both dominant channels down so no pink halo remains.
+    const w = 40, h = 40, inset = 12;
+    const data = makeMagentaWithGreenCenter(w, h, inset);
+    const fx = inset + 1;
+    const fy = Math.floor(h / 2);
+    paint(data, w, fx, fy, [100, 70, 95]);
+
+    processChromaKey(data, w, h, MAGENTA_KEY, 35, () => {}, 2, 0.22, { guided: true });
+
+    const i = (fy * w + fx) * 4;
+    expect(data[i + 3]).toBeGreaterThan(200);
+    expect(Math.min(data[i]!, data[i + 2]!) - data[i + 1]!).toBeLessThanOrEqual(1);
+  });
+
+  it('clears enclosed magenta pocket clusters in guided mode', () => {
+    const w = 40, h = 40, inset = 8;
+    const data = makeMagentaWithGreenCenter(w, h, inset);
+    for (let y = 14; y <= 16; y++) {
+      for (let x = 14; x <= 16; x++) paint(data, w, x, y, [29, 13, 27]);
+    }
+
+    processChromaKey(data, w, h, MAGENTA_KEY, 35, () => {}, 2, 0.22, { guided: true });
+
+    expect(alphaAt(data, w, 15, 15)).toBe(0);
+    expect(alphaAt(data, w, inset + 5, inset + 5)).toBe(255);
+  });
+});
+
+describe('magenta caption-ink guard', () => {
+  const w = 40;
+  const h = 40;
+  const inset = 12;
+  const fy = Math.floor(h / 2);
+
+  /** Warm/cool inks that a magenta key would otherwise mistake for spill. */
+  const INKS: ReadonlyArray<readonly [string, readonly number[]]> = [
+    ['rose caption text', [200, 40, 120]],
+    ['pale pink caption text', [240, 120, 150]],
+    ['red lips', [200, 40, 50]],
+    ['blush', [250, 180, 190]],
+    ['violet hair', [120, 60, 190]],
+  ];
+
+  for (const [name, rgb] of INKS) {
+    it(`keeps ${name} on the edge band instead of erasing it`, () => {
+      const data = makeMagentaWithGreenCenter(w, h, inset);
+      paint(data, w, inset, fy, rgb);
+      processChromaKey(data, w, h, MAGENTA_KEY, 35, () => {}, 2, 0.22, { guided: true });
+      expect(alphaAt(data, w, 0, 0)).toBe(0);
+      expect(alphaAt(data, w, inset, fy)).toBe(255);
+    });
+  }
+
+  it('still erases the balanced magenta control pixel at the same spot', () => {
+    const data = makeMagentaWithGreenCenter(w, h, inset);
+    paint(data, w, inset, fy, [200, 40, 190]);
+    processChromaKey(data, w, h, MAGENTA_KEY, 35, () => {}, 2, 0.22, { guided: true });
+    expect(alphaAt(data, w, inset, fy)).toBe(0);
+  });
+
+  it('does not certain-hole-punch rose ink in the non-guided path', () => {
+    const data = makeMagentaWithGreenCenter(w, h, 8);
+    // Hot-pink text: inside the certain-hole distance band, but R − B = 45 marks
+    // it as warm ink rather than key spill.
+    paint(data, w, 14, 14, [220, 0, 175]);
+    processChromaKey(data, w, h, MAGENTA_KEY, 35, () => {}, 2, 0.22, { guided: false });
+    expect(alphaAt(data, w, 14, 14)).toBe(255);
+  });
+});
+
+/**
+ * Pass 3 reads pre-pass snapshots, so its neighbor-count decisions must not
+ * depend on the low→high scan order. Rotating the input 180° and rotating the
+ * result back must reproduce the un-rotated run exactly.
+ */
 describe('Pass 3 spike erasure is scan-order independent', () => {
   const W = 39; // odd, < 40 → seed strides are 1 so flood seeding is symmetric
   const H = 39;
   const INSET = 12;
-  const GREEN_KEY = { r: 0, g: 255, b: 0 };
-  const SPIKE_RGB = [54, 148, 36];
 
   function rotate180(data: Uint8ClampedArray, w: number, h: number) {
     const out = new Uint8ClampedArray(data.length);
@@ -309,37 +471,46 @@ describe('Pass 3 spike erasure is scan-order independent', () => {
   }
 
   /** 4px diagonal spill spike hanging off the subject edge into the background. */
-  function addDiagonalSpike(data: Uint8ClampedArray) {
-    for (let k = 0; k < 4; k++) paint(data, W, INSET - 1 - k, Math.floor(H / 2) - k, SPIKE_RGB);
+  function addDiagonalSpike(data: Uint8ClampedArray, rgb: readonly number[]) {
+    for (let k = 0; k < 4; k++) paint(data, W, INSET - 1 - k, Math.floor(H / 2) - k, rgb);
   }
 
   function spikeAlphas(data: Uint8ClampedArray) {
-    return [0, 1, 2, 3].map((k) => alphaAt(data, W, INSET - 1 - k, Math.floor(H / 2) - k));
+    return [0, 1, 2, 3].map((k) =>
+      alphaAt(data, W, INSET - 1 - k, Math.floor(H / 2) - k)
+    );
   }
 
-  it('180° rotated input gives the 180° rotated output', () => {
-    const source = makeGreenWithRedCenter(W, H, INSET);
-    addDiagonalSpike(source);
+  const CASES = [
+    { name: 'green', key: { r: 0, g: 255, b: 0 }, spike: [54, 148, 36], base: makeGreenWithRedCenter },
+    { name: 'magenta', key: MAGENTA_KEY, spike: [150, 40, 145], base: makeMagentaWithGreenCenter },
+  ] as const;
 
-    const upright = new Uint8ClampedArray(source);
-    processChromaKey(upright, W, H, GREEN_KEY, 35, () => {}, 2, 0.22, { guided: true });
+  for (const { name, key, spike, base } of CASES) {
+    it(`${name}: 180° rotated input gives the 180° rotated output`, () => {
+      const source = base(W, H, INSET);
+      addDiagonalSpike(source, spike);
 
-    const rotated = rotate180(source, W, H);
-    processChromaKey(rotated, W, H, GREEN_KEY, 35, () => {}, 2, 0.22, { guided: true });
-    const restored = rotate180(rotated, W, H);
+      const upright = new Uint8ClampedArray(source);
+      processChromaKey(upright, W, H, key, 35, () => {}, 2, 0.22, { guided: true });
 
-    expect(Array.from(restored)).toEqual(Array.from(upright));
-  });
+      const rotated = rotate180(source, W, H);
+      processChromaKey(rotated, W, H, key, 35, () => {}, 2, 0.22, { guided: true });
+      const restored = rotate180(rotated, W, H);
 
-  it("the spike's neighbor count actually discriminates", () => {
-    // Guards against a vacuous rotation test: the sparse ends of the diagonal
-    // are erased while the two middle pixels keep >= 3 same-class neighbors.
-    // Scan-order-dependent code would cascade and erase all four.
-    const data = makeGreenWithRedCenter(W, H, INSET);
-    addDiagonalSpike(data);
-    processChromaKey(data, W, H, GREEN_KEY, 35, () => {}, 2, 0.22, { guided: true });
-    const alphas = spikeAlphas(data);
-    expect(alphas.filter((a) => a === 0).length).toBeGreaterThan(0);
-    expect(alphas.filter((a) => a! > 200).length).toBeGreaterThan(0);
-  });
+      expect(Array.from(restored)).toEqual(Array.from(upright));
+    });
+
+    it(`${name}: the spike's neighbor count actually discriminates`, () => {
+      // Guards against a vacuous rotation test: the sparse ends of the diagonal
+      // are erased while the two middle pixels keep >= 3 same-class neighbors.
+      // Scan-order-dependent code would cascade and erase all four.
+      const data = base(W, H, INSET);
+      addDiagonalSpike(data, spike);
+      processChromaKey(data, W, H, key, 35, () => {}, 2, 0.22, { guided: true });
+      const alphas = spikeAlphas(data);
+      expect(alphas.filter((a) => a === 0).length).toBeGreaterThan(0);
+      expect(alphas.filter((a) => a! > 200).length).toBeGreaterThan(0);
+    });
+  }
 });
