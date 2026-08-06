@@ -277,3 +277,69 @@ describe('processChromaKey hard cases', () => {
     expect(alphaAt(data, w, inset + 5, inset + 5)).toBe(255);
   });
 });
+
+function paint(data: Uint8ClampedArray, w: number, x: number, y: number, rgb: readonly number[]) {
+  const i = (y * w + x) * 4;
+  data[i] = rgb[0]!;
+  data[i + 1] = rgb[1]!;
+  data[i + 2] = rgb[2]!;
+  data[i + 3] = 255;
+}
+
+describe('Pass 3 spike erasure is scan-order independent', () => {
+  const W = 39; // odd, < 40 → seed strides are 1 so flood seeding is symmetric
+  const H = 39;
+  const INSET = 12;
+  const GREEN_KEY = { r: 0, g: 255, b: 0 };
+  const SPIKE_RGB = [54, 148, 36];
+
+  function rotate180(data: Uint8ClampedArray, w: number, h: number) {
+    const out = new Uint8ClampedArray(data.length);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const s = (y * w + x) * 4;
+        const t = ((h - 1 - y) * w + (w - 1 - x)) * 4;
+        out[t] = data[s]!;
+        out[t + 1] = data[s + 1]!;
+        out[t + 2] = data[s + 2]!;
+        out[t + 3] = data[s + 3]!;
+      }
+    }
+    return out;
+  }
+
+  /** 4px diagonal spill spike hanging off the subject edge into the background. */
+  function addDiagonalSpike(data: Uint8ClampedArray) {
+    for (let k = 0; k < 4; k++) paint(data, W, INSET - 1 - k, Math.floor(H / 2) - k, SPIKE_RGB);
+  }
+
+  function spikeAlphas(data: Uint8ClampedArray) {
+    return [0, 1, 2, 3].map((k) => alphaAt(data, W, INSET - 1 - k, Math.floor(H / 2) - k));
+  }
+
+  it('180° rotated input gives the 180° rotated output', () => {
+    const source = makeGreenWithRedCenter(W, H, INSET);
+    addDiagonalSpike(source);
+
+    const upright = new Uint8ClampedArray(source);
+    processChromaKey(upright, W, H, GREEN_KEY, 35, () => {}, 2, 0.22, { guided: true });
+
+    const rotated = rotate180(source, W, H);
+    processChromaKey(rotated, W, H, GREEN_KEY, 35, () => {}, 2, 0.22, { guided: true });
+    const restored = rotate180(rotated, W, H);
+
+    expect(Array.from(restored)).toEqual(Array.from(upright));
+  });
+
+  it("the spike's neighbor count actually discriminates", () => {
+    // Guards against a vacuous rotation test: the sparse ends of the diagonal
+    // are erased while the two middle pixels keep >= 3 same-class neighbors.
+    // Scan-order-dependent code would cascade and erase all four.
+    const data = makeGreenWithRedCenter(W, H, INSET);
+    addDiagonalSpike(data);
+    processChromaKey(data, W, H, GREEN_KEY, 35, () => {}, 2, 0.22, { guided: true });
+    const alphas = spikeAlphas(data);
+    expect(alphas.filter((a) => a === 0).length).toBeGreaterThan(0);
+    expect(alphas.filter((a) => a! > 200).length).toBeGreaterThan(0);
+  });
+});

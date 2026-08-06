@@ -436,6 +436,13 @@ export function processChromaKey(
   // Pass 3: Final Decontamination (spill suppression) with full edge band
   // Despill formulas: green g' = min(g, max(r,b)) style; magenta: pull R,B toward G (Wikipedia / industry)
   // Skip color modification for near-white pixels (e.g. white borders) to avoid green/magenta residue.
+  // Pass 3 mutates data/erodedAlpha in place while scanning low→high, so snapshot
+  // both first: the thin-edge-spike neighbor count must see pre-pass state, or
+  // already-despilled up/left neighbors would undercount vs. down/right ones and
+  // erase top/left hair AA more aggressively than bottom/right.
+  const preDespill = new Uint8ClampedArray(data.length);
+  preDespill.set(data);
+  const preDespillAlpha = new Uint8Array(erodedAlpha);
   for (let i = 0; i < data.length; i += 4) {
     const pixelIdx = i / 4;
     const alpha = erodedAlpha[pixelIdx];
@@ -488,15 +495,22 @@ export function processChromaKey(
       // sticker-09 mark2: raw (54,148,36)/(53,81,32) fail YCbCr key (d≈52) so stay
       // opaque; despill then leaves a gray hair spike. Erase strong spill near
       // transparency (wider than edgeBand) instead of only recoloring.
+      // Own r/g/b from the snapshot too, so the whole erase decision reads one
+      // consistent pre-pass state (writes below still target live data).
+      const sr = preDespill[i]!;
+      const sg = preDespill[i + 1]!;
+      const sb = preDespill[i + 2]!;
+      const sGreenContrast = sg - (sr + sb) / 2;
       if (
         nearTransparentSpill &&
-        g > r &&
-        g > b &&
-        greenContrast > 32 &&
-        !isCyanTealCaptionInk(r, g, b)
+        sg > sr &&
+        sg > sb &&
+        sGreenContrast > 32 &&
+        !isCyanTealCaptionInk(sr, sg, sb)
       ) {
         // Only erase thin edge spikes — keep interior green props (4×4 block has
-        // ≥3 same-class neighbors in 5×5; a lone hair AA pixel has 0–2).
+        // ≥3 same-class neighbors in 5×5; a lone hair AA pixel has 0–2). The count
+        // reads the pre-pass snapshot, so it is the same regardless of scan order.
         // Skip cyan/mint caption ink — thin「青色」strokes are also sparse.
         let greenSpillNeighbors = 0;
         const x = pixelIdx % width;
@@ -507,11 +521,11 @@ export function processChromaKey(
             const nx = x + dx;
             const ny = y + dy;
             if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
-            if (erodedAlpha[ny * width + nx]! <= 40) continue;
+            if (preDespillAlpha[ny * width + nx]! <= 40) continue;
             const ni = (ny * width + nx) * 4;
-            const nr = data[ni]!;
-            const ng = data[ni + 1]!;
-            const nb = data[ni + 2]!;
+            const nr = preDespill[ni]!;
+            const ng = preDespill[ni + 1]!;
+            const nb = preDespill[ni + 2]!;
             const nContrast = ng - (nr + nb) / 2;
             if (ng > nr && ng > nb && nContrast > 32 && !isCyanTealCaptionInk(nr, ng, nb)) {
               greenSpillNeighbors++;
