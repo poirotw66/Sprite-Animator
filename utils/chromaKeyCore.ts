@@ -71,6 +71,62 @@ function isCyanTealCaptionInk(r: number, g: number, b: number): boolean {
   return false;
 }
 
+/**
+ * Dilate a 0/1 mask in place with a square (Chebyshev / box) structuring element:
+ * every cell within `radius` px — box distance, not Euclidean — of a set cell
+ * becomes set.
+ *
+ * A box is separable, so a horizontal pass followed by a vertical pass yields
+ * exactly the same mask as the naive "(2r+1)² scan around every seed" loop, but
+ * costs O(N) instead of O(N·r²): each pass slides a running count of set cells
+ * across the window, one add and one subtract per pixel.
+ *
+ * Out-of-bounds neighbors are simply skipped (clamped, never wrapped), matching
+ * the bounds checks in the brute-force loops this replaces.
+ *
+ * @param mask 0/1 mask: read as the seed set, overwritten with the dilated result.
+ * @param scratch Full-size buffer holding the horizontal pass. Every cell is
+ *   written before it is read, so one buffer can be shared by all call sites.
+ */
+function dilateMaskBox(
+  mask: Uint8Array,
+  width: number,
+  height: number,
+  radius: number,
+  scratch: Uint8Array
+): void {
+  // Horizontal: scratch[y][x] = any seed in mask[y][x-radius .. x+radius].
+  for (let y = 0; y < height; y++) {
+    const row = y * width;
+    let count = 0;
+    for (let x = 0; x <= radius && x < width; x++) {
+      if (mask[row + x] !== 0) count++;
+    }
+    for (let x = 0; x < width; x++) {
+      scratch[row + x] = count > 0 ? 1 : 0;
+      const enter = x + radius + 1;
+      if (enter < width && mask[row + enter] !== 0) count++;
+      const leave = x - radius;
+      if (leave >= 0 && mask[row + leave] !== 0) count--;
+    }
+  }
+
+  // Vertical: mask[y][x] = any horizontal-pass hit in column x within radius rows.
+  for (let x = 0; x < width; x++) {
+    let count = 0;
+    for (let y = 0; y <= radius && y < height; y++) {
+      if (scratch[y * width + x] !== 0) count++;
+    }
+    for (let y = 0; y < height; y++) {
+      mask[y * width + x] = count > 0 ? 1 : 0;
+      const enter = y + radius + 1;
+      if (enter < height && scratch[enter * width + x] !== 0) count++;
+      const leave = y - radius;
+      if (leave >= 0 && scratch[leave * width + x] !== 0) count--;
+    }
+  }
+}
+
 export interface ProcessChromaKeyOptions {
   /** true/false wins; undefined → auto-detect regular gutters. */
   guided?: boolean;
@@ -382,24 +438,15 @@ export function processChromaKey(
 
   onProgress(55);
 
+  // Shared scratch for every box dilation below (fully rewritten per call).
+  const dilateScratch = new Uint8Array(totalPixels);
+
   // Build edge band mask: pixels within radius px of semi-transparent or transparent (for spill suppression)
   const edgeBand = new Uint8Array(totalPixels);
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const i = y * width + x;
-      if (erodedAlpha[i] < 255) {
-        for (let dy = -radius; dy <= radius; dy++) {
-          for (let dx = -radius; dx <= radius; dx++) {
-            const ny = y + dy;
-            const nx = x + dx;
-            if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
-              edgeBand[ny * width + nx] = 1;
-            }
-          }
-        }
-      }
-    }
+  for (let i = 0; i < totalPixels; i++) {
+    if (erodedAlpha[i] < 255) edgeBand[i] = 1;
   }
+  dilateMaskBox(edgeBand, width, height, radius, dilateScratch);
 
   onProgress(60);
 
@@ -407,20 +454,10 @@ export function processChromaKey(
   // inside the opaque mass (sticker-09 mark2 gray hair spike).
   const strongSpillRadius = Math.max(radius + 3, 5);
   const nearTransparentForSpill = new Uint8Array(totalPixels);
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const i = y * width + x;
-      if (erodedAlpha[i] >= 40) continue;
-      for (let dy = -strongSpillRadius; dy <= strongSpillRadius; dy++) {
-        for (let dx = -strongSpillRadius; dx <= strongSpillRadius; dx++) {
-          const ny = y + dy;
-          const nx = x + dx;
-          if (ny < 0 || ny >= height || nx < 0 || nx >= width) continue;
-          nearTransparentForSpill[ny * width + nx] = 1;
-        }
-      }
-    }
+  for (let i = 0; i < totalPixels; i++) {
+    if (erodedAlpha[i] < 40) nearTransparentForSpill[i] = 1;
   }
+  dilateMaskBox(nearTransparentForSpill, width, height, strongSpillRadius, dilateScratch);
 
   // Pass 2b (guided green key only): clear enclosed pockets before despill grays them.
   if (useGuided && targetIsGreen) {
@@ -654,20 +691,10 @@ export function processChromaKey(
   if (targetIsGreen) {
     const clampRadius = Math.max(radius + 6, 8);
     const nearTransparent = new Uint8Array(totalPixels);
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const i = y * width + x;
-        if (data[i * 4 + 3] >= 40) continue;
-        for (let dy = -clampRadius; dy <= clampRadius; dy++) {
-          for (let dx = -clampRadius; dx <= clampRadius; dx++) {
-            const ny = y + dy;
-            const nx = x + dx;
-            if (ny < 0 || ny >= height || nx < 0 || nx >= width) continue;
-            nearTransparent[ny * width + nx] = 1;
-          }
-        }
-      }
+    for (let i = 0; i < totalPixels; i++) {
+      if (data[i * 4 + 3] < 40) nearTransparent[i] = 1;
     }
+    dilateMaskBox(nearTransparent, width, height, clampRadius, dilateScratch);
     for (let i = 0; i < totalPixels; i++) {
       if (nearTransparent[i] === 0) continue;
       const idx = i * 4;
