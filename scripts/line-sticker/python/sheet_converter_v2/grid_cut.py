@@ -15,15 +15,13 @@ class GridCuts:
     rows: int
 
 
-def _smooth(profile: np.ndarray, radius: int = 2) -> np.ndarray:
+def _smooth(profile: np.ndarray, radius: int = 3) -> np.ndarray:
     if radius <= 0:
         return profile
-    out = np.empty_like(profile)
-    for i in range(len(profile)):
-        lo = max(0, i - radius)
-        hi = min(len(profile), i + radius + 1)
-        out[i] = float(np.mean(profile[lo:hi]))
-    return out
+    kernel = np.ones(radius * 2 + 1, dtype=np.float64)
+    kernel /= kernel.sum()
+    padded = np.pad(profile.astype(np.float64), radius, mode="edge")
+    return np.convolve(padded, kernel, mode="valid").astype(np.float32)
 
 
 def _content_profiles(alpha: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -38,28 +36,38 @@ def _find_seams(
     expected_cuts: int,
     size: int,
     *,
-    search_ratio: float = 0.18,
+    search_ratio: float = 0.22,
 ) -> list[int]:
-    """Find (expected_cuts) internal seams near equal-split positions (low density)."""
+    """
+    Find internal seams near equal-split positions.
+
+    Prefers the lowest-density valley, with a small distance penalty so thin
+    gutters win over cutting through sticker content.
+    """
     bounds = [0]
     cell = size / (expected_cuts + 1)
-    radius = max(8, int(cell * search_ratio))
+    radius = max(10, int(cell * search_ratio))
     for i in range(1, expected_cuts + 1):
         theoretical = int(round(i * size / (expected_cuts + 1)))
-        lo = max(bounds[-1] + 4, theoretical - radius)
-        hi = min(size - 4, theoretical + radius)
-        window = density[lo : hi + 1]
-        if len(window) == 0:
+        lo = max(bounds[-1] + 6, theoretical - radius)
+        hi = min(size - 6, theoretical + radius)
+        if hi <= lo:
             bounds.append(theoretical)
             continue
-        # Prefer lowest content density (gutter / paper gap)
-        local = int(lo + int(np.argmin(window)))
+        window = density[lo : hi + 1]
+        offsets = np.arange(lo, hi + 1, dtype=np.float32)
+        dist_pen = 0.015 * np.abs(offsets - theoretical) / max(radius, 1)
+        scores = window + dist_pen
+        local = int(lo + int(np.argmin(scores)))
         bounds.append(local)
     bounds.append(size)
-    # Enforce monotonic + min cell size
-    min_cell = max(16, size // ((expected_cuts + 1) * 4))
+
+    min_cell = max(20, size // ((expected_cuts + 1) * 4))
     for i in range(1, len(bounds) - 1):
-        bounds[i] = max(bounds[i - 1] + min_cell, min(bounds[i], size - (len(bounds) - 1 - i) * min_cell))
+        bounds[i] = max(
+            bounds[i - 1] + min_cell,
+            min(bounds[i], size - (len(bounds) - 1 - i) * min_cell),
+        )
     bounds[-1] = size
     return bounds
 
@@ -80,3 +88,32 @@ def equal_grid_cuts(width: int, height: int, cols: int, rows: int) -> GridCuts:
     x_bounds = [int(round(i * width / cols)) for i in range(cols + 1)]
     y_bounds = [int(round(i * height / rows)) for i in range(rows + 1)]
     return GridCuts(x_bounds=x_bounds, y_bounds=y_bounds, cols=cols, rows=rows)
+
+
+def inset_cell_rect(
+    cuts: GridCuts,
+    col: int,
+    row: int,
+    *,
+    inset: int = 2,
+) -> tuple[int, int, int, int]:
+    """Build a per-cell rect, shrinking shared seams so neighbors don't overlap."""
+    x0 = cuts.x_bounds[col]
+    x1 = cuts.x_bounds[col + 1]
+    y0 = cuts.y_bounds[row]
+    y1 = cuts.y_bounds[row + 1]
+    if inset <= 0:
+        return x0, y0, x1, y1
+    if col > 0:
+        x0 += inset
+    if col < cuts.cols - 1:
+        x1 -= inset
+    if row > 0:
+        y0 += inset
+    if row < cuts.rows - 1:
+        y1 -= inset
+    if x1 <= x0 + 4:
+        x0, x1 = cuts.x_bounds[col], cuts.x_bounds[col + 1]
+    if y1 <= y0 + 4:
+        y0, y1 = cuts.y_bounds[row], cuts.y_bounds[row + 1]
+    return x0, y0, x1, y1

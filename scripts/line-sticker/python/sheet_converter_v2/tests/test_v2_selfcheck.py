@@ -84,6 +84,32 @@ def test_convert_sheet_writes_expected_count(tmp_path: Path) -> None:
     result = convert_sheet(sheet, out, ConvertOptions(cols=4, rows=5, fit_line_spec=True))
     assert len(result.sticker_paths) == 20
     assert all(path.exists() for path in result.sticker_paths)
+    assert result.skipped_key is False
+
+
+def test_already_keyed_skips_background_removal(tmp_path: Path) -> None:
+    height, width = 200, 200
+    rgba = np.zeros((height, width, 4), dtype=np.uint8)
+    # Transparent gutters + four opaque cells
+    for y0, x0 in ((10, 10), (10, 110), (110, 10), (110, 110)):
+        rgba[y0 : y0 + 70, x0 : x0 + 70] = (40, 120, 200, 255)
+    sheet = tmp_path / "keyed.png"
+    Image.fromarray(rgba, mode="RGBA").save(sheet)
+    out = tmp_path / "out"
+    result = convert_sheet(
+        sheet,
+        out,
+        ConvertOptions(cols=2, rows=2, fit_line_spec=False, skip_key=True),
+    )
+    assert result.skipped_key is True
+    assert len(result.sticker_paths) == 4
+    # Auto mode also skips when transparency is already present
+    auto = convert_sheet(
+        sheet,
+        tmp_path / "out-auto",
+        ConvertOptions(cols=2, rows=2, fit_line_spec=False, skip_key=None),
+    )
+    assert auto.skipped_key is True
 
 
 def main() -> None:
@@ -93,7 +119,13 @@ def main() -> None:
     test_morph_close_fills_small_gap()
     test_decontaminate_processes_opaque_edge()
     with tempfile.TemporaryDirectory() as tmp:
-        test_convert_sheet_writes_expected_count(Path(tmp))
+        root = Path(tmp)
+        count_dir = root / "count"
+        keyed_dir = root / "keyed"
+        count_dir.mkdir()
+        keyed_dir.mkdir()
+        test_convert_sheet_writes_expected_count(count_dir)
+        test_already_keyed_skips_background_removal(keyed_dir)
     print("all v2 self-checks passed")
 
 

@@ -36,6 +36,11 @@ def estimate_background_rgb(
     # ponytail: tolerance scales with how flat the border is; upgrade: K-means multi-bg
     spread = float(np.mean(np.std(samples.astype(np.float64), axis=0)))
     tolerance = float(np.clip(28.0 + spread * 0.8, 24.0, 55.0))
+    # For near-black / flat chroma borders, widen tolerance slightly so JPEG
+    # compression noise in gutters still flood-fills as background.
+    luminance = 0.2126 * rgb_tuple[0] + 0.7152 * rgb_tuple[1] + 0.0722 * rgb_tuple[2]
+    if luminance < 40.0:
+        tolerance = float(np.clip(tolerance + 12.0, 30.0, 70.0))
     return BackgroundEstimate(rgb=rgb_tuple, tolerance=tolerance)
 
 

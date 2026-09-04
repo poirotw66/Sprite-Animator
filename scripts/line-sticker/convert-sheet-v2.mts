@@ -3,6 +3,7 @@
  * Does not replace nodeImage chroma/slice — opt-in only.
  *
  *   npx tsx convert-sheet-v2.mts --sheet path/to/4x5.png --out output/my-set
+ *   npx tsx convert-sheet-v2.mts --sheet path/to/keyed.png --out output/my-set --already-keyed
  *   npx tsx convert-sheet-v2.mts --input input/ --output output/ --zip
  *   npx tsx convert-sheet-v2.mts --self-check
  */

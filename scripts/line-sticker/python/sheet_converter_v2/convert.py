@@ -42,6 +42,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Use equal cell bounds instead of projection-histogram cuts",
     )
     parser.add_argument("--no-line-fit", action="store_true", help="Skip 370×320 fit")
+    parser.add_argument(
+        "--already-keyed",
+        action="store_true",
+        help="Skip background keying (sheet already transparent / 已去背)",
+    )
+    parser.add_argument(
+        "--force-key",
+        action="store_true",
+        help="Always run background keying even when the sheet already has alpha",
+    )
     parser.add_argument("--zip", action="store_true", help="Write stickers_v2.zip in batch mode")
     parser.add_argument("--self-check", action="store_true", help="Run synthetic self-check and exit")
     return parser
@@ -51,6 +61,7 @@ def run_self_check() -> int:
     from sheet_converter_v2.background import estimate_background_rgb, flood_fill_background_mask
     from sheet_converter_v2.export import fit_line_sticker
     from sheet_converter_v2.grid_cut import detect_grid_cuts
+    from sheet_converter_v2.pipeline import has_existing_transparency
     import numpy as np
 
     rgb = np.full((200, 200, 3), 243, dtype=np.uint8)
@@ -69,6 +80,9 @@ def run_self_check() -> int:
     rgba = np.dstack([rgb, alpha])
     fitted = fit_line_sticker(rgba)
     assert fitted.shape[1] <= 370 and fitted.shape[0] <= 320
+    assert has_existing_transparency(rgba)
+    opaque = np.dstack([rgb, np.full((200, 200), 255, dtype=np.uint8)])
+    assert not has_existing_transparency(opaque)
     print("sheet_converter_v2 self-check OK")
     return 0
 
@@ -78,12 +92,25 @@ def main(argv: list[str] | None = None) -> int:
     if args.self_check:
         return run_self_check()
 
+    if args.already_keyed and args.force_key:
+        print("Use only one of --already-keyed or --force-key", file=sys.stderr)
+        return 2
+
+    skip_key: bool | None
+    if args.already_keyed:
+        skip_key = True
+    elif args.force_key:
+        skip_key = False
+    else:
+        skip_key = None  # auto: skip when transparency already present
+
     options = ConvertOptions(
         cols=args.cols,
         rows=args.rows,
         use_histogram_cuts=not args.equal_grid,
         fit_line_spec=not args.no_line_fit,
         start_index=args.start_index,
+        skip_key=skip_key,
     )
 
     if args.sheet:
@@ -91,9 +118,10 @@ def main(argv: list[str] | None = None) -> int:
             print("--out is required with --sheet", file=sys.stderr)
             return 2
         result = convert_sheet(args.sheet, args.out, options)
+        key_note = "skip-key" if result.skipped_key else f"bg≈{result.bg_rgb}, tol={result.bg_tolerance:.1f}"
         print(
             f"V2: {result.sheet_path.name} → {len(result.sticker_paths)} stickers "
-            f"(bg≈{result.bg_rgb}, tol={result.bg_tolerance:.1f}) → {result.out_dir}"
+            f"({key_note}) → {result.out_dir}"
         )
         return 0
 
@@ -101,7 +129,11 @@ def main(argv: list[str] | None = None) -> int:
         output = args.output or (args.input.parent / "output")
         results = convert_batch(args.input, output, options, make_zip=args.zip)
         total = sum(len(r.sticker_paths) for r in results)
-        print(f"V2 batch: {len(results)} sheets → {total} stickers → {output}")
+        skipped = sum(1 for r in results if r.skipped_key)
+        print(
+            f"V2 batch: {len(results)} sheets → {total} stickers "
+            f"(skipped key on {skipped}) → {output}"
+        )
         return 0
 
     build_parser().print_help()

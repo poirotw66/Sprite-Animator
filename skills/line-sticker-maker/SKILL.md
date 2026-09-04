@@ -1,6 +1,6 @@
 ---
 name: line-sticker-maker
-description: Generate a complete LINE sticker set from a single character reference image, fully headless (no browser). Produces sprite sheets via Gemini, slices stickers, and packages output for the repo-local upload workflow (or legacy line-upload.zip). Use when the user wants to "make LINE stickers", "produce a sticker set", "生成貼圖 / 做一套貼圖" from a reference image.
+description: Generate a complete LINE sticker set from a single character reference image, fully headless (no browser). Produces sprite sheets via Gemini, slices stickers, and packages output for the repo-local upload workflow (or legacy line-upload.zip). Use when the user wants to "make LINE stickers", "produce a sticker set", "生成貼圖 / 做一套貼圖" from a reference image. For ChatGPT sheets that are already background-removed (已去背), use convert-sheet-v2 --already-keyed and do not re-key.
 ---
 
 # LINE Sticker Maker
@@ -15,15 +15,28 @@ It **reuses the app's own modules** (`utils/lineStickerPrompt.ts`,
 `utils/lineStickerSetSchema.ts`, `utils/chromaKeyCore.ts`,
 `utils/lineStickerUploadSpec.ts`) so output matches the web app.
 
-### Additive: ChatGPT paper-bg sheets (V2)
+### Additive: ChatGPT / pre-keyed sheets (V2)
 
-For **light-paper** 4×5 sheets (not Gemini green chroma), use the Python V2
+For **ChatGPT** 4×5 sheets (paper or solid chroma), use the Python V2
 converter — it does **not** replace `legacy`/`core`/`forge` or TS slice modes:
 
 ```bash
+# Needs background keying (paper / solid black-green-magenta, no alpha yet)
 npx tsx scripts/line-sticker/convert-sheet-v2.mts \
   --sheet path/to/4x5.png --out output/my-set
+
+# Already background-removed (transparent PNG / 已去背) → slice only, do NOT re-key
+npx tsx scripts/line-sticker/convert-sheet-v2.mts \
+  --sheet path/to/4x5-transparent.png --out output/my-set --already-keyed
 ```
+
+**Agent rule — never re-key when the user says 已去背 / already keyed:**
+
+| User / input | Action |
+|---|---|
+| Says **已去背** / **already keyed**, or sheet already has transparency (`_v2_keyed_sheet.png`, `_processed-sheet.png`, alpha PNG) | `convert-sheet-v2` with **`--already-keyed`** (slice + LINE fit only) |
+| Opaque paper / solid chroma sheet, first pass | `convert-sheet-v2` default (one key + slice). Do **not** also run Gemini `generate.mts` chroma |
+| Re-processing a previously keyed output | Prefer `--already-keyed`; auto-skip also triggers when alpha is already present |
 
 Read repo-root `docs/workflows/sheet-converter-v2.md`.
 
