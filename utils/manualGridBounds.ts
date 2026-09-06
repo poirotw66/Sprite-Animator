@@ -171,3 +171,36 @@ export function findNearestInteriorLine(
   }
   return bestIndex;
 }
+
+/** Snap `position` to the nearest candidate within threshold (else unchanged). */
+export function snapPosition(
+  position: number,
+  candidates: number[],
+  thresholdPx = 5
+): number {
+  if (candidates.length === 0 || thresholdPx <= 0) return Math.round(position);
+  let best = Math.round(position);
+  let bestDist = Infinity;
+  for (const candidate of candidates) {
+    const d = Math.abs(candidate - position);
+    if (d < bestDist && d <= thresholdPx) {
+      bestDist = d;
+      best = candidate;
+    }
+  }
+  return best;
+}
+
+/** Equal-split snap targets for an axis (excluding outer edges). */
+export function equalSnapCandidates(
+  sheetSize: number,
+  cellCount: number
+): number[] {
+  const n = Math.max(1, Math.floor(cellCount));
+  if (n <= 1) return [];
+  const out: number[] = [];
+  for (let i = 1; i < n; i++) {
+    out.push(Math.round((i * sheetSize) / n));
+  }
+  return out;
+}

@@ -11,9 +11,20 @@ import {
   type DrawLineTool,
 } from './ManualSliceOverlay';
 import {
+  RectMarqueeOverlay,
+  type RectMarqueeTool,
+} from './RectMarqueeOverlay';
+import type { RectMarqueeHistoryState } from './RectMarqueeOverlay';
+import {
   enableManualSliceMode,
+  enterManualSliceMode,
   seedEqualManualSliceMode,
 } from '../utils/manualSliceMode';
+import {
+  clearRectsSliceMode,
+  enterRectsSliceMode,
+} from '../utils/manualCellRects';
+import type { ManualSliceHistoryState } from './ManualSliceOverlay';
 
 interface SpriteSheetViewerProps {
   spriteSheetImage: string | null;
@@ -29,6 +40,10 @@ interface SpriteSheetViewerProps {
   onEditedImage?: (dataUrl: string) => void; // When user confirms eraser edit, replace current image
   chromaKeyProgress?: number; // Progress of chroma key removal (0-100)
   isProcessingChromaKey?: boolean; // Whether chroma key removal is in progress
+  /** Visual accent for Parting (teal) vs default (blue). */
+  controlsAccent?: 'blue' | 'teal';
+  /** Hide equal/ownership/manual toggles when parent provides its own mode strip. */
+  hideSliceModeToggle?: boolean;
 }
 
 export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
@@ -45,12 +60,27 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   onEditedImage,
   chromaKeyProgress = 0,
   isProcessingChromaKey = false,
+  controlsAccent = 'blue',
+  hideSliceModeToggle = false,
 }) => {
   const { t } = useLanguage();
   const [showOriginal, setShowOriginal] = useState(false);
   const [openEraserModal, setOpenEraserModal] = useState(false);
   const [drawLineTool, setDrawLineTool] = useState<DrawLineTool>('vertical');
+  const [rectMarqueeTool, setRectMarqueeTool] = useState<RectMarqueeTool>('draw');
+  const [manualHistoryState, setManualHistoryState] = useState<ManualSliceHistoryState>({
+    canUndo: false,
+    canRedo: false,
+  });
+  const [rectsHistoryState, setRectsHistoryState] = useState<RectMarqueeHistoryState>({
+    canUndo: false,
+    canRedo: false,
+  });
+  const manualHistoryApiRef = useRef<{ undo: () => void; redo: () => void } | null>(null);
+  const rectsHistoryApiRef = useRef<{ undo: () => void; redo: () => void } | null>(null);
   const manualMode = sliceSettings.sliceMode === 'manual';
+  const rectsMode = sliceSettings.sliceMode === 'rects';
+  const freeformOverlay = manualMode || rectsMode;
   const handleColsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const cols = Math.max(1, Number(e.target.value));
     setSliceSettings((p) => ({ ...p, cols }));
@@ -100,6 +130,24 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
     if (sheetDimensions.width === 0 || sheetDimensions.height === 0) {
       return null;
     }
+    if (rectsMode && sliceSettings.inferredCellRects) {
+      const list = sliceSettings.inferredCellRects;
+      const avgW =
+        list.length > 0
+          ? Math.round(list.reduce((s, r) => s + r.width, 0) / list.length)
+          : 0;
+      const avgH =
+        list.length > 0
+          ? Math.round(list.reduce((s, r) => s + r.height, 0) / list.length)
+          : 0;
+      return {
+        cellWidth: avgW,
+        cellHeight: avgH,
+        totalFrames: list.length,
+        effectiveWidth: sheetDimensions.width,
+        effectiveHeight: sheetDimensions.height,
+      };
+    }
     if (
       manualMode &&
       sliceSettings.manualXBounds &&
@@ -140,7 +188,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
       effectiveWidth,
       effectiveHeight,
     };
-  }, [sheetDimensions, sliceSettings, padding, manualMode]);
+  }, [sheetDimensions, sliceSettings, padding, manualMode, rectsMode]);
 
   // Reset to default settings (clear four-edge and inferred/manual mode)
   const handleReset = useCallback(() => {
@@ -175,7 +223,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
       if (sheetDimensions.width <= 0 || sheetDimensions.height <= 0) {
         return prev;
       }
-      return enableManualSliceMode(prev, sheetDimensions.width, sheetDimensions.height);
+      return enterManualSliceMode(prev, sheetDimensions.width, sheetDimensions.height);
     });
   }, [setSliceSettings, sheetDimensions.height, sheetDimensions.width]);
 
@@ -192,6 +240,23 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
       enableManualSliceMode(prev, sheetDimensions.width, sheetDimensions.height)
     );
   }, [setSliceSettings, sheetDimensions.height, sheetDimensions.width]);
+
+  const handleClearRectBoxes = useCallback(() => {
+    setSliceSettings((prev) => clearRectsSliceMode(prev));
+  }, [setSliceSettings]);
+
+  const handleEnterRectsMode = useCallback(() => {
+    setSliceSettings((prev) => {
+      if (prev.sliceMode === 'rects') {
+        return {
+          ...prev,
+          sliceMode: 'equal',
+          inferredCellRects: undefined,
+        };
+      }
+      return enterRectsSliceMode(prev);
+    });
+  }, [setSliceSettings]);
 
   // Interactive grid editing state
   const [isDragging, setIsDragging] = useState(false);
@@ -537,7 +602,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
               />
 
               {/* Grid overlay for alignment - drawn behind SVG but visible */}
-              {sheetDimensions.width > 0 && gridPositions && !manualMode && (
+              {sheetDimensions.width > 0 && gridPositions && !freeformOverlay && (
                 <svg
                   viewBox={`0 0 ${sheetDimensions.width} ${sheetDimensions.height}`}
                   className="absolute inset-0 w-full h-full pointer-events-none"
@@ -573,6 +638,9 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                   sliceSettings={sliceSettings}
                   setSliceSettings={setSliceSettings}
                   drawTool={drawLineTool}
+                  onDrawToolChange={setDrawLineTool}
+                  historyApiRef={manualHistoryApiRef}
+                  onHistoryStateChange={setManualHistoryState}
                   hint={
                     drawLineTool === 'delete'
                       ? t.sliceModeManualHintDelete
@@ -582,7 +650,24 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                   }
                 />
               )}
-              {sheetDimensions.width > 0 && !manualMode && (
+              {sheetDimensions.width > 0 && rectsMode && (
+                <RectMarqueeOverlay
+                  sheetWidth={sheetDimensions.width}
+                  sheetHeight={sheetDimensions.height}
+                  sliceSettings={sliceSettings}
+                  setSliceSettings={setSliceSettings}
+                  tool={rectMarqueeTool}
+                  onToolChange={setRectMarqueeTool}
+                  historyApiRef={rectsHistoryApiRef}
+                  onHistoryStateChange={setRectsHistoryState}
+                  hint={
+                    rectMarqueeTool === 'delete'
+                      ? t.sliceModeRectsHintDelete
+                      : t.sliceModeRectsHintDraw
+                  }
+                />
+              )}
+              {sheetDimensions.width > 0 && !freeformOverlay && (
                 <svg
                   ref={svgRef}
                   viewBox={`0 0 ${sheetDimensions.width} ${sheetDimensions.height}`}
@@ -821,6 +906,24 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
           onToggleManualDraw={handleToggleManualDraw}
           onSeedEqualManual={handleSeedEqualManual}
           onClearManualLines={handleClearManualLines}
+          onUndoManual={() =>
+            rectsMode
+              ? rectsHistoryApiRef.current?.undo()
+              : manualHistoryApiRef.current?.undo()
+          }
+          onRedoManual={() =>
+            rectsMode
+              ? rectsHistoryApiRef.current?.redo()
+              : manualHistoryApiRef.current?.redo()
+          }
+          canUndoManual={rectsMode ? rectsHistoryState.canUndo : manualHistoryState.canUndo}
+          canRedoManual={rectsMode ? rectsHistoryState.canRedo : manualHistoryState.canRedo}
+          rectMarqueeTool={rectMarqueeTool}
+          onRectMarqueeToolChange={setRectMarqueeTool}
+          onToggleRectsMode={handleEnterRectsMode}
+          onClearRectBoxes={handleClearRectBoxes}
+          accent={controlsAccent}
+          hideModeToggle={hideSliceModeToggle}
         />
       )}
     </div>

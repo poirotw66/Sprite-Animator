@@ -1,17 +1,20 @@
 /**
  * SVG overlay for user-drawn slice dividers (vertical / horizontal cut lines).
  */
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SliceSettings } from '../utils/imageUtils';
 import {
   buildEmptyManualBounds,
   cellRectsFromBounds,
+  equalSnapCandidates,
   findNearestInteriorLine,
   insertManualLine,
   moveManualLine,
   removeNearestManualLine,
+  snapPosition,
   type ManualGridBounds,
 } from '../utils/manualGridBounds';
+import { ManualBoundsHistory } from '../utils/manualBoundsHistory';
 
 /** Tool for draw-line slicing: add vertical, add horizontal, or delete. */
 export type DrawLineTool = 'vertical' | 'horizontal' | 'delete';
@@ -19,13 +22,25 @@ export type DrawLineTool = 'vertical' | 'horizontal' | 'delete';
 /** @deprecated use DrawLineTool */
 export type DrawLineAxis = 'x' | 'y';
 
+export interface ManualSliceHistoryState {
+  canUndo: boolean;
+  canRedo: boolean;
+}
+
 interface ManualSliceOverlayProps {
   sheetWidth: number;
   sheetHeight: number;
   sliceSettings: SliceSettings;
   setSliceSettings: React.Dispatch<React.SetStateAction<SliceSettings>>;
   drawTool: DrawLineTool;
+  onDrawToolChange?: (tool: DrawLineTool) => void;
   hint: string;
+  onHistoryStateChange?: (state: ManualSliceHistoryState) => void;
+  /** Imperative undo/redo registration for parent toolbars. */
+  historyApiRef?: React.MutableRefObject<{
+    undo: () => void;
+    redo: () => void;
+  } | null>;
 }
 
 function ensureManualBounds(
@@ -68,13 +83,19 @@ export const ManualSliceOverlay: React.FC<ManualSliceOverlayProps> = ({
   sliceSettings,
   setSliceSettings,
   drawTool,
+  onDrawToolChange,
   hint,
+  onHistoryStateChange,
+  historyApiRef,
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const historyRef = useRef(new ManualBoundsHistory(30));
+  const dragStartBoundsRef = useRef<ManualGridBounds | null>(null);
   const [dragging, setDragging] = useState<{ axis: 'x' | 'y'; index: number } | null>(
     null
   );
   const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
+  const [snapDisabled, setSnapDisabled] = useState(false);
 
   const bounds = useMemo(
     () => ensureManualBounds(sliceSettings, sheetWidth, sheetHeight),
@@ -85,6 +106,69 @@ export const ManualSliceOverlay: React.FC<ManualSliceOverlayProps> = ({
     () => cellRectsFromBounds(bounds.xBounds, bounds.yBounds),
     [bounds]
   );
+
+  const emitHistoryState = useCallback(() => {
+    onHistoryStateChange?.({
+      canUndo: historyRef.current.canUndo,
+      canRedo: historyRef.current.canRedo,
+    });
+  }, [onHistoryStateChange]);
+
+  const applyHistoryBounds = useCallback(
+    (next: ManualGridBounds) => {
+      setSliceSettings((prev) => ({
+        ...prev,
+        sliceMode: 'manual',
+        manualXBounds: next.xBounds,
+        manualYBounds: next.yBounds,
+        cols: Math.max(1, next.xBounds.length - 1),
+        rows: Math.max(1, next.yBounds.length - 1),
+      }));
+      queueMicrotask(() => emitHistoryState());
+    },
+    [emitHistoryState, setSliceSettings]
+  );
+
+  const commitBounds = useCallback(
+    (next: ManualGridBounds, recordHistory = true) => {
+      if (recordHistory) {
+        historyRef.current.push(bounds);
+      }
+      setSliceSettings((prev) => ({
+        ...prev,
+        sliceMode: 'manual',
+        manualXBounds: next.xBounds,
+        manualYBounds: next.yBounds,
+        cols: Math.max(1, next.xBounds.length - 1),
+        rows: Math.max(1, next.yBounds.length - 1),
+      }));
+      queueMicrotask(() => emitHistoryState());
+    },
+    [bounds, emitHistoryState, setSliceSettings]
+  );
+
+  const undo = useCallback(() => {
+    const prev = historyRef.current.undo(bounds);
+    if (prev) applyHistoryBounds(prev);
+  }, [applyHistoryBounds, bounds]);
+
+  const redo = useCallback(() => {
+    const next = historyRef.current.redo(bounds);
+    if (next) applyHistoryBounds(next);
+  }, [applyHistoryBounds, bounds]);
+
+  useEffect(() => {
+    if (historyApiRef) {
+      historyApiRef.current = { undo, redo };
+    }
+    return () => {
+      if (historyApiRef) historyApiRef.current = null;
+    };
+  }, [historyApiRef, redo, undo]);
+
+  useEffect(() => {
+    emitHistoryState();
+  }, [emitHistoryState, bounds]);
 
   const screenToSvg = useCallback((clientX: number, clientY: number) => {
     const svg = svgRef.current;
@@ -97,18 +181,15 @@ export const ManualSliceOverlay: React.FC<ManualSliceOverlayProps> = ({
     };
   }, []);
 
-  const commitBounds = useCallback(
-    (next: ManualGridBounds) => {
-      setSliceSettings((prev) => ({
-        ...prev,
-        sliceMode: 'manual',
-        manualXBounds: next.xBounds,
-        manualYBounds: next.yBounds,
-        cols: Math.max(1, next.xBounds.length - 1),
-        rows: Math.max(1, next.yBounds.length - 1),
-      }));
+  const snapAxisPosition = useCallback(
+    (axis: 'x' | 'y', position: number, disableSnap: boolean) => {
+      if (disableSnap) return Math.round(position);
+      const cellCount = axis === 'x' ? bounds.xBounds.length - 1 : bounds.yBounds.length - 1;
+      const sheetSize = axis === 'x' ? sheetWidth : sheetHeight;
+      const candidates = equalSnapCandidates(sheetSize, Math.max(cellCount, 2));
+      return snapPosition(position, candidates, 5);
     },
-    [setSliceSettings]
+    [bounds.xBounds.length, bounds.yBounds.length, sheetHeight, sheetWidth]
   );
 
   const cursor =
@@ -121,10 +202,12 @@ export const ManualSliceOverlay: React.FC<ManualSliceOverlayProps> = ({
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
       e.preventDefault();
+      svgRef.current?.focus();
       const { x, y } = screenToSvg(e.clientX, e.clientY);
       const threshold = Math.max(10, Math.min(sheetWidth, sheetHeight) * 0.012);
+      setSnapDisabled(e.altKey);
 
-      if (drawTool === 'delete' || e.button === 2 || e.altKey) {
+      if (drawTool === 'delete' || e.button === 2) {
         const hit = findNearestLineAnyAxis(bounds, x, y, threshold * 2);
         if (hit) {
           const next = removeNearestManualLine(
@@ -133,35 +216,36 @@ export const ManualSliceOverlay: React.FC<ManualSliceOverlayProps> = ({
             hit.axis === 'x' ? x : y,
             threshold * 2
           );
-          commitBounds(next);
+          if (next !== bounds) commitBounds(next);
         }
         return;
       }
 
       const near = findNearestLineAnyAxis(bounds, x, y, threshold);
       if (near) {
+        historyRef.current.push(bounds);
+        dragStartBoundsRef.current = bounds;
+        emitHistoryState();
         setDragging(near);
         (e.target as Element).setPointerCapture?.(e.pointerId);
         return;
       }
 
       const axis = drawTool === 'vertical' ? 'x' : 'y';
-      const next = insertManualLine(
-        bounds,
-        axis,
-        axis === 'x' ? x : y,
-        sheetWidth,
-        sheetHeight
-      );
-      commitBounds(next);
+      const raw = axis === 'x' ? x : y;
+      const position = snapAxisPosition(axis, raw, e.altKey);
+      const next = insertManualLine(bounds, axis, position, sheetWidth, sheetHeight);
+      if (next !== bounds) commitBounds(next);
     },
     [
       bounds,
       commitBounds,
       drawTool,
+      emitHistoryState,
       screenToSvg,
       sheetHeight,
       sheetWidth,
+      snapAxisPosition,
     ]
   );
 
@@ -169,37 +253,93 @@ export const ManualSliceOverlay: React.FC<ManualSliceOverlayProps> = ({
     (e: React.PointerEvent<SVGSVGElement>) => {
       const pos = screenToSvg(e.clientX, e.clientY);
       setHoverPos(pos);
+      setSnapDisabled(e.altKey);
       if (!dragging) return;
-      const next = moveManualLine(
-        bounds,
-        dragging.axis,
-        dragging.index,
-        dragging.axis === 'x' ? pos.x : pos.y
-      );
-      commitBounds(next);
+      const raw = dragging.axis === 'x' ? pos.x : pos.y;
+      const position = snapAxisPosition(dragging.axis, raw, e.altKey);
+      const next = moveManualLine(bounds, dragging.axis, dragging.index, position);
+      setSliceSettings((prev) => ({
+        ...prev,
+        sliceMode: 'manual',
+        manualXBounds: next.xBounds,
+        manualYBounds: next.yBounds,
+        cols: Math.max(1, next.xBounds.length - 1),
+        rows: Math.max(1, next.yBounds.length - 1),
+      }));
     },
-    [bounds, commitBounds, dragging, screenToSvg]
+    [bounds, dragging, screenToSvg, setSliceSettings, snapAxisPosition]
   );
 
   const handlePointerUp = useCallback(() => {
     setDragging(null);
+    dragStartBoundsRef.current = null;
   }, []);
 
   const handlePointerLeave = useCallback(() => {
     setDragging(null);
     setHoverPos(null);
+    dragStartBoundsRef.current = null;
   }, []);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+        return;
+      }
+      if (mod && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        redo();
+        return;
+      }
+
+      if (e.key === 'v' || e.key === 'V') {
+        e.preventDefault();
+        onDrawToolChange?.('vertical');
+      } else if (e.key === 'h' || e.key === 'H') {
+        e.preventDefault();
+        onDrawToolChange?.('horizontal');
+      } else if (e.key === 'x' || e.key === 'X' || e.key === 'Delete') {
+        e.preventDefault();
+        onDrawToolChange?.('delete');
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onDrawToolChange, redo, undo]);
 
   const showPreview =
     !dragging &&
     hoverPos &&
     (drawTool === 'vertical' || drawTool === 'horizontal');
 
+  const previewPos = useMemo(() => {
+    if (!hoverPos || !showPreview) return null;
+    const axis = drawTool === 'vertical' ? 'x' : 'y';
+    const raw = axis === 'x' ? hoverPos.x : hoverPos.y;
+    const snapped = snapAxisPosition(axis, raw, snapDisabled);
+    return axis === 'x' ? { x: snapped, y: hoverPos.y } : { x: hoverPos.x, y: snapped };
+  }, [drawTool, hoverPos, showPreview, snapAxisPosition, snapDisabled]);
+
   return (
     <svg
       ref={svgRef}
+      tabIndex={0}
       viewBox={`0 0 ${sheetWidth} ${sheetHeight}`}
-      className="absolute inset-0 h-full w-full touch-none"
+      className="absolute inset-0 h-full w-full touch-none outline-none"
       style={{ cursor }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -217,11 +357,11 @@ export const ManualSliceOverlay: React.FC<ManualSliceOverlayProps> = ({
         strokeWidth={2}
       />
 
-      {showPreview && drawTool === 'vertical' && (
+      {showPreview && previewPos && drawTool === 'vertical' && (
         <line
-          x1={hoverPos.x}
+          x1={previewPos.x}
           y1={0}
-          x2={hoverPos.x}
+          x2={previewPos.x}
           y2={sheetHeight}
           stroke="rgba(249,115,22,0.45)"
           strokeWidth={2}
@@ -229,12 +369,12 @@ export const ManualSliceOverlay: React.FC<ManualSliceOverlayProps> = ({
           className="pointer-events-none"
         />
       )}
-      {showPreview && drawTool === 'horizontal' && (
+      {showPreview && previewPos && drawTool === 'horizontal' && (
         <line
           x1={0}
-          y1={hoverPos.y}
+          y1={previewPos.y}
           x2={sheetWidth}
-          y2={hoverPos.y}
+          y2={previewPos.y}
           stroke="rgba(249,115,22,0.45)"
           strokeWidth={2}
           strokeDasharray="6 4"

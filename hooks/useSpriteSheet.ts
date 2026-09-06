@@ -174,6 +174,7 @@ export const useSpriteSheet = (
     }
     if (settings.sliceMode === 'inferred') return; // Inferred grid uses explicit rects, skip smart align
     if (settings.sliceMode === 'manual') return; // User-drawn bounds — don't auto-shift
+    if (settings.sliceMode === 'rects') return; // User marquee boxes — don't auto-shift
     const opt = settings.autoOptimized;
     if (!opt?.paddingX || !opt?.paddingY || !opt?.shiftX || !opt?.shiftY) {
       return;

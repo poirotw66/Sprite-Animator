@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Pencil, RotateCcw, X } from './Icons';
 import { GripVertical } from 'lucide-react';
 import { getCellRectForFrame, getContentCentroidOffset, getBestOffsetByTemplateMatch, cropCellFromImage, getEffectivePadding, type FrameOverride, type SliceSettings } from '../utils/imageUtils';
+import { resolveCellRectForFrame } from '../utils/manualCellRects';
 import { useLanguage } from '../hooks/useLanguage';
 
 const OFFSET_MIN = -500;
@@ -33,6 +34,34 @@ interface FrameGridProps {
 }
 
 const CANVAS_SIZE = 400;
+
+function cellRectForEditingFrame(
+  sliceSettings: SliceSettings,
+  sheetWidth: number,
+  sheetHeight: number,
+  frameIndex: number
+) {
+  const padding = getEffectivePadding(sliceSettings);
+  return resolveCellRectForFrame(
+    sliceSettings,
+    sheetWidth,
+    sheetHeight,
+    frameIndex,
+    () =>
+      getCellRectForFrame(
+        sheetWidth,
+        sheetHeight,
+        sliceSettings.cols,
+        sliceSettings.rows,
+        sliceSettings.paddingX,
+        sliceSettings.paddingY,
+        sliceSettings.shiftX,
+        sliceSettings.shiftY,
+        frameIndex,
+        padding
+      )
+  );
+}
 
 /** Sheet crop window → sub-rectangle in the per-frame image (matches sliceSpriteSheet dst math, scaled to natural size). */
 function frameImageSubRectFromSheetCrop(
@@ -127,18 +156,11 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
   // Draw single-frame canvas with crop box when sheet geometry + source image are available
   useEffect(() => {
     if (!hasCropCanvasData || !canvasRef.current) return;
-    const padding = getEffectivePadding(sliceSettings!);
-    const cellRect = getCellRectForFrame(
+    const cellRect = cellRectForEditingFrame(
+      sliceSettings!,
       sheetDimensions.width,
       sheetDimensions.height,
-      sliceSettings!.cols,
-      sliceSettings!.rows,
-      sliceSettings!.paddingX,
-      sliceSettings!.paddingY,
-      sliceSettings!.shiftX,
-      sliceSettings!.shiftY,
-      editingFrameIndex!,
-      padding
+      editingFrameIndex!
     );
     if (!cellRect) return;
     const ov = frameOverrides[editingFrameIndex!] ?? {};
@@ -249,18 +271,11 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
   const startCropDrag = useCallback((clientX: number, clientY: number) => {
     if (!sliceSettings || !setFrameOverrides || editingFrameIndex == null ||
         sheetDimensions.width <= 0 || sheetDimensions.height <= 0 || !canvasRef.current) return;
-    const padding = getEffectivePadding(sliceSettings);
-    const cellRect = getCellRectForFrame(
+    const cellRect = cellRectForEditingFrame(
+      sliceSettings,
       sheetDimensions.width,
       sheetDimensions.height,
-      sliceSettings.cols,
-      sliceSettings.rows,
-      sliceSettings.paddingX,
-      sliceSettings.paddingY,
-      sliceSettings.shiftX,
-      sliceSettings.shiftY,
-      editingFrameIndex,
-      padding
+      editingFrameIndex
     );
     if (!cellRect) return;
     const ov = frameOverrides[editingFrameIndex] ?? {};
@@ -584,18 +599,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                           
                           const cellRects: Array<{ x: number; y: number; width: number; height: number }> = [];
                           for (let i = 0; i < frames.length; i++) {
-                            const padding = getEffectivePadding(sliceSettings);
-                            const rect = getCellRectForFrame(
-                              W, H,
-                              sliceSettings.cols,
-                              sliceSettings.rows,
-                              sliceSettings.paddingX,
-                              sliceSettings.paddingY,
-                              sliceSettings.shiftX,
-                              sliceSettings.shiftY,
-                              i,
-                              padding
-                            );
+                            const rect = cellRectForEditingFrame(sliceSettings, W, H, i);
                             if (rect) cellRects.push(rect);
                           }
                           if (cellRects.length !== frames.length) return;

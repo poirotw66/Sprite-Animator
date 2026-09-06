@@ -29,8 +29,15 @@ export async function sliceSheetWithSettings(
     threshold = 230,
   } = options;
 
-  if (settings.sliceMode === 'inferred' && settings.inferredCellRects?.length) {
+  if (
+    (settings.sliceMode === 'inferred' || settings.sliceMode === 'rects') &&
+    settings.inferredCellRects?.length
+  ) {
     return sliceSpriteSheetByCellRects(source, settings.inferredCellRects);
+  }
+
+  if (settings.sliceMode === 'rects') {
+    return [];
   }
 
   if (

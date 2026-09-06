@@ -23,9 +23,10 @@ export interface SliceSettings {
   /**
    * `equal` = fixed cell crops; `inferred` = detected rects;
    * `ownership` = equal grid + connected-component owner masking;
-   * `manual` = user-drawn divider lines (`manualXBounds` / `manualYBounds`).
+   * `manual` = user-drawn divider lines (`manualXBounds` / `manualYBounds`);
+   * `rects` = user-drawn marquee rectangles (`inferredCellRects`).
    */
-  sliceMode?: 'equal' | 'inferred' | 'ownership' | 'manual';
+  sliceMode?: 'equal' | 'inferred' | 'ownership' | 'manual' | 'rects';
   inferredCellRects?: Array<{ x: number; y: number; width: number; height: number }>;
   /** Full X edge list [0, ..., sheetWidth] when sliceMode is `manual`. */
   manualXBounds?: number[];

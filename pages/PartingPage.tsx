@@ -11,6 +11,10 @@ import { useSpriteSheetFlow } from '../hooks/useSpriteSheetFlow';
 import { useLineStickerDownload } from '../hooks/useLineStickerDownload';
 import { useSheetSliceProgrammaticOverlay } from '../hooks/useSheetSliceProgrammaticOverlay';
 import { SheetSliceProgrammaticOverlayPanel } from '../components/SheetSliceProgrammaticOverlayPanel';
+import {
+  enterManualSliceMode,
+} from '../utils/manualSliceMode';
+import { enterRectsSliceMode } from '../utils/manualCellRects';
 
 const SpriteSheetViewer = lazyWithRetry(() =>
   import('../components/SpriteSheetViewer').then((m) => ({ default: m.SpriteSheetViewer }))
@@ -107,6 +111,9 @@ const PartingPage: React.FC = () => {
   }, [flow.image]);
 
   const handleOptimizeSlice = useCallback(async () => {
+    if (flow.sliceSettings.sliceMode === 'manual' || flow.sliceSettings.sliceMode === 'rects') {
+      return;
+    }
     setOptimizeStatus(t.statusOptimizing);
     try {
       await flow.optimizeSlice();
@@ -116,6 +123,41 @@ const PartingPage: React.FC = () => {
       setOptimizeStatus(null);
     }
   }, [flow, t.statusOptimizing, t.statusOptimized]);
+
+  const sliceMode = flow.sliceSettings.sliceMode ?? 'equal';
+  const isManualSlice = sliceMode === 'manual';
+  const isRectsSlice = sliceMode === 'rects';
+  const isFreeformSlice = isManualSlice || isRectsSlice;
+
+  const setSliceModeEqual = useCallback(() => {
+    flow.setSliceSettings((prev) => ({
+      ...prev,
+      sliceMode: 'equal',
+      manualXBounds: undefined,
+      manualYBounds: undefined,
+      inferredCellRects: undefined,
+    }));
+  }, [flow]);
+
+  const setSliceModeOwnership = useCallback(() => {
+    flow.setSliceSettings((prev) => ({
+      ...prev,
+      sliceMode: 'ownership',
+      manualXBounds: undefined,
+      manualYBounds: undefined,
+      inferredCellRects: undefined,
+    }));
+  }, [flow]);
+
+  const setSliceModeManual = useCallback(() => {
+    const { width, height } = flow.sheetDimensions;
+    if (width <= 0 || height <= 0) return;
+    flow.setSliceSettings((prev) => enterManualSliceMode(prev, width, height));
+  }, [flow]);
+
+  const setSliceModeRects = useCallback(() => {
+    flow.setSliceSettings((prev) => enterRectsSliceMode(prev));
+  }, [flow]);
 
   const handleFrameClick = useCallback((index: number) => {
     setCurrentGridIndex(index);
@@ -235,6 +277,70 @@ const PartingPage: React.FC = () => {
               </div>
 
               {displayImage && (
+                <>
+                  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 space-y-3">
+                    <h3 className="text-sm font-semibold text-slate-700">{t.gridSliceSettings}</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={setSliceModeEqual}
+                        className={`px-2.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                          !isFreeformSlice && sliceMode !== 'ownership'
+                            ? 'bg-teal-600 text-white border-teal-700'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                        }`}
+                        aria-pressed={!isFreeformSlice && sliceMode !== 'ownership'}
+                      >
+                        {t.partingModeEqual}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={setSliceModeOwnership}
+                        className={`px-2.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                          sliceMode === 'ownership'
+                            ? 'bg-teal-600 text-white border-teal-700'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                        }`}
+                        aria-pressed={sliceMode === 'ownership'}
+                        title={t.sliceModeOwnershipHint}
+                      >
+                        {t.partingModeOwnership}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={setSliceModeManual}
+                        className={`px-2.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                          isManualSlice
+                            ? 'bg-orange-600 text-white border-orange-700'
+                            : 'bg-white text-orange-800 border-orange-200 hover:bg-orange-50'
+                        }`}
+                        aria-pressed={isManualSlice}
+                        title={t.sliceModeManualHint}
+                      >
+                        {t.partingModeManual}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={setSliceModeRects}
+                        className={`px-2.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                          isRectsSlice
+                            ? 'bg-emerald-600 text-white border-emerald-700'
+                            : 'bg-white text-emerald-800 border-emerald-200 hover:bg-emerald-50'
+                        }`}
+                        aria-pressed={isRectsSlice}
+                        title={t.sliceModeRectsHint}
+                      >
+                        {t.partingModeRects}
+                      </button>
+                    </div>
+                    {isManualSlice && (
+                      <p className="text-xs text-orange-800 leading-relaxed">{t.partingDrawHint}</p>
+                    )}
+                    {isRectsSlice && (
+                      <p className="text-xs text-emerald-800 leading-relaxed">{t.partingRectsHint}</p>
+                    )}
+                  </div>
+
                 <Suspense
                   fallback={
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex items-center justify-center min-h-[200px]">
@@ -254,11 +360,14 @@ const PartingPage: React.FC = () => {
                     onDownloadOriginal={onDownloadOriginal}
                     chromaKeyProgress={flow.chromaKeyProgress}
                     isProcessingChromaKey={flow.isProcessingChromaKey}
+                    controlsAccent="teal"
+                    hideSliceModeToggle
                   />
                 </Suspense>
+                </>
               )}
 
-              {displayImage && (
+              {displayImage && !isFreeformSlice && (
                 <div className="flex flex-col gap-2">
                   <button
                     type="button"

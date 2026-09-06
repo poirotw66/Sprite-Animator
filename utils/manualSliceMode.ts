@@ -39,3 +39,15 @@ export function seedEqualManualSliceMode(
     rows: seeded.yBounds.length - 1,
   };
 }
+
+/**
+ * Enter draw-line mode with equal dividers seeded from current cols×rows
+ * so the sheet immediately shows editable cut lines.
+ */
+export function enterManualSliceMode(
+  settings: SliceSettings,
+  sheetWidth: number,
+  sheetHeight: number
+): SliceSettings {
+  return seedEqualManualSliceMode(settings, sheetWidth, sheetHeight);
+}

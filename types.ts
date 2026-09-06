@@ -51,7 +51,7 @@ export interface SavedSliceSettings {
   paddingBottom?: number;
   shiftX: number;
   shiftY: number;
-  sliceMode?: 'equal' | 'inferred' | 'ownership' | 'manual';
+  sliceMode?: 'equal' | 'inferred' | 'ownership' | 'manual' | 'rects';
   inferredCellRects?: Array<{ x: number; y: number; width: number; height: number }>;
   manualXBounds?: number[];
   manualYBounds?: number[];

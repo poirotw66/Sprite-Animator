@@ -1,8 +1,9 @@
 import React from 'react';
-import { Sliders, RefreshCw, Move } from './Icons';
+import { Sliders, RefreshCw, Move, RotateCcw, RotateCw } from './Icons';
 import { SliceSettings } from '../utils/imageUtils';
 import { useLanguage } from '../hooks/useLanguage';
 import type { DrawLineTool } from './ManualSliceOverlay';
+import type { RectMarqueeTool } from './RectMarqueeOverlay';
 
 /** Real-time grid metrics computed by the parent viewer. */
 export interface SliceCellInfo {
@@ -32,6 +33,18 @@ interface SpriteSheetSliceControlsProps {
   onToggleManualDraw?: () => void;
   onSeedEqualManual?: () => void;
   onClearManualLines?: () => void;
+  onUndoManual?: () => void;
+  onRedoManual?: () => void;
+  canUndoManual?: boolean;
+  canRedoManual?: boolean;
+  rectMarqueeTool?: RectMarqueeTool;
+  onRectMarqueeToolChange?: (tool: RectMarqueeTool) => void;
+  onToggleRectsMode?: () => void;
+  onClearRectBoxes?: () => void;
+  /** Visual accent for Parting (teal) vs default sprite tools (blue). */
+  accent?: 'blue' | 'teal';
+  /** When true, hide the equal/ownership/manual toggle row (parent owns mode strip). */
+  hideModeToggle?: boolean;
 }
 
 /**
@@ -57,26 +70,63 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
   onToggleManualDraw,
   onSeedEqualManual,
   onClearManualLines,
+  onUndoManual,
+  onRedoManual,
+  canUndoManual = false,
+  canRedoManual = false,
+  rectMarqueeTool = 'draw',
+  onRectMarqueeToolChange,
+  onToggleRectsMode,
+  onClearRectBoxes,
+  accent = 'blue',
+  hideModeToggle = false,
 }) => {
   const { t } = useLanguage();
   const ownershipOn = sliceSettings.sliceMode === 'ownership';
   const manualOn = sliceSettings.sliceMode === 'manual';
-  const modeLabel = manualOn
-    ? t.sliceModeManual
-    : ownershipOn
-      ? t.sliceModeOwnership
-      : t.sliceModeEqual;
+  const rectsOn = sliceSettings.sliceMode === 'rects';
+  const hideGridInputs = manualOn || rectsOn;
+  const modeLabel = rectsOn
+    ? t.sliceModeRects
+    : manualOn
+      ? t.sliceModeManual
+      : ownershipOn
+        ? t.sliceModeOwnership
+        : t.sliceModeEqual;
+  const shellClass =
+    accent === 'teal'
+      ? 'mt-4 p-5 bg-gradient-to-br from-teal-50/80 to-cyan-50/60 border border-teal-200 rounded-xl flex flex-col gap-4 text-sm animate-in fade-in slide-in-from-top-2 shadow-md'
+      : 'mt-4 p-5 bg-gradient-to-br from-blue-50/80 to-indigo-50/60 border border-blue-200 rounded-xl flex flex-col gap-4 text-sm animate-in fade-in slide-in-from-top-2 shadow-md';
+  const titleClass = accent === 'teal' ? 'text-teal-900' : 'text-blue-900';
+  const borderClass = accent === 'teal' ? 'border-teal-300' : 'border-blue-300';
+  const mutedClass = accent === 'teal' ? 'text-teal-600' : 'text-blue-600';
 
   return (
-    <div className="mt-4 p-5 bg-gradient-to-br from-blue-50/80 to-indigo-50/60 border border-blue-200 rounded-xl flex flex-col gap-4 text-sm animate-in fade-in slide-in-from-top-2 shadow-md">
+    <div className={shellClass}>
       {/* Header with Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-300 pb-3">
-        <div className="flex items-center gap-2 text-blue-900 font-bold">
+      <div className={`flex flex-wrap items-center justify-between gap-2 border-b ${borderClass} pb-3`}>
+        <div className={`flex items-center gap-2 ${titleClass} font-bold`}>
           <Sliders className="w-5 h-5" />
           <span>{t.gridSliceSettings}</span>
-          <span className="text-xs font-normal text-blue-600 ml-1">({modeLabel})</span>
+          <span className={`text-xs font-normal ${mutedClass} ml-1`}>({modeLabel})</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {!hideModeToggle && (
+            <>
+          <button
+            type="button"
+            onClick={onToggleRectsMode}
+            className={`text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border ${
+              rectsOn
+                ? 'text-white bg-emerald-600 border-emerald-700 hover:bg-emerald-700'
+                : 'text-emerald-800 bg-emerald-100 border-emerald-300 hover:bg-emerald-200'
+            }`}
+            title={t.sliceModeRectsHint}
+            aria-pressed={rectsOn}
+            aria-label={t.sliceModeRects}
+          >
+            {t.sliceModeRects}
+          </button>
           <button
             type="button"
             onClick={onToggleManualDraw}
@@ -99,14 +149,16 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
                 sliceMode:
                   prev.sliceMode === 'ownership'
                     ? 'equal'
-                    : prev.sliceMode === 'manual'
-                      ? 'manual'
+                    : prev.sliceMode === 'manual' || prev.sliceMode === 'rects'
+                      ? prev.sliceMode
                       : 'ownership',
                 inferredCellRects:
-                  prev.sliceMode === 'ownership' ? prev.inferredCellRects : undefined,
+                  prev.sliceMode === 'ownership' || prev.sliceMode === 'rects'
+                    ? prev.inferredCellRects
+                    : undefined,
               }))
             }
-            disabled={manualOn}
+            disabled={manualOn || rectsOn}
             className={`text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border disabled:opacity-40 disabled:cursor-not-allowed ${
               ownershipOn
                 ? 'text-white bg-blue-600 border-blue-700 hover:bg-blue-700'
@@ -118,9 +170,11 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
           >
             {t.sliceModeOwnership}
           </button>
+            </>
+          )}
           <button
             onClick={onAutoCenter}
-            disabled={manualOn}
+            disabled={manualOn || rectsOn}
             className="text-xs flex items-center gap-1.5 text-blue-700 bg-blue-100 hover:bg-blue-200 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border border-blue-300 hover:shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
             title={t.autoCenter}
             aria-label={t.autoCenter}
@@ -139,6 +193,73 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
           </button>
         </div>
       </div>
+
+      {rectsOn && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50/90 px-3 py-2 space-y-2">
+          <p className="text-xs text-emerald-900 leading-relaxed">{t.sliceModeRectsHint}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-emerald-900">{t.sliceModeManualDraw}</span>
+            <button
+              type="button"
+              onClick={() => onRectMarqueeToolChange?.('draw')}
+              className={`text-xs px-2.5 py-1 rounded-md border font-medium ${
+                rectMarqueeTool === 'draw'
+                  ? 'bg-emerald-600 text-white border-emerald-700'
+                  : 'bg-white text-emerald-800 border-emerald-300'
+              }`}
+              aria-pressed={rectMarqueeTool === 'draw'}
+            >
+              {t.sliceModeRectsDraw}
+            </button>
+            <button
+              type="button"
+              onClick={() => onRectMarqueeToolChange?.('delete')}
+              className={`text-xs px-2.5 py-1 rounded-md border font-medium ${
+                rectMarqueeTool === 'delete'
+                  ? 'bg-red-600 text-white border-red-700'
+                  : 'bg-white text-red-700 border-red-300'
+              }`}
+              aria-pressed={rectMarqueeTool === 'delete'}
+              title={t.sliceModeRectsHintDelete}
+            >
+              {t.sliceModeRectsDelete}
+            </button>
+            <button
+              type="button"
+              onClick={onUndoManual}
+              disabled={!canUndoManual}
+              className="text-xs px-2.5 py-1 rounded-md border border-emerald-300 bg-white text-emerald-800 font-medium hover:bg-emerald-100 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+              title={t.sliceModeManualUndo}
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              {t.sliceModeManualUndo}
+            </button>
+            <button
+              type="button"
+              onClick={onRedoManual}
+              disabled={!canRedoManual}
+              className="text-xs px-2.5 py-1 rounded-md border border-emerald-300 bg-white text-emerald-800 font-medium hover:bg-emerald-100 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+              title={t.sliceModeManualRedo}
+            >
+              <RotateCw className="w-3.5 h-3.5" />
+              {t.sliceModeManualRedo}
+            </button>
+            <button
+              type="button"
+              onClick={onClearRectBoxes}
+              className="text-xs px-2.5 py-1 rounded-md border border-emerald-300 bg-white text-emerald-800 font-medium hover:bg-emerald-100"
+            >
+              {t.sliceModeRectsClear}
+            </button>
+            <span className="text-[10px] text-emerald-700/80 ml-auto">{t.sliceModeRectsHotkeys}</span>
+          </div>
+          {cellInfo && (
+            <p className="text-[11px] text-emerald-800 font-medium">
+              {cellInfo.totalFrames} {t.frames}
+            </p>
+          )}
+        </div>
+      )}
 
       {manualOn && (
         <div className="rounded-lg border border-orange-200 bg-orange-50/90 px-3 py-2 space-y-2">
@@ -184,6 +305,26 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
             </button>
             <button
               type="button"
+              onClick={onUndoManual}
+              disabled={!canUndoManual}
+              className="text-xs px-2.5 py-1 rounded-md border border-orange-300 bg-white text-orange-800 font-medium hover:bg-orange-100 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+              title={t.sliceModeManualUndo}
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              {t.sliceModeManualUndo}
+            </button>
+            <button
+              type="button"
+              onClick={onRedoManual}
+              disabled={!canRedoManual}
+              className="text-xs px-2.5 py-1 rounded-md border border-orange-300 bg-white text-orange-800 font-medium hover:bg-orange-100 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+              title={t.sliceModeManualRedo}
+            >
+              <RotateCw className="w-3.5 h-3.5" />
+              {t.sliceModeManualRedo}
+            </button>
+            <button
+              type="button"
               onClick={onClearManualLines}
               className="text-xs px-2.5 py-1 rounded-md border border-orange-300 bg-white text-orange-800 font-medium hover:bg-orange-100"
             >
@@ -196,17 +337,24 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
             >
               {t.sliceModeManualSeedEqual}
             </button>
+            <span className="text-[10px] text-orange-700/80 ml-auto">{t.sliceModeManualHotkeys}</span>
           </div>
+          {cellInfo && (
+            <p className="text-[11px] text-orange-800 font-medium">
+              {cellInfo.totalFrames} {t.frames} · {sliceSettings.cols}×{sliceSettings.rows}
+            </p>
+          )}
         </div>
       )}
 
-      {ownershipOn && !manualOn && (
+      {ownershipOn && !manualOn && !rectsOn && (
         <p className="text-xs text-blue-800 bg-blue-50/90 border border-blue-200 rounded-lg px-3 py-2 leading-relaxed">
           {t.sliceModeOwnershipHint}
         </p>
       )}
 
-      {/* Grid Size Controls */}
+      {/* Grid Size Controls — hidden in manual / rects mode */}
+      {!hideGridInputs && (
       <div className="bg-white/80 rounded-lg p-3 border border-blue-200/50">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-semibold text-slate-700">{t.gridSize}</span>
@@ -256,9 +404,10 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
           </div>
         </div>
       </div>
+      )}
 
       {/* X / Y padding & shift (equal / ownership grid only) */}
-      {!manualOn && (
+      {!hideGridInputs && (
         <>
       <div className="bg-white/80 rounded-lg p-3 border border-blue-200/50">
         <div className="flex items-center gap-2 mb-2">
