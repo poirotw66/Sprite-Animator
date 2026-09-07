@@ -175,6 +175,13 @@ The app uses hash routing so direct navigation and refreshes work reliably on Gi
 
 After your first clone, run `graphify update .` to build the local code knowledge graph (writes to `graphify-out/`, ~15s, not versioned).
 
+After changing `public/style-previews/*.png` or `public/font.png`, rebuild and commit the browser thumbnails:
+
+```bash
+npm run previews:build
+npm run previews:check
+```
+
 ### Build Production Version
 
 ```bash

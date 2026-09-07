@@ -406,7 +406,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
   if (frames.length === 0) return null;
 
   return (
-    <div className="mt-4 pt-4 border-t border-slate-200">
+    <div data-testid="frame-grid" className="mt-4 pt-4 border-t border-slate-200">
       <h3 className="text-xs font-semibold text-slate-700 mb-3 flex items-center justify-between">
         動作分解 (Extracted Frames)
         <span className="text-[10px] bg-slate-100 px-2 py-1 rounded-full text-slate-600 font-medium">點擊切換</span>
@@ -698,6 +698,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
               >
                 <input
                   type="checkbox"
+                  data-testid={`frame-include-${idx}`}
                   checked={frameIncluded[idx] !== false}
                   onChange={() => {
                     setFrameIncluded((prev) => {

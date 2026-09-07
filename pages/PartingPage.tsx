@@ -237,6 +237,7 @@ const PartingPage: React.FC = () => {
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
+                      data-testid="parting-remove-background"
                       checked={flow.removeBackground}
                       onChange={(e) => flow.setRemoveBackground(e.target.checked)}
                       className="rounded border-slate-300"
@@ -446,6 +447,7 @@ const PartingPage: React.FC = () => {
                   />
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button
+                      data-testid="parting-download-all"
                       onClick={downloadAllAsZip}
                       disabled={isDownloading || flow.frames.length === 0}
                       className="px-5 py-2.5 bg-teal-500 text-white text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-teal-600 disabled:opacity-50 transition-all shadow-md"
@@ -454,6 +456,7 @@ const PartingPage: React.FC = () => {
                       {t.lineStickerDownloadAll}
                     </button>
                     <button
+                      data-testid="parting-download-selected"
                       onClick={() => downloadSelectedAsZip(selectedIndices)}
                       disabled={isDownloading || selectedIndices.length === 0}
                       className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl flex items-center gap-2 hover:bg-slate-50 disabled:opacity-50 transition-all"

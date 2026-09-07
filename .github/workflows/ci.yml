@@ -41,6 +41,9 @@ jobs:
       - name: Security audit
         run: npm run security:audit
 
+      - name: Scan repository for API credentials
+        run: npm run security:secrets
+
       # Mirrors are gitignored generated copies of skills/; sync before tests that expect them.
       - name: Sync LINE sticker skill mirrors
         run: npm run skills:sync:line-sticker
@@ -50,6 +53,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Check generated preview assets
+        run: npm run previews:check
 
       - name: Test TypeScript
         run: npm run test
@@ -67,6 +73,9 @@ jobs:
         env:
           GITHUB_PAGES: 'true'
         run: npm run build
+
+      - name: Scan production bundle for API credentials
+        run: npm run security:bundle
 
       - name: Setup Pages
         if: github.event_name != 'pull_request'

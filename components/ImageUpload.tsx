@@ -43,6 +43,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = React.memo(({
       >
         <input
           type="file"
+          data-testid="image-upload-input"
           ref={fileInputRef}
           onChange={onImageUpload}
           accept="image/*"

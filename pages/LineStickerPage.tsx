@@ -20,7 +20,6 @@ import { useLineStickerSettingsPanelViewModel } from '../hooks/useLineStickerSet
 import { useLineStickerResultPanelViewModel } from '../hooks/useLineStickerResultPanelViewModel';
 import {
     SliceSettings,
-    FrameOverride,
     mergeOptimizedPadding,
     optimizeSliceSettings,
 } from '../utils/imageUtils';
@@ -29,7 +28,6 @@ import { ChromaKeyColorType, BgRemovalMethod } from '../types';
 import { DEFAULT_SLICE_SETTINGS, LINE_STICKER_CELL_INSET_RATIO } from '../utils/constants';
 import {
     createLineStickerSetSliceSettings,
-    DEFAULT_LINE_STICKER_SHEET_INDEX,
     formatLineStickerSetText,
     LINE_STICKER_SHEET_INDICES,
     LINE_STICKER_SET_COLS,
@@ -38,11 +36,6 @@ import {
     type LineStickerSheetIndex,
 } from '../utils/lineStickerSetSchema';
 import {
-    createSetModeSliceSettingsList,
-    createEmptySetModeImageList,
-    createEmptySetModeFrameList,
-    createEmptySetModeOverrideList,
-    createEmptySetModeSelectionList,
     summarizeSheetPrompt,
 } from '../utils/lineStickerSetModeFactories';
 import { deriveLineStickerActiveSheetState } from '../utils/lineStickerActiveSheetState';
@@ -73,6 +66,7 @@ import {
     useLineStickerProgrammaticOverlayCore,
 } from '../hooks/useLineStickerProgrammaticOverlay';
 import { useLazyBundledStickerFont } from '../hooks/useLazyBundledStickerFont';
+import { useLineStickerSetOutputState } from '../hooks/useLineStickerSetOutputState';
 
 const LineStickerPage: React.FC = () => {
     const { t } = useLanguage();
@@ -119,15 +113,6 @@ const LineStickerPage: React.FC = () => {
     const [gridCols, setGridCols] = useState(4);
     const [gridRows, setGridRows] = useState(4);
 
-    // Advanced Slicing State
-    const [sheetSliceSettings, setSheetSliceSettings] = useState<SliceSettings[]>(() => createSetModeSliceSettingsList());
-    const [sheetDimensions, setSheetDimensions] = useState({ width: 0, height: 0 });
-    const [frameOverrides, setFrameOverrides] = useState<FrameOverride[]>([]);
-
-    // Chroma key progress
-    const [chromaKeyProgress, setChromaKeyProgress] = useState(0);
-    const [isProcessingChromaKey, setIsProcessingChromaKey] = useState(false);
-
     const [selectedStyle, setSelectedStyle] = useState<LineStickerStyleOption>('matchUploaded');
     const [customStyleText, setCustomStyleText] = useState('');
     const [customFontText, setCustomFontText] = useState('');
@@ -148,17 +133,24 @@ const LineStickerPage: React.FC = () => {
     const [stickerSetMode, setStickerSetMode] = useState(false);
     const [setPhrasesList, setSetPhrasesList] = useState<string[]>([]);
     const [actionDescsList, setActionDescsList] = useState<string[]>([]);
-    const [sheetImages, setSheetImages] = useState<(string | null)[]>(() => createEmptySetModeImageList());
-    const [processedSheetImages, setProcessedSheetImages] = useState<(string | null)[]>(() => createEmptySetModeImageList());
-    const [sheetFrames, setSheetFrames] = useState<string[][]>(() => createEmptySetModeFrameList());
-    const [sheetFrameOverrides, setSheetFrameOverrides] = useState<FrameOverride[][]>(() => createEmptySetModeOverrideList());
-    const [selectedFramesBySheet, setSelectedFramesBySheet] = useState<boolean[][]>(() => createEmptySetModeSelectionList());
-    const [currentSheetIndex, setCurrentSheetIndex] = useState<LineStickerSheetIndex>(DEFAULT_LINE_STICKER_SHEET_INDEX);
-
-    const [spriteSheetImage, setSpriteSheetImage] = useState<string | null>(null);
-    const [processedSpriteSheet, setProcessedSpriteSheet] = useState<string | null>(null);
-    const [stickerFrames, setStickerFrames] = useState<string[]>([]);
-    const [selectedFrames, setSelectedFrames] = useState<boolean[]>([]);
+    const {
+        sheetSliceSettings, setSheetSliceSettings,
+        sheetDimensions, setSheetDimensions,
+        frameOverrides, setFrameOverrides,
+        chromaKeyProgress, setChromaKeyProgress,
+        isProcessingChromaKey, setIsProcessingChromaKey,
+        sheetImages, setSheetImages,
+        processedSheetImages, setProcessedSheetImages,
+        sheetFrames, setSheetFrames,
+        sheetFrameOverrides, setSheetFrameOverrides,
+        selectedFramesBySheet, setSelectedFramesBySheet,
+        currentSheetIndex, setCurrentSheetIndex,
+        spriteSheetImage, setSpriteSheetImage,
+        processedSpriteSheet, setProcessedSpriteSheet,
+        stickerFrames, setStickerFrames,
+        selectedFrames, setSelectedFrames,
+        resetSetOutputState,
+    } = useLineStickerSetOutputState();
     const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('green');
     const [includeText, setIncludeText] = useState(true);
     const [textRendering, setTextRendering] = useState<LineStickerTextRendering>('model');
@@ -377,7 +369,7 @@ const LineStickerPage: React.FC = () => {
                 return undefined;
             }
         },
-        []
+        [setSheetSliceSettings]
     );
 
     const {
@@ -434,22 +426,9 @@ const LineStickerPage: React.FC = () => {
     });
 
     const resetSetModeGeneratedOutputs = useCallback(() => {
-        setCurrentSheetIndex(DEFAULT_LINE_STICKER_SHEET_INDEX);
-        setSheetImages(createEmptySetModeImageList());
-        setProcessedSheetImages(createEmptySetModeImageList());
-        setSheetFrames(createEmptySetModeFrameList());
-        setSheetFrameOverrides(createEmptySetModeOverrideList());
-        setSelectedFramesBySheet(createEmptySetModeSelectionList());
-        setSpriteSheetImage(null);
-        setProcessedSpriteSheet(null);
-        setStickerFrames([]);
-        setSelectedFrames([]);
-        setFrameOverrides([]);
-        setSheetDimensions({ width: 0, height: 0 });
-        setChromaKeyProgress(0);
-        setIsProcessingChromaKey(false);
+        resetSetOutputState();
         resetSheetStatuses();
-    }, [resetSheetStatuses]);
+    }, [resetSetOutputState, resetSheetStatuses]);
 
     const resetSingleModeGeneratedOutputs = useCallback(() => {
         singleSheetFlow.setImage(null);
@@ -583,7 +562,7 @@ const LineStickerPage: React.FC = () => {
     const handleSelectOverviewSheet = useCallback((sheetIndex: LineStickerSheetIndex) => {
         setCurrentSheetIndex(sheetIndex);
         showPromptPreviewForSheet(sheetIndex);
-    }, [showPromptPreviewForSheet]);
+    }, [setCurrentSheetIndex, showPromptPreviewForSheet]);
 
     const sheetOverviewItems = useMemo<LineStickerSetOverviewItem[]>(() => {
         if (!stickerSetMode) {
