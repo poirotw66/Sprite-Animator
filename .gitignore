@@ -11,6 +11,8 @@ node_modules
 .venv/
 dist
 dist-ssr
+playwright-report/
+test-results/
 *.local
 
 # graphify knowledge graph (local generated; run `graphify update .` after clone)

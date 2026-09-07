@@ -1,6 +1,7 @@
 import { logger } from './logger';
 import { CHROMA_KEY_COLORS } from './constants';
 import { createAbortError, throwIfAborted } from './abort';
+import { getSessionHfToken } from './credentialStorage';
 
 const ENGINE_VERSION = '2026.02.11.V8.1_STABLE';
 
@@ -34,7 +35,7 @@ export async function getSegmenter() {
     );
 
     // 1. Sanitize Token
-    const rawVal = localStorage.getItem('hf_token') || '';
+    const rawVal = getSessionHfToken();
     const hfToken = (rawVal.trim() === 'null' || rawVal.trim() === '') ? null : rawVal.trim();
 
     // Choose model

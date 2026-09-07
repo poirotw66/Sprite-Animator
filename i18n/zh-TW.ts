@@ -184,7 +184,7 @@ export const zhTW: Translations = {
   usingCustomKey: '使用自訂 Key (優先)',
   usingLocalDevelopmentKey: '使用本機開發 Key',
   noApiKeyConfigured: '尚未設定 API Key',
-  apiKeyHint: '您的 Key 僅會儲存在本地瀏覽器中。',
+  apiKeyHint: '您的 Key 僅保留在目前瀏覽器工作階段；關閉分頁後會清除。',
   getApiKey: '獲取 Key',
   modelLabel: '模型選擇',
   modelRecommended: '(推薦)',

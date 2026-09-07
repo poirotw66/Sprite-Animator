@@ -163,11 +163,13 @@ Sprite-Animator/
 ```
 
 More routes:
-- `/line-sticker`: Build a complete LINE sticker set in browser
-- `/daily-sticker-registry`: Registry/dashboard for batch production
-- `/one-page-comic`: One-page comic wizard
-- `/rmbg`: Background removal
-- `/parting`: Sprite sheet slicing tool
+- `/#/line-sticker`: Build a complete LINE sticker set in browser
+- `/#/daily-sticker-registry`: Registry/dashboard for batch production
+- `/#/one-page-comic`: One-page comic wizard
+- `/#/rmbg`: Background removal
+- `/#/parting`: Sprite sheet slicing tool
+
+The app uses hash routing so direct navigation and refreshes work reliably on GitHub Pages.
 
 ## 🔧 Development
 

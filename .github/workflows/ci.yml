@@ -54,6 +54,12 @@ jobs:
       - name: Test TypeScript
         run: npm run test
 
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Test browser routes
+        run: npm run test:e2e
+
       - name: Test Python
         run: npm run python:check
 

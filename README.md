@@ -177,11 +177,13 @@ Sprite-Animator/
 ```
 
 更多功能頁面：
-- `/line-sticker`：瀏覽器內完成一整套 LINE 貼圖
-- `/daily-sticker-registry`：批量生產使用的登記與盤點
-- `/one-page-comic`：單頁漫畫嚮導
-- `/rmbg`：背景去除
-- `/parting`：精靈圖分割工具
+- `/#/line-sticker`：瀏覽器內完成一整套 LINE 貼圖
+- `/#/daily-sticker-registry`：批量生產使用的登記與盤點
+- `/#/one-page-comic`：單頁漫畫嚮導
+- `/#/rmbg`：背景去除
+- `/#/parting`：精靈圖分割工具
+
+頁面採 hash routing，確保 GitHub Pages 上直接開啟或重新整理子頁面不會得到 404。
 
 ## 🔧 開發
 

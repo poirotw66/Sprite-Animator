@@ -184,7 +184,7 @@ export const en: Translations = {
   usingCustomKey: 'Using Custom Key (priority)',
   usingLocalDevelopmentKey: 'Using Local Development Key',
   noApiKeyConfigured: 'No API key configured',
-  apiKeyHint: 'Your key is stored locally in browser only.',
+  apiKeyHint: 'Your key is kept only for this browser session and is cleared when the tab closes.',
   getApiKey: 'Get Key',
   modelLabel: 'Model Selection',
   modelRecommended: '(Recommended)',

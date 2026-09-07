@@ -321,6 +321,11 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                 <img
                   src={previewImageSrc}
                   alt="Style preview"
+                  width={1024}
+                  height={1024}
+                  loading="lazy"
+                  decoding="async"
+                  fetchPriority="low"
                   className="h-52 w-full object-contain bg-white"
                 />
               ) : (
@@ -602,6 +607,11 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
               <img
                 src={resolvePublicAssetPath('font.png')}
                 alt=""
+                width={1408}
+                height={768}
+                loading="lazy"
+                decoding="async"
+                fetchPriority="low"
                 className="w-full max-h-[420px] rounded-lg border border-slate-100 object-contain bg-slate-50"
               />
             </div>

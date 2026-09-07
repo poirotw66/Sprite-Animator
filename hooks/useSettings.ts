@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 import { DEFAULT_MODEL, DEFAULT_OUTPUT_RESOLUTION, MODEL_RESOLUTIONS, SUPPORTED_MODELS, defaultResolutionForModel } from '../utils/constants';
 import type { ImageResolution } from '../utils/constants';
 import { getLocalDevelopmentGeminiApiKey } from '../utils/localDevelopmentGeminiApiKey';
+import { loadSessionCredentials, saveSessionCredentials } from '../utils/credentialStorage';
 
-const API_KEY_STORAGE_KEY = 'gemini_api_key';
 const MODEL_STORAGE_KEY = 'gemini_model';
-const HF_TOKEN_STORAGE_KEY = 'hf_token';
 const OUTPUT_RESOLUTION_STORAGE_KEY = 'gemini_output_resolution';
 const STYLE_PREVIEW_RESOLUTION_STORAGE_KEY = 'gemini_style_preview_resolution';
 
@@ -55,16 +54,15 @@ export const useSettings = () => {
 
   // Load settings from local storage on mount
   useEffect(() => {
-    const storedKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+    const credentials = loadSessionCredentials();
     const storedModel = localStorage.getItem(MODEL_STORAGE_KEY);
-    const storedHfToken = localStorage.getItem(HF_TOKEN_STORAGE_KEY);
     const storedResolution = localStorage.getItem(OUTPUT_RESOLUTION_STORAGE_KEY) as ImageResolution | null;
     const storedStylePreviewResolution = localStorage.getItem(
       STYLE_PREVIEW_RESOLUTION_STORAGE_KEY
     ) as ImageResolution | null;
 
-    if (storedKey) setApiKey(storedKey);
-    if (storedHfToken) setHfToken(storedHfToken);
+    if (credentials.apiKey) setApiKey(credentials.apiKey);
+    if (credentials.hfToken) setHfToken(credentials.hfToken);
 
     // Validate stored model or force update to the recommended one
     const model = resolveStoredModel(storedModel);
@@ -97,7 +95,7 @@ export const useSettings = () => {
     }
 
     // If no key is found, show settings automatically
-    if (!storedKey && !getLocalDevelopmentGeminiApiKey()) {
+    if (!credentials.apiKey && !getLocalDevelopmentGeminiApiKey()) {
       setShowSettings(true);
     }
   }, []);
@@ -138,17 +136,7 @@ export const useSettings = () => {
     setStylePreviewResolution(previewRes);
     setHfToken(trimmedToken);
 
-    if (trimmedKey) {
-      localStorage.setItem(API_KEY_STORAGE_KEY, trimmedKey);
-    } else {
-      localStorage.removeItem(API_KEY_STORAGE_KEY);
-    }
-
-    if (trimmedToken) {
-      localStorage.setItem(HF_TOKEN_STORAGE_KEY, trimmedToken);
-    } else {
-      localStorage.removeItem(HF_TOKEN_STORAGE_KEY);
-    }
+    saveSessionCredentials(trimmedKey, trimmedToken);
 
     localStorage.setItem(MODEL_STORAGE_KEY, model);
     localStorage.setItem(OUTPUT_RESOLUTION_STORAGE_KEY, res);

@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { lazyWithRetry } from './utils/lazyWithRetry';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { Loader2 } from './components/Icons';
 import { useLanguage } from './hooks/useLanguage';
 
@@ -28,7 +28,7 @@ const PageLoader: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
+    <HashRouter>
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -40,7 +40,7 @@ const App: React.FC = () => {
           <Route path="/daily-sticker-registry" element={<DailyStickerRegistryPage />} />
         </Routes>
       </Suspense>
-    </BrowserRouter>
+    </HashRouter>
   );
 };
 
