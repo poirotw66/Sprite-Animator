@@ -72,6 +72,11 @@ jobs:
       - name: Build
         env:
           GITHUB_PAGES: 'true'
+          # Deliberately shaped like a Gemini key, but split in source so the
+          # repository secret scan does not mistake this synthetic value for a
+          # credential. The post-build scan must fail if browser key isolation
+          # ever regresses and this sentinel reaches dist/.
+          GEMINI_API_KEY: ${{ format('{0}{1}', 'AI', 'za01234567890123456789012345678901234') }}
         run: npm run build
 
       - name: Scan production bundle for API credentials

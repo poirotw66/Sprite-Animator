@@ -19,27 +19,14 @@ import { DEFAULT_MODEL, defaultResolutionForModel } from '../../../utils/constan
 import { loadGeminiApiKey } from '../../shared/loadGeminiApiKey.mts';
 import { buildCharacterRefPrompt, listStyleKeys } from './characterRefPrompt.ts';
 import { generateCharacterRefImage } from './geminiCharacterRef.mts';
+import { CliUsageError, cliBoolean, parseCliArgs, printCliHelp, reportCliError } from '../../../scripts/line-sticker/cli.mts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const SKILL_DIR = resolve(SCRIPT_DIR, '..');
 const ROOT_DIR = resolve(SKILL_DIR, '../../..');
 
-function parseArgs(argv: string[]): Record<string, string | boolean> {
-  const args: Record<string, string | boolean> = {};
-  for (let i = 0; i < argv.length; i++) {
-    const token = argv[i];
-    if (!token?.startsWith('--')) continue;
-    const key = token.slice(2);
-    const next = argv[i + 1];
-    if (next && !next.startsWith('--')) {
-      args[key] = next;
-      i++;
-    } else {
-      args[key] = true;
-    }
-  }
-  return args;
-}
+const USAGE =
+  'Usage: generate-character-ref.mts --concept <description> --out <character-ref.png> [--style <preset>] [--identity-ref <image>] [--dry-run] [--list-styles]';
 
 function mimeFromPath(path: string): string {
   const ext = extname(path).toLowerCase();
@@ -66,22 +53,29 @@ function printStyleTable(): void {
 }
 
 async function main(): Promise<void> {
-  const args = parseArgs(process.argv.slice(2));
+  const args = parseCliArgs(process.argv.slice(2), {
+    values: ['concept', 'out', 'style', 'style-context', 'name', 'identity-ref', 'model', 'resolution'],
+    booleans: ['dry-run', 'list-styles', 'help'],
+  });
+  if (cliBoolean(args.help)) {
+    printCliHelp(USAGE);
+    return;
+  }
 
-  if (args['list-styles']) {
+  if (cliBoolean(args['list-styles'])) {
     printStyleTable();
     return;
   }
 
   const concept = args.concept;
   const outArg = args.out;
-  const dryRun = Boolean(args['dry-run']);
+  const dryRun = cliBoolean(args['dry-run']);
 
   if (!concept || typeof concept !== 'string') {
-    throw new Error('Missing --concept "character description"');
+    throw new CliUsageError('Missing --concept "character description"');
   }
   if (!dryRun && (!outArg || typeof outArg !== 'string')) {
-    throw new Error('Missing --out <path/to/character-ref.png>');
+    throw new CliUsageError('Missing --out <path/to/character-ref.png>');
   }
 
   const styleKey = typeof args.style === 'string' ? args.style : 'chibi';
@@ -138,6 +132,5 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-  console.error(err instanceof Error ? err.message : err);
-  process.exit(1);
+  reportCliError(err, USAGE);
 });

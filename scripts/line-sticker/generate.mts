@@ -63,6 +63,7 @@ import {
   resolveSetLayout,
   splitPhrasesAcrossSheets,
 } from './sheetPlan.ts';
+import { CliUsageError, cliBoolean, parseCliArgs, printCliHelp, reportCliError } from './cli.mts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = resolve(SCRIPT_DIR, '../..');
@@ -128,23 +129,8 @@ interface StickerConfig {
   qaMode?: StickerQaMode;
 }
 
-function parseArgs(argv: string[]) {
-  const args: Record<string, string | boolean> = {};
-  for (let i = 0; i < argv.length; i++) {
-    const a = argv[i];
-    if (a.startsWith('--')) {
-      const key = a.slice(2);
-      const next = argv[i + 1];
-      if (next && !next.startsWith('--')) {
-        args[key] = next;
-        i++;
-      } else {
-        args[key] = true;
-      }
-    }
-  }
-  return args;
-}
+const USAGE =
+  'Usage: generate.mts --config <job.config.json> [--out <output-dir>] [--sheet <sheet-name>] [--sheet-dir <isolated-sheet-dir>] [--model <model>] [--dry-run]';
 
 function resolveImagePath(p: string, configDir: string): string {
   for (const base of [undefined, configDir, process.cwd(), ROOT_DIR]) {
@@ -345,19 +331,26 @@ function resolvePriorSheetFolder(
 }
 
 async function main() {
-  const args = parseArgs(process.argv.slice(2));
+  const args = parseCliArgs(process.argv.slice(2), {
+    values: ['config', 'out', 'sheet', 'sheet-dir', 'model'],
+    booleans: ['dry-run', 'help'],
+  });
+  if (cliBoolean(args.help)) {
+    printCliHelp(USAGE);
+    return;
+  }
   const configArg = args.config as string;
   if (!configArg) {
-    throw new Error('Missing --config <config.json>');
+    throw new CliUsageError('Missing --config <config.json>');
   }
-  const dryRun = Boolean(args['dry-run']);
+  const dryRun = cliBoolean(args['dry-run']);
 
-  const configPath = resolve(process.cwd(), configArg);
+  const configPath = resolve(ROOT_DIR, configArg);
   const configDir = dirname(configPath);
   const config: StickerConfig = JSON.parse(await readFile(configPath, 'utf8'));
   await applyPhraseSetFile(config, configDir);
 
-  const outDir = resolve(process.cwd(), (args.out as string) ?? 'line-stickers-out');
+  const outDir = resolve(ROOT_DIR, (args.out as string) ?? 'line-stickers-out');
   const sheetDirOverride = typeof args['sheet-dir'] === 'string' ? args['sheet-dir'] : undefined;
   const production = LINE_STICKER_PRODUCTION_PRESET;
   const includeText = config.includeText ?? production.includeText;
@@ -731,6 +724,5 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('✗ Failed:', err instanceof Error ? err.message : err);
-  process.exit(1);
+  reportCliError(err, USAGE);
 });

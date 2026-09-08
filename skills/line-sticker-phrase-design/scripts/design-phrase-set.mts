@@ -47,25 +47,12 @@ import {
 } from '../../../utils/lineStickerSetNaming.ts';
 import { resolveStickerVoice } from '../../../utils/lineStickerVoicePresets.ts';
 import { loadApiKey, ROOT_DIR } from './apiKey.mts';
+import { CliUsageError, cliBoolean, parseCliArgs, printCliHelp, reportCliError } from '../../../scripts/line-sticker/cli.mts';
 
 const THEME_KEYS = Object.keys(THEME_PRESETS);
 
-function parseArgs(argv: string[]): Record<string, string | boolean> {
-  const args: Record<string, string | boolean> = {};
-  for (let i = 0; i < argv.length; i++) {
-    const token = argv[i];
-    if (!token?.startsWith('--')) continue;
-    const key = token.slice(2);
-    const next = argv[i + 1];
-    if (next && !next.startsWith('--')) {
-      args[key] = next;
-      i++;
-    } else {
-      args[key] = true;
-    }
-  }
-  return args;
-}
+const USAGE =
+  'Usage: design-phrase-set.mts (--theme <preset> | --theme-context <text>) --out <phrases.json> [--mode set|single] [--count N] [--preset-only] | --validate <phrases.json> | --list-voices';
 
 function resolveLanguageLabel(languageKey: string): string {
   const preset = TEXT_PRESETS[languageKey as keyof typeof TEXT_PRESETS];
@@ -165,7 +152,7 @@ async function writePhraseSet(outPath: string, data: LineStickerPhraseSetJson): 
 async function designPhraseSet(args: Record<string, string | boolean>): Promise<void> {
   const outArg = args.out;
   if (!outArg || typeof outArg !== 'string') {
-    throw new Error('Missing --out <path/to/phrases.json>');
+    throw new CliUsageError('Missing --out <path/to/phrases.json>');
   }
 
   const mode = args.mode === 'single' ? 'single' : 'set';
@@ -184,8 +171,8 @@ async function designPhraseSet(args: Record<string, string | boolean>): Promise<
   const themeKey = resolveThemeKey(themeKeyInput);
   const themeContext = typeof args['theme-context'] === 'string' ? args['theme-context'] : undefined;
   const fullContext = buildThemeContext(themeKey, themeContext);
-  const presetOnly = Boolean(args['preset-only']);
-  const skipActions = Boolean(args['no-actions']);
+  const presetOnly = cliBoolean(args['preset-only']);
+  const skipActions = cliBoolean(args['no-actions']);
   const characterName = typeof args.character === 'string' ? args.character.trim() : undefined;
   const voiceKeyInput = typeof args.voice === 'string' ? args.voice : undefined;
   const voiceContext = typeof args['voice-context'] === 'string' ? args['voice-context'] : undefined;
@@ -356,16 +343,23 @@ function printVoiceChoices(): void {
 }
 
 async function main(): Promise<void> {
-  const args = parseArgs(process.argv.slice(2));
+  const args = parseCliArgs(process.argv.slice(2), {
+    values: ['theme', 'theme-context', 'mode', 'count', 'language', 'name', 'voice', 'voice-context', 'character', 'out', 'cols', 'rows', 'validate', 'actions-only'],
+    booleans: ['preset-only', 'no-actions', 'list-voices', 'help'],
+  });
+  if (cliBoolean(args.help)) {
+    printCliHelp(USAGE);
+    return;
+  }
 
-  if (args['list-voices']) {
+  if (cliBoolean(args['list-voices'])) {
     printVoiceChoices();
     return;
   }
 
   if (args.validate) {
     const path = typeof args.validate === 'string' ? args.validate : '';
-    if (!path) throw new Error('Missing --validate <phrases.json>');
+    if (!path) throw new CliUsageError('Missing --validate <phrases.json>');
     const code = await validatePhraseSetFile(resolve(ROOT_DIR, path), 'Traditional Chinese');
     process.exit(code);
   }
@@ -379,6 +373,5 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-  console.error(err instanceof Error ? err.message : err);
-  process.exit(1);
+  reportCliError(err, USAGE);
 });

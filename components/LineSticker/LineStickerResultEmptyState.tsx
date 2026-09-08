@@ -25,6 +25,7 @@ export const LineStickerResultEmptyState: React.FC<LineStickerResultEmptyStatePr
       ref={fileInputRef}
       type="file"
       accept="image/*"
+      data-testid="line-sticker-sprite-sheet-input"
       onChange={onFileChange}
       className="hidden"
       aria-hidden

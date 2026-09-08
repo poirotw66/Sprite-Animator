@@ -13,6 +13,7 @@ import {
   isUploadEnabled,
 } from './uploadConfig.mts';
 import { buildBatchEnvContent } from './uploadCredentials.mts';
+import { CliUsageError, cliBoolean, parseCliArgs, printCliHelp, reportCliError } from './cli.mts';
 
 const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 export const DEFAULT_UPLOAD_ROOT = resolve(PROJECT_ROOT, '.line-upload');
@@ -142,27 +143,21 @@ export function shouldSyncToUploadRoot(upload: UploadConfig | undefined): boolea
   return true;
 }
 
-function parseArgs(argv: string[]): Record<string, string> {
-  const args: Record<string, string> = {};
-  for (let i = 0; i < argv.length; i++) {
-    const token = argv[i];
-    if (!token?.startsWith('--')) continue;
-    const key = token.slice(2);
-    const next = argv[i + 1];
-    if (next && !next.startsWith('--')) {
-      args[key] = next;
-      i++;
-    }
-  }
-  return args;
-}
+const USAGE = 'Usage: sync-upload-input.mts --source <output-dir> --config <job.config.json>';
 
 export async function main() {
-  const args = parseArgs(process.argv.slice(2));
+  const args = parseCliArgs(process.argv.slice(2), {
+    values: ['source', 'config'],
+    booleans: ['help'],
+  });
+  if (cliBoolean(args.help)) {
+    printCliHelp(USAGE);
+    return;
+  }
   const sourceDir = args.source ?? '';
   const configPath = args.config ?? '';
-  if (!sourceDir || !configPath) {
-    throw new Error('Usage: sync-upload-input.mts --source <out> --config <job.json>');
+  if (typeof sourceDir !== 'string' || typeof configPath !== 'string' || !sourceDir || !configPath) {
+    throw new CliUsageError('Both --source <output-dir> and --config <job.config.json> are required');
   }
 
   const { resolveUploadConfig } = await import('./uploadConfig.mts');
@@ -190,7 +185,6 @@ export async function main() {
 const isCli = process.argv[1]?.includes('sync-upload-input');
 if (isCli) {
   main().catch((err) => {
-    console.error('✗', err instanceof Error ? err.message : err);
-    process.exit(1);
+    reportCliError(err, USAGE);
   });
 }

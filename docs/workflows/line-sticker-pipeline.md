@@ -18,6 +18,14 @@ The canonical full-config examples are:
 - `skills/line-sticker-maker/config.example.json`
 - `skills/line-sticker-maker/examples/demo-job.config.json`
 
+## Headless CLI contract
+
+All public LINE sticker entry points accept `--help`.  Their relative input and
+output paths are resolved from the repository root, so commands behave the same
+when invoked from a subdirectory or CI. Invalid or incomplete CLI arguments
+print `Usage:` and exit with code `2`; pipeline, filesystem, and API failures
+exit with code `1`.
+
 ## Inputs
 
 | Input | Required | Notes |

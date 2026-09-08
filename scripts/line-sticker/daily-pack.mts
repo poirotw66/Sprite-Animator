@@ -33,6 +33,7 @@ import {
   vaultRegistryPath,
 } from '../../utils/registry/stickerVault.ts';
 import { loadGeminiApiKey } from '../../skills/shared/loadGeminiApiKey.mts';
+import { CliUsageError, cliBoolean, parseCliArgs, printCliHelp, reportCliError } from './cli.mts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(SCRIPT_DIR, '../..');
@@ -48,22 +49,8 @@ const PHRASE_SCRIPT = resolve(
 const PIPELINE_SCRIPT = resolve(ROOT, 'scripts/line-sticker/run-from-inputs.mts');
 const BACKFILL_SCRIPT = resolve(ROOT, 'scripts/line-sticker/backfill-sticker-registry.mts');
 
-function parseArgs(argv: string[]): Record<string, string | boolean> {
-  const args: Record<string, string | boolean> = {};
-  for (let i = 0; i < argv.length; i++) {
-    const token = argv[i];
-    if (!token?.startsWith('--')) continue;
-    const key = token.slice(2);
-    const next = argv[i + 1];
-    if (next && !next.startsWith('--')) {
-      args[key] = next;
-      i++;
-    } else {
-      args[key] = true;
-    }
-  }
-  return args;
-}
+const USAGE =
+  'Usage: daily-pack.mts (--plan-only | --execute) [--date YYYY-MM-DD] [--count N] [--ratio 2:1] [--resume] [--backfill|--no-backfill] [--registry <path>] [--vault <path>]';
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -271,31 +258,44 @@ async function executeSlot(
 }
 
 async function main(): Promise<void> {
-  const args = parseArgs(process.argv.slice(2));
-  const planOnly = Boolean(args['plan-only']);
-  const execute = Boolean(args.execute);
-  const resume = Boolean(args.resume);
-  const backfill = !args['no-backfill'];
+  const args = parseCliArgs(process.argv.slice(2), {
+    values: ['date', 'count', 'ratio', 'from-set', 'registry', 'vault'],
+    booleans: ['plan-only', 'execute', 'resume', 'backfill', 'no-backfill', 'no-vault', 'help'],
+  });
+  if (cliBoolean(args.help)) {
+    printCliHelp(USAGE);
+    return;
+  }
+  const planOnly = cliBoolean(args['plan-only']);
+  const execute = cliBoolean(args.execute);
+  const resume = cliBoolean(args.resume);
+  const backfill = cliBoolean(args.backfill) || !cliBoolean(args['no-backfill']);
   const date = typeof args.date === 'string' ? args.date : todayIso();
   const count = typeof args.count === 'string' ? Number.parseInt(args.count, 10) : 30;
   const ratio = typeof args.ratio === 'string' ? args.ratio : '2:1';
   const fromSet = typeof args['from-set'] === 'string' ? Number.parseInt(args['from-set'], 10) : 1;
 
+  if (planOnly && execute) {
+    throw new CliUsageError('Use only one of --plan-only or --execute');
+  }
   if (!planOnly && !execute) {
-    throw new Error('Specify --plan-only to preview or --execute to run generation');
+    throw new CliUsageError('Specify --plan-only to preview or --execute to run generation');
+  }
+  if (cliBoolean(args.backfill) && cliBoolean(args['no-backfill'])) {
+    throw new CliUsageError('Use only one of --backfill or --no-backfill');
   }
   if (!Number.isFinite(count) || count < 1) {
-    throw new Error('Invalid --count');
+    throw new CliUsageError('Invalid --count');
   }
   if (!Number.isFinite(fromSet) || fromSet < 1) {
-    throw new Error('Invalid --from-set');
+    throw new CliUsageError('Invalid --from-set');
   }
 
   const registryPath = resolve(
     ROOT,
     typeof args.registry === 'string' ? args.registry : DEFAULT_REGISTRY_REL_PATH
   );
-  const useVault = !args['no-vault'];
+  const useVault = !cliBoolean(args['no-vault']);
   const vaultRoot = useVault
     ? resolveVaultRoot(ROOT, typeof args.vault === 'string' ? args.vault : undefined)
     : undefined;
@@ -372,6 +372,5 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-  console.error(err instanceof Error ? err.message : err);
-  process.exit(1);
+  reportCliError(err, USAGE);
 });

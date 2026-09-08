@@ -1,13 +1,13 @@
 # 專案優化路線圖
 
-*最後校準：2026-08-03。此文件描述目前程式碼，而非早期 Sprite Animator 原型的待辦清單。*
+*最後校準：2026-09-08。此文件描述目前程式碼，而非早期 Sprite Animator 原型的待辦清單。*
 
 ## 目前基線
 
 - 執行環境：Node.js 20 或 22（`>=20 <23`）、npm 10+。
 - 核心工具：Sprite Animator、LINE 貼圖流程、單頁漫畫、AI 去背與每日貼圖登記。
 - 品質門檻：`npm run ci` 會執行安全檢查、SKILL mirror 檢查、TypeScript、lint、Vitest、Python 檢查與 production build。
-- 路由頁面已採 lazy loading；LINE 貼圖主流程也已拆成 settings/result view-model hooks。
+- 路由頁面已採 lazy loading；LINE 貼圖主流程已拆成設計、文案、單張、整組輸出、生成 lifecycle、sheet overview 與 frame edit controllers。
 - Production build 採 BYOK，不注入 Gemini key；本機 `vite dev` 才可使用非公開的開發 fallback。
 
 ## 已完成（不應再列為待辦）
@@ -24,7 +24,9 @@
 - TypeScript strict mode、ESLint 零 warning、Vitest 與 Python self-check 已納入 CI。
 - Error boundary 與主要 loading/error 字串已接上 i18n。
 - 精靈圖切分、色鍵修復、LINE 格式與文案格式已有單元測試。
-- `LineStickerPage` 已將風格預覽與 phrase-set 檔案傳輸拆至專責 hooks；後續可按流程繼續收斂 controller。
+- `LineStickerPage` 已從 866 行降至約 666 行；可編輯狀態、輸出 lifecycle、生成／重置、sheet overview 與 frame edit 已移至專責 controllers。
+- Playwright 已覆蓋所有主要路由，以及 Parting 與 LINE Sticker 的本地「上傳 → 切片 → 選取 → ZIP」流程，不需要 Gemini。
+- 九個主要 headless LINE CLI 已有共同的 `--help`、repo-root 路徑、usage exit code 2 與 runtime exit code 1 契約。
 - GitHub Actions 的 quality gate 與 deploy 已採最小權限分離；舊版曾注入公開 build 的 Gemini key 應視為可能暴露並輪替。
 
 ## 優先工作
@@ -33,8 +35,8 @@
 |---|---|---|
 | P0 | 舊 Gemini key 輪替與 release 驗證 | 輪替曾用於公開 build 的 key；每次 release 確認 production bundle 不含 key sentinel。 |
 | P1 | 靜態資產與 AI runtime 載入策略 | 字型採 WOFF2／subset，Transformers/WASM 在需要時才載入，並設定可追蹤的 bundle budget。 |
-| P1 | Browser-level 流程測試 | 以 Playwright 或等效工具涵蓋主要路由、上傳、切分、設定、LINE 匯出；Gemini 使用 mock。 |
-| P2 | LINE 貼圖 controller 模組化 | 依「來源輸入、生成、sheet state、下載」持續拆分，保持 hooks 的單一責任與既有 i18n 介面。 |
+| P2 | Browser-level AI 流程測試 | 現有離線上傳／切片／ZIP 已涵蓋；下一階段以 mock Gemini 覆蓋 phrase import 與生成狀態。 |
+| P2 | LINE 貼圖 controller 維護 | controller 基線已完成；新增功能不得把 lifecycle 或 ViewModel mapping 搬回頁面。 |
 | P2 | 文件與 SKILL 路由 | 補齊根目錄 `AGENTS.md`，說明 canonical `skills/`、mirror 同步、必要 CI 與敏感設定處理。 |
 
 ## 效能量測原則
@@ -61,9 +63,9 @@ npm run build
 
 - [ ] 公開網站沒有可重複使用的 Gemini 服務端金鑰。
 - [ ] 重要資產有明確 lazy-load 邊界與大小預算。
-- [ ] 主要互動流程有 browser smoke/E2E coverage。
-- [ ] `LineStickerPage` 的新增流程不再讓單一 controller 持續膨脹。
-- [ ] 文件、SKILL canonical source 與 generated mirrors 一致。
+- [x] 主要離線互動流程有 browser smoke/E2E coverage。
+- [x] `LineStickerPage` 的狀態與生成 lifecycle 已拆成專責 controllers。
+- [x] 文件、SKILL canonical source 與 generated mirrors 一致。
 
 ## 參考
 

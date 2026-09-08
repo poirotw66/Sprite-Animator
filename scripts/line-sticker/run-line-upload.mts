@@ -20,6 +20,7 @@ import {
   resolveUploadStepsFromEnv,
   type UploadStepName,
 } from './uploadPipeline.mts';
+import { CliUsageError, cliBoolean, parseCliArgs, printCliHelp, reportCliError } from './cli.mts';
 
 const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const UPLOAD_SKILL_ROOT = resolve(PROJECT_ROOT, 'skills/line-sticker-upload');
@@ -34,20 +35,8 @@ const STEP_SCRIPTS: Record<UploadStepName, string> = {
   submit: 'submit_line_review.py',
 };
 
-function parseArgs(argv: string[]): Record<string, string> {
-  const args: Record<string, string> = {};
-  for (let i = 0; i < argv.length; i++) {
-    const token = argv[i];
-    if (!token?.startsWith('--')) continue;
-    const key = token.slice(2);
-    const next = argv[i + 1];
-    if (next && !next.startsWith('--')) {
-      args[key] = next;
-      i++;
-    }
-  }
-  return args;
-}
+const USAGE =
+  'Usage: run-line-upload.mts --env <batch.env> [--step gdrive|provision|zip|submit|all] [--submit true|false] [--workers N] [--interactive true|false]';
 
 function runPython(script: string, envPath: string, extraArgs: string[] = []): void {
   const scriptPath = resolve(UPLOAD_SCRIPTS, script);
@@ -75,23 +64,28 @@ function runPython(script: string, envPath: string, extraArgs: string[] = []): v
   }
 }
 
-const args = parseArgs(process.argv.slice(2));
-const envFile = args.env ?? '';
-const step = (args.step ?? 'all') as UploadStep;
-const skipGridGate = args['skip-grid-gate'] === 'true';
+async function main(): Promise<void> {
+  const args = parseCliArgs(process.argv.slice(2), {
+    values: ['env', 'step', 'submit', 'workers', 'interactive', 'auto'],
+    booleans: ['skip-grid-gate', 'help'],
+  });
+  if (cliBoolean(args.help)) {
+    printCliHelp(USAGE);
+    return;
+  }
+  const envFile = args.env ?? '';
+  const step = (args.step ?? 'all') as UploadStep;
+  const skipGridGate = cliBoolean(args['skip-grid-gate']);
 
-if (!envFile) {
-  console.error(
-    'Usage: run-line-upload.mts --env output/pX/.env.batch/Set_Name.env [--step gdrive|provision|zip|submit|all] [--submit true|false] [--workers N] [--interactive true]'
-  );
-  process.exit(1);
-}
+  if (typeof envFile !== 'string' || !envFile) {
+    throw new CliUsageError('Missing --env <batch.env>');
+  }
+  if (!['gdrive', 'provision', 'zip', 'submit', 'all'].includes(step)) {
+    throw new CliUsageError(`Invalid --step: ${step}`);
+  }
 
-const envSrc = resolve(PROJECT_ROOT, envFile);
-if (!existsSync(envSrc)) {
-  console.error(`Env file not found: ${envSrc}`);
-  process.exit(1);
-}
+  const envSrc = resolve(PROJECT_ROOT, envFile);
+  if (!existsSync(envSrc)) throw new Error(`Env file not found: ${envSrc}`);
 
 if (!skipGridGate) {
   const jobOutDir = resolve(envSrc, '..', '..');
@@ -107,7 +101,7 @@ await ensureBatchEnvReady(envSrc);
 const batchEnv = parseEnv(readFileSync(envSrc, 'utf8'));
 const submitEnabled = resolveSubmitEnabled({
   step,
-  cliSubmit: args.submit,
+  cliSubmit: typeof args.submit === 'string' ? args.submit : undefined,
   envSubmit: batchEnv.LINE_UPLOAD_SUBMIT,
 });
 const steps =
@@ -138,7 +132,7 @@ if (!runInteractive) {
 for (const name of steps) {
   console.log(`\n▶ ${name}: ${STEP_SCRIPTS[name]}`);
   const extra = name === 'gdrive' ? ['--stage'] : [];
-  if (name === 'gdrive' && args.workers) {
+  if (name === 'gdrive' && typeof args.workers === 'string') {
     extra.push('--workers', args.workers);
   }
   if (!runInteractive) {
@@ -164,3 +158,6 @@ for (const name of steps) {
 }
 
 console.log('\n✓ Upload pipeline step(s) complete.');
+}
+
+main().catch((error) => reportCliError(error, USAGE));

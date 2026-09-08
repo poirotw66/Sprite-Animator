@@ -94,6 +94,7 @@ export const LineStickerDownloadSection: React.FC<LineStickerDownloadSectionProp
         <button
           type="button"
           onClick={() => onDownloadSelectedAsZip(selectedIndices)}
+          data-testid="line-sticker-download-selected"
           disabled={isDownloading || selectedCount === 0}
           className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
         >

@@ -1,13 +1,15 @@
 # Project Optimization Report
 
-*Last audited: 2026-08-03. This report supersedes the 2026-07-12 first-round cleanup snapshot.*
+*Last audited: 2026-09-08. This report supersedes the 2026-07-12 first-round cleanup snapshot.*
 
 ## Current status
 
 - CI covers security checks, generated LINE sticker SKILL mirrors, TypeScript strict mode, ESLint, Vitest, Python checks, and a production build.
 - Route-level lazy loading is already in place.
 - Chroma key removal runs in `workers/chromaKeyWorker.ts` through `utils/chromaKeyProcessor.ts`, with progress reporting and a main-thread fallback only when Workers are unavailable.
-- `LineStickerPage.tsx` has been reduced from roughly 1,000 to roughly 840 lines by extracting the style-preview lifecycle and phrase-set file transfer into focused hooks.
+- `LineStickerPage.tsx` has been reduced from 866 to roughly 666 lines. Design, phrase, single-sheet, set-output, generation lifecycle, sheet-overview, and frame-edit responsibilities now have focused controllers.
+- Playwright covers direct navigation plus offline upload → slice → selection → ZIP export flows on both Parting and LINE Sticker pages.
+- Nine public LINE sticker CLI entry points share `--help`, repository-root path semantics, and distinct usage/runtime exit codes.
 - Production builds use BYOK and do not inject Gemini keys; the local development fallback is limited to `vite dev`.
 
 ## Completed or no longer actionable
@@ -16,7 +18,9 @@
 |---|---|
 | Add a Web Worker for chroma-key removal | Complete; worker and fallback share the core algorithm. |
 | Add a background-removal progress indicator | Complete. |
-| Split the initial LINE sticker page surface | Partially complete; settings/result view models plus preview and phrase-set transfer hooks are separate. |
+| Split the LINE sticker controller surface | Complete baseline; lifecycle and domain state are separated while presentation remains in `components/LineSticker/`. |
+| Add browser interaction coverage | Complete offline baseline for Parting and LINE Sticker; future Gemini flows should use network mocks. |
+| Normalize public headless CLI behavior | Complete for the nine primary LINE sticker entry points. |
 | Add a unit-test framework | Complete; the project uses Vitest and Python checks in CI. |
 | Error-boundary loading strings | Complete; the relevant strings use i18n. |
 | Expose a shared Gemini key through the browser build | Complete; production builds no longer inject a Gemini key. Rotate any key that was used by an older public build. |
@@ -42,13 +46,12 @@ Suggested guardrails:
 - set an explicit maximum chunk and asset-size budget in CI;
 - measure representative browser flows, not only the build manifest.
 
-### P1 — Browser interaction coverage
+### P2 — Extend browser and controller coverage
 
-The current test suite is strong for pure TypeScript and command-line flows, but it does not exercise the React UI in a browser. Add a small Playwright (or equivalent) smoke suite for routes, image input, slice settings, phrase-set import/export, and downloads. Gemini calls should be mocked.
-
-### P2 — Continue controller decomposition
-
-`LineStickerPage` remains the main orchestration surface. The next low-risk boundary is a dedicated generation/sheet-state controller; keep presentation in `components/LineSticker/` and expose narrow view models. Avoid a broad global store unless cross-route state actually requires it.
+The offline interaction baseline is complete. Add mocked Gemini coverage only when
+changing phrase import or generation states. Keep new lifecycle behavior in the
+focused controllers and presentation in `components/LineSticker/`; avoid a broad
+global store unless cross-route state actually requires it.
 
 ### P2 — Type hygiene and observability
 

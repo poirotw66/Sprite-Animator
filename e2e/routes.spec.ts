@@ -53,3 +53,37 @@ test('parting uploads, slices, selects, and exports frames without Gemini', asyn
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/^line_stickers_\d+\.zip$/);
 });
+
+test('line sticker uploads a sheet, slices, selects, and exports without Gemini', async ({ page }) => {
+  await page.goto('/#/line-sticker');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toBeHidden();
+
+  const cells = Array.from({ length: 16 }, (_, index) => {
+    const col = index % 4;
+    const row = Math.floor(index / 4);
+    const color = ['#f97316', '#14b8a6', '#3b82f6', '#a855f7'][index % 4];
+    return `<circle cx="${col * 100 + 50}" cy="${row * 100 + 50}" r="30" fill="${color}"/>`;
+  }).join('');
+
+  await page.getByTestId('line-sticker-sprite-sheet-input').setInputFiles({
+    name: 'line-sticker-sheet.svg',
+    mimeType: 'image/svg+xml',
+    buffer: Buffer.from(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="#00ff00"/>${cells}</svg>`
+    ),
+  });
+
+  const frames = page.getByTestId('frame-grid').locator('img[alt^="Frame "]');
+  await expect(frames).toHaveCount(16);
+
+  const firstFrame = page.getByTestId('frame-include-0');
+  await firstFrame.uncheck();
+  await expect(firstFrame).not.toBeChecked();
+
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByTestId('line-sticker-download-selected').click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/^line_stickers_\d+\.zip$/);
+});

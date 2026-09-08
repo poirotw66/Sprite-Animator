@@ -3,6 +3,10 @@
 Additive Python pipeline for **ChatGPT / similar** 4×5 sticker sheets
 (paper background or already-keyed transparent sheets).
 
+The TypeScript wrapper follows the shared headless contract: use `--help`, pass
+paths relative to the repository root, and expect exit code `2` for invalid CLI
+arguments (instead of a conversion failure).
+
 > Does **not** replace the TypeScript chroma + slice stack used for Gemini
 > green/magenta guided sheets. Keep using `scripts/line-sticker/generate.mts`
 > / `reslice-sheet.mts` for those.

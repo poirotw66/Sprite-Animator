@@ -33,26 +33,13 @@ import { prepareShopListing } from '../../utils/lineCreatorsListingText.ts';
 import { DEFAULT_LINE_STICKER_SET_COUNT } from './sheetPlan.ts';
 import { resolveUploadConfig } from './uploadConfig.mts';
 import { loadCredentials } from './uploadCredentials.mts';
+import { CliUsageError, cliBoolean, parseCliArgs, printCliHelp, reportCliError } from './cli.mts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(SCRIPT_DIR, '../..');
 
-function parseArgs(argv: string[]): Record<string, string | boolean> {
-  const args: Record<string, string | boolean> = {};
-  for (let i = 0; i < argv.length; i++) {
-    const token = argv[i];
-    if (!token?.startsWith('--')) continue;
-    const key = token.slice(2);
-    const next = argv[i + 1];
-    if (next && !next.startsWith('--')) {
-      args[key] = next;
-      i++;
-    } else {
-      args[key] = true;
-    }
-  }
-  return args;
-}
+const USAGE =
+  'Usage: run-from-inputs.mts --out <output-dir> (--image <reference-image> --phrase-set <phrases.json> | --job <job.config.json>) [--dry-run] [--upload]';
 
 function run(cmd: string, cmdArgs: string[]): void {
   const result = spawnSync(cmd, cmdArgs, {
@@ -70,20 +57,27 @@ function slugSetName(name: string): string {
 }
 
 async function main(): Promise<void> {
-  const args = parseArgs(process.argv.slice(2));
+  const args = parseCliArgs(process.argv.slice(2), {
+    values: ['image', 'image2', 'phrase-set', 'out', 'job', 'theme', 'voice', 'character-name', 'character-slug', 'title-zh', 'set-name', 'title-en', 'desc-zh', 'desc-en', 'character-concept'],
+    booleans: ['dry-run', 'upload', 'help'],
+  });
+  if (cliBoolean(args.help)) {
+    printCliHelp(USAGE);
+    return;
+  }
   const imageArg = args.image;
   const image2Arg = args.image2;
   const phraseSetArg = args['phrase-set'];
   const outArg = args.out;
   const jobArg = args.job;
-  const dryRun = Boolean(args['dry-run']);
-  const upload = Boolean(args.upload);
+  const dryRun = cliBoolean(args['dry-run']);
+  const upload = cliBoolean(args.upload);
 
   if (!outArg || typeof outArg !== 'string') {
-    throw new Error('Missing --out <output-dir>');
+    throw new CliUsageError('Missing --out <output-dir>');
   }
   if (!jobArg && (!imageArg || !phraseSetArg)) {
-    throw new Error(
+    throw new CliUsageError(
       'Provide --image <path> and --phrase-set <path>, or --job <existing-config.json>'
     );
   }
@@ -301,6 +295,5 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-  console.error(err instanceof Error ? err.message : err);
-  process.exit(1);
+  reportCliError(err, USAGE);
 });
