@@ -27,7 +27,7 @@ interface UseLineStickerPhraseSetTransferParams {
   setActionDescsList: Dispatch<SetStateAction<string[]>>;
   setSheetSliceSettings: Dispatch<SetStateAction<SliceSettings[]>>;
   setCurrentSheetIndex: Dispatch<SetStateAction<LineStickerSheetIndex>>;
-  setError: Dispatch<SetStateAction<string | null>>;
+  setError: (value: string | null) => void;
   invalidFileMessage: string;
 }
 

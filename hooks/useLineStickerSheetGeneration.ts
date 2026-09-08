@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { getErrorMessage } from '../types/errors';
 import { removeBackgroundAI } from '../utils/aiBackgroundRemoval';
@@ -16,10 +16,6 @@ import {
   sliceLineStickerSheetFrames,
   type LineStickerSheetIndex,
 } from '../utils/lineStickerSetSchema';
-import {
-  isActiveSheetStage,
-  createInitialSheetStatuses,
-} from './lineStickerSheetGenerationTypes';
 import type {
   LineStickerSheetStage,
   LineStickerSheetStatus,
@@ -60,6 +56,11 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
       setError,
       setShowSettings,
       setIsGenerating,
+      setRunStage,
+      cancelRun,
+      resetRun,
+      sheetStatuses,
+      updateSheetStatus,
       setSheetImages,
       setProcessedSheetImages,
       setSheetFrames,
@@ -73,9 +74,6 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
     optimizeSheetSlice,
   } = options;
 
-  const [sheetStatuses, setSheetStatuses] = useState<LineStickerSheetStatus[]>(() =>
-    createInitialSheetStatuses()
-  );
   const requestCounterRef = useRef(0);
   const activeRequestIdRef = useRef<number | null>(null);
   const activeAbortControllerRef = useRef<AbortController | null>(null);
@@ -86,26 +84,6 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
         .filter((status) => status.stage === 'failed')
         .map((status) => status.sheetIndex),
     [sheetStatuses]
-  );
-
-  const updateSheetStatus = useCallback(
-    (
-      sheetIndex: SheetIndex,
-      updater:
-        | Partial<LineStickerSheetStatus>
-        | ((current: LineStickerSheetStatus) => Partial<LineStickerSheetStatus>)
-    ) => {
-      setSheetStatuses((prev) =>
-        prev.map((entry) => {
-          if (entry.sheetIndex !== sheetIndex) {
-            return entry;
-          }
-          const patch = typeof updater === 'function' ? updater(entry) : updater;
-          return { ...entry, ...patch };
-        })
-      );
-    },
-    []
   );
 
   const isRequestActive = useCallback((requestId: number) => {
@@ -125,25 +103,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
     [isRequestActive]
   );
 
-  const resetInFlightSheetStatuses = useCallback(() => {
-    setSheetStatuses((prev) =>
-      prev.map((status) =>
-        isActiveSheetStage(status.stage)
-          ? {
-              ...status,
-              stage: 'idle',
-              progress: 0,
-              message: '',
-              error: null,
-            }
-          : status
-      )
-    );
-  }, []);
-
-  const resetSheetStatuses = useCallback(() => {
-    setSheetStatuses(createInitialSheetStatuses());
-  }, []);
+  const resetSheetStatuses = resetRun;
 
   const startRequest = useCallback(() => {
     activeAbortControllerRef.current?.abort(createAbortError('Superseded by a newer request'));
@@ -151,11 +111,10 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
     requestCounterRef.current = requestId;
     activeRequestIdRef.current = requestId;
     activeAbortControllerRef.current = new AbortController();
-    resetInFlightSheetStatuses();
     setChromaKeyProgress(0);
     setIsProcessingChromaKey(false);
     return requestId;
-  }, [resetInFlightSheetStatuses, setChromaKeyProgress, setIsProcessingChromaKey]);
+  }, [setChromaKeyProgress, setIsProcessingChromaKey]);
 
   const finishRequest = useCallback(
     (requestId: number, clearStatusText: boolean = true) => {
@@ -184,15 +143,13 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
     activeAbortControllerRef.current?.abort(createAbortError('User cancelled generation'));
     activeAbortControllerRef.current = null;
     activeRequestIdRef.current = null;
-    resetInFlightSheetStatuses();
-    setIsGenerating(false);
+    cancelRun();
     setIsProcessingChromaKey(false);
     setChromaKeyProgress(0);
     setStatusText('');
   }, [
-    resetInFlightSheetStatuses,
+    cancelRun,
     setChromaKeyProgress,
-    setIsGenerating,
     setIsProcessingChromaKey,
     setStatusText,
   ]);
@@ -272,13 +229,12 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
         );
       }
 
-      updateSheetStatus(sheetIndex, (current) => ({
+      updateSheetStatus(sheetIndex, {
         stage: 'generating',
         progress: 15,
         message: t.lineStickerGeneratingSheetN.replace('{n}', getSheetLabel(sheetIndex)),
         error: null,
-        attempts: current.attempts + 1,
-      }));
+      });
 
       const generated = await generateSingleSheet(phraseSlice, actionSlice, {
         suppressUiState: true,
@@ -581,6 +537,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
           setStatusText('');
         }
       } else {
+        setRunStage('generating');
         const generated = await generateSingleSheet(undefined, undefined, {
           suppressUiState: true,
           throwOnError: true,
@@ -599,6 +556,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
 
         setSpriteSheetImage(generated);
         if (bgRemovalMethod === 'ai') {
+          setRunStage('processing');
           setStatusText(t.statusProcessing);
           setIsProcessingChromaKey(true);
           const processed = await removeBackground(
@@ -641,6 +599,7 @@ export function useLineStickerSheetGeneration(options: UseLineStickerSheetGenera
     setShowSettings,
     sourceImage,
     setIsGenerating,
+    setRunStage,
     stickerSetMode,
     currentSheetIndex,
     generateSingleSheet,

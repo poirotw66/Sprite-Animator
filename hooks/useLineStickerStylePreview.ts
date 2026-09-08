@@ -20,7 +20,7 @@ interface UseLineStickerStylePreviewParams {
   selectedModel: string;
   stylePreviewResolution: ImageResolution;
   getEffectiveApiKey: () => string;
-  setError: Dispatch<SetStateAction<string | null>>;
+  setError: (value: string | null) => void;
   setShowSettings: Dispatch<SetStateAction<boolean>>;
   errorApiKey: string;
   errorNoImage: string;

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import {
     STYLE_PRESETS,
     TEXT_PRESETS,
@@ -19,6 +19,7 @@ import { generateSpriteSheet } from '../services/geminiService';
 import { logger } from '../utils/logger';
 import { useLanguage } from './useLanguage';
 import type { ImageResolution } from '../utils/constants';
+import { useLineStickerRunState } from './useLineStickerRunState';
 
 interface UseLineStickerGenerationProps {
     apiKey: string | null;
@@ -77,9 +78,16 @@ export const useLineStickerGeneration = ({
     selectedResolution,
 }: UseLineStickerGenerationProps) => {
     const { t } = useLanguage();
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [statusText, setStatusText] = useState('');
-    const [error, setError] = useState<string | null>(null);
+    const run = useLineStickerRunState();
+    const {
+        isGenerating,
+        setIsGenerating,
+        statusText,
+        setStatusText,
+        error,
+        setError,
+        setStage,
+    } = run;
 
     const totalFrames = gridCols * gridRows;
 
@@ -179,6 +187,7 @@ export const useLineStickerGeneration = ({
 
         if (!suppressUiState) {
             setIsGenerating(true);
+            setStage('generating');
             setError(null);
             setStatusText(t.lineStickerGenerating);
         }
@@ -237,6 +246,10 @@ export const useLineStickerGeneration = ({
         gridCols,
         gridRows,
         t,
+        setError,
+        setIsGenerating,
+        setStatusText,
+        setStage,
     ]);
 
     return {
@@ -246,6 +259,7 @@ export const useLineStickerGeneration = ({
         setStatusText,
         error,
         setError,
+        run,
         generateSingleSheet,
         buildPrompt,
     };

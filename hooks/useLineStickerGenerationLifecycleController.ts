@@ -8,8 +8,12 @@ import type {
   LineStickerGenerationTexts,
   LineStickerGenerationSetters,
 } from './lineStickerSheetGenerationTypes';
+import type { LineStickerRunController } from './useLineStickerRunState';
 
-interface LifecycleState {
+interface LifecycleState extends Pick<
+  LineStickerRunController,
+  'cancelRun' | 'resetRun' | 'setStage' | 'sheetStatuses' | 'updateSheetStatus'
+> {
   setIsGenerating: (value: boolean) => void;
   setStatusText: (value: string) => void;
   setError: (value: string | null) => void;
@@ -105,12 +109,26 @@ export function useLineStickerGenerationLifecycleController({
     setChromaKeyProgress: setSingleChromaKeyProgress,
     resetGeneratedOutputs: resetSingleGeneratedOutputs,
   } = singleSheet;
-  const { setStatusText, setError, setIsGenerating } = state;
+  const {
+    setStatusText,
+    setError,
+    setIsGenerating,
+    cancelRun,
+    resetRun,
+    setStage,
+    sheetStatuses,
+    updateSheetStatus,
+  } = state;
   const setters: LineStickerGenerationSetters = {
     setStatusText,
     setError,
     setShowSettings,
     setIsGenerating,
+    cancelRun,
+    resetRun,
+    setRunStage: setStage,
+    sheetStatuses,
+    updateSheetStatus,
     setSheetImages,
     setProcessedSheetImages,
     setSheetFrames,

@@ -7,19 +7,12 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { BgRemovalMethod, ChromaKeyColorType } from '../types';
 import type { SliceSettings } from '../utils/imageUtils';
-import {
-  createLineStickerSheetArray,
-  type LineStickerSheetIndex,
-} from '../utils/lineStickerSetSchema';
+import type { PipelineStage } from '../features/line-sticker/domain';
+import type { LineStickerSheetIndex } from '../utils/lineStickerSetSchema';
 
 export type LineStickerSheetStage =
-  | 'idle'
-  | 'queued'
-  | 'generating'
-  | 'processing'
-  | 'slicing'
-  | 'completed'
-  | 'failed';
+  | Extract<PipelineStage, 'idle' | 'queued' | 'generating' | 'processing' | 'slicing' | 'failed'>
+  | 'completed';
 
 export interface LineStickerSheetStatus {
   sheetIndex: LineStickerSheetIndex;
@@ -28,26 +21,6 @@ export interface LineStickerSheetStatus {
   message: string;
   error: string | null;
   attempts: number;
-}
-
-export function isActiveSheetStage(stage: LineStickerSheetStage): boolean {
-  return (
-    stage === 'queued' ||
-    stage === 'generating' ||
-    stage === 'processing' ||
-    stage === 'slicing'
-  );
-}
-
-export function createInitialSheetStatuses(): LineStickerSheetStatus[] {
-  return createLineStickerSheetArray((sheetIndex) => ({
-    sheetIndex,
-    stage: 'idle',
-    progress: 0,
-    message: '',
-    error: null,
-    attempts: 0,
-  }));
 }
 
 export interface LineStickerGenerationTexts {
@@ -73,6 +46,14 @@ export interface LineStickerGenerationSetters {
   setError: (value: string | null) => void;
   setShowSettings: (value: boolean) => void;
   setIsGenerating: (value: boolean) => void;
+  setRunStage: (stage: PipelineStage, message?: string | null) => void;
+  cancelRun: () => void;
+  resetRun: () => void;
+  sheetStatuses: LineStickerSheetStatus[];
+  updateSheetStatus: (
+    sheetIndex: LineStickerSheetIndex,
+    patch: Partial<LineStickerSheetStatus>
+  ) => void;
   setSheetImages: Dispatch<SetStateAction<(string | null)[]>>;
   setProcessedSheetImages: Dispatch<SetStateAction<(string | null)[]>>;
   setSheetFrames: Dispatch<SetStateAction<string[][]>>;
