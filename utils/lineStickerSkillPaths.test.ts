@@ -16,6 +16,28 @@ const CANONICAL_SKILL_DOCS = SKILL_NAMES.map((name) =>
 const MIRROR_ROOTS = ['.agents/skills', '.claude/skills'];
 
 describe('LINE sticker skill paths', () => {
+  it('keeps canonical frontmatter minimal and names aligned with folders', () => {
+    for (const name of SKILL_NAMES) {
+      const path = resolve(process.cwd(), 'skills', name, 'SKILL.md');
+      const source = readFileSync(path, 'utf8');
+      const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+      expect(match, `${name}: missing YAML frontmatter`).not.toBeNull();
+
+      const frontmatter = match![1]!;
+      const keys = frontmatter
+        .split(/\r?\n/)
+        .filter((line) => /^[-A-Za-z0-9_]+:/u.test(line))
+        .map((line) => line.slice(0, line.indexOf(':')));
+
+      expect(keys, `${name}: only name and description belong in frontmatter`).toEqual([
+        'name',
+        'description',
+      ]);
+      expect(frontmatter).toMatch(new RegExp(`^name: ${name}$`, 'mu'));
+      expect(frontmatter).toMatch(/^description:\s*(?:>-|[^\s].+)$/mu);
+    }
+  });
+
   it('does not reference the nonexistent .Codex skill path', () => {
     for (const path of CANONICAL_SKILL_DOCS) {
       const source = readFileSync(path, 'utf8');

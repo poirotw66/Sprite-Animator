@@ -108,7 +108,7 @@ Chroma QA thresholds scale with the actual sticker: enclosed chroma pockets use 
 foreground-pixel population, and despill fringe uses the Alpha-edge population.
 Small stickers retain absolute minimum thresholds, while `qa-report.json` records
 the ratios and resolved pixel thresholds used for every sticker.
-- [ ] 6. (Optional) Upload via line-sticker-upload skill
+- [ ] 8. (Optional) Upload via line-sticker-upload skill, only when explicitly requested
 ```
 
 ### Step 3 — Dry-run

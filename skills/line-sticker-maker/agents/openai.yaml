@@ -1,4 +1,4 @@
 interface:
   display_name: "LINE Sticker Maker"
-  short_description: "Generate, slice, validate, and package a LINE sticker set"
-  default_prompt: "Use $line-sticker-maker to generate and package a LINE sticker set from my character reference."
+  short_description: "Recover, reslice, or finalize advanced sticker jobs"
+  default_prompt: "Use $line-sticker-maker to recover or reslice my existing LINE sticker job."

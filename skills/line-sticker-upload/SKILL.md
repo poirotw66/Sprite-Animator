@@ -1,15 +1,26 @@
 ---
 name: line-sticker-upload
 description: >-
-  LINE Creators Market upload pipeline localized in this repo: Google Drive
-  staging, Playwright form provision, ZIP upload, and submit-for-review.
-  Use after line-sticker-maker produces a set.
+  Stages a completed sticker package in Google Drive and operates LINE Creators
+  Market through Playwright. Use only when the user explicitly asks to stage,
+  upload, provision, or submit a specific package; generating or packaging a set
+  alone is not permission to publish it.
 ---
 
 # LINE Sticker Upload
 
 Google Drive and Playwright scripts live at:
 `skills/line-sticker-upload/scripts/`
+
+## Authorization boundary
+
+- Input inspection and local preflight are read-only.
+- Drive staging, Creators Market form creation, and ZIP upload mutate external
+  systems. Confirm the exact package and requested step before running them.
+- Review submission is a separate, highest-impact step. Never infer `submit` from
+  “upload”, and never enable automatic submission without explicit authorization.
+- Batch upload requires an explicitly named directory/range; do not infer it from
+  a request concerning one set.
 
 ## Environment files
 
@@ -84,7 +95,8 @@ npx tsx scripts/line-sticker/run-line-upload.mts \
 ```
 
 Visible browser and save pauses are **opt-in** via `--interactive true` on `run-line-upload.mts`.
-Default: headless Playwright, no Enter prompts, ZIP pause 0s, auto submit when enabled.
+Default: headless Playwright, no Enter prompts, ZIP pause 0s. Automatic submission
+must remain disabled unless the user explicitly requests review submission.
 
 Single step:
 

@@ -1,11 +1,10 @@
 ---
 name: line-sticker-character-ref
 description: >-
-  Generates LINE sticker character reference model sheets via Gemini image models.
-  Sheet layout is defined by text (turnaround, expressions, detail insets) — no
-  layout PNG attachment. Supports STYLE_PRESETS (--style chibi, yurukawa, etc.).
-  Use when the user wants to 生成角色參考圖 / 角色設定圖 / character reference
-  before phrase-design or line-sticker-pipeline.
+  Generates one LINE sticker character model sheet through Gemini, with text-defined
+  turnaround, expressions, and detail panels. Use for 角色參考圖、角色設定圖、
+  character reference, or identity-locking an uploaded design before phrase design;
+  do not use to generate a finished sticker set.
 ---
 
 # LINE Sticker Character Reference Generator
@@ -44,13 +43,13 @@ npx tsx skills/line-sticker-character-ref/scripts/generate-character-ref.mts \
   --out output/twice-1-raw.png
 ```
 
-### Flags
+### Core flags
 
 | flag | default | notes |
 |---|---|---|
 | `--concept` | required | Character description (species, personality, colors) |
 | `--out` | required | Output PNG path |
-| `--style` | `chibi` | Key from `STYLE_PRESETS` (see below); use `matchUploaded` with `--identity-ref` |
+| `--style` | `chibi` | Key from `STYLE_PRESETS`; use `matchUploaded` with `--identity-ref` |
 | `--style-context` | — | Custom style text (overrides preset) |
 | `--name` | — | Character name for prompt title |
 | `--identity-ref` | — | Optional image — lock species/palette/outfit |
@@ -64,27 +63,8 @@ npx tsx .../generate-character-ref.mts --list-styles
 npx tsx .../generate-character-ref.mts --concept "..." --style chibi --dry-run
 ```
 
-## Style presets (`--style`)
-
-Same keys as the web app / `line-sticker-maker` config:
-
-| key | label |
-|---|---|
-| `chibi` | Q 版可愛 |
-| `lineChibi` | 日系貼圖暖色 |
-| `minimalist` | 極簡線條 |
-| `yurukawa` | 慵懶軟懶風 |
-| `anime` | 日系動漫 |
-| `watercolor` | 手繪水彩 |
-| `pastel` | 蠟筆粉彩 |
-| `cartoon` | 美式卡通 |
-| `flat` | 扁平時尚 |
-| `doodle` | 塗鴉手繪 |
-| `kidDoodle` | 五歲塗鴉 |
-| `gouache` | 不透明水彩 |
-| `pixel` | 像素藝術 |
-
-Source: `utils/lineStickerPresets.ts`. `matchUploaded` works with `--identity-ref`.
+List current presets with `--list-styles`; the source of truth is
+`utils/lineStickerPresets.ts`. `matchUploaded` works with `--identity-ref`.
 
 Custom:
 
@@ -116,6 +96,9 @@ Character ref:
 - [ ] 5. User approves reference image
 - [ ] 6. phrase-design → pipeline with --image <out>
 ```
+
+Generating the image makes a paid API call. A request to inspect or draft the
+prompt authorizes only `--dry-run`, not generation.
 
 ### Example follow-up
 

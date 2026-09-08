@@ -11,7 +11,7 @@ backfill registry  →  plan batch  →  per slot:
 
 ## Quick start
 
-**Web UI:** Home → **貼圖產出履歷** (`/daily-sticker-registry`) — auto-loads `line-sticker-vault/registry/sticker-registry.json` via dev `/vault/` middleware; upload JSON manually otherwise.
+**Web UI:** Home → **貼圖產出履歷** (`/#/daily-sticker-registry`) — auto-loads `line-sticker-vault/registry/sticker-registry.json` via dev `/vault/` middleware; upload JSON manually otherwise.
 
 ```bash
 # 1. Backfill existing output/ + preview today's plan (zero image API)
@@ -19,6 +19,7 @@ npx tsx scripts/line-sticker/daily-pack.mts \
   --backfill --plan-only
 
 # 2. Run for real (resume skips completed sets)
+# Only after approving the date/count; this makes paid Gemini calls.
 npx tsx scripts/line-sticker/daily-pack.mts \
   --execute --resume
 

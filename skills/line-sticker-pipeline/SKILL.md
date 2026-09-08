@@ -1,13 +1,12 @@
 ---
 name: line-sticker-pipeline
 description: >-
-  End-to-end LINE sticker pipeline from one reference image plus a designed
-  phrase-set JSON (or job config). Validates inputs, dry-runs prompts,
-  generates sprite sheets and sticker PNGs, optionally uploads to LINE Creators
-  Market. Use when the user provides 圖片 + JSON, wants to 產生貼圖 / 做一套貼圖,
-  or asks to run the sticker generation workflow headlessly. When sheets are
-  already background-removed (已去背), slice with convert-sheet-v2 --already-keyed
-  instead of re-running chroma.
+  Runs the normal headless LINE sticker workflow from a character reference plus
+  phrase-set JSON (or an existing job config): validate, dry-run, generate, slice,
+  QA, and package. Use for 圖片 + JSON、產生貼圖、做一套貼圖. Use
+  line-sticker-maker instead for regeneration, recovery, or existing sprite
+  sheets; use line-sticker-upload only when upload or review submission is
+  explicitly requested.
 ---
 
 # LINE Sticker Pipeline
@@ -16,9 +15,21 @@ Canonical skill sources live under `skills/`. `.agents/skills/` and
 `.claude/skills/` are generated runtime mirrors; refresh both with
 `npm run skills:sync:line-sticker` after edits.
 
-The shared production preset is defined in `utils/lineStickerProductionPreset.ts`:
-2K when supported, guided 4×5 layout with every character/style reference attached, automatic green/magenta selection with `core` chroma removal, blocking chroma/content QA, programmatic captions,
-sheet-1 style anchoring, and at most 3 generation attempts per sheet.
+The shared production preset is defined in `utils/lineStickerProductionPreset.ts`.
+Explicit job fields may override it.
+
+## Operating rules
+
+- Confirm the reference image, phrase-set/job config, and output directory.
+- If only a character concept exists, route to `line-sticker-character-ref` first.
+  If the phrase content or tone is missing, route to `line-sticker-phrase-design`.
+  Pipeline validation covers file/schema readiness, not creative phrase repair.
+- Run a dry-run before paid image generation unless the user explicitly asks to
+  resume an already-reviewed job.
+- Actual Gemini generation must be requested by the user. A request to inspect,
+  plan, or validate is not permission to generate.
+- Never add `--upload` or invoke `line-sticker-upload` unless the user explicitly
+  asks to upload. Upload and review submission are separate permissions.
 
 **Shortcut — sheets already background-removed (已去背):** do **not** run Gemini
 generation or chroma again. Slice with V2 and `--already-keyed`:
@@ -28,8 +39,8 @@ npx tsx scripts/line-sticker/convert-sheet-v2.mts \
   --input path/to/sheets/ --output output/my-set --already-keyed --zip
 ```
 
-See `line-sticker-maker` → ChatGPT / pre-keyed sheets, and
-`docs/workflows/sheet-converter-v2.md`.
+See `line-sticker-maker` and `docs/workflows/sheet-converter-v2.md` for existing
+or pre-keyed sheets.
 
 Thin agent entry point. Full workflow, commands, and checklists:
 
@@ -44,4 +55,5 @@ npx tsx scripts/line-sticker/run-from-inputs.mts \
   --out output/my-set
 ```
 
-Related: `line-sticker-phrase-design` (phrases) · `line-sticker-maker` (config) · `line-sticker-upload` (LINE Creators Market)
+Related: `line-sticker-phrase-design` (phrases) · `line-sticker-maker`
+(advanced/recovery) · `line-sticker-upload` (explicit external delivery)

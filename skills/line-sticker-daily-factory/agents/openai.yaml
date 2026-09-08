@@ -1,4 +1,4 @@
 interface:
   display_name: "LINE Sticker Daily Factory"
   short_description: "Plan and produce daily batches of LINE sticker sets"
-  default_prompt: "Use $line-sticker-daily-factory to plan and produce today's LINE sticker batch."
+  default_prompt: "Use $line-sticker-daily-factory to plan today's LINE sticker batch without executing it."

@@ -5,7 +5,11 @@
  * @module logger
  */
 
-const isDev = import.meta.env.DEV;
+// Vite injects `import.meta.env` in the browser, but the repository's headless
+// `tsx` skills run directly in Node where it is absent.
+const isDev =
+  import.meta.env?.DEV ??
+  (typeof process !== 'undefined' ? process.env.NODE_ENV !== 'production' : false);
 
 /**
  * Logger utility that conditionally logs based on environment.

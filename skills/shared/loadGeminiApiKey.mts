@@ -3,11 +3,25 @@
  */
 
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, parse, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const SHARED_DIR = dirname(fileURLToPath(import.meta.url));
-export const REPO_ROOT = resolve(SHARED_DIR, '../../..');
+
+function findRepoRoot(start: string): string {
+  let current = resolve(start);
+  const volumeRoot = parse(current).root;
+  while (current !== volumeRoot) {
+    if (existsSync(resolve(current, 'package.json'))) return current;
+    current = dirname(current);
+  }
+  throw new Error(`Unable to locate repository root from ${start}`);
+}
+
+// The canonical file is at skills/shared, while generated runtime mirrors are
+// nested below .agents/skills or .claude/skills. Discovering package.json keeps
+// all three copies location-independent.
+export const REPO_ROOT = findRepoRoot(SHARED_DIR);
 
 function readKeyFromFile(path: string): string {
   if (!existsSync(path)) return '';
