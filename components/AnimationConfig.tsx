@@ -128,14 +128,14 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
         </button>
       </div>
 
-      <div className="space-y-5 md:space-y-6">
+        <div className="space-y-5 md:space-y-6">
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-2">{t.promptLabel}</label>
           <textarea
             value={config.prompt}
             onChange={handlePromptChange}
             placeholder={t.promptPlaceholder}
-            className="w-full border border-slate-200 rounded-lg p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus-visible:ring-signal focus:border-signal outline-none resize-none min-h-[80px] transition-all bg-white touch-manipulation"
+            className="w-full border border-slate-200 rounded-lg p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-signal/30 focus:border-signal outline-none resize-none min-h-[80px] transition-all bg-white touch-manipulation"
             aria-label={t.promptLabel}
             rows={3}
           />
@@ -144,7 +144,7 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Conditionally Render Frame Count OR Grid Controls */}
           {config.mode === 'frame' ? (
-            <div>
+            <div className="sm:col-span-2 sm:max-w-md">
               <label className="block text-xs font-semibold text-slate-600 mb-1.5 flex justify-between">
                 {t.frameCount} <span className="text-signal font-bold">{config.frameCount}</span>
               </label>
@@ -197,26 +197,26 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
               </div>
             </>
           )}
+        </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5 flex justify-between">
-              {t.playbackSpeed}{' '}
-              <span className="bg-slate-100 px-1.5 rounded text-slate-700 font-semibold">
-                {Math.max(1, config.speed * ANIMATION_FPS_MULTIPLIER)}
-              </span>
-            </label>
-            <div className="flex items-center gap-2">
-              <Play className="w-4 h-4 text-slate-400" />
-              <input
-                type="range"
-                min="1"
-                max="12"
-                value={config.speed}
-                onChange={handleSpeedChange}
-                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-                aria-label={t.playbackSpeed}
-              />
-            </div>
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 mb-1.5 flex justify-between">
+            {t.playbackSpeed}{' '}
+            <span className="bg-slate-100 px-1.5 rounded text-slate-700 font-semibold">
+              {Math.max(1, config.speed * ANIMATION_FPS_MULTIPLIER)}
+            </span>
+          </label>
+          <div className="flex items-center gap-2">
+            <Play className="w-4 h-4 text-slate-400" />
+            <input
+              type="range"
+              min="1"
+              max="12"
+              value={config.speed}
+              onChange={handleSpeedChange}
+              className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+              aria-label={t.playbackSpeed}
+            />
           </div>
         </div>
 

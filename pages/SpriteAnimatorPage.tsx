@@ -493,8 +493,8 @@ const SpriteAnimatorPage: React.FC = () => {
       />
 
       <header className="sticky top-0 z-20 max-w-7xl mx-auto mb-4 md:mb-8 -mx-4 px-4 md:mx-0 md:px-0 safe-top">
-        <div className="bg-white/95 backdrop-blur-md rounded-xl md:rounded-2xl shadow-sm border border-slate-200/60 p-3 sm:p-4 md:p-5 flex items-center justify-between gap-2 safe-left safe-right">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div className="bg-white/95 backdrop-blur-md rounded-xl md:rounded-2xl shadow-sm border border-slate-200/60 p-3 sm:p-4 md:p-5 flex flex-wrap items-center justify-between gap-2 safe-left safe-right">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <Link
               to="/"
               className="min-h-[44px] min-w-[44px] p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 bg-white rounded-xl transition-all duration-200 shadow-sm border border-slate-200 hover:border-slate-300 hover:shadow-md cursor-pointer flex items-center justify-center touch-manipulation"
@@ -511,7 +511,7 @@ const SpriteAnimatorPage: React.FC = () => {
               </span>
             </h1>
           </div>
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <ProjectHistory
               list={projectList}
               onSaveCurrent={(name) => { setIsSavingProject(true); handleSaveProject(name); }}
@@ -534,7 +534,7 @@ const SpriteAnimatorPage: React.FC = () => {
               aria-label={t.settings}
             >
               <Settings className="w-5 h-5" />
-              {hasCustomKey && <span className="text-xs font-semibold pr-1">{t.customKey}</span>}
+              {hasCustomKey && <span className="hidden text-xs font-semibold pr-1 sm:inline">{t.customKey}</span>}
             </button>
             <button
               onClick={handleReset}
@@ -548,7 +548,7 @@ const SpriteAnimatorPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 md:gap-6">
+      <main className="max-w-7xl mx-auto grid grid-cols-1 items-start lg:grid-cols-12 gap-4 sm:gap-5 md:gap-6">
         <div className="lg:col-span-5 space-y-4 sm:space-y-5 md:space-y-6">
           <ImageUpload
             sourceImage={sourceImage}
@@ -572,7 +572,12 @@ const SpriteAnimatorPage: React.FC = () => {
 
           {config.mode === 'sheet' && (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5">
-              <h3 className="text-sm font-semibold text-slate-800 mb-3">{t.sheetSliceProgrammaticOverlayTitle}</h3>
+              <h3 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
+                  5
+                </span>
+                {t.sheetSliceProgrammaticOverlayTitle}
+              </h3>
               <SheetSliceProgrammaticOverlayPanel
                 t={t}
                 accent="orange"
@@ -677,7 +682,7 @@ const SpriteAnimatorPage: React.FC = () => {
                           className="flex-shrink-0 px-2 py-1 rounded hover:bg-red-100 text-red-600 font-medium"
                           aria-label={t.reset}
                         >
-                          ?
+                          ×
                         </button>
                       </div>
                     )}
@@ -702,7 +707,7 @@ const SpriteAnimatorPage: React.FC = () => {
                         className="min-h-[40px] px-4 flex items-center justify-center gap-2 rounded-lg text-sm font-semibold bg-signal text-white hover:bg-signal-hover disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation tap-highlight"
                         aria-label={t.saveProject}
                       >
-                        {isSavingProject ? <span className="animate-pulse">?</span> : <Save className="w-4 h-4" />}
+                        {isSavingProject ? <span className="animate-pulse">…</span> : <Save className="w-4 h-4" />}
                         {t.saveProject}
                       </button>
                     </div>

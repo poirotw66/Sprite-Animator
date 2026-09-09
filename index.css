@@ -73,11 +73,6 @@
   ::selection {
     background: rgb(226 61 47 / 0.18);
   }
-
-  :focus-visible {
-    outline: 2px solid var(--color-signal);
-    outline-offset: 2px;
-  }
 }
 
 @layer components {

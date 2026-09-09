@@ -509,7 +509,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
           <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
-            S
+            3
           </span>
           {t.spriteSheetTitle}（{showOriginal ? t.spriteSheetOriginal : t.spriteSheetProcessed}）
         </h2>

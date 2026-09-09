@@ -34,11 +34,11 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
   const { t } = useLanguage();
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6 flex-1 flex flex-col min-h-[320px] sm:min-h-[400px] md:min-h-[500px]">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6 flex flex-col">
       <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
-            3
+            4
           </span>
           {t.previewTitle}
         </div>
@@ -50,7 +50,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
       </h2>
 
       <div
-        className="flex-1 bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center relative overflow-hidden group min-h-[220px] sm:min-h-[280px] md:min-h-[300px] cursor-pointer transition-colors hover:border-slate-400 hover:bg-slate-100/50 active:bg-slate-100 touch-manipulation tap-highlight"
+        className="bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center relative overflow-hidden group min-h-[220px] sm:min-h-[280px] md:min-h-[320px] cursor-pointer transition-colors hover:border-slate-400 hover:bg-slate-100/50 active:bg-slate-100 touch-manipulation tap-highlight"
         onClick={onTogglePlay}
         title={t.clickToPlayPause}
         role="button"
