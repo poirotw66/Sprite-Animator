@@ -3,10 +3,11 @@
 
 > 本專案最初為「角色幀動畫生成器」，現已擴充為多工具工作室：  
 > - Sprite Animator（逐幀 / 精靈圖）  
-> - LINE 貼圖製作（含文案、版面、自動上傳的 headless 工廠）  
+> - LINE 貼圖製作（含文案、版面、IndexedDB 還原、自動上傳的 headless 工廠）  
 > - One-Page Comic（單頁漫畫嚮導）  
 > - Remove Background（AI 去背）  
 > - Daily Sticker Registry（批量生產登記盤點）  
+> - Parting（精靈圖分割）
 
 ## ✨ 功能特色
 
@@ -27,6 +28,17 @@
   - GIF（兼容性好）
   - ZIP（所有幀的原始 PNG 文件）
 
+- 💬 **LINE 貼圖工作區**：
+  - 瀏覽器內完成角色上傳、文案、生成、切片與下載
+  - **IndexedDB 作業還原**：重新整理後可接續上一份貼圖作業（影像／文案以 job SoT 持久化）
+  - 損壞的本機紀錄不會拖垮作業列表；刪除作業會一併清除資產
+  - 中斷中的生成會在還原時標示為已取消，並顯示可關閉提示
+
+- 🎛️ **Signal Studio 介面語言**：
+  - 全站統一的冷紙面 + vermillion 強調色（不再依工具彩虹配色）
+  - Outfit + Noto Sans TC 字體、共用 header／按鈕／banner 樣式
+  - 各工具頁維持相同 chrome，降低切換成本
+
 - ⚡ **性能優化**：
   - React 性能優化（useMemo, useCallback, React.memo）
   - 代碼分割（動態導入）
@@ -40,12 +52,13 @@
   - 統一的錯誤處理
   - 自動重試機制（帶指數退避）
   - 生產環境日誌管理（開發/生產環境自動切換）
+  - CI 含 typecheck、lint、單元／e2e、Python 檢查、dist budget 與秘密掃描
 
 ## 🚀 快速開始
 
 ### 環境要求
 
-- Node.js 20 或 22（`>=20 <23`）
+- Node.js 20–26（`>=20 <27`）
 - npm 10+（建議使用專案鎖定的 npm 10.9.2）
 
 ### 安裝步驟
@@ -75,7 +88,7 @@
 
 ## 📖 使用指南
 
-### 基本流程
+### 基本流程（Sprite Animator）
 
 1. **上傳角色圖片**：點擊或拖拽上傳角色圖片
 2. **選擇模式**：
@@ -88,6 +101,13 @@
    - 預覽縮放
 5. **生成動畫**：點擊生成按鈕
 6. **導出結果**：選擇 APNG、GIF 或 ZIP 格式
+
+### LINE 貼圖（`/#/line-sticker`）
+
+1. 上傳角色參考圖並填寫／生成貼圖文案
+2. 產生套圖（多張 sheet）並切片、去背、下載
+3. 重新整理頁面後，系統會嘗試還原上一份作業；若作業遺失或損毀，會顯示提示並從空白開始
+4. 進階 headless 量產／上傳請見 `.claude/skills/line-sticker-*` 與 `scripts/line-sticker/`
 
 ### 精靈圖模式進階功能
 
@@ -132,52 +152,33 @@
 ```
 Sprite-Animator/
 ├── components/          # React 組件
+│   ├── ui/              # Signal Studio 共用 chrome（如 ToolPageHeader）
+│   ├── LineSticker/     # LINE 貼圖瀏覽器 UI
+│   ├── Comic/           # 單頁漫畫嚮導
 │   ├── SettingsModal.tsx
 │   ├── ImageUpload.tsx
 │   ├── AnimationConfig.tsx
 │   ├── SpriteSheetViewer.tsx
-│   ├── SpriteSheetEraserModal.tsx
 │   ├── AnimationPreview.tsx
-│   ├── FrameGrid.tsx
-│   ├── ErrorBoundary.tsx
-│   ├── ProjectHistory.tsx
-│   ├── LanguageSwitcher.tsx
-│   ├── ExampleSelector.tsx
-│   └── Icons.tsx
-├── hooks/               # 自定義 Hooks
-│   ├── useSettings.ts
-│   ├── useAnimation.ts
-│   ├── useSpriteSheet.ts
-│   ├── useExport.ts
 │   └── ...
+├── features/
+│   └── line-sticker/    # LINE 貼圖 domain／persistence（IndexedDB）
+├── hooks/               # 自定義 Hooks（含 job 還原、影像／文案 SoT）
+├── pages/               # 各工具頁面（HashRouter）
 ├── services/            # API 服務
-│   └── geminiService.ts
-├── utils/               # 工具函數
-│   ├── constants.ts
-│   ├── logger.ts
-│   ├── imageUtils.ts         # re-export 與共用圖像工具
-│   ├── sliceSpriteSheet.ts   # 網格切片
-│   ├── optimizeSliceSettings.ts  # 自動優化切片參數
-│   ├── sliceByCellRects.ts   # 依 cell rect 切片
-│   ├── imageContentAnalysis.ts   # 內容分析（對齊、質心）
-│   ├── imageCrop.ts          # 單格裁切與 template match
-│   ├── spriteSlicing.ts      # 切片類型與 getEffectivePadding
-│   ├── imageInterpolation.ts # 幀插值、平滑動畫
-│   ├── chromaKeyProcessor.ts # 去背處理器（Web Worker）
-│   ├── aiBackgroundRemoval.ts # AI 去背
-│   └── ...
-├── workers/            # Web Workers
-│   └── chromaKeyWorker.ts    # 去背處理 Worker
-├── types/               # TypeScript 類型定義
-│   ├── index.ts
-│   └── errors.ts
-├── App.tsx              # 主應用組件
-├── index.tsx            # 入口文件
-└── vite.config.ts       # Vite 配置
+├── utils/               # 工具函數（切片、去背、常數等）
+├── workers/             # Web Workers
+├── i18n/                # 繁中／英文文案
+├── scripts/             # CI、字體／縮圖、LINE headless 工具
+├── App.tsx
+├── index.tsx
+├── index.css            # Tailwind v4 + Signal Studio tokens
+└── vite.config.ts
 ```
 
 更多功能頁面：
-- `/#/line-sticker`：瀏覽器內完成一整套 LINE 貼圖
+- `/#/sprite-animation`：角色幀動畫／精靈圖
+- `/#/line-sticker`：瀏覽器內完成一整套 LINE 貼圖（含作業還原）
 - `/#/daily-sticker-registry`：批量生產使用的登記與盤點
 - `/#/one-page-comic`：單頁漫畫嚮導
 - `/#/rmbg`：背景去除
@@ -194,6 +195,15 @@ Sprite-Animator/
 ```bash
 npm run previews:build
 npm run previews:check
+```
+
+常用檢查：
+
+```bash
+npm run typecheck
+npm run lint
+npm run test
+npm run dist:budget   # 建置後資產體積門檻
 ```
 
 ### 構建生產版本
@@ -268,7 +278,9 @@ npm run preview
 - **React Router 7** - 多工具路由（各頁面採 lazy loading）
 - **TypeScript** - 類型安全
 - **Vite 6** - 構建工具
-- **Tailwind CSS 4** - 樣式（透過 PostCSS 建置，非 CDN）
+- **Tailwind CSS 4** - 樣式（透過 PostCSS 建置；`index.css` 定義 Signal Studio tokens）
+- **Outfit / Noto Sans TC** - UI 字體（`@fontsource`）
+- **IndexedDB** - LINE 貼圖作業與影像資產持久化
 - **Google Gemini API** - AI 圖像生成
 - **@huggingface/transformers** - AI 去背模型（需要時才載入）
 - **upng-js** - APNG 編碼
@@ -290,6 +302,12 @@ npm run preview
 - **一致的風格**：上傳的角色圖片應該風格一致
 - **適當的幀數**：4-8 幀通常足夠表現基本動作
 
+### LINE 貼圖
+
+- 重要作業請確認瀏覽器允許本站使用 IndexedDB／本機儲存
+- 清除網站資料會一併刪除已還原的貼圖作業
+- 量產與上傳請使用專用 skill／腳本，勿把 API Key 寫進 job 快照
+
 ## 🐛 故障排除
 遇到問題請先參考 [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
 
@@ -297,6 +315,7 @@ npm run preview
 - **頁面空白**：檢查開發服務器是否運行，清除瀏覽器緩存
 - **API 錯誤**：確認 API Key 正確設置
 - **生成失敗**：檢查網絡連接和 API 配額
+- **LINE 貼圖無法還原**：確認未清除網站資料；若顯示還原失敗提示，可重新開始一份作業
 
 ## 📄 許可證
 
@@ -318,5 +337,5 @@ npm run preview
 
 ---
 
-**最後更新**：2026-08-07
+**最後更新**：2026-09-09  
 **版本**：v1.2.0

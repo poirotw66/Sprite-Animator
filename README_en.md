@@ -3,10 +3,11 @@
 
 > Originally a “Sprite Animator”, this repo has grown into a multi-tool studio:
 > - Sprite Animator (frame-by-frame / sprite sheet)
-> - LINE Sticker Builder (phrases, layouts, headless upload factory)
+> - LINE Sticker Builder (phrases, layouts, IndexedDB restore, headless upload factory)
 > - One-Page Comic wizard
 > - Remove Background (AI)
 > - Daily Sticker Registry for batch production
+> - Parting (sprite sheet slicing)
 
 ## ✨ Features
 
@@ -27,6 +28,17 @@
   - GIF (good compatibility)
   - ZIP (all frames as raw PNG files)
 
+- 💬 **LINE Sticker Workspace**:
+  - Complete character upload, phrases, generation, slicing, and download in the browser
+  - **IndexedDB job restore**: Resume the previous sticker job after refresh (images / phrases persisted as job SoT)
+  - Corrupt local records will not crash the job list; deleting a job also clears its assets
+  - Interrupted generation is marked cancelled on restore, with a dismissible notice
+
+- 🎛️ **Signal Studio UI language**:
+  - Unified cool paper surface + vermillion accent across the app (no more per-tool rainbow themes)
+  - Outfit + Noto Sans TC fonts, shared header / button / banner styles
+  - Consistent chrome on every tool page to reduce context switching
+
 - ⚡ **Performance Optimization**:
   - React performance optimization (useMemo, useCallback, React.memo)
   - Code splitting (dynamic imports)
@@ -40,12 +52,13 @@
   - Unified error handling
   - Automatic retry mechanism (with exponential backoff)
   - Production logging management (auto-switch between dev/prod)
+  - CI covers typecheck, lint, unit / e2e, Python checks, dist budget, and secret scanning
 
 ## 🚀 Quick Start
 
 ### Requirements
 
-- Node.js 20 or 22 (`>=20 <23`)
+- Node.js 20–26 (`>=20 <27`)
 - npm 10+ (the project is pinned to npm 10.9.2)
 
 ### Installation
@@ -75,7 +88,7 @@
 
 ## 📖 Usage Guide
 
-### Basic Workflow
+### Basic Workflow (Sprite Animator)
 
 1. **Upload character image**: Click or drag to upload character image
 2. **Select mode**:
@@ -88,6 +101,13 @@
    - Preview scale
 5. **Generate animation**: Click generate button
 6. **Export results**: Choose APNG, GIF, or ZIP format
+
+### LINE Stickers (`/#/line-sticker`)
+
+1. Upload a character reference and fill in / generate sticker phrases
+2. Generate the set (multiple sheets), then slice, remove backgrounds, and download
+3. After a page refresh, the app tries to restore the previous job; if it is missing or corrupt, a notice is shown and you start from a blank job
+4. For advanced headless mass production / upload, see `.claude/skills/line-sticker-*` and `scripts/line-sticker/`
 
 ### Advanced Sprite Sheet Features
 
@@ -131,39 +151,34 @@ All GIFs above were generated from **gemini.webp** using this tool with the Goog
 
 ```
 Sprite-Animator/
-├── components/          # React Components
+├── components/          # React components
+│   ├── ui/              # Shared Signal Studio chrome (e.g. ToolPageHeader)
+│   ├── LineSticker/     # LINE sticker browser UI
+│   ├── Comic/           # One-page comic wizard
 │   ├── SettingsModal.tsx
 │   ├── ImageUpload.tsx
-│   ├── AnimationConfigPanel.tsx
+│   ├── AnimationConfig.tsx
 │   ├── SpriteSheetViewer.tsx
 │   ├── AnimationPreview.tsx
-│   ├── FrameGrid.tsx
-│   ├── ErrorBoundary.tsx
-│   └── Icons.tsx
-├── hooks/               # Custom Hooks
-│   ├── useSettings.ts
-│   ├── useAnimation.ts
-│   ├── useSpriteSheet.ts
-│   └── useExport.ts
-├── services/            # API Services
-│   └── geminiService.ts
-├── utils/               # Utility Functions
-│   ├── constants.ts
-│   ├── imageUtils.ts
-│   ├── chromaKeyProcessor.ts  # Background removal processor (Web Worker)
-│   └── logger.ts              # Logging utility
+│   └── ...
+├── features/
+│   └── line-sticker/    # LINE sticker domain / persistence (IndexedDB)
+├── hooks/               # Custom hooks (incl. job restore, image / phrase SoT)
+├── pages/               # Tool pages (HashRouter)
+├── services/            # API services
+├── utils/               # Utilities (slicing, chroma key, constants, etc.)
 ├── workers/             # Web Workers
-│   └── chromaKeyWorker.ts     # Background removal Worker
-├── types/               # TypeScript Type Definitions
-│   ├── index.ts
-│   └── errors.ts
-├── App.tsx              # Main Application Component
-├── index.tsx            # Entry Point
-└── vite.config.ts       # Vite Configuration
+├── i18n/                # Traditional Chinese / English copy
+├── scripts/             # CI, font / preview thumbs, LINE headless tools
+├── App.tsx
+├── index.tsx
+├── index.css            # Tailwind v4 + Signal Studio tokens
+└── vite.config.ts
 ```
 
 More routes:
-- `/#/line-sticker`: Build a complete LINE sticker set in browser
+- `/#/sprite-animation`: Character frame animation / sprite sheets
+- `/#/line-sticker`: Build a complete LINE sticker set in browser (with job restore)
 - `/#/daily-sticker-registry`: Registry/dashboard for batch production
 - `/#/one-page-comic`: One-page comic wizard
 - `/#/rmbg`: Background removal
@@ -180,6 +195,15 @@ After changing `assets/style-preview-sources/*.png` or `assets/font.png`, rebuil
 ```bash
 npm run previews:build
 npm run previews:check
+```
+
+Common checks:
+
+```bash
+npm run typecheck
+npm run lint
+npm run test
+npm run dist:budget   # post-build asset size budget
 ```
 
 ### Build Production Version
@@ -254,7 +278,9 @@ npm run preview
 - **React Router 7** - Multi-tool routing (routes are lazy loaded)
 - **TypeScript** - Type Safety
 - **Vite 6** - Build Tool
-- **Tailwind CSS 4** - Styling (compiled through PostCSS, not a CDN)
+- **Tailwind CSS 4** - Styling (built via PostCSS; Signal Studio tokens defined in `index.css`)
+- **Outfit / Noto Sans TC** - UI fonts (`@fontsource`)
+- **IndexedDB** - LINE sticker job and image asset persistence
 - **Google Gemini API** - AI Image Generation
 - **@huggingface/transformers** - AI background-removal model (loaded on demand)
 - **upng-js** - APNG Encoding
@@ -276,6 +302,12 @@ npm run preview
 - **Consistent style**: Uploaded character images should have consistent style
 - **Appropriate frame count**: 4-8 frames are usually sufficient for basic actions
 
+### LINE Stickers
+
+- For important jobs, confirm the browser allows IndexedDB / local storage for this site
+- Clearing site data also deletes restored sticker jobs
+- Use dedicated skills / scripts for mass production and upload; do not write API keys into job snapshots
+
 ## 🐛 Troubleshooting
 
 If you run into issues, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
@@ -284,6 +316,7 @@ Common issues:
 - **Blank page**: Check if dev server is running, clear browser cache
 - **API errors**: Verify API Key is correctly set
 - **Generation failed**: Check network connection and API quota
+- **LINE sticker restore failed**: Confirm site data was not cleared; if a restore-failure notice appears, start a new job
 
 ## 📄 License
 
@@ -305,5 +338,5 @@ Issues and Pull Requests are welcome!
 
 ---
 
-**Last Updated**: 2026-08-07
+**Last Updated**: 2026-09-09  
 **Version**: v1.2.0
