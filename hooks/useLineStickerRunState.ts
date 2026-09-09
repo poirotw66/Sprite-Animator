@@ -5,6 +5,7 @@ import {
   isRunActive,
   lineStickerRunActions,
   lineStickerRunReducer,
+  sanitizeLineStickerRunStateForResume,
   type LineStickerRunState,
 } from '../features/line-sticker/domain/lineStickerRunState';
 import type { PipelineStage } from '../features/line-sticker/domain/lineStickerJob';
@@ -48,6 +49,7 @@ export interface LineStickerRunController {
   setRunStage: (runId: number, stage: PipelineStage, message?: string | null) => void;
   cancelRun: (runId: number) => void;
   resetRun: () => void;
+  hydrateRun: (next: LineStickerRunState) => void;
   updateSheetStatus: (
     runId: number,
     sheetIndex: LineStickerSheetIndex,
@@ -104,6 +106,13 @@ export function useLineStickerRunState(): LineStickerRunController {
   const resetRun = useCallback(() => {
     setUiError(null);
     dispatch(lineStickerRunActions.reset());
+  }, []);
+  const hydrateRun = useCallback((next: LineStickerRunState) => {
+    const sanitized = sanitizeLineStickerRunStateForResume(next);
+    latestRunIdRef.current = sanitized.runId;
+    activeRunIdRef.current = isRunActive(sanitized) ? sanitized.runId : 0;
+    setUiError(null);
+    dispatch(lineStickerRunActions.hydrate(sanitized));
   }, []);
   const setStage = useCallback((stage: PipelineStage, message?: string | null) => {
     setRunStage(activeRunIdRef.current, stage, message);
@@ -170,6 +179,7 @@ export function useLineStickerRunState(): LineStickerRunController {
     setRunStage,
     cancelRun,
     resetRun,
+    hydrateRun,
     updateSheetStatus,
   };
 }

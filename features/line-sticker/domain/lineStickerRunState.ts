@@ -39,6 +39,7 @@ export type LineStickerRunAction =
   | { type: 'run/errorCleared'; runId: number }
   | { type: 'run/cancel'; runId: number }
   | { type: 'run/reset' }
+  | { type: 'run/hydrate'; state: LineStickerRunState }
   | {
       type: 'sheet/updated';
       runId: number;
@@ -118,11 +119,18 @@ export function lineStickerRunReducer(
   state: LineStickerRunState,
   action: LineStickerRunAction,
 ): LineStickerRunState {
-  if (action.type !== 'run/start' && action.type !== 'run/reset' && action.runId !== state.runId) {
+  if (
+    action.type !== 'run/start'
+    && action.type !== 'run/reset'
+    && action.type !== 'run/hydrate'
+    && action.runId !== state.runId
+  ) {
     return state;
   }
 
   switch (action.type) {
+    case 'run/hydrate':
+      return action.state;
     case 'run/start': {
       if (!Number.isSafeInteger(action.runId) || action.runId <= state.runId) return state;
       const sheets = Object.fromEntries(Object.entries(state.sheets).map(([id, sheet]) => [
@@ -198,6 +206,22 @@ export function isActivePipelineStage(stage: PipelineStage): boolean {
   return ACTIVE_STAGES.includes(stage);
 }
 
+/** Coerce in-flight stages so a refreshed page never looks mid-generation. */
+export function sanitizeLineStickerRunStateForResume(run: LineStickerRunState): LineStickerRunState {
+  const sheets = Object.fromEntries(Object.entries(run.sheets).map(([id, sheet]) => [
+    id,
+    isActivePipelineStage(sheet.stage)
+      ? { ...sheet, stage: 'cancelled' as const, message: null, error: null }
+      : sheet,
+  ]));
+  return {
+    ...run,
+    sheets,
+    stage: deriveStage(sheets, isActivePipelineStage(run.stage) ? 'cancelled' : run.stage),
+    message: isActivePipelineStage(run.stage) ? null : run.message,
+  };
+}
+
 export function isRunActive(state: LineStickerRunState): boolean {
   return isActivePipelineStage(state.stage);
 }
@@ -221,6 +245,7 @@ export const lineStickerRunActions = {
   start: (runId: number): LineStickerRunAction => ({ type: 'run/start', runId }),
   finish: (runId: number): LineStickerRunAction => ({ type: 'run/finish', runId }),
   reset: (): LineStickerRunAction => ({ type: 'run/reset' }),
+  hydrate: (state: LineStickerRunState): LineStickerRunAction => ({ type: 'run/hydrate', state }),
   cancel: (runId: number): LineStickerRunAction => ({ type: 'run/cancel', runId }),
   error: (runId: number, error: RunError): LineStickerRunAction => ({ type: 'run/error', runId, error }),
   clearError: (runId: number): LineStickerRunAction => ({ type: 'run/errorCleared', runId }),

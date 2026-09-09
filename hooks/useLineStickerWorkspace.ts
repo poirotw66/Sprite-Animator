@@ -27,6 +27,7 @@ import { getLineStickerActiveGrid } from '../utils/lineStickerActiveGrid';
 import { useLineStickerGenerationLifecycleController } from './useLineStickerGenerationLifecycleController';
 import { useLineStickerSheetOverviewController } from './useLineStickerSheetOverviewController';
 import { useLineStickerFrameEditController } from './useLineStickerFrameEditController';
+import { useLineStickerJobPersistence } from './useLineStickerJobPersistence';
 
 /**
  * Composes the LINE sticker feature controllers into props consumed by the page.
@@ -269,7 +270,7 @@ export const useLineStickerWorkspace = () => {
         retrySheet,
         hasFailedSheets,
         cancelActiveGeneration,
-        resetGeneratedOutputs,
+        resetGeneratedOutputs: resetGeneratedOutputsBase,
         handleStickerSetModeChange,
         handleUseStylePreview,
     } = useLineStickerGenerationLifecycleController({
@@ -337,6 +338,32 @@ export const useLineStickerWorkspace = () => {
         setStickerSetMode,
         resetOverlayState: lineStickerProgrammaticOverlayCore.resetOverlayState,
     });
+
+    const { clearPersistedJob } = useLineStickerJobPersistence({
+        isGenerating,
+        run,
+        sourceImage,
+        setSourceImage,
+        stickerSetMode,
+        setStickerSetMode,
+        setPhrasesList,
+        setSetPhrasesList,
+        actionDescsList,
+        setActionDescsList,
+        sheetImages,
+        setSheetImages,
+        processedSheetImages,
+        setProcessedSheetImages,
+        sheetFrames,
+        setSheetFrames,
+        setSpriteSheetImage,
+        setProcessedSpriteSheet,
+    });
+
+    const resetGeneratedOutputs = useCallback(() => {
+        resetGeneratedOutputsBase();
+        void clearPersistedJob();
+    }, [clearPersistedJob, resetGeneratedOutputsBase]);
 
     const {
         isGeneratingStylePreview,
