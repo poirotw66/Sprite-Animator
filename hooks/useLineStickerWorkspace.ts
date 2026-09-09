@@ -159,7 +159,6 @@ export const useLineStickerWorkspace = () => {
 
     const {
         isGenerating,
-        setIsGenerating,
         statusText,
         setStatusText,
         error,
@@ -322,10 +321,13 @@ export const useLineStickerWorkspace = () => {
         state: {
             setStatusText,
             setError,
-            setIsGenerating,
+            startRun: run.startRun,
+            finishRun: run.finishRun,
+            setRunMessage: run.setRunMessage,
+            setRunError: run.setRunError,
             cancelRun: run.cancelRun,
             resetRun: run.resetRun,
-            setStage: run.setStage,
+            setRunStage: run.setRunStage,
             sheetStatuses: run.sheetStatuses,
             updateSheetStatus: run.updateSheetStatus,
         },

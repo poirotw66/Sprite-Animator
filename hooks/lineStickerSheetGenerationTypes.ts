@@ -42,15 +42,18 @@ export interface LineStickerGenerationTexts {
 
 /** Grouped setters to keep hook options readable and testable. */
 export interface LineStickerGenerationSetters {
-  setStatusText: (value: string) => void;
   setError: (value: string | null) => void;
   setShowSettings: (value: boolean) => void;
-  setIsGenerating: (value: boolean) => void;
-  setRunStage: (stage: PipelineStage, message?: string | null) => void;
-  cancelRun: () => void;
+  startRun: () => number;
+  finishRun: (runId: number) => void;
+  setRunMessage: (runId: number, value: string) => void;
+  setRunError: (runId: number, value: string) => void;
+  setRunStage: (runId: number, stage: PipelineStage, message?: string | null) => void;
+  cancelRun: (runId: number) => void;
   resetRun: () => void;
   sheetStatuses: LineStickerSheetStatus[];
   updateSheetStatus: (
+    runId: number,
     sheetIndex: LineStickerSheetIndex,
     patch: Partial<LineStickerSheetStatus>
   ) => void;

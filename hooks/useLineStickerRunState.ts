@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useReducer } from 'react';
+import { useCallback, useMemo, useReducer, useRef, useState } from 'react';
 import {
   createLineStickerRunState,
   getFailedSheetIds,
@@ -41,9 +41,15 @@ export interface LineStickerRunController {
   setStatusText: (value: string) => void;
   setError: (value: string | null) => void;
   setStage: (stage: PipelineStage, message?: string | null) => void;
-  cancelRun: () => void;
+  startRun: () => number;
+  finishRun: (runId: number) => void;
+  setRunMessage: (runId: number, value: string) => void;
+  setRunError: (runId: number, value: string) => void;
+  setRunStage: (runId: number, stage: PipelineStage, message?: string | null) => void;
+  cancelRun: (runId: number) => void;
   resetRun: () => void;
   updateSheetStatus: (
+    runId: number,
     sheetIndex: LineStickerSheetIndex,
     patch: Partial<LineStickerSheetStatus>,
   ) => void;
@@ -56,25 +62,55 @@ export function useLineStickerRunState(): LineStickerRunController {
     undefined,
     () => createLineStickerRunState({ sheetIds: SHEET_IDS }),
   );
+  const latestRunIdRef = useRef(0);
+  const activeRunIdRef = useRef(0);
+  const [uiError, setUiError] = useState<string | null>(null);
+
+  const startRun = useCallback(() => {
+    const runId = latestRunIdRef.current + 1;
+    latestRunIdRef.current = runId;
+    activeRunIdRef.current = runId;
+    setUiError(null);
+    dispatch(lineStickerRunActions.start(runId));
+    return runId;
+  }, []);
+  const finishRun = useCallback((runId: number) => {
+    dispatch(lineStickerRunActions.finish(runId));
+  }, []);
+  const setRunMessage = useCallback((runId: number, value: string) => {
+    dispatch(lineStickerRunActions.messageChanged(runId, value || null));
+  }, []);
+  const setRunError = useCallback((runId: number, value: string) => {
+    dispatch(lineStickerRunActions.error(runId, { code: 'generation_failed', message: value }));
+  }, []);
+  const setRunStage = useCallback((runId: number, stage: PipelineStage, message?: string | null) => {
+    dispatch(lineStickerRunActions.stageChanged(runId, stage, message));
+  }, []);
 
   const setIsGenerating = useCallback((value: boolean) => {
-    dispatch(value ? lineStickerRunActions.start() : lineStickerRunActions.finish());
-  }, []);
+    if (value) {
+      startRun();
+      return;
+    }
+    finishRun(activeRunIdRef.current);
+  }, [finishRun, startRun]);
   const setStatusText = useCallback((value: string) => {
-    dispatch(lineStickerRunActions.messageChanged(value || null));
-  }, []);
+    setRunMessage(activeRunIdRef.current, value);
+  }, [setRunMessage]);
   const setError = useCallback((value: string | null) => {
-    dispatch(value
-      ? lineStickerRunActions.error({ code: 'ui_error', message: value })
-      : lineStickerRunActions.clearError());
+    setUiError(value);
   }, []);
-  const cancelRun = useCallback(() => dispatch(lineStickerRunActions.cancel()), []);
-  const resetRun = useCallback(() => dispatch(lineStickerRunActions.reset()), []);
+  const cancelRun = useCallback((runId: number) => dispatch(lineStickerRunActions.cancel(runId)), []);
+  const resetRun = useCallback(() => {
+    setUiError(null);
+    dispatch(lineStickerRunActions.reset());
+  }, []);
   const setStage = useCallback((stage: PipelineStage, message?: string | null) => {
-    dispatch(lineStickerRunActions.stageChanged(stage, message));
-  }, []);
+    setRunStage(activeRunIdRef.current, stage, message);
+  }, [setRunStage]);
 
   const updateSheetStatus = useCallback((
+    runId: number,
     index: LineStickerSheetIndex,
     patch: Partial<LineStickerSheetStatus>,
   ) => {
@@ -82,13 +118,14 @@ export function useLineStickerRunState(): LineStickerRunController {
     if (patch.stage === 'failed') {
       const message = patch.error ?? patch.message ?? 'Sheet generation failed';
       dispatch(lineStickerRunActions.sheetError(
+        runId,
         id,
         { code: 'sheet_failed', message },
         patch.message,
       ));
       return;
     }
-    dispatch(lineStickerRunActions.sheetUpdated(id, {
+    dispatch(lineStickerRunActions.sheetUpdated(runId, id, {
       ...(patch.stage === undefined ? {} : { stage: toDomainStage(patch.stage) }),
       ...(patch.progress === undefined ? {} : { progress: patch.progress }),
       ...(patch.message === undefined ? {} : { message: patch.message || null }),
@@ -119,13 +156,18 @@ export function useLineStickerRunState(): LineStickerRunController {
     state,
     isGenerating: isRunActive(state),
     statusText: state.message ?? '',
-    error: state.error?.message ?? null,
+    error: uiError ?? state.error?.message ?? null,
     sheetStatuses,
     failedSheetIndices,
     setIsGenerating,
     setStatusText,
     setError,
     setStage,
+    startRun,
+    finishRun,
+    setRunMessage,
+    setRunError,
+    setRunStage,
     cancelRun,
     resetRun,
     updateSheetStatus,

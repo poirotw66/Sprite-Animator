@@ -86,7 +86,11 @@ export const useLineStickerGeneration = ({
         setStatusText,
         error,
         setError,
-        setStage,
+        startRun,
+        finishRun,
+        setRunMessage,
+        setRunError,
+        setRunStage,
     } = run;
 
     const totalFrames = gridCols * gridRows;
@@ -174,6 +178,7 @@ export const useLineStickerGeneration = ({
         options: GenerateSingleSheetOptions = {}
     ) => {
         const { suppressUiState = false, throwOnError = false, onStatusChange, signal } = options;
+        let runId: number | null = null;
 
         if (!apiKey) {
             if (!suppressUiState) {
@@ -186,10 +191,10 @@ export const useLineStickerGeneration = ({
         }
 
         if (!suppressUiState) {
-            setIsGenerating(true);
-            setStage('generating');
+            runId = startRun();
+            setRunStage(runId, 'generating');
             setError(null);
-            setStatusText(t.lineStickerGenerating);
+            setRunMessage(runId, t.lineStickerGenerating);
         }
         onStatusChange?.(t.lineStickerGenerating);
 
@@ -206,8 +211,8 @@ export const useLineStickerGeneration = ({
                 apiKey,
                 selectedModel,
                 (status) => {
-                    if (!suppressUiState) {
-                        setStatusText(status);
+                    if (runId !== null) {
+                        setRunMessage(runId, status);
                     }
                     onStatusChange?.(status);
                 },
@@ -220,17 +225,16 @@ export const useLineStickerGeneration = ({
         } catch (err: unknown) {
             logger.error('Generation failed:', err);
             const errorMessage = getErrorMessage(err) || t.errorGeneration;
-            if (!suppressUiState) {
-                setError(errorMessage);
+            if (runId !== null) {
+                setRunError(runId, errorMessage);
             }
             if (throwOnError) {
                 throw err;
             }
             return null;
         } finally {
-            if (!suppressUiState) {
-                setIsGenerating(false);
-                setStatusText('');
+            if (runId !== null) {
+                finishRun(runId);
             }
             onStatusChange?.('');
         }
@@ -246,10 +250,12 @@ export const useLineStickerGeneration = ({
         gridCols,
         gridRows,
         t,
+        finishRun,
         setError,
-        setIsGenerating,
-        setStatusText,
-        setStage,
+        setRunError,
+        setRunMessage,
+        setRunStage,
+        startRun,
     ]);
 
     return {

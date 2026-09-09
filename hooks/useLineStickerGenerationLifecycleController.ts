@@ -12,9 +12,16 @@ import type { LineStickerRunController } from './useLineStickerRunState';
 
 interface LifecycleState extends Pick<
   LineStickerRunController,
-  'cancelRun' | 'resetRun' | 'setStage' | 'sheetStatuses' | 'updateSheetStatus'
+  | 'startRun'
+  | 'finishRun'
+  | 'setRunMessage'
+  | 'setRunError'
+  | 'setRunStage'
+  | 'cancelRun'
+  | 'resetRun'
+  | 'sheetStatuses'
+  | 'updateSheetStatus'
 > {
-  setIsGenerating: (value: boolean) => void;
   setStatusText: (value: string) => void;
   setError: (value: string | null) => void;
 }
@@ -112,21 +119,26 @@ export function useLineStickerGenerationLifecycleController({
   const {
     setStatusText,
     setError,
-    setIsGenerating,
+    startRun,
+    finishRun,
+    setRunMessage,
+    setRunError,
     cancelRun,
     resetRun,
-    setStage,
+    setRunStage,
     sheetStatuses,
     updateSheetStatus,
   } = state;
   const setters: LineStickerGenerationSetters = {
-    setStatusText,
     setError,
     setShowSettings,
-    setIsGenerating,
+    startRun,
+    finishRun,
+    setRunMessage,
+    setRunError,
     cancelRun,
     resetRun,
-    setRunStage: setStage,
+    setRunStage,
     sheetStatuses,
     updateSheetStatus,
     setSheetImages,
@@ -164,7 +176,6 @@ export function useLineStickerGenerationLifecycleController({
     setStylePreviewImage(null);
     setStatusText('');
     setError(null);
-    setIsGenerating(false);
   }, [
     cancelActiveGeneration,
     resetOverlayState,
@@ -172,7 +183,6 @@ export function useLineStickerGenerationLifecycleController({
     resetSheetStatuses,
     resetSingleGeneratedOutputs,
     setError,
-    setIsGenerating,
     setStatusText,
     setStylePreviewImage,
   ]);

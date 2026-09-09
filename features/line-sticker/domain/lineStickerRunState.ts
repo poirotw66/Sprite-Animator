@@ -31,22 +31,23 @@ export interface CreateLineStickerRunStateOptions {
 }
 
 export type LineStickerRunAction =
-  | { type: 'run/start' }
-  | { type: 'run/finish' }
-  | { type: 'run/stageChanged'; stage: PipelineStage; message?: string | null }
-  | { type: 'run/messageChanged'; message: string | null }
-  | { type: 'run/error'; error: RunError }
-  | { type: 'run/errorCleared' }
-  | { type: 'run/cancel' }
+  | { type: 'run/start'; runId: number }
+  | { type: 'run/finish'; runId: number }
+  | { type: 'run/stageChanged'; runId: number; stage: PipelineStage; message?: string | null }
+  | { type: 'run/messageChanged'; runId: number; message: string | null }
+  | { type: 'run/error'; runId: number; error: RunError }
+  | { type: 'run/errorCleared'; runId: number }
+  | { type: 'run/cancel'; runId: number }
   | { type: 'run/reset' }
   | {
       type: 'sheet/updated';
+      runId: number;
       sheetId: string;
       stage?: PipelineStage;
       progress?: number;
       message?: string | null;
     }
-  | { type: 'sheet/error'; sheetId: string; error: RunError; message?: string | null };
+  | { type: 'sheet/error'; runId: number; sheetId: string; error: RunError; message?: string | null };
 
 const ACTIVE_STAGES: readonly PipelineStage[] = [
   'validating', 'queued', 'generating', 'processing', 'slicing', 'qa', 'packaging',
@@ -117,18 +118,23 @@ export function lineStickerRunReducer(
   state: LineStickerRunState,
   action: LineStickerRunAction,
 ): LineStickerRunState {
+  if (action.type !== 'run/start' && action.type !== 'run/reset' && action.runId !== state.runId) {
+    return state;
+  }
+
   switch (action.type) {
     case 'run/start': {
+      if (!Number.isSafeInteger(action.runId) || action.runId <= state.runId) return state;
       const sheets = Object.fromEntries(Object.entries(state.sheets).map(([id, sheet]) => [
         id,
         isActivePipelineStage(sheet.stage)
           ? { ...createSheetRunState(id), attempts: sheet.attempts }
           : sheet,
       ]));
-      return { ...state, runId: state.runId + 1, stage: 'validating', message: null, sheets, error: null };
+      return { ...state, runId: action.runId, stage: 'validating', message: null, sheets, error: null };
     }
     case 'run/reset':
-      return createLineStickerRunState({ sheetIds: Object.keys(state.sheets) });
+      return createLineStickerRunState({ sheetIds: Object.keys(state.sheets), runId: state.runId });
     case 'run/error':
       return { ...state, stage: 'failed', message: action.error.message, error: action.error };
     case 'run/errorCleared':
@@ -212,26 +218,30 @@ export function getFailedSheetIds(state: LineStickerRunState): string[] {
 }
 
 export const lineStickerRunActions = {
-  start: (): LineStickerRunAction => ({ type: 'run/start' }),
-  finish: (): LineStickerRunAction => ({ type: 'run/finish' }),
+  start: (runId: number): LineStickerRunAction => ({ type: 'run/start', runId }),
+  finish: (runId: number): LineStickerRunAction => ({ type: 'run/finish', runId }),
   reset: (): LineStickerRunAction => ({ type: 'run/reset' }),
-  cancel: (): LineStickerRunAction => ({ type: 'run/cancel' }),
-  error: (error: RunError): LineStickerRunAction => ({ type: 'run/error', error }),
-  clearError: (): LineStickerRunAction => ({ type: 'run/errorCleared' }),
-  messageChanged: (message: string | null): LineStickerRunAction => ({ type: 'run/messageChanged', message }),
-  stageChanged: (stage: PipelineStage, message?: string | null): LineStickerRunAction => ({
-    type: 'run/stageChanged', stage, ...(message === undefined ? {} : { message }),
+  cancel: (runId: number): LineStickerRunAction => ({ type: 'run/cancel', runId }),
+  error: (runId: number, error: RunError): LineStickerRunAction => ({ type: 'run/error', runId, error }),
+  clearError: (runId: number): LineStickerRunAction => ({ type: 'run/errorCleared', runId }),
+  messageChanged: (runId: number, message: string | null): LineStickerRunAction => ({
+    type: 'run/messageChanged', runId, message,
+  }),
+  stageChanged: (runId: number, stage: PipelineStage, message?: string | null): LineStickerRunAction => ({
+    type: 'run/stageChanged', runId, stage, ...(message === undefined ? {} : { message }),
   }),
   sheetStageChanged: (
+    runId: number,
     sheetId: string,
     stage: PipelineStage,
     options: { progress?: number; message?: string | null } = {},
-  ): LineStickerRunAction => ({ type: 'sheet/updated', sheetId, stage, ...options }),
+  ): LineStickerRunAction => ({ type: 'sheet/updated', runId, sheetId, stage, ...options }),
   sheetUpdated: (
+    runId: number,
     sheetId: string,
     options: { stage?: PipelineStage; progress?: number; message?: string | null },
-  ): LineStickerRunAction => ({ type: 'sheet/updated', sheetId, ...options }),
-  sheetError: (sheetId: string, error: RunError, message?: string | null): LineStickerRunAction => ({
-    type: 'sheet/error', sheetId, error, ...(message === undefined ? {} : { message }),
+  ): LineStickerRunAction => ({ type: 'sheet/updated', runId, sheetId, ...options }),
+  sheetError: (runId: number, sheetId: string, error: RunError, message?: string | null): LineStickerRunAction => ({
+    type: 'sheet/error', runId, sheetId, error, ...(message === undefined ? {} : { message }),
   }),
 };

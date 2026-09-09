@@ -4,7 +4,14 @@
  * them and reference them by a stable asset id/path/URL.
  */
 
-export const LINE_STICKER_JOB_SCHEMA_VERSION = 1 as const;
+import {
+  resolveLineStickerSetLayout,
+  totalFramesFromLayouts,
+  type SupportedLineStickerSetCount,
+} from './lineStickerLayout';
+
+export const LINE_STICKER_JOB_SCHEMA_VERSION = 2 as const;
+export const DEFAULT_BROWSER_LINE_STICKER_SET_COUNT = 48;
 export const DEFAULT_LINE_STICKER_SHEET_COUNT = 3;
 
 export type JsonPrimitive = boolean | number | string | null;
@@ -36,6 +43,9 @@ export interface LineStickerJobSheet {
   id: string;
   /** Display/order position. It is not required to be a contiguous array index. */
   index: number;
+  cols: number;
+  rows: number;
+  expectedFrames: number;
   phrases: string[];
   actionDescriptions?: string[];
   sourceAsset?: LineStickerAssetRef;
@@ -48,6 +58,7 @@ export interface LineStickerJob {
   schemaVersion: typeof LINE_STICKER_JOB_SCHEMA_VERSION;
   id: string;
   mode: LineStickerJobMode;
+  stickerCount: number;
   createdAt: string;
   updatedAt: string;
   sourceAsset?: LineStickerAssetRef;
@@ -58,6 +69,7 @@ export interface LineStickerJob {
 export interface CreateLineStickerJobOptions {
   id: string;
   mode: LineStickerJobMode;
+  stickerCount?: SupportedLineStickerSetCount;
   createdAt: string;
   updatedAt?: string;
   sourceAsset?: LineStickerAssetRef;
@@ -66,27 +78,37 @@ export interface CreateLineStickerJobOptions {
 }
 
 /** The current browser set has three 4×4 sheets, while callers may supply more. */
-export function createDefaultLineStickerJobSheets(): LineStickerJobSheet[] {
-  return Array.from({ length: DEFAULT_LINE_STICKER_SHEET_COUNT }, (_, index) => ({
+export function createLineStickerJobSheets(stickerCount: SupportedLineStickerSetCount): LineStickerJobSheet[] {
+  return resolveLineStickerSetLayout(stickerCount).map(({ cols, rows }, index) => ({
     id: `sheet-${index}`,
     index,
+    cols,
+    rows,
+    expectedFrames: cols * rows,
     phrases: [],
   }));
+}
+
+/** Current browser default: the legacy 48-sticker, three-sheet workspace. */
+export function createDefaultLineStickerJobSheets(): LineStickerJobSheet[] {
+  return createLineStickerJobSheets(DEFAULT_BROWSER_LINE_STICKER_SET_COUNT);
 }
 
 export function createLineStickerJob({
   id,
   mode,
+  stickerCount = DEFAULT_BROWSER_LINE_STICKER_SET_COUNT,
   createdAt,
   updatedAt = createdAt,
   sourceAsset,
-  sheets = createDefaultLineStickerJobSheets(),
+  sheets = createLineStickerJobSheets(stickerCount),
   metadata,
 }: CreateLineStickerJobOptions): LineStickerJob {
   return {
     schemaVersion: LINE_STICKER_JOB_SCHEMA_VERSION,
     id,
     mode,
+    stickerCount: totalFramesFromLayouts(sheets),
     createdAt,
     updatedAt,
     ...(sourceAsset ? { sourceAsset } : {}),
