@@ -18,9 +18,10 @@ headless slice modes (`template` / `detect` / `divider`).
 2. Flood-fill key (border-connected only — keeps interior props) *(skipped if already keyed)*  
 3. Morphological close (reconnect thin sweat / motion lines) *(skipped if already keyed)*  
 4. Edge decontaminate (reduce gray fringe) *(skipped if already keyed)*  
-5. Projection-histogram grid cuts (fallback: equal grid)  
-6. Connected-component cell extract (avoid neighbor bleed)  
-7. Fit to LINE 370×320, write transparent PNG (+ optional ZIP)
+5. Projection-histogram grid cuts — valley-band center + per-column row median (fallback: equal grid)  
+6. Adaptive cell inset (skip shrink on soft-touch gutters)  
+7. Connected-component cell extract (avoid neighbor bleed; keep soft AA)  
+8. Fit to LINE 370×320, write transparent PNG (+ optional ZIP)
 
 ## Install
 

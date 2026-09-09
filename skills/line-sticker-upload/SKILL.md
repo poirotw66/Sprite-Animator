@@ -1,10 +1,12 @@
 ---
 name: line-sticker-upload
 description: >-
-  Stages a completed sticker package in Google Drive and operates LINE Creators
-  Market through Playwright. Use only when the user explicitly asks to stage,
-  upload, provision, or submit a specific package; generating or packaging a set
-  alone is not permission to publish it.
+  Stages a completed sticker package in Google Drive (optional) and operates
+  LINE Creators Market through Playwright. Without gdrive_credentials.json,
+  skips Drive and attaches sprite sheets via 夾帶 ZIP during provision. Use
+  only when the user explicitly asks to stage, upload, provision, or submit a
+  specific package; generating or packaging a set alone is not permission to
+  publish it.
 ---
 
 # LINE Sticker Upload
@@ -42,7 +44,7 @@ The wrapper merges credentials into the batch file automatically.
 
 OAuth / session artifacts (never commit):
 
-- `.secrets/line-sticker/gdrive_credentials.json` — Google Desktop OAuth client
+- `.secrets/line-sticker/gdrive_credentials.json` — Google Desktop OAuth client (**optional**)
 - `.secrets/line-sticker/gdrive_token.json` — Drive API token (auto-refreshed)
 - `.line-upload/state/playwright_line_state.json` — LINE login session (auto-created)
 
@@ -54,11 +56,19 @@ uv run playwright install chromium
 
 cp skills/line-sticker-maker/credentials.env.example \
    .secrets/line-sticker/credentials.env
-# fill LINE_EMAIL, LINE_PASSWORD, LINE_CREATOR_ID, GOOGLE_*
+# fill LINE_EMAIL, LINE_PASSWORD, LINE_CREATOR_ID
+# GOOGLE_* only needed if you use Drive staging
 ```
 
-Place `gdrive_credentials.json` at
-`.secrets/line-sticker/gdrive_credentials.json` (Google Cloud Console → Desktop OAuth).
+### Google Drive (optional)
+
+If `.secrets/line-sticker/gdrive_credentials.json` is present (Google Cloud Console →
+Desktop OAuth), the pipeline stages ZIP + sprite sheets to Drive and fills
+`design_url` with the share link.
+
+If that file is **missing**, Drive is skipped automatically. During provision,
+`SPRITE_SHEETS_DIR` sprite sheets are packed into one ZIP and uploaded via the
+Creators Market **夾帶** (`attachments[]`) control instead.
 
 ## Workflow with line-sticker-maker
 
@@ -107,16 +117,18 @@ npx tsx .../run-line-upload.mts --env <out>/.env.batch/Set_Name.env --step zip
 npx tsx .../run-line-upload.mts --env <out>/.env.batch/Set_Name.env --step submit
 ```
 
-## Pipeline order (do not skip)
+## Pipeline order
 
-| Step | Script | Purpose |
-|------|--------|---------|
-| 1 | `upload_gdrive.py --stage` | Upload ZIP + sprite sheets → Drive share URL |
-| 2 | `provision_line_sticker.py` | Fill Creators Market form → `LINE_STICKER_ID` |
-| 3 | `upload_line_zip.py` | Upload 42-PNG ZIP on image edit page |
-| 4 | `submit_line_review.py` | Submit for review → prints `PROJECT_URL=` |
+| Step | Script | Purpose | When |
+|------|--------|---------|------|
+| 1 | `upload_gdrive.py --stage` | Upload ZIP + sprite sheets → Drive share URL | Only if `gdrive_credentials.json` exists |
+| 2 | `provision_line_sticker.py` | Fill Creators Market form → `LINE_STICKER_ID`; **夾帶** sprite-sheet ZIP when Drive was skipped / sheets present | Always |
+| 3 | `upload_line_zip.py` | Upload 42-PNG ZIP on image edit page | Always |
+| 4 | `submit_line_review.py` | Submit for review → prints `PROJECT_URL=` | Only when explicitly authorized |
 
 All Python scripts require `--env <out>/.env.batch/Set_Name.env` (credentials merged if you use `run-line-upload.mts`).
+
+Set `ATTACH_REVIEW_FILES=false` in the batch env to skip 夾帶 even when sprite sheets exist.
 
 ### Batch upload (multiple sets)
 
@@ -126,6 +138,7 @@ uv run --locked python skills/line-sticker-upload/scripts/batch_submit_sticker_s
 ```
 
 Uses `credentials.env` + writes batch env files under `.line-upload/.env.batch/`.
+Also auto-skips Drive when `gdrive_credentials.json` is missing.
 
 ## Upload root layout
 

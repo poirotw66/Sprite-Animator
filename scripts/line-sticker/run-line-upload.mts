@@ -15,6 +15,7 @@ import { spawnSync } from 'node:child_process';
 import { assertOutDirGridGate } from './manifestGridGate.mts';
 import { ensureBatchEnvReady, parseEnv } from './uploadCredentials.mts';
 import {
+  hasGdriveCredentials,
   resolvePipelineSteps,
   resolveSubmitEnabled,
   resolveUploadStepsFromEnv,
@@ -87,77 +88,98 @@ async function main(): Promise<void> {
   const envSrc = resolve(PROJECT_ROOT, envFile);
   if (!existsSync(envSrc)) throw new Error(`Env file not found: ${envSrc}`);
 
-if (!skipGridGate) {
-  const jobOutDir = resolve(envSrc, '..', '..');
-  const manifestPath = resolve(jobOutDir, 'manifest.json');
-  if (existsSync(manifestPath)) {
-    console.log('▶ Grid gate: checking manifest.json...');
-    await assertOutDirGridGate(jobOutDir);
+  if (!skipGridGate) {
+    const jobOutDir = resolve(envSrc, '..', '..');
+    const manifestPath = resolve(jobOutDir, 'manifest.json');
+    if (existsSync(manifestPath)) {
+      console.log('▶ Grid gate: checking manifest.json...');
+      await assertOutDirGridGate(jobOutDir);
+    }
   }
-}
-console.log(`▶ Using ${envSrc}`);
-await ensureBatchEnvReady(envSrc);
+  console.log(`▶ Using ${envSrc}`);
+  await ensureBatchEnvReady(envSrc);
 
-const batchEnv = parseEnv(readFileSync(envSrc, 'utf8'));
-const submitEnabled = resolveSubmitEnabled({
-  step,
-  cliSubmit: typeof args.submit === 'string' ? args.submit : undefined,
-  envSubmit: batchEnv.LINE_UPLOAD_SUBMIT,
-});
-const steps =
-  step === 'all'
-    ? resolveUploadStepsFromEnv(
-        {
-          lineStickerId: batchEnv.LINE_STICKER_ID,
-          gdriveFolderId: batchEnv.GDRIVE_FOLDER_ID,
-        },
-        submitEnabled
-      )
-    : resolvePipelineSteps(step, submitEnabled);
+  const batchEnv = parseEnv(readFileSync(envSrc, 'utf8'));
+  const gdriveAvailable = hasGdriveCredentials(PROJECT_ROOT);
+  const submitEnabled = resolveSubmitEnabled({
+    step,
+    cliSubmit: typeof args.submit === 'string' ? args.submit : undefined,
+    envSubmit: batchEnv.LINE_UPLOAD_SUBMIT,
+  });
 
-if (step === 'all' && !submitEnabled) {
-  console.log('▶ Submit skipped (--submit false / LINE_UPLOAD_SUBMIT=false)');
-}
-if (step === 'all' && batchEnv.LINE_STICKER_ID?.trim()) {
-  console.log('▶ Upload shortcut: LINE_STICKER_ID present — zip only' + (submitEnabled ? ' + submit' : ''));
-} else if (step === 'all' && batchEnv.GDRIVE_FOLDER_ID?.trim()) {
-  console.log('▶ Upload shortcut: GDRIVE_FOLDER_ID present — skipping gdrive');
-}
-/** Default: unattended pipeline (no Enter prompts, headless Playwright). */
-const runInteractive = args.interactive === 'true' || args.auto === 'false';
-if (!runInteractive) {
-  console.log('▶ Unattended upload (headless, no Enter prompts). Pass --interactive true to review in browser.');
-}
-
-for (const name of steps) {
-  console.log(`\n▶ ${name}: ${STEP_SCRIPTS[name]}`);
-  const extra = name === 'gdrive' ? ['--stage'] : [];
-  if (name === 'gdrive' && typeof args.workers === 'string') {
-    extra.push('--workers', args.workers);
+  if (step === 'gdrive' && !gdriveAvailable) {
+    throw new Error(
+      'Missing .secrets/line-sticker/gdrive_credentials.json. ' +
+        'Either add the Google Desktop OAuth client JSON, or omit --step gdrive ' +
+        'so the pipeline provisions with 夾帶 sprite-sheet ZIP instead.'
+    );
   }
+
+  const steps =
+    step === 'all'
+      ? resolveUploadStepsFromEnv(
+          {
+            lineStickerId: batchEnv.LINE_STICKER_ID,
+            gdriveFolderId: batchEnv.GDRIVE_FOLDER_ID,
+            gdriveAvailable,
+          },
+          submitEnabled
+        )
+      : resolvePipelineSteps(step, submitEnabled, { gdriveAvailable });
+
+  if (step === 'all' && !submitEnabled) {
+    console.log('▶ Submit skipped (--submit false / LINE_UPLOAD_SUBMIT=false)');
+  }
+  if (step === 'all' && batchEnv.LINE_STICKER_ID?.trim()) {
+    console.log(
+      '▶ Upload shortcut: LINE_STICKER_ID present — zip only' +
+        (submitEnabled ? ' + submit' : '')
+    );
+  } else if (step === 'all' && batchEnv.GDRIVE_FOLDER_ID?.trim()) {
+    console.log('▶ Upload shortcut: GDRIVE_FOLDER_ID present — skipping gdrive');
+  } else if (step === 'all' && !gdriveAvailable) {
+    console.log(
+      '▶ No gdrive_credentials.json — skipping Drive; provision will 夾帶 sprite-sheet ZIP'
+    );
+  }
+
+  /** Default: unattended pipeline (no Enter prompts, headless Playwright). */
+  const runInteractive = args.interactive === 'true' || args.auto === 'false';
   if (!runInteractive) {
-    if (name === 'provision' || name === 'submit' || name === 'zip') {
-      extra.push('--headless');
-    }
-    if (name === 'provision') {
-      extra.push('--no-pause-before-save');
-    }
-    if (name === 'zip') {
-      extra.push('--post-upload-pause', '5');
-      extra.push('--import-timeout', '600');
-    }
-  } else {
-    if (name === 'provision') {
-      extra.push('--pause-before-save');
-    }
-    if (name === 'zip') {
-      extra.push('--post-upload-pause', '8');
-    }
+    console.log(
+      '▶ Unattended upload (headless, no Enter prompts). Pass --interactive true to review in browser.'
+    );
   }
-  runPython(STEP_SCRIPTS[name], envSrc, extra);
-}
 
-console.log('\n✓ Upload pipeline step(s) complete.');
+  for (const name of steps) {
+    console.log(`\n▶ ${name}: ${STEP_SCRIPTS[name]}`);
+    const extra = name === 'gdrive' ? ['--stage'] : [];
+    if (name === 'gdrive' && typeof args.workers === 'string') {
+      extra.push('--workers', args.workers);
+    }
+    if (!runInteractive) {
+      if (name === 'provision' || name === 'submit' || name === 'zip') {
+        extra.push('--headless');
+      }
+      if (name === 'provision') {
+        extra.push('--no-pause-before-save');
+      }
+      if (name === 'zip') {
+        extra.push('--post-upload-pause', '5');
+        extra.push('--import-timeout', '600');
+      }
+    } else {
+      if (name === 'provision') {
+        extra.push('--pause-before-save');
+      }
+      if (name === 'zip') {
+        extra.push('--post-upload-pause', '8');
+      }
+    }
+    runPython(STEP_SCRIPTS[name], envSrc, extra);
+  }
+
+  console.log('\n✓ Upload pipeline step(s) complete.');
 }
 
 main().catch((error) => reportCliError(error, USAGE));

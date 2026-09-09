@@ -45,28 +45,38 @@ def dismiss_creator_announcements(page: Page) -> None:
 
 
 def configure_campaigns(page: Page, env: dict[str, str]) -> None:
-    """LINE blocks save while a freemium campaign is active; opt out when JOIN_CAMPAIGNS=false."""
-    join = env.get("JOIN_CAMPAIGNS", "false").lower() in ("1", "true", "yes")
-    if join:
-        return
+    """Select LINE freemium / value-plan campaign participation.
+
+    Default is join (參加). Set JOIN_CAMPAIGNS=false to opt out (不參加).
+    """
+    join = env.get("JOIN_CAMPAIGNS", "true").lower() in ("1", "true", "yes")
+    targets = (
+        ("參加", "参加", "Participate")
+        if join
+        else ("不參加", "不参加", "Do not participate")
+    )
 
     page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
     page.wait_for_timeout(600)
-    declined = page.evaluate(
-        """() => {
+    clicked = page.evaluate(
+        """(targets) => {
+            const wanted = new Set(targets);
             let count = 0;
             for (const label of document.querySelectorAll('label')) {
                 const text = (label.innerText || label.textContent || '').trim();
-                if (text === '不參加' || text === '不参加' || text === 'Do not participate') {
+                if (wanted.has(text)) {
                     label.click();
                     count++;
                 }
             }
             return count;
-        }"""
+        }""",
+        list(targets),
     )
-    if declined:
-        print(f"Declined {declined} campaign(s) (JOIN_CAMPAIGNS=false)", flush=True)
+    if clicked:
+        action = "Joined" if join else "Declined"
+        flag = "true" if join else "false"
+        print(f"{action} {clicked} campaign(s) (JOIN_CAMPAIGNS={flag})", flush=True)
     page.wait_for_timeout(800)
 
 
@@ -214,6 +224,104 @@ def fill_chinese_fields(page: Page, env: dict[str, str]) -> None:
     print(f"Filled zh description ({len(zh_desc)} chars)", flush=True)
 
 
+def resolve_review_attachment_files(env: dict[str, str]) -> list[Path]:
+    """Sprite sheets (or explicit ATTACHMENT_FILES) for the 夾帶 / review attachment slot."""
+    explicit = env.get("ATTACHMENT_FILES", "").strip()
+    if explicit:
+        files = []
+        for part in re.split(r"[,:;]", explicit):
+            raw = part.strip()
+            if not raw:
+                continue
+            path = Path(raw)
+            if not path.is_absolute():
+                path = (PROJECT_ROOT / path).resolve()
+            if path.is_file():
+                files.append(path)
+        return files
+
+    sprite_rel = env.get("SPRITE_SHEETS_DIR", "").strip()
+    if not sprite_rel:
+        return []
+    sprite_dir = Path(sprite_rel)
+    if not sprite_dir.is_absolute():
+        sprite_dir = (PROJECT_ROOT / sprite_dir).resolve()
+    if not sprite_dir.is_dir():
+        return []
+
+    preferred = [
+        sprite_dir / "sprite_sheet_1_transparent.png",
+        sprite_dir / "sprite_sheet_2_transparent.png",
+    ]
+    files = [path for path in preferred if path.is_file()]
+    if files:
+        return files
+    return sorted(sprite_dir.glob("sprite_sheet_*transparent.png"))[:10]
+
+
+def build_review_attachment_zip(files: list[Path], env: dict[str, str]) -> Path:
+    """LINE attachments[] is single-file; pack PNGs into one <20MB ZIP."""
+    import zipfile
+
+    set_name = re.sub(r"[^\w\-]+", "_", env.get("GDRIVE_SET_FOLDER") or env.get("STICKER_TITLE_EN") or "attachments")
+    out_dir = PROJECT_ROOT / "output" / "debug" / "line-sticker-upload"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    zip_path = out_dir / f"{set_name}_review_attachments.zip"
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for path in files:
+            zf.write(path, arcname=path.name)
+    size_mb = zip_path.stat().st_size / (1024 * 1024)
+    if size_mb > 20:
+        raise SystemExit(f"Review attachment ZIP is {size_mb:.1f} MB (> 20 MB LINE limit): {zip_path}")
+    return zip_path
+
+
+def attach_review_files(page: Page, env: dict[str, str]) -> None:
+    """Upload proof / source sheets via the 夾帶 file button on the sale form.
+
+    Fallback when Google Drive staging is unavailable (no ``gdrive_credentials.json``):
+    pack ``SPRITE_SHEETS_DIR`` into one ZIP and attach it. Also attaches when Drive
+    URL is present unless ``ATTACH_REVIEW_FILES=false``.
+    """
+    files = resolve_review_attachment_files(env)
+    drive_url = env.get("GDRIVE_SHARE_URL", "").strip()
+    if not files:
+        if not drive_url:
+            print(
+                "WARNING: No GDRIVE_SHARE_URL and no sprite sheets to 夾帶. "
+                "Set SPRITE_SHEETS_DIR or add gdrive_credentials.json for Drive staging.",
+                flush=True,
+            )
+        return
+    if env.get("ATTACH_REVIEW_FILES", "true").strip().lower() in ("0", "false", "no"):
+        print("Skipping 夾帶 (ATTACH_REVIEW_FILES=false).", flush=True)
+        return
+
+    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+    page.wait_for_timeout(500)
+
+    # Creators Market uses a single-file input named attachments[].
+    file_input = page.locator('input[type="file"][name="attachments[]"]')
+    if file_input.count() == 0:
+        file_input = page.locator("label.mdBtnLabel input[type='file'], input.mdBtn[type='file']")
+    if file_input.count() == 0:
+        print("No attachments[] file input found; skipping 夾帶 upload.", flush=True)
+        return
+
+    upload_path = files[0] if len(files) == 1 else build_review_attachment_zip(files, env)
+    file_input.first.set_input_files(str(upload_path.resolve()))
+    page.wait_for_timeout(1_500)
+
+    if len(files) == 1:
+        print(f"Attached review file via 夾帶: {upload_path.name}", flush=True)
+    else:
+        names = ", ".join(path.name for path in files)
+        print(
+            f"Attached review ZIP via 夾帶: {upload_path.name} ({names})",
+            flush=True,
+        )
+
+
 def fill_sale_block(page: Page, env: dict[str, str]) -> None:
     page.fill(
         'input[name="copyright"]',
@@ -228,6 +336,8 @@ def fill_sale_block(page: Page, env: dict[str, str]) -> None:
         page.fill('input[name="design_url"]', drive_url)
         page.keyboard.press("Tab")
         page.wait_for_timeout(2_500)
+
+    attach_review_files(page, env)
 
     page.locator('input[name="area_group"][value="all"]').click(force=True)
 
@@ -390,7 +500,8 @@ def ensure_creators_logged_in(page: Page, env: dict[str, str], target_url: str) 
         "creator.line.me" in page.url and "/my/" not in page.url
     )
     if needs_login:
-        login_line(page, email, password, 120_000)
+        # Allow ample time for LINE phone 2FA in interactive runs.
+        login_line(page, email, password, 600_000)
         page.goto(target_url, wait_until="networkidle", timeout=120_000)
 
 
@@ -498,24 +609,37 @@ def open_sticker_edit_form(
 ) -> None:
     """Open metadata edit form from project list (detail page has no form fields)."""
     title_en = env.get("STICKER_TITLE_EN", "").strip()
-    queries = [title_en, env.get("STICKER_TITLE_ZH", "").strip(), sticker_id]
+    title_zh = env.get("STICKER_TITLE_ZH", "").strip()
+    # Include blank query so we can locate by sticker id after a title rename.
+    queries = [
+        sticker_id,
+        "",
+        title_en,
+        title_zh,
+        "Burnout Corgi: Office Life",
+        "累爆柯基：上班崩潰篇",
+    ]
+    seen: set[str] = set()
     for query in queries:
-        if not query:
+        key = query.strip()
+        if key in seen:
             continue
-        list_url = (
-            f"https://creator.line.me/my/{creator}/sticker/"
-            f"?status=all&query={query}&page=1"
-        )
+        seen.add(key)
+        if key:
+            list_url = (
+                f"https://creator.line.me/my/{creator}/sticker/"
+                f"?status=all&query={key}&page=1"
+            )
+        else:
+            list_url = f"https://creator.line.me/my/{creator}/sticker/?status=all&page=1"
         page.goto(list_url, wait_until="networkidle", timeout=120_000)
         dismiss_wizards(page)
         opened = page.evaluate(
             """(sid) => {
-                for (const a of document.querySelectorAll('a[href*="/sticker/"]')) {
-                    const href = a.getAttribute('href') || '';
-                    if (!href.includes('/sticker/' + sid)) continue;
-                    let node = a;
-                    for (let i = 0; i < 8 && node; i++) {
-                        for (const el of node.querySelectorAll('a, button')) {
+                const clickEditNear = (root) => {
+                    let node = root;
+                    for (let i = 0; i < 10 && node; i++) {
+                        for (const el of node.querySelectorAll('a, button, span')) {
                             const t = (el.innerText || el.textContent || '').trim();
                             if (t === '編輯' || t === 'Edit') {
                                 el.click();
@@ -524,6 +648,18 @@ def open_sticker_edit_form(
                         }
                         node = node.parentElement;
                     }
+                    return false;
+                };
+                for (const a of document.querySelectorAll('a[href*="/sticker/"]')) {
+                    const href = a.getAttribute('href') || '';
+                    if (!href.includes('/sticker/' + sid)) continue;
+                    if (clickEditNear(a)) return true;
+                }
+                // Fallback: any row/card mentioning the numeric id.
+                for (const el of document.querySelectorAll('tr, li, article, div')) {
+                    const text = (el.innerText || '').trim();
+                    if (!text.includes(sid)) continue;
+                    if (clickEditNear(el)) return true;
                 }
                 return false;
             }""",
@@ -533,6 +669,23 @@ def open_sticker_edit_form(
             page.wait_for_timeout(1_500)
             if page.locator('input[name="meta[en][title]"]').count():
                 return
+
+    # Last resort: open detail page and click Edit there.
+    detail = sticker_detail_url(creator, sticker_id)
+    page.goto(detail, wait_until="networkidle", timeout=120_000)
+    dismiss_wizards(page)
+    for pattern in (r"^編輯$", r"^Edit$"):
+        btn = page.get_by_role("button", name=re.compile(pattern))
+        link = page.get_by_role("link", name=re.compile(pattern))
+        for loc in (btn, link):
+            if loc.count():
+                try:
+                    loc.first.click(timeout=3_000)
+                    page.wait_for_timeout(1_500)
+                    if page.locator('input[name="meta[en][title]"]').count():
+                        return
+                except PlaywrightTimeout:
+                    pass
     raise SystemExit(
         f"Could not open edit form for sticker {sticker_id}. "
         "Check LINE_STICKER_ID or create a new project (omit --update)."

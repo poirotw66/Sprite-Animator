@@ -20,6 +20,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 # scripts → line-sticker-upload → skills → <repo>
 PROJECT_ROOT = SCRIPT_DIR.parents[2]
 CREDENTIALS_ENV = PROJECT_ROOT / ".secrets/line-sticker/credentials.env"
+GDRIVE_CREDENTIALS = PROJECT_ROOT / ".secrets/line-sticker/gdrive_credentials.json"
 DEFAULT_BATCH_ENV_DIR = PROJECT_ROOT / ".line-upload" / ".env.batch"
 STATE_DIR = PROJECT_ROOT / ".line-upload" / "state"
 MASTER_STORAGE = STATE_DIR / "playwright_line_state.json"
@@ -102,7 +103,7 @@ def update_env(env_path: Path, set_dir: Path, meta: dict[str, str], zip_path: Pa
         "COPYRIGHT": prev.get("COPYRIGHT") or "Copyright (c) Blo0m",
         "USE_AI": prev.get("USE_AI") or "true",
         "SALE_START": prev.get("SALE_START") or "auto",
-        "JOIN_CAMPAIGNS": prev.get("JOIN_CAMPAIGNS") or "false",
+        "JOIN_CAMPAIGNS": prev.get("JOIN_CAMPAIGNS") or "true",
         "SOURCE_ZIP": rel_posix(zip_path),
         "UPLOAD_ZIP": rel_posix(zip_path),
         "SPRITE_SHEETS_DIR": rel_posix(set_dir / "sprite_sheets"),
@@ -203,7 +204,14 @@ def process_one_set(job: SetJob) -> tuple[str, str | None, bool]:
     env_flag = ["--env", str(env_path)]
 
     ok = True
-    if not job.skip_drive:
+    skip_drive = job.skip_drive
+    if not skip_drive and not GDRIVE_CREDENTIALS.is_file():
+        print(
+            "No gdrive_credentials.json — skipping Drive; provision will 夾帶 sprite-sheet ZIP",
+            flush=True,
+        )
+        skip_drive = True
+    if not skip_drive:
         ok = run_step(
             "Drive (stage + upload)",
             [
@@ -326,6 +334,14 @@ def main() -> None:
         raise SystemExit(f"Missing credentials file: {credentials_env}")
 
     batch_env_dir = args.batch_env_dir.resolve()
+
+    if not args.skip_drive and not GDRIVE_CREDENTIALS.is_file():
+        print(
+            f"No {GDRIVE_CREDENTIALS.relative_to(PROJECT_ROOT)} — "
+            "auto --skip-drive; provision will 夾帶 sprite-sheet ZIP",
+            flush=True,
+        )
+        args.skip_drive = True
 
     parallel = max(1, args.parallel)
     if parallel > 1 and not args.headless_provision:

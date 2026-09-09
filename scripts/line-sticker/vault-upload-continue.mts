@@ -9,9 +9,14 @@ import { resolve } from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 
 import { parseEnv } from './uploadCredentials.mts';
-import { resolveSubmitEnabled, resolveUploadStepsFromEnv } from './uploadPipeline.mts';
+import {
+  hasGdriveCredentials,
+  resolveSubmitEnabled,
+  resolveUploadStepsFromEnv,
+} from './uploadPipeline.mts';
 
 const ROOT = resolve(import.meta.dirname, '../..');
+const PROJECT_ROOT = ROOT;
 const RUN_UPLOAD = resolve(import.meta.dirname, 'run-line-upload.mts');
 const UPLOAD_SCRIPTS = resolve(ROOT, 'skills/line-sticker-upload/scripts');
 const PLAYWRIGHT_STATE_DIR = resolve(ROOT, '.line-upload/state');
@@ -177,6 +182,7 @@ function buildJobs(from: number, to: number): UploadJob[] {
       {
         lineStickerId: env.LINE_STICKER_ID,
         gdriveFolderId: env.GDRIVE_FOLDER_ID,
+        gdriveAvailable: hasGdriveCredentials(PROJECT_ROOT),
       },
       submitEnabled
     ) as UploadStep[];

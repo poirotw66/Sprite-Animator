@@ -56,9 +56,10 @@ Auto behavior (no flag): if ≥2% of pixels are already transparent, keying is s
 1. Auto estimate background from border median *(skipped when already keyed)*  
 2. Flood-fill key (border-connected only) *(skipped when already keyed)*  
 3. Morphological closing + edge decontaminate *(paper sheets only; skipped for dark/chroma and already-keyed)*  
-4. Projection-histogram grid seams with per-cell inset  
-5. Connected-component ownership (keep in-cell text/props; drop side-edge neighbor skims)  
-6. LINE fit 370×320 + transparent PNG (+ ZIP)
+4. Projection-histogram grid seams: prefer the **center of the widest low-density valley**, with per-column row detection + median merge  
+5. **Adaptive cell inset** — only shrink into confirmed empty gutter; soft-touch valleys keep inset≈0 so white outlines are not carved  
+6. Connected-component ownership (keep in-cell text/props; drop side-edge neighbor skims; preserve soft AA inside the cell)  
+7. LINE fit 370×320 + transparent PNG (+ ZIP)
 
 ## Coexistence
 

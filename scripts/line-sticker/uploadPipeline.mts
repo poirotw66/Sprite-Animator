@@ -1,6 +1,12 @@
 /**
  * Upload pipeline step resolution (Drive → provision → zip → optional submit).
+ *
+ * When Google Drive OAuth client JSON is missing, Drive staging is skipped and
+ * provision attaches sprite sheets via LINE Creators 「夾帶」 ZIP instead.
  */
+
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 export type UploadStepName = 'gdrive' | 'provision' | 'zip' | 'submit';
 
@@ -27,12 +33,27 @@ export function resolveSubmitEnabled(options: {
   return defaultValue;
 }
 
+/** True when Desktop OAuth client JSON is present for Drive staging. */
+export function hasGdriveCredentials(
+  projectRoot: string,
+  credentialsPath?: string
+): boolean {
+  const path = credentialsPath?.trim()
+    ? resolve(projectRoot, credentialsPath)
+    : resolve(projectRoot, '.secrets/line-sticker/gdrive_credentials.json');
+  return existsSync(path);
+}
+
 export function resolvePipelineSteps(
   step: 'all' | UploadStepName,
-  submitEnabled: boolean
+  submitEnabled: boolean,
+  options: { gdriveAvailable?: boolean } = {}
 ): UploadStepName[] {
   if (step !== 'all') return [step];
-  const pipeline: UploadStepName[] = ['gdrive', 'provision', 'zip'];
+  const gdriveAvailable = options.gdriveAvailable !== false;
+  const pipeline: UploadStepName[] = gdriveAvailable
+    ? ['gdrive', 'provision', 'zip']
+    : ['provision', 'zip'];
   if (submitEnabled) pipeline.push('submit');
   return pipeline;
 }
@@ -40,6 +61,8 @@ export function resolvePipelineSteps(
 export interface UploadEnvState {
   lineStickerId?: string;
   gdriveFolderId?: string;
+  /** When false, skip Drive and rely on provision 夾帶 ZIP. Default true. */
+  gdriveAvailable?: boolean;
 }
 
 /** Skip completed upload stages when batch env already has runtime IDs. */
@@ -57,5 +80,7 @@ export function resolveUploadStepsFromEnv(
     if (submitEnabled) steps.push('submit');
     return steps;
   }
-  return resolvePipelineSteps('all', submitEnabled);
+  return resolvePipelineSteps('all', submitEnabled, {
+    gdriveAvailable: env.gdriveAvailable,
+  });
 }

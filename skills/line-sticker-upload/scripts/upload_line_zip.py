@@ -87,16 +87,23 @@ def login_line(page: Page, email: str, password: str, two_fa_timeout_ms: int) ->
 
     fill_line_login(page, email, password)
     print("Complete 2FA on your phone if LINE asks for a verification code.", flush=True)
+    print(f"Waiting up to {int(two_fa_timeout_ms / 1000)}s for Creators Market login…", flush=True)
 
     deadline = time.monotonic() + two_fa_timeout_ms / 1000
+    last_notice = 0.0
     while time.monotonic() < deadline:
         url = page.url
-        if "creator.line.me" in url and "/my/" in url:
+        if "creator.line.me" in url and ("/my/" in url or "/sticker" in url):
             click_consent_if_present(page)
             dismiss_modals(page)
+            print(f"LINE login OK → {url}", flush=True)
             return
         if "access.line.me" in url:
             click_consent_if_present(page)
+        elapsed = time.monotonic() - (deadline - two_fa_timeout_ms / 1000)
+        if elapsed - last_notice >= 30:
+            print(f"  …still waiting for 2FA/login ({int(elapsed)}s) current={url}", flush=True)
+            last_notice = elapsed
         page.wait_for_timeout(1_000)
     raise PlaywrightTimeout("Login timed out before reaching Creators Market.")
 

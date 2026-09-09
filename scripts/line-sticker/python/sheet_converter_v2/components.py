@@ -55,7 +55,7 @@ def extract_cell_with_components(
     gutter: int = 4,
     min_area: int = 24,
     margin_ratio: float = 0.03,
-    ownership_inset: int = 5,
+    ownership_inset: int = 3,
     primary_mass_ratio: float = 0.55,
     satellite_max_area_ratio: float = 0.12,
 ) -> np.ndarray:
@@ -63,8 +63,9 @@ def extract_cell_with_components(
     Crop cell with small gutter, keep the primary in-cell component plus small
     satellites, then trim to content bbox + margin.
 
-    Stricter than a flat mass-ratio gate so neighbor sticker fragments that
-    only skim the shared gutter are dropped.
+    Ownership uses a lighter core inset than before so soft-touch seams (where
+    the grid cut already sits on anti-aliased outlines) do not drop the cell's
+    own white border. Neighbor skims are still rejected via border + core_ratio.
     """
     height, width, _ = rgba.shape
     gx0 = max(0, rect.x0 - gutter)
@@ -84,7 +85,11 @@ def extract_cell_with_components(
     lx1 = rect.x1 - gx0
     ly1 = rect.y1 - gy0
 
-    inset = max(0, ownership_inset)
+    # Soft-touch cells are often only a few px larger than the art; keep the
+    # ownership core close to the full rect so outlines near seams survive.
+    cell_w = max(1, lx1 - lx0)
+    cell_h = max(1, ly1 - ly0)
+    inset = min(max(0, ownership_inset), max(1, min(cell_w, cell_h) // 12))
     ox0 = min(lx0 + inset, lx1)
     oy0 = min(ly0 + inset, ly1)
     ox1 = max(lx1 - inset, ox0)
@@ -100,11 +105,18 @@ def extract_cell_with_components(
             continue
         in_core = (xs >= ox0) & (xs < ox1) & (ys >= oy0) & (ys < oy1)
         core_ratio = float(np.count_nonzero(in_core)) / float(area)
+        # Also measure mass inside the strict cell rect (not only the inset core)
+        # so outline pixels that sit in the soft seam still count as owned.
+        in_cell = (xs >= lx0) & (xs < lx1) & (ys >= ly0) & (ys < ly1)
+        cell_ratio = float(np.count_nonzero(in_cell)) / float(area)
         cx = float(np.mean(xs))
         cy = float(np.mean(ys))
         centroid_in = ox0 <= cx < ox1 and oy0 <= cy < oy1
+        centroid_in_cell = lx0 <= cx < lx1 and ly0 <= cy < ly1
         border = _touches_crop_border(xs, ys, cw, ch)
-        candidates.append((label, area, core_ratio, centroid_in, border, cx, cy))
+        candidates.append(
+            (label, area, max(core_ratio, cell_ratio * 0.92), centroid_in or centroid_in_cell, border, cx, cy)
+        )
 
     if not candidates:
         out = crop.copy()
@@ -117,9 +129,9 @@ def extract_cell_with_components(
     for label, area, core_ratio, centroid_in, border, _cx, _cy in candidates:
         # Keep every component whose mass lives in this cell (text / props /
         # sparkles often sit apart from the character silhouette).
-        if centroid_in and core_ratio >= 0.2:
+        if centroid_in and core_ratio >= 0.18:
             # Drop skim-in neighbor fragments that mostly live outside.
-            if border and core_ratio < 0.5:
+            if border and core_ratio < 0.45:
                 continue
             keep[label] = True
             continue
@@ -146,6 +158,17 @@ def extract_cell_with_components(
             keep[label] = False
 
     owned = np.isin(labels, np.where(keep)[0])
+    # Preserve soft outline AA that labeling (alpha>80) dropped, but only inside
+    # the strict cell and only when not already claimed by a kept component's
+    # neighborhood — avoids reintroducing neighbor bleed.
+    soft = (alpha > 24) & (alpha <= 80)
+    soft_in_cell = soft.copy()
+    soft_in_cell[:ly0, :] = False
+    soft_in_cell[ly1:, :] = False
+    soft_in_cell[:, :lx0] = False
+    soft_in_cell[:, lx1:] = False
+    owned = owned | soft_in_cell
+
     out = crop.copy()
     out[~owned, 3] = 0
     return _trim_with_margin(out, margin_ratio)

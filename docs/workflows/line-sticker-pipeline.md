@@ -92,7 +92,7 @@ Options:
 Pipeline:
 - [ ] 1. Confirm image path + phrase-set JSON (or job config)
 - [ ] 2. Ensure GEMINI_API_KEY (repo `.env` / `.env.local` / env var)
-- [ ] 2b. (Upload) Fill `.secrets/line-sticker/credentials.env` once
+- [ ] 2b. (Upload) Fill `.secrets/line-sticker/credentials.env` once (`LINE_*` required; Google Drive OAuth JSON optional — without it, provision 夾帶 sprite-sheet ZIP)
 - [ ] 3. Dry-run: run-from-inputs.mts --dry-run
 - [ ] 4. Generate for real
 - [ ] 5. Spot-check stickers/ + manifest.json gridScores

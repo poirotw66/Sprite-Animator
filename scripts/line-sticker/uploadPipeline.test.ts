@@ -39,6 +39,18 @@ describe('uploadPipeline', () => {
     expect(resolvePipelineSteps('submit', false)).toEqual(['submit']);
   });
 
+  it('resolvePipelineSteps skips gdrive when credentials are unavailable', () => {
+    expect(resolvePipelineSteps('all', false, { gdriveAvailable: false })).toEqual([
+      'provision',
+      'zip',
+    ]);
+    expect(resolvePipelineSteps('all', true, { gdriveAvailable: false })).toEqual([
+      'provision',
+      'zip',
+      'submit',
+    ]);
+  });
+
   it('resolveUploadStepsFromEnv skips completed stages', () => {
     expect(
       resolveUploadStepsFromEnv({ lineStickerId: '12345', gdriveFolderId: 'abc' }, false)
@@ -51,5 +63,9 @@ describe('uploadPipeline', () => {
       'zip',
     ]);
     expect(resolveUploadStepsFromEnv({}, false)).toEqual(['gdrive', 'provision', 'zip']);
+    expect(resolveUploadStepsFromEnv({ gdriveAvailable: false }, false)).toEqual([
+      'provision',
+      'zip',
+    ]);
   });
 });

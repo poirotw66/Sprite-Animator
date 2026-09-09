@@ -42,6 +42,45 @@ def test_histogram_cuts_find_four_cells() -> None:
     assert cuts.x_bounds[0] == 0 and cuts.x_bounds[-1] == width
     assert 60 < cuts.x_bounds[1] < 140
     assert 60 < cuts.y_bounds[1] < 140
+    assert len(cuts.x_band_half) == 1
+    assert cuts.x_band_half[0] >= 3
+
+
+def test_soft_touch_gutter_avoids_blind_inset() -> None:
+    """Near-touching stickers: seam sits in a soft valley; inset must not carve art."""
+    from sheet_converter_v2.grid_cut import inset_cell_rect
+
+    height, width = 240, 240
+    alpha = np.zeros((height, width), dtype=np.uint8)
+    # Two columns of art with only a soft 8px AA valley (no fully empty gutter).
+    alpha[20:100, 10:116] = 255
+    alpha[20:100, 124:230] = 255
+    alpha[20:100, 116:124] = 55
+    alpha[140:220, 10:116] = 255
+    alpha[140:220, 124:230] = 255
+    alpha[140:220, 116:124] = 55
+    cuts = detect_grid_cuts(alpha, cols=2, rows=2)
+    assert 112 <= cuts.x_bounds[1] <= 128
+    # Soft valley → adaptive inset collapses so we don't carve white outlines.
+    x0, _, x1, _ = inset_cell_rect(cuts, 0, 0, inset=6)
+    assert x0 == cuts.x_bounds[0]
+    assert cuts.x_bounds[1] - x1 <= 1
+
+
+def test_wide_gutter_keeps_small_inset() -> None:
+    from sheet_converter_v2.grid_cut import inset_cell_rect
+
+    height, width = 200, 240
+    alpha = np.zeros((height, width), dtype=np.uint8)
+    alpha[10:90, 10:90] = 255
+    alpha[10:90, 150:230] = 255
+    alpha[110:190, 10:90] = 255
+    alpha[110:190, 150:230] = 255
+    cuts = detect_grid_cuts(alpha, cols=2, rows=2)
+    assert cuts.x_band_half[0] >= 8
+    x0, _, x1, _ = inset_cell_rect(cuts, 0, 0, inset=6)
+    assert x1 < cuts.x_bounds[1]
+    assert cuts.x_bounds[1] - x1 <= 6
 
 
 def test_line_fit_respects_max_box() -> None:
@@ -115,6 +154,8 @@ def test_already_keyed_skips_background_removal(tmp_path: Path) -> None:
 def main() -> None:
     test_background_flood_fill_keeps_interior_subject()
     test_histogram_cuts_find_four_cells()
+    test_soft_touch_gutter_avoids_blind_inset()
+    test_wide_gutter_keeps_small_inset()
     test_line_fit_respects_max_box()
     test_morph_close_fills_small_gap()
     test_decontaminate_processes_opaque_edge()
