@@ -115,7 +115,7 @@ USE_AI=true
 SALE_START=auto
 STICKER_COUNT=40
 SALE_REGION=all
-JOIN_CAMPAIGNS=true
+JOIN_CAMPAIGNS=超值,拼貼,免費試用
 LINE_UPLOAD_SUBMIT=${fields.submitForReview === true ? 'true' : 'false'}
 
 SOURCE_ZIP=${rel}/${fields.setName}.zip

@@ -45,39 +45,250 @@ def dismiss_creator_announcements(page: Page) -> None:
 
 
 def configure_campaigns(page: Page, env: dict[str, str]) -> None:
-    """Select LINE freemium / value-plan campaign participation.
+    """Select LINE special-campaign participation.
 
-    Default is join (參加). Set JOIN_CAMPAIGNS=false to opt out (不參加).
+    JOIN_CAMPAIGNS values:
+      - false / 0 / no -> all campaign sections decline
+      - true / 1 / yes / all -> all campaign sections join
+      - comma-separated keywords -> join matching titles only
+        e.g. JOIN_CAMPAIGNS=超值,拼貼,免費試用
+
+    Free-trial requires 超值方案 first; clicks are ordered and verified
+    because LINE resets 免費試用 if prerequisites are not live yet.
     """
-    join = env.get("JOIN_CAMPAIGNS", "true").lower() in ("1", "true", "yes")
-    targets = (
-        ("參加", "参加", "Participate")
-        if join
-        else ("不參加", "不参加", "Do not participate")
-    )
+    raw = (env.get("JOIN_CAMPAIGNS") or "false").strip()
+    lowered = raw.lower()
+    if lowered in ("0", "false", "no", "none", "off"):
+        mode = "none"
+        keywords: list[str] = []
+    elif lowered in ("1", "true", "yes", "all", "on"):
+        mode = "all"
+        keywords = []
+    else:
+        mode = "keywords"
+        keywords = [part.strip() for part in raw.replace(";", ",").split(",") if part.strip()]
 
     page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
     page.wait_for_timeout(600)
-    clicked = page.evaluate(
-        """(targets) => {
-            const wanted = new Set(targets);
-            let count = 0;
-            for (const label of document.querySelectorAll('label')) {
-                const text = (label.innerText || label.textContent || '').trim();
-                if (wanted.has(text)) {
-                    label.click();
-                    count++;
+
+    discover_js = """() => {
+        const joinTexts = new Set(['參加', '参加', 'Participate']);
+        const declineTexts = new Set(['不參加', '不参加', 'Do not participate']);
+        const titleHints = ['超值', '拼貼', '試用', '特輯', '企劃', '方案', '活動', '功能', 'value', 'trial', 'collage'];
+        const labelText = (el) => (el.innerText || el.textContent || '').trim();
+        const radioFor = (label) => {
+            const nested = label.querySelector('input[type="radio"]');
+            if (nested) return nested;
+            const id = label.getAttribute('for');
+            return id ? document.getElementById(id) : null;
+        };
+        const stripChoice = (s) => (s || '')
+            .replace(/不參加|不参加|參加|参加|Participate|Do not participate/g, ' ')
+            .replace(/\\s+/g, ' ')
+            .trim();
+        const findTitle = (container) => {
+            let node = container;
+            for (let depth = 0; depth < 8 && node; depth++) {
+                let sib = node.previousElementSibling;
+                for (let i = 0; i < 4 && sib; i++) {
+                    const t = stripChoice(sib.innerText || sib.textContent || '');
+                    if (t.length >= 4 && t.length <= 80 && titleHints.some((h) => t.includes(h))) {
+                        return t;
+                    }
+                    sib = sib.previousElementSibling;
                 }
+                const own = stripChoice(node.innerText || '');
+                for (const line of own.split(/\\n+/).map((x) => x.trim()).filter(Boolean)) {
+                    if (line.startsWith('※') || line.startsWith('・')) continue;
+                    if (line.length >= 4 && line.length <= 40 && titleHints.some((h) => line.includes(h))) {
+                        return line;
+                    }
+                }
+                node = node.parentElement;
             }
-            return count;
-        }""",
-        list(targets),
+            return stripChoice(container.innerText || '').slice(0, 60);
+        };
+
+        const pairs = [];
+        const usedJoin = new Set();
+        for (const label of document.querySelectorAll('label')) {
+            if (!joinTexts.has(labelText(label))) continue;
+            const joinInput = radioFor(label);
+            if (!joinInput || joinInput.type !== 'radio' || usedJoin.has(joinInput)) continue;
+
+            let container = label.parentElement;
+            let declineLabel = null;
+            for (let depth = 0; depth < 10 && container; depth++) {
+                const joinLabs = [];
+                const declineLabs = [];
+                for (const lab of container.querySelectorAll('label')) {
+                    const t = labelText(lab);
+                    if (joinTexts.has(t)) joinLabs.push(lab);
+                    else if (declineTexts.has(t)) declineLabs.push(lab);
+                }
+                if (joinLabs.length === 1 && declineLabs.length === 1 && joinLabs[0] === label) {
+                    declineLabel = declineLabs[0];
+                    break;
+                }
+                container = container.parentElement;
+            }
+            if (!declineLabel || !container) continue;
+            const declineInput = radioFor(declineLabel);
+            if (joinInput.disabled && declineInput && declineInput.disabled) continue;
+            usedJoin.add(joinInput);
+            const sectionRaw = findTitle(container);
+            const idx = pairs.length;
+            pairs.push({
+                index: idx,
+                section: sectionRaw.toLowerCase(),
+                sectionRaw,
+                joinDisabled: !!joinInput.disabled,
+            });
+            label.setAttribute('data-campaign-join-idx', String(idx));
+            declineLabel.setAttribute('data-campaign-decline-idx', String(idx));
+            joinInput.setAttribute('data-campaign-join-input-idx', String(idx));
+        }
+        return pairs;
+    }"""
+
+    pairs = page.evaluate(discover_js) or []
+
+    def choose_join(section: str) -> bool:
+        if mode == "all":
+            return True
+        if mode == "none":
+            return False
+        lower = section.lower()
+        return any(k.lower() in lower for k in keywords)
+
+    def sort_key(pair: dict) -> tuple[int, int]:
+        section = str(pair.get("section") or "")
+        if "超值" in section or "value" in section:
+            return (0, int(pair["index"]))
+        if "試用" in section or "trial" in section:
+            return (2, int(pair["index"]))
+        return (1, int(pair["index"]))
+
+    ordered = sorted(pairs, key=sort_key)
+    joined = 0
+    declined = 0
+    matched: list[str] = []
+
+    click_js = """({ index, join }) => {
+        const joinLabel = document.querySelector('[data-campaign-join-idx="' + index + '"]');
+        const declineLabel = document.querySelector('[data-campaign-decline-idx="' + index + '"]');
+        const joinInput = document.querySelector('[data-campaign-join-input-idx="' + index + '"]');
+        const targetLabel = join ? joinLabel : declineLabel;
+        let targetInput = null;
+        if (join) {
+            targetInput = joinInput;
+        } else if (declineLabel) {
+            targetInput = declineLabel.querySelector('input[type="radio"]')
+                || document.getElementById(declineLabel.getAttribute('for') || '');
+        }
+        if (!targetLabel && !targetInput) return { ok: false, reason: 'missing' };
+        if (targetInput && targetInput.disabled) return { ok: false, reason: 'disabled' };
+        if (targetInput) {
+            targetInput.checked = true;
+            targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+            targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+            try { targetInput.click(); } catch (e) {}
+        }
+        if (targetLabel) {
+            try { targetLabel.click(); } catch (e) {}
+        }
+        return {
+            ok: true,
+            joinChecked: !!(joinInput && joinInput.checked),
+        };
+    }"""
+
+    for pair in ordered:
+        section = str(pair.get("section") or "")
+        want_join = choose_join(section)
+        if pair.get("joinDisabled") and want_join:
+            print(f"Campaign skip (disabled join): {pair.get('sectionRaw')!r}", flush=True)
+            continue
+
+        attempts = 3 if (("試用" in section or "trial" in section) and want_join) else 1
+        ok_checked = False
+        for attempt in range(attempts):
+            page.evaluate(click_js, {"index": pair["index"], "join": want_join})
+            page.wait_for_timeout(800)
+            if ("超值" in section or "value" in section) and want_join:
+                page.wait_for_timeout(1000)
+            if want_join:
+                ok_checked = bool(
+                    page.evaluate(
+                        """(index) => {
+                            const input = document.querySelector(
+                              '[data-campaign-join-input-idx="' + index + '"]'
+                            );
+                            return !!(input && input.checked);
+                        }""",
+                        pair["index"],
+                    )
+                )
+                if ok_checked:
+                    break
+                if attempt + 1 < attempts:
+                    for pre in ordered:
+                        pre_section = str(pre.get("section") or "")
+                        if ("超值" in pre_section or "value" in pre_section) and choose_join(
+                            pre_section
+                        ):
+                            page.evaluate(click_js, {"index": pre["index"], "join": True})
+                            page.wait_for_timeout(1100)
+            else:
+                break
+
+        if want_join:
+            joined += 1
+            matched.append(str(pair.get("sectionRaw") or ""))
+            if ("試用" in section or "trial" in section) and not ok_checked:
+                print(
+                    f"WARNING: free-trial join did not stick after retries: {pair.get('sectionRaw')!r}",
+                    flush=True,
+                )
+        else:
+            declined += 1
+
+    final = page.evaluate(
+        """() => {
+            const out = [];
+            for (const input of document.querySelectorAll('[data-campaign-join-input-idx]')) {
+                const idx = input.getAttribute('data-campaign-join-input-idx');
+                const joinLabel = document.querySelector('[data-campaign-join-idx="' + idx + '"]');
+                let title = '';
+                let node = joinLabel;
+                for (let i = 0; i < 6 && node; i++) {
+                    const prev = node.previousElementSibling;
+                    if (prev) {
+                        const t = (prev.innerText || '').replace(/\\s+/g, ' ').trim();
+                        if (t.length >= 4 && t.length <= 40) { title = t; break; }
+                    }
+                    node = node.parentElement;
+                }
+                out.push({ idx, joinChecked: !!input.checked, title: title.slice(0, 40) });
+            }
+            return out;
+        }"""
     )
-    if clicked:
-        action = "Joined" if join else "Declined"
-        flag = "true" if join else "false"
-        print(f"{action} {clicked} campaign(s) (JOIN_CAMPAIGNS={flag})", flush=True)
-    page.wait_for_timeout(800)
+
+    print(
+        f"Campaigns: joined={joined} declined={declined} groups={len(pairs)} "
+        f"(JOIN_CAMPAIGNS={raw!r})",
+        flush=True,
+    )
+    sample = [str(p.get("sectionRaw") or "") for p in pairs[:8]]
+    if sample:
+        print(f"Campaign sections sample: {sample}", flush=True)
+    if matched:
+        print(f"Campaign joined titles: {matched}", flush=True)
+    if final:
+        print(f"Campaign final checked: {final}", flush=True)
+    page.wait_for_timeout(400)
+
 
 
 def dismiss_campaign_float(page: Page) -> None:
@@ -88,6 +299,35 @@ def dismiss_campaign_float(page: Page) -> None:
             page.wait_for_timeout(400)
         else:
             break
+    # Announcement / special-feature promo modals (e.g. 慶祝表情貼特輯)
+    for label in ("確認", "關閉", "同意", "OK", "Close"):
+        btn = page.get_by_role("button", name=label)
+        plain = page.get_by_text(label, exact=True)
+        for candidate in (btn, plain):
+            if candidate.count() == 0:
+                continue
+            try:
+                if candidate.first.is_visible():
+                    candidate.first.click(timeout=2_000)
+                    page.wait_for_timeout(400)
+            except PlaywrightTimeout:
+                continue
+    page.evaluate(
+        """() => {
+            for (const el of document.querySelectorAll('button, a, span')) {
+              const t = (el.innerText || '').trim();
+              if (t === '確認' || t === '關閉' || t === '同意' || t === 'OK') {
+                const style = window.getComputedStyle(el);
+                if (style && style.display !== 'none' && style.visibility !== 'hidden') {
+                  el.click();
+                  return true;
+                }
+              }
+            }
+            return false;
+        }"""
+    )
+    page.wait_for_timeout(400)
 
 
 def dismiss_wizards(page: Page) -> None:
@@ -692,8 +932,111 @@ def open_sticker_edit_form(
     )
 
 
+def withdraw_to_edit_if_needed(page: Page) -> bool:
+    """If project is under review, return it to the editable form.
+
+    LINE Creators shows 「回到編輯頁面」 while status is 等待審核 / 審核中.
+    """
+    dismiss_campaign_float(page)
+    dismiss_overlays(page)
+    # Prefer exact text click — more reliable than role matching on this page.
+    for text in ("回到編輯頁面", "返回編輯頁面", "返回編輯", "Back to edit"):
+        loc = page.get_by_text(text, exact=True)
+        if loc.count() == 0:
+            continue
+        try:
+            if loc.first.is_visible():
+                loc.first.click(timeout=5_000)
+                page.wait_for_timeout(1_200)
+                for confirm in ("同意", "確定", "OK", "是", "Yes", "取消申請"):
+                    btn = page.get_by_role("button", name=re.compile(rf"^{re.escape(confirm)}$"))
+                    plain = page.get_by_text(confirm, exact=True)
+                    for candidate in (btn, plain):
+                        if candidate.count() == 0:
+                            continue
+                        try:
+                            if candidate.first.is_visible():
+                                candidate.first.click(timeout=3_000)
+                                page.wait_for_timeout(1_200)
+                        except PlaywrightTimeout:
+                            pass
+                # Also click any visible OK / 同意 via JS fallback
+                page.evaluate(
+                    """() => {
+                        for (const el of document.querySelectorAll('button, a, span')) {
+                          const t = (el.innerText || '').trim();
+                          if (t === '同意' || t === 'OK' || t === '確定') { el.click(); return true; }
+                        }
+                        return false;
+                    }"""
+                )
+                page.wait_for_timeout(1_500)
+                print("Withdrew to edit page (was under review)", flush=True)
+                return True
+        except PlaywrightTimeout:
+            continue
+
+    clicked = page.evaluate(
+        """() => {
+            for (const el of document.querySelectorAll('a, button, span, div')) {
+                const t = (el.innerText || el.textContent || '').trim();
+                if (t === '回到編輯頁面' || t === '返回編輯頁面' || t === '返回編輯') {
+                    el.click();
+                    return true;
+                }
+            }
+            return false;
+        }"""
+    )
+    if clicked:
+        page.wait_for_timeout(1_500)
+        print("Withdrew to edit page (was under review)", flush=True)
+        return True
+    return False
+
+
+def open_edit_button_if_present(page: Page) -> bool:
+    """On detail view (編輯中), click the green 編輯 button to open the form."""
+    for pattern in (r"^編輯$", r"^Edit$"):
+        btn = page.get_by_role("button", name=re.compile(pattern))
+        link = page.get_by_role("link", name=re.compile(pattern))
+        for loc in (btn, link):
+            if loc.count() == 0:
+                continue
+            try:
+                if loc.first.is_visible():
+                    loc.first.click(timeout=5_000)
+                    page.wait_for_timeout(1_500)
+                    if page.locator('input[name="meta[en][title]"]').count():
+                        print("Opened edit form via 編輯 button", flush=True)
+                        return True
+            except PlaywrightTimeout:
+                continue
+    clicked = page.evaluate(
+        """() => {
+            const nodes = [...document.querySelectorAll('a, button')];
+            for (const el of nodes) {
+              const t = (el.innerText || '').trim();
+              if (t === '編輯' || t === 'Edit') { el.click(); return true; }
+            }
+            return false;
+        }"""
+    )
+    if clicked:
+        page.wait_for_timeout(1_500)
+        if page.locator('input[name="meta[en][title]"]').count():
+            print("Opened edit form via 編輯 button", flush=True)
+            return True
+    return False
+
+
 def update_existing(
-    page: Page, env: dict[str, str], *, pause_before_save: bool = False, debug_label: str = "update"
+    page: Page,
+    env: dict[str, str],
+    *,
+    pause_before_save: bool = False,
+    debug_label: str = "update",
+    campaigns_only: bool = False,
 ) -> tuple[str, str]:
     creator = env.get("LINE_CREATOR_ID", "").strip()
     sticker_id = env.get("LINE_STICKER_ID", "").strip()
@@ -705,12 +1048,28 @@ def update_existing(
     edit_url = sticker_detail_url(creator, sticker_id)
     ensure_creators_logged_in(page, env, edit_url)
     dismiss_wizards(page)
-    if page.locator('input[name="meta[en][title]"]').count() == 0:
+    for _ in range(3):
+        if page.locator('input[name="meta[en][title]"]').count():
+            break
+        withdraw_to_edit_if_needed(page)
+        dismiss_wizards(page)
+        open_edit_button_if_present(page)
+        page.wait_for_timeout(800)
+        if page.locator('input[name="meta[en][title]"]').count():
+            break
         open_sticker_edit_form(page, env, creator, sticker_id)
+        if page.locator('input[name="meta[en][title]"]').count():
+            break
+        # Detail page may still be under review — reload and try withdraw again.
+        page.goto(edit_url, wait_until="networkidle", timeout=120_000)
+        dismiss_wizards(page)
     page.locator('input[name="meta[en][title]"]').wait_for(state="visible", timeout=90_000)
-    fill_english(page, env)
-    ensure_chinese_fields(page, env)
-    fill_sale_block(page, env)
+    if campaigns_only:
+        configure_campaigns(page, env)
+    else:
+        fill_english(page, env)
+        ensure_chinese_fields(page, env)
+        fill_sale_block(page, env)
     return save_sticker_form(page, pause_before_save=pause_before_save, debug_label=debug_label)
 
 
@@ -743,6 +1102,11 @@ def main() -> None:
         help="Update existing project from LINE_STICKER_ID in .env (not create new).",
     )
     parser.add_argument(
+        "--campaigns-only",
+        action="store_true",
+        help="With --update: only set JOIN_CAMPAIGNS radios and save (do not rewrite titles/sale).",
+    )
+    parser.add_argument(
         "--env",
         type=Path,
         required=True,
@@ -758,15 +1122,25 @@ def main() -> None:
 
     headless = bool(args.headless)
     pause_before_save = bool(args.pause_before_save) and not args.no_pause_before_save
+    if args.campaigns_only and not args.update:
+        raise SystemExit("--campaigns-only requires --update")
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=headless)
         ctx = create_browser_context(browser, storage)
         page = ctx.new_page()
-        action = update_existing if args.update else provision
-        sticker_id, final_url = action(
-            page, env, pause_before_save=pause_before_save, debug_label=env_path.stem
-        )
+        if args.update:
+            sticker_id, final_url = update_existing(
+                page,
+                env,
+                pause_before_save=pause_before_save,
+                debug_label=env_path.stem,
+                campaigns_only=bool(args.campaigns_only),
+            )
+        else:
+            sticker_id, final_url = provision(
+                page, env, pause_before_save=pause_before_save, debug_label=env_path.stem
+            )
         ctx.storage_state(path=str(storage))
         browser.close()
 

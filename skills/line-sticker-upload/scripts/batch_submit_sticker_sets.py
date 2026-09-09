@@ -103,7 +103,7 @@ def update_env(env_path: Path, set_dir: Path, meta: dict[str, str], zip_path: Pa
         "COPYRIGHT": prev.get("COPYRIGHT") or "Copyright (c) Blo0m",
         "USE_AI": prev.get("USE_AI") or "true",
         "SALE_START": prev.get("SALE_START") or "auto",
-        "JOIN_CAMPAIGNS": prev.get("JOIN_CAMPAIGNS") or "true",
+        "JOIN_CAMPAIGNS": prev.get("JOIN_CAMPAIGNS") or "超值,拼貼,免費試用",
         "SOURCE_ZIP": rel_posix(zip_path),
         "UPLOAD_ZIP": rel_posix(zip_path),
         "SPRITE_SHEETS_DIR": rel_posix(set_dir / "sprite_sheets"),
