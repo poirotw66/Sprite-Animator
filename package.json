@@ -22,9 +22,10 @@
     "security:audit": "tsx scripts/security-audit.mts",
     "security:secrets": "tsx scripts/scan-secrets.mts",
     "security:bundle": "tsx scripts/scan-secrets.mts --include-dist",
+    "dist:budget": "tsx scripts/check-dist-budget.mts",
     "skills:sync:line-sticker": "tsx scripts/line-sticker/sync-line-sticker-skills.mts",
     "skills:check:line-sticker": "tsx scripts/line-sticker/sync-line-sticker-skills.mts --check",
-    "ci": "npm run security:audit && npm run security:secrets && npm run skills:sync:line-sticker && npm run typecheck && npm run lint && npm run test && npm run test:e2e && npm run python:check && npm run build && npm run security:bundle",
+    "ci": "npm run security:audit && npm run security:secrets && npm run skills:sync:line-sticker && npm run typecheck && npm run lint && npm run test && npm run test:e2e && npm run python:check && npm run build && npm run security:bundle && npm run dist:budget",
     "predev": "npm run fonts:build && npm run previews:check",
     "prebuild": "npm run fonts:build && npm run fonts:check && npm run previews:check",
     "build": "vite build",
@@ -70,7 +71,7 @@
     "sharp": "$sharp"
   },
   "engines": {
-    "node": ">=20 <23",
+    "node": ">=20 <27",
     "npm": ">=10"
   },
   "packageManager": "npm@10.9.2"

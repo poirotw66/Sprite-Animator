@@ -82,6 +82,9 @@ jobs:
       - name: Scan production bundle for API credentials
         run: npm run security:bundle
 
+      - name: Enforce production dist size budget
+        run: npm run dist:budget
+
       - name: Setup Pages
         if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v4

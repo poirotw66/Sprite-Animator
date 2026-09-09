@@ -111,8 +111,8 @@
 
 | 原圖 |
 |------|
-| <img src="images/gemini.png" alt="原圖 gemini" width="300"> |
-| **gemini.png** — 角色原檔 |
+| <img src="images/gemini.webp" alt="原圖 gemini" width="300"> |
+| **gemini.webp** — 角色原檔 |
 
 ### 生成結果（輸出）
 
@@ -125,7 +125,7 @@
 | 偏頭疑惑 | ![偏頭疑惑](images/偏頭疑惑.gif) |
 | 生氣 | ![生氣](images/生氣.gif) |
 
-以上 GIF 皆由 **gemini.png** 作為原圖，經本工具搭配 Google Gemini API 生成幀動畫後導出。
+以上 GIF 皆由 **gemini.webp** 作為原圖，經本工具搭配 Google Gemini API 生成幀動畫後導出。
 
 ## 🏗️ 專案結構（節錄）
 

@@ -111,8 +111,8 @@ Upload a character standing or bust image as the generation source:
 
 | Source |
 |--------|
-| <img src="images/gemini.png" alt="Source gemini" width="300"> |
-| **gemini.png** — Character source file |
+| <img src="images/gemini.webp" alt="Source gemini" width="300"> |
+| **gemini.webp** — Character source file |
 
 ### Generated Results (Output)
 
@@ -125,7 +125,7 @@ Use **Sprite Sheet Mode** or **Frame-by-Frame Mode**, enter an action prompt to 
 | Head tilt confused (偏頭疑惑) | ![Head tilt confused](images/偏頭疑惑.gif) |
 | Angry (生氣) | ![Angry](images/生氣.gif) |
 
-All GIFs above were generated from **gemini.png** using this tool with the Google Gemini API.
+All GIFs above were generated from **gemini.webp** using this tool with the Google Gemini API.
 
 ## 🏗️ Project Structure (excerpt)
 
