@@ -4,8 +4,10 @@ import process from 'node:process';
 import sharp from 'sharp';
 
 const projectRoot = process.cwd();
-const previewSourceDir = join(projectRoot, 'public', 'style-previews');
+/** Source PNGs live outside public/ so Vite does not ship them in dist. */
+const previewSourceDir = join(projectRoot, 'assets', 'style-preview-sources');
 const previewOutputDir = join(projectRoot, 'public', 'style-preview-thumbnails');
+const fontSourcePath = join(projectRoot, 'assets', 'font.png');
 const checkOnly = process.argv.includes('--check');
 
 interface OutputAsset {
@@ -28,7 +30,7 @@ async function buildAssets(): Promise<OutputAsset[]> {
 
   const font = {
     path: join(projectRoot, 'public', 'font.webp'),
-    contents: await sharp(join(projectRoot, 'public', 'font.png'))
+    contents: await sharp(fontSourcePath)
       .resize({ width: 1024, fit: 'inside', withoutEnlargement: true })
       .webp({ quality: 82, effort: 5 })
       .toBuffer(),

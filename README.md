@@ -189,7 +189,7 @@ Sprite-Animator/
 
 首次 clone 請執行 `graphify update .` 建立本地程式碼知識圖（產出至 `graphify-out/`，約 15 秒，不進版控）。
 
-修改 `public/style-previews/*.png` 或 `public/font.png` 後，請重建並提交瀏覽器縮圖：
+修改 `assets/style-preview-sources/*.png` 或 `assets/font.png` 後，請重建並提交瀏覽器縮圖：
 
 ```bash
 npm run previews:build

@@ -1,5 +1,5 @@
 /**
- * Generate missing public/style-previews/{styleKey}.png from a reference photo.
+ * Generate missing assets/style-preview-sources/{styleKey}.png from a reference photo.
  *
  *   npx tsx scripts/generate-missing-style-previews.mts --image example/chae.jpg
  *   npx tsx scripts/generate-missing-style-previews.mts --image example/chae.jpg --only trigger,sumiE
@@ -22,7 +22,7 @@ import {
 import { buildLineStickerStylePreviewPrompt } from '../utils/lineStickerPrompt.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT_DIR = resolve(ROOT, 'public/style-previews');
+const OUT_DIR = resolve(ROOT, 'assets/style-preview-sources');
 
 function parseArgs(argv: string[]): Record<string, string | boolean> {
   const args: Record<string, string | boolean> = {};
