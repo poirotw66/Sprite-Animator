@@ -136,6 +136,27 @@ export function parseLineStickerJobSnapshot(value: unknown): LineStickerJobSnaps
   return { job: job as LineStickerJob, run: run as unknown as LineStickerRunState, savedAt: value.savedAt };
 }
 
+/** Returns null instead of throwing when a stored record is corrupt. */
+export function tryParseLineStickerJobSnapshot(value: unknown): LineStickerJobSnapshot | null {
+  try {
+    return parseLineStickerJobSnapshot(value);
+  } catch {
+    return null;
+  }
+}
+
+export function collectLineStickerJobAssetIds(job: LineStickerJob): string[] {
+  const ids: string[] = [];
+  if (job.sourceAsset) ids.push(job.sourceAsset.id);
+  for (const sheet of job.sheets) {
+    if (sheet.sourceAsset) ids.push(sheet.sourceAsset.id);
+    if (sheet.generatedAsset) ids.push(sheet.generatedAsset.id);
+    if (sheet.processedAsset) ids.push(sheet.processedAsset.id);
+    for (const frame of sheet.frameAssets ?? []) ids.push(frame.id);
+  }
+  return ids;
+}
+
 export function toLineStickerJobSummary(snapshot: LineStickerJobSnapshot): LineStickerJobSummary {
   return {
     id: snapshot.job.id,
@@ -165,12 +186,22 @@ export class InMemoryLineStickerJobRepository implements LineStickerJobRepositor
   }
 
   async list(): Promise<LineStickerJobSummary[]> {
-    return [...this.jobs.values()]
-      .map(toLineStickerJobSummary)
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    const summaries: LineStickerJobSummary[] = [];
+    for (const snapshot of this.jobs.values()) {
+      const parsed = tryParseLineStickerJobSnapshot(snapshot);
+      if (!parsed) continue;
+      summaries.push(toLineStickerJobSummary(parsed));
+    }
+    return summaries.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
 
   async delete(jobId: string): Promise<void> {
+    const existing = this.jobs.get(jobId);
+    if (existing) {
+      for (const assetId of collectLineStickerJobAssetIds(existing.job)) {
+        this.assets.delete(assetId);
+      }
+    }
     this.jobs.delete(jobId);
   }
 

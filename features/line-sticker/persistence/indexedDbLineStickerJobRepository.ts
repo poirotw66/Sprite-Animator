@@ -1,11 +1,14 @@
 import {
+  collectLineStickerJobAssetIds,
   parseLineStickerJobSnapshot,
   toLineStickerJobSummary,
+  tryParseLineStickerJobSnapshot,
   type LineStickerJobRepository,
   type LineStickerJobSnapshot,
   type LineStickerJobSummary,
   type LineStickerStoredAsset,
 } from './lineStickerJobRepository';
+import { logger } from '../../../utils/logger';
 
 const DATABASE_NAME = 'sprite-animator-line-sticker';
 const DATABASE_VERSION = 1;
@@ -73,7 +76,13 @@ export class IndexedDbLineStickerJobRepository implements LineStickerJobReposito
     const transaction = database.transaction(JOB_STORE, 'readonly');
     const raw = await requestResult(transaction.objectStore(JOB_STORE).get(jobId) as IDBRequest<unknown>);
     await transactionDone(transaction);
-    return raw === undefined ? null : parseLineStickerJobSnapshot(raw);
+    if (raw === undefined) return null;
+    const parsed = tryParseLineStickerJobSnapshot(raw);
+    if (!parsed) {
+      logger.warn('Skipping corrupt LINE sticker job during load', { jobId });
+      return null;
+    }
+    return parsed;
   }
 
   async list(): Promise<LineStickerJobSummary[]> {
@@ -81,17 +90,31 @@ export class IndexedDbLineStickerJobRepository implements LineStickerJobReposito
     const transaction = database.transaction(JOB_STORE, 'readonly');
     const values = await requestResult(transaction.objectStore(JOB_STORE).getAll() as IDBRequest<unknown[]>);
     await transactionDone(transaction);
-    return values
-      .map(parseLineStickerJobSnapshot)
-      .map(toLineStickerJobSummary)
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    const summaries: LineStickerJobSummary[] = [];
+    for (const raw of values) {
+      const parsed = tryParseLineStickerJobSnapshot(raw);
+      if (!parsed) {
+        logger.warn('Skipping corrupt LINE sticker job during list');
+        continue;
+      }
+      summaries.push(toLineStickerJobSummary(parsed));
+    }
+    return summaries.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
 
   async delete(jobId: string): Promise<void> {
     const database = await this.open();
-    const transaction = database.transaction(JOB_STORE, 'readwrite');
-    transaction.objectStore(JOB_STORE).delete(jobId);
-    await transactionDone(transaction);
+    const readTransaction = database.transaction(JOB_STORE, 'readonly');
+    const raw = await requestResult(readTransaction.objectStore(JOB_STORE).get(jobId) as IDBRequest<unknown>);
+    await transactionDone(readTransaction);
+    const parsed = raw === undefined ? null : tryParseLineStickerJobSnapshot(raw);
+    const assetIds = parsed ? collectLineStickerJobAssetIds(parsed.job) : [];
+
+    const writeTransaction = database.transaction([JOB_STORE, ASSET_STORE], 'readwrite');
+    const assetStore = writeTransaction.objectStore(ASSET_STORE);
+    for (const assetId of assetIds) assetStore.delete(assetId);
+    writeTransaction.objectStore(JOB_STORE).delete(jobId);
+    await transactionDone(writeTransaction);
   }
 
   async putAsset(asset: LineStickerStoredAsset): Promise<void> {

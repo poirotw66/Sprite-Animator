@@ -18,12 +18,21 @@ import {
   sliceLineStickerSheetFrames,
   type LineStickerSheetIndex,
 } from '../../../utils/lineStickerSetSchema';
-import type { LineStickerJobRepository, LineStickerJobSnapshot } from './lineStickerJobRepository';
+import {
+  collectLineStickerJobAssetIds,
+  type LineStickerJobRepository,
+  type LineStickerJobSnapshot,
+} from './lineStickerJobRepository';
 import { isActivePipelineStage, sanitizeLineStickerRunStateForResume } from '../domain/lineStickerRunState';
 import {
   applyJobTextStateToSheets,
   type LineStickerJobTextState,
 } from '../domain/lineStickerJobText';
+import {
+  hasJobImageArtifacts,
+  jobImageStateFromJobSheets,
+  type LineStickerJobImageState,
+} from '../domain/lineStickerJobImageState';
 
 export interface LineStickerWorkspaceArtifacts {
   mode: LineStickerJobMode;
@@ -32,6 +41,8 @@ export interface LineStickerWorkspaceArtifacts {
   actionDescsList: string[];
   /** Preferred SoT for set-mode text; when present, flat lists are ignored for sheet text. */
   jobTextState?: LineStickerJobTextState;
+  /** Preferred SoT for set-mode images; when present, flat image arrays are ignored. */
+  jobImageState?: LineStickerJobImageState;
   sheetImages: readonly (string | null)[];
   processedSheetImages: readonly (string | null)[];
   sheetFrames: readonly (readonly string[])[];
@@ -69,18 +80,6 @@ export function storedBytesToDataUrl(mimeType: string, bytes: ArrayBuffer): stri
 
 function assetId(jobId: string, ...parts: string[]): string {
   return [jobId, ...parts].join('/');
-}
-
-function collectAssetIds(job: LineStickerJob): string[] {
-  const ids: string[] = [];
-  if (job.sourceAsset) ids.push(job.sourceAsset.id);
-  for (const sheet of job.sheets) {
-    if (sheet.sourceAsset) ids.push(sheet.sourceAsset.id);
-    if (sheet.generatedAsset) ids.push(sheet.generatedAsset.id);
-    if (sheet.processedAsset) ids.push(sheet.processedAsset.id);
-    for (const frame of sheet.frameAssets ?? []) ids.push(frame.id);
-  }
-  return ids;
 }
 
 async function putDataUrlAsset(
@@ -121,9 +120,13 @@ function flattenSheetValues(sheets: LineStickerJob['sheets'], pick: 'phrases' | 
 export function hasPersistableWorkspaceArtifacts(artifacts: LineStickerWorkspaceArtifacts): boolean {
   return Boolean(
     artifacts.sourceImage
-    || artifacts.sheetImages.some(Boolean)
-    || artifacts.processedSheetImages.some(Boolean)
-    || artifacts.sheetFrames.some((frames) => frames.length > 0)
+    || (artifacts.jobImageState
+      ? hasJobImageArtifacts(artifacts.jobImageState)
+      : (
+        artifacts.sheetImages.some(Boolean)
+        || artifacts.processedSheetImages.some(Boolean)
+        || artifacts.sheetFrames.some((frames) => frames.length > 0)
+      ))
     || artifacts.setPhrasesList.some((phrase) => phrase.trim().length > 0),
   );
 }
@@ -132,10 +135,7 @@ export async function deleteLineStickerJobWithAssets(
   repository: LineStickerJobRepository,
   jobId: string,
 ): Promise<void> {
-  const existing = await repository.load(jobId);
-  if (existing) {
-    await Promise.all(collectAssetIds(existing.job).map((id) => repository.deleteAsset(id)));
-  }
+  // Repository adapters cascade asset cleanup inside delete().
   await repository.delete(jobId);
 }
 
@@ -149,7 +149,9 @@ export async function saveLineStickerWorkspaceSnapshot(options: {
   const { repository, jobId, createdAt, artifacts, run } = options;
   const updatedAt = new Date().toISOString();
   const previous = await repository.load(jobId);
-  const previousAssetIds = previous ? new Set(collectAssetIds(previous.job)) : new Set<string>();
+  const previousAssetIds = previous
+    ? new Set(collectLineStickerJobAssetIds(previous.job))
+    : new Set<string>();
   const nextAssetIds = new Set<string>();
 
   const sourceAsset = artifacts.sourceImage
@@ -174,7 +176,9 @@ export async function saveLineStickerWorkspaceSnapshot(options: {
     });
   for (const sheetIndex of LINE_STICKER_SHEET_INDICES) {
     const sheet = sheets[sheetIndex];
-    const generated = artifacts.sheetImages[sheetIndex];
+    const generated = artifacts.jobImageState
+      ? artifacts.jobImageState[sheetIndex]?.generated
+      : artifacts.sheetImages[sheetIndex];
     if (generated) {
       sheet.generatedAsset = await putDataUrlAsset(
         repository,
@@ -185,7 +189,9 @@ export async function saveLineStickerWorkspaceSnapshot(options: {
       nextAssetIds.add(sheet.generatedAsset.id);
     }
 
-    const processed = artifacts.processedSheetImages[sheetIndex];
+    const processed = artifacts.jobImageState
+      ? artifacts.jobImageState[sheetIndex]?.processed
+      : artifacts.processedSheetImages[sheetIndex];
     if (processed) {
       sheet.processedAsset = await putDataUrlAsset(
         repository,
@@ -196,7 +202,9 @@ export async function saveLineStickerWorkspaceSnapshot(options: {
       nextAssetIds.add(sheet.processedAsset.id);
     }
 
-    const frames = artifacts.sheetFrames[sheetIndex] ?? [];
+    const frames = artifacts.jobImageState
+      ? (artifacts.jobImageState[sheetIndex]?.frames ?? [])
+      : (artifacts.sheetFrames[sheetIndex] ?? []);
     if (frames.length > 0) {
       sheet.frameAssets = [];
       for (let frameIndex = 0; frameIndex < frames.length; frameIndex += 1) {
@@ -283,6 +291,11 @@ export async function loadLineStickerWorkspaceSnapshot(options: {
       sheetImages,
       processedSheetImages,
       sheetFrames,
+      jobImageState: jobImageStateFromJobSheets(snapshot.job.sheets, {
+        generated: sheetImages,
+        processed: processedSheetImages,
+        frames: sheetFrames,
+      }),
     },
   };
 }

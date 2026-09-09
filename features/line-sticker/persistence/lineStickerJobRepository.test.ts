@@ -7,8 +7,10 @@ import {
 import {
   InMemoryLineStickerJobRepository,
   parseLineStickerJobSnapshot,
+  tryParseLineStickerJobSnapshot,
   type LineStickerJobSnapshot,
 } from './lineStickerJobRepository';
+import { deleteLineStickerJobWithAssets } from './lineStickerJobWorkspaceMapper';
 
 function createSnapshot(stickerCount: 40 | 48 = 40): LineStickerJobSnapshot {
   const job = createLineStickerJob({
@@ -90,5 +92,43 @@ describe('LineStickerJobRepository', () => {
       { cols: 4, rows: 4, expectedFrames: 16 },
       { cols: 4, rows: 4, expectedFrames: 16 },
     ]);
+  });
+
+  it('skips corrupt rows while listing jobs', async () => {
+    const repository = new InMemoryLineStickerJobRepository();
+    await repository.save(createSnapshot(40));
+    const internal = repository as unknown as {
+      jobs: Map<string, unknown>;
+    };
+    internal.jobs.set('corrupt-job', { not: 'a-valid-snapshot' });
+
+    expect(tryParseLineStickerJobSnapshot({ not: 'a-valid-snapshot' })).toBeNull();
+    expect((await repository.list()).map(({ id }) => id)).toEqual(['job-40']);
+  });
+
+  it('cascades asset deletion when a job is deleted', async () => {
+    const repository = new InMemoryLineStickerJobRepository();
+    const snapshot = createSnapshot(40);
+    snapshot.job.sourceAsset = { id: 'job-40/source', mimeType: 'image/png' };
+    snapshot.job.sheets[0].generatedAsset = { id: 'job-40/sheet-0/generated', mimeType: 'image/png' };
+    await repository.save(snapshot);
+    await repository.putAsset({
+      id: 'job-40/source',
+      mimeType: 'image/png',
+      bytes: new Uint8Array([1]).buffer,
+      updatedAt: '2026-09-08T00:00:00.000Z',
+    });
+    await repository.putAsset({
+      id: 'job-40/sheet-0/generated',
+      mimeType: 'image/png',
+      bytes: new Uint8Array([2]).buffer,
+      updatedAt: '2026-09-08T00:00:00.000Z',
+    });
+
+    await deleteLineStickerJobWithAssets(repository, 'job-40');
+
+    expect(await repository.load('job-40')).toBeNull();
+    expect(await repository.getAsset('job-40/source')).toBeNull();
+    expect(await repository.getAsset('job-40/sheet-0/generated')).toBeNull();
   });
 });

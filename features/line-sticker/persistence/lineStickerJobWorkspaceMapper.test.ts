@@ -13,6 +13,7 @@ import {
   saveLineStickerWorkspaceSnapshot,
   storedBytesToDataUrl,
 } from './lineStickerJobWorkspaceMapper';
+import { createLineStickerJobImageState } from '../domain/lineStickerJobImageState';
 
 const TINY_PNG =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
@@ -66,6 +67,11 @@ describe('lineStickerJobWorkspaceMapper', () => {
     expect(loaded.artifacts.processedSheetImages[0]).toBe(TINY_PNG);
     expect(loaded.artifacts.sheetFrames[0]).toEqual([TINY_PNG]);
     expect(loaded.artifacts.setPhrasesList.slice(0, 3)).toEqual(['p0', 'p1', 'p2']);
+    expect(loaded.artifacts.jobImageState?.[0]).toMatchObject({
+      generated: TINY_PNG,
+      processed: TINY_PNG,
+      frames: [TINY_PNG],
+    });
     expect(loaded.snapshot.run.runId).toBe(3);
     expect(loaded.snapshot.run.sheets['sheet-0'].stage).toBe('ready');
     expect(loaded.wasInterrupted).toBe(false);
@@ -138,5 +144,52 @@ describe('lineStickerJobWorkspaceMapper', () => {
       processedSheetImages: [null, null, null],
       sheetFrames: [[], [], []],
     })).toBe(false);
+  });
+
+  it('persists preferred jobImageState over flat image arrays', async () => {
+    const repository = new InMemoryLineStickerJobRepository();
+    const jobImageState = createLineStickerJobImageState();
+    jobImageState[1] = {
+      generated: TINY_PNG,
+      processed: TINY_PNG,
+      frames: [TINY_PNG, TINY_PNG],
+    };
+    const run = createLineStickerRunState({ sheetIds: ['sheet-0', 'sheet-1', 'sheet-2'] });
+
+    await saveLineStickerWorkspaceSnapshot({
+      repository,
+      jobId: 'job-image-sot',
+      createdAt: '2026-09-09T00:00:00.000Z',
+      run,
+      artifacts: {
+        mode: 'set',
+        sourceImage: null,
+        setPhrasesList: [],
+        actionDescsList: [],
+        jobImageState,
+        // Flat arrays intentionally diverge; SoT wins.
+        sheetImages: [TINY_PNG, null, null],
+        processedSheetImages: [null, null, null],
+        sheetFrames: [[], [], []],
+      },
+    });
+
+    const loaded = await loadLineStickerWorkspaceSnapshot({
+      repository,
+      jobId: 'job-image-sot',
+    });
+    expect(loaded?.artifacts.sheetImages).toEqual([null, TINY_PNG, null]);
+    expect(loaded?.artifacts.processedSheetImages).toEqual([null, TINY_PNG, null]);
+    expect(loaded?.artifacts.sheetFrames[1]).toEqual([TINY_PNG, TINY_PNG]);
+    expect(hasPersistableWorkspaceArtifacts({
+      mode: 'set',
+      sourceImage: null,
+      setPhrasesList: [],
+      actionDescsList: [],
+      jobImageState,
+      sheetImages: [null, null, null],
+      processedSheetImages: [null, null, null],
+      sheetFrames: [[], [], []],
+    })).toBe(true);
   });
 });

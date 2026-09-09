@@ -50,6 +50,26 @@ const LineStickerPage: React.FC = () => {
                 </div>
             ) : null}
 
+            {!resume.isHydrating && resume.hydrateIssue ? (
+                <div
+                    className="mx-auto mb-4 flex max-w-7xl flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50/90 p-4 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between"
+                    data-testid="line-sticker-hydrate-issue"
+                >
+                    <p>
+                        {resume.hydrateIssue === 'missing'
+                            ? resume.hydrateMissingLabel
+                            : resume.hydrateFailedLabel}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={resume.onDismissHydrateIssue}
+                        className="inline-flex min-h-[40px] shrink-0 items-center justify-center rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+                    >
+                        {resume.dismissLabel}
+                    </button>
+                </div>
+            ) : null}
+
             <main
                 className={`mx-auto grid max-w-7xl grid-cols-1 items-start gap-8 lg:grid-cols-12 lg:gap-10 ${
                     resume.isHydrating ? 'pointer-events-none opacity-60' : ''

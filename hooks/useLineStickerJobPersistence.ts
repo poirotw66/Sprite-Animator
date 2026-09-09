@@ -9,12 +9,15 @@ import {
   type LineStickerWorkspaceArtifacts,
 } from '../features/line-sticker/persistence/lineStickerJobWorkspaceMapper';
 import type { LineStickerJobTextState } from '../features/line-sticker/domain/lineStickerJobText';
+import type { LineStickerJobImageState } from '../features/line-sticker/domain/lineStickerJobImageState';
 import type { LineStickerJobSheet } from '../features/line-sticker/domain/lineStickerJob';
 import type { LineStickerRunController } from './useLineStickerRunState';
 import { logger } from '../utils/logger';
 
 const ACTIVE_JOB_STORAGE_KEY = 'line-sticker.activeJobId';
 const AUTOSAVE_DEBOUNCE_MS = 750;
+
+export type LineStickerHydrateIssue = 'missing' | 'failed' | null;
 
 export interface UseLineStickerJobPersistenceOptions {
   isGenerating: boolean;
@@ -29,6 +32,15 @@ export interface UseLineStickerJobPersistenceOptions {
   setActionDescsList: (value: string[]) => void;
   jobTextState?: LineStickerJobTextState;
   replaceFromJobSheets?: (sheets: readonly LineStickerJobSheet[]) => void;
+  jobImageState?: LineStickerJobImageState;
+  replaceImagesFromJobSheets?: (
+    sheets: readonly LineStickerJobSheet[],
+    resolved: {
+      generated: readonly (string | null)[];
+      processed: readonly (string | null)[];
+      frames: readonly (readonly string[])[];
+    },
+  ) => void;
   sheetImages: (string | null)[];
   setSheetImages: (value: (string | null)[]) => void;
   processedSheetImages: (string | null)[];
@@ -71,6 +83,8 @@ export function useLineStickerJobPersistence({
   setActionDescsList,
   jobTextState,
   replaceFromJobSheets,
+  jobImageState,
+  replaceImagesFromJobSheets,
   sheetImages,
   setSheetImages,
   processedSheetImages,
@@ -85,6 +99,7 @@ export function useLineStickerJobPersistence({
   const [jobId, setJobId] = useState<string | null>(null);
   const [showRestoredNotice, setShowRestoredNotice] = useState(false);
   const [wasInterruptedOnResume, setWasInterruptedOnResume] = useState(false);
+  const [hydrateIssue, setHydrateIssue] = useState<LineStickerHydrateIssue>(null);
   const repositoryRef = useRef<LineStickerJobRepository | null>(repositoryOverride ?? null);
   const createdAtRef = useRef<string>(new Date().toISOString());
   const skipNextSaveRef = useRef(false);
@@ -115,11 +130,26 @@ export function useLineStickerJobPersistence({
       try {
         const storedId = readActiveJobId();
         const summaries = await repository.list();
-        const jobToLoad = storedId ?? summaries[0]?.id ?? null;
+        const storedStillListed = Boolean(storedId && summaries.some((summary) => summary.id === storedId));
+        const jobToLoad = storedStillListed
+          ? storedId
+          : (summaries[0]?.id ?? null);
+
+        if (storedId && !storedStillListed && !jobToLoad) {
+          writeActiveJobId(null);
+          if (!cancelled) setHydrateIssue('missing');
+          return;
+        }
+
         if (!jobToLoad) return;
 
         const loaded = await loadLineStickerWorkspaceSnapshot({ repository, jobId: jobToLoad });
-        if (!loaded || cancelled) return;
+        if (cancelled) return;
+        if (!loaded) {
+          writeActiveJobId(null);
+          setHydrateIssue('missing');
+          return;
+        }
 
         skipNextSaveRef.current = true;
         createdAtRef.current = loaded.snapshot.job.createdAt;
@@ -133,9 +163,17 @@ export function useLineStickerJobPersistence({
           setSetPhrasesList(loaded.artifacts.setPhrasesList);
           setActionDescsList(loaded.artifacts.actionDescsList);
         }
-        setSheetImages([...loaded.artifacts.sheetImages]);
-        setProcessedSheetImages([...loaded.artifacts.processedSheetImages]);
-        setSheetFrames(loaded.artifacts.sheetFrames.map((frames) => [...frames]));
+        if (replaceImagesFromJobSheets) {
+          replaceImagesFromJobSheets(loaded.snapshot.job.sheets, {
+            generated: loaded.artifacts.sheetImages,
+            processed: loaded.artifacts.processedSheetImages,
+            frames: loaded.artifacts.sheetFrames,
+          });
+        } else {
+          setSheetImages([...loaded.artifacts.sheetImages]);
+          setProcessedSheetImages([...loaded.artifacts.processedSheetImages]);
+          setSheetFrames(loaded.artifacts.sheetFrames.map((frames) => [...frames]));
+        }
         const firstReadyIndex = loaded.artifacts.sheetImages.findIndex(Boolean);
         if (firstReadyIndex >= 0) {
           setSpriteSheetImage(loaded.artifacts.sheetImages[firstReadyIndex]);
@@ -144,8 +182,10 @@ export function useLineStickerJobPersistence({
         hydrateRun(loaded.snapshot.run);
         setShowRestoredNotice(true);
         setWasInterruptedOnResume(loaded.wasInterrupted);
+        setHydrateIssue(null);
       } catch (error) {
         logger.warn('Failed to restore LINE sticker job from IndexedDB', error);
+        if (!cancelled) setHydrateIssue('failed');
       } finally {
         if (!cancelled) setIsHydrating(false);
       }
@@ -158,6 +198,7 @@ export function useLineStickerJobPersistence({
   }, [
     hydrateRun,
     replaceFromJobSheets,
+    replaceImagesFromJobSheets,
     setActionDescsList,
     setProcessedSheetImages,
     setProcessedSpriteSheet,
@@ -177,6 +218,7 @@ export function useLineStickerJobPersistence({
     createdAtRef.current = new Date().toISOString();
     setShowRestoredNotice(false);
     setWasInterruptedOnResume(false);
+    setHydrateIssue(null);
     if (repository && activeId) {
       try {
         await deleteLineStickerJobWithAssets(repository, activeId);
@@ -188,6 +230,10 @@ export function useLineStickerJobPersistence({
 
   const dismissRestoredNotice = useCallback(() => {
     setShowRestoredNotice(false);
+  }, []);
+
+  const dismissHydrateIssue = useCallback(() => {
+    setHydrateIssue(null);
   }, []);
 
   useEffect(() => {
@@ -202,6 +248,7 @@ export function useLineStickerJobPersistence({
       setPhrasesList,
       actionDescsList,
       ...(jobTextState ? { jobTextState } : {}),
+      ...(jobImageState ? { jobImageState } : {}),
       sheetImages,
       processedSheetImages,
       sheetFrames,
@@ -239,6 +286,7 @@ export function useLineStickerJobPersistence({
     isGenerating,
     isHydrating,
     jobId,
+    jobImageState,
     jobTextState,
     processedSheetImages,
     run.state,
@@ -254,7 +302,9 @@ export function useLineStickerJobPersistence({
     jobId,
     showRestoredNotice,
     wasInterruptedOnResume,
+    hydrateIssue,
     dismissRestoredNotice,
+    dismissHydrateIssue,
     clearPersistedJob,
   };
 }

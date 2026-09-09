@@ -561,6 +561,8 @@ export const zhTW: Translations = {
   lineStickerRestoredJob: '已還原上一份貼圖作業。可繼續編輯或重新生成。',
   lineStickerRestoredJobDismiss: '知道了',
   lineStickerResumeInterrupted: '上次重整時生成尚未完成，進行中的張次已標示為已取消。',
+  lineStickerHydrateMissing: '找不到可還原的貼圖作業，將從空白開始。',
+  lineStickerHydrateFailed: '還原上一份貼圖作業失敗，將從空白開始。',
   lineStickerPhrasePlaceholder: '每行一句短語，例如：\n查規則書...\n骰子成功！\n暗骰中...',
   lineStickerTotalFramesSet: '{n}（{sheetCount} 張 × {framesPerSheet}）',
   lineStickerDownloadCurrentSheet: '下載當前組 (Zip)',

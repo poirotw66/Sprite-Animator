@@ -1,8 +1,6 @@
 import { useCallback, useState } from 'react';
 import type { FrameOverride, SliceSettings } from '../utils/imageUtils';
 import {
-  createEmptySetModeFrameList,
-  createEmptySetModeImageList,
   createEmptySetModeOverrideList,
   createEmptySetModeSelectionList,
   createSetModeSliceSettingsList,
@@ -11,6 +9,7 @@ import {
   DEFAULT_LINE_STICKER_SHEET_INDEX,
   type LineStickerSheetIndex,
 } from '../utils/lineStickerSetSchema';
+import { useLineStickerJobImageState } from './useLineStickerJobImageState';
 
 /** Owns generated artifacts and slicing state for the three-sheet sticker-set flow. */
 export function useLineStickerSetOutputState() {
@@ -21,15 +20,17 @@ export function useLineStickerSetOutputState() {
   const [frameOverrides, setFrameOverrides] = useState<FrameOverride[]>([]);
   const [chromaKeyProgress, setChromaKeyProgress] = useState(0);
   const [isProcessingChromaKey, setIsProcessingChromaKey] = useState(false);
-  const [sheetImages, setSheetImages] = useState<(string | null)[]>(
-    () => createEmptySetModeImageList(),
-  );
-  const [processedSheetImages, setProcessedSheetImages] = useState<(string | null)[]>(
-    () => createEmptySetModeImageList(),
-  );
-  const [sheetFrames, setSheetFrames] = useState<string[][]>(
-    () => createEmptySetModeFrameList(),
-  );
+  const {
+    jobImageState,
+    sheetImages,
+    setSheetImages,
+    processedSheetImages,
+    setProcessedSheetImages,
+    sheetFrames,
+    setSheetFrames,
+    replaceImagesFromJobSheets,
+    resetJobImages,
+  } = useLineStickerJobImageState();
   const [sheetFrameOverrides, setSheetFrameOverrides] = useState<FrameOverride[][]>(
     () => createEmptySetModeOverrideList(),
   );
@@ -46,9 +47,7 @@ export function useLineStickerSetOutputState() {
 
   const resetSetOutputState = useCallback(() => {
     setCurrentSheetIndex(DEFAULT_LINE_STICKER_SHEET_INDEX);
-    setSheetImages(createEmptySetModeImageList());
-    setProcessedSheetImages(createEmptySetModeImageList());
-    setSheetFrames(createEmptySetModeFrameList());
+    resetJobImages();
     setSheetFrameOverrides(createEmptySetModeOverrideList());
     setSelectedFramesBySheet(createEmptySetModeSelectionList());
     setSpriteSheetImage(null);
@@ -59,7 +58,7 @@ export function useLineStickerSetOutputState() {
     setSheetDimensions({ width: 0, height: 0 });
     setChromaKeyProgress(0);
     setIsProcessingChromaKey(false);
-  }, []);
+  }, [resetJobImages]);
 
   return {
     sheetSliceSettings, setSheetSliceSettings,
@@ -67,9 +66,11 @@ export function useLineStickerSetOutputState() {
     frameOverrides, setFrameOverrides,
     chromaKeyProgress, setChromaKeyProgress,
     isProcessingChromaKey, setIsProcessingChromaKey,
+    jobImageState,
     sheetImages, setSheetImages,
     processedSheetImages, setProcessedSheetImages,
     sheetFrames, setSheetFrames,
+    replaceImagesFromJobSheets,
     sheetFrameOverrides, setSheetFrameOverrides,
     selectedFramesBySheet, setSelectedFramesBySheet,
     currentSheetIndex, setCurrentSheetIndex,

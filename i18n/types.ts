@@ -561,6 +561,8 @@ export interface Translations {
   lineStickerRestoredJob: string;
   lineStickerRestoredJobDismiss: string;
   lineStickerResumeInterrupted: string;
+  lineStickerHydrateMissing: string;
+  lineStickerHydrateFailed: string;
   lineStickerSheetCancelled: string;
   lineStickerPhrasePlaceholder: string;
   lineStickerTotalFramesSet: string;

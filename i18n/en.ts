@@ -561,6 +561,8 @@ export const en: Translations = {
   lineStickerRestoredJob: 'Restored your previous sticker job. Continue editing or regenerate.',
   lineStickerRestoredJobDismiss: 'Dismiss',
   lineStickerResumeInterrupted: 'Generation was still running when the page reloaded. In-progress sheets are marked cancelled.',
+  lineStickerHydrateMissing: 'Could not find a previous sticker job to restore. Starting fresh.',
+  lineStickerHydrateFailed: 'Could not restore the previous sticker job. Starting fresh.',
   lineStickerSheetCancelled: 'Cancelled (interrupted by reload)',
   lineStickerPhrasePlaceholder: 'One phrase per line, e.g.:\nCheck rulebook...\nDice success!\nRolling secretly...',
   lineStickerTotalFramesSet: '{n} ({sheetCount} sheets × {framesPerSheet})',
