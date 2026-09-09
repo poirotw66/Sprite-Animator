@@ -92,6 +92,7 @@ export const useLineStickerWorkspace = () => {
         actionDedupeStrength, setActionDedupeStrength, selectedTextColor, setSelectedTextColor,
         selectedFont, setSelectedFont, singlePhrasesList, stickerSetMode, setStickerSetMode, setSinglePhrasesList,
         setPhrasesList, setSetPhrasesList, actionDescsList, setActionDescsList,
+        jobTextState, replaceFromJobSheets, resetJobText,
         stylePreviewImage, setStylePreviewImage, chromaKeyColor, setChromaKeyColor,
         bgRemovalMethod, setBgRemovalMethod,
         includeText, setIncludeText, textRendering, setTextRendering,
@@ -339,7 +340,13 @@ export const useLineStickerWorkspace = () => {
         resetOverlayState: lineStickerProgrammaticOverlayCore.resetOverlayState,
     });
 
-    const { clearPersistedJob } = useLineStickerJobPersistence({
+    const {
+        isHydrating,
+        showRestoredNotice,
+        wasInterruptedOnResume,
+        dismissRestoredNotice,
+        clearPersistedJob,
+    } = useLineStickerJobPersistence({
         isGenerating,
         run,
         sourceImage,
@@ -350,6 +357,8 @@ export const useLineStickerWorkspace = () => {
         setSetPhrasesList,
         actionDescsList,
         setActionDescsList,
+        jobTextState,
+        replaceFromJobSheets,
         sheetImages,
         setSheetImages,
         processedSheetImages,
@@ -362,8 +371,9 @@ export const useLineStickerWorkspace = () => {
 
     const resetGeneratedOutputs = useCallback(() => {
         resetGeneratedOutputsBase();
+        resetJobText();
         void clearPersistedJob();
-    }, [clearPersistedJob, resetGeneratedOutputsBase]);
+    }, [clearPersistedJob, resetGeneratedOutputsBase, resetJobText]);
 
     const {
         isGeneratingStylePreview,
@@ -670,6 +680,16 @@ export const useLineStickerWorkspace = () => {
             hasCustomKey,
             onOpenSettings: () => setShowSettings(true),
             jumpToResultLabel: lineStickerT.lineStickerJumpToResult,
+        },
+        resume: {
+            isHydrating,
+            showRestoredNotice,
+            wasInterruptedOnResume,
+            onDismissRestoredNotice: dismissRestoredNotice,
+            hydratingLabel: lineStickerT.lineStickerHydrating,
+            restoredLabel: lineStickerT.lineStickerRestoredJob,
+            dismissLabel: lineStickerT.lineStickerRestoredJobDismiss,
+            interruptedLabel: lineStickerT.lineStickerResumeInterrupted,
         },
         settings: {
             t: lineStickerT,

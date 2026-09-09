@@ -107,6 +107,7 @@ export const LineStickerUploadCard: React.FC<LineStickerUploadCardProps> = ({
           type="file"
           accept="image/*"
           onChange={onImageUpload}
+          data-testid="line-sticker-character-upload"
           className="hidden"
           aria-hidden
         />

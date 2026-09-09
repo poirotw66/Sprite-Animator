@@ -19,13 +19,19 @@ import {
   type LineStickerSheetIndex,
 } from '../../../utils/lineStickerSetSchema';
 import type { LineStickerJobRepository, LineStickerJobSnapshot } from './lineStickerJobRepository';
-import { sanitizeLineStickerRunStateForResume } from '../domain/lineStickerRunState';
+import { isActivePipelineStage, sanitizeLineStickerRunStateForResume } from '../domain/lineStickerRunState';
+import {
+  applyJobTextStateToSheets,
+  type LineStickerJobTextState,
+} from '../domain/lineStickerJobText';
 
 export interface LineStickerWorkspaceArtifacts {
   mode: LineStickerJobMode;
   sourceImage: string | null;
   setPhrasesList: string[];
   actionDescsList: string[];
+  /** Preferred SoT for set-mode text; when present, flat lists are ignored for sheet text. */
+  jobTextState?: LineStickerJobTextState;
   sheetImages: readonly (string | null)[];
   processedSheetImages: readonly (string | null)[];
   sheetFrames: readonly (readonly string[])[];
@@ -34,6 +40,7 @@ export interface LineStickerWorkspaceArtifacts {
 export interface LoadedLineStickerWorkspace {
   snapshot: LineStickerJobSnapshot;
   artifacts: LineStickerWorkspaceArtifacts;
+  wasInterrupted: boolean;
 }
 
 const DATA_URL_PATTERN = /^data:([^;,]+)?(?:;charset=[^;,]+)?;base64,(.+)$/i;
@@ -150,13 +157,23 @@ export async function saveLineStickerWorkspaceSnapshot(options: {
     : undefined;
   if (sourceAsset) nextAssetIds.add(sourceAsset.id);
 
-  const sheets = createLineStickerJobSheets(DEFAULT_BROWSER_LINE_STICKER_SET_COUNT);
+  const plannedSheets = createLineStickerJobSheets(DEFAULT_BROWSER_LINE_STICKER_SET_COUNT);
+  const sheets = artifacts.jobTextState
+    ? applyJobTextStateToSheets(plannedSheets, artifacts.jobTextState)
+    : plannedSheets.map((sheet, sheetIndex) => {
+      const index = sheetIndex as LineStickerSheetIndex;
+      const phrases = sliceLineStickerSheetFrames(artifacts.setPhrasesList, index);
+      const actions = sliceLineStickerSheetFrames(artifacts.actionDescsList, index);
+      return {
+        ...sheet,
+        phrases,
+        ...(actions.some((value) => value.trim().length > 0)
+          ? { actionDescriptions: actions }
+          : {}),
+      };
+    });
   for (const sheetIndex of LINE_STICKER_SHEET_INDICES) {
     const sheet = sheets[sheetIndex];
-    sheet.phrases = sliceLineStickerSheetFrames(artifacts.setPhrasesList, sheetIndex);
-    const actions = sliceLineStickerSheetFrames(artifacts.actionDescsList, sheetIndex);
-    if (actions.some((value) => value.trim().length > 0)) sheet.actionDescriptions = actions;
-
     const generated = artifacts.sheetImages[sheetIndex];
     if (generated) {
       sheet.generatedAsset = await putDataUrlAsset(
@@ -230,6 +247,9 @@ export async function loadLineStickerWorkspaceSnapshot(options: {
   const snapshot = await options.repository.load(options.jobId);
   if (!snapshot) return null;
 
+  const wasInterrupted = isActivePipelineStage(snapshot.run.stage)
+    || Object.values(snapshot.run.sheets).some((sheet) => isActivePipelineStage(sheet.stage));
+
   const sheetImages: (string | null)[] = LINE_STICKER_SHEET_INDICES.map(() => null);
   const processedSheetImages: (string | null)[] = LINE_STICKER_SHEET_INDICES.map(() => null);
   const sheetFrames: string[][] = LINE_STICKER_SHEET_INDICES.map(() => []);
@@ -254,6 +274,7 @@ export async function loadLineStickerWorkspaceSnapshot(options: {
       ...snapshot,
       run: sanitizeLineStickerRunStateForResume(snapshot.run),
     },
+    wasInterrupted,
     artifacts: {
       mode: snapshot.job.mode,
       sourceImage: await loadDataUrlAsset(options.repository, snapshot.job.sourceAsset),

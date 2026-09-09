@@ -27,7 +27,7 @@ const toDomainStage = (stage: LineStickerSheetStage): PipelineStage =>
 const toViewStage = (stage: PipelineStage): LineStickerSheetStage => {
   if (stage === 'ready') return 'completed';
   if (stage === 'queued' || stage === 'generating' || stage === 'processing'
-    || stage === 'slicing' || stage === 'failed') return stage;
+    || stage === 'slicing' || stage === 'failed' || stage === 'cancelled') return stage;
   return 'idle';
 };
 

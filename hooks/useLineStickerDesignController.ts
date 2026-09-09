@@ -15,6 +15,7 @@ import {
   DEFAULT_PROGRAMMATIC_TEXT_OVERLAY_TUNING,
   type ProgrammaticTextOverlayTuning,
 } from '../utils/lineStickerTextOverlay';
+import { useLineStickerJobTextState } from './useLineStickerJobTextState';
 
 /**
  * Owns the editable design brief. Generated images deliberately live in the
@@ -39,8 +40,15 @@ export function useLineStickerDesignController() {
   );
   const [singlePhrasesList, setSinglePhrasesList] = useState<string[]>([]);
   const [stickerSetMode, setStickerSetMode] = useState(false);
-  const [setPhrasesList, setSetPhrasesList] = useState<string[]>([]);
-  const [actionDescsList, setActionDescsList] = useState<string[]>([]);
+  const {
+    jobTextState,
+    setPhrasesList,
+    setSetPhrasesList,
+    actionDescsList,
+    setActionDescsList,
+    replaceFromJobSheets,
+    resetJobText,
+  } = useLineStickerJobTextState();
   const [stylePreviewImage, setStylePreviewImage] = useState<string | null>(null);
   const [chromaKeyColor, setChromaKeyColor] = useState<ChromaKeyColorType>('green');
   const [bgRemovalMethod, setBgRemovalMethod] = useState<BgRemovalMethod>('chroma');
@@ -89,6 +97,9 @@ export function useLineStickerDesignController() {
     setSetPhrasesList,
     actionDescsList,
     setActionDescsList,
+    jobTextState,
+    replaceFromJobSheets,
+    resetJobText,
     stylePreviewImage,
     setStylePreviewImage,
     chromaKeyColor,

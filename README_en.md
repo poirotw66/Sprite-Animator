@@ -120,10 +120,10 @@ Use **Sprite Sheet Mode** or **Frame-by-Frame Mode**, enter an action prompt to 
 
 | Action | Generated GIF |
 |--------|---------------|
-| Happy (開心) | ![Happy](images/開心.gif) |
-| Wave (揮手) | ![Wave](images/揮手.gif) |
-| Head tilt confused (偏頭疑惑) | ![Head tilt confused](images/偏頭疑惑.gif) |
-| Angry (生氣) | ![Angry](images/生氣.gif) |
+| Happy (開心) | ![Happy](images/開心.webp) |
+| Wave (揮手) | ![Wave](images/揮手.webp) |
+| Head tilt confused (偏頭疑惑) | ![Head tilt confused](images/偏頭疑惑.webp) |
+| Angry (生氣) | ![Angry](images/生氣.webp) |
 
 All GIFs above were generated from **gemini.webp** using this tool with the Google Gemini API.
 

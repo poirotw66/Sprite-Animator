@@ -28,6 +28,7 @@ Technical docs are grouped by domain. Agent workflow guides live under `workflow
 
 - [Optimization Report](./OPTIMIZATION_REPORT.md)
 - [Optimization Roadmap](./PROJECT_OPTIMIZATION_ROADMAP.md)
+- [Credential Rotation Checklist](./CREDENTIAL_ROTATION_CHECKLIST.md)
 - [Browser Font Assets](./BROWSER_FONT_ASSETS.md) — WOFF2 build, sources, and validation
 
 ## Design records

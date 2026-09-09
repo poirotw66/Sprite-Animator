@@ -68,7 +68,48 @@ describe('lineStickerJobWorkspaceMapper', () => {
     expect(loaded.artifacts.setPhrasesList.slice(0, 3)).toEqual(['p0', 'p1', 'p2']);
     expect(loaded.snapshot.run.runId).toBe(3);
     expect(loaded.snapshot.run.sheets['sheet-0'].stage).toBe('ready');
+    expect(loaded.wasInterrupted).toBe(false);
     expect(JSON.stringify(loaded.snapshot)).not.toMatch(/apiKey|hfToken|authorization/i);
+  });
+
+  it('flags interrupted runs that were mid-generation when saved', async () => {
+    const repository = new InMemoryLineStickerJobRepository();
+    const started = lineStickerRunReducer(
+      createLineStickerRunState({ sheetIds: ['sheet-0', 'sheet-1', 'sheet-2'] }),
+      lineStickerRunActions.start(9),
+    );
+    const generating = lineStickerRunReducer(
+      started,
+      lineStickerRunActions.sheetStageChanged(9, 'sheet-1', 'generating'),
+    );
+    // Bypass sanitize on save by writing through repository after constructing snapshot manually.
+    const snapshot = await saveLineStickerWorkspaceSnapshot({
+      repository,
+      jobId: 'job-interrupted',
+      createdAt: '2026-09-09T00:00:00.000Z',
+      run: generating,
+      artifacts: {
+        mode: 'set',
+        sourceImage: TINY_PNG,
+        setPhrasesList: [],
+        actionDescsList: [],
+        sheetImages: [null, null, null],
+        processedSheetImages: [null, null, null],
+        sheetFrames: [[], [], []],
+      },
+    });
+    // save sanitizes before persist — re-save an active run directly for the load flag test.
+    await repository.save({
+      ...snapshot,
+      run: generating,
+    });
+
+    const loaded = await loadLineStickerWorkspaceSnapshot({
+      repository,
+      jobId: 'job-interrupted',
+    });
+    expect(loaded?.wasInterrupted).toBe(true);
+    expect(loaded?.snapshot.run.sheets['sheet-1'].stage).toBe('cancelled');
   });
 
   it('sanitizes in-flight stages before resume', () => {

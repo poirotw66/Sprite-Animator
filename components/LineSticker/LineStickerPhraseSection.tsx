@@ -210,6 +210,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
             type="button"
             onClick={handleGeneratePhrases}
             disabled={isGeneratingPhrases}
+            data-testid="line-sticker-generate-phrases"
             title={stickerSetMode ? t.lineStickerPhraseGenHint48 : t.lineStickerPhraseGenHint}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-white border border-green-200 rounded-lg px-3 py-2 shadow-sm hover:bg-green-50 disabled:opacity-50 disabled:pointer-events-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 min-h-[40px]"
           >
@@ -367,6 +368,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
         type="button"
         onClick={stickerSetMode ? onGenerateAllSheets : onGenerate}
         disabled={isGenerating || !sourceImage || !previewPrompt}
+        data-testid="line-sticker-generate"
         title={
           !sourceImage
             ? undefined

@@ -11,7 +11,7 @@ import type { PipelineStage } from '../features/line-sticker/domain';
 import type { LineStickerSheetIndex } from '../utils/lineStickerSetSchema';
 
 export type LineStickerSheetStage =
-  | Extract<PipelineStage, 'idle' | 'queued' | 'generating' | 'processing' | 'slicing' | 'failed'>
+  | Extract<PipelineStage, 'idle' | 'queued' | 'generating' | 'processing' | 'slicing' | 'failed' | 'cancelled'>
   | 'completed';
 
 export interface LineStickerSheetStatus {

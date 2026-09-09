@@ -120,10 +120,10 @@
 
 | 動作 | 生成 GIF |
 |------|----------|
-| 開心 | ![開心](images/開心.gif) |
-| 揮手 | ![揮手](images/揮手.gif) |
-| 偏頭疑惑 | ![偏頭疑惑](images/偏頭疑惑.gif) |
-| 生氣 | ![生氣](images/生氣.gif) |
+| 開心 | ![開心](images/開心.webp) |
+| 揮手 | ![揮手](images/揮手.webp) |
+| 偏頭疑惑 | ![偏頭疑惑](images/偏頭疑惑.webp) |
+| 生氣 | ![生氣](images/生氣.webp) |
 
 以上 GIF 皆由 **gemini.webp** 作為原圖，經本工具搭配 Google Gemini API 生成幀動畫後導出。
 

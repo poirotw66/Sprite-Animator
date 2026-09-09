@@ -42,13 +42,21 @@ export const LineStickerSetOverviewPanel: React.FC<LineStickerSetOverviewPanelPr
       const isCurrent = item.sheetIndex === currentSheetIndex;
       const isFailed = item.stage === 'failed';
       const isCompleted = item.stage === 'completed';
+      const isCancelled = item.stage === 'cancelled';
       const isActive = isActiveStage(item.stage);
       const progressBarColor = isFailed
         ? 'bg-red-500'
         : isCompleted
           ? 'bg-emerald-500'
-          : 'bg-green-500';
-      const statusText = item.message || (item.stage === 'idle' ? t.lineStickerSheetIdle : '');
+          : isCancelled
+            ? 'bg-amber-500'
+            : 'bg-green-500';
+      const statusText = item.message
+        || (item.stage === 'idle'
+          ? t.lineStickerSheetIdle
+          : item.stage === 'cancelled'
+            ? t.lineStickerSheetCancelled
+            : '');
 
       return (
         <button
@@ -70,6 +78,7 @@ export const LineStickerSetOverviewPanel: React.FC<LineStickerSetOverviewPanelPr
                 {isActive ? <Loader2 className="w-3.5 h-3.5 text-green-600 animate-spin" /> : null}
                 {isCompleted ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : null}
                 {isFailed ? <AlertTriangle className="w-3.5 h-3.5 text-red-600" /> : null}
+                {isCancelled ? <AlertTriangle className="w-3.5 h-3.5 text-amber-600" /> : null}
               </div>
               <p className={`mt-1 text-xs ${isFailed ? 'text-red-600' : 'text-slate-500'}`}>
                 {statusText}

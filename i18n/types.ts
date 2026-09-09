@@ -557,6 +557,11 @@ export interface Translations {
   lineStickerRegenerateSheetN: string;
   lineStickerErrorSomeSheetsFailed: string;
   lineStickerSheetProgressTitle: string;
+  lineStickerHydrating: string;
+  lineStickerRestoredJob: string;
+  lineStickerRestoredJobDismiss: string;
+  lineStickerResumeInterrupted: string;
+  lineStickerSheetCancelled: string;
   lineStickerPhrasePlaceholder: string;
   lineStickerTotalFramesSet: string;
   lineStickerDownloadCurrentSheet: string;
