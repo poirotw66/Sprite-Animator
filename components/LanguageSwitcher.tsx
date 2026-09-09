@@ -12,11 +12,11 @@ export const LanguageSwitcher: React.FC = React.memo(() => {
 
   return (
     <div className="flex items-center gap-2">
-      <Globe className="w-4 h-4 text-slate-500" />
+      <Globe className="h-4 w-4 text-ink-faint" />
       <select
         value={language}
         onChange={handleChange}
-        className="min-h-[44px] bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 cursor-pointer hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all touch-manipulation"
+        className="ui-input min-h-[44px] w-auto cursor-pointer py-2"
         aria-label={t.language}
       >
         {supportedLanguages.map((lang) => (

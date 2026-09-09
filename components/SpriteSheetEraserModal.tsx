@@ -357,7 +357,7 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
               max={MAX_BRUSH}
               value={brushSize}
               onChange={(e) => setBrushSize(Number(e.target.value))}
-              className="w-28 h-2 rounded-full accent-green-600"
+              className="w-28 h-2 rounded-full accent-signal"
             />
             <span className="text-sm text-slate-600 tabular-nums w-10">{brushSize}px</span>
           </div>
@@ -403,7 +403,7 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
           <button
             type="button"
             onClick={() => setRulerOn((on) => !on)}
-            className={`p-2.5 rounded-lg border flex items-center gap-1.5 transition-colors ${rulerOn ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
+            className={`p-2.5 rounded-lg border flex items-center gap-1.5 transition-colors ${rulerOn ? 'border-signal bg-signal-soft text-signal' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
             title={t.spriteSheetEraserRulerHint}
             aria-label={t.spriteSheetEraserRuler}
             aria-pressed={rulerOn}
@@ -431,7 +431,7 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
           {!imageLoaded && !error && (
             <div className="absolute inset-0 flex items-center justify-center bg-slate-100/80 z-10 rounded-lg m-3">
               <div className="flex flex-col items-center gap-2 text-slate-500">
-                <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-8 h-8 border-2 border-signal border-t-transparent rounded-full animate-spin" />
                 <span className="text-sm font-medium">{t.spriteSheetEraserLoading}</span>
               </div>
             </div>
@@ -491,7 +491,7 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
           </div>
           {cursorCircle && (
             <div
-              className="pointer-events-none fixed border-2 border-violet-500 rounded-full bg-violet-500/20 z-[60]"
+              className="pointer-events-none fixed border-2 border-signal rounded-full bg-paper0/20 z-[60]"
               style={{
                 left: cursorCircle.x - cursorCircle.diameterPx / 2,
                 top: cursorCircle.y - cursorCircle.diameterPx / 2,
@@ -521,7 +521,7 @@ export const SpriteSheetEraserModal: React.FC<SpriteSheetEraserModalProps> = ({
               type="button"
               onClick={handleConfirm}
               disabled={!imageLoaded}
-              className="px-5 py-2.5 rounded-xl bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 font-medium transition-colors shadow-sm"
+              className="px-5 py-2.5 rounded-xl bg-signal text-white hover:bg-signal-hover disabled:opacity-50 flex items-center gap-2 font-medium transition-colors shadow-sm"
             >
               <Check className="w-4 h-4" />
               {t.spriteSheetEraserConfirm}

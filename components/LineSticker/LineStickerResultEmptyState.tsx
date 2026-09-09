@@ -33,7 +33,7 @@ export const LineStickerResultEmptyState: React.FC<LineStickerResultEmptyStatePr
     <button
       type="button"
       onClick={onUploadClick}
-      className="flex min-h-[48px] items-center gap-2 rounded-xl border-2 border-green-200 bg-white px-6 py-3 font-semibold text-green-800 shadow-sm transition-colors hover:border-green-300 hover:bg-green-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
+      className="flex min-h-[48px] items-center gap-2 rounded-xl border-2 border-signal/25 bg-white px-6 py-3 font-semibold text-signal-hover shadow-sm transition-colors hover:border-signal/40 hover:bg-signal-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2"
     >
       <Upload className="w-4 h-4" />
       {uploadButtonText}

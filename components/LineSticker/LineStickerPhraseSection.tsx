@@ -93,7 +93,7 @@ const LineStickerPhraseCell: React.FC<LineStickerPhraseCellProps> = React.memo((
       maxLength={phraseMaxLength}
       onChange={(e) => updatePhraseAt(index, e.target.value)}
       placeholder={`${index + 1}`}
-      className="w-full min-w-0 p-2 border border-slate-200 rounded-lg text-xs font-mono focus:ring-2 focus:ring-green-500 focus:border-green-400 outline-none bg-white"
+      className="w-full min-w-0 p-2 border border-slate-200 rounded-lg text-xs font-mono focus:ring-2 focus-visible:ring-signal focus:border-signal outline-none bg-white"
       aria-label={
         stickerSetMode
           ? `Sheet ${currentSheetIndex + 1} cell ${index + 1} phrase`
@@ -105,7 +105,7 @@ const LineStickerPhraseCell: React.FC<LineStickerPhraseCellProps> = React.memo((
       value={actionDesc}
       onChange={(e) => updateActionDescAt(index, e.target.value)}
       placeholder={t.lineStickerActionDescPlaceholder}
-      className="w-full min-w-0 min-h-[3.5rem] p-1.5 border border-slate-100 rounded text-xs text-slate-500 focus:ring-2 focus:ring-green-500 outline-none bg-slate-50 resize-y"
+      className="w-full min-w-0 min-h-[3.5rem] p-1.5 border border-slate-100 rounded text-xs text-slate-500 focus:ring-2 focus-visible:ring-signal outline-none bg-slate-50 resize-y"
       aria-label={
         stickerSetMode
           ? `Sheet ${currentSheetIndex + 1} cell ${index + 1} action`
@@ -201,7 +201,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
           <p className="text-xs text-slate-500 mt-1 leading-relaxed">
             {stickerSetMode ? t.lineStickerPhraseGenHint48 : t.lineStickerPhraseGenHint}
           </p>
-          <p className="text-[11px] text-slate-400 mt-2 leading-relaxed border-l-2 border-green-200 pl-2">
+          <p className="text-[11px] text-slate-400 mt-2 leading-relaxed border-l-2 border-signal/25 pl-2">
             {t.lineStickerPhraseActionHint}
           </p>
         </div>
@@ -212,7 +212,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
             disabled={isGeneratingPhrases}
             data-testid="line-sticker-generate-phrases"
             title={stickerSetMode ? t.lineStickerPhraseGenHint48 : t.lineStickerPhraseGenHint}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-white border border-green-200 rounded-lg px-3 py-2 shadow-sm hover:bg-green-50 disabled:opacity-50 disabled:pointer-events-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 min-h-[40px]"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-signal bg-white border border-signal/25 rounded-lg px-3 py-2 shadow-sm hover:bg-signal-soft disabled:opacity-50 disabled:pointer-events-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 min-h-[40px]"
           >
             {isGeneratingPhrases ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
@@ -232,7 +232,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
           <button
             type="button"
             onClick={() => phraseSetFileInputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg px-3 py-2 bg-white hover:bg-slate-50 min-h-[40px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg px-3 py-2 bg-white hover:bg-slate-50 min-h-[40px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2"
           >
             <Upload className="w-3.5 h-3.5 shrink-0" />
             {t.lineStickerPhraseSetUpload}
@@ -240,7 +240,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
           <button
             type="button"
             onClick={handleDownloadPhraseSet}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg px-3 py-2 bg-white hover:bg-slate-50 min-h-[40px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg px-3 py-2 bg-white hover:bg-slate-50 min-h-[40px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2"
           >
             <Download className="w-3.5 h-3.5 shrink-0" />
             {t.lineStickerPhraseSetDownload}
@@ -256,9 +256,9 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
               role="tab"
               aria-selected={currentSheetIndex === i}
               onClick={() => setCurrentSheetIndex(i)}
-              className={`min-h-[40px] px-4 py-2 text-xs font-semibold rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${
+              className={`min-h-[40px] px-4 py-2 text-xs font-semibold rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 ${
                 currentSheetIndex === i
-                  ? 'bg-green-600 text-white shadow-sm'
+                  ? 'bg-signal text-white shadow-sm'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -279,14 +279,14 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
         updateActionDescAt={updateActionDescAt}
       />
       {isBackfillingActionDescs ? (
-        <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">
+        <div className="inline-flex items-center gap-2 rounded-lg border border-ok/25 bg-ok-soft px-3 py-1.5 text-xs font-medium text-ok">
           <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
           {t.lineStickerActionDescBackfilling}
         </div>
       ) : null}
     </div>
 
-    <div className="space-y-3 p-4 bg-gradient-to-br from-slate-50 to-emerald-50/30 rounded-xl border border-slate-200 shadow-inner">
+    <div className="space-y-3 p-4 bg-gradient-to-br from-slate-50 to-ok-soft rounded-xl border border-slate-200 shadow-inner">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
           <h3 className="text-sm font-semibold text-slate-800">{t.lineStickerPromptPreviewTitle}</h3>
@@ -297,7 +297,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
         <button
           type="button"
           onClick={handleGeneratePromptPreview}
-          className="text-xs px-4 py-2 min-h-[40px] bg-white border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
+          className="text-xs px-4 py-2 min-h-[40px] bg-white border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2"
         >
           {t.lineStickerGeneratePrompt}
         </button>
@@ -319,7 +319,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
               className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 font-medium inline-flex items-center gap-1.5"
             >
               {promptCopied ? (
-                <Check className="w-3.5 h-3.5 text-green-600" />
+                <Check className="w-3.5 h-3.5 text-ok" />
               ) : (
                 <Copy className="w-3.5 h-3.5" />
               )}
@@ -376,7 +376,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
               ? t.lineStickerPromptEmptyHint
               : undefined
         }
-        className="flex-1 min-h-[52px] py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-green-600/25 hover:shadow-xl hover:from-green-600 hover:to-emerald-700 transition-all disabled:opacity-50 disabled:shadow-none disabled:hover:from-green-500 disabled:hover:to-emerald-600 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
+        className="flex-1 min-h-[52px] py-4 bg-signal text-white font-bold rounded-xl shadow-lg shadow-md hover:shadow-xl hover:bg-signal-hover transition-all disabled:opacity-50 disabled:shadow-none disabled:hover:bg-signal flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2"
       >
         {isGenerating ? (
           <Loader2 className="w-5 h-5 animate-spin" />
@@ -389,7 +389,7 @@ export const LineStickerPhraseSection: React.FC<LineStickerPhraseSectionProps> =
         <button
           type="button"
           onClick={onCancelGeneration}
-          className="sm:w-auto min-h-[52px] py-4 px-5 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
+          className="sm:w-auto min-h-[52px] py-4 px-5 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2"
         >
           {t.cancel}
         </button>

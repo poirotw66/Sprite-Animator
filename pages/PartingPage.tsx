@@ -171,7 +171,7 @@ const PartingPage: React.FC = () => {
   const displayImage = flow.processedImage ?? flow.image;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 font-sans overflow-x-hidden px-4 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] md:px-6 lg:px-8 md:pt-6 lg:pt-8 md:pb-6 lg:pb-8">
+    <div className="min-h-[100dvh] font-sans overflow-x-hidden px-4 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] md:px-6 lg:px-8 md:pt-6 lg:pt-8 md:pb-6 lg:pb-8">
       <SettingsModal
         apiKey={apiKey}
         setApiKey={setApiKey}
@@ -199,7 +199,7 @@ const PartingPage: React.FC = () => {
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2 truncate">
-              <div className="bg-gradient-to-br from-teal-500 to-cyan-500 p-1.5 sm:p-2 rounded-lg md:rounded-xl shadow-md flex-shrink-0">
+              <div className="bg-gradient-to-br from-ink to-ink-soft p-1.5 sm:p-2 rounded-lg md:rounded-xl shadow-md flex-shrink-0">
                 <Grid className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
               <span className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
@@ -264,7 +264,7 @@ const PartingPage: React.FC = () => {
                         onClick={() => flow.setChromaKeyColor('green')}
                         className={`flex-1 flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all text-sm font-medium ${
                           flow.chromaKeyColor === 'green'
-                            ? 'border-green-400 bg-green-50 text-green-800'
+                            ? 'border-green-400 bg-signal-soft text-signal-hover'
                             : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                         }`}
                       >
@@ -312,8 +312,8 @@ const PartingPage: React.FC = () => {
                         onClick={setSliceModeManual}
                         className={`px-2.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
                           isManualSlice
-                            ? 'bg-orange-600 text-white border-orange-700'
-                            : 'bg-white text-orange-800 border-orange-200 hover:bg-orange-50'
+                            ? 'bg-signal-hover text-white border-signal-hover'
+                            : 'bg-white text-signal border-signal/25 hover:bg-signal-soft'
                         }`}
                         aria-pressed={isManualSlice}
                         title={t.sliceModeManualHint}
@@ -325,8 +325,8 @@ const PartingPage: React.FC = () => {
                         onClick={setSliceModeRects}
                         className={`px-2.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
                           isRectsSlice
-                            ? 'bg-emerald-600 text-white border-emerald-700'
-                            : 'bg-white text-emerald-800 border-emerald-200 hover:bg-emerald-50'
+                            ? 'bg-ok text-white border-ok'
+                            : 'bg-white text-ok border-ok/25 hover:bg-ok-soft'
                         }`}
                         aria-pressed={isRectsSlice}
                         title={t.sliceModeRectsHint}
@@ -335,10 +335,10 @@ const PartingPage: React.FC = () => {
                       </button>
                     </div>
                     {isManualSlice && (
-                      <p className="text-xs text-orange-800 leading-relaxed">{t.partingDrawHint}</p>
+                      <p className="text-xs text-signal leading-relaxed">{t.partingDrawHint}</p>
                     )}
                     {isRectsSlice && (
-                      <p className="text-xs text-emerald-800 leading-relaxed">{t.partingRectsHint}</p>
+                      <p className="text-xs text-ok leading-relaxed">{t.partingRectsHint}</p>
                     )}
                   </div>
 

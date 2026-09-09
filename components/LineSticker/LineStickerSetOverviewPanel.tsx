@@ -47,10 +47,10 @@ export const LineStickerSetOverviewPanel: React.FC<LineStickerSetOverviewPanelPr
       const progressBarColor = isFailed
         ? 'bg-red-500'
         : isCompleted
-          ? 'bg-emerald-500'
+          ? 'bg-ok'
           : isCancelled
-            ? 'bg-amber-500'
-            : 'bg-green-500';
+            ? 'bg-warn'
+            : 'bg-signal';
       const statusText = item.message
         || (item.stage === 'idle'
           ? t.lineStickerSheetIdle
@@ -65,7 +65,7 @@ export const LineStickerSetOverviewPanel: React.FC<LineStickerSetOverviewPanelPr
           onClick={() => onSelectSheet(item.sheetIndex)}
           className={`rounded-xl border p-3 text-left transition-all ${
             isCurrent
-              ? 'border-green-300 bg-green-50/70 shadow-sm'
+              ? 'border-signal/40 bg-signal-soft shadow-sm'
               : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
           }`}
         >
@@ -75,8 +75,8 @@ export const LineStickerSetOverviewPanel: React.FC<LineStickerSetOverviewPanelPr
                 <span className="text-xs font-semibold text-slate-900">
                   {t.lineStickerSheetN.replace('{n}', String(item.sheetIndex + 1))}
                 </span>
-                {isActive ? <Loader2 className="w-3.5 h-3.5 text-green-600 animate-spin" /> : null}
-                {isCompleted ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : null}
+                {isActive ? <Loader2 className="w-3.5 h-3.5 text-ok animate-spin" /> : null}
+                {isCompleted ? <Check className="w-3.5 h-3.5 text-ok" /> : null}
                 {isFailed ? <AlertTriangle className="w-3.5 h-3.5 text-red-600" /> : null}
                 {isCancelled ? <AlertTriangle className="w-3.5 h-3.5 text-amber-600" /> : null}
               </div>
@@ -119,7 +119,7 @@ export const LineStickerSetOverviewPanel: React.FC<LineStickerSetOverviewPanelPr
                   onRetrySheet(item.sheetIndex);
                 }}
                 disabled={isGenerating}
-                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 {(item.stage === 'completed' || item.stage === 'failed')

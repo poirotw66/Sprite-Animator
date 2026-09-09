@@ -13,29 +13,25 @@ const LineStickerPage: React.FC = () => {
     const { modal, header, settings, result, profiler, resume } = useLineStickerWorkspace();
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans px-4 pb-12 pt-4 md:px-6 md:pb-14 md:pt-6 lg:px-8">
+        <div className="ui-page">
             <SettingsModal {...modal} />
             <LineStickerHeader {...header} />
 
             {resume.isHydrating ? (
-                <div
-                    className="mx-auto mb-4 flex max-w-7xl items-center gap-3 rounded-xl border border-emerald-200/80 bg-emerald-50/80 p-4 text-sm text-emerald-900"
-                    data-testid="line-sticker-hydrating"
-                >
-                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-                    {resume.hydratingLabel}
+                <div className="ui-banner-ok" data-testid="line-sticker-hydrating">
+                    <div className="flex items-center gap-3">
+                        <Loader2 className="h-4 w-4 shrink-0 animate-spin text-ok" />
+                        {resume.hydratingLabel}
+                    </div>
                 </div>
             ) : null}
 
             {!resume.isHydrating && resume.showRestoredNotice ? (
-                <div
-                    className="mx-auto mb-4 flex max-w-7xl flex-col gap-3 rounded-xl border border-sky-200 bg-sky-50/90 p-4 text-sm text-sky-950 sm:flex-row sm:items-center sm:justify-between"
-                    data-testid="line-sticker-restored-notice"
-                >
+                <div className="ui-banner-info" data-testid="line-sticker-restored-notice">
                     <div className="space-y-1">
                         <p>{resume.restoredLabel}</p>
                         {resume.wasInterruptedOnResume ? (
-                            <p className="text-amber-800" data-testid="line-sticker-resume-interrupted">
+                            <p className="text-warn" data-testid="line-sticker-resume-interrupted">
                                 {resume.interruptedLabel}
                             </p>
                         ) : null}
@@ -43,7 +39,7 @@ const LineStickerPage: React.FC = () => {
                     <button
                         type="button"
                         onClick={resume.onDismissRestoredNotice}
-                        className="inline-flex min-h-[40px] shrink-0 items-center justify-center rounded-lg border border-sky-300 bg-white px-3 py-2 text-xs font-semibold text-sky-800 hover:bg-sky-100"
+                        className="ui-btn-secondary min-h-[40px] px-3 py-2 text-xs"
                     >
                         {resume.dismissLabel}
                     </button>
@@ -51,10 +47,7 @@ const LineStickerPage: React.FC = () => {
             ) : null}
 
             {!resume.isHydrating && resume.hydrateIssue ? (
-                <div
-                    className="mx-auto mb-4 flex max-w-7xl flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50/90 p-4 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between"
-                    data-testid="line-sticker-hydrate-issue"
-                >
+                <div className="ui-banner-warn" data-testid="line-sticker-hydrate-issue">
                     <p>
                         {resume.hydrateIssue === 'missing'
                             ? resume.hydrateMissingLabel
@@ -63,7 +56,7 @@ const LineStickerPage: React.FC = () => {
                     <button
                         type="button"
                         onClick={resume.onDismissHydrateIssue}
-                        className="inline-flex min-h-[40px] shrink-0 items-center justify-center rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+                        className="ui-btn-secondary min-h-[40px] px-3 py-2 text-xs"
                     >
                         {resume.dismissLabel}
                     </button>

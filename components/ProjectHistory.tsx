@@ -82,7 +82,7 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = React.memo(({
         </>
       )}
       {isHeader && list.length > 0 && (
-        <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center">
+        <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-signal text-white text-[10px] font-bold flex items-center justify-center">
           {list.length}
         </span>
       )}
@@ -115,7 +115,7 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = React.memo(({
                   value={saveName}
                   onChange={(e) => setSaveName(e.target.value)}
                   placeholder={t.projectNamePlaceholder}
-                  className="flex-1 min-w-0 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
+                  className="flex-1 min-w-0 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus-visible:ring-signal focus:border-signal outline-none"
                   aria-label={t.projectNamePlaceholder}
                 />
                 <div className="flex gap-2">
@@ -123,7 +123,7 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = React.memo(({
                     type="button"
                     onClick={handleSave}
                     disabled={!canSave || isSaving}
-                    className="min-h-[40px] px-3 py-2 rounded-lg text-sm font-semibold bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 flex items-center gap-2 touch-manipulation"
+                    className="min-h-[40px] px-3 py-2 rounded-lg text-sm font-semibold bg-signal text-white hover:bg-signal-hover disabled:opacity-50 flex items-center gap-2 touch-manipulation"
                   >
                     {isSaving ? <span className="animate-pulse">…</span> : <Save className="w-4 h-4" />}
                     {t.saveProject}
@@ -240,7 +240,7 @@ const ProjectHistoryItem: React.FC<ProjectHistoryItemProps> = React.memo(({
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); handleLoad(); }}
-          className="min-h-[36px] min-w-[36px] p-2 rounded-lg text-slate-600 hover:bg-orange-100 hover:text-orange-700 flex items-center justify-center touch-manipulation"
+          className="min-h-[36px] min-w-[36px] p-2 rounded-lg text-slate-600 hover:bg-signal-soft hover:text-signal-hover flex items-center justify-center touch-manipulation"
           title={t.loadProject}
           aria-label={t.loadProject}
         >

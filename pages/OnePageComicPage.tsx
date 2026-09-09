@@ -401,26 +401,26 @@ const OnePageComicPage: React.FC = () => {
   ]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-[100dvh] flex flex-col">
       <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link
             to="/"
-            className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition-colors font-medium text-sm group"
+            className="flex items-center gap-2 text-slate-600 hover:text-signal transition-colors font-medium text-sm group"
           >
-            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
+            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-paper transition-colors">
               <ArrowLeft className="w-4 h-4" />
             </div>
             {t.backToHome}
           </Link>
-          <h1 className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent flex items-center gap-2">
+          <h1 className="text-lg font-bold bg-signal bg-clip-text text-transparent flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-indigo-500" />
             {t.comicTitle}
           </h1>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowSettings(true)}
-              className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+              className="p-2 text-slate-500 hover:text-signal hover:bg-paper rounded-lg transition-all"
               aria-label={t.settings}
             >
               <Settings className="w-5 h-5" />
@@ -473,7 +473,7 @@ const OnePageComicPage: React.FC = () => {
             <button
               type="button"
               onClick={handleNext}
-              className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:from-indigo-700 hover:to-violet-700"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-signal px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-signal-hover"
             >
               {t.comicNext}
             </button>

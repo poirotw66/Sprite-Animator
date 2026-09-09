@@ -1,1 +1,160 @@
 @import "tailwindcss";
+
+/**
+ * Signal Studio — product visual language
+ * Cool paper surfaces, ink typography, single vermillion accent.
+ * Tool pages share one system; no per-tool rainbow CTAs.
+ */
+@theme {
+  --font-sans: "Outfit Variable", "Noto Sans TC", ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #14171f;
+  --color-ink-soft: #3d4454;
+  --color-ink-muted: #5a6170;
+  --color-ink-faint: #8b92a3;
+
+  --color-paper: #eef0f4;
+  --color-paper-deep: #e4e7ee;
+  --color-surface: #ffffff;
+  --color-line: #d5d9e2;
+  --color-line-strong: #b8becb;
+
+  --color-signal: #e23d2f;
+  --color-signal-hover: #c83328;
+  --color-signal-pressed: #a82b22;
+  --color-signal-soft: #fdecea;
+  --color-signal-ring: rgb(226 61 47 / 0.28);
+
+  --color-ok: #1f8a70;
+  --color-ok-soft: #e6f5f0;
+  --color-warn: #c47a12;
+  --color-warn-soft: #fff4e5;
+  --color-info: #2f6fed;
+  --color-info-soft: #eaf0fe;
+
+  /* Remap slate onto Signal Studio neutrals so existing utilities inherit the new language */
+  --color-slate-50: #eef0f4;
+  --color-slate-100: #e4e7ee;
+  --color-slate-200: #d5d9e2;
+  --color-slate-300: #b8becb;
+  --color-slate-400: #8b92a3;
+  --color-slate-500: #6b7285;
+  --color-slate-600: #5a6170;
+  --color-slate-700: #3d4454;
+  --color-slate-800: #252a36;
+  --color-slate-900: #14171f;
+  --color-slate-950: #0c0e14;
+
+  /* Single radius scale: controls 12px, panels 16px */
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.25rem;
+
+  --shadow-sm: 0 1px 2px rgb(20 23 31 / 0.05);
+  --shadow-md: 0 8px 24px rgb(20 23 31 / 0.08);
+  --shadow-lg: 0 16px 40px rgb(20 23 31 / 0.12);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 10% -10%, rgb(226 61 47 / 0.06), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgb(47 111 237 / 0.05), transparent 50%),
+      linear-gradient(180deg, #f4f5f8 0%, #eef0f4 40%, #e9ebf1 100%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: rgb(226 61 47 / 0.18);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-signal);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .ui-page {
+    @apply min-h-[100dvh] px-4 pb-12 pt-4 md:px-6 md:pb-14 md:pt-6 lg:px-8;
+  }
+
+  .ui-shell {
+    @apply mx-auto max-w-7xl;
+  }
+
+  .ui-panel {
+    @apply rounded-xl border border-line bg-surface p-6 shadow-sm;
+  }
+
+  .ui-header {
+    @apply sticky top-3 z-30 mx-auto mb-6 max-w-7xl rounded-xl border border-line/90 bg-surface/90 p-3 shadow-sm backdrop-blur-md sm:p-4;
+  }
+
+  .ui-btn {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200 touch-manipulation active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .ui-btn-primary {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-signal px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 touch-manipulation hover:bg-signal-hover active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+    box-shadow: 0 10px 24px rgb(226 61 47 / 0.22);
+  }
+
+  .ui-btn-primary:hover {
+    box-shadow: 0 14px 28px rgb(226 61 47 / 0.28);
+  }
+
+  .ui-btn-secondary {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-all duration-200 touch-manipulation hover:bg-paper active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .ui-btn-ghost {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink-muted transition-all duration-200 touch-manipulation hover:border-line-strong hover:bg-paper hover:text-ink active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .ui-icon-mark {
+    @apply inline-flex shrink-0 items-center justify-center rounded-lg bg-signal p-2 text-white shadow-sm;
+  }
+
+  .ui-banner {
+    @apply mx-auto mb-4 flex max-w-7xl flex-col gap-3 rounded-xl border p-4 text-sm sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .ui-banner-info {
+    @apply mx-auto mb-4 flex max-w-7xl flex-col gap-3 rounded-xl border border-info/25 bg-info-soft p-4 text-sm text-ink sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .ui-banner-ok {
+    @apply mx-auto mb-4 flex max-w-7xl flex-col gap-3 rounded-xl border border-ok/25 bg-ok-soft p-4 text-sm text-ink sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .ui-banner-warn {
+    @apply mx-auto mb-4 flex max-w-7xl flex-col gap-3 rounded-xl border border-warn/30 bg-warn-soft p-4 text-sm text-ink sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .ui-banner-signal {
+    @apply mx-auto mb-4 flex max-w-7xl flex-col gap-3 rounded-xl border border-signal/25 bg-signal-soft p-4 text-sm text-ink sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .ui-input {
+    @apply w-full min-h-[44px] rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none transition-shadow placeholder:text-ink-faint focus:border-signal focus:ring-2 focus:ring-signal-ring;
+  }
+
+  .ui-segment {
+    @apply flex gap-1 rounded-xl bg-paper-deep p-1;
+  }
+
+  .ui-segment-item {
+    @apply flex-1 min-h-[44px] rounded-lg text-sm font-semibold text-ink-muted transition-all;
+  }
+
+  .ui-segment-item-active {
+    @apply bg-surface text-ink shadow-sm;
+  }
+}

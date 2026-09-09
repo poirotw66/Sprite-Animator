@@ -29,7 +29,7 @@ export const ComicResultStep: React.FC<ComicResultStepProps> = React.memo(({
     <div className={`rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm sm:p-7 ${className}`.trim()}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-signal">
             {t.comicStepGenerate}
           </p>
           <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-900">
@@ -45,10 +45,10 @@ export const ComicResultStep: React.FC<ComicResultStepProps> = React.memo(({
             type="button"
             onClick={onGenerate}
             disabled={!canGenerate || isGenerating}
-            className={`inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
+            className={`inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 ${
               !canGenerate || isGenerating
                 ? 'cursor-not-allowed bg-slate-300'
-                : 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:-translate-y-0.5 hover:from-indigo-700 hover:to-violet-700'
+                : 'bg-signal hover:-translate-y-0.5 hover:bg-signal-hover'
             }`}
           >
             {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Wand2 className="h-4 w-4" aria-hidden />}
@@ -72,7 +72,7 @@ export const ComicResultStep: React.FC<ComicResultStepProps> = React.memo(({
       </div>
 
       {status ? (
-        <div className="mt-5 rounded-2xl border border-indigo-100 bg-indigo-50/80 px-4 py-3 text-sm text-indigo-700">
+        <div className="mt-5 rounded-2xl border border-line bg-paper px-4 py-3 text-sm text-ink-soft">
           {status}
         </div>
       ) : null}
@@ -92,7 +92,7 @@ export const ComicResultStep: React.FC<ComicResultStepProps> = React.memo(({
         ) : (
           <div className="flex min-h-[420px] items-center justify-center bg-gradient-to-br from-slate-50 via-white to-violet-50/50 p-8">
             <div className="max-w-sm text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-indigo-100 text-indigo-600 shadow-sm">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-paper-deep text-signal shadow-sm">
                 <ImageIcon className="h-7 w-7" aria-hidden />
               </div>
               <h3 className="mt-4 text-base font-semibold text-slate-900">

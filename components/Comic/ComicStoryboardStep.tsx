@@ -43,7 +43,7 @@ export const ComicStoryboardStep: React.FC<ComicStoryboardStepProps> = React.mem
       <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm sm:p-7">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-signal">
               {t.comicStepStoryboard}
             </p>
             <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-900">
@@ -58,10 +58,10 @@ export const ComicStoryboardStep: React.FC<ComicStoryboardStepProps> = React.mem
             type="button"
             onClick={onFillFromSynopsis}
             disabled={isFilling || !synopsis.trim()}
-            className={`inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
+            className={`inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 ${
               isFilling || !synopsis.trim()
                 ? 'cursor-not-allowed bg-slate-300'
-                : 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:-translate-y-0.5 hover:from-indigo-700 hover:to-violet-700'
+                : 'bg-signal hover:-translate-y-0.5 hover:bg-signal-hover'
             }`}
           >
             {isFilling ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Wand2 className="h-4 w-4" aria-hidden />}
@@ -69,9 +69,9 @@ export const ComicStoryboardStep: React.FC<ComicStoryboardStepProps> = React.mem
           </button>
         </div>
 
-        <div className="mt-6 rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-5">
+        <div className="mt-6 rounded-2xl border border-line bg-gradient-to-br from-paper via-surface to-paper-deep p-5">
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-indigo-600 shadow-sm ring-1 ring-indigo-100">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-signal shadow-sm ring-1 ring-indigo-100">
               <Grid className="h-5 w-5" aria-hidden />
             </div>
             <div className="min-w-0">
@@ -89,7 +89,7 @@ export const ComicStoryboardStep: React.FC<ComicStoryboardStepProps> = React.mem
             value={synopsis}
             onChange={(event) => onSynopsisChange(event.target.value)}
             placeholder={t.comicSynopsisPlaceholder}
-            className="mt-4 min-h-[140px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-700 outline-none transition-shadow placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500"
+            className="mt-4 min-h-[140px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-700 outline-none transition-shadow placeholder:text-slate-400 focus:ring-2 focus:ring-signal"
           />
         </div>
 
@@ -119,7 +119,7 @@ export const ComicStoryboardStep: React.FC<ComicStoryboardStepProps> = React.mem
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-signal">
                     #{index + 1}
                   </p>
                   <h3 className="mt-1 text-base font-semibold text-slate-900">
@@ -142,7 +142,7 @@ export const ComicStoryboardStep: React.FC<ComicStoryboardStepProps> = React.mem
                       onPanelChange(index, { sceneDescription: event.target.value })
                     }
                     placeholder={t.comicPanelScenePlaceholder}
-                    className={`min-h-[132px] w-full rounded-2xl px-4 py-3 text-sm text-slate-700 outline-none transition-shadow placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 ${
+                    className={`min-h-[132px] w-full rounded-2xl px-4 py-3 text-sm text-slate-700 outline-none transition-shadow placeholder:text-slate-400 focus:ring-2 focus:ring-signal ${
                       isInvalid
                         ? 'border border-red-200 bg-red-50/40'
                         : 'border border-slate-200 bg-slate-50/70'
@@ -166,7 +166,7 @@ export const ComicStoryboardStep: React.FC<ComicStoryboardStepProps> = React.mem
                       value={panel.dialogue ?? ''}
                       onChange={(event) => onPanelChange(index, { dialogue: event.target.value })}
                       placeholder={t.comicPanelDialogueLabel}
-                      className="min-h-[48px] w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition-shadow placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500"
+                      className="min-h-[48px] w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition-shadow placeholder:text-slate-400 focus:ring-2 focus:ring-signal"
                     />
                   </div>
 
@@ -179,7 +179,7 @@ export const ComicStoryboardStep: React.FC<ComicStoryboardStepProps> = React.mem
                       value={panel.cameraNote ?? ''}
                       onChange={(event) => onPanelChange(index, { cameraNote: event.target.value })}
                       placeholder={t.comicPanelCameraPlaceholder}
-                      className="min-h-[48px] w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition-shadow placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500"
+                      className="min-h-[48px] w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition-shadow placeholder:text-slate-400 focus:ring-2 focus:ring-signal"
                     />
                   </div>
                 </div>

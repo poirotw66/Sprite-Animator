@@ -36,19 +36,19 @@ interface UploadedPhraseSet {
 }
 
 function statusBadgeClass(status: StickerRegistryEntry['status']): string {
-  if (status === 'completed') return 'bg-emerald-100 text-emerald-800';
+  if (status === 'completed') return 'bg-ok-soft text-ok';
   if (status === 'failed') return 'bg-red-100 text-red-800';
-  return 'bg-amber-100 text-amber-800';
+  return 'bg-amber-100 text-warn';
 }
 
 function batchBadgeClass(batchType: StickerRegistryEntry['batchType']): string {
-  return batchType === 'B' ? 'bg-sky-100 text-sky-800' : 'bg-violet-100 text-violet-800';
+  return batchType === 'B' ? 'bg-sky-100 text-info' : 'bg-violet-100 text-signal';
 }
 
 function tabButtonClass(active: boolean): string {
   return active
     ? 'bg-rose-500 text-white shadow-sm'
-    : 'bg-white text-slate-600 border border-slate-200 hover:border-rose-300';
+    : 'bg-white text-slate-600 border border-slate-200 hover:border-signal/40';
 }
 
 function countNonEmptyPhrases(phrases: string[]): number {
@@ -273,7 +273,7 @@ const DailyStickerRegistryPage: React.FC = () => {
             <span className="px-2 py-1 rounded-lg bg-rose-50 text-rose-700">{meta.theme}</span>
           )}
           {meta.voice && (
-            <span className="px-2 py-1 rounded-lg bg-violet-50 text-violet-700">{meta.voice}</span>
+            <span className="px-2 py-1 rounded-lg bg-paper text-signal">{meta.voice}</span>
           )}
         </div>
       )}
@@ -284,7 +284,7 @@ const DailyStickerRegistryPage: React.FC = () => {
       )}
       {loading && <p className="text-sm text-slate-500">{t.registryPhraseSetLoading}</p>}
       {loadError && (
-        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+        <p className="text-sm text-amber-700 bg-warn-soft border border-amber-100 rounded-lg px-3 py-2">
           {loadError}
         </p>
       )}
@@ -380,7 +380,7 @@ const DailyStickerRegistryPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 font-sans">
+    <div className="min-h-[100dvh] font-sans">
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
@@ -393,7 +393,7 @@ const DailyStickerRegistryPage: React.FC = () => {
             </Link>
             <div className="h-6 w-px bg-slate-200 hidden sm:block" />
             <div className="flex items-center gap-2 min-w-0">
-              <Factory className="w-6 h-6 text-rose-500 shrink-0" />
+              <Factory className="w-6 h-6 text-signal shrink-0" />
               <h1 className="text-lg md:text-xl font-bold text-slate-900 truncate">{t.registryTitle}</h1>
             </div>
           </div>
@@ -405,18 +405,18 @@ const DailyStickerRegistryPage: React.FC = () => {
         <p className="text-slate-600 text-sm md:text-base">{t.registrySubtitle}</p>
 
         <div className="flex flex-wrap gap-3">
-          <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 shadow-sm cursor-pointer hover:border-rose-300 transition-colors text-sm font-medium text-slate-700">
-            <Upload className="w-4 h-4 text-rose-500" />
+          <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 shadow-sm cursor-pointer hover:border-signal/40 transition-colors text-sm font-medium text-slate-700">
+            <Upload className="w-4 h-4 text-signal" />
             {t.registryUploadRegistry}
             <input type="file" accept=".json,application/json" className="hidden" onChange={handleRegistryFile} />
           </label>
-          <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 shadow-sm cursor-pointer hover:border-rose-300 transition-colors text-sm font-medium text-slate-700">
-            <ClipboardList className="w-4 h-4 text-rose-500" />
+          <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 shadow-sm cursor-pointer hover:border-signal/40 transition-colors text-sm font-medium text-slate-700">
+            <ClipboardList className="w-4 h-4 text-signal" />
             {t.registryUploadBatchPlan}
             <input type="file" accept=".json,application/json" className="hidden" onChange={handleBatchPlanFile} />
           </label>
-          <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 shadow-sm cursor-pointer hover:border-rose-300 transition-colors text-sm font-medium text-slate-700">
-            <FileJson className="w-4 h-4 text-rose-500" />
+          <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 shadow-sm cursor-pointer hover:border-signal/40 transition-colors text-sm font-medium text-slate-700">
+            <FileJson className="w-4 h-4 text-signal" />
             {t.registryUploadPhraseSet}
             <input
               type="file"
@@ -429,9 +429,9 @@ const DailyStickerRegistryPage: React.FC = () => {
           <button
             type="button"
             onClick={() => void loadRegistryFromUrl()}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 shadow-sm hover:border-rose-300 transition-colors text-sm font-medium text-slate-700"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 shadow-sm hover:border-signal/40 transition-colors text-sm font-medium text-slate-700"
           >
-            <RefreshCw className="w-4 h-4 text-rose-500" />
+            <RefreshCw className="w-4 h-4 text-signal" />
             {t.registryReloadOutput}
           </button>
         </div>
@@ -476,7 +476,7 @@ const DailyStickerRegistryPage: React.FC = () => {
                 .replace('{ratio}', batchPlan.ratio)}
             </p>
             {batchPlan.warnings.length > 0 && (
-              <ul className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 space-y-1 mb-3">
+              <ul className="text-xs text-amber-700 bg-warn-soft rounded-lg px-3 py-2 space-y-1 mb-3">
                 {batchPlan.warnings.map((w) => (
                   <li key={w}>{w}</li>
                 ))}
@@ -541,7 +541,7 @@ const DailyStickerRegistryPage: React.FC = () => {
                           key={profile.characterName}
                           type="button"
                           onClick={() => setSelectedCharacterName(profile.characterName)}
-                          className={`text-left bg-white rounded-2xl border shadow-sm overflow-hidden transition-colors hover:border-rose-300 ${
+                          className={`text-left bg-white rounded-2xl border shadow-sm overflow-hidden transition-colors hover:border-signal/40 ${
                             selectedCharacterName === profile.characterName
                               ? 'border-rose-400 ring-2 ring-rose-100'
                               : 'border-slate-200'
@@ -647,8 +647,8 @@ const DailyStickerRegistryPage: React.FC = () => {
                             onClick={() => selectUploadedPhraseSet(upload)}
                             className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
                               selectedUploadId === upload.id
-                                ? 'border-violet-400 bg-violet-50 text-violet-800'
-                                : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-violet-300'
+                                ? 'border-violet-400 bg-paper text-signal'
+                                : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-signal/40'
                             }`}
                           >
                             {upload.data.name || upload.fileName}
@@ -732,7 +732,7 @@ const DailyStickerRegistryPage: React.FC = () => {
                       )}
                     </div>
                   ) : selectedUpload ? (
-                    <div className="bg-white rounded-2xl border border-violet-200 shadow-sm p-4 sticky top-24">
+                    <div className="bg-white rounded-2xl border border-line shadow-sm p-4 sticky top-24">
                       {renderPhraseSetPanel(
                         selectedUpload.data.name || selectedUpload.fileName,
                         {},

@@ -104,27 +104,27 @@ const RemoveBackgroundPage: React.FC = () => {
     }, [processedImage]);
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col">
+        <div className="min-h-[100dvh] flex flex-col">
             {/* Navbar */}
             <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30">
                 <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                     <Link
                         to="/"
-                        className="flex items-center gap-2 text-slate-600 hover:text-orange-600 transition-colors font-medium text-sm group"
+                        className="flex items-center gap-2 text-slate-600 hover:text-signal transition-colors font-medium text-sm group"
                     >
-                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-orange-50 transition-colors">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-signal-soft transition-colors">
                             <ArrowLeft className="w-4 h-4" />
                         </div>
                         {t.backToHome}
                     </Link>
-                    <h1 className="text-lg font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent flex items-center gap-2">
-                        <Eraser className="w-5 h-5 text-orange-500" />
+                    <h1 className="text-lg font-bold bg-gradient-to-r from-signal to-signal-hover bg-clip-text text-transparent flex items-center gap-2">
+                        <Eraser className="w-5 h-5 text-signal" />
                         {t.rmbgTitle}
                     </h1>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setShowSettings(true)}
-                            className="p-2 text-slate-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
+                            className="p-2 text-slate-500 hover:text-signal hover:bg-signal-soft rounded-lg transition-all"
                             aria-label={t.settings}
                         >
                             <Settings className="w-5 h-5" />
@@ -161,7 +161,7 @@ const RemoveBackgroundPage: React.FC = () => {
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-6 sticky top-24">
                             <div className="space-y-2">
                                 <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                                    <Sliders className="w-4 h-4 text-orange-500" />
+                                    <Sliders className="w-4 h-4 text-signal" />
                                     {t.settings}
                                 </h2>
                                 <p className="text-xs text-slate-500 leading-relaxed">
@@ -176,7 +176,7 @@ const RemoveBackgroundPage: React.FC = () => {
                                         <button
                                             onClick={() => setBgRemovalMethod('chroma')}
                                             className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-200 ${bgRemovalMethod === 'chroma'
-                                                ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
+                                                ? 'border-signal bg-signal-soft text-signal shadow-sm'
                                                 : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
                                                 }`}
                                         >
@@ -185,7 +185,7 @@ const RemoveBackgroundPage: React.FC = () => {
                                         <button
                                             onClick={() => setBgRemovalMethod('ai')}
                                             className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all duration-200 ${bgRemovalMethod === 'ai'
-                                                ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
+                                                ? 'border-signal bg-signal-soft text-signal shadow-sm'
                                                 : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
                                                 }`}
                                         >
@@ -203,22 +203,22 @@ const RemoveBackgroundPage: React.FC = () => {
                                             <button
                                                 onClick={() => setChromaKeyColor('magenta')}
                                                 className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 ${chromaKeyColor === 'magenta'
-                                                    ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700 shadow-sm'
+                                                    ? 'border-signal bg-signal-soft text-signal shadow-sm'
                                                     : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
                                                     }`}
                                             >
-                                                <div className="w-4 h-4 rounded-full bg-fuchsia-500" />
+                                                <div className="w-4 h-4 rounded-full bg-[#E879F9]" />
                                                 <span className="text-sm font-bold">{t.magentaColor}</span>
                                                 {chromaKeyColor === 'magenta' && <Check className="w-3.5 h-3.5 ml-auto" />}
                                             </button>
                                             <button
                                                 onClick={() => setChromaKeyColor('green')}
                                                 className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 ${chromaKeyColor === 'green'
-                                                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                                                    ? 'border-ok bg-ok-soft text-ok shadow-sm'
                                                     : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
                                                     }`}
                                             >
-                                                <div className="w-4 h-4 rounded-full bg-emerald-500" />
+                                                <div className="w-4 h-4 rounded-full bg-[#22C55E]" />
                                                 <span className="text-sm font-bold">{t.greenScreen}</span>
                                                 {chromaKeyColor === 'green' && <Check className="w-3.5 h-3.5 ml-auto" />}
                                             </button>
@@ -234,7 +234,7 @@ const RemoveBackgroundPage: React.FC = () => {
                                         <label className="text-sm font-semibold text-slate-700">
                                             {t.rmbgToleranceLabel}
                                         </label>
-                                        <span className="text-xs font-mono font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-md border border-orange-100">
+                                        <span className="text-xs font-mono font-bold text-signal bg-signal-soft px-2 py-1 rounded-md border border-signal/20">
                                             {tolerance}
                                         </span>
                                     </div>
@@ -245,7 +245,7 @@ const RemoveBackgroundPage: React.FC = () => {
                                         step="5"
                                         value={tolerance}
                                         onChange={(e) => setTolerance(Number(e.target.value))}
-                                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-signal"
                                     />
                                     <div className="flex justify-between text-[10px] text-slate-400 font-medium">
                                         <span>Strict</span>
@@ -262,7 +262,7 @@ const RemoveBackgroundPage: React.FC = () => {
                                             <label className="text-sm font-semibold text-slate-700">
                                                 {t.rmbgEdgeBandLabel}
                                             </label>
-                                            <span className="text-xs font-mono font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-md border border-orange-100">
+                                            <span className="text-xs font-mono font-bold text-signal bg-signal-soft px-2 py-1 rounded-md border border-signal/20">
                                                 {edgeBandRadius} px
                                             </span>
                                         </div>
@@ -273,7 +273,7 @@ const RemoveBackgroundPage: React.FC = () => {
                                             step="1"
                                             value={edgeBandRadius}
                                             onChange={(e) => setEdgeBandRadius(Number(e.target.value))}
-                                            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                                            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-signal"
                                         />
                                     </div>
                                     <div className="space-y-3">
@@ -281,7 +281,7 @@ const RemoveBackgroundPage: React.FC = () => {
                                             <label className="text-sm font-semibold text-slate-700">
                                                 {t.rmbgEdgeBlendLabel}
                                             </label>
-                                            <span className="text-xs font-mono font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-md border border-orange-100">
+                                            <span className="text-xs font-mono font-bold text-signal bg-signal-soft px-2 py-1 rounded-md border border-signal/20">
                                                 {Math.round(edgeBlend * 100)}%
                                             </span>
                                         </div>
@@ -292,7 +292,7 @@ const RemoveBackgroundPage: React.FC = () => {
                                             step="0.01"
                                             value={edgeBlend}
                                             onChange={(e) => setEdgeBlend(Number(e.target.value))}
-                                            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                                            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-signal"
                                         />
                                     </div>
                                 </div>
@@ -304,7 +304,7 @@ const RemoveBackgroundPage: React.FC = () => {
                                 disabled={!originalImage || isProcessing}
                                 className={`w-full py-4 rounded-xl flex items-center justify-center gap-2 font-bold text-sm shadow-lg transition-all transform active:scale-[0.98] ${!originalImage || isProcessing
                                     ? 'bg-slate-100 text-slate-300 cursor-not-allowed border border-slate-200 shadow-none'
-                                    : 'bg-gradient-to-r from-orange-500 to-red-600 text-white hover:shadow-orange-200 hover:-translate-y-0.5'
+                                    : 'bg-signal text-white hover:shadow-md hover:-translate-y-0.5'
                                     }`}
                             >
                                 {isProcessing ? (
@@ -335,7 +335,7 @@ const RemoveBackgroundPage: React.FC = () => {
                             {/* Preview Header */}
                             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-orange-100 rounded-lg text-orange-600">
+                                    <div className="p-2 bg-signal-soft rounded-lg text-signal">
                                         <ImageIcon className="w-4 h-4" />
                                     </div>
                                     <div>
@@ -351,7 +351,7 @@ const RemoveBackgroundPage: React.FC = () => {
                                         <button
                                             onClick={() => setShowOriginal(!showOriginal)}
                                             className={`text-xs px-3 py-1.5 rounded-full font-bold transition-all border ${showOriginal
-                                                ? 'bg-orange-500 text-white border-orange-600 shadow-sm'
+                                                ? 'bg-signal text-white border-signal-hover shadow-sm'
                                                 : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                                                 }`}
                                         >
@@ -359,7 +359,7 @@ const RemoveBackgroundPage: React.FC = () => {
                                         </button>
                                         <button
                                             onClick={handleDownload}
-                                            className="text-xs px-4 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-full font-bold shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
+                                            className="text-xs px-4 py-1.5 bg-signal hover:bg-signal text-white rounded-full font-bold shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
                                         >
                                             <Download className="w-3.5 h-3.5" />
                                             {t.rmbgDownloadProcessed}
@@ -379,8 +379,8 @@ const RemoveBackgroundPage: React.FC = () => {
                                             className="text-center p-8 cursor-pointer w-full h-full flex flex-col items-center justify-center gap-4 hover:bg-slate-50 transition-colors group"
                                             onClick={() => fileInputRef.current?.click()}
                                         >
-                                            <div className="w-16 h-16 rounded-3xl bg-orange-50 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                                                <Upload className="w-8 h-8 text-orange-500" />
+                                            <div className="w-16 h-16 rounded-3xl bg-signal-soft flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                                <Upload className="w-8 h-8 text-signal" />
                                             </div>
                                             <div className="space-y-1">
                                                 <p className="font-bold text-slate-700">{t.rmbgUploadTitle}</p>
@@ -399,8 +399,8 @@ const RemoveBackgroundPage: React.FC = () => {
 
                                     {isProcessing && (
                                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/40 backdrop-blur-[1px]">
-                                            <div className="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center gap-3 border border-orange-100">
-                                                <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
+                                            <div className="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center gap-3 border border-signal/20">
+                                                <Loader2 className="w-8 h-8 text-signal animate-spin" />
                                                 <div className="text-center">
                                                     <p className="text-sm font-bold text-slate-800">{t.rmbgProcessing}</p>
                                                     <p className="text-xs text-slate-500 font-mono">{progress}%</p>
@@ -414,7 +414,7 @@ const RemoveBackgroundPage: React.FC = () => {
                                     <div className="mt-4 flex items-center justify-center gap-4">
                                         <button
                                             onClick={() => fileInputRef.current?.click()}
-                                            className="text-xs font-bold text-slate-500 hover:text-orange-600 transition-colors flex items-center gap-1.5"
+                                            className="text-xs font-bold text-slate-500 hover:text-signal transition-colors flex items-center gap-1.5"
                                         >
                                             <RefreshCw className="w-3.5 h-3.5" />
                                             Change Image

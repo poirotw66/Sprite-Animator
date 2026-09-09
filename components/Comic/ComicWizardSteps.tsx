@@ -32,14 +32,14 @@ export const ComicWizardSteps: React.FC<ComicWizardStepsProps> = React.memo(({
     <div className={`rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm sm:p-6 ${className}`.trim()}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-signal">
             {t.comicWizardEyebrow}
           </p>
           <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-900">
             {t.comicWizardTitle}
           </h2>
         </div>
-        <div className="rounded-full bg-gradient-to-r from-indigo-500 to-violet-600 px-3 py-1 text-xs font-semibold text-white shadow-sm">
+        <div className="rounded-full bg-gradient-to-r from-ink to-ink-soft px-3 py-1 text-xs font-semibold text-white shadow-sm">
           {t.comicStepCounter.replace('{step}', String(currentStep))}
         </div>
       </div>
@@ -55,7 +55,7 @@ export const ComicWizardSteps: React.FC<ComicWizardStepsProps> = React.memo(({
               {index < steps.length - 1 ? (
                 <span
                   aria-hidden
-                  className="absolute left-[calc(50%+1.75rem)] right-[-0.75rem] top-6 hidden h-px bg-gradient-to-r from-indigo-200 via-violet-200 to-transparent md:block"
+                  className="absolute left-[calc(50%+1.75rem)] right-[-0.75rem] top-6 hidden h-px bg-gradient-to-r from-line via-line-strong to-transparent md:block"
                 />
               ) : null}
 
@@ -63,20 +63,20 @@ export const ComicWizardSteps: React.FC<ComicWizardStepsProps> = React.memo(({
                 type="button"
                 disabled={!canNavigate}
                 onClick={() => onStepChange?.(item.step)}
-                className={`relative flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
+                className={`relative flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 ${
                   isActive
-                    ? 'border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-violet-50 shadow-sm'
+                    ? 'border-line bg-gradient-to-br from-paper via-surface to-paper-deep shadow-sm'
                     : isComplete
-                      ? 'border-violet-200 bg-violet-50/60 text-slate-700'
+                      ? 'border-line bg-paper/60 text-slate-700'
                       : 'border-slate-200 bg-slate-50/70 text-slate-600'
-                } ${canNavigate ? 'cursor-pointer hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-sm' : 'cursor-default'}`}
+                } ${canNavigate ? 'cursor-pointer hover:-translate-y-0.5 hover:border-line hover:shadow-sm' : 'cursor-default'}`}
               >
                 <span
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-bold ${
                     isActive
-                      ? 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-sm'
+                      ? 'bg-gradient-to-br from-ink to-ink-soft text-white shadow-sm'
                       : isComplete
-                        ? 'bg-violet-500 text-white'
+                        ? 'bg-paper0 text-white'
                         : 'bg-white text-slate-500 ring-1 ring-slate-200'
                   }`}
                 >

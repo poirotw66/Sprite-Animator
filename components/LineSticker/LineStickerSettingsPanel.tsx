@@ -231,9 +231,9 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
               role="radio"
               aria-checked={!config.stickerSetMode}
               onClick={() => config.onStickerSetModeChange(false)}
-              className={`flex-1 min-h-[44px] rounded-lg text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${
+              className={`flex-1 min-h-[44px] rounded-lg text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 ${
                 !config.stickerSetMode
-                  ? 'bg-white text-green-700 shadow-sm'
+                  ? 'bg-white text-signal shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -244,9 +244,9 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
               role="radio"
               aria-checked={config.stickerSetMode}
               onClick={() => config.onStickerSetModeChange(true)}
-              className={`flex-1 min-h-[44px] rounded-lg text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${
+              className={`flex-1 min-h-[44px] rounded-lg text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 ${
                 config.stickerSetMode
-                  ? 'bg-white text-green-700 shadow-sm'
+                  ? 'bg-white text-signal shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -268,7 +268,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                 max="8"
                 value={config.gridCols}
                 onChange={(event) => config.onGridColsChange(Number(event.target.value))}
-                className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500"
+                className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus-visible:ring-signal"
               />
             </div>
             <div>
@@ -279,7 +279,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                 max="8"
                 value={config.gridRows}
                 onChange={(event) => config.onGridRowsChange(Number(event.target.value))}
-                className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500"
+                className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus-visible:ring-signal"
               />
             </div>
           </div>
@@ -294,7 +294,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
             <select
               value={config.selectedStyle}
               onChange={(event) => config.setSelectedStyle(event.target.value as LineStickerStyleOption)}
-              className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
+              className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus-visible:ring-signal bg-white"
             >
               {STYLE_PRESET_ORDER.map((key) => (
                 <option key={key} value={key}>{key === 'matchUploaded' ? t.lineStickerStyleMatchUploaded : STYLE_PRESETS[key].label}</option>
@@ -305,10 +305,10 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
               type="button"
               onClick={config.onGenerateStylePreview}
               disabled={config.isGeneratingStylePreview}
-              className={`mt-2 w-full min-h-[40px] rounded-xl px-3 py-2 text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${
+              className={`mt-2 w-full min-h-[40px] rounded-xl px-3 py-2 text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 ${
                 config.isGeneratingStylePreview
                   ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+                  : 'bg-signal-soft text-signal hover:bg-signal-soft'
               }`}
             >
               {config.isGeneratingStylePreview ? '產生中...' : '根據上傳圖產生風格預覽'}
@@ -329,7 +329,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                   className="h-52 w-full object-contain bg-white"
                 />
               ) : (
-                <div className="h-52 bg-gradient-to-br from-slate-100 via-white to-emerald-50/40 flex items-center justify-center">
+                <div className="h-52 bg-gradient-to-br from-slate-100 via-white to-ok-soft flex items-center justify-center">
                   <div className="text-center px-3">
                     <p className="text-xs font-semibold text-slate-600 tracking-wide uppercase">{previewTitle}</p>
                     <p className="mt-1 text-[11px] text-slate-500">Placeholder Example</p>
@@ -344,7 +344,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                   <button
                     type="button"
                     onClick={config.onDownloadStylePreview}
-                    className="flex-1 inline-flex items-center justify-center gap-2 min-h-[44px] px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
+                    className="flex-1 inline-flex items-center justify-center gap-2 min-h-[44px] px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2"
                   >
                     <Download className="w-4 h-4 shrink-0" aria-hidden />
                     {t.lineStickerStylePreviewDownload}
@@ -352,7 +352,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                   <button
                     type="button"
                     onClick={config.onUseStylePreviewAsReference}
-                    className="flex-1 inline-flex items-center justify-center gap-2 min-h-[44px] px-3 py-2 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
+                    className="flex-1 inline-flex items-center justify-center gap-2 min-h-[44px] px-3 py-2 rounded-xl text-xs font-semibold text-white bg-signal hover:bg-signal-hover shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2"
                   >
                     <ImageIcon className="w-4 h-4 shrink-0" aria-hidden />
                     {t.lineStickerStylePreviewUseAsReference}
@@ -370,7 +370,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
               value={config.customStyleText}
               onChange={(event) => config.setCustomStyleText(event.target.value)}
               placeholder={t.lineStickerStyleCustomPlaceholder}
-              className="w-full h-24 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none resize-none"
+              className="w-full h-24 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus-visible:ring-signal outline-none resize-none"
             />
           </div>
         )}
@@ -383,7 +383,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
           <select
             value={config.selectedTheme}
             onChange={(event) => config.setSelectedTheme(event.target.value as ThemeOption)}
-            className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
+            className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus-visible:ring-signal bg-white"
           >
             {Object.keys(THEME_PRESETS).map((key) => <option key={key} value={key}>{THEME_PRESETS[key as keyof typeof THEME_PRESETS].label}</option>)}
             <option value="custom">{t.lineStickerThemeCustom}</option>
@@ -397,7 +397,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
               value={config.customThemeContext}
               onChange={(event) => config.setCustomThemeContext(event.target.value)}
               placeholder={t.lineStickerCustomThemePlaceholder}
-              className="w-full h-24 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none resize-none"
+              className="w-full h-24 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus-visible:ring-signal outline-none resize-none"
             />
           </div>
         )}
@@ -409,8 +409,8 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
               <button
                 type="button"
                 onClick={() => config.setBgRemovalMethod('chroma')}
-                className={`flex items-center justify-center gap-2 min-h-[44px] p-2.5 rounded-xl border-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${config.bgRemovalMethod === 'chroma'
-                  ? 'border-green-500 bg-green-50 text-green-700 shadow-sm'
+                className={`flex items-center justify-center gap-2 min-h-[44px] p-2.5 rounded-xl border-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 ${config.bgRemovalMethod === 'chroma'
+                  ? 'border-signal bg-signal-soft text-signal shadow-sm'
                   : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
                   }`}
               >
@@ -419,8 +419,8 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
               <button
                 type="button"
                 onClick={() => config.setBgRemovalMethod('ai')}
-                className={`flex items-center justify-center gap-2 min-h-[44px] p-2.5 rounded-xl border-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${config.bgRemovalMethod === 'ai'
-                  ? 'border-green-500 bg-green-50 text-green-700 shadow-sm'
+                className={`flex items-center justify-center gap-2 min-h-[44px] p-2.5 rounded-xl border-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 ${config.bgRemovalMethod === 'ai'
+                  ? 'border-signal bg-signal-soft text-signal shadow-sm'
                   : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
                   }`}
               >
@@ -436,24 +436,24 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                 <button
                   type="button"
                   onClick={() => config.setChromaKeyColor('magenta')}
-                  className={`flex items-center justify-center gap-2 min-h-[44px] p-2.5 rounded-xl border-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500 focus-visible:ring-offset-2 ${config.chromaKeyColor === 'magenta'
-                    ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700 shadow-sm'
+                  className={`flex items-center justify-center gap-2 min-h-[44px] p-2.5 rounded-xl border-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 ${config.chromaKeyColor === 'magenta'
+                    ? 'border-[#E879F9] bg-[#FDF4FF] text-[#A21CAF] shadow-sm'
                     : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
                     }`}
                 >
-                  <div className="w-3 h-3 rounded-full bg-fuchsia-500" />
+                  <div className="w-3 h-3 rounded-full bg-[#E879F9]" />
                   <span className="text-sm font-bold">{t.magentaColor}</span>
                   {config.chromaKeyColor === 'magenta' && <Check className="w-3.5 h-3.5 ml-auto" />}
                 </button>
                 <button
                   type="button"
                   onClick={() => config.setChromaKeyColor('green')}
-                  className={`flex items-center justify-center gap-2 min-h-[44px] p-2.5 rounded-xl border-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${config.chromaKeyColor === 'green'
-                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                  className={`flex items-center justify-center gap-2 min-h-[44px] p-2.5 rounded-xl border-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ok focus-visible:ring-offset-2 ${config.chromaKeyColor === 'green'
+                    ? 'border-ok bg-ok-soft text-ok shadow-sm'
                     : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
                     }`}
                 >
-                  <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                  <div className="w-3 h-3 rounded-full bg-[#22C55E]" />
                   <span className="text-sm font-bold">{t.greenScreen}</span>
                   {config.chromaKeyColor === 'green' && <Check className="w-3.5 h-3.5 ml-auto" />}
                 </button>
@@ -471,7 +471,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
               id="includeText"
               checked={config.includeText}
               onChange={(event) => config.setIncludeText(event.target.checked)}
-              className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-slate-300 text-green-600 focus:ring-green-500"
+              className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-slate-300 text-ok focus-visible:ring-signal"
             />
             <label htmlFor="includeText" className="cursor-pointer text-sm font-medium leading-snug text-slate-700">
               {t.lineStickerIncludeText}
@@ -484,7 +484,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                 <input
                   type="radio"
                   name="lineStickerTextRendering"
-                  className="shrink-0 text-green-600"
+                  className="shrink-0 text-ok"
                   checked={config.textRendering === 'model'}
                   onChange={() => config.setTextRendering('model')}
                 />
@@ -494,7 +494,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                 <input
                   type="radio"
                   name="lineStickerTextRendering"
-                  className="shrink-0 text-green-600"
+                  className="shrink-0 text-ok"
                   checked={config.textRendering === 'programmatic'}
                   onChange={() => config.setTextRendering('programmatic')}
                 />
@@ -527,7 +527,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
               <select
                 value={config.selectedLanguage}
                 onChange={(event) => config.setSelectedLanguage(event.target.value as keyof typeof TEXT_PRESETS)}
-                className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
+                className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus-visible:ring-signal bg-white"
               >
                 {Object.keys(TEXT_PRESETS).map((key) => <option key={key} value={key}>{TEXT_PRESETS[key as keyof typeof TEXT_PRESETS].label}</option>)}
               </select>
@@ -546,7 +546,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                     event.target.value as LineStickerPromptVersion
                   )
                 }
-                className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
+                className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus-visible:ring-signal bg-white"
               >
                 <option value="v3">{t.lineStickerPromptVersionV3}</option>
                 <option value="v2">{t.lineStickerPromptVersionV2}</option>
@@ -567,7 +567,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                     event.target.value as ActionDedupeStrength
                   )
                 }
-                className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
+                className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus-visible:ring-signal bg-white"
               >
                 <option value="conservative">
                   {t.lineStickerActionDedupeConservative}
@@ -586,7 +586,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
               <select
                 value={config.selectedFont}
                 onChange={(event) => config.setSelectedFont(event.target.value as keyof typeof FONT_PRESETS)}
-                className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
+                className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus-visible:ring-signal bg-white"
               >
                 {FONT_PRESET_ORDER.map((key) => <option key={key} value={key}>{FONT_PRESETS[key].label}</option>)}
               </select>
@@ -598,7 +598,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
                   value={config.customFontText}
                   onChange={(event) => config.setCustomFontText(event.target.value)}
                   placeholder={t.lineStickerFontCustomPlaceholder}
-                  className="w-full h-24 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 outline-none resize-none"
+                  className="w-full h-24 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus-visible:ring-signal outline-none resize-none"
                 />
               </div>
             )}

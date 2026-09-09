@@ -44,11 +44,11 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
     <div className={`grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] ${className}`.trim()}>
       <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm sm:p-7">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-sm">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-ink to-ink-soft text-white shadow-sm">
             <Wand2 className="h-5 w-5" aria-hidden />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-signal">
               {t.comicStepSheet}
             </p>
             <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-900">
@@ -61,14 +61,14 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
         </div>
 
         {referenceImage ? (
-          <div className="mt-6 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-700">
+          <div className="mt-6 rounded-2xl border border-line bg-paper p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
               {t.comicUploadReferencePreview}
             </p>
             <img
               src={referenceImage}
               alt={t.comicUploadReferenceAlt}
-              className="mt-3 max-h-40 w-full rounded-xl border border-indigo-100 object-contain bg-white"
+              className="mt-3 max-h-40 w-full rounded-xl border border-line object-contain bg-white"
             />
           </div>
         ) : null}
@@ -82,7 +82,7 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
               <select
                 value={styleKey}
                 onChange={(event) => onStyleKeyChange(event.target.value)}
-                className="min-h-[48px] w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition-shadow focus:ring-2 focus:ring-indigo-500"
+                className="min-h-[48px] w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition-shadow focus:ring-2 focus:ring-signal"
               >
                 {STYLE_PRESET_ORDER.map((presetKey) => (
                   <option key={presetKey} value={presetKey}>
@@ -92,9 +92,9 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
               </select>
             </div>
 
-            <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-5">
+            <div className="rounded-2xl border border-line bg-gradient-to-br from-paper via-surface to-paper-deep p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                <Check className="h-4 w-4 text-indigo-600" aria-hidden />
+                <Check className="h-4 w-4 text-signal" aria-hidden />
                 {t.comicSelectedStyleDetails}
               </div>
               <dl className="mt-4 space-y-4">
@@ -133,7 +133,7 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
                 </p>
               </div>
               {characterSheetImage ? (
-                <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                <span className="rounded-full bg-ok-soft px-2.5 py-1 text-[11px] font-semibold text-ok">
                   {t.comicSheetReady}
                 </span>
               ) : null}
@@ -147,9 +147,9 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
                   className="aspect-square w-full object-contain bg-white"
                 />
               ) : (
-                <div className="flex aspect-square items-center justify-center bg-gradient-to-br from-slate-50 via-white to-violet-50/60 p-6 text-center">
+                <div className="flex aspect-square items-center justify-center bg-gradient-to-br from-slate-50 via-surface to-paper-deep p-6 text-center">
                   <div>
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-paper-deep text-signal">
                       <ImageIcon className="h-6 w-6" aria-hidden />
                     </div>
                     <p className="mt-4 text-sm font-semibold text-slate-700">
@@ -164,7 +164,7 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
             </div>
 
             {status ? (
-              <div className="mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/80 px-4 py-3 text-sm text-indigo-700">
+              <div className="mt-4 rounded-2xl border border-line bg-paper px-4 py-3 text-sm text-ink-soft">
                 {status}
               </div>
             ) : null}
@@ -179,10 +179,10 @@ export const ComicCharacterSheetStep: React.FC<ComicCharacterSheetStepProps> = R
                 type="button"
                 onClick={onGenerate}
                 disabled={isGenerating}
-                className={`inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
+                className={`inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 ${
                   isGenerating
                     ? 'cursor-not-allowed bg-slate-300'
-                    : 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:-translate-y-0.5 hover:from-indigo-700 hover:to-violet-700'
+                    : 'bg-signal hover:-translate-y-0.5 hover:bg-signal-hover'
                 }`}
               >
                 {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Wand2 className="h-4 w-4" aria-hidden />}

@@ -21,8 +21,8 @@ export interface SheetSliceProgrammaticOverlayPanelProps {
 }
 
 const focusRing: Record<SheetSliceProgrammaticOverlayPanelProps['accent'], string> = {
-  teal: 'focus:ring-teal-500/30 focus:border-teal-500',
-  orange: 'focus:ring-orange-500/30 focus:border-orange-500',
+  teal: 'focus:ring-signal-ring focus:border-signal',
+  orange: 'focus-visible:ring-signal focus:border-signal',
 };
 
 export const SheetSliceProgrammaticOverlayPanel: React.FC<SheetSliceProgrammaticOverlayPanelProps> = ({
@@ -41,7 +41,7 @@ export const SheetSliceProgrammaticOverlayPanel: React.FC<SheetSliceProgrammatic
 }) => {
   const ring = focusRing[accent];
   const borderAccent =
-    accent === 'teal' ? 'border-teal-100 bg-teal-50/40' : 'border-orange-100 bg-orange-50/40';
+    accent === 'teal' ? 'border-ok/20 bg-ok-soft' : 'border-signal/20 bg-signal-soft';
 
   return (
     <div className={`rounded-2xl border p-4 space-y-3 ${borderAccent}`}>
@@ -51,7 +51,7 @@ export const SheetSliceProgrammaticOverlayPanel: React.FC<SheetSliceProgrammatic
           type="checkbox"
           checked={enabled}
           onChange={(e) => onEnabledChange(e.target.checked)}
-          className="mt-1 rounded border-slate-300 text-teal-600 shrink-0"
+          className="mt-1 rounded border-slate-300 text-ok shrink-0"
         />
         <div className="min-w-0 flex-1">
           <label htmlFor="sheet-slice-overlay-enable" className="text-sm font-semibold text-slate-800 cursor-pointer">
@@ -83,7 +83,7 @@ export const SheetSliceProgrammaticOverlayPanel: React.FC<SheetSliceProgrammatic
                 <input
                   type="radio"
                   name="sheetSliceOverlayFontSrc"
-                  className="text-teal-600 shrink-0"
+                  className="text-ok shrink-0"
                   checked={tuning.fontFamilySource === 'preset'}
                   onChange={() =>
                     onTuningChange((prev) => ({ ...prev, fontFamilySource: 'preset' as ProgrammaticFontFamilySource }))
@@ -95,7 +95,7 @@ export const SheetSliceProgrammaticOverlayPanel: React.FC<SheetSliceProgrammatic
                 <input
                   type="radio"
                   name="sheetSliceOverlayFontSrc"
-                  className="text-teal-600 shrink-0"
+                  className="text-ok shrink-0"
                   checked={tuning.fontFamilySource === 'custom'}
                   onChange={() =>
                     onTuningChange((prev) => ({ ...prev, fontFamilySource: 'custom' as ProgrammaticFontFamilySource }))

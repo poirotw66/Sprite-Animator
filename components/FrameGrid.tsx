@@ -468,7 +468,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                           type="checkbox"
                           checked={usePrevAsRef}
                           onChange={(e) => setUsePrevAsRef(e.target.checked)}
-                          className="rounded border-slate-300 text-orange-500 focus:ring-orange-500/30"
+                          className="rounded border-slate-300 text-signal focus-visible:ring-signal"
                         />
                         <span className="text-xs text-slate-600">上一幀作為參考圖（虛影疊在編輯畫面上）</span>
                       </label>
@@ -507,7 +507,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                         max={OFFSET_MAX}
                         value={offsetX}
                         onChange={(e) => updateOverride({ offsetX: Math.max(OFFSET_MIN, Math.min(OFFSET_MAX, Number(e.target.value))) })}
-                        className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30"
+                        className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-signal focus:ring-2 focus-visible:ring-signal"
                       />
                     </div>
                     <div className="flex-1">
@@ -518,7 +518,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                         max={OFFSET_MAX}
                         value={offsetY}
                         onChange={(e) => updateOverride({ offsetY: Math.max(OFFSET_MIN, Math.min(OFFSET_MAX, Number(e.target.value))) })}
-                        className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30"
+                        className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-signal focus:ring-2 focus-visible:ring-signal"
                       />
                     </div>
                   </div>
@@ -564,7 +564,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                         return n;
                       });
                     }}
-                    className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-2.5 py-1.5 rounded-lg border border-orange-200 transition-colors"
+                    className="text-xs flex items-center gap-1.5 text-signal bg-signal-soft hover:bg-signal-soft px-2.5 py-1.5 rounded-lg border border-signal/25 transition-colors"
                     title="將第一幀的切割參數（位子、框型大小）套用到其餘所有幀"
                   >
                     從第一幀套用至其餘
@@ -664,7 +664,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                           setIsAutoAligning(false);
                         }
                       }}
-                      className="text-xs flex items-center gap-1.5 text-white bg-orange-500 hover:bg-orange-600 px-3 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                      className="text-xs flex items-center gap-1.5 text-white bg-signal hover:bg-signal-hover px-3 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                       title={t.reAlignToAnchor}
                     >
                       {isAutoAligning ? `🔄 ${t.reAlignToAnchorProgress}` : `✨ ${t.reAlignToAnchor}`}
@@ -687,7 +687,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
           <div
             key={idx}
             className={`relative aspect-square rounded-lg border-2 overflow-hidden bg-white transition-all duration-200 shadow-sm hover:shadow-md group touch-manipulation
-              ${idx === currentFrameIndex ? 'border-orange-500 ring-2 ring-orange-200 shadow-md' : 'border-slate-200 hover:border-orange-400'}
+              ${idx === currentFrameIndex ? 'border-signal ring-2 ring-signal/25 shadow-md' : 'border-slate-200 hover:border-signal'}
               ${frameIncluded[idx] === false ? 'opacity-50' : ''}`}
           >
             {setFrameIncluded && (
@@ -708,7 +708,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                       return n;
                     });
                   }}
-                  className="rounded border-slate-300 text-orange-500 focus:ring-orange-500/30 w-4 h-4 touch-manipulation"
+                  className="rounded border-slate-300 text-signal focus-visible:ring-signal w-4 h-4 touch-manipulation"
                 />
               </label>
             )}
@@ -737,7 +737,7 @@ export const FrameGrid: React.FC<FrameGridProps> = React.memo(({
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setEditingFrameIndex(idx); }}
                 className={`absolute top-1 right-1 min-w-[36px] min-h-[36px] p-2 rounded-lg transition-all flex items-center justify-center touch-manipulation tap-highlight
-                  ${editingFrameIndex === idx ? 'bg-orange-500 text-white' : 'bg-white/90 text-slate-500 hover:bg-orange-100 hover:text-orange-600 active:bg-orange-200'}`}
+                  ${editingFrameIndex === idx ? 'bg-signal text-white' : 'bg-white/90 text-slate-500 hover:bg-signal-soft hover:text-signal active:bg-signal-soft'}`}
                 title="逐幀調整切割"
                 aria-label={`編輯第 ${idx + 1} 幀`}
               >

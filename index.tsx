@@ -1,3 +1,6 @@
+import '@fontsource-variable/outfit/index.css';
+import '@fontsource/noto-sans-tc/chinese-traditional-400.css';
+import '@fontsource/noto-sans-tc/chinese-traditional-700.css';
 import './index.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';

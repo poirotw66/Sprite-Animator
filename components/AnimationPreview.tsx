@@ -43,7 +43,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
           {t.previewTitle}
         </div>
         {generatedFrames.length > 0 && (
-          <span className="text-xs text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full font-semibold border border-orange-200">
+          <span className="text-xs text-signal bg-signal-soft px-2.5 py-1 rounded-full font-semibold border border-signal/25">
             {t.frame} {currentFrameIndex + 1} / {generatedFrames.length}
           </span>
         )}
@@ -76,8 +76,8 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
         {isGenerating && (
           <div className="text-center z-10 p-6 max-w-sm">
             <div className="relative w-16 h-16 mx-auto mb-4">
-              <div className="absolute inset-0 border-4 border-orange-100 rounded-full"></div>
-              <div className="absolute inset-0 border-4 border-orange-500 rounded-full border-t-transparent animate-spin"></div>
+              <div className="absolute inset-0 border-4 border-signal/20 rounded-full"></div>
+              <div className="absolute inset-0 border-4 border-signal rounded-full border-t-transparent animate-spin"></div>
             </div>
             <h3 className="text-lg font-semibold text-slate-800 animate-pulse">{t.drawing}</h3>
             <p className="text-slate-600 mt-2 text-sm">{statusText}</p>
@@ -116,7 +116,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
               <button
                 onClick={onDownloadApng}
                 disabled={isExporting || generatedFrames.length === 0}
-                className="min-h-[44px] bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 disabled:cursor-wait cursor-pointer hover:shadow-xl touch-manipulation tap-highlight"
+                className="min-h-[44px] bg-signal hover:bg-signal-hover text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 disabled:cursor-wait cursor-pointer hover:shadow-xl touch-manipulation tap-highlight"
                 aria-label={t.downloadApng}
               >
                 {isExporting ? <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" /> : <FileVideo className="w-4 h-4 flex-shrink-0" />}
@@ -139,7 +139,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
                   className="min-h-[44px] flex-1 min-w-[100px] bg-white/95 hover:bg-white text-slate-800 px-3 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 cursor-pointer hover:shadow-xl border border-slate-200/50 touch-manipulation tap-highlight"
                   aria-label={t.downloadZip}
                 >
-                  <Archive className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                  <Archive className="w-4 h-4 text-info flex-shrink-0" />
                   <span className="truncate">{t.downloadZip}</span>
                 </button>
               </div>
@@ -150,7 +150,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
 
       <div className="mt-4 text-xs text-slate-500 text-center space-y-1">
         <p>{t.exportHint}</p>
-        <p className="text-green-600">{t.exportSmoothHint}</p>
+        <p className="text-ok">{t.exportSmoothHint}</p>
       </div>
     </div>
   );

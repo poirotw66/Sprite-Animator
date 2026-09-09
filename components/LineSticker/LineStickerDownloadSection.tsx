@@ -47,7 +47,7 @@ export const LineStickerDownloadSection: React.FC<LineStickerDownloadSectionProp
             isDownloading ||
             (!processedSheetImages.every((img) => !!img) && !sheetFrames.some((arr) => arr.length > 0))
           }
-          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-signal px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-signal-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Download className="h-4 w-4 shrink-0" />
           {t.lineStickerDownloadAllOneClick}
@@ -74,7 +74,7 @@ export const LineStickerDownloadSection: React.FC<LineStickerDownloadSectionProp
           type="button"
           onClick={onDownloadCurrentSheetZip}
           disabled={isDownloading || !processedSheetImagesCurrent}
-          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-emerald-300/80 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-ok/40/80 bg-ok px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-ok disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Download className="h-4 w-4 shrink-0" />
           {t.lineStickerDownloadCurrentSheet}
@@ -86,7 +86,7 @@ export const LineStickerDownloadSection: React.FC<LineStickerDownloadSectionProp
           type="button"
           onClick={onDownloadAllAsZip}
           disabled={isDownloading || stickerFramesLength === 0}
-          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-signal px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-signal-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Download className="h-4 w-4 shrink-0" />
           {t.lineStickerDownloadAll}

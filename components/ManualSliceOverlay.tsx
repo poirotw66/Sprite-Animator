@@ -432,7 +432,7 @@ export const ManualSliceOverlay: React.FC<ManualSliceOverlayProps> = ({
           x={rect.x + rect.width / 2}
           y={rect.y + 16}
           textAnchor="middle"
-          className="pointer-events-none fill-orange-700 font-bold"
+          className="pointer-events-none fill-signal font-bold"
           style={{ fontSize: '11px', fontFamily: 'system-ui, sans-serif' }}
         >
           {i + 1}
@@ -443,7 +443,7 @@ export const ManualSliceOverlay: React.FC<ManualSliceOverlayProps> = ({
         x={sheetWidth / 2}
         y={18}
         textAnchor="middle"
-        className="pointer-events-none fill-orange-700 font-semibold"
+        className="pointer-events-none fill-signal font-semibold"
         style={{ fontSize: '12px' }}
       >
         {hint}

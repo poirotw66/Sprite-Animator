@@ -492,12 +492,12 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
       {isProcessingChromaKey && (
         <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-10">
           <div className="text-center space-y-4">
-            <Loader2 className="w-8 h-8 text-orange-500 animate-spin mx-auto" />
+            <Loader2 className="w-8 h-8 text-signal animate-spin mx-auto" />
             <div className="space-y-2">
               <p className="text-sm font-semibold text-slate-700">{t.processingChromaKey}</p>
               <div className="w-64 bg-slate-200 rounded-full h-2.5 overflow-hidden shadow-inner">
                 <div
-                  className="bg-gradient-to-r from-orange-500 to-orange-600 h-full transition-all duration-300 ease-out rounded-full"
+                  className="bg-signal h-full transition-all duration-300 ease-out rounded-full"
                   style={{ width: `${chromaKeyProgress}%` }}
                 />
               </div>
@@ -517,7 +517,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
           {spriteSheetImage && originalSpriteSheet && (
             <button
               onClick={() => setShowOriginal(!showOriginal)}
-              className="text-xs flex items-center gap-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition-all duration-200 font-semibold cursor-pointer border border-blue-200 hover:border-blue-300 hover:shadow-sm"
+              className="text-xs flex items-center gap-1.5 text-info bg-info-soft hover:bg-info-soft px-3 py-1.5 rounded-full transition-all duration-200 font-semibold cursor-pointer border border-info/25 hover:border-info/40 hover:shadow-sm"
               aria-label={showOriginal ? t.showProcessed : t.showOriginal}
             >
               {showOriginal ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -527,7 +527,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
           {spriteSheetImage && originalSpriteSheet && onDownloadOriginal && (
             <button
               onClick={onDownloadOriginal}
-              className="text-xs flex items-center gap-1.5 text-green-600 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-full transition-all duration-200 font-semibold cursor-pointer border border-green-200 hover:border-green-300 hover:shadow-sm"
+              className="text-xs flex items-center gap-1.5 text-ok bg-signal-soft hover:bg-signal-soft px-3 py-1.5 rounded-full transition-all duration-200 font-semibold cursor-pointer border border-signal/25 hover:border-signal/40 hover:shadow-sm"
               aria-label={t.downloadOriginal}
             >
               <Download className="w-3.5 h-3.5" />
@@ -537,7 +537,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
           {spriteSheetImage && (
             <button
               onClick={() => onDownload(true)}
-              className="text-xs flex items-center gap-1.5 text-orange-600 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-all duration-200 font-semibold cursor-pointer border border-orange-200 hover:border-orange-300 hover:shadow-sm"
+              className="text-xs flex items-center gap-1.5 text-signal bg-signal-soft hover:bg-signal-soft px-3 py-1.5 rounded-full transition-all duration-200 font-semibold cursor-pointer border border-signal/25 hover:border-signal/40 hover:shadow-sm"
               aria-label={t.downloadProcessed}
             >
               <Download className="w-3.5 h-3.5" />
@@ -548,7 +548,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
             <button
               type="button"
               onClick={() => setOpenEraserModal(true)}
-              className="text-xs flex items-center gap-1.5 text-violet-600 bg-violet-50 hover:bg-violet-100 px-3 py-1.5 rounded-full transition-all duration-200 font-semibold cursor-pointer border border-violet-200 hover:border-violet-300 hover:shadow-sm"
+              className="text-xs flex items-center gap-1.5 text-signal bg-paper hover:bg-paper-deep px-3 py-1.5 rounded-full transition-all duration-200 font-semibold cursor-pointer border border-line hover:border-signal/40 hover:shadow-sm"
               aria-label={t.spriteSheetEdit}
             >
               <Eraser className="w-3.5 h-3.5" />
@@ -579,7 +579,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
 
         {!spriteSheetImage && (isGenerating || isProcessingChromaKey) && (
           <div className="flex flex-col items-center">
-            <Loader2 className="w-8 h-8 text-orange-500 animate-spin mb-2" />
+            <Loader2 className="w-8 h-8 text-signal animate-spin mb-2" />
             <p className="text-xs text-slate-600 font-medium">
               {isProcessingChromaKey ? t.processingChromaKey : t.generating}
             </p>
@@ -703,7 +703,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                         y2={gridPositions.startY + gridPositions.effectiveHeight}
                         stroke="rgba(34,197,94,0.6)"
                         strokeWidth="4"
-                        className="cursor-ew-resize hover:stroke-green-500"
+                        className="cursor-ew-resize hover:stroke-signal"
                         style={{ pointerEvents: 'stroke' }}
                       />
                       {/* Right edge */}
@@ -714,7 +714,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                         y2={gridPositions.startY + gridPositions.effectiveHeight}
                         stroke="rgba(34,197,94,0.6)"
                         strokeWidth="4"
-                        className="cursor-ew-resize hover:stroke-green-500"
+                        className="cursor-ew-resize hover:stroke-signal"
                         style={{ pointerEvents: 'stroke' }}
                       />
                       {/* Top edge */}
@@ -725,7 +725,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                         y2={gridPositions.startY}
                         stroke="rgba(34,197,94,0.6)"
                         strokeWidth="4"
-                        className="cursor-ns-resize hover:stroke-green-500"
+                        className="cursor-ns-resize hover:stroke-signal"
                         style={{ pointerEvents: 'stroke' }}
                       />
                       {/* Bottom edge */}
@@ -736,7 +736,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
                         y2={gridPositions.startY + gridPositions.effectiveHeight}
                         stroke="rgba(34,197,94,0.6)"
                         strokeWidth="4"
-                        className="cursor-ns-resize hover:stroke-green-500"
+                        className="cursor-ns-resize hover:stroke-signal"
                         style={{ pointerEvents: 'stroke' }}
                       />
                     </>

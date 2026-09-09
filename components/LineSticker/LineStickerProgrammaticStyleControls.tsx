@@ -61,19 +61,19 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
   );
 
   return (
-    <div className="space-y-4 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100 animate-in fade-in slide-in-from-top-2 duration-300">
+    <div className="space-y-4 p-4 bg-ok-soft rounded-xl border border-ok/25 animate-in fade-in slide-in-from-top-2 duration-300">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
         <div>
           <p className="text-sm font-semibold text-slate-800">{t.lineStickerProgrammaticTuningTitle}</p>
           <p className="text-xs text-slate-600 mt-1 leading-relaxed">{t.lineStickerProgrammaticTuningHint}</p>
           {frameEditSubtitle ? (
-            <p className="text-xs text-emerald-800 font-medium mt-2">{frameEditSubtitle}</p>
+            <p className="text-xs text-ok font-medium mt-2">{frameEditSubtitle}</p>
           ) : null}
         </div>
         <button
           type="button"
           onClick={onResetProgrammaticTextTuning}
-          className="shrink-0 min-h-[40px] px-3 py-2 rounded-lg text-xs font-semibold text-emerald-800 bg-white border border-emerald-200 hover:bg-emerald-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+          className="shrink-0 min-h-[40px] px-3 py-2 rounded-lg text-xs font-semibold text-ok bg-white border border-ok/25 hover:bg-ok-soft transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ok focus-visible:ring-offset-2"
         >
           {t.lineStickerProgrammaticResetTuning}
         </button>
@@ -86,7 +86,7 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
             <input
               type="radio"
               name={nameFontSource}
-              className="text-green-600 shrink-0"
+              className="text-ok shrink-0"
               checked={programmaticTextTuning.fontFamilySource === 'preset'}
               onChange={() =>
                 setProgrammaticTextTuning((prev) => ({
@@ -101,7 +101,7 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
             <input
               type="radio"
               name={nameFontSource}
-              className="text-green-600 shrink-0"
+              className="text-ok shrink-0"
               checked={programmaticTextTuning.fontFamilySource === 'custom'}
               onChange={() =>
                 setProgrammaticTextTuning((prev) => ({
@@ -123,7 +123,7 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
           <select
             value={selectedFont}
             onChange={(event) => setSelectedFont(event.target.value as keyof typeof FONT_PRESETS)}
-            className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
+            className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus-visible:ring-signal bg-white"
           >
             {FONT_PRESET_CANVAS_ORDER.map((key) => (
               <option key={key} value={key}>
@@ -151,7 +151,7 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
             }
             placeholder={t.lineStickerProgrammaticFontCustomPlaceholder}
             rows={2}
-            className="w-full p-3 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-green-500 outline-none resize-y bg-white"
+            className="w-full p-3 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus-visible:ring-signal outline-none resize-y bg-white"
           />
         </div>
       )}
@@ -165,7 +165,7 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
           onChange={(event) =>
             setSelectedTextColor(event.target.value as keyof typeof TEXT_COLOR_PRESETS)
           }
-          className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
+          className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus-visible:ring-signal bg-white"
         >
           {(Object.keys(TEXT_COLOR_PRESETS) as (keyof typeof TEXT_COLOR_PRESETS)[]).map((key) => (
             <option key={key} value={key}>
@@ -187,7 +187,7 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
               placementMode: event.target.value as ProgrammaticTextPlacementMode,
             }))
           }
-          className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
+          className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus-visible:ring-signal bg-white"
         >
           {placementOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -201,7 +201,7 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
       </div>
 
       {stickerCellCount != null && stickerCellCount > 0 && stickerCellCount <= 24 ? (
-        <div className="rounded-xl border border-emerald-200/80 bg-white/60 p-3 space-y-2">
+        <div className="rounded-xl border border-ok/25 bg-white/60 p-3 space-y-2">
           <p className="text-xs font-semibold text-slate-800">{t.lineStickerProgrammaticPerFramePlacementTitle}</p>
           <p className="text-[11px] text-slate-600 leading-relaxed">{t.lineStickerProgrammaticPerFramePlacementHint}</p>
           <div className="max-h-52 space-y-2 overflow-y-auto pr-1">
@@ -228,7 +228,7 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
                       };
                     });
                   }}
-                  className="min-w-0 flex-1 min-h-[40px] rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-green-500/30"
+                  className="min-w-0 flex-1 min-h-[40px] rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none focus:ring-2 focus-visible:ring-signal/30"
                 >
                   {perFramePlacementChoices.map((opt) => (
                     <option key={opt.value === '' ? 'inherit' : opt.value} value={opt.value}>
@@ -254,7 +254,7 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
               fontWeight: Number(event.target.value) as ProgrammaticTextOverlayTuning['fontWeight'],
             }))
           }
-          className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus:ring-green-500 bg-white"
+          className="w-full min-h-[44px] px-3 border border-slate-200 rounded-xl text-sm outline-none transition-shadow focus:ring-2 focus-visible:ring-signal bg-white"
         >
           <option value={400}>400</option>
           <option value={500}>500</option>
@@ -280,7 +280,7 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
               fontSizePercent: Number(event.target.value),
             }))
           }
-          className="w-full accent-emerald-600"
+          className="w-full accent-ok"
         />
       </div>
 
@@ -301,7 +301,7 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
               edgeMarginPercent: Number(event.target.value),
             }))
           }
-          className="w-full accent-emerald-600"
+          className="w-full accent-ok"
         />
       </div>
 
@@ -322,7 +322,7 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
               lineHeightMultiplier: Number(event.target.value),
             }))
           }
-          className="w-full accent-emerald-600"
+          className="w-full accent-ok"
         />
       </div>
 
@@ -343,7 +343,7 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
               strokeScale: Number(event.target.value),
             }))
           }
-          className="w-full accent-emerald-600"
+          className="w-full accent-ok"
         />
       </div>
 
@@ -364,7 +364,7 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
               offsetXPercent: Number(event.target.value),
             }))
           }
-          className="w-full accent-emerald-600"
+          className="w-full accent-ok"
         />
       </div>
 
@@ -385,7 +385,7 @@ export const LineStickerProgrammaticStyleControls: React.FC<LineStickerProgramma
               offsetYPercent: Number(event.target.value),
             }))
           }
-          className="w-full accent-emerald-600"
+          className="w-full accent-ok"
         />
       </div>
     </div>

@@ -475,7 +475,7 @@ const SpriteAnimatorPage: React.FC = () => {
   }, [spriteSheetImage, handleDownloadSpriteSheet]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 font-sans overflow-x-hidden px-4 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] md:px-6 lg:px-8 md:pt-6 lg:pt-8 md:pb-6 lg:pb-8">
+    <div className="min-h-[100dvh] font-sans overflow-x-hidden px-4 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] md:px-6 lg:px-8 md:pt-6 lg:pt-8 md:pb-6 lg:pb-8">
       <SettingsModal
         apiKey={apiKey}
         setApiKey={setApiKey}
@@ -503,7 +503,7 @@ const SpriteAnimatorPage: React.FC = () => {
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2 sm:gap-3 truncate">
-              <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-1.5 sm:p-2 rounded-lg md:rounded-xl shadow-md flex-shrink-0">
+              <div className="bg-signal p-1.5 sm:p-2 rounded-lg md:rounded-xl shadow-md flex-shrink-0">
                 <Zap className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
               <span className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
@@ -527,7 +527,7 @@ const SpriteAnimatorPage: React.FC = () => {
               onClick={() => setShowSettings(true)}
               className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl transition-all duration-200 shadow-sm border flex items-center justify-center gap-2 cursor-pointer touch-manipulation tap-highlight
                 ${hasCustomKey
-                  ? 'text-green-700 bg-green-50 hover:bg-green-100 border-green-200 hover:shadow-md'
+                  ? 'text-signal bg-signal-soft hover:bg-signal-soft border-signal/25 hover:shadow-md'
                   : 'text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 hover:shadow-md'
                 }`}
               title={hasCustomKey ? t.useCustomKey : t.useSystemKey}
@@ -597,7 +597,7 @@ const SpriteAnimatorPage: React.FC = () => {
             <Suspense
               fallback={
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex items-center justify-center min-h-[200px]">
-                  <Loader2 className="w-6 h-6 text-orange-500 animate-spin" />
+                  <Loader2 className="w-6 h-6 text-signal animate-spin" />
                 </div>
               }
             >
@@ -622,7 +622,7 @@ const SpriteAnimatorPage: React.FC = () => {
             <Suspense
               fallback={
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex items-center justify-center min-h-[500px]">
-                  <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
+                  <Loader2 className="w-8 h-8 text-signal animate-spin" />
                 </div>
               }
             >
@@ -687,7 +687,7 @@ const SpriteAnimatorPage: React.FC = () => {
                         value={bottomSaveName}
                         onChange={(e) => setBottomSaveName(e.target.value)}
                         placeholder={t.projectNamePlaceholder}
-                        className="flex-1 min-w-0 px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
+                        className="flex-1 min-w-0 px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus-visible:ring-signal focus:border-signal outline-none"
                         aria-label={t.projectNamePlaceholder}
                       />
                       <button
@@ -699,7 +699,7 @@ const SpriteAnimatorPage: React.FC = () => {
                           setBottomSaveName('');
                         }}
                         disabled={!canSaveProject || isSavingProject}
-                        className="min-h-[40px] px-4 flex items-center justify-center gap-2 rounded-lg text-sm font-semibold bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation tap-highlight"
+                        className="min-h-[40px] px-4 flex items-center justify-center gap-2 rounded-lg text-sm font-semibold bg-signal text-white hover:bg-signal-hover disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation tap-highlight"
                         aria-label={t.saveProject}
                       >
                         {isSavingProject ? <span className="animate-pulse">?</span> : <Save className="w-4 h-4" />}

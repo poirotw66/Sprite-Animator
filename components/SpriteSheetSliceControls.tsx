@@ -95,11 +95,11 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
         : t.sliceModeEqual;
   const shellClass =
     accent === 'teal'
-      ? 'mt-4 p-5 bg-gradient-to-br from-teal-50/80 to-cyan-50/60 border border-teal-200 rounded-xl flex flex-col gap-4 text-sm animate-in fade-in slide-in-from-top-2 shadow-md'
-      : 'mt-4 p-5 bg-gradient-to-br from-blue-50/80 to-indigo-50/60 border border-blue-200 rounded-xl flex flex-col gap-4 text-sm animate-in fade-in slide-in-from-top-2 shadow-md';
-  const titleClass = accent === 'teal' ? 'text-teal-900' : 'text-blue-900';
-  const borderClass = accent === 'teal' ? 'border-teal-300' : 'border-blue-300';
-  const mutedClass = accent === 'teal' ? 'text-teal-600' : 'text-blue-600';
+      ? 'mt-4 p-5 bg-gradient-to-br from-ok-soft to-paper border border-line rounded-xl flex flex-col gap-4 text-sm animate-in fade-in slide-in-from-top-2 shadow-md'
+      : 'mt-4 p-5 bg-gradient-to-br from-info-soft to-paper border border-info/25 rounded-xl flex flex-col gap-4 text-sm animate-in fade-in slide-in-from-top-2 shadow-md';
+  const titleClass = accent === 'teal' ? 'text-ink' : 'text-ink';
+  const borderClass = accent === 'teal' ? 'border-ok/40' : 'border-info/40';
+  const mutedClass = accent === 'teal' ? 'text-ok' : 'text-info';
 
   return (
     <div className={shellClass}>
@@ -118,8 +118,8 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
             onClick={onToggleRectsMode}
             className={`text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border ${
               rectsOn
-                ? 'text-white bg-emerald-600 border-emerald-700 hover:bg-emerald-700'
-                : 'text-emerald-800 bg-emerald-100 border-emerald-300 hover:bg-emerald-200'
+                ? 'text-white bg-ok border-ok hover:bg-ok'
+                : 'text-ok bg-ok-soft border-ok/40 hover:bg-ok-soft'
             }`}
             title={t.sliceModeRectsHint}
             aria-pressed={rectsOn}
@@ -132,8 +132,8 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
             onClick={onToggleManualDraw}
             className={`text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border ${
               manualOn
-                ? 'text-white bg-orange-600 border-orange-700 hover:bg-orange-700'
-                : 'text-orange-800 bg-orange-100 border-orange-300 hover:bg-orange-200'
+                ? 'text-white bg-signal-hover border-signal-hover hover:bg-signal-hover'
+                : 'text-signal bg-signal-soft border-signal/40 hover:bg-signal-soft'
             }`}
             title={t.sliceModeManualHint}
             aria-pressed={manualOn}
@@ -161,8 +161,8 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
             disabled={manualOn || rectsOn}
             className={`text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border disabled:opacity-40 disabled:cursor-not-allowed ${
               ownershipOn
-                ? 'text-white bg-blue-600 border-blue-700 hover:bg-blue-700'
-                : 'text-blue-700 bg-blue-100 border-blue-300 hover:bg-blue-200'
+                ? 'text-white bg-info border-info hover:bg-info'
+                : 'text-info bg-info-soft border-info/40 hover:bg-info-soft'
             }`}
             title={t.sliceModeOwnershipHint}
             aria-pressed={ownershipOn}
@@ -175,7 +175,7 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
           <button
             onClick={onAutoCenter}
             disabled={manualOn || rectsOn}
-            className="text-xs flex items-center gap-1.5 text-blue-700 bg-blue-100 hover:bg-blue-200 px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border border-blue-300 hover:shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+            className="text-xs flex items-center gap-1.5 text-info bg-info-soft hover:bg-info-soft px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium cursor-pointer border border-info/40 hover:shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
             title={t.autoCenter}
             aria-label={t.autoCenter}
           >
@@ -195,17 +195,17 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
       </div>
 
       {rectsOn && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50/90 px-3 py-2 space-y-2">
-          <p className="text-xs text-emerald-900 leading-relaxed">{t.sliceModeRectsHint}</p>
+        <div className="rounded-lg border border-ok/25 bg-ok-soft px-3 py-2 space-y-2">
+          <p className="text-xs text-ink leading-relaxed">{t.sliceModeRectsHint}</p>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-emerald-900">{t.sliceModeManualDraw}</span>
+            <span className="text-xs font-semibold text-ink">{t.sliceModeManualDraw}</span>
             <button
               type="button"
               onClick={() => onRectMarqueeToolChange?.('draw')}
               className={`text-xs px-2.5 py-1 rounded-md border font-medium ${
                 rectMarqueeTool === 'draw'
-                  ? 'bg-emerald-600 text-white border-emerald-700'
-                  : 'bg-white text-emerald-800 border-emerald-300'
+                  ? 'bg-ok text-white border-ok'
+                  : 'bg-white text-ok border-ok/40'
               }`}
               aria-pressed={rectMarqueeTool === 'draw'}
             >
@@ -228,7 +228,7 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
               type="button"
               onClick={onUndoManual}
               disabled={!canUndoManual}
-              className="text-xs px-2.5 py-1 rounded-md border border-emerald-300 bg-white text-emerald-800 font-medium hover:bg-emerald-100 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+              className="text-xs px-2.5 py-1 rounded-md border border-ok/40 bg-white text-ok font-medium hover:bg-ok-soft disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
               title={t.sliceModeManualUndo}
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -238,7 +238,7 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
               type="button"
               onClick={onRedoManual}
               disabled={!canRedoManual}
-              className="text-xs px-2.5 py-1 rounded-md border border-emerald-300 bg-white text-emerald-800 font-medium hover:bg-emerald-100 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+              className="text-xs px-2.5 py-1 rounded-md border border-ok/40 bg-white text-ok font-medium hover:bg-ok-soft disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
               title={t.sliceModeManualRedo}
             >
               <RotateCw className="w-3.5 h-3.5" />
@@ -247,14 +247,14 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
             <button
               type="button"
               onClick={onClearRectBoxes}
-              className="text-xs px-2.5 py-1 rounded-md border border-emerald-300 bg-white text-emerald-800 font-medium hover:bg-emerald-100"
+              className="text-xs px-2.5 py-1 rounded-md border border-ok/40 bg-white text-ok font-medium hover:bg-ok-soft"
             >
               {t.sliceModeRectsClear}
             </button>
-            <span className="text-[10px] text-emerald-700/80 ml-auto">{t.sliceModeRectsHotkeys}</span>
+            <span className="text-[10px] text-ok/80 ml-auto">{t.sliceModeRectsHotkeys}</span>
           </div>
           {cellInfo && (
-            <p className="text-[11px] text-emerald-800 font-medium">
+            <p className="text-[11px] text-ok font-medium">
               {cellInfo.totalFrames} {t.frames}
             </p>
           )}
@@ -262,17 +262,17 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
       )}
 
       {manualOn && (
-        <div className="rounded-lg border border-orange-200 bg-orange-50/90 px-3 py-2 space-y-2">
-          <p className="text-xs text-orange-900 leading-relaxed">{t.sliceModeManualHint}</p>
+        <div className="rounded-lg border border-signal/25 bg-signal-soft px-3 py-2 space-y-2">
+          <p className="text-xs text-ink leading-relaxed">{t.sliceModeManualHint}</p>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-orange-900">{t.sliceModeManualDraw}</span>
+            <span className="text-xs font-semibold text-ink">{t.sliceModeManualDraw}</span>
             <button
               type="button"
               onClick={() => onDrawLineToolChange?.('vertical')}
               className={`text-xs px-2.5 py-1 rounded-md border font-medium ${
                 drawLineTool === 'vertical'
-                  ? 'bg-orange-600 text-white border-orange-700'
-                  : 'bg-white text-orange-800 border-orange-300'
+                  ? 'bg-signal-hover text-white border-signal-hover'
+                  : 'bg-white text-signal border-signal/40'
               }`}
               aria-pressed={drawLineTool === 'vertical'}
             >
@@ -283,8 +283,8 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
               onClick={() => onDrawLineToolChange?.('horizontal')}
               className={`text-xs px-2.5 py-1 rounded-md border font-medium ${
                 drawLineTool === 'horizontal'
-                  ? 'bg-orange-600 text-white border-orange-700'
-                  : 'bg-white text-orange-800 border-orange-300'
+                  ? 'bg-signal-hover text-white border-signal-hover'
+                  : 'bg-white text-signal border-signal/40'
               }`}
               aria-pressed={drawLineTool === 'horizontal'}
             >
@@ -307,7 +307,7 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
               type="button"
               onClick={onUndoManual}
               disabled={!canUndoManual}
-              className="text-xs px-2.5 py-1 rounded-md border border-orange-300 bg-white text-orange-800 font-medium hover:bg-orange-100 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+              className="text-xs px-2.5 py-1 rounded-md border border-signal/40 bg-white text-signal font-medium hover:bg-signal-soft disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
               title={t.sliceModeManualUndo}
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -317,7 +317,7 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
               type="button"
               onClick={onRedoManual}
               disabled={!canRedoManual}
-              className="text-xs px-2.5 py-1 rounded-md border border-orange-300 bg-white text-orange-800 font-medium hover:bg-orange-100 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+              className="text-xs px-2.5 py-1 rounded-md border border-signal/40 bg-white text-signal font-medium hover:bg-signal-soft disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
               title={t.sliceModeManualRedo}
             >
               <RotateCw className="w-3.5 h-3.5" />
@@ -326,21 +326,21 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
             <button
               type="button"
               onClick={onClearManualLines}
-              className="text-xs px-2.5 py-1 rounded-md border border-orange-300 bg-white text-orange-800 font-medium hover:bg-orange-100"
+              className="text-xs px-2.5 py-1 rounded-md border border-signal/40 bg-white text-signal font-medium hover:bg-signal-soft"
             >
               {t.sliceModeManualClear}
             </button>
             <button
               type="button"
               onClick={onSeedEqualManual}
-              className="text-xs px-2.5 py-1 rounded-md border border-orange-300 bg-white text-orange-800 font-medium hover:bg-orange-100"
+              className="text-xs px-2.5 py-1 rounded-md border border-signal/40 bg-white text-signal font-medium hover:bg-signal-soft"
             >
               {t.sliceModeManualSeedEqual}
             </button>
-            <span className="text-[10px] text-orange-700/80 ml-auto">{t.sliceModeManualHotkeys}</span>
+            <span className="text-[10px] text-signal/80 ml-auto">{t.sliceModeManualHotkeys}</span>
           </div>
           {cellInfo && (
-            <p className="text-[11px] text-orange-800 font-medium">
+            <p className="text-[11px] text-signal font-medium">
               {cellInfo.totalFrames} {t.frames} · {sliceSettings.cols}×{sliceSettings.rows}
             </p>
           )}
@@ -348,24 +348,24 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
       )}
 
       {ownershipOn && !manualOn && !rectsOn && (
-        <p className="text-xs text-blue-800 bg-blue-50/90 border border-blue-200 rounded-lg px-3 py-2 leading-relaxed">
+        <p className="text-xs text-ink bg-info-soft border border-info/25 rounded-lg px-3 py-2 leading-relaxed">
           {t.sliceModeOwnershipHint}
         </p>
       )}
 
       {/* Grid Size Controls — hidden in manual / rects mode */}
       {!hideGridInputs && (
-      <div className="bg-white/80 rounded-lg p-3 border border-blue-200/50">
+      <div className="bg-white/80 rounded-lg p-3 border border-info/25/50">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-semibold text-slate-700">{t.gridSize}</span>
           {cellInfo && (
-            <span className="text-xs text-blue-600 font-medium">
+            <span className="text-xs text-info font-medium">
               {cellInfo.totalFrames} {t.frames} · {cellInfo.cellWidth}×{cellInfo.cellHeight}px
             </span>
           )}
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200 flex-1">
+          <div className="flex items-center gap-2 bg-info-soft px-3 py-2 rounded-lg border border-info/25 flex-1">
             <span className="text-xs text-slate-600 font-medium min-w-[40px]">{t.cols} (Cols)</span>
             <input
               type="number"
@@ -374,7 +374,7 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
               value={sliceSettings.cols}
               onChange={onColsChange}
               disabled={lockGridSize}
-              className="flex-1 text-center text-sm font-bold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+              className="flex-1 text-center text-sm font-bold outline-none text-slate-900 focus:ring-2 focus:ring-signal-ring rounded bg-white px-2 py-1 border border-info/25 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
               aria-label={t.cols}
             />
             {cellInfo && (
@@ -384,7 +384,7 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
             )}
           </div>
 
-          <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200 flex-1">
+          <div className="flex items-center gap-2 bg-info-soft px-3 py-2 rounded-lg border border-info/25 flex-1">
             <span className="text-xs text-slate-600 font-medium min-w-[40px]">{t.rows} (Rows)</span>
             <input
               type="number"
@@ -393,7 +393,7 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
               value={sliceSettings.rows}
               onChange={onRowsChange}
               disabled={lockGridSize}
-              className="flex-1 text-center text-sm font-bold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+              className="flex-1 text-center text-sm font-bold outline-none text-slate-900 focus:ring-2 focus:ring-signal-ring rounded bg-white px-2 py-1 border border-info/25 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
               aria-label={t.rows}
             />
             {cellInfo && (
@@ -409,9 +409,9 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
       {/* X / Y padding & shift (equal / ownership grid only) */}
       {!hideGridInputs && (
         <>
-      <div className="bg-white/80 rounded-lg p-3 border border-blue-200/50">
+      <div className="bg-white/80 rounded-lg p-3 border border-info/25/50">
         <div className="flex items-center gap-2 mb-2">
-          <div className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded w-6 text-center">X</div>
+          <div className="text-xs font-bold text-info bg-info-soft px-2 py-1 rounded w-6 text-center">X</div>
           <span className="text-xs font-semibold text-slate-700">{t.horizontalAxis}</span>
         </div>
         <div className="space-y-3">
@@ -422,14 +422,14 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
                 <span>{t.scalePadding} (Padding)</span>
                 <span className="text-[10px] text-slate-400">{t.removeEdge}</span>
                 {sliceSettings.autoOptimized?.paddingX && (
-                  <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-semibold border border-green-200">
+                  <span className="text-[10px] text-ok bg-signal-soft px-1.5 py-0.5 rounded font-semibold border border-signal/25">
                     {t.autoOptimized}
                   </span>
                 )}
               </label>
               <span className={`text-xs font-bold px-2 py-0.5 rounded ${sliceSettings.autoOptimized?.paddingX
-                ? 'text-green-700 bg-green-50 border border-green-200'
-                : 'text-blue-700 bg-blue-50'
+                ? 'text-signal bg-signal-soft border border-signal/25'
+                : 'text-info bg-info-soft'
                 }`}>
                 {sliceSettings.paddingX}px
               </span>
@@ -442,7 +442,7 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
                 max={Math.floor(sheetDimensions.width * 0.4)}
                 value={sliceSettings.paddingX}
                 onChange={onPaddingXChange}
-                className="flex-1 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                className="flex-1 h-2 bg-info/30 rounded-lg appearance-none cursor-pointer"
                 aria-label={t.paddingX}
               />
               <span className="text-[10px] text-slate-400 w-8">{Math.floor(sheetDimensions.width * 0.4)}</span>
@@ -459,7 +459,7 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
                     autoOptimized: { ...p.autoOptimized, paddingX: false }
                   }));
                 }}
-                className="w-16 text-center text-xs font-semibold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200"
+                className="w-16 text-center text-xs font-semibold outline-none text-slate-900 focus:ring-2 focus:ring-signal-ring rounded bg-white px-2 py-1 border border-info/25"
                 aria-label={t.paddingX}
               />
             </div>
@@ -472,14 +472,14 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
                 <span>{t.shiftPosition} (Shift)</span>
                 <span className="text-[10px] text-slate-400">{t.fineTunePosition}</span>
                 {sliceSettings.autoOptimized?.shiftX && (
-                  <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-semibold border border-green-200">
+                  <span className="text-[10px] text-ok bg-signal-soft px-1.5 py-0.5 rounded font-semibold border border-signal/25">
                     {t.autoOptimized}
                   </span>
                 )}
               </label>
               <span className={`text-xs font-bold px-2 py-0.5 rounded ${sliceSettings.autoOptimized?.shiftX
-                ? 'text-green-700 bg-green-50 border border-green-200'
-                : 'text-blue-700 bg-blue-50'
+                ? 'text-signal bg-signal-soft border border-signal/25'
+                : 'text-info bg-info-soft'
                 }`}>
                 {sliceSettings.shiftX > 0 ? '+' : ''}{sliceSettings.shiftX}px
               </span>
@@ -492,7 +492,7 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
                 max={100}
                 value={sliceSettings.shiftX}
                 onChange={onShiftXChange}
-                className="flex-1 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                className="flex-1 h-2 bg-info/30 rounded-lg appearance-none cursor-pointer"
                 aria-label={t.shiftX}
               />
               <span className="text-[10px] text-slate-400 w-8">+100</span>
@@ -509,7 +509,7 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
                     autoOptimized: { ...p.autoOptimized, shiftX: false }
                   }));
                 }}
-                className="w-16 text-center text-xs font-semibold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200"
+                className="w-16 text-center text-xs font-semibold outline-none text-slate-900 focus:ring-2 focus:ring-signal-ring rounded bg-white px-2 py-1 border border-info/25"
                 aria-label={t.shiftX}
               />
             </div>
@@ -518,9 +518,9 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
       </div>
 
       {/* Y Axis Controls */}
-      <div className="bg-white/80 rounded-lg p-3 border border-blue-200/50">
+      <div className="bg-white/80 rounded-lg p-3 border border-info/25/50">
         <div className="flex items-center gap-2 mb-2">
-          <div className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded w-6 text-center">Y</div>
+          <div className="text-xs font-bold text-info bg-info-soft px-2 py-1 rounded w-6 text-center">Y</div>
           <span className="text-xs font-semibold text-slate-700">{t.verticalAxis}</span>
         </div>
         <div className="space-y-3">
@@ -531,14 +531,14 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
                 <span>{t.scalePadding} (Padding)</span>
                 <span className="text-[10px] text-slate-400">{t.removeEdge}</span>
                 {sliceSettings.autoOptimized?.paddingY && (
-                  <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-semibold border border-green-200">
+                  <span className="text-[10px] text-ok bg-signal-soft px-1.5 py-0.5 rounded font-semibold border border-signal/25">
                     {t.autoOptimized}
                   </span>
                 )}
               </label>
               <span className={`text-xs font-bold px-2 py-0.5 rounded ${sliceSettings.autoOptimized?.paddingY
-                ? 'text-green-700 bg-green-50 border border-green-200'
-                : 'text-blue-700 bg-blue-50'
+                ? 'text-signal bg-signal-soft border border-signal/25'
+                : 'text-info bg-info-soft'
                 }`}>
                 {sliceSettings.paddingY}px
               </span>
@@ -551,7 +551,7 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
                 max={Math.floor(sheetDimensions.height * 0.4)}
                 value={sliceSettings.paddingY}
                 onChange={onPaddingYChange}
-                className="flex-1 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                className="flex-1 h-2 bg-info/30 rounded-lg appearance-none cursor-pointer"
                 aria-label={t.paddingY}
               />
               <span className="text-[10px] text-slate-400 w-8">{Math.floor(sheetDimensions.height * 0.4)}</span>
@@ -568,7 +568,7 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
                     autoOptimized: { ...p.autoOptimized, paddingY: false }
                   }));
                 }}
-                className="w-16 text-center text-xs font-semibold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200"
+                className="w-16 text-center text-xs font-semibold outline-none text-slate-900 focus:ring-2 focus:ring-signal-ring rounded bg-white px-2 py-1 border border-info/25"
                 aria-label={t.paddingY}
               />
             </div>
@@ -581,14 +581,14 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
                 <span>{t.shiftPosition} (Shift)</span>
                 <span className="text-[10px] text-slate-400">{t.fineTunePosition}</span>
                 {sliceSettings.autoOptimized?.shiftY && (
-                  <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-semibold border border-green-200">
+                  <span className="text-[10px] text-ok bg-signal-soft px-1.5 py-0.5 rounded font-semibold border border-signal/25">
                     {t.autoOptimized}
                   </span>
                 )}
               </label>
               <span className={`text-xs font-bold px-2 py-0.5 rounded ${sliceSettings.autoOptimized?.shiftY
-                ? 'text-green-700 bg-green-50 border border-green-200'
-                : 'text-blue-700 bg-blue-50'
+                ? 'text-signal bg-signal-soft border border-signal/25'
+                : 'text-info bg-info-soft'
                 }`}>
                 {sliceSettings.shiftY > 0 ? '+' : ''}{sliceSettings.shiftY}px
               </span>
@@ -601,7 +601,7 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
                 max={100}
                 value={sliceSettings.shiftY}
                 onChange={onShiftYChange}
-                className="flex-1 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                className="flex-1 h-2 bg-info/30 rounded-lg appearance-none cursor-pointer"
                 aria-label={t.shiftY}
               />
               <span className="text-[10px] text-slate-400 w-8">+100</span>
@@ -618,7 +618,7 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
                     autoOptimized: { ...p.autoOptimized, shiftY: false }
                   }));
                 }}
-                className="w-16 text-center text-xs font-semibold outline-none text-slate-900 focus:ring-2 focus:ring-blue-400 rounded bg-white px-2 py-1 border border-blue-200"
+                className="w-16 text-center text-xs font-semibold outline-none text-slate-900 focus:ring-2 focus:ring-signal-ring rounded bg-white px-2 py-1 border border-info/25"
                 aria-label={t.shiftY}
               />
             </div>
@@ -630,19 +630,19 @@ export const SpriteSheetSliceControls: React.FC<SpriteSheetSliceControlsProps> =
 
       {/* Info Summary */}
       {cellInfo && (
-        <div className="bg-blue-100/50 rounded-lg p-2.5 border border-blue-300/50">
+        <div className="bg-info-soft/50 rounded-lg p-2.5 border border-info/40/50">
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="flex items-center justify-between">
               <span className="text-slate-600">{t.cellSize}</span>
-              <span className="font-bold text-blue-700">{cellInfo.cellWidth} × {cellInfo.cellHeight}px</span>
+              <span className="font-bold text-info">{cellInfo.cellWidth} × {cellInfo.cellHeight}px</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-600">{t.effectiveArea}</span>
-              <span className="font-bold text-blue-700">{cellInfo.effectiveWidth} × {cellInfo.effectiveHeight}px</span>
+              <span className="font-bold text-info">{cellInfo.effectiveWidth} × {cellInfo.effectiveHeight}px</span>
             </div>
             <div className="flex items-center justify-between col-span-2">
               <span className="text-slate-600">{t.totalFrames}</span>
-              <span className="font-bold text-blue-700">{cellInfo.totalFrames} {t.frames}</span>
+              <span className="font-bold text-info">{cellInfo.totalFrames} {t.frames}</span>
             </div>
           </div>
         </div>

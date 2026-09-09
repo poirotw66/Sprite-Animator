@@ -17,10 +17,10 @@ const DailyStickerRegistryPage = lazyWithRetry(() => import('./pages/DailySticke
 const PageLoader: React.FC = () => {
   const { t } = useLanguage();
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 flex items-center justify-center">
+    <div className="flex min-h-[100dvh] items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
-        <p className="text-slate-500 font-medium">{t.pageLoading}</p>
+        <Loader2 className="h-10 w-10 animate-spin text-signal" />
+        <p className="font-medium text-ink-muted">{t.pageLoading}</p>
       </div>
     </div>
   );

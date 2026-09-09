@@ -196,13 +196,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                     ? t.localDevelopmentKeyDetected
                     : t.apiKeyPlaceholder
                 }
-                className="w-full border border-slate-300 rounded-lg p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 outline-none pr-10 bg-white transition-all"
+                className="w-full border border-slate-300 rounded-lg p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus-visible:ring-signal focus:border-signal outline-none pr-10 bg-white transition-all"
                 aria-label={t.apiKeyLabel}
                 aria-describedby="api-key-description"
                 autoComplete="off"
               />
               {hasCustomKey && (
-                <div className="absolute right-3 top-3 text-green-600" title={t.usingCustomKey}>
+                <div className="absolute right-3 top-3 text-ok" title={t.usingCustomKey}>
                   <ShieldCheck className="w-4 h-4" />
                 </div>
               )}
@@ -211,7 +211,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
             {/* Status Indicator */}
             <div className="mt-2 flex items-center gap-2 text-xs">
               {hasCustomKey ? (
-                <span className="text-green-700 flex items-center gap-1.5 bg-green-50 px-2.5 py-1.5 rounded-lg border border-green-200 font-medium">
+                <span className="text-signal flex items-center gap-1.5 bg-signal-soft px-2.5 py-1.5 rounded-lg border border-signal/25 font-medium">
                   <ShieldCheck className="w-3.5 h-3.5" /> {t.usingCustomKey}
                 </span>
               ) : hasLocalDevelopmentKey ? (
@@ -219,7 +219,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                   <ShieldAlert className="w-3.5 h-3.5" /> {t.usingLocalDevelopmentKey}
                 </span>
               ) : (
-                <span className="text-amber-700 flex items-center gap-1.5 bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-200 font-medium">
+                <span className="text-amber-700 flex items-center gap-1.5 bg-warn-soft px-2.5 py-1.5 rounded-lg border border-warn/30 font-medium">
                   <ShieldAlert className="w-3.5 h-3.5" /> {t.noApiKeyConfigured}
                 </span>
               )}
@@ -233,8 +233,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
             )}
 
             {validationSuccess && (
-              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-xs text-green-700 font-medium flex items-center gap-1.5">
+              <div className="mt-3 p-3 bg-signal-soft border border-signal/25 rounded-lg">
+                <p className="text-xs text-signal font-medium flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4" />
                   {t.validationSuccess}
                 </p>
@@ -247,7 +247,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                 href="https://aistudio.google.com/app/apikey"
                 target="_blank"
                 rel="noreferrer"
-                className="text-orange-600 hover:text-orange-700 hover:underline ml-1 font-medium transition-colors"
+                className="text-signal hover:text-signal-hover hover:underline ml-1 font-medium transition-colors"
                 aria-label={t.getApiKey}
               >
                 {t.getApiKey}
@@ -263,7 +263,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
               id="model-select"
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
-              className="w-full border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 outline-none bg-white transition-all cursor-pointer"
+              className="w-full border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus-visible:ring-signal focus:border-signal outline-none bg-white transition-all cursor-pointer"
               aria-label={t.modelLabel}
             >
               {SUPPORTED_MODELS.map((model) => {
@@ -300,7 +300,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                     onClick={() => setOutputResolution(res as ImageResolution)}
                     className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition-colors ${
                       outputResolution === res
-                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        ? 'border-signal bg-signal-soft text-signal'
                         : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                     }`}
                   >
@@ -326,7 +326,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                     }
                     className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition-colors ${
                       stylePreviewResolution === res
-                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        ? 'border-signal bg-signal-soft text-signal'
                         : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                     }`}
                   >
@@ -350,7 +350,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
               value={hfToken}
               onChange={(e) => setHfToken(e.target.value)}
               placeholder={t.hfTokenPlaceholder}
-              className="w-full border border-slate-300 rounded-lg p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 outline-none pr-10 bg-white transition-all"
+              className="w-full border border-slate-300 rounded-lg p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus-visible:ring-signal focus:border-signal outline-none pr-10 bg-white transition-all"
               aria-label={t.hfTokenLabel}
               autoComplete="off"
             />
@@ -360,7 +360,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                 href="https://huggingface.co/settings/tokens"
                 target="_blank"
                 rel="noreferrer"
-                className="text-orange-600 hover:text-orange-700 hover:underline ml-1 font-medium transition-colors"
+                className="text-signal hover:text-signal-hover hover:underline ml-1 font-medium transition-colors"
               >
                 {t.getHfToken}
               </a>
@@ -371,7 +371,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                 href="https://huggingface.co/briaai/RMBG-2.0"
                 target="_blank"
                 rel="noreferrer"
-                className="text-orange-600 hover:text-orange-700 hover:underline ml-1 font-medium transition-colors"
+                className="text-signal hover:text-signal-hover hover:underline ml-1 font-medium transition-colors"
               >
                 {t.modelPageLink}
               </a>
@@ -382,7 +382,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
             <button
               onClick={handleSave}
               disabled={isValidating}
-              className="w-full bg-gradient-to-r from-slate-900 to-slate-800 text-white py-3 rounded-lg font-semibold hover:from-slate-800 hover:to-slate-700 transition-all duration-200 focus:ring-2 focus:ring-orange-500/50 focus:outline-none shadow-md hover:shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="ui-btn-primary w-full py-3"
               type="button"
               aria-label={t.saveAndApply}
             >

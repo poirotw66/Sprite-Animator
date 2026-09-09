@@ -27,7 +27,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = React.memo(({
 
       <div
         className={`border-2 border-dashed rounded-xl min-h-[160px] sm:min-h-[192px] h-48 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 relative overflow-hidden group touch-manipulation tap-highlight
-          ${sourceImage ? 'border-orange-300 bg-orange-50/50' : 'border-slate-300 hover:border-orange-400 hover:bg-slate-50 hover:shadow-sm active:bg-slate-100'}`}
+          ${sourceImage ? 'border-signal/40 bg-signal-soft' : 'border-slate-300 hover:border-signal hover:bg-slate-50 hover:shadow-sm active:bg-slate-100'}`}
         onDragOver={(e) => e.preventDefault()}
         onDrop={onDrop}
         onClick={() => fileInputRef.current?.click()}
@@ -59,7 +59,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = React.memo(({
           />
         ) : (
           <div className="text-center p-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-50 to-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200 shadow-sm">
+            <div className="w-12 h-12 bg-signal-soft text-signal rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200 shadow-sm">
               <ImageIcon className="w-6 h-6" />
             </div>
             <p className="text-slate-700 font-medium text-sm">{t.uploadHint}</p>

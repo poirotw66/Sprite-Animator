@@ -82,10 +82,10 @@ export const LineStickerUploadCard: React.FC<LineStickerUploadCardProps> = ({
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOverInner}
-        className={`w-full max-w-[280px] sm:max-w-[320px] mx-auto aspect-square rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 border-2 border-dashed ${
+        className={`w-full max-w-[280px] sm:max-w-[320px] mx-auto aspect-square rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 border-2 border-dashed ${
           isDragging
-            ? 'border-green-500 bg-green-50 scale-[1.01]'
-            : 'border-slate-200 hover:border-green-400 hover:bg-emerald-50/30 bg-slate-50/80'
+            ? 'border-signal bg-signal-soft scale-[1.01]'
+            : 'border-slate-200 hover:border-signal hover:bg-ok-soft bg-slate-50/80'
         }`}
       >
         {sourceImage ? (
@@ -94,7 +94,7 @@ export const LineStickerUploadCard: React.FC<LineStickerUploadCardProps> = ({
           <div className="text-center p-6">
             <Upload
               className={`w-11 h-11 mx-auto mb-3 transition-colors ${
-                isDragging ? 'text-green-600' : 'text-slate-400 group-hover:text-green-600'
+                isDragging ? 'text-ok' : 'text-slate-400 group-hover:text-ok'
               }`}
               aria-hidden
             />

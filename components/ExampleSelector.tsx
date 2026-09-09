@@ -38,27 +38,27 @@ export const ExampleSelector: React.FC<ExampleSelectorProps> = React.memo(({
   };
 
   return (
-    <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl border border-orange-200 overflow-hidden transition-all duration-300">
+    <div className="bg-signal-soft rounded-xl border border-signal/25 overflow-hidden transition-all duration-300">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-orange-100/50 transition-colors"
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-signal-soft/50 transition-colors"
         aria-expanded={isExpanded}
         aria-label={t.exampleTitle}
       >
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center shadow-sm">
+          <div className="w-8 h-8 bg-signal rounded-lg flex items-center justify-center shadow-sm">
             <Lightbulb className="w-5 h-5 text-white" />
           </div>
           <div className="text-left">
-            <h3 className="text-sm font-semibold text-orange-900">{t.exampleTitle}</h3>
-            <p className="text-xs text-orange-700">{t.exampleHint}</p>
+            <h3 className="text-sm font-semibold text-ink">{t.exampleTitle}</h3>
+            <p className="text-xs text-signal">{t.exampleHint}</p>
           </div>
         </div>
         {isExpanded ? (
-          <ChevronUp className="w-5 h-5 text-orange-700" />
+          <ChevronUp className="w-5 h-5 text-signal" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-orange-700" />
+          <ChevronDown className="w-5 h-5 text-signal" />
         )}
       </button>
 
@@ -75,17 +75,17 @@ export const ExampleSelector: React.FC<ExampleSelectorProps> = React.memo(({
                     onSelectExample(example);
                     setIsExpanded(false);
                   }}
-                  className="group text-left bg-white hover:bg-orange-50 border-2 border-orange-200 hover:border-orange-400 rounded-lg p-3 transition-all duration-200 hover:shadow-md active:scale-[0.98]"
+                  className="group text-left bg-white hover:bg-signal-soft border-2 border-signal/25 hover:border-signal rounded-lg p-3 transition-all duration-200 hover:shadow-md active:scale-[0.98]"
                   aria-label={`${t.exampleTitle}: ${localized.name}`}
                 >
                   <div className="flex items-start gap-2">
-                    <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                    <div className="flex-shrink-0 w-10 h-10 bg-signal rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                       <span className="text-white font-bold text-sm">
                         {example.gridCols}×{example.gridRows}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-sm text-slate-800 mb-0.5 truncate group-hover:text-orange-900 transition-colors">
+                      <h4 className="font-semibold text-sm text-slate-800 mb-0.5 truncate group-hover:text-ink transition-colors">
                         {localized.name}
                       </h4>
                       <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
@@ -93,7 +93,7 @@ export const ExampleSelector: React.FC<ExampleSelectorProps> = React.memo(({
                       </p>
                     </div>
                   </div>
-                  <div className="mt-2 pt-2 border-t border-orange-100">
+                  <div className="mt-2 pt-2 border-t border-signal/20">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-500">
                         {example.gridCols * example.gridRows} {t.frames}
@@ -101,7 +101,7 @@ export const ExampleSelector: React.FC<ExampleSelectorProps> = React.memo(({
                       <span className={`px-2 py-0.5 rounded-full text-white text-[10px] font-medium ${
                         example.chromaKeyColor === 'magenta' 
                           ? 'bg-pink-500' 
-                          : 'bg-green-600'
+                          : 'bg-signal'
                       }`}>
                         {example.chromaKeyColor === 'magenta' ? t.magentaBg : t.greenBg}
                       </span>
@@ -113,8 +113,8 @@ export const ExampleSelector: React.FC<ExampleSelectorProps> = React.memo(({
           </div>
           
           {/* Tip */}
-          <div className="mt-3 p-2.5 bg-orange-100/50 rounded-lg border border-orange-200">
-            <p className="text-xs text-orange-800 leading-relaxed">
+          <div className="mt-3 p-2.5 bg-signal-soft/50 rounded-lg border border-signal/25">
+            <p className="text-xs text-signal leading-relaxed">
               {t.exampleTip}
             </p>
           </div>

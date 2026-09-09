@@ -158,7 +158,7 @@ const LineStickerResultViewerSection: React.FC<LineStickerResultViewerSectionPro
             onClick={() => setShowOriginalInSpriteView((prev) => !prev)}
             className={`rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${
               showOriginalInSpriteView
-                ? 'border-amber-300 bg-amber-50 text-amber-800'
+                ? 'border-warn/40 bg-warn-soft text-warn'
                 : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
             }`}
           >
@@ -186,7 +186,7 @@ const LineStickerResultViewerSection: React.FC<LineStickerResultViewerSectionPro
               )
             }
             disabled={!viewer.effectiveProcessedSpriteSheet}
-            className="rounded-lg border border-emerald-200/80 bg-emerald-50/60 px-3 py-2 text-xs font-semibold text-emerald-800 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg border border-ok/25 bg-ok-soft px-3 py-2 text-xs font-semibold text-ok transition-colors hover:bg-ok-soft disabled:cursor-not-allowed disabled:opacity-50"
           >
             {t.downloadProcessed}
           </button>
@@ -194,7 +194,7 @@ const LineStickerResultViewerSection: React.FC<LineStickerResultViewerSectionPro
             type="button"
             disabled={viewer.effectiveIsProcessingChromaKey || !viewer.effectiveSpriteSheetImage}
             onClick={handleReRunCurrentChromaKey}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-teal-200/80 bg-teal-50/60 px-3 py-2 text-xs font-semibold text-teal-800 transition-colors hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-line/80 bg-teal-50/60 px-3 py-2 text-xs font-semibold text-teal-800 transition-colors hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {viewer.effectiveIsProcessingChromaKey ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
             {t.spriteSheetReRunChromaKey}
@@ -231,7 +231,7 @@ const LineStickerResultViewerSection: React.FC<LineStickerResultViewerSectionPro
         </Suspense>
 
         {viewer.resultSidePhraseEdit ? (
-          <div className="space-y-3 rounded-xl border border-emerald-200/70 bg-emerald-50/50 p-4">
+          <div className="space-y-3 rounded-xl border border-ok/25 bg-ok-soft p-4">
             <div>
               <h3 className="text-sm font-semibold text-slate-800">{t.lineStickerResultProgrammaticPhrasesTitle}</h3>
               <p className="text-xs text-slate-600 mt-1 leading-relaxed">{t.lineStickerResultProgrammaticPhrasesHint}</p>
@@ -257,7 +257,7 @@ const LineStickerResultViewerSection: React.FC<LineStickerResultViewerSectionPro
               <p className="mt-0.5 text-xs text-slate-500">{t.lineStickerPreviewCropHint}</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <button type="button" onClick={downloads.selectAll} className="text-xs font-semibold text-green-700 hover:text-green-800">
+              <button type="button" onClick={downloads.selectAll} className="text-xs font-semibold text-signal hover:text-signal-hover">
                 {t.lineStickerSelectAll}
               </button>
               <span className="hidden h-3 w-px bg-slate-200 sm:block" aria-hidden />
@@ -339,9 +339,9 @@ export const LineStickerResultPanel: React.FC<LineStickerResultPanelProps> = Rea
                 key={index}
                 type="button"
                 onClick={() => sheet.setCurrentSheetIndex(index)}
-                className={`min-h-[40px] rounded-lg px-4 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${
+                className={`min-h-[40px] rounded-lg px-4 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 ${
                   sheet.currentSheetIndex === index
-                    ? 'bg-white text-green-700 shadow-sm'
+                    ? 'bg-white text-signal shadow-sm'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
@@ -359,7 +359,7 @@ export const LineStickerResultPanel: React.FC<LineStickerResultPanelProps> = Rea
         </div>
       ) : null}
       {status.statusText ? (
-        <div className="mb-4 flex animate-in items-center gap-3 rounded-xl border border-emerald-200/80 bg-emerald-50/80 p-4 text-sm text-emerald-900 slide-in-from-top-2">
+        <div className="mb-4 flex animate-in items-center gap-3 rounded-xl border border-ok/25 bg-ok-soft p-4 text-sm text-ink slide-in-from-top-2">
           <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
           {status.statusText}
         </div>
