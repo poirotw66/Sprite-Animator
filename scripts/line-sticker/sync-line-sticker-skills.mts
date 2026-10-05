@@ -41,7 +41,7 @@ function assertDirectChild(root: string, target: string): void {
   }
 }
 
-function isForbidden(relativePath: string): boolean {
+export function isForbidden(relativePath: string): boolean {
   const normalized = relativePath.replaceAll('\\', '/');
   const parts = normalized.split('/');
   const fileName = parts.at(-1) ?? '';
@@ -49,10 +49,13 @@ function isForbidden(relativePath: string): boolean {
     FORBIDDEN_FILE_NAMES.has(fileName) ||
     /^playwright_line_state(?:\.[^.]+)?\.json$/u.test(fileName) ||
     /^playwright_drive_state(?:\.[^.]+)?\.json$/u.test(fileName) ||
-    fileName.endsWith('.pyc') ||
-    parts.includes('__pycache__') ||
     parts.includes('debug_snapshots')
   );
+}
+
+export function isIgnored(relativePath: string): boolean {
+  const parts = relativePath.replaceAll('\\', '/').split('/');
+  return parts.includes('__pycache__') || /\.py[co]$/u.test(parts.at(-1) ?? '');
 }
 
 async function listFiles(
@@ -68,7 +71,12 @@ async function listFiles(
       files.push(...(await listFiles(root, path, includeForbidden)));
     } else if (entry.isFile()) {
       const rel = relative(root, path).replaceAll('\\', '/');
-      if (includeForbidden || !isForbidden(rel)) files.push(rel);
+      // Ignored cache directories must never hide credentials or session files.
+      if (isForbidden(rel)) {
+        if (includeForbidden) files.push(rel);
+      } else if (!isIgnored(rel)) {
+        files.push(rel);
+      }
     }
   }
   return files.sort();
@@ -78,17 +86,17 @@ async function hashFile(path: string): Promise<string> {
   return createHash('sha256').update(await readFile(path)).digest('hex');
 }
 
-async function assertSourceClean(source: string): Promise<void> {
+export async function assertSourceClean(source: string): Promise<void> {
   const forbidden = (await listFiles(source, source, true)).filter(isForbidden);
   if (forbidden.length > 0) {
     throw new Error(
-      `Runtime secrets or generated artifacts found in canonical Skill ${relative(ROOT, source)}: ` +
+      `Forbidden credentials or debug artifacts found in canonical Skill ${relative(ROOT, source)}: ` +
         forbidden.join(', ')
     );
   }
 }
 
-async function directoriesMatch(source: string, target: string): Promise<boolean> {
+export async function directoriesMatch(source: string, target: string): Promise<boolean> {
   try {
     if (!(await stat(target)).isDirectory()) return false;
   } catch {
@@ -121,7 +129,7 @@ async function main(): Promise<void> {
   }
 
   for (const targetRoot of TARGET_ROOTS) {
-    await mkdir(targetRoot, { recursive: true });
+    if (!CHECK_ONLY) await mkdir(targetRoot, { recursive: true });
     for (const skill of SKILL_PACKAGES) {
       const source = resolve(SOURCE_ROOT, skill);
       const target = resolve(targetRoot, skill);
@@ -154,4 +162,6 @@ async function main(): Promise<void> {
   );
 }
 
-await main();
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  await main();
+}

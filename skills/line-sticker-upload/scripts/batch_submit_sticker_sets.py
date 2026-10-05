@@ -166,10 +166,10 @@ class SetJob:
     skip_drive: bool
     skip_provision: bool
     skip_zip: bool
-    skip_submit: bool
     headless_provision: bool
     no_pause_provision: bool
     continue_on_error: bool
+    submit: bool = False
 
 
 def worker_storage_path(worker_id: int) -> Path:
@@ -200,6 +200,7 @@ def process_one_set(job: SetJob) -> tuple[str, str | None, bool]:
         shutil.copy2(MASTER_STORAGE, worker_storage)
 
     child_env = os.environ.copy()
+    child_env["PYTHONDONTWRITEBYTECODE"] = "1"
     child_env["LINE_PLAYWRIGHT_STATE"] = str(worker_storage)
     env_flag = ["--env", str(env_path)]
 
@@ -249,7 +250,7 @@ def process_one_set(job: SetJob) -> tuple[str, str | None, bool]:
         ) and ok
 
     project_url: str | None = None
-    if not job.skip_submit and ok:
+    if job.submit and ok:
         submit_cmd = [py, str(scripts / "submit_line_review.py"), *env_flag, "--headless"]
         if run_step("Submit review", submit_cmd, continue_on_error=job.continue_on_error, env=child_env):
             env_data = load_env(env_path)
@@ -271,7 +272,7 @@ def process_one_set(job: SetJob) -> tuple[str, str | None, bool]:
     return name, project_url, ok
 
 
-def main() -> None:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Batch LINE sticker upload for folders under a base path.")
     parser.add_argument(
         "base_dir",
@@ -293,7 +294,16 @@ def main() -> None:
     parser.add_argument("--skip-drive", action="store_true")
     parser.add_argument("--skip-provision", action="store_true")
     parser.add_argument("--skip-zip", action="store_true")
-    parser.add_argument("--skip-submit", action="store_true")
+    submission = parser.add_mutually_exclusive_group()
+    submission.add_argument(
+        "--submit", action="store_true",
+        help="Submit for review after upload (requires explicit user authorization)",
+    )
+    submission.add_argument(
+        "--skip-submit", action="store_false", dest="submit",
+        help="Skip review submission (default; retained for compatibility)",
+    )
+    parser.set_defaults(submit=False)
     parser.add_argument(
         "--headless-provision",
         action="store_true",
@@ -323,7 +333,11 @@ def main() -> None:
         metavar="N",
         help="Process N sticker sets concurrently (default: 1)",
     )
-    args = parser.parse_args()
+    return parser.parse_args(argv)
+
+
+def main() -> None:
+    args = parse_args()
 
     base = args.base_dir.resolve()
     if not base.is_dir():
@@ -371,7 +385,7 @@ def main() -> None:
                 skip_drive=args.skip_drive,
                 skip_provision=args.skip_provision,
                 skip_zip=args.skip_zip,
-                skip_submit=args.skip_submit,
+                submit=args.submit,
                 headless_provision=args.headless_provision,
                 no_pause_provision=args.no_pause_provision,
                 continue_on_error=args.continue_on_error,

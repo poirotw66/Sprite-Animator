@@ -23,8 +23,10 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm exec vite -- --host localhost --port 4173 --strictPort',
+    // A local .env.local key changes the first-run dialog and must not enter tests.
+    env: { GEMINI_API_KEY: '' },
     url: 'http://localhost:4173',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
   },
 });

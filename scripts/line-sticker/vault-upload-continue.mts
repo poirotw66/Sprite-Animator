@@ -74,7 +74,7 @@ function checkReviewStatus(envRel: string, workerId: number): ReviewStatusResult
 
   const result = spawnSync(
     'uv',
-    ['run', '--locked', 'python', CHECK_STATUS_SCRIPT, '--env', envPath, '--headless'],
+    ['run', '--locked', 'python', '-B', CHECK_STATUS_SCRIPT, '--env', envPath, '--headless'],
     {
       cwd: ROOT,
       encoding: 'utf8',

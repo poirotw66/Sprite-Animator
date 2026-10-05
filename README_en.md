@@ -67,7 +67,7 @@
 
 2. **Install dependencies**:
    ```bash
-   npm install
+   npm ci
    ```
 
 3. **Set a local development key** (optional):
@@ -107,7 +107,7 @@
 1. Upload a character reference and fill in / generate sticker phrases
 2. Generate the set (multiple sheets), then slice, remove backgrounds, and download
 3. After a page refresh, the app tries to restore the previous job; if it is missing or corrupt, a notice is shown and you start from a blank job
-4. For advanced headless mass production / upload, see `.claude/skills/line-sticker-*` and `scripts/line-sticker/`
+4. For advanced headless mass production / upload, see `skills/line-sticker-*` and `scripts/line-sticker/`
 
 ### Advanced Sprite Sheet Features
 
@@ -187,6 +187,9 @@ More routes:
 The app uses hash routing so direct navigation and refreshes work reliably on GitHub Pages.
 
 ## 🔧 Development
+
+See [AGENTS.md](./AGENTS.md) for maintenance. `skills/` is canonical; after edits, run `npm run skills:sync:line-sticker` and `npm run skills:check:line-sticker` to refresh and verify both agent mirrors.
+
 
 After your first clone, run `graphify update .` to build the local code knowledge graph (writes to `graphify-out/`, ~15s, not versioned).
 

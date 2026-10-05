@@ -67,7 +67,7 @@
 
 2. **安裝依賴**：
    ```bash
-   npm install
+   npm ci
    ```
 
 3. **設定本機開發金鑰**（可選）：
@@ -107,7 +107,7 @@
 1. 上傳角色參考圖並填寫／生成貼圖文案
 2. 產生套圖（多張 sheet）並切片、去背、下載
 3. 重新整理頁面後，系統會嘗試還原上一份作業；若作業遺失或損毀，會顯示提示並從空白開始
-4. 進階 headless 量產／上傳請見 `.claude/skills/line-sticker-*` 與 `scripts/line-sticker/`
+4. 進階 headless 量產／上傳請見 `skills/line-sticker-*` 與 `scripts/line-sticker/`
 
 ### 精靈圖模式進階功能
 
@@ -187,6 +187,9 @@ Sprite-Animator/
 頁面採 hash routing，確保 GitHub Pages 上直接開啟或重新整理子頁面不會得到 404。
 
 ## 🔧 開發
+
+維護入口見 [AGENTS.md](./AGENTS.md)。`skills/` 為正式來源；修改後執行 `npm run skills:sync:line-sticker` 與 `npm run skills:check:line-sticker` 更新並驗證兩份代理副本。
+
 
 首次 clone 請執行 `graphify update .` 建立本地程式碼知識圖（產出至 `graphify-out/`，約 15 秒，不進版控）。
 

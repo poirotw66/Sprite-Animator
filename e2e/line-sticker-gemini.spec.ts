@@ -4,7 +4,8 @@ import { expect, test, type Page, type Route } from '@playwright/test';
 const TINY_PNG_BASE64 =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
-const FAKE_API_KEY = 'AIzaSyE2E_MOCK_LINE_STICKER_E2E_00000000';
+// Keep the mocked key visibly synthetic so repository secret scans stay useful.
+const FAKE_API_KEY = 'mock-line-sticker-e2e-key';
 
 function phraseLines(count: number): string {
   return Array.from({ length: count }, (_, index) => `- phrase-${index + 1}`).join('\n');

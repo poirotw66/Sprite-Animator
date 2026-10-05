@@ -40,7 +40,7 @@ try {
   assertUvAvailable();
   const result = spawnSync(
     'uv',
-    ['run', '--locked', 'python', CONVERT_PY, ...process.argv.slice(2)],
+    ['run', '--locked', 'python', '-B', CONVERT_PY, ...process.argv.slice(2)],
     { cwd: PROJECT_ROOT, stdio: 'inherit', env: process.env }
   );
   process.exit(result.status ?? 1);

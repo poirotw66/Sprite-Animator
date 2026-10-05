@@ -133,12 +133,15 @@ Set `ATTACH_REVIEW_FILES=false` in the batch env to skip 夾帶 even when sprite
 ### Batch upload (multiple sets)
 
 ```bash
-uv run --locked python skills/line-sticker-upload/scripts/batch_submit_sticker_sets.py \
+uv run --locked python -B skills/line-sticker-upload/scripts/batch_submit_sticker_sets.py \
   .line-upload/input/706
 ```
 
 Uses `credentials.env` + writes batch env files under `.line-upload/.env.batch/`.
 Also auto-skips Drive when `gdrive_credentials.json` is missing.
+Review submission is disabled by default. Only after explicit authorization for
+this batch, add `--submit` to the command above. Legacy `--skip-submit` remains
+accepted and leaves submission disabled; combining both flags is an error.
 
 ## Upload root layout
 

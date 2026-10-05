@@ -38,7 +38,7 @@
 | P1 | 靜態資產與 AI runtime 載入策略 | 已落地 WebP thumbnail、`assets/` 來源分離與 `dist:budget`；後續僅需維持門檻。 |
 | P2 | Browser-level AI 流程測試 | mock Gemini phrase／generate 基線已建立；變更相關狀態時擴充既有 mock。 |
 | P2 | LINE 貼圖 controller 維護 | controller 基線已完成；新增功能不得把 lifecycle 或 ViewModel mapping 搬回頁面。 |
-| P2 | 文件與 SKILL 路由 | 補齊根目錄 `AGENTS.md`，說明 canonical `skills/`、mirror 同步、必要 CI 與敏感設定處理。 |
+| P2 | 文件與 SKILL 路由維護 | 已建立根目錄 `AGENTS.md`；維持 canonical `skills/` 與兩份 mirror 一致，修改後執行 sync/check。 |
 
 ## 效能量測原則
 

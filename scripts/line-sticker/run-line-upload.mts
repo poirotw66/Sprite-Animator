@@ -48,7 +48,7 @@ function runPython(script: string, envPath: string, extraArgs: string[] = []): v
   if (script === 'upload_gdrive.py') {
     baseArgs.push('--project-root', PROJECT_ROOT);
   }
-  const result = spawnSync('uv', ['run', '--locked', 'python', ...baseArgs, ...extraArgs], {
+  const result = spawnSync('uv', ['run', '--locked', 'python', '-B', ...baseArgs, ...extraArgs], {
     cwd: PROJECT_ROOT,
     stdio: 'inherit',
     env: {
