@@ -42,6 +42,13 @@ npx tsx scripts/line-sticker/convert-sheet-v2.mts \
 See `line-sticker-maker` and `docs/workflows/sheet-converter-v2.md` for existing
 or pre-keyed sheets.
 
+For a requested transparent 4×5 / 37:40 sheet, read
+`skills/line-sticker-sprite-sheet/SKILL.md`. Generate → review slices → repack the
+final 2960×3200 canvas deterministically. Fix recoverable geometry by repacking,
+and reserve corrective image calls for content. Record text, character, action
+and cropping separately; unresolved content defects stay pending acceptance.
+This branch does not change the existing Gemini chroma workflow.
+
 Thin agent entry point. Full workflow, commands, and checklists:
 
 Read repo-root `docs/workflows/line-sticker-pipeline.md`.

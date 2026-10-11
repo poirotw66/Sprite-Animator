@@ -22,7 +22,11 @@ Keep the entire character, caption, props, strokes, outlines, shadows, and effec
 Target 30 pixels of completely transparent safety space along every cell edge; never less than 20 pixels at the recommended resolution.
 Scale that safety space proportionally if the output resolution differs.
 Nothing may cross a cell boundary, touch a neighboring sticker, or be clipped by the sheet edge.
-Use one clear expressive moment per cell. Keep captions readable at final sticker size.
+Use one clear expressive moment per cell, not simultaneous before/after actions.
+Give a cat exactly two front paws unless its supplied design explicitly differs. Assign plausible roles to each paw.
+Show unambiguous prop relationships and contact: cutting requires blades touching a ribbon with visibly separated ends.
+Show the complete intended character, including ears, paws, and tail. Do not substitute a bust unless explicitly requested.
+Keep captions readable at final sticker size.
 
 TRANSPARENCY — REQUIRED
 The background and all space between stickers must have actual transparent alpha pixels.
@@ -39,5 +43,8 @@ Do not add, omit, reorder, or repeat stickers.
 Produce the image itself. Do not replace the requested image with a JSON list or a textual description.
 ```
 
-For a repair prompt, keep this contract and name only the observed defects and
-specific affected cells. Keep correct captions and character details unchanged.
+For a content repair prompt, name only observed content defects and affected
+cells; preserve correct captions and character details. Recoverable ratio,
+resolution and gutter defects go to slicing/repacking, not another generation
+call. The requested generation size remains a target; the deterministic repacker
+builds the final exact canvas after slice review.

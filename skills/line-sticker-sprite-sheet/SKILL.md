@@ -1,16 +1,17 @@
 ---
 name: line-sticker-sprite-sheet
 description: >-
-  Create generation prompts, generate, or inspect one transparent 4-column by
-  5-row LINE sticker sprite sheet from a character reference and 20 phrase/action
+  Create prompts, generate and review slices, repack, or inspect one transparent
+  4-column by 5-row LINE sticker sprite sheet from a reference and 20 phrase/action
   pairs. Use for 20 格貼圖圖集、4×5 精靈圖、37:40 透明 PNG. Use phrase-design
   skills for writing a series and line-sticker-maker for slicing existing sheets.
 ---
 
 # LINE Sticker Sprite Sheet
 
-Produce one cleanly sliceable sheet with 20 independent stickers. This skill
-works with any supplied character; Huahua is a source example, not a required
+Produce one final sheet with 20 independent stickers using generation, slice
+review, and deterministic repacking. This skill works with any supplied
+character; Huahua is a source example, not a required
 identity. Read [source context](references/source-context.md) only when the user
 asks about the original conversation or its style.
 
@@ -23,7 +24,7 @@ Refresh generated mirrors with `npm run skills:sync:line-sticker` after edits.
 | --- | --- |
 | Sheet | One PNG, exactly 4 columns × 5 rows, 20 cells |
 | Aspect ratio | Exactly 37:40, width:height |
-| Recommended working size | 2960 × 3200 px |
+| Final production size | 2960 × 3200 px, built from reviewed slices |
 | Cell at that size | 740 × 640 px, matching a 370 × 320 final sticker's ratio |
 | Reading order | Left to right, then top to bottom; preserve input index order |
 | Safe boundary | Target 30 px, minimum 20 px of transparent space on all four sides of each working cell |
@@ -34,9 +35,10 @@ Refresh generated mirrors with `npm run skills:sync:line-sticker` after edits.
 Do not render white, gray, black, or checkerboard backgrounds. White fur,
 caption outlines, and character props are allowed foreground details. A viewer's
 transparency checkerboard is not proof that the pixels are transparent.
-The safety boundary is measured at 2960 × 3200; scale it proportionally for
-another resolution with the same ratio. Record actual dimensions rather than
-claiming the prompt's requested dimensions were produced.
+The final production canvas is fixed; original generation may have different
+dimensions. Preserve and report both sizes, including any upscaling. For
+inspection of existing sheets at another resolution, scale safety boundaries
+proportionally; do not relabel their measured dimensions.
 
 ## Inputs and modes
 
@@ -63,7 +65,11 @@ by the user. Creating this skill does not authorize a generation call.
 Read [generation prompt](references/generation-prompt.md), substitute the actual
 character/reference and all 20 pairs, and include the core contract on every
 sheet's prompt. Translate a multi-step action into one readable key moment while
-preserving the joke. Keep captions legible and poses distinct at sticker size.
+preserving the joke. Before generation, check one moment, plausible paw roles,
+clear prop contact and a complete intended character. Read
+[production review](references/production-review.md) for the preflight and
+independent text, character, action and cropping checks. Keep captions legible
+and poses distinct at sticker size.
 Planning slot labels may identify positions; instruct the generator never to
 render those labels or numbers.
 
@@ -76,10 +82,19 @@ silently switch providers if the selected workflow is unavailable.
 Save the original PNG and exact prompt when files can be exported. Preserve the
 original on repair; do not stretch a wrong-ratio sheet, paint a background away,
 or add an opaque alpha channel and call it transparent. Report any requested vs
-actual resolution difference. 2960 × 3200 is a recommended working target;
-37:40, the 4×5 layout, and genuine transparency remain required.
+actual resolution difference. Request 2960 × 3200, then build that exact final
+canvas from reviewed slices. Do not spend corrective image calls on recoverable
+geometry or spacing; repack proportionally with transparent margins instead.
 
-## Verification and repair
+## Slice review, repacking and verification
+
+For authorized production, follow [production review](references/production-review.md):
+**generate → slice → review each slice → repack → inspect final output**.
+Slicing into working pieces is part of making the requested sheet; exporting a
+LINE package still requires that scope. Use `line-sticker-maker` for V2 slicing
+and `--already-keyed` for genuine alpha sources. Repack the 20 ordered slices
+with `scripts/repack-sprite-sheet.mts`; it fixes final geometry without stretching
+art or changing captions. Preserve originals and disclose upscaling.
 
 From the Sprite-Animator repository root, run the read-only checker:
 
@@ -95,23 +110,21 @@ and exits nonzero for structural failures. It uses the repository's existing
 `sharp` dependency; outside the repository, use the canonical installed location
 or report that the dependency is unavailable.
 
-A structural pass still requires visual review of all 20 cells:
+A structural pass still requires independent `text`, `character`, `action` and
+`cropping` results for all 20 cells, including the final sticker-size review.
+Alpha tests cannot prove identity, text, actions, semantic backgrounds or the
+absence of missing/clipped content. Keep that review separate from geometry.
 
-- Match each caption and action to the input in reading order; check omissions,
-  duplicate stickers, wrong characters, incidental text, and rendered numbers.
-- Confirm character identity and readable captions at approximately 370 × 320.
-- Look for detached foreground fragments, painted background panels, checkerboard
-  pixels, clipping, and apparent cross-cell content. Alpha tests alone cannot
-  recognize semantic backgrounds or prove the correct content count.
+Identify content defects before the single corrective generation/edit attempt
+per sheet. Reslice recoverable cutting defects and repack geometry first. After
+that attempt, preserve unresolved defects as `pending-acceptance`, show affected
+cells to the user, and deliver only a review candidate until explicit acceptance
+is recorded. An accepted exception does not turn a failed content check into a
+pass. See the linked review reference for the per-cell record and acceptance
+rules. A missing original PNG or unavailable checker means transparency/geometry
+are unverified.
 
-Identify failed cells and defects before attempting a repair. For an authorized
-image task, make at most one corrective generation/edit attempt per sheet,
-then remeasure and review. Preserve partial outputs and report unresolved defects
-instead of repeatedly spending generation calls or declaring success. A missing
-original PNG or unavailable checker means transparency/geometry are unverified.
-
-Return the file path, actual dimensions, structural result, visual-review result,
-and remaining defects. Do not call the sheet upload-ready solely because the
-checker passes. Slicing/packaging is a separate requested step: read
-`line-sticker-maker` and use `--already-keyed` for verified transparent sheets.
-Do not upload or submit for review without explicit authorization.
+Return the original and final paths, both measured sizes, repack report,
+structural result, per-cell content review and any pending/accepted exceptions.
+Do not call the sheet upload-ready solely because geometry passes. Packaging,
+upload and review submission remain separately authorized steps.
