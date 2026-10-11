@@ -24,6 +24,7 @@ const SKILL_PACKAGES = [
   'line-sticker-maker',
   'line-sticker-phrase-design',
   'line-sticker-pipeline',
+  'line-sticker-sprite-sheet',
   'line-sticker-upload',
   'shared',
 ] as const;
