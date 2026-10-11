@@ -18,6 +18,7 @@ const TARGET_ROOTS = [
 const CHECK_ONLY = process.argv.includes('--check');
 
 const SKILL_PACKAGES = [
+  'huahua-line-sticker-series',
   'line-sticker-character-ref',
   'line-sticker-daily-factory',
   'line-sticker-maker',

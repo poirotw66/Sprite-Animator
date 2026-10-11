@@ -8,6 +8,7 @@
 
 | 使用者需求 | SKILL |
 |---|---|
+| 花花系列發想／下一彈／花花文案 JSON | `skills/huahua-line-sticker-series/SKILL.md` |
 | 角色參考圖／設定圖 | `skills/line-sticker-character-ref/SKILL.md` |
 | 貼圖文案／phrase-set JSON | `skills/line-sticker-phrase-design/SKILL.md` |
 | 從參考圖製作整套貼圖 | `skills/line-sticker-maker/SKILL.md` |
