@@ -33,7 +33,6 @@ class DemoScene extends Phaser.Scene {
   }
 }
 
-// eslint-disable-next-line no-new
 new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
