@@ -267,6 +267,9 @@ export interface Translations {
   homeSubtitle: string;
   spriteAnimatorTool: string;
   spriteAnimatorDesc: string;
+  openSpriteAnimator: string;
+  optionalStudioTools: string;
+  optionalStudioToolsHint: string;
   lineStickerTool: string;
   lineStickerDesc: string;
   comicTool: string;

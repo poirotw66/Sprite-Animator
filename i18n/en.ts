@@ -264,14 +264,20 @@ export const en: Translations = {
   languageEn: 'English',
 
   // Home Page
-  homeTitle: 'Sprite Toolbox',
-  homeSubtitle: 'Select a tool to get started',
+  homeTitle: 'Sprite Animator',
+  homeSubtitle:
+    'Turn a character image into frame animations and sprite sheets — chroma-key removal, grid slicing, APNG / GIF / ZIP export.',
   spriteAnimatorTool: 'Sprite Animator',
-  spriteAnimatorDesc: 'Upload character image, AI generates sprite sheet and splits into animation frames, supports GIF/APNG export',
+  spriteAnimatorDesc:
+    'Upload a character image, generate frame-by-frame or sprite-sheet animation with Gemini, then slice and export.',
+  openSpriteAnimator: 'Open Sprite Animator',
+  optionalStudioTools: 'Optional studio tools',
+  optionalStudioToolsHint:
+    'Extra workflows that reuse the same pipeline. Not required for core sprite animation.',
   lineStickerTool: 'LINE Sticker Maker',
-  lineStickerDesc: 'Upload character image, AI generates various expressions as sprite sheet, auto-split into LINE sticker assets',
+  lineStickerDesc: 'Optional: phrases, multi-sheet stickers, and IndexedDB job restore',
   comicTool: 'One-Page Comic',
-  comicDesc: 'Upload a character or describe a concept, generate a reference sheet and four-panel storyboard, then export a one-page comic PNG.',
+  comicDesc: 'Optional: concept → reference sheet → storyboard → one-page comic PNG',
   enterTool: 'Enter Tool',
   backToHome: 'Back to Home',
   pageLoading: 'Loading…',
@@ -285,7 +291,7 @@ export const en: Translations = {
   errorBoundaryHint: 'If the problem persists, clear your browser cache or contact support.',
 
   registryTool: 'Sticker Production Registry',
-  registryToolDesc: 'Browse daily-pack sticker-registry and batch plans; track characters, themes, and status',
+  registryToolDesc: 'Optional: browse daily-pack registry and batch plans',
   registryTitle: 'Sticker Production Registry',
   registrySubtitle: 'Load output/sticker-registry.json or batch-plan.json. Local dev server can auto-fetch from output/',
   registryUploadRegistry: 'Upload registry JSON',
