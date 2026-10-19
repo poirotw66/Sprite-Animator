@@ -53,25 +53,30 @@ describe('reviewed slice repacking', () => {
     await expect(repackSpriteSheet([jpeg, ...Array<Buffer>(19).fill(valid)])).rejects.toThrow('static PNG with alpha');
   });
 
-  it('resolves ordered paths relative to the list and refuses to overwrite existing artwork', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'sprite-repack-'));
-    try {
-      const names = Array.from({ length: 20 }, (_, i) => `${i + 1}.png`);
-      await Promise.all(names.map(async (name, i) => writeFile(join(directory, name), await slice(i))));
-      const list = join(directory, 'inputs.json');
-      const output = join(directory, 'final.png');
-      await writeFile(list, JSON.stringify(names));
-      const entry = resolve('skills/line-sticker-sprite-sheet/scripts/repack-sprite-sheet.mts');
-      const args = ['tsx', entry, '--inputs', list, '--out', output];
-      const result = JSON.parse(execFileSync('npx', args, { encoding: 'utf8' }));
-      expect(result.structural.structuralPass).toBe(true);
-      const before = await readFile(output);
-      expect(() => execFileSync('npx', args, { stdio: 'pipe' })).toThrow();
-      expect(await readFile(output)).toEqual(before);
-      await writeFile(list, JSON.stringify(Array<string>(20).fill(names[0]!)));
-      expect(() => execFileSync('npx', args, { stdio: 'pipe' })).toThrow();
-    } finally {
-      await rm(directory, { recursive: true, force: true });
-    }
-  });
+  // Spawns npx + sharp twice; under full-suite CI load the default 5s is tight.
+  it(
+    'resolves ordered paths relative to the list and refuses to overwrite existing artwork',
+    async () => {
+      const directory = await mkdtemp(join(tmpdir(), 'sprite-repack-'));
+      try {
+        const names = Array.from({ length: 20 }, (_, i) => `${i + 1}.png`);
+        await Promise.all(names.map(async (name, i) => writeFile(join(directory, name), await slice(i))));
+        const list = join(directory, 'inputs.json');
+        const output = join(directory, 'final.png');
+        await writeFile(list, JSON.stringify(names));
+        const entry = resolve('skills/line-sticker-sprite-sheet/scripts/repack-sprite-sheet.mts');
+        const args = ['tsx', entry, '--inputs', list, '--out', output];
+        const result = JSON.parse(execFileSync('npx', args, { encoding: 'utf8' }));
+        expect(result.structural.structuralPass).toBe(true);
+        const before = await readFile(output);
+        expect(() => execFileSync('npx', args, { stdio: 'pipe' })).toThrow();
+        expect(await readFile(output)).toEqual(before);
+        await writeFile(list, JSON.stringify(Array<string>(20).fill(names[0]!)));
+        expect(() => execFileSync('npx', args, { stdio: 'pipe' })).toThrow();
+      } finally {
+        await rm(directory, { recursive: true, force: true });
+      }
+    },
+    20_000,
+  );
 });
