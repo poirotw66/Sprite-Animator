@@ -20,37 +20,37 @@
    ```bash
    npm ci
    ```
-2. **Optional local key** — copy [`.env.example`](./.env.example) to `.env.local` and set `GEMINI_API_KEY` (see [API keys](#api-keys) below).
+2. **Optional local Gemini key** — copy [`.env.example`](./.env.example) to `.env.local` and set `GEMINI_API_KEY` for `npm run dev` only (see [API keys](#api-keys)). There is no OpenRouter env var; use Settings for OpenRouter.
 3. **Run**
    ```bash
    npm run dev
    ```
-   Open [http://localhost:3000](http://localhost:3000) — the app opens **Sprite Animator** at `/#/` (optional studio tools live at `/#/studio`).
+   Open [http://localhost:3000](http://localhost:3000) — the app opens **Sprite Animator** at `/#/` (optional studio tools live at `/#/studio`). In **Settings**, choose **Image provider** (`Google Gemini` or `OpenRouter (BYOK)`) and paste the matching key.
 
 Requirements: Node.js 20–26 (`>=20 <27`), npm 10+ (pinned to 10.9.2).
 
 ### Docker (web app only)
 
-Builds and serves the static SPA (no LINE factory / Python upload tools):
+Builds and serves the static SPA (no LINE factory / Python upload tools). The image does **not** bake in API keys:
 
 ```bash
 docker build -t sprite-animator .
 docker run --rm -p 8080:8080 sprite-animator
 ```
 
-Open [http://localhost:8080/](http://localhost:8080/). Use in-app Settings for your Gemini API key (BYOK).
+Open [http://localhost:8080/](http://localhost:8080/). Use in-app **Settings** → **Image provider** and paste a Gemini or OpenRouter key (BYOK / `sessionStorage`).
 
 ## What it does
 
 Upload one character image, describe an action (e.g. “Run Cycle”), and generate:
 
-- **Frame-by-frame mode** — one API call per frame for finer motion control  
-- **Sprite sheet mode** — one API call for a full grid (quota-friendly)  
+- **Frame-by-frame mode** — one API call per frame for finer motion control (**Gemini path today**)  
+- **Sprite sheet mode** — one API call for a full grid (quota-friendly; **Gemini or OpenRouter** via Settings)  
 - **Chroma-key background removal** (magenta / green) with Web Worker processing  
 - **Grid slicing** with padding, shift, and live preview  
 - **Export** APNG, GIF, ZIP (PNG frames + packed atlas), and **Aseprite-compatible JSON** (json-array + `frameTags`, Phaser `load.aseprite`-ready)
 
-Powered by the Google Gemini image API (bring your own key in the browser).
+Bring-your-own-key image generation: **Google Gemini** or **OpenRouter** (selectable in Settings). Keys stay in the browser tab (`sessionStorage`) and are never bundled.
 
 ### Engine export (ZIP / Aseprite)
 
@@ -114,13 +114,20 @@ Headless LINE mass-production / upload lives under `skills/line-sticker-*` and `
 
 | Context | How |
 |---------|-----|
-| **Local `npm run dev`** | Optional `GEMINI_API_KEY` in `.env.local` (from [`.env.example`](./.env.example)). Injected only for the Vite dev server (Gemini provider). |
-| **Hosted / production** | **Bring your own key (BYOK)** in Settings. Choose **Gemini** or **OpenRouter**; keys stay in `sessionStorage` for the tab and are never bundled. |
-| **Production builds** | API keys are **never** embedded in the client bundle. CI builds with a fake sentinel and fails if it appears in `dist/`. |
+| **Settings (BYOK)** | Gear → **Image provider**: `Google Gemini` or `OpenRouter (BYOK)`. Paste the matching key. Both keys are stored in `sessionStorage` for the current tab only and cleared when the tab closes. Never bundled. |
+| **Get a key** | Gemini: [Google AI Studio](https://aistudio.google.com/app/apikey). OpenRouter: [openrouter.ai/keys](https://openrouter.ai/keys). |
+| **Local `npm run dev` only** | Optional `GEMINI_API_KEY` in `.env.local` (from [`.env.example`](./.env.example)) fills Gemini when the Settings field is empty. **No** `OPENROUTER_*` env injection exists. |
+| **Docker / production** | Keys are **never** in the image or client bundle. Always use Settings BYOK. CI builds with a fake sentinel and fails if a real key appears in `dist/`. |
 
-Sprite Animator sheet generation goes through an `ImageProvider` abstraction (`services/imageProviders/`). LINE Sticker and Comic remain **Gemini-only** even if OpenRouter is selected for the core animator.
+**What each provider covers**
 
-Do not commit `.env.local` or paste keys into issues or job snapshots. Set quotas / billing limits on the provider side (Google AI / OpenRouter).
+| Surface | Provider |
+|---------|----------|
+| Sprite Animator **sheet** mode | Selected provider (`services/imageProviders/`) |
+| Sprite Animator **frame-by-frame** mode | Still the Gemini SDK path (`generateAnimationFrames`) — use **Google Gemini** in Settings for this mode |
+| LINE Sticker / One-Page Comic | **Gemini-only**, even if OpenRouter is selected for sheets |
+
+Do not commit `.env.local` or paste keys into issues or job snapshots. Set quotas / billing limits on the provider side.
 
 Optional: a Hugging Face token in Settings is only for on-demand AI background removal (`@huggingface/transformers`).
 
@@ -140,7 +147,8 @@ Same source character (`images/gemini.webp`), different action prompts:
 ```
 Sprite-Animator/
 ├── pages/SpriteAnimatorPage.tsx   # Core product
-├── services/gemini/               # Gemini generation (sprite / frames / optional tools)
+├── services/imageProviders/       # Gemini + OpenRouter BYOK (sheet generation)
+├── services/gemini/               # Gemini helpers (frames, prompts, optional LINE/comic)
 ├── hooks/                         # Sprite flow, export, animation…
 ├── utils/                         # Chroma key, slicing, constants
 ├── workers/                       # Chroma Web Worker
@@ -172,7 +180,7 @@ Push to `main` runs CI and deploys Pages when green. Enable **Settings → Pages
 
 ## Tech stack
 
-React 19 · Vite 6 · TypeScript · Tailwind CSS 4 · React Router 7 · Google Gemini (`@google/genai`) · upng-js · gifenc · jszip · optional `@huggingface/transformers` · Python/uv for optional LINE upload tooling
+React 19 · Vite 6 · TypeScript · Tailwind CSS 4 · React Router 7 · Google Gemini (`@google/genai`) · OpenRouter Images API (BYOK) · upng-js · gifenc · jszip · optional `@huggingface/transformers` · Python/uv for optional LINE upload tooling
 
 ## License
 
