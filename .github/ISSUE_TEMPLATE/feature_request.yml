@@ -1,0 +1,48 @@
+name: Feature request
+description: Suggest an improvement to Sprite Animator
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the capability you want. Prefer improvements to the **core Sprite Animator**
+        and engine exports; see [CONTRIBUTING.md](../../CONTRIBUTING.md).
+
+        **Never paste API keys or other secrets** into this issue. See [SECURITY.md](../../SECURITY.md).
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What problem does this solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How should it work from a user perspective?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Sprite Animator (core)
+        - Engine export / game engines
+        - Multi-provider / API settings
+        - Optional studio tools (LINE / Comic / Registry)
+        - Docs / DX / other
+    validations:
+      required: true

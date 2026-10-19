@@ -1,0 +1,77 @@
+name: Bug report
+description: Report a problem with Sprite Animator or related studio tools
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug.
+
+        **Never paste API keys, tokens, passwords, or session cookies** into this issue
+        (including screenshots of Settings). Use placeholders like `AIza…` / `sk-or-…`.
+        See [SECURITY.md](../../SECURITY.md).
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What went wrong in one or two sentences?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps someone else can follow.
+      placeholder: |
+        1. Open /#/
+        2. Upload …
+        3. Click …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Sprite Animator (core)
+        - Engine export (ZIP / Aseprite / Godot / manifest)
+        - Remove Background / Parting
+        - LINE Sticker / Comic / Registry (optional tools)
+        - Docs / CI / other
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser + OS, or Node version if CLI-related.
+      placeholder: e.g. Chrome 131 / macOS 15, or Node 20.19
+    validations:
+      required: false
+
+  - type: textarea
+    id: extras
+    attributes:
+      label: Additional context
+      description: Logs (redact secrets), sample prompts (no keys), or links.
+    validations:
+      required: false
