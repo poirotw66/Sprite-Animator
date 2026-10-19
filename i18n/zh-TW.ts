@@ -62,7 +62,8 @@ export const zhTW: Translations = {
   downloadApng: '下載 APNG (高清)',
   downloadGif: 'GIF',
   downloadZip: 'ZIP',
-  exportHint: '提示：點擊上方預覽區可暫停/播放。APNG 支援全彩半透明。',
+  downloadAsepriteJson: 'Aseprite JSON',
+  exportHint: '提示：點擊上方預覽區可暫停/播放。APNG 支援全彩半透明。ZIP 含 frames/、sprite-sheet.png 與可供 Phaser 載入的 Aseprite JSON。',
   exportSmoothHint: '✨ GIF/APNG 導出自動補幀，生成絲滑動畫 (24 FPS)',
 
   // Sprite Sheet Viewer
@@ -278,7 +279,7 @@ export const zhTW: Translations = {
   comicTool: '一頁式漫畫',
   comicDesc: '可選：概念 → 設定圖 → 分鏡 → 單頁漫畫 PNG',
   enterTool: '進入工具',
-  backToHome: '返回首頁',
+  backToHome: '工作室工具',
   pageLoading: '載入中…',
   errorBoundaryTitle: '發生錯誤',
   errorBoundarySubtitle: '應用程式遇到了一個意外錯誤',

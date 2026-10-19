@@ -385,7 +385,7 @@ const DailyStickerRegistryPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <Link
-              to="/"
+              to="/studio"
               className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors shrink-0"
             >
               <ArrowLeft className="w-5 h-5" />

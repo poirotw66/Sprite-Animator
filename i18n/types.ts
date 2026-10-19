@@ -64,6 +64,7 @@ export interface Translations {
   downloadApng: string;
   downloadGif: string;
   downloadZip: string;
+  downloadAsepriteJson: string;
   exportHint: string;
   exportSmoothHint: string;
 

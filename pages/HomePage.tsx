@@ -86,7 +86,7 @@ const HomePage: React.FC = () => {
 
       <main className="mx-auto flex max-w-6xl flex-col gap-10 md:gap-12">
         <Link
-          to="/sprite-animation"
+          to="/"
           className="group relative overflow-hidden rounded-xl border border-line bg-surface p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-signal/35 hover:shadow-md active:scale-[0.99] md:p-8"
         >
           <div

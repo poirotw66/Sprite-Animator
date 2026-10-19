@@ -161,6 +161,7 @@ const SpriteAnimatorPage: React.FC = () => {
     handleDownloadApng,
     handleDownloadGif,
     handleDownloadZip,
+    handleDownloadAsepriteJson,
     handleDownloadSpriteSheet,
   } = useExport(animationFrames, config);
 
@@ -459,6 +460,14 @@ const SpriteAnimatorPage: React.FC = () => {
     }
   }, [handleDownloadZip, handleExportError]);
 
+  const wrappedDownloadAsepriteJson = useCallback(async () => {
+    try {
+      await handleDownloadAsepriteJson();
+    } catch (err: unknown) {
+      handleExportError(new Error(getErrorMessage(err)));
+    }
+  }, [handleDownloadAsepriteJson, handleExportError]);
+
   const wrappedDownloadSpriteSheet = useCallback(() => {
     // Download the processed (chroma-key-removed) version if available
     const imageToDownload = processedSpriteSheet || spriteSheetImage;
@@ -496,7 +505,7 @@ const SpriteAnimatorPage: React.FC = () => {
         <div className="bg-white/95 backdrop-blur-md rounded-xl md:rounded-2xl shadow-sm border border-slate-200/60 p-3 sm:p-4 md:p-5 flex flex-wrap items-center justify-between gap-2 safe-left safe-right">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <Link
-              to="/"
+              to="/studio"
               className="min-h-[44px] min-w-[44px] p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 bg-white rounded-xl transition-all duration-200 shadow-sm border border-slate-200 hover:border-slate-300 hover:shadow-md cursor-pointer flex items-center justify-center touch-manipulation"
               title={t.backToHome}
             >
@@ -643,6 +652,7 @@ const SpriteAnimatorPage: React.FC = () => {
                 onDownloadApng={wrappedDownloadApng}
                 onDownloadGif={wrappedDownloadGif}
                 onDownloadZip={wrappedDownloadZip}
+                onDownloadAsepriteJson={wrappedDownloadAsepriteJson}
               />
             </Suspense>
 

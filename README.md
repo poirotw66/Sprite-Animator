@@ -25,9 +25,20 @@
    ```bash
    npm run dev
    ```
-   Open [http://localhost:3000](http://localhost:3000) → **Sprite Animator**.
+   Open [http://localhost:3000](http://localhost:3000) — the app opens **Sprite Animator** at `/#/` (optional studio tools live at `/#/studio`).
 
 Requirements: Node.js 20–26 (`>=20 <27`), npm 10+ (pinned to 10.9.2).
+
+### Docker (web app only)
+
+Builds and serves the static SPA (no LINE factory / Python upload tools):
+
+```bash
+docker build -t sprite-animator .
+docker run --rm -p 8080:8080 sprite-animator
+```
+
+Open [http://localhost:8080/](http://localhost:8080/). Use in-app Settings for your Gemini API key (BYOK).
 
 ## What it does
 
@@ -37,9 +48,37 @@ Upload one character image, describe an action (e.g. “Run Cycle”), and gener
 - **Sprite sheet mode** — one API call for a full grid (quota-friendly)  
 - **Chroma-key background removal** (magenta / green) with Web Worker processing  
 - **Grid slicing** with padding, shift, and live preview  
-- **Export** APNG, GIF, or a ZIP of PNG frames  
+- **Export** APNG, GIF, ZIP (PNG frames + packed atlas), and **Aseprite-compatible JSON** (json-array + `frameTags`, Phaser `load.aseprite`-ready)
 
 Powered by the Google Gemini image API (bring your own key in the browser).
+
+### Engine export (ZIP / Aseprite)
+
+Downloading **ZIP** produces:
+
+| Path | Contents |
+|------|----------|
+| `frames/frame_XXX.png` | Individual frames |
+| `sprite-sheet.png` | Packed atlas (grid when sheet mode fits; otherwise a horizontal strip) |
+| `sprite-sheet.json` | Aseprite `--format json-array` metadata (`frames[]`, `meta.image`, `meta.frameTags`) |
+| `manifest.json` | Compact engine manifest: `cols` / `rows`, frame size, `fps`, `frameCount`, `loop`, sheet paths |
+| `animation.tres` | Godot 4 `SpriteFrames` pointing at `frames/*.png` |
+
+`manifest.json` schema (`schemaVersion: 1`) is meant for custom loaders and quick inspection without parsing Aseprite JSON.
+
+See [Engine export formats](./docs/animation/ENGINE_EXPORT.md) for Phaser / Godot import notes.
+
+You can also download **Aseprite JSON** alone from the preview toolbar (pairs with the atlas inside the ZIP).
+
+**Phaser example** (after unpacking the ZIP):
+
+```js
+this.load.aseprite('hero', 'sprite-sheet.png', 'sprite-sheet.json');
+// later:
+this.anims.createFromAseprite('hero');
+```
+
+Frame durations follow the current playback FPS (`speed × 3` ms per frame).
 
 ### Optional studio tools
 

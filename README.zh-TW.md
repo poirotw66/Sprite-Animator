@@ -25,9 +25,20 @@
    ```bash
    npm run dev
    ```
-   開啟 [http://localhost:3000](http://localhost:3000) → **Sprite Animator**。
+   開啟 [http://localhost:3000](http://localhost:3000) — 預設進入 **Sprite Animator**（`/#/`；可選工作室工具在 `/#/studio`）。
 
 環境：Node.js 20–26（`>=20 <27`）、npm 10+（專案鎖定 10.9.2）。
+
+### Docker（僅網站）
+
+建置並提供靜態 SPA（不含 LINE 工廠／Python 上傳工具）：
+
+```bash
+docker build -t sprite-animator .
+docker run --rm -p 8080:8080 sprite-animator
+```
+
+開啟 [http://localhost:8080/](http://localhost:8080/)。請在應用設定以 BYOK 填入自己的 Gemini API Key。
 
 ## 核心功能
 
@@ -35,9 +46,36 @@
 - **精靈圖模式**：一次請求產出整張網格（較省 API 配額）
 - **色鍵去背**（洋紅／綠幕）＋ Web Worker
 - **網格切分**（padding／shift、即時預覽）
-- **匯出** APNG、GIF、或 PNG 幀 ZIP
+- **匯出** APNG、GIF、ZIP（PNG 幀 + 打包圖集），以及 **Aseprite 相容 JSON**（json-array + `frameTags`，可供 Phaser `load.aseprite` 載入）
 
 使用 Google Gemini 圖像 API（瀏覽器內自行填入 API Key）。
+
+### 引擎匯出（ZIP／Aseprite）
+
+下載 **ZIP** 會包含：
+
+| 路徑 | 內容 |
+|------|------|
+| `frames/frame_XXX.png` | 個別幀 |
+| `sprite-sheet.png` | 打包圖集（sheet 模式可用網格；否則水平條） |
+| `sprite-sheet.json` | Aseprite `--format json-array` 中繼資料 |
+| `manifest.json` | 精簡引擎清單：`cols`／`rows`、幀尺寸、`fps`、`frameCount`、`loop`、圖集路徑 |
+| `animation.tres` | Godot 4 `SpriteFrames`（指向 `frames/*.png`） |
+
+`manifest.json`（`schemaVersion: 1`）方便自訂載入器或快速檢視，不必解析完整 Aseprite JSON。
+
+Phaser／Godot 匯入說明見 [Engine export formats](./docs/animation/ENGINE_EXPORT.md)。
+
+預覽工具列也可單獨下載 **Aseprite JSON**（與 ZIP 內圖集配對使用）。
+
+**Phaser 範例：**
+
+```js
+this.load.aseprite('hero', 'sprite-sheet.png', 'sprite-sheet.json');
+this.anims.createFromAseprite('hero');
+```
+
+幀時長依目前播放 FPS（`speed × 3`）。
 
 ### 可選工作室工具
 

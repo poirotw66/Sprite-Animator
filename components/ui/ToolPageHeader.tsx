@@ -29,8 +29,8 @@ export const ToolPageHeader: React.FC<ToolPageHeaderProps> = ({
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex min-w-0 items-center gap-3">
         <Link
-          to="/"
-          aria-label="Back to home"
+          to="/studio"
+          aria-label="Back to studio tools"
           className="ui-btn-ghost min-h-[44px] min-w-[44px] px-0"
         >
           <ArrowLeft className="h-5 w-5" />

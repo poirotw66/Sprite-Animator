@@ -62,7 +62,8 @@ export const en: Translations = {
   downloadApng: 'Download APNG (HD)',
   downloadGif: 'GIF',
   downloadZip: 'ZIP',
-  exportHint: 'Tip: Click preview area to play/pause. APNG supports full-color transparency.',
+  downloadAsepriteJson: 'Aseprite JSON',
+  exportHint: 'Tip: Click preview area to play/pause. APNG supports full-color transparency. ZIP includes frames/, sprite-sheet.png, and Aseprite JSON for Phaser.',
   exportSmoothHint: '✨ GIF/APNG export with frame interpolation for smooth animation (24 FPS)',
 
   // Sprite Sheet Viewer
@@ -279,7 +280,7 @@ export const en: Translations = {
   comicTool: 'One-Page Comic',
   comicDesc: 'Optional: concept → reference sheet → storyboard → one-page comic PNG',
   enterTool: 'Enter Tool',
-  backToHome: 'Back to Home',
+  backToHome: 'Studio tools',
   pageLoading: 'Loading…',
   errorBoundaryTitle: 'Something went wrong',
   errorBoundarySubtitle: 'The app hit an unexpected error',
