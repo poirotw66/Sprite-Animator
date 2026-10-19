@@ -8,7 +8,9 @@ import JSZip from 'jszip';
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 import {
   buildAsepriteExport,
+  buildSpriteExportManifest,
   downloadBlob,
+  stringifySpriteExportManifest,
   timingFromPlaybackSpeed,
 } from '../utils/engineExport';
 
@@ -161,6 +163,12 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
         timing,
         ...packGrid,
       });
+      const manifestText = stringifySpriteExportManifest(
+        buildSpriteExportManifest({
+          layout: asepriteExport.layout,
+          timing,
+        }),
+      );
 
       generatedFrames.forEach((frame, index) => {
         const base64Data = frame.replace(/^data:image\/(png|jpg|jpeg);base64,/, '');
@@ -170,6 +178,7 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
 
       zip.file(asepriteExport.sheetFileName, asepriteExport.sheetPngBytes);
       zip.file(asepriteExport.asepriteFileName, asepriteExport.asepriteJsonText);
+      zip.file('manifest.json', manifestText);
 
       const content = await zip.generateAsync({ type: 'blob' });
       downloadBlob(content, 'sprite-export.zip');

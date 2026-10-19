@@ -1,12 +1,13 @@
 import { buildAsepriteJsonArray, stringifyAsepriteJson } from './asepriteJson';
 import { packSpriteSheetFromFrameDataUrls } from './packSpriteSheet';
-import type { EngineExportTiming } from './types';
+import type { EngineExportLayout, EngineExportTiming } from './types';
 
 export interface AsepriteExportFiles {
   sheetFileName: string;
   asepriteFileName: string;
   sheetPngBytes: Uint8Array;
   asepriteJsonText: string;
+  layout: EngineExportLayout;
 }
 
 export function buildAsepriteExport(input: {
@@ -38,5 +39,6 @@ export function buildAsepriteExport(input: {
     asepriteFileName,
     sheetPngBytes: packed.sheetPngBytes,
     asepriteJsonText: stringifyAsepriteJson(aseprite),
+    layout: packed.layout,
   };
 }

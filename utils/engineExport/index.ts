@@ -9,6 +9,14 @@ export type {
 } from './asepriteJson';
 export { downloadBlob } from './downloadBlob';
 export { layoutFrames } from './layoutFrames';
+export {
+  buildSpriteExportManifest,
+  stringifySpriteExportManifest,
+} from './manifestJson';
+export type {
+  BuildSpriteExportManifestInput,
+  SpriteExportManifest,
+} from './manifestJson';
 export { packSpriteSheetFromFrameDataUrls } from './packSpriteSheet';
 export { timingFromPlaybackSpeed } from './timing';
 export type {

@@ -50,6 +50,9 @@ Downloading **ZIP** produces:
 | `frames/frame_XXX.png` | Individual frames |
 | `sprite-sheet.png` | Packed atlas (grid when sheet mode fits; otherwise a horizontal strip) |
 | `sprite-sheet.json` | Aseprite `--format json-array` metadata (`frames[]`, `meta.image`, `meta.frameTags`) |
+| `manifest.json` | Compact engine manifest: `cols` / `rows`, frame size, `fps`, `frameCount`, `loop`, sheet paths |
+
+`manifest.json` schema (`schemaVersion: 1`) is meant for custom loaders and quick inspection without parsing Aseprite JSON.
 
 You can also download **Aseprite JSON** alone from the preview toolbar (pairs with the atlas inside the ZIP).
 
