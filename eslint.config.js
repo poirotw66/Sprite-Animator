@@ -15,12 +15,23 @@ export default tseslint.config(
       'md/**',
       'docs/**',
       'example/**',
+      'examples/**',
       'images/**',
       'removed_bg_*.png',
     ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  {
+    files: ['scripts/**/*.{js,mjs,cjs}'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
