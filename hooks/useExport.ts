@@ -8,6 +8,7 @@ import JSZip from 'jszip';
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 import {
   buildAsepriteExport,
+  buildGodotSpriteFramesTres,
   buildSpriteExportManifest,
   downloadBlob,
   stringifySpriteExportManifest,
@@ -176,9 +177,17 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
         zip.file(fileName, base64Data, { base64: true });
       });
 
+      const godotTres = buildGodotSpriteFramesTres({
+        frameCount: generatedFrames.length,
+        timing,
+        framesDirectory: 'frames',
+        animationName: 'default',
+      });
+
       zip.file(asepriteExport.sheetFileName, asepriteExport.sheetPngBytes);
       zip.file(asepriteExport.asepriteFileName, asepriteExport.asepriteJsonText);
       zip.file('manifest.json', manifestText);
+      zip.file('animation.tres', godotTres);
 
       const content = await zip.generateAsync({ type: 'blob' });
       downloadBlob(content, 'sprite-export.zip');

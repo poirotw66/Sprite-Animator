@@ -49,8 +49,11 @@
 | `sprite-sheet.png` | 打包圖集（sheet 模式可用網格；否則水平條） |
 | `sprite-sheet.json` | Aseprite `--format json-array` 中繼資料 |
 | `manifest.json` | 精簡引擎清單：`cols`／`rows`、幀尺寸、`fps`、`frameCount`、`loop`、圖集路徑 |
+| `animation.tres` | Godot 4 `SpriteFrames`（指向 `frames/*.png`） |
 
 `manifest.json`（`schemaVersion: 1`）方便自訂載入器或快速檢視，不必解析完整 Aseprite JSON。
+
+Phaser／Godot 匯入說明見 [Engine export formats](./docs/animation/ENGINE_EXPORT.md)。
 
 預覽工具列也可單獨下載 **Aseprite JSON**（與 ZIP 內圖集配對使用）。
 

@@ -8,6 +8,7 @@ export type {
   BuildAsepriteJsonArrayInput,
 } from './asepriteJson';
 export { downloadBlob } from './downloadBlob';
+export { buildGodotSpriteFramesTres } from './godotSpriteFrames';
 export { layoutFrames } from './layoutFrames';
 export {
   buildSpriteExportManifest,

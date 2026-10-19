@@ -51,8 +51,11 @@ Downloading **ZIP** produces:
 | `sprite-sheet.png` | Packed atlas (grid when sheet mode fits; otherwise a horizontal strip) |
 | `sprite-sheet.json` | Aseprite `--format json-array` metadata (`frames[]`, `meta.image`, `meta.frameTags`) |
 | `manifest.json` | Compact engine manifest: `cols` / `rows`, frame size, `fps`, `frameCount`, `loop`, sheet paths |
+| `animation.tres` | Godot 4 `SpriteFrames` pointing at `frames/*.png` |
 
 `manifest.json` schema (`schemaVersion: 1`) is meant for custom loaders and quick inspection without parsing Aseprite JSON.
+
+See [Engine export formats](./docs/animation/ENGINE_EXPORT.md) for Phaser / Godot import notes.
 
 You can also download **Aseprite JSON** alone from the preview toolbar (pairs with the atlas inside the ZIP).
 
