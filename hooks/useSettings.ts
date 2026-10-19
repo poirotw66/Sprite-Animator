@@ -1,10 +1,18 @@
 import { useState, useEffect } from 'react';
-import { DEFAULT_MODEL, DEFAULT_OUTPUT_RESOLUTION, MODEL_RESOLUTIONS, SUPPORTED_MODELS, defaultResolutionForModel } from '../utils/constants';
 import type { ImageResolution } from '../utils/constants';
 import { getLocalDevelopmentGeminiApiKey } from '../utils/localDevelopmentGeminiApiKey';
 import { loadSessionCredentials, saveSessionCredentials } from '../utils/credentialStorage';
+import {
+  defaultModelForProvider,
+  defaultResolutionForProviderModel,
+  isImageProviderId,
+  resolutionsForModel,
+  resolveModelForProvider,
+  type ImageProviderId,
+} from '../services/imageProviders';
 
 const MODEL_STORAGE_KEY = 'gemini_model';
+const PROVIDER_STORAGE_KEY = 'image_provider';
 const OUTPUT_RESOLUTION_STORAGE_KEY = 'gemini_output_resolution';
 const STYLE_PREVIEW_RESOLUTION_STORAGE_KEY = 'gemini_style_preview_resolution';
 
@@ -14,73 +22,82 @@ const LEGACY_MODEL_IDS: Record<string, string> = {
   'gemini-3.1-flash-image-preview': 'gemini-3.1-flash-image',
 };
 
-function resolveStoredModel(storedModel: string | null): string {
-  if (!storedModel) {
-    return DEFAULT_MODEL;
-  }
-  const migrated = LEGACY_MODEL_IDS[storedModel] ?? storedModel;
-  if ((SUPPORTED_MODELS as readonly string[]).includes(migrated)) {
-    return migrated;
-  }
-  return DEFAULT_MODEL;
+function resolveStoredProvider(stored: string | null): ImageProviderId {
+  if (stored && isImageProviderId(stored)) return stored;
+  return 'gemini';
+}
+
+export interface SaveSettingsArgs {
+  apiKey: string;
+  model: string;
+  hfToken?: string;
+  outputResolution?: ImageResolution;
+  stylePreviewResolution?: ImageResolution;
+  imageProvider?: ImageProviderId;
+  openRouterApiKey?: string;
 }
 
 /**
  * Custom hook for managing application settings including API key and model selection.
- * Handles localStorage persistence and a local-development-only fallback.
- * 
- * @returns Object containing settings state and management functions
- * 
- * @example
- * ```typescript
- * const {
- *   apiKey,
- *   setApiKey,
- *   selectedModel,
- *   showSettings,
- *   saveSettings,
- *   getEffectiveApiKey
- * } = useSettings();
- * ```
+ * Keys stay in sessionStorage (never bundled). Provider preference is in localStorage.
  */
 export const useSettings = () => {
   const [apiKey, setApiKey] = useState('');
-  const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL);
-  const [outputResolution, setOutputResolution] = useState<ImageResolution>(DEFAULT_OUTPUT_RESOLUTION);
+  const [openRouterApiKey, setOpenRouterApiKey] = useState('');
+  const [imageProvider, setImageProvider] = useState<ImageProviderId>('gemini');
+  const [selectedModel, setSelectedModel] = useState(defaultModelForProvider('gemini'));
+  const [outputResolution, setOutputResolution] = useState<ImageResolution>(
+    defaultResolutionForProviderModel('gemini', defaultModelForProvider('gemini')),
+  );
   const [stylePreviewResolution, setStylePreviewResolution] =
     useState<ImageResolution>('1K');
   const [hfToken, setHfToken] = useState('');
   const [showSettings, setShowSettings] = useState(false);
 
-  // Load settings from local storage on mount
   useEffect(() => {
     const credentials = loadSessionCredentials();
-    const storedModel = localStorage.getItem(MODEL_STORAGE_KEY);
-    const storedResolution = localStorage.getItem(OUTPUT_RESOLUTION_STORAGE_KEY) as ImageResolution | null;
+    const storedProvider = resolveStoredProvider(
+      localStorage.getItem(PROVIDER_STORAGE_KEY),
+    );
+    const storedModelRaw = localStorage.getItem(MODEL_STORAGE_KEY);
+    const storedModelMigrated = storedModelRaw
+      ? (LEGACY_MODEL_IDS[storedModelRaw] ?? storedModelRaw)
+      : null;
+    const storedResolution = localStorage.getItem(
+      OUTPUT_RESOLUTION_STORAGE_KEY,
+    ) as ImageResolution | null;
     const storedStylePreviewResolution = localStorage.getItem(
-      STYLE_PREVIEW_RESOLUTION_STORAGE_KEY
+      STYLE_PREVIEW_RESOLUTION_STORAGE_KEY,
     ) as ImageResolution | null;
 
     if (credentials.apiKey) setApiKey(credentials.apiKey);
+    if (credentials.openRouterApiKey) {
+      setOpenRouterApiKey(credentials.openRouterApiKey);
+    }
     if (credentials.hfToken) setHfToken(credentials.hfToken);
 
-    // Validate stored model or force update to the recommended one
-    const model = resolveStoredModel(storedModel);
+    setImageProvider(storedProvider);
+    localStorage.setItem(PROVIDER_STORAGE_KEY, storedProvider);
+
+    const model = resolveModelForProvider(storedProvider, storedModelMigrated);
     setSelectedModel(model);
-    if (!storedModel || model !== storedModel) {
+    if (!storedModelRaw || model !== storedModelRaw) {
       localStorage.setItem(MODEL_STORAGE_KEY, model);
     }
 
-    // Output resolution: must be allowed for current model (2.5 Flash = 1K only; 3 Pro = 1K/2K/4K)
-    const allowed = MODEL_RESOLUTIONS[model] ?? ['1K'];
-    const resolution = storedResolution && allowed.includes(storedResolution) ? storedResolution : defaultResolutionForModel(model);
+    const allowed = resolutionsForModel(storedProvider, model);
+    const resolution =
+      storedResolution && allowed.includes(storedResolution)
+        ? storedResolution
+        : defaultResolutionForProviderModel(storedProvider, model);
     setOutputResolution(resolution);
     if (!storedResolution || !allowed.includes(storedResolution)) {
       localStorage.setItem(OUTPUT_RESOLUTION_STORAGE_KEY, resolution);
     }
 
     const stylePreviewResolution =
-      storedStylePreviewResolution && allowed.includes(storedStylePreviewResolution)
+      storedStylePreviewResolution &&
+      allowed.includes(storedStylePreviewResolution)
         ? storedStylePreviewResolution
         : ('1K' as ImageResolution);
     setStylePreviewResolution(stylePreviewResolution);
@@ -90,21 +107,25 @@ export const useSettings = () => {
     ) {
       localStorage.setItem(
         STYLE_PREVIEW_RESOLUTION_STORAGE_KEY,
-        stylePreviewResolution
+        stylePreviewResolution,
       );
     }
 
-    // If no key is found, show settings automatically
-    if (!credentials.apiKey && !getLocalDevelopmentGeminiApiKey()) {
+    const hasGemini =
+      !!credentials.apiKey || !!getLocalDevelopmentGeminiApiKey();
+    const hasOpenRouter = !!credentials.openRouterApiKey;
+    if (storedProvider === 'openrouter' ? !hasOpenRouter : !hasGemini) {
       setShowSettings(true);
     }
   }, []);
 
-  // When model changes, clamp resolution to model support (e.g. switch to 2.5 Flash -> 1K only)
   useEffect(() => {
-    const allowed = MODEL_RESOLUTIONS[selectedModel] ?? ['1K'];
+    const allowed = resolutionsForModel(imageProvider, selectedModel);
     if (!allowed.includes(outputResolution)) {
-      const fallback = defaultResolutionForModel(selectedModel);
+      const fallback = defaultResolutionForProviderModel(
+        imageProvider,
+        selectedModel,
+      );
       setOutputResolution(fallback);
       localStorage.setItem(OUTPUT_RESOLUTION_STORAGE_KEY, fallback);
     }
@@ -112,39 +133,53 @@ export const useSettings = () => {
       setStylePreviewResolution('1K');
       localStorage.setItem(STYLE_PREVIEW_RESOLUTION_STORAGE_KEY, '1K');
     }
-  }, [selectedModel, outputResolution, stylePreviewResolution]);
+  }, [imageProvider, selectedModel, outputResolution, stylePreviewResolution]);
 
-  const saveSettings = (
-    key: string,
-    model: string,
-    token: string = '',
-    resolution?: ImageResolution,
-    previewResolution?: ImageResolution
-  ) => {
-    const trimmedKey = key.trim();
-    const trimmedToken = token.trim();
-    const allowed = MODEL_RESOLUTIONS[model] ?? ['1K'];
-    const res = resolution != null && allowed.includes(resolution) ? resolution : defaultResolutionForModel(model);
+  const saveSettings = (args: SaveSettingsArgs) => {
+    const provider = args.imageProvider ?? imageProvider;
+    const trimmedKey = args.apiKey.trim();
+    const trimmedOpenRouter = (args.openRouterApiKey ?? openRouterApiKey).trim();
+    const trimmedToken = (args.hfToken ?? '').trim();
+    const model = resolveModelForProvider(provider, args.model);
+    const allowed = resolutionsForModel(provider, model);
+    const res =
+      args.outputResolution != null && allowed.includes(args.outputResolution)
+        ? args.outputResolution
+        : defaultResolutionForProviderModel(provider, model);
     const previewRes =
-      previewResolution != null && allowed.includes(previewResolution)
-        ? previewResolution
+      args.stylePreviewResolution != null &&
+      allowed.includes(args.stylePreviewResolution)
+        ? args.stylePreviewResolution
         : ('1K' as ImageResolution);
 
     setApiKey(trimmedKey);
+    setOpenRouterApiKey(trimmedOpenRouter);
+    setImageProvider(provider);
     setSelectedModel(model);
     setOutputResolution(res);
     setStylePreviewResolution(previewRes);
     setHfToken(trimmedToken);
 
-    saveSessionCredentials(trimmedKey, trimmedToken);
+    saveSessionCredentials(trimmedKey, trimmedToken, trimmedOpenRouter);
 
+    localStorage.setItem(PROVIDER_STORAGE_KEY, provider);
     localStorage.setItem(MODEL_STORAGE_KEY, model);
     localStorage.setItem(OUTPUT_RESOLUTION_STORAGE_KEY, res);
     localStorage.setItem(STYLE_PREVIEW_RESOLUTION_STORAGE_KEY, previewRes);
     setShowSettings(false);
   };
 
+  /** Key for the currently selected image provider (Sprite Animator). */
   const getEffectiveApiKey = (): string => {
+    if (imageProvider === 'openrouter') {
+      return openRouterApiKey.trim();
+    }
+    const userKey = apiKey.trim();
+    return userKey || getLocalDevelopmentGeminiApiKey();
+  };
+
+  /** Always Gemini — used by LINE sticker / comic paths. */
+  const getEffectiveGeminiApiKey = (): string => {
     const userKey = apiKey.trim();
     return userKey || getLocalDevelopmentGeminiApiKey();
   };
@@ -152,6 +187,10 @@ export const useSettings = () => {
   return {
     apiKey,
     setApiKey,
+    openRouterApiKey,
+    setOpenRouterApiKey,
+    imageProvider,
+    setImageProvider,
     selectedModel,
     setSelectedModel,
     outputResolution,
@@ -164,5 +203,6 @@ export const useSettings = () => {
     setShowSettings,
     saveSettings,
     getEffectiveApiKey,
+    getEffectiveGeminiApiKey,
   };
 };

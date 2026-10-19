@@ -38,6 +38,10 @@ const OnePageComicPage: React.FC = () => {
   const {
     apiKey,
     setApiKey,
+    openRouterApiKey,
+    setOpenRouterApiKey,
+    imageProvider,
+    setImageProvider,
     selectedModel,
     setSelectedModel,
     outputResolution,
@@ -433,6 +437,10 @@ const OnePageComicPage: React.FC = () => {
       <SettingsModal
         apiKey={apiKey}
         setApiKey={setApiKey}
+        openRouterApiKey={openRouterApiKey}
+        setOpenRouterApiKey={setOpenRouterApiKey}
+        imageProvider={imageProvider}
+        setImageProvider={setImageProvider}
         selectedModel={selectedModel}
         setSelectedModel={setSelectedModel}
         outputResolution={outputResolution}
@@ -441,9 +449,7 @@ const OnePageComicPage: React.FC = () => {
         setStylePreviewResolution={setStylePreviewResolution}
         showSettings={showSettings}
         onClose={() => setShowSettings(false)}
-        onSave={(key, model, token, resolution, previewResolution) =>
-          saveSettings(key, model, token, resolution, previewResolution)
-        }
+        onSave={saveSettings}
         hfToken={hfToken}
         setHfToken={setHfToken}
       />

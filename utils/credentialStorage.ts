@@ -1,8 +1,10 @@
 export const GEMINI_API_KEY_STORAGE_KEY = 'gemini_api_key';
+export const OPENROUTER_API_KEY_STORAGE_KEY = 'openrouter_api_key';
 export const HF_TOKEN_STORAGE_KEY = 'hf_token';
 
 export interface StoredCredentials {
   apiKey: string;
+  openRouterApiKey: string;
   hfToken: string;
 }
 
@@ -23,30 +25,36 @@ function write(storage: Storage, key: string, value: string): void {
   }
 }
 
+function migrateKeyToSession(key: string): string {
+  const value = read(sessionStorage, key) || read(localStorage, key);
+  write(sessionStorage, key, value);
+  write(localStorage, key, '');
+  return value;
+}
+
 /**
  * Loads credentials for this browser tab. Legacy localStorage values are moved
  * to sessionStorage once so upgrades do not unexpectedly sign users out while
  * long-lived, script-readable copies are removed.
  */
 export function loadSessionCredentials(): StoredCredentials {
-  const apiKey = read(sessionStorage, GEMINI_API_KEY_STORAGE_KEY)
-    || read(localStorage, GEMINI_API_KEY_STORAGE_KEY);
-  const hfToken = read(sessionStorage, HF_TOKEN_STORAGE_KEY)
-    || read(localStorage, HF_TOKEN_STORAGE_KEY);
-
-  write(sessionStorage, GEMINI_API_KEY_STORAGE_KEY, apiKey);
-  write(sessionStorage, HF_TOKEN_STORAGE_KEY, hfToken);
-  write(localStorage, GEMINI_API_KEY_STORAGE_KEY, '');
-  write(localStorage, HF_TOKEN_STORAGE_KEY, '');
-
-  return { apiKey, hfToken };
+  const apiKey = migrateKeyToSession(GEMINI_API_KEY_STORAGE_KEY);
+  const openRouterApiKey = migrateKeyToSession(OPENROUTER_API_KEY_STORAGE_KEY);
+  const hfToken = migrateKeyToSession(HF_TOKEN_STORAGE_KEY);
+  return { apiKey, openRouterApiKey, hfToken };
 }
 
-export function saveSessionCredentials(apiKey: string, hfToken: string): void {
+export function saveSessionCredentials(
+  apiKey: string,
+  hfToken: string,
+  openRouterApiKey: string = '',
+): void {
   write(sessionStorage, GEMINI_API_KEY_STORAGE_KEY, apiKey.trim());
+  write(sessionStorage, OPENROUTER_API_KEY_STORAGE_KEY, openRouterApiKey.trim());
   write(sessionStorage, HF_TOKEN_STORAGE_KEY, hfToken.trim());
   // Always purge values written by older releases.
   write(localStorage, GEMINI_API_KEY_STORAGE_KEY, '');
+  write(localStorage, OPENROUTER_API_KEY_STORAGE_KEY, '');
   write(localStorage, HF_TOKEN_STORAGE_KEY, '');
 }
 

@@ -219,7 +219,12 @@ export const useLineStickerGeneration = ({
                 chromaKeyColor,
                 selectedResolution,
                 effectiveIncludeText,
-                signal
+                signal,
+                {
+                    providerId: 'gemini',
+                    sheetKind: 'line-sticker',
+                    lineStickerIncludeText: effectiveIncludeText,
+                },
             );
             return result;
         } catch (err: unknown) {

@@ -178,8 +178,16 @@ export interface Translations {
 
   // Settings Modal
   settingsTitle: string;
+  imageProviderLabel: string;
+  imageProviderGemini: string;
+  imageProviderOpenRouter: string;
+  imageProviderHint: string;
   apiKeyLabel: string;
   apiKeyPlaceholder: string;
+  openRouterApiKeyLabel: string;
+  openRouterApiKeyPlaceholder: string;
+  openRouterApiKeyHint: string;
+  getOpenRouterApiKey: string;
   localDevelopmentKeyDetected: string;
   usingCustomKey: string;
   usingLocalDevelopmentKey: string;

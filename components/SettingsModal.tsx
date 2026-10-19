@@ -1,14 +1,23 @@
 import React from 'react';
 import { Settings, X, ShieldCheck, ShieldAlert } from './Icons';
-import { MODEL_RESOLUTIONS, SUPPORTED_MODELS } from '../utils/constants';
 import type { ImageResolution } from '../utils/constants';
-import { GoogleGenAI } from '@google/genai';
 import { useLanguage } from '../hooks/useLanguage';
 import { getLocalDevelopmentGeminiApiKey } from '../utils/localDevelopmentGeminiApiKey';
+import {
+  getImageProvider,
+  modelsForProvider,
+  resolutionsForModel,
+  type ImageProviderId,
+} from '../services/imageProviders';
+import type { SaveSettingsArgs } from '../hooks/useSettings';
 
 interface SettingsModalProps {
   apiKey: string;
   setApiKey: (key: string) => void;
+  openRouterApiKey: string;
+  setOpenRouterApiKey: (key: string) => void;
+  imageProvider: ImageProviderId;
+  setImageProvider: (provider: ImageProviderId) => void;
   selectedModel: string;
   setSelectedModel: (model: string) => void;
   outputResolution: ImageResolution;
@@ -17,13 +26,7 @@ interface SettingsModalProps {
   setStylePreviewResolution: (value: ImageResolution) => void;
   showSettings: boolean;
   onClose: () => void;
-  onSave: (
-    key: string,
-    model: string,
-    hfToken: string,
-    outputResolution: ImageResolution,
-    stylePreviewResolution: ImageResolution
-  ) => void;
+  onSave: (args: SaveSettingsArgs) => void;
   hfToken?: string;
   setHfToken?: (token: string) => void;
 }
@@ -31,6 +34,10 @@ interface SettingsModalProps {
 export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
   apiKey,
   setApiKey,
+  openRouterApiKey,
+  setOpenRouterApiKey,
+  imageProvider,
+  setImageProvider,
   selectedModel,
   setSelectedModel,
   outputResolution,
@@ -44,16 +51,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
   setHfToken = () => {},
 }) => {
   const { t } = useLanguage();
-  // All hooks must be called before any conditional returns
   const [isValidating, setIsValidating] = React.useState(false);
   const [validationError, setValidationError] = React.useState<string | null>(null);
   const [validationSuccess, setValidationSuccess] = React.useState(false);
   const modalRef = React.useRef<HTMLDivElement>(null);
 
-  const hasCustomKey = !!apiKey.trim();
-  const hasLocalDevelopmentKey = !!getLocalDevelopmentGeminiApiKey();
+  const activeKey =
+    imageProvider === 'openrouter' ? openRouterApiKey : apiKey;
+  const hasCustomKey = !!activeKey.trim();
+  const hasLocalDevelopmentKey =
+    imageProvider === 'gemini' && !!getLocalDevelopmentGeminiApiKey();
+  const availableModels = modelsForProvider(imageProvider);
+  const availableResolutions = resolutionsForModel(imageProvider, selectedModel);
 
-  // Validate API Key
   const validateApiKey = async (keyToValidate: string): Promise<boolean> => {
     if (!keyToValidate.trim()) {
       setValidationError(t.pleaseEnterApiKey);
@@ -65,11 +75,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
     setValidationSuccess(false);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: keyToValidate });
-
-      // Simple test: list models to verify the key works
-      await ai.models.list();
-
+      const provider = getImageProvider(imageProvider);
+      await provider.validateApiKey(keyToValidate);
       setValidationSuccess(true);
       setValidationError(null);
       return true;
@@ -78,11 +85,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
       const errorObj = error as Error | { message?: string };
       const message = errorObj?.message ?? '';
 
-      if (message.includes('API_KEY_INVALID') || message.includes('invalid')) {
+      if (message.includes('API_KEY_INVALID') || message.includes('invalid') || message.includes('Unauthorized')) {
         errorMessage = t.apiKeyInvalid;
       } else if (message.includes('quota') || message.includes('429')) {
         errorMessage = t.quotaExceeded;
-      } else if (message.includes('network') || message.includes('fetch')) {
+      } else if (message.includes('network') || message.includes('fetch') || message.includes('Failed to fetch')) {
         errorMessage = t.networkError;
       } else if (message) {
         errorMessage = `${t.validationFailed}: ${message}`;
@@ -96,33 +103,38 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
     }
   };
 
-  // Handle save with validation
+  const handleProviderChange = (next: ImageProviderId) => {
+    setImageProvider(next);
+    const models = modelsForProvider(next);
+    if (!(models as readonly string[]).includes(selectedModel)) {
+      setSelectedModel(models[0]!);
+    }
+  };
+
   const handleSave = async () => {
-    // If using custom key, validate it first
     if (hasCustomKey) {
-      const isValid = await validateApiKey(apiKey);
+      const isValid = await validateApiKey(activeKey);
       if (!isValid) {
-        return; // Don't save if validation failed
+        return;
       }
     }
 
-    // Save and close (resolution is constrained by model in parent)
-    onSave(
+    onSave({
       apiKey,
-      selectedModel,
+      openRouterApiKey,
+      imageProvider,
+      model: selectedModel,
       hfToken,
       outputResolution,
-      stylePreviewResolution
-    );
+      stylePreviewResolution,
+    });
   };
 
-  // Clear validation state when key changes
   React.useEffect(() => {
     setValidationError(null);
     setValidationSuccess(false);
-  }, [apiKey]);
+  }, [apiKey, openRouterApiKey, imageProvider]);
 
-  // Handle Escape key to close modal
   React.useEffect(() => {
     if (!showSettings) return;
 
@@ -136,18 +148,36 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [showSettings, onClose]);
 
-  // Focus trap for modal
   React.useEffect(() => {
     if (showSettings && modalRef.current) {
-      const firstInput = modalRef.current.querySelector('input') as HTMLInputElement;
+      const firstInput = modalRef.current.querySelector('input, select') as
+        | HTMLInputElement
+        | HTMLSelectElement
+        | null;
       if (firstInput) {
         firstInput.focus();
       }
     }
   }, [showSettings]);
 
-  // Conditional render AFTER all hooks
   if (!showSettings) return null;
+
+  const keyLabel =
+    imageProvider === 'openrouter' ? t.openRouterApiKeyLabel : t.apiKeyLabel;
+  const keyPlaceholder =
+    imageProvider === 'openrouter'
+      ? t.openRouterApiKeyPlaceholder
+      : hasLocalDevelopmentKey
+        ? t.localDevelopmentKeyDetected
+        : t.apiKeyPlaceholder;
+  const keyHint =
+    imageProvider === 'openrouter' ? t.openRouterApiKeyHint : t.apiKeyHint;
+  const keyHelpUrl =
+    imageProvider === 'openrouter'
+      ? 'https://openrouter.ai/keys'
+      : 'https://aistudio.google.com/app/apikey';
+  const keyHelpLabel =
+    imageProvider === 'openrouter' ? t.getOpenRouterApiKey : t.getApiKey;
 
   return (
     <div
@@ -182,22 +212,41 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
         </div>
         <div className="p-4 sm:p-6 space-y-5 overflow-y-auto">
           <div>
+            <label htmlFor="image-provider-select" className="block text-sm font-semibold text-slate-700 mb-2">
+              {t.imageProviderLabel}
+            </label>
+            <select
+              id="image-provider-select"
+              value={imageProvider}
+              onChange={(e) => handleProviderChange(e.target.value as ImageProviderId)}
+              className="w-full border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus-visible:ring-signal focus:border-signal outline-none bg-white transition-all cursor-pointer"
+              aria-label={t.imageProviderLabel}
+            >
+              <option value="gemini">{t.imageProviderGemini}</option>
+              <option value="openrouter">{t.imageProviderOpenRouter}</option>
+            </select>
+            <p className="text-xs text-slate-500 mt-2">{t.imageProviderHint}</p>
+          </div>
+
+          <div>
             <label htmlFor="api-key-input" className="block text-sm font-semibold text-slate-700 mb-2">
-              {t.apiKeyLabel}
+              {keyLabel}
             </label>
             <div className="relative">
               <input
                 id="api-key-input"
                 type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder={
-                  hasLocalDevelopmentKey
-                    ? t.localDevelopmentKeyDetected
-                    : t.apiKeyPlaceholder
-                }
+                value={activeKey}
+                onChange={(e) => {
+                  if (imageProvider === 'openrouter') {
+                    setOpenRouterApiKey(e.target.value);
+                  } else {
+                    setApiKey(e.target.value);
+                  }
+                }}
+                placeholder={keyPlaceholder}
                 className="w-full border border-slate-300 rounded-lg p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus-visible:ring-signal focus:border-signal outline-none pr-10 bg-white transition-all"
-                aria-label={t.apiKeyLabel}
+                aria-label={keyLabel}
                 aria-describedby="api-key-description"
                 autoComplete="off"
               />
@@ -208,7 +257,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
               )}
             </div>
 
-            {/* Status Indicator */}
             <div className="mt-2 flex items-center gap-2 text-xs">
               {hasCustomKey ? (
                 <span className="text-signal flex items-center gap-1.5 bg-signal-soft px-2.5 py-1.5 rounded-lg border border-signal/25 font-medium">
@@ -225,7 +273,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
               )}
             </div>
 
-            {/* Validation Status */}
             {validationError && (
               <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-xs text-red-700 font-medium">{validationError}</p>
@@ -242,15 +289,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
             )}
 
             <p id="api-key-description" className="text-xs text-slate-500 mt-3">
-              {t.apiKeyHint}
+              {keyHint}
               <a
-                href="https://aistudio.google.com/app/apikey"
+                href={keyHelpUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="text-signal hover:text-signal-hover hover:underline ml-1 font-medium transition-colors"
-                aria-label={t.getApiKey}
+                aria-label={keyHelpLabel}
               >
-                {t.getApiKey}
+                {keyHelpLabel}
               </a>
             </p>
           </div>
@@ -266,8 +313,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
               className="w-full border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus-visible:ring-signal focus:border-signal outline-none bg-white transition-all cursor-pointer"
               aria-label={t.modelLabel}
             >
-              {SUPPORTED_MODELS.map((model) => {
-                let displayName = '';
+              {availableModels.map((model) => {
+                let displayName = model;
                 if (model === 'gemini-3.1-flash-lite-image') {
                   displayName = `Gemini 3.1 Flash Lite Image (Nano Banana 2 Lite) ${t.modelRecommended}`;
                 } else if (model === 'gemini-2.5-flash-image') {
@@ -276,8 +323,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
                   displayName = 'Gemini 3 Pro Image';
                 } else if (model === 'gemini-3.1-flash-image') {
                   displayName = 'Gemini 3.1 Flash Image (Nano Banana 2)';
-                } else {
-                  displayName = model;
+                } else if (model === 'google/gemini-2.5-flash-image') {
+                  displayName = 'OpenRouter · Gemini 2.5 Flash Image';
+                } else if (model === 'google/gemini-3-pro-image') {
+                  displayName = 'OpenRouter · Gemini 3 Pro Image';
+                } else if (model === 'openai/gpt-image-1') {
+                  displayName = 'OpenRouter · GPT Image 1';
+                } else if (model === 'black-forest-labs/flux.2-pro') {
+                  displayName = 'OpenRouter · FLUX.2 Pro';
                 }
                 return (
                   <option key={model} value={model}>
@@ -287,13 +340,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
               })}
             </select>
 
-            {/* Sprite sheet output size */}
             <div className="mt-4">
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 {t.outputResolutionLabel}
               </label>
               <div className="flex flex-wrap gap-2">
-                {(MODEL_RESOLUTIONS[selectedModel] ?? ['1K']).map((res) => (
+                {availableResolutions.map((res) => (
                   <button
                     key={res}
                     type="button"
@@ -311,13 +363,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
               <p className="text-xs text-slate-500 mt-1.5">{t.outputResolutionHint}</p>
             </div>
 
-            {/* Style preview output size */}
             <div className="mt-4">
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 {t.stylePreviewResolutionLabel}
               </label>
               <div className="flex flex-wrap gap-2">
-                {(MODEL_RESOLUTIONS[selectedModel] ?? ['1K']).map((res) => (
+                {availableResolutions.map((res) => (
                   <button
                     key={`preview-${res}`}
                     type="button"
