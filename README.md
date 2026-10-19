@@ -29,6 +29,17 @@
 
 Requirements: Node.js 20–26 (`>=20 <27`), npm 10+ (pinned to 10.9.2).
 
+### Docker (web app only)
+
+Builds and serves the static SPA (no LINE factory / Python upload tools):
+
+```bash
+docker build -t sprite-animator .
+docker run --rm -p 8080:8080 sprite-animator
+```
+
+Open [http://localhost:8080/](http://localhost:8080/). Use in-app Settings for your Gemini API key (BYOK).
+
 ## What it does
 
 Upload one character image, describe an action (e.g. “Run Cycle”), and generate:

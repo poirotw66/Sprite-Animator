@@ -25,9 +25,20 @@
    ```bash
    npm run dev
    ```
-   開啟 [http://localhost:3000](http://localhost:3000) → **Sprite Animator**。
+   開啟 [http://localhost:3000](http://localhost:3000) — 預設進入 **Sprite Animator**（`/#/`；可選工作室工具在 `/#/studio`）。
 
 環境：Node.js 20–26（`>=20 <27`）、npm 10+（專案鎖定 10.9.2）。
+
+### Docker（僅網站）
+
+建置並提供靜態 SPA（不含 LINE 工廠／Python 上傳工具）：
+
+```bash
+docker build -t sprite-animator .
+docker run --rm -p 8080:8080 sprite-animator
+```
+
+開啟 [http://localhost:8080/](http://localhost:8080/)。請在應用設定以 BYOK 填入自己的 Gemini API Key。
 
 ## 核心功能
 
