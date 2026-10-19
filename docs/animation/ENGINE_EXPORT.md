@@ -21,6 +21,8 @@ this.anims.createFromAseprite('hero');
 
 `meta.frameTags[0].name` defaults to `"default"`.
 
+Runnable sample: [`examples/phaser3/`](../../examples/phaser3/) (uses [`examples/sample-export/`](../../examples/sample-export/)).
+
 ## Godot 4
 
 1. Unpack the ZIP into your project (e.g. `res://sprites/hero/`).
@@ -31,6 +33,40 @@ this.anims.createFromAseprite('hero');
 The animation name is `default`; `speed` is FPS from the export playback setting.
 
 Minimal import without the `.tres`: create an `AnimatedSprite2D`, make a new SpriteFrames resource, and drag `frames/*.png` into a clip at the same FPS shown in `manifest.json`.
+
+Runnable sample: [`examples/godot4/`](../../examples/godot4/).
+
+## Unity (Sprite Editor)
+
+Unity does not ship a first-party Aseprite JSON importer. The cheapest path uses **`manifest.json`** + the atlas (or individual frames).
+
+### Option A — Grid slice the atlas (recommended)
+
+1. Import `sprite-sheet.png` into your Unity project (Texture Type: **Sprite (2D and UI)**).
+2. Open the texture in the **Sprite Editor**.
+3. Set **Sprite Mode** → **Multiple**, then **Slice** → **Grid By Cell Size** (or Grid By Cell Count):
+   - Cell size = `manifest.json` → `frameWidth` × `frameHeight`
+   - Or cell count = `cols` × `rows` (ignore empty trailing cells if `cols * rows > frameCount`)
+4. Apply. Create an **Animator** / Animation clip that sequences the sliced sprites at `fps` (and loop if `loop` is true).
+
+You can also skip the atlas and drag `frames/frame_XXX.png` into a clip in order — no slicing required.
+
+### Option B — TexturePacker-style JSON (optional)
+
+Sprite Animator does **not** emit TexturePacker JSON today. If your pipeline already expects TexturePacker **JSON Array** / Hash:
+
+- Prefer writing a small converter from `sprite-sheet.json` (Aseprite json-array: `frames[].frame.{x,y,w,h}` + `meta.size`) into TexturePacker shape, **or**
+- Keep using Option A with `manifest.json` (stable `schemaVersion: 1`).
+
+Third-party Unity Aseprite importers can sometimes consume `sprite-sheet.json` directly; treat that as optional tooling, not a required dependency.
+
+## Examples
+
+| Path | Notes |
+|------|--------|
+| [`examples/sample-export/`](../../examples/sample-export/) | Tiny ZIP-shaped fixture |
+| [`examples/phaser3/`](../../examples/phaser3/) | Browser Phaser 3 + `load.aseprite` |
+| [`examples/godot4/`](../../examples/godot4/) | Godot 4 project + `animation.tres` |
 
 ## Custom engines
 

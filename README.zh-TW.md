@@ -64,11 +64,27 @@ docker run --rm -p 8080:8080 sprite-animator
 
 `manifest.json`（`schemaVersion: 1`）方便自訂載入器或快速檢視，不必解析完整 Aseprite JSON。
 
-Phaser／Godot 匯入說明見 [Engine export formats](./docs/animation/ENGINE_EXPORT.md)。
+Phaser／Godot／**Unity Sprite Editor** 匯入說明見 [Engine export formats](./docs/animation/ENGINE_EXPORT.md)。
 
 預覽工具列也可單獨下載 **Aseprite JSON**（與 ZIP 內圖集配對使用）。
 
-**Phaser 範例：**
+**可執行範例**（內附精簡 sample export）：
+
+| 路徑 | 引擎 |
+|------|------|
+| [`examples/phaser3/`](./examples/phaser3/) | Phaser 3 + `load.aseprite` |
+| [`examples/godot4/`](./examples/godot4/) | Godot 4 + `animation.tres` |
+| [`examples/sample-export/`](./examples/sample-export/) | 共用 ZIP 結構測試檔 |
+
+```bash
+# Phaser（需靜態伺服器）
+npx --yes serve examples -p 4177
+# → http://localhost:4177/phaser3/
+```
+
+以 Godot 4.2+ 開啟 `examples/godot4/` 後按 Play。
+
+**Phaser 片段**（解壓 ZIP 後）：
 
 ```js
 this.load.aseprite('hero', 'sprite-sheet.png', 'sprite-sheet.json');
