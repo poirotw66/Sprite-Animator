@@ -58,6 +58,10 @@ export const useLineStickerWorkspace = () => {
     const {
         apiKey,
         setApiKey,
+        openRouterApiKey,
+        setOpenRouterApiKey,
+        imageProvider,
+        setImageProvider,
         selectedModel,
         setSelectedModel,
         outputResolution,
@@ -69,7 +73,7 @@ export const useLineStickerWorkspace = () => {
         showSettings,
         setShowSettings,
         saveSettings,
-        getEffectiveApiKey,
+        getEffectiveGeminiApiKey,
     } = useSettings();
 
     const {
@@ -170,7 +174,8 @@ export const useLineStickerWorkspace = () => {
         generateSingleSheet,
         buildPrompt,
     } = useLineStickerGeneration({
-        apiKey: getEffectiveApiKey(),
+        // LINE paths stay Gemini-only regardless of Sprite Animator provider selection.
+        apiKey: getEffectiveGeminiApiKey(),
         selectedModel,
         selectedStyle,
         customStyleText,
@@ -197,7 +202,7 @@ export const useLineStickerWorkspace = () => {
         isBackfillingActionDescs,
         handleGeneratePhrases,
     } = useLineStickerPhraseGeneration({
-        getEffectiveApiKey,
+        getEffectiveApiKey: getEffectiveGeminiApiKey,
         setError,
         setShowSettings,
         stickerSetMode,
@@ -276,7 +281,7 @@ export const useLineStickerWorkspace = () => {
         handleStickerSetModeChange,
         handleUseStylePreview,
     } = useLineStickerGenerationLifecycleController({
-        getEffectiveApiKey,
+        getEffectiveApiKey: getEffectiveGeminiApiKey,
         sourceImage,
         stickerSetMode,
         setPhrasesList,
@@ -394,7 +399,7 @@ export const useLineStickerWorkspace = () => {
         chromaKeyColor,
         selectedModel,
         stylePreviewResolution,
-        getEffectiveApiKey,
+        getEffectiveApiKey: getEffectiveGeminiApiKey,
         setError,
         setShowSettings,
         errorApiKey: lineStickerT.errorApiKey,
@@ -668,6 +673,10 @@ export const useLineStickerWorkspace = () => {
         modal: {
             apiKey,
             setApiKey,
+            openRouterApiKey,
+            setOpenRouterApiKey,
+            imageProvider,
+            setImageProvider,
             selectedModel,
             setSelectedModel,
             outputResolution,

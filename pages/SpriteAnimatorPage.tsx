@@ -42,6 +42,10 @@ const SpriteAnimatorPage: React.FC = () => {
   const {
     apiKey,
     setApiKey,
+    openRouterApiKey,
+    setOpenRouterApiKey,
+    imageProvider,
+    setImageProvider,
     selectedModel,
     setSelectedModel,
     outputResolution,
@@ -247,8 +251,8 @@ const SpriteAnimatorPage: React.FC = () => {
       shiftY: 0,
     });
 
-    // If using user key, we assume higher limits and reduce artificial delay
-    const delayBetweenFrames = apiKey.trim() ? 2000 : 5000;
+    // If using a BYOK key, assume higher limits and reduce artificial delay
+    const delayBetweenFrames = getEffectiveApiKey() ? 2000 : 5000;
 
     try {
       if (config.mode === 'sheet') {
@@ -263,7 +267,10 @@ const SpriteAnimatorPage: React.FC = () => {
           selectedModel,
           (status) => setStatusText(status),
           config.chromaKeyColor,
-          outputResolution
+          outputResolution,
+          undefined,
+          undefined,
+          { providerId: imageProvider, sheetKind: 'animation' },
         );
 
         setSpriteSheetImage(sheetImage);
@@ -333,11 +340,11 @@ const SpriteAnimatorPage: React.FC = () => {
   }, [
     t,
     getEffectiveApiKey,
+    imageProvider,
     sourceImage,
     config,
     selectedModel,
     outputResolution,
-    apiKey,
     setSpriteSheetFrames,
     setShowSettings,
     setFrameModeFrames,
@@ -488,6 +495,10 @@ const SpriteAnimatorPage: React.FC = () => {
       <SettingsModal
         apiKey={apiKey}
         setApiKey={setApiKey}
+        openRouterApiKey={openRouterApiKey}
+        setOpenRouterApiKey={setOpenRouterApiKey}
+        imageProvider={imageProvider}
+        setImageProvider={setImageProvider}
         selectedModel={selectedModel}
         setSelectedModel={setSelectedModel}
         outputResolution={outputResolution}
@@ -496,9 +507,7 @@ const SpriteAnimatorPage: React.FC = () => {
         setStylePreviewResolution={setStylePreviewResolution}
         showSettings={showSettings}
         onClose={() => setShowSettings(false)}
-        onSave={(key, model, token, res, previewRes) =>
-          saveSettings(key, model, token, res, previewRes)
-        }
+        onSave={saveSettings}
       />
 
       <header className="sticky top-0 z-20 max-w-7xl mx-auto mb-4 md:mb-8 -mx-4 px-4 md:mx-0 md:px-0 safe-top">

@@ -28,6 +28,10 @@ const PartingPage: React.FC = () => {
   const {
     apiKey,
     setApiKey,
+    openRouterApiKey,
+    setOpenRouterApiKey,
+    imageProvider,
+    setImageProvider,
     selectedModel,
     setSelectedModel,
     outputResolution,
@@ -175,6 +179,10 @@ const PartingPage: React.FC = () => {
       <SettingsModal
         apiKey={apiKey}
         setApiKey={setApiKey}
+        openRouterApiKey={openRouterApiKey}
+        setOpenRouterApiKey={setOpenRouterApiKey}
+        imageProvider={imageProvider}
+        setImageProvider={setImageProvider}
         selectedModel={selectedModel}
         setSelectedModel={setSelectedModel}
         outputResolution={outputResolution}
@@ -183,9 +191,7 @@ const PartingPage: React.FC = () => {
         setStylePreviewResolution={setStylePreviewResolution}
         showSettings={showSettings}
         onClose={() => setShowSettings(false)}
-        onSave={(key, model, token, res, previewRes) =>
-          saveSettings(key, model, token, res, previewRes)
-        }
+        onSave={saveSettings}
       />
 
       <header className="sticky top-0 z-20 max-w-7xl mx-auto mb-4 md:mb-8 -mx-4 px-4 md:mx-0 md:px-0 safe-top">

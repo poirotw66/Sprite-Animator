@@ -114,11 +114,13 @@ Headless LINE mass-production / upload lives under `skills/line-sticker-*` and `
 
 | Context | How |
 |---------|-----|
-| **Local `npm run dev`** | Optional `GEMINI_API_KEY` in `.env.local` (from [`.env.example`](./.env.example)). Injected only for the Vite dev server. |
-| **Hosted / production** | **Bring your own key (BYOK)** in the in-app Settings dialog. Stored in `sessionStorage` for the tab. |
-| **Production builds** | The Gemini key is **never** embedded in the client bundle. CI builds with a fake sentinel and fails if it appears in `dist/`. |
+| **Local `npm run dev`** | Optional `GEMINI_API_KEY` in `.env.local` (from [`.env.example`](./.env.example)). Injected only for the Vite dev server (Gemini provider). |
+| **Hosted / production** | **Bring your own key (BYOK)** in Settings. Choose **Gemini** or **OpenRouter**; keys stay in `sessionStorage` for the tab and are never bundled. |
+| **Production builds** | API keys are **never** embedded in the client bundle. CI builds with a fake sentinel and fails if it appears in `dist/`. |
 
-Use your own Gemini API key and set quotas / billing limits on the Google AI / Cloud side. Do not commit `.env.local` or paste keys into issues or job snapshots.
+Sprite Animator sheet generation goes through an `ImageProvider` abstraction (`services/imageProviders/`). LINE Sticker and Comic remain **Gemini-only** even if OpenRouter is selected for the core animator.
+
+Do not commit `.env.local` or paste keys into issues or job snapshots. Set quotas / billing limits on the provider side (Google AI / OpenRouter).
 
 Optional: a Hugging Face token in Settings is only for on-demand AI background removal (`@huggingface/transformers`).
 

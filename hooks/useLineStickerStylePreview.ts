@@ -94,7 +94,9 @@ export function useLineStickerStylePreview({
         undefined,
         chromaKeyColor,
         stylePreviewResolution,
-        false
+        false,
+        undefined,
+        { providerId: 'gemini', sheetKind: 'style-preview' },
       );
       setStylePreviewImage(preview);
     } catch (error: unknown) {

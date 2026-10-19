@@ -111,11 +111,13 @@ Headless LINE 量產／上傳見 `skills/line-sticker-*`、`scripts/line-sticker
 
 | 情境 | 作法 |
 |------|------|
-| **本機 `npm run dev`** | 可選：在 `.env.local` 設定 `GEMINI_API_KEY`（參考 [`.env.example`](./.env.example)）。僅注入 Vite 開發伺服器。 |
-| **公開／正式站** | 在應用「設定」以 **BYOK** 自行輸入；存於該分頁的 `sessionStorage`。 |
-| **Production 建置** | **不會**把 Gemini 金鑰寫進前端 bundle。CI 以假 sentinel 建置，若出現在 `dist/` 則失敗。 |
+| **本機 `npm run dev`** | 可選：在 `.env.local` 設定 `GEMINI_API_KEY`（參考 [`.env.example`](./.env.example)）。僅注入 Vite 開發伺服器（Gemini）。 |
+| **公開／正式站** | 在「設定」以 **BYOK** 選擇 **Gemini** 或 **OpenRouter**；金鑰存於該分頁的 `sessionStorage`，不會打包進 bundle。 |
+| **Production 建置** | **不會**把 API 金鑰寫進前端 bundle。CI 以假 sentinel 建置，若出現在 `dist/` 則失敗。 |
 
-請使用自己的 Gemini API Key，並在 Google AI／Cloud 端設定配額與帳單上限。勿提交 `.env.local`，也勿把金鑰貼進 Issue 或 job 快照。
+精靈動畫產生器透過 `ImageProvider`（`services/imageProviders/`）呼叫供應商。LINE 貼圖與漫畫即使選了 OpenRouter，仍固定走 Gemini。
+
+請在供應商端設定配額與帳單上限。勿提交 `.env.local`，也勿把金鑰貼進 Issue 或 job 快照。
 
 可選：Settings 中的 Hugging Face token 僅供按需載入的 AI 去背模型使用。
 
