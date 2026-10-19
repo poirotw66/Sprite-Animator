@@ -1,0 +1,21 @@
+; Engine configuration for Sprite Animator sample import.
+; Open this folder in Godot 4.2+ and press F5 / Play.
+
+config_version=5
+
+[application]
+
+config/name="Sprite Animator Sample"
+config/description="Minimal Godot 4 project using animation.tres from a Sprite Animator ZIP export."
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.2", "Forward Plus")
+
+[display]
+
+window/size/viewport_width=320
+window/size/viewport_height=240
+window/stretch/mode="canvas_items"
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0

@@ -66,11 +66,27 @@ Downloading **ZIP** produces:
 
 `manifest.json` schema (`schemaVersion: 1`) is meant for custom loaders and quick inspection without parsing Aseprite JSON.
 
-See [Engine export formats](./docs/animation/ENGINE_EXPORT.md) for Phaser / Godot import notes.
+See [Engine export formats](./docs/animation/ENGINE_EXPORT.md) for Phaser / Godot / **Unity Sprite Editor** import notes.
 
 You can also download **Aseprite JSON** alone from the preview toolbar (pairs with the atlas inside the ZIP).
 
-**Phaser example** (after unpacking the ZIP):
+**Runnable examples** (tiny sample export included):
+
+| Path | Engine |
+|------|--------|
+| [`examples/phaser3/`](./examples/phaser3/) | Phaser 3 + `load.aseprite` |
+| [`examples/godot4/`](./examples/godot4/) | Godot 4 + `animation.tres` |
+| [`examples/sample-export/`](./examples/sample-export/) | Shared ZIP-shaped fixture |
+
+```bash
+# Phaser (static server required)
+npx --yes serve examples -p 4177
+# → http://localhost:4177/phaser3/
+```
+
+Open `examples/godot4/` in Godot 4.2+ and press Play.
+
+**Phaser snippet** (after unpacking a ZIP):
 
 ```js
 this.load.aseprite('hero', 'sprite-sheet.png', 'sprite-sheet.json');
