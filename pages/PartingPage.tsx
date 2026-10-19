@@ -192,7 +192,7 @@ const PartingPage: React.FC = () => {
         <div className="bg-white/95 backdrop-blur-md rounded-xl md:rounded-2xl shadow-sm border border-slate-200/60 p-3 sm:p-4 md:p-5 flex items-center justify-between gap-2 safe-left safe-right">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Link
-              to="/"
+              to="/studio"
               className="min-h-[44px] min-w-[44px] p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 bg-white rounded-xl transition-all duration-200 shadow-sm border border-slate-200 hover:border-slate-300 flex items-center justify-center"
               title={t.backToHome}
             >

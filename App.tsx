@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { lazyWithRetry } from './utils/lazyWithRetry';
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Loader2 } from './components/Icons';
 import { useLanguage } from './hooks/useLanguage';
 
@@ -31,13 +31,17 @@ const App: React.FC = () => {
     <HashRouter>
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          {/* Primary product: Sprite Animator at `/` */}
+          <Route path="/" element={<SpriteAnimatorPage />} />
           <Route path="/sprite-animation" element={<SpriteAnimatorPage />} />
+          {/* Optional studio tools hub (former home) */}
+          <Route path="/studio" element={<HomePage />} />
           <Route path="/line-sticker" element={<LineStickerPage />} />
           <Route path="/one-page-comic" element={<OnePageComicPage />} />
           <Route path="/rmbg" element={<RemoveBackgroundPage />} />
           <Route path="/parting" element={<PartingPage />} />
           <Route path="/daily-sticker-registry" element={<DailyStickerRegistryPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
     </HashRouter>

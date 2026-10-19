@@ -25,7 +25,7 @@
    ```bash
    npm run dev
    ```
-   Open [http://localhost:3000](http://localhost:3000) → **Sprite Animator**.
+   Open [http://localhost:3000](http://localhost:3000) — the app opens **Sprite Animator** at `/#/` (optional studio tools live at `/#/studio`).
 
 Requirements: Node.js 20–26 (`>=20 <27`), npm 10+ (pinned to 10.9.2).
 

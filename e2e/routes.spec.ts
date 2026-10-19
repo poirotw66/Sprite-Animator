@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 const routes = [
   '/',
   '/sprite-animation',
+  '/studio',
   '/line-sticker',
   '/one-page-comic',
   '/rmbg',

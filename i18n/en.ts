@@ -280,7 +280,7 @@ export const en: Translations = {
   comicTool: 'One-Page Comic',
   comicDesc: 'Optional: concept → reference sheet → storyboard → one-page comic PNG',
   enterTool: 'Enter Tool',
-  backToHome: 'Back to Home',
+  backToHome: 'Studio tools',
   pageLoading: 'Loading…',
   errorBoundaryTitle: 'Something went wrong',
   errorBoundarySubtitle: 'The app hit an unexpected error',

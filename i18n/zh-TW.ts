@@ -279,7 +279,7 @@ export const zhTW: Translations = {
   comicTool: '一頁式漫畫',
   comicDesc: '可選：概念 → 設定圖 → 分鏡 → 單頁漫畫 PNG',
   enterTool: '進入工具',
-  backToHome: '返回首頁',
+  backToHome: '工作室工具',
   pageLoading: '載入中…',
   errorBoundaryTitle: '發生錯誤',
   errorBoundarySubtitle: '應用程式遇到了一個意外錯誤',
