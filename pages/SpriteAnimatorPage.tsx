@@ -161,6 +161,7 @@ const SpriteAnimatorPage: React.FC = () => {
     handleDownloadApng,
     handleDownloadGif,
     handleDownloadZip,
+    handleDownloadAsepriteJson,
     handleDownloadSpriteSheet,
   } = useExport(animationFrames, config);
 
@@ -459,6 +460,14 @@ const SpriteAnimatorPage: React.FC = () => {
     }
   }, [handleDownloadZip, handleExportError]);
 
+  const wrappedDownloadAsepriteJson = useCallback(async () => {
+    try {
+      await handleDownloadAsepriteJson();
+    } catch (err: unknown) {
+      handleExportError(new Error(getErrorMessage(err)));
+    }
+  }, [handleDownloadAsepriteJson, handleExportError]);
+
   const wrappedDownloadSpriteSheet = useCallback(() => {
     // Download the processed (chroma-key-removed) version if available
     const imageToDownload = processedSpriteSheet || spriteSheetImage;
@@ -643,6 +652,7 @@ const SpriteAnimatorPage: React.FC = () => {
                 onDownloadApng={wrappedDownloadApng}
                 onDownloadGif={wrappedDownloadGif}
                 onDownloadZip={wrappedDownloadZip}
+                onDownloadAsepriteJson={wrappedDownloadAsepriteJson}
               />
             </Suspense>
 

@@ -62,7 +62,8 @@ export const en: Translations = {
   downloadApng: 'Download APNG (HD)',
   downloadGif: 'GIF',
   downloadZip: 'ZIP',
-  exportHint: 'Tip: Click preview area to play/pause. APNG supports full-color transparency.',
+  downloadAsepriteJson: 'Aseprite JSON',
+  exportHint: 'Tip: Click preview area to play/pause. APNG supports full-color transparency. ZIP includes frames/, sprite-sheet.png, and Aseprite JSON for Phaser.',
   exportSmoothHint: '✨ GIF/APNG export with frame interpolation for smooth animation (24 FPS)',
 
   // Sprite Sheet Viewer

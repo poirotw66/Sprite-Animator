@@ -16,6 +16,7 @@ interface AnimationPreviewProps {
   onDownloadApng: () => void;
   onDownloadGif: () => void;
   onDownloadZip: () => void;
+  onDownloadAsepriteJson: () => void;
 }
 
 export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
@@ -30,6 +31,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
   onDownloadApng,
   onDownloadGif,
   onDownloadZip,
+  onDownloadAsepriteJson,
 }) => {
   const { t } = useLanguage();
 
@@ -141,6 +143,15 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
                 >
                   <Archive className="w-4 h-4 text-info flex-shrink-0" />
                   <span className="truncate">{t.downloadZip}</span>
+                </button>
+                <button
+                  onClick={onDownloadAsepriteJson}
+                  disabled={isExporting || generatedFrames.length === 0}
+                  className="min-h-[44px] flex-1 min-w-[100px] bg-white/95 hover:bg-white text-slate-800 px-3 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 cursor-pointer hover:shadow-xl border border-slate-200/50 touch-manipulation tap-highlight"
+                  aria-label={t.downloadAsepriteJson}
+                >
+                  <Archive className="w-4 h-4 text-signal flex-shrink-0" />
+                  <span className="truncate">{t.downloadAsepriteJson}</span>
                 </button>
               </div>
             </div>

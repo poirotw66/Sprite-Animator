@@ -6,6 +6,11 @@ import { logger } from '../utils/logger';
 import UPNG from 'upng-js';
 import JSZip from 'jszip';
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
+import {
+  buildAsepriteExport,
+  downloadBlob,
+  timingFromPlaybackSpeed,
+} from '../utils/engineExport';
 
 /** Decode PNG from base64/data URL to RGBA using UPNG (same source as ZIP, no canvas). */
 function decodePngToRgba(dataUrl: string): { data: Uint8ClampedArray; width: number; height: number } {
@@ -20,24 +25,21 @@ function decodePngToRgba(dataUrl: string): { data: Uint8ClampedArray; width: num
   return { data, width: img.width, height: img.height };
 }
 
+function resolvePackGrid(config: AnimationConfig, frameCount: number): { cols?: number; rows?: number } {
+  if (
+    config.mode === 'sheet' &&
+    config.gridCols >= 1 &&
+    config.gridRows >= 1 &&
+    config.gridCols * config.gridRows >= frameCount
+  ) {
+    return { cols: config.gridCols, rows: config.gridRows };
+  }
+  return {};
+}
+
 /**
  * Custom hook for exporting animation frames in various formats.
- * Supports APNG (high quality with transparency), GIF, and ZIP formats.
- * Automatically handles resource cleanup (URL.revokeObjectURL).
- * 
- * @param generatedFrames - Array of base64 encoded frame images
- * @param config - Animation configuration including speed
- * @returns Object containing export state and export functions
- * 
- * @example
- * ```typescript
- * const {
- *   isExporting,
- *   handleDownloadApng,
- *   handleDownloadGif,
- *   handleDownloadZip
- * } = useExport(frames, config);
- * ```
+ * Supports APNG, GIF, ZIP (frames + Aseprite atlas/JSON), and direct Aseprite JSON.
  */
 export const useExport = (generatedFrames: string[], config: AnimationConfig) => {
   const [isExporting, setIsExporting] = useState(false);
@@ -47,12 +49,10 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
 
     setIsExporting(true);
     try {
-      // Step 1: Generate smooth animation with frame interpolation
       const originalFps = Math.max(1, config.speed * ANIMATION_FPS_MULTIPLIER);
 
       let framesToExport = generatedFrames;
 
-      // Apply frame interpolation for smoother animation (if enabled)
       if (config.enableInterpolation && generatedFrames.length >= 2) {
         logger.debug(`APNG: Interpolating frames: ${generatedFrames.length} -> target ${GIF_TARGET_FPS} FPS`);
         framesToExport = await generateSmoothAnimation(generatedFrames, {
@@ -65,30 +65,17 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
         logger.debug(`APNG: Interpolation complete: ${framesToExport.length} frames`);
       }
 
-      // Step 2: Load image data
       const { imagesData, width, height } = await loadImagesData(framesToExport);
 
       const buffers = imagesData.map((d) => d.data.buffer);
 
-      // Calculate delay based on interpolated frame count
       const effectiveFps = config.enableInterpolation ? GIF_TARGET_FPS : originalFps;
       const delayMs = Math.round(1000 / effectiveFps);
       const delays = framesToExport.map(() => delayMs);
 
       const apngBuffer = UPNG.encode(buffers, width, height, 0, delays);
 
-      const blob = new Blob([apngBuffer], { type: 'image/png' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'animation.png';
-      document.body.appendChild(link);
-      link.click();
-      // Use setTimeout to ensure download starts before revoking URL
-      setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }, 100);
+      downloadBlob(new Blob([apngBuffer], { type: 'image/png' }), 'animation.png');
     } catch (err) {
       logger.error('APNG Export failed', err);
       throw new Error('APNG 導出失敗');
@@ -102,12 +89,10 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
 
     setIsExporting(true);
     try {
-      // Step 1: Generate smooth animation with frame interpolation
       const originalFps = Math.max(1, config.speed * ANIMATION_FPS_MULTIPLIER);
 
       let framesToExport = generatedFrames;
 
-      // Apply frame interpolation for smoother animation (if enabled)
       if (config.enableInterpolation && generatedFrames.length >= 2) {
         logger.debug(`Interpolating frames: ${generatedFrames.length} -> target ${GIF_TARGET_FPS} FPS`);
         framesToExport = await generateSmoothAnimation(generatedFrames, {
@@ -120,12 +105,10 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
         logger.debug(`Interpolation complete: ${framesToExport.length} frames`);
       }
 
-      // Step 2: Decode PNG to RGBA the same way as ZIP (raw PNG bytes via UPNG, no canvas)
       const imagesData = framesToExport.map((frame) => decodePngToRgba(frame));
       const width = imagesData[0].width;
       const height = imagesData[0].height;
 
-      // Step 3: Create GIF from same RGBA as in the PNG files
       const gif = new GIFEncoder();
       const effectiveFps = config.enableInterpolation ? GIF_TARGET_FPS : originalFps;
       const delayMs = Math.round(1000 / effectiveFps);
@@ -156,20 +139,7 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
       }
 
       gif.finish();
-      const buffer = gif.bytes();
-
-      const blob = new Blob([buffer], { type: 'image/gif' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'animation.gif';
-      document.body.appendChild(link);
-      link.click();
-      // Use setTimeout to ensure download starts before revoking URL
-      setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }, 100);
+      downloadBlob(new Blob([gif.bytes()], { type: 'image/gif' }), 'animation.gif');
     } catch (err) {
       logger.error('GIF Export failed', err);
       throw new Error('GIF 導出失敗');
@@ -184,33 +154,56 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
     setIsExporting(true);
     try {
       const zip = new JSZip();
+      const timing = timingFromPlaybackSpeed(config.speed);
+      const packGrid = resolvePackGrid(config, generatedFrames.length);
+      const asepriteExport = buildAsepriteExport({
+        frameDataUrls: generatedFrames,
+        timing,
+        ...packGrid,
+      });
 
       generatedFrames.forEach((frame, index) => {
         const base64Data = frame.replace(/^data:image\/(png|jpg|jpeg);base64,/, '');
-        const fileName = `frame_${String(index + 1).padStart(3, '0')}.png`;
+        const fileName = `frames/frame_${String(index + 1).padStart(3, '0')}.png`;
         zip.file(fileName, base64Data, { base64: true });
       });
 
-      const content = await zip.generateAsync({ type: 'blob' });
+      zip.file(asepriteExport.sheetFileName, asepriteExport.sheetPngBytes);
+      zip.file(asepriteExport.asepriteFileName, asepriteExport.asepriteJsonText);
 
-      const url = URL.createObjectURL(content);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'frames_archive.zip';
-      document.body.appendChild(link);
-      link.click();
-      // Use setTimeout to ensure download starts before revoking URL
-      setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }, 100);
+      const content = await zip.generateAsync({ type: 'blob' });
+      downloadBlob(content, 'sprite-export.zip');
     } catch (err) {
       logger.error('Zip Export failed', err);
       throw new Error('ZIP 打包失敗');
     } finally {
       setIsExporting(false);
     }
-  }, [generatedFrames]);
+  }, [generatedFrames, config]);
+
+  const handleDownloadAsepriteJson = useCallback(async () => {
+    if (generatedFrames.length === 0) return;
+
+    setIsExporting(true);
+    try {
+      const timing = timingFromPlaybackSpeed(config.speed);
+      const packGrid = resolvePackGrid(config, generatedFrames.length);
+      const asepriteExport = buildAsepriteExport({
+        frameDataUrls: generatedFrames,
+        timing,
+        ...packGrid,
+      });
+      downloadBlob(
+        new Blob([asepriteExport.asepriteJsonText], { type: 'application/json' }),
+        asepriteExport.asepriteFileName,
+      );
+    } catch (err) {
+      logger.error('Aseprite JSON export failed', err);
+      throw new Error('Aseprite JSON export failed');
+    } finally {
+      setIsExporting(false);
+    }
+  }, [generatedFrames, config]);
 
   const handleDownloadSpriteSheet = useCallback((spriteSheetImage: string) => {
     if (!spriteSheetImage) return;
@@ -227,6 +220,7 @@ export const useExport = (generatedFrames: string[], config: AnimationConfig) =>
     handleDownloadApng,
     handleDownloadGif,
     handleDownloadZip,
+    handleDownloadAsepriteJson,
     handleDownloadSpriteSheet,
   };
 };

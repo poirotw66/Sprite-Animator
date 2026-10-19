@@ -35,9 +35,30 @@
 - **精靈圖模式**：一次請求產出整張網格（較省 API 配額）
 - **色鍵去背**（洋紅／綠幕）＋ Web Worker
 - **網格切分**（padding／shift、即時預覽）
-- **匯出** APNG、GIF、或 PNG 幀 ZIP
+- **匯出** APNG、GIF、ZIP（PNG 幀 + 打包圖集），以及 **Aseprite 相容 JSON**（json-array + `frameTags`，可供 Phaser `load.aseprite` 載入）
 
 使用 Google Gemini 圖像 API（瀏覽器內自行填入 API Key）。
+
+### 引擎匯出（ZIP／Aseprite）
+
+下載 **ZIP** 會包含：
+
+| 路徑 | 內容 |
+|------|------|
+| `frames/frame_XXX.png` | 個別幀 |
+| `sprite-sheet.png` | 打包圖集（sheet 模式可用網格；否則水平條） |
+| `sprite-sheet.json` | Aseprite `--format json-array` 中繼資料 |
+
+預覽工具列也可單獨下載 **Aseprite JSON**（與 ZIP 內圖集配對使用）。
+
+**Phaser 範例：**
+
+```js
+this.load.aseprite('hero', 'sprite-sheet.png', 'sprite-sheet.json');
+this.anims.createFromAseprite('hero');
+```
+
+幀時長依目前播放 FPS（`speed × 3`）。
 
 ### 可選工作室工具
 

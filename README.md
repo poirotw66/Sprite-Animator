@@ -37,9 +37,31 @@ Upload one character image, describe an action (e.g. “Run Cycle”), and gener
 - **Sprite sheet mode** — one API call for a full grid (quota-friendly)  
 - **Chroma-key background removal** (magenta / green) with Web Worker processing  
 - **Grid slicing** with padding, shift, and live preview  
-- **Export** APNG, GIF, or a ZIP of PNG frames  
+- **Export** APNG, GIF, ZIP (PNG frames + packed atlas), and **Aseprite-compatible JSON** (json-array + `frameTags`, Phaser `load.aseprite`-ready)
 
 Powered by the Google Gemini image API (bring your own key in the browser).
+
+### Engine export (ZIP / Aseprite)
+
+Downloading **ZIP** produces:
+
+| Path | Contents |
+|------|----------|
+| `frames/frame_XXX.png` | Individual frames |
+| `sprite-sheet.png` | Packed atlas (grid when sheet mode fits; otherwise a horizontal strip) |
+| `sprite-sheet.json` | Aseprite `--format json-array` metadata (`frames[]`, `meta.image`, `meta.frameTags`) |
+
+You can also download **Aseprite JSON** alone from the preview toolbar (pairs with the atlas inside the ZIP).
+
+**Phaser example** (after unpacking the ZIP):
+
+```js
+this.load.aseprite('hero', 'sprite-sheet.png', 'sprite-sheet.json');
+// later:
+this.anims.createFromAseprite('hero');
+```
+
+Frame durations follow the current playback FPS (`speed × 3` ms per frame).
 
 ### Optional studio tools
 
