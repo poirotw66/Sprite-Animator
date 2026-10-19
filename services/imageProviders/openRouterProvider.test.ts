@@ -58,7 +58,41 @@ describe('openRouterImageProvider', () => {
     expect(body.model).toBe('google/gemini-2.5-flash-image');
     expect(body.aspect_ratio).toBe('2:1');
     expect(body.resolution).toBe('1K');
+    expect(body.input_references).toHaveLength(1);
     expect(body.input_references[0].image_url.url).toContain('data:image/png');
+  });
+
+  it('sends previous-frame references for frame-by-frame continuity', async () => {
+    const fetchMock = vi.fn(
+      async (_input: RequestInfo | URL, _init?: RequestInit) =>
+        new Response(
+          JSON.stringify({
+            data: [{ b64_json: TINY_PNG_B64, media_type: 'image/png' }],
+          }),
+          { status: 200 },
+        ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await openRouterImageProvider.generateImage({
+      imageBase64: `data:image/png;base64,${TINY_PNG_B64}`,
+      primaryImageCaption: 'Reference Character (Style/Design Source)',
+      additionalImages: [
+        {
+          imageBase64: `data:image/png;base64,${TINY_PNG_B64}`,
+          caption: 'Previous Frame 1 (Motion Context)',
+        },
+      ],
+      prompt: 'Frame 2 of 4',
+      model: 'google/gemini-2.5-flash-image',
+      apiKey: 'sk-or-test',
+    });
+
+    const call = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    const body = JSON.parse(String(call[1].body));
+    expect(body.input_references).toHaveLength(2);
+    expect(body.prompt).toContain('Reference Character');
+    expect(body.prompt).toContain('Previous Frame 1');
   });
 
   it('surfaces HTTP errors from OpenRouter', async () => {

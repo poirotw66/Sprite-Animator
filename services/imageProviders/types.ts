@@ -7,9 +7,23 @@ export type ImageProviderId = 'gemini' | 'openrouter';
 
 export type ProgressCallback = (status: string) => void;
 
+/** Extra reference image (e.g. previous frame for continuity). */
+export interface ReferenceImage {
+  imageBase64: string;
+  /** Caption inserted after this image for multimodal models (Gemini parts). */
+  caption?: string;
+}
+
 export interface GenerateImageRequest {
   /** Character / reference image as data URL or raw base64. */
   imageBase64: string;
+  /**
+   * Optional caption after the primary image (Gemini multimodal parts).
+   * Used by frame-by-frame mode; sprite-sheet mode omits this.
+   */
+  primaryImageCaption?: string;
+  /** Extra references (previous frame, etc.). */
+  additionalImages?: ReferenceImage[];
   prompt: string;
   model: string;
   apiKey: string;

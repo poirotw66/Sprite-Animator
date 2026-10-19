@@ -42,7 +42,7 @@ docker run --rm -p 8080:8080 sprite-animator
 
 ## 核心功能
 
-- **逐幀模式**：逐張生成，適合精細動作（**目前仍走 Gemini SDK**）
+- **逐幀模式**：逐張生成，適合精細動作（**Gemini 或 OpenRouter**，由設定選擇）
 - **精靈圖模式**：一次請求產出整張網格（較省 API 配額；**Gemini 或 OpenRouter**，由設定選擇）
 - **色鍵去背**（洋紅／綠幕）＋ Web Worker
 - **網格切分**（padding／shift、即時預覽）
@@ -121,8 +121,8 @@ Headless LINE 量產／上傳見 `skills/line-sticker-*`、`scripts/line-sticker
 | 功能 | 供應商 |
 |------|--------|
 | Sprite Animator **精靈圖**模式 | 設定所選供應商（`services/imageProviders/`） |
-| Sprite Animator **逐幀**模式 | 仍走 Gemini SDK（`generateAnimationFrames`）— 此模式請選 **Google Gemini** |
-| LINE 貼圖／一頁式漫畫 | **固定 Gemini**，即使精靈圖選了 OpenRouter |
+| Sprite Animator **逐幀**模式 | 設定所選供應商（`ImageProvider`）。Gemini 另做 AI 分鏡規劃；OpenRouter 使用演算法分鏡（Images API 無規劃端點）。建議選支援圖生圖的模型（例如 OpenRouter 的 `google/gemini-*-image`）。 |
+| LINE 貼圖／一頁式漫畫 | **固定 Gemini**，即使 Sprite Animator 選了 OpenRouter |
 
 請在供應商端設定配額與帳單上限。勿提交 `.env.local`，也勿把金鑰貼進 Issue 或 job 快照。
 

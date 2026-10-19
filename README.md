@@ -44,7 +44,7 @@ Open [http://localhost:8080/](http://localhost:8080/). Use in-app **Settings** �
 
 Upload one character image, describe an action (e.g. “Run Cycle”), and generate:
 
-- **Frame-by-frame mode** — one API call per frame for finer motion control (**Gemini path today**)  
+- **Frame-by-frame mode** — one API call per frame for finer motion control (**Gemini or OpenRouter** via Settings)  
 - **Sprite sheet mode** — one API call for a full grid (quota-friendly; **Gemini or OpenRouter** via Settings)  
 - **Chroma-key background removal** (magenta / green) with Web Worker processing  
 - **Grid slicing** with padding, shift, and live preview  
@@ -124,8 +124,8 @@ Headless LINE mass-production / upload lives under `skills/line-sticker-*` and `
 | Surface | Provider |
 |---------|----------|
 | Sprite Animator **sheet** mode | Selected provider (`services/imageProviders/`) |
-| Sprite Animator **frame-by-frame** mode | Still the Gemini SDK path (`generateAnimationFrames`) — use **Google Gemini** in Settings for this mode |
-| LINE Sticker / One-Page Comic | **Gemini-only**, even if OpenRouter is selected for sheets |
+| Sprite Animator **frame-by-frame** mode | Selected provider (`ImageProvider`). Gemini also runs AI storyboard planning; OpenRouter uses an algorithmic storyboard (Images API has no planning endpoint). Prefer image-to-image capable models (e.g. `google/gemini-*-image` on OpenRouter). |
+| LINE Sticker / One-Page Comic | **Gemini-only**, even if OpenRouter is selected for Sprite Animator |
 
 Do not commit `.env.local` or paste keys into issues or job snapshots. Set quotas / billing limits on the provider side.
 
@@ -147,8 +147,8 @@ Same source character (`images/gemini.webp`), different action prompts:
 ```
 Sprite-Animator/
 ├── pages/SpriteAnimatorPage.tsx   # Core product
-├── services/imageProviders/       # Gemini + OpenRouter BYOK (sheet generation)
-├── services/gemini/               # Gemini helpers (frames, prompts, optional LINE/comic)
+├── services/imageProviders/       # Gemini + OpenRouter BYOK (sheet + frame generation)
+├── services/gemini/               # Prompts, storyboard helpers, optional LINE/comic
 ├── hooks/                         # Sprite flow, export, animation…
 ├── utils/                         # Chroma key, slicing, constants
 ├── workers/                       # Chroma Web Worker

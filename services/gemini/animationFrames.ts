@@ -1,14 +1,47 @@
 /**
  * Frame-by-frame animation generation with storyboard and continuity.
+ * Image generation goes through ImageProvider (Gemini or OpenRouter).
+ * Storyboard planning: Gemini multimodal when provider is Gemini; algorithmic
+ * for OpenRouter (no direct Gemini SDK calls on the OpenRouter path).
  */
 
-import { GoogleGenAI } from '@google/genai';
 import { logger } from '../../utils/logger';
+import {
+  formatImageProviderError,
+  getImageProvider,
+  type ImageProviderId,
+} from '../imageProviders';
 import { wait } from './retry';
-import { retryOperation } from './retry';
-import { getAnimationStoryboard } from './storyboard';
+import { planAnimationStoryboard } from './storyboard';
 import { API_KEY_MISSING_MESSAGE } from './types';
 import type { ProgressCallback } from './types';
+
+export interface GenerateAnimationFramesOptions {
+  /** Defaults to gemini. */
+  providerId?: ImageProviderId;
+  signal?: AbortSignal;
+}
+
+function buildFramePrompt(
+  userPrompt: string,
+  frameDesc: string,
+  frameIndex: number,
+  frameCount: number,
+  hasPreviousFrame: boolean,
+): string {
+  return `
+    Task: Generate Frame ${frameIndex + 1} of ${frameCount} for a sprite sheet.
+    Action: "${userPrompt}".
+    Pose Description: ${frameDesc}.
+    
+    [STRICT RULES]
+    1. STYLE: Match "Reference Character" exactly (Colors, Proportions, Shading).
+    2. BACKGROUND: Solid White (#FFFFFF).
+    3. CONTINUITY: ${hasPreviousFrame ? 'The new frame must logically follow "Previous Frame" to create smooth animation.' : 'Start the animation sequence.'}
+    4. ANCHOR: Keep the character size and ground position consistent.
+    5. FORMAT: Single character, centered.
+    `;
+}
 
 export async function generateAnimationFrames(
   imageBase64: string,
@@ -17,78 +50,58 @@ export async function generateAnimationFrames(
   apiKey: string,
   model: string,
   onProgress?: ProgressCallback,
-  interFrameDelayMs: number = 4000
+  interFrameDelayMs: number = 4000,
+  options?: GenerateAnimationFramesOptions,
 ): Promise<string[]> {
   if (!apiKey) throw new Error(API_KEY_MISSING_MESSAGE);
 
-  const ai = new GoogleGenAI({ apiKey });
-  const cleanBase64 = imageBase64.replace(
-    /^data:image\/(png|jpeg|jpg|webp);base64,/,
-    ''
-  );
+  const providerId = options?.providerId ?? 'gemini';
+  const signal = options?.signal;
+  const provider = getImageProvider(providerId);
 
-  const frameDescriptions = await getAnimationStoryboard(
-    ai,
+  const frameDescriptions = await planAnimationStoryboard({
+    providerId,
+    apiKey,
     imageBase64,
-    prompt,
+    userPrompt: prompt,
     frameCount,
-    onProgress
-  );
+    onProgress,
+  });
 
   const generateFrame = async (
     frameDesc: string,
     i: number,
-    prevFrameBase64: string | null
+    prevFrameBase64: string | null,
   ): Promise<string> => {
-    const parts: Array<
-      { inlineData?: { mimeType: string; data: string }; text?: string }
-    > = [];
-
-    parts.push({ inlineData: { mimeType: 'image/png', data: cleanBase64 } });
-    parts.push({ text: 'Reference Character (Style/Design Source)' });
-
-    if (prevFrameBase64) {
-      const prevClean = prevFrameBase64.replace(
-        /^data:image\/(png|jpeg|jpg|webp);base64,/,
-        ''
-      );
-      parts.push({ inlineData: { mimeType: 'image/png', data: prevClean } });
-      parts.push({ text: `Previous Frame ${i} (Motion Context)` });
-    }
-
-    const fullPrompt = `
-    Task: Generate Frame ${i + 1} of ${frameCount} for a sprite sheet.
-    Action: "${prompt}".
-    Pose Description: ${frameDesc}.
-    
-    [STRICT RULES]
-    1. STYLE: Match "Reference Character" exactly (Colors, Proportions, Shading).
-    2. BACKGROUND: Solid White (#FFFFFF).
-    3. CONTINUITY: ${prevFrameBase64 ? 'The new frame must logically follow "Previous Frame" to create smooth animation.' : 'Start the animation sequence.'}
-    4. ANCHOR: Keep the character size and ground position consistent.
-    5. FORMAT: Single character, centered.
-    `;
-
-    parts.push({ text: fullPrompt });
-
-    const response = await retryOperation(
-      async () =>
-        await ai.models.generateContent({
-          model,
-          contents: { parts },
-        }),
-      onProgress
+    const fullPrompt = buildFramePrompt(
+      prompt,
+      frameDesc,
+      i,
+      frameCount,
+      !!prevFrameBase64,
     );
 
-    const resultParts = response.candidates?.[0]?.content?.parts;
-    if (resultParts) {
-      for (const part of resultParts) {
-        if (part.inlineData?.data) {
-          return `data:image/png;base64,${part.inlineData.data}`;
-        }
-      }
+    try {
+      return await provider.generateImage({
+        imageBase64,
+        primaryImageCaption: 'Reference Character (Style/Design Source)',
+        additionalImages: prevFrameBase64
+          ? [
+              {
+                imageBase64: prevFrameBase64,
+                caption: `Previous Frame ${i} (Motion Context)`,
+              },
+            ]
+          : undefined,
+        prompt: fullPrompt,
+        model,
+        apiKey,
+        signal,
+        onProgress,
+      });
+    } catch (err) {
+      throw formatImageProviderError(providerId, err);
     }
-    throw new Error(`No image data received for frame ${i + 1}`);
   };
 
   const results: string[] = [];
@@ -100,22 +113,24 @@ export async function generateAnimationFrames(
   for (let i = 0; i < frameDescriptions.length; i++) {
     const desc = frameDescriptions[i]!;
     try {
-      if (onProgress)
+      if (onProgress) {
         onProgress(
-          `正在繪製第 ${i + 1} / ${frameDescriptions.length} 幀...`
+          `正在繪製第 ${i + 1} / ${frameDescriptions.length} 幀...`,
         );
+      }
 
       if (i > 0) {
         if (onProgress && interFrameDelayMs > 1000) {
           onProgress(
-            `等待 API 冷卻 (${Math.round(interFrameDelayMs / 1000)}秒)... 準備繪製第 ${i + 1} 幀`
+            `等待 API 冷卻 (${Math.round(interFrameDelayMs / 1000)}秒)... 準備繪製第 ${i + 1} 幀`,
           );
         }
         await wait(interFrameDelayMs);
-        if (onProgress)
+        if (onProgress) {
           onProgress(
-            `正在繪製第 ${i + 1} / ${frameDescriptions.length} 幀...`
+            `正在繪製第 ${i + 1} / ${frameDescriptions.length} 幀...`,
           );
+        }
       }
 
       const frameResult = await generateFrame(desc, i, previousFrame);
