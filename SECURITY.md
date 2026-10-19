@@ -10,8 +10,8 @@ Do **not** open a public issue for unpatched vulnerabilities.
 
 This project is a **bring-your-own-key (BYOK)** browser app:
 
-- Production / hosted builds **never** embed a Gemini API key in the client bundle.
-- Users paste their own key in the in-app Settings dialog; it is stored in `sessionStorage` for the current tab only.
+- Production / hosted builds **never** embed API keys in the client bundle.
+- Users paste their own Gemini and/or OpenRouter key in Settings; keys are stored in `sessionStorage` for the current tab only.
 - Optional local development may use `GEMINI_API_KEY` in `.env.local` (see `.env.example`); that value is only injected by `vite` during `npm run dev`, not into production builds.
 
 **Never paste API keys, Hugging Face tokens, LINE credentials, or session cookies into issues, pull requests, or screenshots.**
