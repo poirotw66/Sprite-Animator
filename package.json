@@ -2,6 +2,7 @@
   "name": "sprite-animator",
   "private": true,
   "version": "1.2.0",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -35,7 +36,7 @@
     "@fontsource-variable/outfit": "^5.3.0",
     "@fontsource/noto-sans-tc": "^5.3.0",
     "@google/genai": "^1.52.0",
-    "@huggingface/transformers": "^4.2.0",
+    "@huggingface/transformers": "^4.3.1",
     "gifenc": "1.0.3",
     "jszip": "3.10.1",
     "lucide-react": "^0.562.0",
@@ -59,7 +60,7 @@
     "globals": "^17.8.0",
     "jpeg-js": "^0.4.4",
     "postcss": "^8.5.25",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.5",
     "tailwindcss": "^4.2.0",
     "tsx": "^4.23.1",
     "typescript": "~5.8.2",
@@ -68,7 +69,7 @@
     "vitest": "^4.1.10"
   },
   "overrides": {
-    "adm-zip": "0.6.0",
+    "adm-zip": "0.6.1",
     "protobufjs": "7.6.5",
     "sharp": "$sharp"
   },

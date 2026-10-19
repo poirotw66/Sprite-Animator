@@ -147,7 +147,7 @@ To verify the normalization is working:
 
 **修改的檔案**
 - `services/geminiService.ts` — 新增 `normalizeBackgroundColor()`,於 `generateSpriteSheet()` 套用,並強化提示詞的顏色規格
-- `README.md` / `README_en.md` — 加入「智能顏色標準化」功能說明
+- `README.md` / `README.zh-TW.md` — 加入「智能顏色標準化」功能說明
 
 **不影響的部分**
 - 去背算法本身（`workers/chromaKeyWorker.ts`）維持不變

@@ -264,14 +264,19 @@ export const zhTW: Translations = {
   languageEn: 'English',
 
   // Home Page
-  homeTitle: '精靈圖工具箱',
-  homeSubtitle: '選擇您需要的工具開始創作',
-  spriteAnimatorTool: '角色幀動畫小工具',
-  spriteAnimatorDesc: '上傳角色圖片，AI 自動生成精靈圖並切分為動畫幀，支援 GIF、APNG 輸出',
-  lineStickerTool: 'LINE 貼圖製作工具',
-  lineStickerDesc: '上傳角色圖片，AI 生成多種表情動作的精靈圖，自動切分為 LINE 貼圖素材',
+  homeTitle: 'Sprite Animator',
+  homeSubtitle:
+    '上傳角色圖，生成幀動畫與精靈圖——自動去背、網格切分，並匯出 APNG／GIF／ZIP。',
+  spriteAnimatorTool: 'Sprite Animator',
+  spriteAnimatorDesc:
+    '上傳角色圖，以 Gemini 生成逐幀或精靈圖動畫，再切分並匯出。',
+  openSpriteAnimator: '開啟 Sprite Animator',
+  optionalStudioTools: '可選工作室工具',
+  optionalStudioToolsHint: '共用同一套切分／去背管線的額外流程；核心動畫不必使用。',
+  lineStickerTool: 'LINE 貼圖製作',
+  lineStickerDesc: '可選：短語、多張 sheet、IndexedDB 作業還原',
   comicTool: '一頁式漫畫',
-  comicDesc: '上傳角色或描述概念，生成設定圖與四格分鏡，輸出單頁漫畫 PNG。',
+  comicDesc: '可選：概念 → 設定圖 → 分鏡 → 單頁漫畫 PNG',
   enterTool: '進入工具',
   backToHome: '返回首頁',
   pageLoading: '載入中…',
@@ -285,7 +290,7 @@ export const zhTW: Translations = {
   errorBoundaryHint: '若問題持續，請清除瀏覽器快取或聯絡技術支援。',
 
   registryTool: '貼圖產出履歷',
-  registryToolDesc: '檢視 daily-pack 產出的 sticker-registry 與批次計畫，追蹤角色、主題與完成狀態',
+  registryToolDesc: '可選：瀏覽 daily-pack 登記與批次計畫',
   registryTitle: '貼圖產出履歷',
   registrySubtitle: '載入 output/sticker-registry.json 或批次 batch-plan.json，檢視量產紀錄與預覽貼圖（本機開發伺服器可自動讀取 output/）',
   registryUploadRegistry: '上傳 registry JSON',

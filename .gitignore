@@ -56,3 +56,6 @@ output/
 __pycache__/
 fonts/
 inbox/
+
+# Local one-off debug / campaign scratch scripts
+scripts/line-sticker/_*.py

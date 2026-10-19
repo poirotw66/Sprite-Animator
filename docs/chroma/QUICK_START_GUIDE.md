@@ -138,19 +138,10 @@ isGreenLike = (
 - 節省時間和精力
 ```
 
-## 🧪 測試工具 (Testing Tool)
+## 🧪 驗證方式 (Verification)
 
-想要測試顏色標準化功能?
-
-```bash
-# 開啟測試工具
-open test-color-normalization.html
-```
-
-測試工具提供:
-- ✅ 洋紅色變體測試
-- ✅ 綠幕變體測試
-- ✅ 視覺比較工具
+顏色標準化由單元測試覆蓋（例如 `utils/normalizeChromaBackground.test.ts`）。
+手動驗證可在 Sprite Animator 或 Remove Background 頁面上傳含洋紅色／綠幕背景的圖，確認去背結果。
 
 詳細說明請參閱 [Chroma Key 改進紀錄](./CHROMA_KEY.md)
 
@@ -203,7 +194,7 @@ open test-color-normalization.html
 如果遇到問題:
 
 1. **首先**: 查看 [FAQ](#-常見問題-faq) 章節
-2. **然後**: 使用 [測試工具](../../test-color-normalization.html) 驗證
+2. **然後**: 執行相關單元測試或在應用內手動驗證去背
 3. **最後**: 查閱 [Chroma Key 改進紀錄](./CHROMA_KEY.md) 的已知限制
 
 ## 🎉 總結 (Summary)
