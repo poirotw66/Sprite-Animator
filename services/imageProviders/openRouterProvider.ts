@@ -43,9 +43,23 @@ async function parseErrorResponse(response: Response): Promise<string> {
   }
 }
 
+function buildPromptWithCaptions(request: GenerateImageRequest): string {
+  const lines: string[] = [];
+  if (request.primaryImageCaption) {
+    lines.push(`Primary reference: ${request.primaryImageCaption}`);
+  }
+  for (const [index, extra] of (request.additionalImages ?? []).entries()) {
+    lines.push(
+      `Additional reference ${index + 1}: ${extra.caption ?? 'context image'}`,
+    );
+  }
+  if (lines.length === 0) return request.prompt;
+  return `${lines.join('\n')}\n\n${request.prompt}`;
+}
+
 /**
  * OpenRouter BYOK image generation via POST /api/v1/images.
- * Uses input_references for character-conditioned sprite sheets.
+ * Uses input_references for character-conditioned generation (sheet + frames).
  */
 export const openRouterImageProvider: ImageProvider = {
   id: 'openrouter',
@@ -61,14 +75,18 @@ export const openRouterImageProvider: ImageProvider = {
       signal,
     });
     if (!response.ok) {
-      throw new Error(await parseErrorResponse(response));
+      const detail = await parseErrorResponse(response);
+      if (response.status === 429 || response.status === 503) {
+        throw new Error(`OpenRouter rate limit (${response.status}): ${detail}`);
+      }
+      throw new Error(detail);
     }
   },
 
   async generateImage(request: GenerateImageRequest): Promise<string> {
     const {
       imageBase64,
-      prompt,
+      additionalImages,
       model,
       apiKey,
       aspectRatio,
@@ -84,17 +102,23 @@ export const openRouterImageProvider: ImageProvider = {
     }
     throwIfAborted(signal);
 
+    const inputReferences = [
+      {
+        type: 'image_url',
+        image_url: { url: toDataUrl(imageBase64) },
+      },
+      ...(additionalImages ?? []).map((extra) => ({
+        type: 'image_url' as const,
+        image_url: { url: toDataUrl(extra.imageBase64) },
+      })),
+    ];
+
     const body: Record<string, unknown> = {
       model,
-      prompt,
+      prompt: buildPromptWithCaptions(request),
       n: 1,
       output_format: 'png',
-      input_references: [
-        {
-          type: 'image_url',
-          image_url: { url: toDataUrl(imageBase64) },
-        },
-      ],
+      input_references: inputReferences,
     };
     if (aspectRatio) body.aspect_ratio = aspectRatio;
     if (imageSize) body.resolution = imageSize;
@@ -109,7 +133,13 @@ export const openRouterImageProvider: ImageProvider = {
       });
 
       if (!response.ok) {
-        throw new Error(await parseErrorResponse(response));
+        const detail = await parseErrorResponse(response);
+        if (response.status === 429 || response.status === 503) {
+          throw new Error(
+            `OpenRouter rate limit (${response.status}): ${detail}`,
+          );
+        }
+        throw new Error(detail);
       }
 
       const json = (await response.json()) as OpenRouterImagesResponse;
@@ -126,7 +156,6 @@ export const openRouterImageProvider: ImageProvider = {
         return first.url;
       }
       if (first?.url) {
-        // Rare: HTTPS URL — fetch and re-encode as data URL for the rest of the pipeline.
         const imageResponse = await fetch(first.url, { signal });
         if (!imageResponse.ok) {
           throw new Error('Failed to download OpenRouter image URL');

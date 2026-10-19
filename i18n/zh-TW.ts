@@ -182,7 +182,7 @@ export const zhTW: Translations = {
   imageProviderLabel: '影像供應商',
   imageProviderGemini: 'Google Gemini',
   imageProviderOpenRouter: 'OpenRouter（自備金鑰）',
-  imageProviderHint: '精靈動畫產生器會使用所選供應商。LINE 貼圖與漫畫仍固定使用 Gemini。',
+  imageProviderHint: '精靈動畫的精靈圖與逐幀模式會使用所選供應商。LINE 貼圖與漫畫仍固定使用 Gemini。',
   apiKeyLabel: 'Gemini API Key',
   apiKeyPlaceholder: 'AIzaSy...',
   openRouterApiKeyLabel: 'OpenRouter API Key',
@@ -278,7 +278,7 @@ export const zhTW: Translations = {
     '上傳角色圖，生成幀動畫與精靈圖——自動去背、網格切分，並匯出 APNG／GIF／ZIP。',
   spriteAnimatorTool: 'Sprite Animator',
   spriteAnimatorDesc:
-    '上傳角色圖，以 Gemini 生成逐幀或精靈圖動畫，再切分並匯出。',
+    '上傳角色圖，以 Gemini 或 OpenRouter（BYOK）生成逐幀或精靈圖動畫，再切分並匯出。',
   openSpriteAnimator: '開啟 Sprite Animator',
   optionalStudioTools: '可選工作室工具',
   optionalStudioToolsHint: '共用同一套切分／去背管線的額外流程；核心動畫不必使用。',

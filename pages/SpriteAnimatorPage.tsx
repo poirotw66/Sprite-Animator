@@ -307,7 +307,7 @@ const SpriteAnimatorPage: React.FC = () => {
           logger.warn('Auto-optimization failed, using default settings:', err);
         }
       } else {
-        // Frame by Frame mode
+        // Frame by Frame mode (ImageProvider: Gemini or OpenRouter)
         setStatusText(`${t.statusGenerating} (${t.statusUsingModel}: ${selectedModel})`);
         const frames = await generateAnimationFrames(
           sourceImage,
@@ -316,7 +316,8 @@ const SpriteAnimatorPage: React.FC = () => {
           effectiveKey,
           selectedModel,
           (status) => setStatusText(status),
-          delayBetweenFrames
+          delayBetweenFrames,
+          { providerId: imageProvider },
         );
         setFrameModeFrames(frames);
       }
@@ -324,11 +325,14 @@ const SpriteAnimatorPage: React.FC = () => {
       const rawMsg = getErrorMessage(err);
       let displayMsg = t.errorGeneration;
 
-      if (rawMsg.includes('API Key is missing')) {
+      if (
+        rawMsg.includes('API Key is missing') ||
+        /API key is invalid/i.test(rawMsg)
+      ) {
         displayMsg = t.errorApiKey;
         setShowSettings(true);
-      } else if (isQuotaError(err)) {
-        displayMsg = t.errorRateLimit;
+      } else if (isQuotaError(err) || /rate limit/i.test(rawMsg)) {
+        displayMsg = `${t.errorRateLimit}: ${rawMsg}`;
       } else {
         displayMsg = `${t.errorGeneration}: ${rawMsg}`;
       }

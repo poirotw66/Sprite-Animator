@@ -9,10 +9,22 @@ function stripDataUrlPrefix(imageBase64: string): string {
   return imageBase64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
 }
 
+function toInlinePart(imageBase64: string): {
+  inlineData: { mimeType: string; data: string };
+} {
+  return {
+    inlineData: {
+      mimeType: 'image/png',
+      data: stripDataUrlPrefix(imageBase64),
+    },
+  };
+}
+
 /**
  * Existing Gemini image path, extracted for the ImageProvider interface.
  * Behavior matches the previous inline GoogleGenAI calls in spriteSheet.ts
  * (retry with imageSize → without imageSize → bare config).
+ * Frame-by-frame may pass primaryImageCaption + additionalImages for continuity.
  */
 export const geminiImageProvider: ImageProvider = {
   id: 'gemini',
@@ -29,6 +41,8 @@ export const geminiImageProvider: ImageProvider = {
   async generateImage(request: GenerateImageRequest): Promise<string> {
     const {
       imageBase64,
+      primaryImageCaption,
+      additionalImages,
       prompt,
       model,
       apiKey,
@@ -44,7 +58,22 @@ export const geminiImageProvider: ImageProvider = {
     throwIfAborted(signal);
 
     const ai = new GoogleGenAI({ apiKey });
-    const cleanBase64 = stripDataUrlPrefix(imageBase64);
+
+    type Part =
+      | { inlineData: { mimeType: string; data: string } }
+      | { text: string };
+
+    const contentParts: Part[] = [toInlinePart(imageBase64)];
+    if (primaryImageCaption) {
+      contentParts.push({ text: primaryImageCaption });
+    }
+    for (const extra of additionalImages ?? []) {
+      contentParts.push(toInlinePart(extra.imageBase64));
+      if (extra.caption) {
+        contentParts.push({ text: extra.caption });
+      }
+    }
+    contentParts.push({ text: prompt });
 
     const isInvalidArgument = (err: unknown): boolean => {
       const msg = getErrorMessage(err);
@@ -66,12 +95,7 @@ export const geminiImageProvider: ImageProvider = {
     const generateRequest = (config: ReturnType<typeof buildConfig>) =>
       ai.models.generateContent({
         model,
-        contents: {
-          parts: [
-            { inlineData: { mimeType: 'image/png', data: cleanBase64 } },
-            { text: prompt },
-          ],
-        },
+        contents: { parts: contentParts },
         config,
       });
 
@@ -102,12 +126,7 @@ export const geminiImageProvider: ImageProvider = {
           () =>
             ai.models.generateContent({
               model,
-              contents: {
-                parts: [
-                  { inlineData: { mimeType: 'image/png', data: cleanBase64 } },
-                  { text: prompt },
-                ],
-              },
+              contents: { parts: contentParts },
               config: { abortSignal: signal },
             }),
           onProgress,

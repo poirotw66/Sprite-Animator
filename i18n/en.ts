@@ -182,7 +182,7 @@ export const en: Translations = {
   imageProviderLabel: 'Image provider',
   imageProviderGemini: 'Google Gemini',
   imageProviderOpenRouter: 'OpenRouter (BYOK)',
-  imageProviderHint: 'Sprite Animator uses the selected provider. LINE Sticker and Comic stay on Gemini.',
+  imageProviderHint: 'Sprite Animator sheet and frame modes use the selected provider. LINE Sticker and Comic stay on Gemini.',
   apiKeyLabel: 'Gemini API Key',
   apiKeyPlaceholder: 'AIzaSy...',
   openRouterApiKeyLabel: 'OpenRouter API Key',
@@ -278,7 +278,7 @@ export const en: Translations = {
     'Turn a character image into frame animations and sprite sheets — chroma-key removal, grid slicing, APNG / GIF / ZIP export.',
   spriteAnimatorTool: 'Sprite Animator',
   spriteAnimatorDesc:
-    'Upload a character image, generate frame-by-frame or sprite-sheet animation with Gemini, then slice and export.',
+    'Upload a character image, generate frame-by-frame or sprite-sheet animation (Gemini or OpenRouter BYOK), then slice and export.',
   openSpriteAnimator: 'Open Sprite Animator',
   optionalStudioTools: 'Optional studio tools',
   optionalStudioToolsHint:
