@@ -20,35 +20,35 @@
    ```bash
    npm ci
    ```
-2. **（可選）本機金鑰** — 將 [`.env.example`](./.env.example) 複製為 `.env.local` 並設定 `GEMINI_API_KEY`（見下方 [API 金鑰](#api-金鑰)）。
+2. **（可選）本機 Gemini 金鑰** — 將 [`.env.example`](./.env.example) 複製為 `.env.local` 並設定 `GEMINI_API_KEY`（僅供 `npm run dev`；見 [API 金鑰](#api-金鑰)）。**沒有** OpenRouter 環境變數；OpenRouter 請在設定內貼上。
 3. **啟動**
    ```bash
    npm run dev
    ```
-   開啟 [http://localhost:3000](http://localhost:3000) — 預設進入 **Sprite Animator**（`/#/`；可選工作室工具在 `/#/studio`）。
+   開啟 [http://localhost:3000](http://localhost:3000) — 預設進入 **Sprite Animator**（`/#/`；可選工作室工具在 `/#/studio`）。於 **設定** 選擇 **影像供應商**（`Google Gemini` 或 `OpenRouter（自備金鑰）`）並貼上對應金鑰。
 
 環境：Node.js 20–26（`>=20 <27`）、npm 10+（專案鎖定 10.9.2）。
 
 ### Docker（僅網站）
 
-建置並提供靜態 SPA（不含 LINE 工廠／Python 上傳工具）：
+建置並提供靜態 SPA（不含 LINE 工廠／Python 上傳工具）。映像**不會**內建 API 金鑰：
 
 ```bash
 docker build -t sprite-animator .
 docker run --rm -p 8080:8080 sprite-animator
 ```
 
-開啟 [http://localhost:8080/](http://localhost:8080/)。請在應用設定以 BYOK 填入自己的 Gemini API Key。
+開啟 [http://localhost:8080/](http://localhost:8080/)。請在應用 **設定** → **影像供應商** 以 BYOK 貼上 Gemini 或 OpenRouter 金鑰（存於 `sessionStorage`）。
 
 ## 核心功能
 
-- **逐幀模式**：逐張生成，適合精細動作
-- **精靈圖模式**：一次請求產出整張網格（較省 API 配額）
+- **逐幀模式**：逐張生成，適合精細動作（**目前仍走 Gemini SDK**）
+- **精靈圖模式**：一次請求產出整張網格（較省 API 配額；**Gemini 或 OpenRouter**，由設定選擇）
 - **色鍵去背**（洋紅／綠幕）＋ Web Worker
 - **網格切分**（padding／shift、即時預覽）
 - **匯出** APNG、GIF、ZIP（PNG 幀 + 打包圖集），以及 **Aseprite 相容 JSON**（json-array + `frameTags`，可供 Phaser `load.aseprite` 載入）
 
-使用 Google Gemini 圖像 API（瀏覽器內自行填入 API Key）。
+影像產生採瀏覽器 **BYOK**：可選 **Google Gemini** 或 **OpenRouter**（設定內切換）。金鑰僅存於目前分頁的 `sessionStorage`，不會打包進 bundle。
 
 ### 引擎匯出（ZIP／Aseprite）
 
@@ -111,11 +111,18 @@ Headless LINE 量產／上傳見 `skills/line-sticker-*`、`scripts/line-sticker
 
 | 情境 | 作法 |
 |------|------|
-| **本機 `npm run dev`** | 可選：在 `.env.local` 設定 `GEMINI_API_KEY`（參考 [`.env.example`](./.env.example)）。僅注入 Vite 開發伺服器（Gemini）。 |
-| **公開／正式站** | 在「設定」以 **BYOK** 選擇 **Gemini** 或 **OpenRouter**；金鑰存於該分頁的 `sessionStorage`，不會打包進 bundle。 |
-| **Production 建置** | **不會**把 API 金鑰寫進前端 bundle。CI 以假 sentinel 建置，若出現在 `dist/` 則失敗。 |
+| **設定（BYOK）** | 齒輪 → **影像供應商**：`Google Gemini` 或 `OpenRouter（自備金鑰）`，再貼上對應金鑰。兩者皆存於目前分頁的 `sessionStorage`，關閉分頁即清除，不會打包進 bundle。 |
+| **取得金鑰** | Gemini：[Google AI Studio](https://aistudio.google.com/app/apikey)。OpenRouter：[openrouter.ai/keys](https://openrouter.ai/keys)。 |
+| **僅本機 `npm run dev`** | 可選：`.env.local` 的 `GEMINI_API_KEY`（參考 [`.env.example`](./.env.example)）在設定欄位空白時作為 Gemini 後備。**沒有** `OPENROUTER_*` 環境變數注入。 |
+| **Docker／正式站** | 金鑰**不會**進映像或前端 bundle；一律用設定 BYOK。CI 以假 sentinel 建置，若真實金鑰出現在 `dist/` 則失敗。 |
 
-精靈動畫產生器透過 `ImageProvider`（`services/imageProviders/`）呼叫供應商。LINE 貼圖與漫畫即使選了 OpenRouter，仍固定走 Gemini。
+**各功能對應的供應商**
+
+| 功能 | 供應商 |
+|------|--------|
+| Sprite Animator **精靈圖**模式 | 設定所選供應商（`services/imageProviders/`） |
+| Sprite Animator **逐幀**模式 | 仍走 Gemini SDK（`generateAnimationFrames`）— 此模式請選 **Google Gemini** |
+| LINE 貼圖／一頁式漫畫 | **固定 Gemini**，即使精靈圖選了 OpenRouter |
 
 請在供應商端設定配額與帳單上限。勿提交 `.env.local`，也勿把金鑰貼進 Issue 或 job 快照。
 

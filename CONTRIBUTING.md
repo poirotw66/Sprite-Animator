@@ -9,7 +9,7 @@ npm ci
 npm test
 ```
 
-Optional local Gemini key: copy `.env.example` to `.env.local` and set `GEMINI_API_KEY`. For UI work you can also paste a key in the in-app Settings dialog.
+Optional local Gemini key: copy `.env.example` to `.env.local` and set `GEMINI_API_KEY` (dev-server Gemini fallback only). For UI work, open Settings → **Image provider** (`Google Gemini` or `OpenRouter (BYOK)`) and paste the matching key; keys stay in `sessionStorage` and are never committed. There is no OpenRouter env var.
 
 Useful checks before opening a PR:
 

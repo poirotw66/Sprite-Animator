@@ -1,7 +1,8 @@
 # Web-only image for the Sprite Animator SPA (no LINE factory / Python upload toolchain).
+# Does not bake in Gemini/OpenRouter keys — use in-app Settings BYOK (sessionStorage).
 # Build:  docker build -t sprite-animator .
 # Run:   docker run --rm -p 8080:8080 sprite-animator
-# Then open http://localhost:8080/
+# Then open http://localhost:8080/ → Settings → Image provider + paste key
 
 FROM node:20-bookworm-slim AS build
 WORKDIR /app

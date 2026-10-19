@@ -10,9 +10,10 @@ Do **not** open a public issue for unpatched vulnerabilities.
 
 This project is a **bring-your-own-key (BYOK)** browser app:
 
-- Production / hosted builds **never** embed API keys in the client bundle.
-- Users paste their own Gemini and/or OpenRouter key in Settings; keys are stored in `sessionStorage` for the current tab only.
-- Optional local development may use `GEMINI_API_KEY` in `.env.local` (see `.env.example`); that value is only injected by `vite` during `npm run dev`, not into production builds.
+- Production / Docker / hosted builds **never** embed API keys in the client bundle or image.
+- In Settings, users choose **Image provider** (`Google Gemini` or `OpenRouter (BYOK)`) and paste the matching key. Both keys are stored in `sessionStorage` for the current tab only.
+- Optional local development may use `GEMINI_API_KEY` in `.env.local` (see `.env.example`) as a Gemini fallback during `npm run dev` only. There is **no** OpenRouter env-var injection.
+- LINE Sticker and Comic tooling always use the Gemini key path, regardless of the selected sheet provider.
 
 **Never paste API keys, Hugging Face tokens, LINE credentials, or session cookies into issues, pull requests, or screenshots.**
 
