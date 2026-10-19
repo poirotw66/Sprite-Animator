@@ -36,6 +36,10 @@ If you touch browser routes or offline flows, also run `npm run test:e2e` (insta
 
 Please keep PRs focused. Do not commit secrets, `.env.local`, `.line-upload/`, or `.secrets/`.
 
+## Code of Conduct
+
+This project follows the [Contributor Covenant Code of Conduct](./CODE_OF_CONDUCT.md). By participating, you are expected to uphold it.
+
 ## License
 
 By contributing, you agree that your contributions are licensed under the [MIT License](./LICENSE).
