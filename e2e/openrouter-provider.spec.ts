@@ -1,8 +1,5 @@
 import { expect, test, type Page, type Route } from '@playwright/test';
-
-/** 1×1 PNG used as mocked OpenRouter sprite-sheet output. */
-const TINY_PNG_BASE64 =
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+import sharp from 'sharp';
 
 const FAKE_OPENROUTER_KEY = 'mock-openrouter-e2e-key';
 
@@ -12,6 +9,8 @@ const DEMO_SVG = Buffer.from(
 
 async function mockOpenRouterApis(page: Page): Promise<string[]> {
   const hits: string[] = [];
+  // Use a sheet large enough for the default 3-by-2 grid and real frame export.
+  const sheet = await sharp({ create: { width: 300, height: 200, channels: 4, background: '#38bdf8' } }).png().toBuffer();
   await page.route(/openrouter\.ai\/api\/v1\//, async (route: Route) => {
     const request = route.request();
     const url = request.url();
@@ -31,7 +30,7 @@ async function mockOpenRouterApis(page: Page): Promise<string[]> {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          data: [{ b64_json: TINY_PNG_BASE64, media_type: 'image/png' }],
+          data: [{ b64_json: sheet.toString('base64'), media_type: 'image/png' }],
         }),
       });
       return;
@@ -49,6 +48,7 @@ async function mockOpenRouterApis(page: Page): Promise<string[]> {
 test('Settings can select OpenRouter and generate a sheet via mocked Image API', async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   const hits = await mockOpenRouterApis(page);
 
   await page.goto('/#/');
@@ -79,4 +79,23 @@ test('Settings can select OpenRouter and generate a sheet via mocked Image API',
     .toBe(true);
 
   expect(hits.some((hit) => /GET .*\/models/.test(hit))).toBe(true);
+
+  const player = page.getByRole('button', { name: /Animation Preview Area|動畫預覽區域/i });
+  await expect(player).toBeVisible();
+  await player.scrollIntoViewIfNeeded();
+  const playerBox = await player.boundingBox();
+  for (const name of [/Download APNG|下載 APNG/i, /^GIF$/, /^ZIP$/, /^Aseprite JSON$/]) {
+    const action = page.getByRole('button', { name });
+    await expect(action).toBeVisible();
+    const box = await action.boundingBox();
+    expect(box!.y).toBeGreaterThanOrEqual(playerBox!.y + playerBox!.height);
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(390);
+  }
+  await player.focus();
+  await player.press('Space');
+  await expect(player).toHaveAttribute('aria-pressed', 'false');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: /^ZIP$/ }).click();
+  expect((await download).suggestedFilename()).toMatch(/\.zip$/);
 });

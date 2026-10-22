@@ -17,16 +17,16 @@ export const ImageUpload: React.FC<ImageUploadProps> = React.memo(({
   const { t } = useLanguage();
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6">
-      <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
-        <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
+    <div className="ui-panel p-4 sm:p-5">
+      <h2 className="ui-section-title">
+        <span className="ui-step">
           1
         </span>
         {t.uploadTitle}
       </h2>
 
       <div
-        className={`border-2 border-dashed rounded-xl min-h-[160px] sm:min-h-[192px] h-48 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 relative overflow-hidden group touch-manipulation tap-highlight
+        className={`border border-dashed rounded-lg h-40 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 relative overflow-hidden group touch-manipulation tap-highlight
           ${sourceImage ? 'border-signal/40 bg-signal-soft' : 'border-slate-300 hover:border-signal hover:bg-slate-50 hover:shadow-sm active:bg-slate-100'}`}
         onDragOver={(e) => e.preventDefault()}
         onDrop={onDrop}
@@ -59,7 +59,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = React.memo(({
           />
         ) : (
           <div className="text-center p-4">
-            <div className="w-12 h-12 bg-signal-soft text-signal rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200 shadow-sm">
+            <div className="w-12 h-12 bg-signal-soft text-signal rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200 shadow-sm">
               <ImageIcon className="w-6 h-6" />
             </div>
             <p className="text-slate-700 font-medium text-sm">{t.uploadHint}</p>

@@ -193,10 +193,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
     >
       <div
         ref={modalRef}
-        className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto overflow-x-hidden animate-in fade-in zoom-in duration-200 border border-slate-200 flex flex-col"
+        className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-lg max-h-[90dvh] overflow-hidden border border-slate-200 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-4 sm:p-5 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white flex-shrink-0">
+        <div className="p-4 sm:p-5 border-b border-slate-200 flex justify-between items-center bg-white flex-shrink-0">
           <h3 id="settings-modal-title" className="font-bold text-slate-900 flex items-center gap-2 text-base sm:text-lg truncate min-w-0">
             <Settings className="w-5 h-5 text-slate-600 flex-shrink-0" aria-hidden="true" />
             <span className="truncate">{t.settingsTitle}</span>
@@ -210,7 +210,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
-        <div className="p-4 sm:p-6 space-y-5 overflow-y-auto">
+        <div className="min-h-0 p-4 sm:p-6 space-y-5 overflow-y-auto">
           <div>
             <label htmlFor="image-provider-select" className="block text-sm font-semibold text-slate-700 mb-2">
               {t.imageProviderLabel}
@@ -428,18 +428,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
               </a>
             </p>
           </div>
-
-          <div className="pt-2">
-            <button
-              onClick={handleSave}
-              disabled={isValidating}
-              className="ui-btn-primary w-full py-3"
-              type="button"
-              aria-label={t.saveAndApply}
-            >
-              {isValidating ? t.validating : t.saveAndApply}
-            </button>
-          </div>
+        </div>
+        <div className="shrink-0 border-t border-line bg-surface p-4 sm:px-6">
+          <button
+            onClick={handleSave}
+            disabled={isValidating}
+            className="ui-btn-primary w-full py-3"
+            type="button"
+            aria-label={t.saveAndApply}
+          >
+            {isValidating ? t.validating : t.saveAndApply}
+          </button>
         </div>
       </div>
     </div>

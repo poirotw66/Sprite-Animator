@@ -1,9 +1,8 @@
 import React, { useState, useCallback, useMemo, Suspense } from 'react';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Settings, Loader2, Download, Check, FileArchive, Grid } from '../components/Icons';
+import { Loader2, Download, Check, FileArchive, Grid } from '../components/Icons';
 import { useLanguage } from '../hooks/useLanguage';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { ToolPageHeader } from '../components/ui';
 import { SettingsModal } from '../components/SettingsModal';
 import { useSettings } from '../hooks/useSettings';
 import { ImageUpload } from '../components/ImageUpload';
@@ -175,7 +174,7 @@ const PartingPage: React.FC = () => {
   const displayImage = flow.processedImage ?? flow.image;
 
   return (
-    <div className="min-h-[100dvh] font-sans overflow-x-hidden px-4 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] md:px-6 lg:px-8 md:pt-6 lg:pt-8 md:pb-6 lg:pb-8">
+    <div className="ui-page">
       <SettingsModal
         apiKey={apiKey}
         setApiKey={setApiKey}
@@ -194,41 +193,15 @@ const PartingPage: React.FC = () => {
         onSave={saveSettings}
       />
 
-      <header className="sticky top-0 z-20 max-w-7xl mx-auto mb-4 md:mb-8 -mx-4 px-4 md:mx-0 md:px-0 safe-top">
-        <div className="bg-white/95 backdrop-blur-md rounded-xl md:rounded-2xl shadow-sm border border-slate-200/60 p-3 sm:p-4 md:p-5 flex items-center justify-between gap-2 safe-left safe-right">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Link
-              to="/studio"
-              className="min-h-[44px] min-w-[44px] p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 bg-white rounded-xl transition-all duration-200 shadow-sm border border-slate-200 hover:border-slate-300 flex items-center justify-center"
-              title={t.backToHome}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2 truncate">
-              <div className="bg-gradient-to-br from-ink to-ink-soft p-1.5 sm:p-2 rounded-lg md:rounded-xl shadow-md flex-shrink-0">
-                <Grid className="w-5 h-5 md:w-6 md:h-6 text-white" />
-              </div>
-              <span className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                {t.partingTitle}
-              </span>
-            </h1>
-          </div>
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-            <LanguageSwitcher />
-            <button
-              onClick={() => setShowSettings(true)}
-              className="min-h-[44px] min-w-[44px] p-2.5 rounded-xl transition-all duration-200 shadow-sm border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 flex items-center justify-center"
-              title={t.settings}
-              aria-label={t.settings}
-            >
-              <Settings className="w-5 h-5 text-slate-600" />
-            </button>
-          </div>
-        </div>
-      </header>
+      <ToolPageHeader
+        title={t.partingTitle}
+        icon={<Grid />}
+        onOpenSettings={() => setShowSettings(true)}
+        settingsLabel={t.settings}
+      />
 
-      <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 md:gap-6">
-        <div className="lg:col-span-5 space-y-4 sm:space-y-5 md:space-y-6">
+      <main className="workspace-grid">
+        <div className="min-w-0 space-y-5">
           <ImageUpload
             sourceImage={flow.image}
             onImageUpload={handleImageUpload}
@@ -411,7 +384,7 @@ const PartingPage: React.FC = () => {
           )}
         </div>
 
-        <div className="lg:col-span-7 flex flex-col gap-4 min-w-0">
+        <div className="min-w-0 flex flex-col gap-4">
           {error && (
             <div className="text-red-600 text-sm bg-red-50 p-3 rounded-xl border border-red-200 flex items-center justify-between gap-2">
               <span>{error}</span>

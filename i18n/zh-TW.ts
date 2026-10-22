@@ -275,7 +275,7 @@ export const zhTW: Translations = {
   // Home Page
   homeTitle: 'Sprite Animator',
   homeSubtitle:
-    '上傳角色圖，生成幀動畫與精靈圖——自動去背、網格切分，並匯出 APNG／GIF／ZIP。',
+    '上傳角色圖，生成幀動畫與精靈圖，自動去背、網格切分，並匯出 APNG／GIF／ZIP。',
   spriteAnimatorTool: 'Sprite Animator',
   spriteAnimatorDesc:
     '上傳角色圖，以 Gemini 或 OpenRouter（BYOK）生成逐幀或精靈圖動畫，再切分並匯出。',

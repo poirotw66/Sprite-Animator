@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
-import { Link } from 'react-router-dom';
-import { RefreshCw, Settings, Zap, Loader2, Save, ArrowLeft } from '../components/Icons';
+import { RefreshCw, Zap, Loader2, Save } from '../components/Icons';
 import { SettingsModal } from '../components/SettingsModal';
 import { ImageUpload } from '../components/ImageUpload';
 import { AnimationConfigPanel } from '../components/AnimationConfig';
 import { SheetSliceProgrammaticOverlayPanel } from '../components/SheetSliceProgrammaticOverlayPanel';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { ToolPageHeader } from '../components/ui';
 import { useLanguage } from '../hooks/useLanguage';
 
 // Lazy load heavy components for code splitting
@@ -495,7 +494,7 @@ const SpriteAnimatorPage: React.FC = () => {
   }, [spriteSheetImage, handleDownloadSpriteSheet]);
 
   return (
-    <div className="min-h-[100dvh] font-sans overflow-x-hidden px-4 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] md:px-6 lg:px-8 md:pt-6 lg:pt-8 md:pb-6 lg:pb-8">
+    <div className="ui-page">
       <SettingsModal
         apiKey={apiKey}
         setApiKey={setApiKey}
@@ -514,64 +513,40 @@ const SpriteAnimatorPage: React.FC = () => {
         onSave={saveSettings}
       />
 
-      <header className="sticky top-0 z-20 max-w-7xl mx-auto mb-4 md:mb-8 -mx-4 px-4 md:mx-0 md:px-0 safe-top">
-        <div className="bg-white/95 backdrop-blur-md rounded-xl md:rounded-2xl shadow-sm border border-slate-200/60 p-3 sm:p-4 md:p-5 flex flex-wrap items-center justify-between gap-2 safe-left safe-right">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <Link
-              to="/studio"
-              className="min-h-[44px] min-w-[44px] p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 bg-white rounded-xl transition-all duration-200 shadow-sm border border-slate-200 hover:border-slate-300 hover:shadow-md cursor-pointer flex items-center justify-center touch-manipulation"
-              title={t.backToHome}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2 sm:gap-3 truncate">
-              <div className="bg-signal p-1.5 sm:p-2 rounded-lg md:rounded-xl shadow-md flex-shrink-0">
-                <Zap className="w-5 h-5 md:w-6 md:h-6 text-white" />
-              </div>
-              <span className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                {t.appTitle}
-              </span>
-            </h1>
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-            <ProjectHistory
-              list={projectList}
-              onSaveCurrent={(name) => { setIsSavingProject(true); handleSaveProject(name); }}
-              loadProjectById={loadProjectById}
-              onLoad={handleLoadProject}
-              onDelete={deleteProject}
-              canSave={canSaveProject}
-              isSaving={isSavingProject}
-              variant="header"
-            />
-            <LanguageSwitcher />
-            <button
-              onClick={() => setShowSettings(true)}
-              className={`min-h-[44px] min-w-[44px] p-2.5 rounded-xl transition-all duration-200 shadow-sm border flex items-center justify-center gap-2 cursor-pointer touch-manipulation tap-highlight
-                ${hasCustomKey
-                  ? 'text-signal bg-signal-soft hover:bg-signal-soft border-signal/25 hover:shadow-md'
-                  : 'text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 hover:shadow-md'
-                }`}
-              title={hasCustomKey ? t.useCustomKey : t.useSystemKey}
-              aria-label={t.settings}
-            >
-              <Settings className="w-5 h-5" />
-              {hasCustomKey && <span className="hidden text-xs font-semibold pr-1 sm:inline">{t.customKey}</span>}
-            </button>
-            <button
-              onClick={handleReset}
-              className="min-h-[44px] min-w-[44px] p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 bg-white rounded-xl transition-all duration-200 shadow-sm border border-slate-200 hover:border-slate-300 hover:shadow-md cursor-pointer flex items-center justify-center touch-manipulation tap-highlight"
-              title={t.reset}
-              aria-label={t.reset}
-            >
-              <RefreshCw className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </header>
+      <ToolPageHeader
+        title={t.appTitle}
+        icon={<Zap />}
+        onOpenSettings={() => setShowSettings(true)}
+        settingsActive={hasCustomKey}
+        settingsLabel={t.settings}
+        jumpToResultHref="#animation-results"
+        jumpToResultLabel={t.previewTitle}
+        leadingActions={
+          <ProjectHistory
+            list={projectList}
+            onSaveCurrent={(name) => { setIsSavingProject(true); handleSaveProject(name); }}
+            loadProjectById={loadProjectById}
+            onLoad={handleLoadProject}
+            onDelete={deleteProject}
+            canSave={canSaveProject}
+            isSaving={isSavingProject}
+            variant="header"
+          />
+        }
+        endActions={
+          <button type="button" onClick={handleReset} className="ui-btn-ghost min-w-11 px-0" title={t.reset} aria-label={t.reset}>
+            <RefreshCw className="h-5 w-5" />
+          </button>
+        }
+      />
 
-      <main className="max-w-7xl mx-auto grid grid-cols-1 items-start lg:grid-cols-12 gap-4 sm:gap-5 md:gap-6">
-        <div className="lg:col-span-5 space-y-4 sm:space-y-5 md:space-y-6">
+      <div className="workspace-intro">
+        <h2 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">{t.spriteAnimatorTool}</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-muted">{t.spriteAnimatorDesc}</p>
+      </div>
+
+      <main className="workspace-grid">
+        <div className="min-w-0 space-y-5">
           <ImageUpload
             sourceImage={sourceImage}
             onImageUpload={handleImageUpload}
@@ -618,7 +593,7 @@ const SpriteAnimatorPage: React.FC = () => {
           )}
         </div>
 
-        <div className="lg:col-span-7 flex flex-col gap-4 sm:gap-5 md:gap-6 min-w-0">
+        <div id="animation-results" tabIndex={-1} className="workspace-results flex min-w-0 flex-col gap-5">
           {/* Sprite Sheet Viewer (Only in Sheet Mode) */}
           {config.mode === 'sheet' && (
             <Suspense

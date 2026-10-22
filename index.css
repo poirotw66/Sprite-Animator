@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /**
- * Signal Studio — product visual language
+ * Signal Studio product visual language.
  * Cool paper surfaces, ink typography, single vermillion accent.
  * Tool pages share one system; no per-tool rainbow CTAs.
  */
@@ -11,16 +11,16 @@
   --color-ink: #14171f;
   --color-ink-soft: #3d4454;
   --color-ink-muted: #5a6170;
-  --color-ink-faint: #8b92a3;
+  --color-ink-faint: #626b7b;
 
-  --color-paper: #eef0f4;
-  --color-paper-deep: #e4e7ee;
+  --color-paper: #f4f5f7;
+  --color-paper-deep: #e9ecf0;
   --color-surface: #ffffff;
-  --color-line: #d5d9e2;
+  --color-line: #dfe3e9;
   --color-line-strong: #b8becb;
 
-  --color-signal: #e23d2f;
-  --color-signal-hover: #c83328;
+  --color-signal: #c93629;
+  --color-signal-hover: #b22c21;
   --color-signal-pressed: #a82b22;
   --color-signal-soft: #fdecea;
   --color-signal-ring: rgb(226 61 47 / 0.28);
@@ -37,7 +37,7 @@
   --color-slate-100: #e4e7ee;
   --color-slate-200: #d5d9e2;
   --color-slate-300: #b8becb;
-  --color-slate-400: #8b92a3;
+  --color-slate-400: #626b7b;
   --color-slate-500: #6b7285;
   --color-slate-600: #5a6170;
   --color-slate-700: #3d4454;
@@ -63,12 +63,16 @@
 
   body {
     @apply bg-paper text-ink font-sans antialiased;
-    background-image:
-      radial-gradient(ellipse 80% 50% at 10% -10%, rgb(226 61 47 / 0.06), transparent 55%),
-      radial-gradient(ellipse 60% 40% at 100% 0%, rgb(47 111 237 / 0.05), transparent 50%),
-      linear-gradient(180deg, #f4f5f8 0%, #eef0f4 40%, #e9ebf1 100%);
-    background-attachment: fixed;
   }
+
+  :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-signal);
+    outline-offset: 3px;
+  }
+
+  :where(button, a) { -webkit-tap-highlight-color: transparent; }
+
+  :where(button:not(:disabled), select) { cursor: pointer; }
 
   ::selection {
     background: rgb(226 61 47 / 0.18);
@@ -77,7 +81,9 @@
 
 @layer components {
   .ui-page {
-    @apply min-h-[100dvh] px-4 pb-12 pt-4 md:px-6 md:pb-14 md:pt-6 lg:px-8;
+    @apply min-h-[100dvh] px-4 pb-12 pt-4 md:px-6 md:pb-14 lg:px-8;
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-bottom: max(3rem, env(safe-area-inset-bottom));
   }
 
   .ui-shell {
@@ -89,7 +95,51 @@
   }
 
   .ui-header {
-    @apply sticky top-3 z-30 mx-auto mb-6 max-w-7xl rounded-xl border border-line/90 bg-surface/90 p-3 shadow-sm backdrop-blur-md sm:p-4;
+    @apply sticky z-30 mx-auto mb-6 w-full max-w-7xl rounded-xl border border-line bg-surface p-3 shadow-sm;
+    top: max(0.5rem, env(safe-area-inset-top));
+  }
+
+  .tool-header-layout {
+    @apply grid min-w-0 grid-cols-1 gap-3 md:flex md:items-center md:justify-between;
+  }
+
+  .tool-header-actions {
+    @apply relative flex min-w-0 flex-wrap items-center justify-end gap-2 border-t border-line pt-3 md:shrink-0 md:flex-nowrap md:border-0 md:pt-0;
+  }
+
+  .ui-section-title {
+    @apply mb-4 flex items-center gap-2.5 text-sm font-semibold text-ink;
+  }
+
+  .ui-step {
+    @apply flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-line bg-paper text-xs font-semibold tabular-nums text-ink-muted;
+  }
+
+  .ui-canvas {
+    @apply relative overflow-hidden rounded-lg border border-line bg-paper;
+    background-image: repeating-conic-gradient(var(--color-surface) 0% 25%, transparent 0% 50%);
+    background-size: 20px 20px;
+  }
+
+  .workspace-results {
+    scroll-margin-top: 10rem;
+    @media (width < 380px) {
+      scroll-margin-top: 14rem;
+    }
+    @media (min-width: 768px) {
+      scroll-margin-top: 6rem;
+    }
+  }
+
+  .workspace-intro {
+    @apply mx-auto mb-6 max-w-7xl border-b border-line pb-5;
+  }
+
+  .workspace-grid {
+    @apply mx-auto grid max-w-7xl grid-cols-1 items-start gap-5 lg:gap-6;
+    @media (min-width: 1024px) {
+      grid-template-columns: minmax(340px, 400px) minmax(0, 1fr);
+    }
   }
 
   .ui-btn {
@@ -98,11 +148,6 @@
 
   .ui-btn-primary {
     @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-signal px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 touch-manipulation hover:bg-signal-hover active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
-    box-shadow: 0 10px 24px rgb(226 61 47 / 0.22);
-  }
-
-  .ui-btn-primary:hover {
-    box-shadow: 0 14px 28px rgb(226 61 47 / 0.28);
   }
 
   .ui-btn-secondary {
@@ -151,5 +196,14 @@
 
   .ui-segment-item-active {
     @apply bg-surface text-ink shadow-sm;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

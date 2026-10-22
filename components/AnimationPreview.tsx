@@ -36,14 +36,14 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
   const { t } = useLanguage();
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6 flex flex-col">
+    <div className="ui-panel p-4 sm:p-5 flex flex-col">
       <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
+        <span className="flex items-center gap-2">
+          <span className="ui-step">
             4
           </span>
           {t.previewTitle}
-        </div>
+        </span>
         {generatedFrames.length > 0 && (
           <span className="text-xs text-signal bg-signal-soft px-2.5 py-1 rounded-full font-semibold border border-signal/25">
             {t.frame} {currentFrameIndex + 1} / {generatedFrames.length}
@@ -52,23 +52,24 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
       </h2>
 
       <div
-        className="bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center relative overflow-hidden group min-h-[220px] sm:min-h-[280px] md:min-h-[320px] cursor-pointer transition-colors hover:border-slate-400 hover:bg-slate-100/50 active:bg-slate-100 touch-manipulation tap-highlight"
-        onClick={onTogglePlay}
-        title={t.clickToPlayPause}
-        role="button"
-        tabIndex={0}
+        className="ui-canvas flex flex-col items-center justify-center min-h-[240px] sm:min-h-[300px] touch-manipulation"
+        onClick={generatedFrames.length > 0 ? onTogglePlay : undefined}
+        title={generatedFrames.length > 0 ? t.clickToPlayPause : undefined}
+        role={generatedFrames.length > 0 ? 'button' : undefined}
+        tabIndex={generatedFrames.length > 0 ? 0 : undefined}
+        aria-pressed={generatedFrames.length > 0 ? isPlaying : undefined}
         aria-label={t.previewArea}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
+          if (generatedFrames.length > 0 && (e.key === 'Enter' || e.key === ' ')) {
             e.preventDefault();
             onTogglePlay();
           }
         }}
       >
         {!isGenerating && generatedFrames.length === 0 && (
-          <div className="text-center p-8 opacity-60">
-            <div className="w-20 h-20 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-              <Play className="w-8 h-8 text-slate-500 ml-1" />
+          <div className="text-center max-w-sm p-6">
+            <div className="w-14 h-14 border border-line bg-surface rounded-xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+              <Play className="w-8 h-8 text-ink-muted ml-1" />
             </div>
             <h3 className="text-lg font-semibold text-slate-700">{t.previewArea}</h3>
             <p className="text-slate-500 mt-2 text-sm">{t.previewHint}</p>
@@ -112,57 +113,59 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = React.memo(({
                 </div>
               </div>
             )}
-
-            {/* Controls Overlay - wrap on narrow screens */}
-            <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 flex flex-col sm:flex-row flex-wrap gap-2 max-w-full justify-end" onClick={(e) => e.stopPropagation()}>
-              <button
-                onClick={onDownloadApng}
-                disabled={isExporting || generatedFrames.length === 0}
-                className="min-h-[44px] bg-signal hover:bg-signal-hover text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 disabled:cursor-wait cursor-pointer hover:shadow-xl touch-manipulation tap-highlight"
-                aria-label={t.downloadApng}
-              >
-                {isExporting ? <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" /> : <FileVideo className="w-4 h-4 flex-shrink-0" />}
-                <span className="truncate">{t.downloadApng}</span>
-              </button>
-
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={onDownloadGif}
-                  disabled={isExporting || generatedFrames.length === 0}
-                  className="min-h-[44px] flex-1 min-w-[100px] bg-white/95 hover:bg-white text-slate-800 px-3 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 cursor-pointer hover:shadow-xl border border-slate-200/50 touch-manipulation tap-highlight"
-                  aria-label={t.downloadGif}
-                >
-                  <Film className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                  <span className="truncate">{t.downloadGif}</span>
-                </button>
-                <button
-                  onClick={onDownloadZip}
-                  disabled={isExporting || generatedFrames.length === 0}
-                  className="min-h-[44px] flex-1 min-w-[100px] bg-white/95 hover:bg-white text-slate-800 px-3 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 cursor-pointer hover:shadow-xl border border-slate-200/50 touch-manipulation tap-highlight"
-                  aria-label={t.downloadZip}
-                >
-                  <Archive className="w-4 h-4 text-info flex-shrink-0" />
-                  <span className="truncate">{t.downloadZip}</span>
-                </button>
-                <button
-                  onClick={onDownloadAsepriteJson}
-                  disabled={isExporting || generatedFrames.length === 0}
-                  className="min-h-[44px] flex-1 min-w-[100px] bg-white/95 hover:bg-white text-slate-800 px-3 py-2.5 rounded-lg text-sm font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-sm disabled:opacity-70 cursor-pointer hover:shadow-xl border border-slate-200/50 touch-manipulation tap-highlight"
-                  aria-label={t.downloadAsepriteJson}
-                >
-                  <Archive className="w-4 h-4 text-signal flex-shrink-0" />
-                  <span className="truncate">{t.downloadAsepriteJson}</span>
-                </button>
-              </div>
-            </div>
           </div>
         )}
       </div>
 
-      <div className="mt-4 text-xs text-slate-500 text-center space-y-1">
-        <p>{t.exportHint}</p>
-        <p className="text-ok">{t.exportSmoothHint}</p>
-      </div>
+      {/* Export actions stay below the canvas to keep artwork visible. */}
+      {generatedFrames.length > 0 && (
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <button
+            onClick={onDownloadApng}
+            disabled={isExporting}
+            className="ui-btn-primary w-full"
+            aria-label={t.downloadApng}
+          >
+            {isExporting ? <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" /> : <FileVideo className="w-4 h-4 flex-shrink-0" />}
+            <span className="truncate">{t.downloadApng}</span>
+          </button>
+
+          <button
+            onClick={onDownloadGif}
+            disabled={isExporting}
+            className="ui-btn-secondary min-w-0 px-2"
+            aria-label={t.downloadGif}
+          >
+            <Film className="w-4 h-4 text-ink-muted flex-shrink-0" />
+            <span className="truncate">{t.downloadGif}</span>
+          </button>
+          <button
+            onClick={onDownloadZip}
+            disabled={isExporting}
+            className="ui-btn-secondary min-w-0 px-2"
+            aria-label={t.downloadZip}
+          >
+            <Archive className="w-4 h-4 text-ink-muted flex-shrink-0" />
+            <span className="truncate">{t.downloadZip}</span>
+          </button>
+          <button
+            onClick={onDownloadAsepriteJson}
+            disabled={isExporting}
+            className="ui-btn-secondary min-w-0 px-2"
+            aria-label={t.downloadAsepriteJson}
+          >
+            <Archive className="w-4 h-4 text-signal flex-shrink-0" />
+            <span className="truncate">{t.downloadAsepriteJson}</span>
+          </button>
+        </div>
+      )}
+
+      {generatedFrames.length > 0 && (
+        <div className="mt-4 text-xs leading-relaxed text-ink-muted space-y-1">
+          <p>{t.exportHint}</p>
+          <p className="text-ok">{t.exportSmoothHint}</p>
+        </div>
+      )}
     </div>
   );
 });

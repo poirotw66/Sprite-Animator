@@ -64,13 +64,13 @@ const LineStickerPage: React.FC = () => {
             ) : null}
 
             <main
-                className={`mx-auto grid max-w-7xl grid-cols-1 items-start gap-8 lg:grid-cols-12 lg:gap-10 ${
+                className={`mx-auto grid max-w-7xl grid-cols-1 items-start gap-5 lg:grid-cols-12 lg:gap-6 ${
                     resume.isHydrating ? 'pointer-events-none opacity-60' : ''
                 }`}
                 aria-busy={resume.isHydrating}
             >
                 <LineStickerSettingsPanel {...settings} />
-                <div id="line-sticker-result" className="scroll-mt-28 space-y-5 lg:col-span-7">
+                <div id="line-sticker-result" tabIndex={-1} className="workspace-results min-w-0 space-y-5 lg:col-span-7">
                     <LineStickerResultPanel {...result} />
                 </div>
             </main>

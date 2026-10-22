@@ -38,7 +38,7 @@ export const ExampleSelector: React.FC<ExampleSelectorProps> = React.memo(({
   };
 
   return (
-    <div className="bg-signal-soft rounded-xl border border-signal/25 overflow-hidden transition-all duration-300">
+    <div className="bg-paper rounded-lg border border-line overflow-hidden transition-colors">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -47,12 +47,12 @@ export const ExampleSelector: React.FC<ExampleSelectorProps> = React.memo(({
         aria-label={t.exampleTitle}
       >
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-signal rounded-lg flex items-center justify-center shadow-sm">
-            <Lightbulb className="w-5 h-5 text-white" />
+          <div className="w-8 h-8 text-ink-muted flex items-center justify-center">
+            <Lightbulb className="w-5 h-5" />
           </div>
           <div className="text-left">
             <h3 className="text-sm font-semibold text-ink">{t.exampleTitle}</h3>
-            <p className="text-xs text-signal">{t.exampleHint}</p>
+            <p className="text-xs text-ink-muted">{t.exampleHint}</p>
           </div>
         </div>
         {isExpanded ? (
@@ -65,7 +65,7 @@ export const ExampleSelector: React.FC<ExampleSelectorProps> = React.memo(({
       {/* Examples Grid */}
       {isExpanded && (
         <div className="px-4 pb-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 mt-2">
             {examples.map((example) => {
               const localized = getLocalizedExample(example);
               return (

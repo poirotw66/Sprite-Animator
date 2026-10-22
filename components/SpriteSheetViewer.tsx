@@ -487,7 +487,7 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
   }, [isDragging, handleMouseUp]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative overflow-x-auto">
+    <div className="ui-panel min-w-0 p-4 sm:p-5 relative overflow-x-auto">
       {/* Chroma Key Processing Progress Indicator */}
       {isProcessingChromaKey && (
         <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-10">
@@ -506,9 +506,9 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
           </div>
         </div>
       )}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
         <h2 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-          <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
+          <span className="ui-step">
             3
           </span>
           {t.spriteSheetTitle}（{showOriginal ? t.spriteSheetOriginal : t.spriteSheetProcessed}）
@@ -569,10 +569,10 @@ export const SpriteSheetViewer: React.FC<SpriteSheetViewerProps> = React.memo(({
         />
       )}
 
-      <div className="bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 min-h-[200px] flex items-center justify-center relative overflow-hidden group select-none">
+      <div className="ui-canvas min-h-[200px] flex items-center justify-center relative overflow-hidden group select-none">
         {!spriteSheetImage && !isGenerating && !isProcessingChromaKey && (
-          <div className="text-center p-6 opacity-60">
-            <Grid3X3 className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+          <div className="text-center p-6">
+            <Grid3X3 className="w-10 h-10 text-ink-muted mx-auto mb-2" />
             <p className="text-slate-500 text-sm">{t.spriteSheetPlaceholder}</p>
           </div>
         )}

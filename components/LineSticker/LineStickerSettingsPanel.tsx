@@ -210,7 +210,7 @@ export const LineStickerSettingsPanel: React.FC<LineStickerSettingsPanelProps> =
   const previewImageSrc = config.stylePreviewImage ?? selectedStylePreviewImage;
 
   return (
-    <div className="space-y-5 lg:sticky lg:top-5 lg:z-10 lg:col-span-5 lg:max-h-[calc(100vh-1.25rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
+    <div className="space-y-5 lg:sticky lg:top-28 lg:z-10 lg:col-span-5 lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
       <LineStickerUploadCard {...uploadCard} />
 
       <div className="space-y-1 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm sm:p-7">

@@ -93,9 +93,9 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
   }, [setConfig]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6">
-      <h2 className="text-sm font-semibold text-slate-700 mb-3 sm:mb-4 flex items-center gap-2">
-        <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
+    <div className="ui-panel p-4 sm:p-5">
+      <h2 className="ui-section-title">
+        <span className="ui-step">
           2
         </span>
         {t.configTitle}
@@ -113,6 +113,7 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
           className={`flex-1 flex items-center justify-center gap-2 min-h-[44px] py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer touch-manipulation
             ${config.mode === 'frame' ? 'bg-white text-signal shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
           aria-label={t.frameByFrameMode}
+          aria-pressed={config.mode === 'frame'}
         >
           <FilmIcon className="w-4 h-4 flex-shrink-0" />
           <span className="truncate">{t.frameByFrameMode}</span>
@@ -122,6 +123,7 @@ export const AnimationConfigPanel: React.FC<AnimationConfigPanelProps> = React.m
           className={`flex-1 flex items-center justify-center gap-2 min-h-[44px] py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer touch-manipulation
             ${config.mode === 'sheet' ? 'bg-white text-signal shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
           aria-label={t.spriteSheetMode}
+          aria-pressed={config.mode === 'sheet'}
         >
           <Grid3X3 className="w-4 h-4 flex-shrink-0" />
           <span className="truncate">{t.spriteSheetMode}</span>

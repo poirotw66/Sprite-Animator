@@ -1,15 +1,14 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Upload, Download, Loader2, Eraser, Sliders, ArrowLeft, Image as ImageIcon, Check, RefreshCw, Settings } from '../components/Icons';
+import { Upload, Download, Loader2, Eraser, Sliders, Image as ImageIcon, Check, RefreshCw } from '../components/Icons';
 import { useLanguage } from '../hooks/useLanguage';
 import { SettingsModal } from '../components/SettingsModal';
 import { useSettings } from '../hooks/useSettings';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { ToolPageHeader } from '../components/ui';
 import { getErrorMessage } from '../types/errors';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { removeBackgroundAI } from '../utils/aiBackgroundRemoval';
 import { CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ, CHROMA_KEY_EDGE_BAND_RADIUS, CHROMA_KEY_EDGE_BLEND, GRID_PATTERN_URL } from '../utils/constants';
 import { logger } from '../utils/logger';
-import { Link } from 'react-router-dom';
 import type { ChromaKeyColorType, BgRemovalMethod } from '../types';
 
 const RemoveBackgroundPage: React.FC = () => {
@@ -108,35 +107,13 @@ const RemoveBackgroundPage: React.FC = () => {
     }, [processedImage]);
 
     return (
-        <div className="min-h-[100dvh] flex flex-col">
-            {/* Navbar */}
-            <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30">
-                <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <Link
-                        to="/studio"
-                        className="flex items-center gap-2 text-slate-600 hover:text-signal transition-colors font-medium text-sm group"
-                    >
-                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-signal-soft transition-colors">
-                            <ArrowLeft className="w-4 h-4" />
-                        </div>
-                        {t.backToHome}
-                    </Link>
-                    <h1 className="text-lg font-bold bg-gradient-to-r from-signal to-signal-hover bg-clip-text text-transparent flex items-center gap-2">
-                        <Eraser className="w-5 h-5 text-signal" />
-                        {t.rmbgTitle}
-                    </h1>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setShowSettings(true)}
-                            className="p-2 text-slate-500 hover:text-signal hover:bg-signal-soft rounded-lg transition-all"
-                            aria-label={t.settings}
-                        >
-                            <Settings className="w-5 h-5" />
-                        </button>
-                        <LanguageSwitcher />
-                    </div>
-                </div>
-            </nav>
+        <div className="ui-page flex flex-col">
+            <ToolPageHeader
+                title={t.rmbgTitle}
+                icon={<Eraser />}
+                onOpenSettings={() => setShowSettings(true)}
+                settingsLabel={t.settings}
+            />
 
             <SettingsModal
                 apiKey={apiKey}
@@ -159,7 +136,7 @@ const RemoveBackgroundPage: React.FC = () => {
             />
 
             {/* Main Content */}
-            <main className="flex-1 max-w-5xl mx-auto w-full p-4 sm:p-6 lg:p-8">
+            <main className="flex-1 max-w-5xl mx-auto w-full py-2">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
 
                     {/* Settings Section */}

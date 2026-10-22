@@ -1,8 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
-import { ArrowLeft, Settings } from '../components/Icons';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { ToolPageHeader } from '../components/ui';
 import { SettingsModal } from '../components/SettingsModal';
 import {
   ComicCharacterSheetStep,
@@ -405,34 +403,13 @@ const OnePageComicPage: React.FC = () => {
   ]);
 
   return (
-    <div className="min-h-[100dvh] flex flex-col">
-      <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link
-            to="/studio"
-            className="flex items-center gap-2 text-slate-600 hover:text-signal transition-colors font-medium text-sm group"
-          >
-            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-paper transition-colors">
-              <ArrowLeft className="w-4 h-4" />
-            </div>
-            {t.backToHome}
-          </Link>
-          <h1 className="text-lg font-bold bg-signal bg-clip-text text-transparent flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-indigo-500" />
-            {t.comicTitle}
-          </h1>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowSettings(true)}
-              className="p-2 text-slate-500 hover:text-signal hover:bg-paper rounded-lg transition-all"
-              aria-label={t.settings}
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-            <LanguageSwitcher />
-          </div>
-        </div>
-      </nav>
+    <div className="ui-page flex flex-col">
+      <ToolPageHeader
+        title={t.comicTitle}
+        icon={<BookOpen />}
+        onOpenSettings={() => setShowSettings(true)}
+        settingsLabel={t.settings}
+      />
 
       <SettingsModal
         apiKey={apiKey}
@@ -454,7 +431,7 @@ const OnePageComicPage: React.FC = () => {
         setHfToken={setHfToken}
       />
 
-      <main className="flex-1 max-w-6xl mx-auto w-full p-4 sm:p-6 lg:p-8 space-y-6">
+      <main className="flex-1 max-w-6xl mx-auto w-full py-2 space-y-6">
         <ComicWizardSteps currentStep={step} />
 
         {stepError ? (

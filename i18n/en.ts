@@ -275,7 +275,7 @@ export const en: Translations = {
   // Home Page
   homeTitle: 'Sprite Animator',
   homeSubtitle:
-    'Turn a character image into frame animations and sprite sheets — chroma-key removal, grid slicing, APNG / GIF / ZIP export.',
+    'Turn a character image into frame animations and sprite sheets, with chroma-key removal, grid slicing, and APNG / GIF / ZIP export.',
   spriteAnimatorTool: 'Sprite Animator',
   spriteAnimatorDesc:
     'Upload a character image, generate frame-by-frame or sprite-sheet animation (Gemini or OpenRouter BYOK), then slice and export.',

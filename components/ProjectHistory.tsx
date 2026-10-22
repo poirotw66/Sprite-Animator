@@ -62,7 +62,7 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = React.memo(({
       onClick={() => setExpanded((e) => !e)}
       className={
         isHeader
-          ? 'min-h-[44px] min-w-[44px] p-2.5 rounded-xl transition-all duration-200 shadow-sm border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 flex items-center justify-center gap-1.5 touch-manipulation tap-highlight relative'
+          ? 'ui-btn-ghost min-w-11 px-0 relative'
           : 'w-full p-4 flex items-center justify-between gap-2 text-left hover:bg-slate-50 transition-colors touch-manipulation'
       }
       aria-expanded={expanded}
@@ -90,7 +90,7 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = React.memo(({
   );
 
   const panelContent = (
-    <div className={isHeader ? 'p-3 space-y-3 min-w-[280px] max-w-[90vw]' : 'border-t border-slate-200 p-4 space-y-4'}>
+    <div className={isHeader ? 'p-3 space-y-3 w-full' : 'border-t border-slate-200 p-4 space-y-4'}>
           {saveError && (
             <div className="flex items-center justify-between gap-2 text-red-700 text-sm bg-red-50 p-3 rounded-lg border border-red-200" role="alert">
               <span>{saveError}</span>
@@ -177,7 +177,7 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = React.memo(({
       ref={containerRef}
       className={
         isHeader
-          ? 'relative flex-shrink-0'
+          ? 'shrink-0 md:relative'
           : 'bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden'
       }
     >
@@ -185,7 +185,7 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = React.memo(({
         <>
           {triggerButton}
           {expanded && (
-            <div className="absolute right-0 top-full mt-1 z-30 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+            <div className="absolute right-0 top-full mt-2 z-30 w-[min(320px,calc(100vw-58px))] bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
               {panelContent}
             </div>
           )}

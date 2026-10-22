@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, ClipboardList, Factory, RefreshCw, Upload, User, FileJson } from 'lucide-react';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { ClipboardList, Factory, RefreshCw, Upload, User, FileJson } from 'lucide-react';
+import { ToolPageHeader } from '../components/ui';
 import { useLanguage } from '../hooks/useLanguage';
 import { parseBatchPlanJson, type DailyPackPlanFile } from '../utils/dailyPackPlanFormat';
 import {
@@ -380,28 +379,10 @@ const DailyStickerRegistryPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-[100dvh] font-sans">
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <Link
-              to="/studio"
-              className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors shrink-0"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="hidden sm:inline text-sm font-medium">{t.backToHome}</span>
-            </Link>
-            <div className="h-6 w-px bg-slate-200 hidden sm:block" />
-            <div className="flex items-center gap-2 min-w-0">
-              <Factory className="w-6 h-6 text-signal shrink-0" />
-              <h1 className="text-lg md:text-xl font-bold text-slate-900 truncate">{t.registryTitle}</h1>
-            </div>
-          </div>
-          <LanguageSwitcher />
-        </div>
-      </header>
+    <div className="ui-page">
+      <ToolPageHeader title={t.registryTitle} icon={<Factory />} />
 
-      <main className="max-w-7xl mx-auto px-4 py-6 md:py-8 space-y-6">
+      <main className="ui-shell space-y-6">
         <p className="text-slate-600 text-sm md:text-base">{t.registrySubtitle}</p>
 
         <div className="flex flex-wrap gap-3">
