@@ -51,16 +51,11 @@ Design phrase-set first: **`skills/line-sticker-phrase-design/SKILL.md`**
 **Daily mass production (30 sets):** see [line-sticker-daily-factory.md](./line-sticker-daily-factory.md)
 (`daily-pack.mts` + `output/sticker-registry.json`).
 
-```json
-{
-  "format": "line-sticker-phrase-set",
-  "version": 1,
-  "mode": "set",
-  "phrases": ["早安", "晚安"],
-  "actionDescs": ["wave hand", "sleepy expression"],
-  "name": "奶油貓日常"
-}
-```
+Use the complete [40-sticker phrase-set example](../../skills/line-sticker-phrase-design/example/daily-set-40.json)
+as an importable starting point. `mode: "set"` requires exactly 40 phrases and,
+when provided, 40 matching action descriptions. A two-item excerpt is not a valid
+set input. The 20-item conversational plans used by the Huahua/sprite-sheet
+skills have their own handoff rules; combine them before using this importer.
 
 ## One-command entry
 
@@ -77,14 +72,19 @@ Options:
 
 | flag | purpose |
 |---|---|
-| `--dry-run` | print prompts only (no Gemini, no files beyond `job.config.json`) |
+| `--dry-run` | preview prompts without Gemini calls; image + JSON mode still creates the output directory, copies its inputs, and writes `job.config.json` |
 | `--set-name` | English ZIP / upload folder name (default: derived from Chinese title) |
 | `--title-zh` / `--desc-zh` | LINE 商店標題與說明（預設取自 phrase-set `name`） |
 | `--title-en` / `--desc-en` | English shop listing |
 | `--job path/to/job.config.json` | skip auto-config; use existing job file |
 | `--upload` | immediately run LINE upload after generation (needs Python/Playwright); the agent workflow omits this flag to review content before a separate authorized upload |
 
-`run-from-inputs.mts` writes `<out>/job.config.json` + copies phrase-set, then calls `generate.mts`.
+In image + JSON mode, `run-from-inputs.mts` writes `<out>/job.config.json`, copies
+`phrase-set.json` and `reference-image.<ext>` (plus `reference-image-2.<ext>` when
+provided), then calls `generate.mts`. These local writes also happen during
+`--dry-run`; it does not create generated sheets, stickers, or upload artifacts.
+With `--job`, the entry point creates the output directory and reads the supplied
+config and its inputs without making those copies or writing a new config.
 
 ## Agent workflow
 

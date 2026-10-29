@@ -22,9 +22,16 @@
 ```bash
 npm run skills:sync:line-sticker
 npm run skills:check:line-sticker
+npm run skills:check:contracts
 ```
 
 同步會忽略 `__pycache__/`、`.pyc`、`.pyo`；憑證、登入狀態與 debug snapshots 仍禁止放入正式來源，且不會複製至副本。Python 指令使用 `python -B`；批次子程序也設定 `PYTHONDONTWRITEBYTECODE=1`。
+
+`skills:check:contracts` 檢查技能與流程文件的本機連結，以及可匯入的正式文案範例。對話規劃用的 20 格 JSON 不套用整套 40 張匯入規格。
+
+全域安裝副本另以 `npm run skills:check:installed` 唯讀檢查；不包含在專案副本同步與 CI 中。更新必須明確指定技能與檢查取得的舊版本指紋，並保留備份；完整指令見 README 的技能維護說明。
+
+交付貼圖時，依 `skills/line-sticker-maker/references/content-review.md` 記錄逐張內容審核，再執行 `npm run stickers:check:content -- --out <job-dir>`。此檢查驗證審核紀錄、圖片對應與雜湊；不能代替視覺審查，也不表示已獲授權上傳或送審。
 
 ## 可重現環境與驗證
 

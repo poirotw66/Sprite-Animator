@@ -172,6 +172,34 @@ npm run dist:budget       # after build
 
 Full quality gate (includes Python LINE tooling): `npm run ci`.
 
+### Installed skill maintenance
+
+`skills/` is canonical. Project mirrors are refreshed with
+`npm run skills:sync:line-sticker`; optional global copies under
+`$CODEX_HOME/skills` (default `~/.codex/skills`) are inspected separately:
+
+```bash
+# Read-only: report fingerprints and changed files for matching installed skills.
+npx tsx scripts/line-sticker/manage-installed-skills.mts
+npx tsx scripts/line-sticker/manage-installed-skills.mts --skill huahua-line-sticker-series
+
+# After reviewing the differences, update exactly that installed copy.
+npx tsx scripts/line-sticker/manage-installed-skills.mts \
+  --skill huahua-line-sticker-series --update \
+  --expect-installed <installed-sha256-from-inspection>
+```
+
+Missing optional global copies are reported without failing an all-skills check;
+an explicitly selected missing copy or detected drift exits with status 1.
+Updates require an existing installation and its inspected fingerprint, replace
+only the selected package, and preserve the old directory in sibling
+`skill-backups/` outside skill discovery. A changed fingerprint aborts the update.
+A package symlink resolving to that exact canonical package is reported as
+`linked`; it already reads the source and is never replaced. Other symlinks,
+overlapping roots, credentials and session artifacts are refused.
+Use `--installed-root /absolute/path/to/skills` to inspect a different installation;
+this tool does not refresh project mirrors or install missing skills.
+
 See [CONTRIBUTING.md](./CONTRIBUTING.md) and [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
 
 ### Deploy (GitHub Pages)
