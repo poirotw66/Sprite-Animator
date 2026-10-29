@@ -5,13 +5,17 @@ import type { SavedProjectMeta, SavedProject } from '../types';
 
 interface ProjectHistoryProps {
   list: SavedProjectMeta[];
-  onSaveCurrent: (name?: string) => void;
-  loadProjectById: (id: string) => SavedProject | null;
+  onSaveCurrent: (name?: string) => Promise<boolean>;
+  loadProjectById: (id: string) => Promise<SavedProject | null>;
   onLoad: (project: SavedProject) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<boolean>;
   canSave: boolean;
   isSaving?: boolean;
-  /** Shown when save failed (e.g. localStorage quota). User can dismiss. */
+  isLoading?: boolean;
+  storageError?: string | null;
+  migrationWarning?: string | null;
+  onRetry?: () => Promise<void>;
+  /** Shown when save failed. User can dismiss. */
   saveError?: string | null;
   onClearSaveError?: () => void;
   /** When 'header', renders as a compact button + dropdown in the header bar */
@@ -26,6 +30,10 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = React.memo(({
   onDelete,
   canSave,
   isSaving = false,
+  isLoading = false,
+  storageError = null,
+  migrationWarning = null,
+  onRetry,
   saveError = null,
   onClearSaveError,
   variant = 'sidebar',
@@ -36,12 +44,49 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = React.memo(({
   const [showSaveInput, setShowSaveInput] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleSave = useCallback(() => {
-    if (!canSave) return;
-    onSaveCurrent(saveName.trim() || undefined);
-    setSaveName('');
-    setShowSaveInput(false);
-  }, [canSave, saveName, onSaveCurrent]);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [isActing, setIsActing] = useState(false);
+  const pendingRef = useRef(false);
+
+  const handleSave = useCallback(async () => {
+    if (!canSave || isLoading || pendingRef.current || storageError) return;
+    pendingRef.current = true;
+    setIsActing(true);
+    setActionError(null);
+    try {
+      if (await onSaveCurrent(saveName.trim() || undefined)) {
+        setSaveName('');
+        setShowSaveInput(false);
+      } else setActionError(t.errorSaveProject);
+    } catch { setActionError(t.errorSaveProject); }
+    finally { pendingRef.current = false; setIsActing(false); }
+  }, [canSave, isLoading, storageError, saveName, onSaveCurrent, t.errorSaveProject]);
+
+  const handleLoad = async (id: string) => {
+    if (isLoading || pendingRef.current || storageError) return;
+    pendingRef.current = true;
+    setIsActing(true);
+    setActionError(null);
+    try {
+      const project = await loadProjectById(id);
+      if (!project) { setActionError(t.projectHistoryLoadError); return; }
+      onLoad(project);
+      setExpanded(false);
+    } catch { setActionError(t.projectHistoryLoadError); }
+    finally { pendingRef.current = false; setIsActing(false); }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (isLoading || pendingRef.current || storageError) return;
+    pendingRef.current = true;
+    setIsActing(true);
+    setActionError(null);
+    try {
+      if (!await onDelete(id)) setActionError(t.projectHistoryStorageError);
+    } catch { setActionError(t.projectHistoryStorageError); }
+    finally { pendingRef.current = false; setIsActing(false); }
+  };
+  const busy = isLoading || isActing || isSaving;
 
   useEffect(() => {
     if (variant !== 'header' || !expanded) return;
@@ -91,6 +136,14 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = React.memo(({
 
   const panelContent = (
     <div className={isHeader ? 'p-3 space-y-3 w-full' : 'border-t border-slate-200 p-4 space-y-4'}>
+          {storageError && (
+            <div className="space-y-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+              <p>{storageError}</p>
+              {onRetry && <button type="button" className="ui-btn-secondary w-full" disabled={busy} onClick={() => { setActionError(null); void onRetry(); }}>{t.projectHistoryRetry}</button>}
+            </div>
+          )}
+          {migrationWarning && <p className="text-sm text-warn" role="status">{migrationWarning}</p>}
+          {actionError && <p className="text-sm text-red-700" role="alert">{actionError}</p>}
           {saveError && (
             <div className="flex items-center justify-between gap-2 text-red-700 text-sm bg-red-50 p-3 rounded-lg border border-red-200" role="alert">
               <span>{saveError}</span>
@@ -122,7 +175,7 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = React.memo(({
                   <button
                     type="button"
                     onClick={handleSave}
-                    disabled={!canSave || isSaving}
+                    disabled={!canSave || busy || !!storageError}
                     className="min-h-[40px] px-3 py-2 rounded-lg text-sm font-semibold bg-signal text-white hover:bg-signal-hover disabled:opacity-50 flex items-center gap-2 touch-manipulation"
                   >
                     {isSaving ? <span className="animate-pulse">…</span> : <Save className="w-4 h-4" />}
@@ -141,7 +194,7 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = React.memo(({
               <button
                 type="button"
                 onClick={() => setShowSaveInput(true)}
-                disabled={!canSave}
+                disabled={!canSave || busy || !!storageError}
                 className="w-full min-h-[40px] flex items-center justify-center gap-2 rounded-lg text-sm font-semibold border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
               >
                 <Save className="w-4 h-4" />
@@ -152,19 +205,18 @@ export const ProjectHistory: React.FC<ProjectHistoryProps> = React.memo(({
 
           {/* List */}
           <div className="max-h-[240px] overflow-y-auto custom-scrollbar space-y-1">
-            {list.length === 0 ? (
+            {isLoading ? (
+              <p className="text-sm text-slate-500 py-2" role="status">{t.projectHistoryLoading}</p>
+            ) : list.length === 0 ? (
               <p className="text-sm text-slate-500 py-2">{t.noProjectsYet}</p>
             ) : (
               list.map((meta) => (
                 <ProjectHistoryItem
                   key={meta.id}
                   meta={meta}
-                  loadProjectById={loadProjectById}
-                  onLoad={(project) => {
-                    onLoad(project);
-                    setExpanded(false);
-                  }}
-                  onDelete={onDelete}
+                  disabled={busy || !!storageError}
+                  onLoad={() => { void handleLoad(meta.id); }}
+                  onDelete={() => { void handleDelete(meta.id); }}
                 />
               ))
             )}
@@ -204,29 +256,26 @@ ProjectHistory.displayName = 'ProjectHistory';
 
 interface ProjectHistoryItemProps {
   meta: SavedProjectMeta;
-  loadProjectById: (id: string) => SavedProject | null;
-  onLoad: (project: SavedProject) => void;
-  onDelete: (id: string) => void;
+  disabled: boolean;
+  onLoad: () => void;
+  onDelete: () => void;
 }
 
 const ProjectHistoryItem: React.FC<ProjectHistoryItemProps> = React.memo(({
   meta,
-  loadProjectById,
+  disabled,
   onLoad,
   onDelete,
 }) => {
   const { t } = useLanguage();
   const dateStr = new Date(meta.createdAt).toLocaleString();
-
-  const handleLoad = () => {
-    const project = loadProjectById(meta.id);
-    if (project) onLoad(project);
-  };
+  const handleLoad = () => { if (!disabled) onLoad(); };
 
   return (
     <div
       role="button"
-      tabIndex={0}
+      tabIndex={disabled ? -1 : 0}
+      aria-disabled={disabled}
       onClick={handleLoad}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleLoad(); } }}
       className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 group cursor-pointer"
@@ -239,6 +288,7 @@ const ProjectHistoryItem: React.FC<ProjectHistoryItemProps> = React.memo(({
       <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
         <button
           type="button"
+          disabled={disabled}
           onClick={(e) => { e.stopPropagation(); handleLoad(); }}
           className="min-h-[36px] min-w-[36px] p-2 rounded-lg text-slate-600 hover:bg-signal-soft hover:text-signal-hover flex items-center justify-center touch-manipulation"
           title={t.loadProject}
@@ -248,7 +298,8 @@ const ProjectHistoryItem: React.FC<ProjectHistoryItemProps> = React.memo(({
         </button>
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); onDelete(meta.id); }}
+          disabled={disabled}
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
           className="min-h-[36px] min-w-[36px] p-2 rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-600 flex items-center justify-center touch-manipulation"
           title={t.deleteProject}
           aria-label={t.deleteProject}

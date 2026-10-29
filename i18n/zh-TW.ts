@@ -234,7 +234,7 @@ export const zhTW: Translations = {
   errorExportApng: 'APNG 導出失敗',
   errorExportGif: 'GIF 導出失敗',
   errorExportZip: 'ZIP 打包失敗',
-  errorSaveProject: '儲存專案失敗（儲存空間不足）。請刪除舊專案後再試。',
+  errorSaveProject: '無法儲存此作品。請確認瀏覽器儲存空間後重試。',
 
   // Status Messages
   statusIdle: 'AI 正在思考中...',
@@ -257,6 +257,11 @@ export const zhTW: Translations = {
 
   // Project History
   projectHistory: '歷史項目',
+  projectHistoryLoading: '正在載入已儲存作品…',
+  projectHistoryStorageError: '無法存取已儲存作品，請重試後再儲存或刪除。',
+  projectHistoryMigrationWarning: '部分舊作品無法匯入，原始資料已保留。',
+  projectHistoryRetry: '重試',
+  projectHistoryLoadError: '無法載入此作品。',
   saveProject: '儲存專案',
   saveProjectAs: '另存為…',
   projectNamePlaceholder: '專案名稱（選填）',

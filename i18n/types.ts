@@ -256,6 +256,11 @@ export interface Translations {
 
   // Project History
   projectHistory: string;
+  projectHistoryLoading: string;
+  projectHistoryStorageError: string;
+  projectHistoryMigrationWarning: string;
+  projectHistoryRetry: string;
+  projectHistoryLoadError: string;
   saveProject: string;
   saveProjectAs: string;
   projectNamePlaceholder: string;

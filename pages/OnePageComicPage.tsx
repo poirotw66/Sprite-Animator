@@ -51,8 +51,8 @@ const OnePageComicPage: React.FC = () => {
     showSettings,
     setShowSettings,
     saveSettings,
-    getEffectiveApiKey,
-  } = useSettings();
+    getEffectiveGeminiApiKey,
+  } = useSettings('gemini');
   const { project, step, setStep, patchProject } = useComicProject();
   const [stepError, setStepError] = useState<string | null>(null);
   const [highlightedMissingPanels, setHighlightedMissingPanels] = useState<number[]>([]);
@@ -146,7 +146,7 @@ const OnePageComicPage: React.FC = () => {
     setStepError(null);
     try {
       const image = await characterSheet.generate({
-        apiKey: getEffectiveApiKey(),
+        apiKey: getEffectiveGeminiApiKey(),
         model: selectedModel,
         resolution: outputResolution,
         project,
@@ -162,7 +162,7 @@ const OnePageComicPage: React.FC = () => {
     }
   }, [
     characterSheet,
-    getEffectiveApiKey,
+    getEffectiveGeminiApiKey,
     outputResolution,
     patchProject,
     project,
@@ -195,7 +195,7 @@ const OnePageComicPage: React.FC = () => {
 
     try {
       const nextPanels = await storyboard.fillFromSynopsis({
-        apiKey: getEffectiveApiKey(),
+        apiKey: getEffectiveGeminiApiKey(),
         characterConcept: project.characterConcept,
         synopsis: project.synopsis ?? '',
       });
@@ -208,7 +208,7 @@ const OnePageComicPage: React.FC = () => {
     } catch {
       // Step component already renders hook-level errors.
     }
-  }, [getEffectiveApiKey, patchProject, project.characterConcept, project.synopsis, storyboard]);
+  }, [getEffectiveGeminiApiKey, patchProject, project.characterConcept, project.synopsis, storyboard]);
 
   const handlePanelChange = useCallback((index: number, patch: Partial<ComicPanel>) => {
     setStepError(null);
@@ -254,7 +254,7 @@ const OnePageComicPage: React.FC = () => {
 
     try {
       const image = await pageGeneration.generate({
-        apiKey: getEffectiveApiKey(),
+        apiKey: getEffectiveGeminiApiKey(),
         model: selectedModel,
         resolution: outputResolution,
         project,
@@ -272,7 +272,7 @@ const OnePageComicPage: React.FC = () => {
       // Step component already renders hook-level errors.
     }
   }, [
-    getEffectiveApiKey,
+    getEffectiveGeminiApiKey,
     outputResolution,
     pageGeneration,
     patchProject,
@@ -412,6 +412,7 @@ const OnePageComicPage: React.FC = () => {
       />
 
       <SettingsModal
+        fixedProvider="gemini"
         apiKey={apiKey}
         setApiKey={setApiKey}
         openRouterApiKey={openRouterApiKey}

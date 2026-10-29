@@ -74,7 +74,7 @@ export const useLineStickerWorkspace = () => {
         setShowSettings,
         saveSettings,
         getEffectiveGeminiApiKey,
-    } = useSettings();
+    } = useSettings('gemini');
 
     const {
         sheetSliceSettings, setSheetSliceSettings, sheetDimensions, setSheetDimensions,
@@ -671,6 +671,7 @@ export const useLineStickerWorkspace = () => {
 
     return {
         modal: {
+            fixedProvider: 'gemini' as const,
             apiKey,
             setApiKey,
             openRouterApiKey,

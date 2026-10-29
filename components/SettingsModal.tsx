@@ -29,6 +29,7 @@ interface SettingsModalProps {
   onSave: (args: SaveSettingsArgs) => void;
   hfToken?: string;
   setHfToken?: (token: string) => void;
+  fixedProvider?: ImageProviderId;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
@@ -49,6 +50,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
   onSave,
   hfToken = '',
   setHfToken = () => {},
+  fixedProvider,
 }) => {
   const { t } = useLanguage();
   const [isValidating, setIsValidating] = React.useState(false);
@@ -104,11 +106,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
   };
 
   const handleProviderChange = (next: ImageProviderId) => {
-    setImageProvider(next);
-    const models = modelsForProvider(next);
-    if (!(models as readonly string[]).includes(selectedModel)) {
-      setSelectedModel(models[0]!);
-    }
+    setImageProvider(fixedProvider ?? next);
   };
 
   const handleSave = async () => {
@@ -150,7 +148,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
 
   React.useEffect(() => {
     if (showSettings && modalRef.current) {
-      const firstInput = modalRef.current.querySelector('input, select') as
+      const firstInput = modalRef.current.querySelector('input:not([disabled]), select:not([disabled])') as
         | HTMLInputElement
         | HTMLSelectElement
         | null;
@@ -218,12 +216,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
             <select
               id="image-provider-select"
               value={imageProvider}
+              disabled={Boolean(fixedProvider)}
               onChange={(e) => handleProviderChange(e.target.value as ImageProviderId)}
               className="w-full border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus-visible:ring-signal focus:border-signal outline-none bg-white transition-all cursor-pointer"
               aria-label={t.imageProviderLabel}
             >
-              <option value="gemini">{t.imageProviderGemini}</option>
-              <option value="openrouter">{t.imageProviderOpenRouter}</option>
+              {(!fixedProvider || fixedProvider === 'gemini') && <option value="gemini">{t.imageProviderGemini}</option>}
+              {(!fixedProvider || fixedProvider === 'openrouter') && <option value="openrouter">{t.imageProviderOpenRouter}</option>}
             </select>
             <p className="text-xs text-slate-500 mt-2">{t.imageProviderHint}</p>
           </div>

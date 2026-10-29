@@ -1,15 +1,21 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useLayoutEffect, useMemo, useRef } from 'react';
 import { SliceSettings, FrameOverride, getEffectivePadding, getCellRectForFrame, smartAutoAlignFrames } from '../utils/imageUtils';
 import { sliceSheetWithSettings } from '../utils/sliceSheetWithSettings';
 import { removeChromaKeyWithWorker } from '../utils/chromaKeyProcessor';
 import { BACKGROUND_REMOVAL_THRESHOLD, DEBOUNCE_DELAY, CHROMA_KEY_COLORS, CHROMA_KEY_FUZZ } from '../utils/constants';
 import { logger } from '../utils/logger';
 import type { ChromaKeyColorType } from '../types';
+import { isAbortError } from '../utils/abort';
 
 export interface UseSpriteSheetSlicePipelineOptions {
   mapFramesAfterSlice?: (frames: string[]) => Promise<string[]>;
   /** Bumps the slice effect when overlay inputs change without changing `mapFramesAfterSlice` identity. */
   slicePipelineRevision?: string | number;
+}
+
+export interface SpriteSheetRestoration {
+  revision: number;
+  frameOverrides: FrameOverride[];
 }
 
 /**
@@ -46,7 +52,8 @@ export const useSpriteSheet = (
   removeBackground: boolean,
   mode: 'frame' | 'sheet',
   chromaKeyColor: ChromaKeyColorType = 'green',
-  slicePipeline?: UseSpriteSheetSlicePipelineOptions | null
+  slicePipeline?: UseSpriteSheetSlicePipelineOptions | null,
+  restoration?: SpriteSheetRestoration | null,
 ) => {
   const [generatedFrames, setGeneratedFrames] = useState<string[]>([]);
   const [sheetDimensions, setSheetDimensions] = useState({ width: 0, height: 0 });
@@ -54,10 +61,30 @@ export const useSpriteSheet = (
   const [chromaKeyProgress, setChromaKeyProgress] = useState<number>(0);
   const [isProcessingChromaKey, setIsProcessingChromaKey] = useState<boolean>(false);
   const [frameOverrides, setFrameOverrides] = useState<FrameOverride[]>([]);
+  const [completedRestorationRevision, setCompletedRestorationRevision] = useState<number | null>(null);
   const lastAlignedSheetRef = useRef<string | null>(null);
+  const appliedRestorationRef = useRef<{ revision: number; source: string | null; cols: number; rows: number } | null>(null);
   const sliceSettingsRef = useRef(sliceSettings);
+  const restorationRevision = restoration?.revision ?? null;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    const isNewRestoration = restoration && appliedRestorationRef.current?.revision !== restoration.revision;
+    if (isNewRestoration) {
+      setFrameOverrides(restoration.frameOverrides);
+      appliedRestorationRef.current = {
+        revision: restoration.revision,
+        source: spriteSheetImage,
+        cols: sliceSettings.cols,
+        rows: sliceSettings.rows,
+      };
+    } else {
+      setFrameOverrides([]);
+      if (!restoration) appliedRestorationRef.current = null;
+    }
+    lastAlignedSheetRef.current = null;
+  }, [spriteSheetImage, sliceSettings.cols, sliceSettings.rows, restoration]);
+
+  useLayoutEffect(() => {
     sliceSettingsRef.current = sliceSettings;
   }, [sliceSettings]);
 
@@ -65,8 +92,9 @@ export const useSpriteSheet = (
   const activeChromaKeyColor = CHROMA_KEY_COLORS[chromaKeyColor];
 
   // Process sprite sheet: remove chroma key background first
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (spriteSheetImage && mode === 'sheet') {
+      const controller = new AbortController();
       setProcessedSpriteSheet(null); // Reset while processing
       setChromaKeyProgress(0);
       setIsProcessingChromaKey(true);
@@ -80,31 +108,38 @@ export const useSpriteSheet = (
             activeChromaKeyColor,
             CHROMA_KEY_FUZZ,
             (progress) => {
-              setChromaKeyProgress(progress);
-            }
+              if (!controller.signal.aborted) setChromaKeyProgress(progress);
+            },
+            undefined,
+            controller.signal,
           );
+          if (controller.signal.aborted) return;
           logger.debug('Chroma key removal completed');
           setProcessedSpriteSheet(chromaKeyRemoved);
           setChromaKeyProgress(100);
         } catch (e) {
+          if (controller.signal.aborted || isAbortError(e)) return;
           logger.error('Chroma key removal failed', e);
           // Fallback to original image if processing fails
           setProcessedSpriteSheet(spriteSheetImage);
         } finally {
-          setIsProcessingChromaKey(false);
+          if (!controller.signal.aborted) setIsProcessingChromaKey(false);
         }
       };
       processImage();
+      return () => controller.abort();
     } else {
       setProcessedSpriteSheet(null);
       setChromaKeyProgress(0);
       setIsProcessingChromaKey(false);
     }
-  }, [spriteSheetImage, mode, chromaKeyColor, activeChromaKeyColor]);
+    return undefined;
+  }, [spriteSheetImage, mode, chromaKeyColor, activeChromaKeyColor, restorationRevision]);
 
   // Re-slice when Slice Settings, Toggle or Image updates
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (processedSpriteSheet && mode === 'sheet') {
+      let cancelled = false;
       const reSlice = async () => {
         try {
           const mapFrames = slicePipeline?.mapFramesAfterSlice;
@@ -113,18 +148,25 @@ export const useSpriteSheet = (
             chromaKeyColor,
             threshold: BACKGROUND_REMOVAL_THRESHOLD,
           });
+          if (cancelled) return;
           if (mapFrames) {
             frames = await mapFrames(frames);
           }
-          setGeneratedFrames(frames);
+          if (!cancelled) {
+            setGeneratedFrames(frames);
+            setCompletedRestorationRevision(restorationRevision);
+          }
         } catch (e) {
-          logger.error('Re-slice failed', e);
+          if (!cancelled) logger.error('Re-slice failed', e);
         }
       };
       const timer = setTimeout(reSlice, DEBOUNCE_DELAY);
-      return () => clearTimeout(timer);
-    } else if (mode !== 'sheet') {
-      // Clear frames when switching away from sheet mode
+      return () => {
+        cancelled = true;
+        clearTimeout(timer);
+      };
+    } else {
+      // Clear frames when resetting the sheet or switching away from sheet mode.
       setGeneratedFrames([]);
       setProcessedSpriteSheet(null);
     }
@@ -151,17 +193,15 @@ export const useSpriteSheet = (
     chromaKeyColor,
     slicePipeline?.mapFramesAfterSlice,
     slicePipeline?.slicePipelineRevision,
+    restorationRevision,
   ]);
 
-  // Reset per-frame overrides when image or grid dimensions change
-  useEffect(() => {
-    setFrameOverrides([]);
-    lastAlignedSheetRef.current = null; // Allow smart align to run again for new sheet
-  }, [processedSpriteSheet, sliceSettings.cols, sliceSettings.rows]);
-
   // Run smart align once after generation when slice settings were auto-optimized
-  useEffect(() => {
+  useLayoutEffect(() => {
     const settings = sliceSettingsRef.current;
+    const restored = appliedRestorationRef.current;
+    if (restored && restored.revision === restorationRevision &&
+        restored.source === spriteSheetImage && restored.cols === settings.cols && restored.rows === settings.rows) return;
     if (
       mode !== 'sheet' ||
       !processedSpriteSheet ||
@@ -244,10 +284,12 @@ export const useSpriteSheet = (
     sliceSettings.autoOptimized?.shiftX,
     sliceSettings.autoOptimized?.shiftY,
     sliceSettings.sliceMode,
+    restorationRevision,
+    spriteSheetImage,
   ]);
 
   // Update dimensions when processed sprite sheet is ready
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (processedSpriteSheet) {
       const img = new Image();
       img.onload = () => {
@@ -260,7 +302,13 @@ export const useSpriteSheet = (
         logger.error('Failed to load processed sprite sheet');
       };
       img.src = processedSpriteSheet;
+      return () => {
+        img.onload = null;
+        img.onerror = null;
+        img.src = '';
+      };
     }
+    return undefined;
   }, [processedSpriteSheet]);
 
   const handleImageLoad = useMemo(
@@ -287,5 +335,6 @@ export const useSpriteSheet = (
     isProcessingChromaKey, // Whether chroma key removal is in progress
     frameOverrides,
     setFrameOverrides,
+    completedRestorationRevision,
   };
 };

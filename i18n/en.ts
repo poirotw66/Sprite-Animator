@@ -234,7 +234,7 @@ export const en: Translations = {
   errorExportApng: 'APNG export failed',
   errorExportGif: 'GIF export failed',
   errorExportZip: 'ZIP export failed',
-  errorSaveProject: 'Failed to save project (storage full). Try deleting old projects first.',
+  errorSaveProject: 'Could not save this project. Check browser storage space and try again.',
 
   // Status Messages
   statusIdle: 'AI is thinking...',
@@ -257,6 +257,11 @@ export const en: Translations = {
 
   // Project History
   projectHistory: 'Project History',
+  projectHistoryLoading: 'Loading saved projects…',
+  projectHistoryStorageError: 'Saved projects are unavailable. Retry before saving or deleting.',
+  projectHistoryMigrationWarning: 'Some older projects could not be imported. Their original data was kept.',
+  projectHistoryRetry: 'Retry',
+  projectHistoryLoadError: 'Could not load this project.',
   saveProject: 'Save Project',
   saveProjectAs: 'Save As…',
   projectNamePlaceholder: 'Project name (optional)',

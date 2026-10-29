@@ -57,7 +57,7 @@ export interface SavedSliceSettings {
   manualYBounds?: number[];
 }
 
-/** Full project snapshot for history (localStorage). */
+/** Full project snapshot for IndexedDB history and legacy storage migration. */
 export interface SavedProject {
   id: string;
   name: string;

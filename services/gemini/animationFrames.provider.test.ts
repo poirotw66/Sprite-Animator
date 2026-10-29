@@ -22,11 +22,11 @@ vi.mock('./storyboard', () => ({
   getAnimationStoryboard: vi.fn(),
 }));
 
-vi.mock('./retry', async () => {
-  const actual = await vi.importActual<typeof import('./retry')>('./retry');
+vi.mock('../../utils/abort', async () => {
+  const actual = await vi.importActual<typeof import('../../utils/abort')>('../../utils/abort');
   return {
     ...actual,
-    wait: vi.fn(async () => undefined),
+    abortableDelay: vi.fn(async (_ms: number, signal?: AbortSignal) => actual.throwIfAborted(signal)),
   };
 });
 

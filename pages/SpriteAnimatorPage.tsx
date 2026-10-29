@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, Suspense } from 'react';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
 import { RefreshCw, Zap, Loader2, Save } from '../components/Icons';
 import { SettingsModal } from '../components/SettingsModal';
@@ -32,6 +32,8 @@ import { DEFAULT_CONFIG, DEFAULT_SLICE_SETTINGS } from '../utils/constants';
 import { optimizeSliceSettings } from '../utils/imageUtils';
 import { logger } from '../utils/logger';
 import type { SavedProject } from '../types';
+import { createAbortError, isAbortError } from '../utils/abort';
+import type { SpriteSheetRestoration } from '../hooks/useSpriteSheet';
 
 const SpriteAnimatorPage: React.FC = () => {
   // Language
@@ -59,7 +61,7 @@ const SpriteAnimatorPage: React.FC = () => {
 
   // Image upload
   const [sourceImage, setSourceImage] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageReaderRef = useRef<FileReader | null>(null);
 
   // Animation config
   const [config, setConfig] = useState<AnimationConfigType>(DEFAULT_CONFIG);
@@ -78,6 +80,54 @@ const SpriteAnimatorPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [spriteSheetImage, setSpriteSheetImage] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
+  const activeGenerationRef = useRef<AbortController | null>(null);
+  const workspaceRevisionRef = useRef(0);
+  const restorationRevisionRef = useRef(0);
+  const [restoration, setRestoration] = useState<SpriteSheetRestoration | null>(null);
+
+  const cancelGeneration = useCallback(() => {
+    workspaceRevisionRef.current++;
+    const request = activeGenerationRef.current;
+    activeGenerationRef.current = null;
+    request?.abort(createAbortError('Animation generation cancelled'));
+    setIsGenerating(false);
+    setStatusText('');
+  }, []);
+
+  const cancelImageRead = useCallback(() => {
+    const reader = imageReaderRef.current;
+    imageReaderRef.current = null;
+    if (reader?.readyState === FileReader.LOADING) reader.abort();
+  }, []);
+
+  // Playback-only edits remain available without cancelling a remote request.
+  const effectiveApiKey = getEffectiveApiKey();
+  const generationInputs = useMemo(() => ({
+    sourceImage,
+    mode: config.mode,
+    prompt: config.prompt,
+    gridCols: config.gridCols,
+    gridRows: config.gridRows,
+    frameCount: config.frameCount,
+    chromaKeyColor: config.chromaKeyColor,
+    imageProvider,
+    selectedModel,
+    outputResolution,
+    effectiveApiKey,
+  }), [sourceImage, config.mode, config.prompt, config.gridCols, config.gridRows, config.frameCount, config.chromaKeyColor, imageProvider, selectedModel, outputResolution, effectiveApiKey]);
+
+  // Layout cleanup runs before an old promise can publish into changed inputs.
+  useLayoutEffect(() => {
+    cancelGeneration();
+  }, [generationInputs, cancelGeneration]);
+
+  useLayoutEffect(() => () => {
+    workspaceRevisionRef.current++;
+    const request = activeGenerationRef.current;
+    activeGenerationRef.current = null;
+    request?.abort(createAbortError('Animation workspace unmounted'));
+    cancelImageRead();
+  }, [cancelImageRead]);
 
   // Sprite sheet hook
   const sheetSliceOverlay = useSheetSliceProgrammaticOverlay();
@@ -107,13 +157,15 @@ const SpriteAnimatorPage: React.FC = () => {
     isProcessingChromaKey, // Whether chroma key removal is in progress
     frameOverrides,
     setFrameOverrides,
+    completedRestorationRevision,
   } = useSpriteSheet(
     spriteSheetImage,
     sliceSettings,
     removeBackground,
     config.mode,
     config.chromaKeyColor,
-    spriteSheetSlicePipeline
+    spriteSheetSlicePipeline,
+    restoration,
   );
 
   // Frame-by-frame mode frames
@@ -126,16 +178,14 @@ const SpriteAnimatorPage: React.FC = () => {
 
   // Per-frame include toggle for custom animation (which frames to use in playback/export)
   const [frameIncluded, setFrameIncluded] = useState<boolean[]>([]);
-  const pendingLoadRef = useRef<{ frameOverrides: SavedProject['frameOverrides']; frameIncluded: boolean[] } | null>(null);
+  const pendingLoadRef = useRef<{ revision: number; frameIncluded: boolean[] } | null>(null);
 
   useEffect(() => {
     if (pendingLoadRef.current) {
-      const { frameOverrides: overrides, frameIncluded: included } = pendingLoadRef.current;
-      if (generatedFrames.length === included.length) {
-        setFrameOverrides(overrides as Parameters<typeof setFrameOverrides>[0]);
-        setFrameIncluded(included);
-        pendingLoadRef.current = null;
-      }
+      const { revision, frameIncluded: included } = pendingLoadRef.current;
+      if (config.mode === 'sheet' && completedRestorationRevision !== revision) return;
+      setFrameIncluded(Array.from({ length: generatedFrames.length }, (_, index) => included[index] !== false));
+      pendingLoadRef.current = null;
       return;
     }
     setFrameIncluded((prev) => {
@@ -143,7 +193,7 @@ const SpriteAnimatorPage: React.FC = () => {
       if (prev.length === L) return prev;
       return Array(L).fill(true);
     });
-  }, [generatedFrames.length, setFrameOverrides]);
+  }, [generatedFrames, config.mode, completedRestorationRevision, restoration]);
 
   // Animation frames = only included; used for preview, playback, export
   const animationFrames = useMemo(
@@ -175,43 +225,54 @@ const SpriteAnimatorPage: React.FC = () => {
   }, [generatedFrames, frameIncluded, currentFrameIndex]);
 
   // Sync slice settings with config when config changes
+  const syncedRestorationRevisionRef = useRef<number | null>(null);
   useEffect(() => {
+    const revision = restoration?.revision ?? null;
+    if (syncedRestorationRevisionRef.current !== revision) {
+      syncedRestorationRevisionRef.current = revision;
+      // A saved slicing grid may intentionally differ from its generation grid.
+      if (revision !== null) return;
+    }
     setSliceSettings((prev) => ({
       ...prev,
       cols: config.gridCols,
       rows: config.gridRows,
     }));
-  }, [config.gridCols, config.gridRows]);
+  }, [config.gridCols, config.gridRows, restoration]);
 
-  // Handle image upload
+  const replaceSourceImage = useCallback((file: File) => {
+    cancelGeneration();
+    cancelImageRead();
+    pendingLoadRef.current = null;
+    setRestoration(null);
+    const reader = new FileReader();
+    imageReaderRef.current = reader;
+    reader.onload = () => {
+      if (imageReaderRef.current !== reader) return;
+      imageReaderRef.current = null;
+      setSourceImage(reader.result as string);
+      setSpriteSheetFrames([]);
+      setFrameModeFrames([]);
+      setSpriteSheetImage(null);
+      setError(null);
+    };
+    reader.readAsDataURL(file);
+  }, [cancelGeneration, cancelImageRead, setSpriteSheetFrames]);
+
+  // Capture the File before clearing the input so the same image can be selected again.
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setSourceImage(event.target?.result as string);
-        setSpriteSheetFrames([]);
-        setFrameModeFrames([]);
-        setSpriteSheetImage(null);
-      };
-      reader.readAsDataURL(file);
-    }
-  }, [setSpriteSheetFrames]);
+    if (file) replaceSourceImage(file);
+    e.target.value = '';
+  }, [replaceSourceImage]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setSourceImage(event.target?.result as string);
-        setSpriteSheetFrames([]);
-        setFrameModeFrames([]);
-        setSpriteSheetImage(null);
-      };
-      reader.readAsDataURL(file);
+      replaceSourceImage(file);
     }
-  }, [setSpriteSheetFrames]);
+  }, [replaceSourceImage]);
 
   // Handle generation
   const handleGenerate = useCallback(async () => {
@@ -232,6 +293,16 @@ const SpriteAnimatorPage: React.FC = () => {
       return;
     }
 
+    workspaceRevisionRef.current++;
+    activeGenerationRef.current?.abort(createAbortError('Superseded by a newer animation request'));
+    const request = new AbortController();
+    activeGenerationRef.current = request;
+    const isCurrentRequest = () => activeGenerationRef.current === request && !request.signal.aborted;
+    const updateStatus = (status: string) => {
+      if (isCurrentRequest()) setStatusText(status);
+    };
+    pendingLoadRef.current = null;
+    setRestoration(null);
     setIsGenerating(true);
     setError(null);
     setStatusText(t.statusIdle);
@@ -264,14 +335,15 @@ const SpriteAnimatorPage: React.FC = () => {
           config.gridRows,
           effectiveKey,
           selectedModel,
-          (status) => setStatusText(status),
+          updateStatus,
           config.chromaKeyColor,
           outputResolution,
           undefined,
-          undefined,
+          request.signal,
           { providerId: imageProvider, sheetKind: 'animation' },
         );
 
+        if (!isCurrentRequest()) return;
         setSpriteSheetImage(sheetImage);
 
         // Auto-optimize slice settings after generating sprite sheet
@@ -283,6 +355,7 @@ const SpriteAnimatorPage: React.FC = () => {
             config.gridRows,
             { conservative: true }
           );
+          if (!isCurrentRequest()) return;
           setSliceSettings((prev) => ({
             ...prev,
             paddingLeft: optimized.paddingLeft,
@@ -302,6 +375,7 @@ const SpriteAnimatorPage: React.FC = () => {
           }));
           setStatusText(t.statusOptimized);
         } catch (err: unknown) {
+          if (!isCurrentRequest() || isAbortError(err)) return;
           // If optimization fails, continue with default settings
           logger.warn('Auto-optimization failed, using default settings:', err);
         }
@@ -314,13 +388,15 @@ const SpriteAnimatorPage: React.FC = () => {
           config.frameCount,
           effectiveKey,
           selectedModel,
-          (status) => setStatusText(status),
+          updateStatus,
           delayBetweenFrames,
-          { providerId: imageProvider },
+          { providerId: imageProvider, signal: request.signal },
         );
+        if (!isCurrentRequest()) return;
         setFrameModeFrames(frames);
       }
     } catch (err: unknown) {
+      if (!isCurrentRequest() || isAbortError(err)) return;
       const rawMsg = getErrorMessage(err);
       let displayMsg = t.errorGeneration;
 
@@ -338,7 +414,10 @@ const SpriteAnimatorPage: React.FC = () => {
 
       setError(displayMsg);
     } finally {
-      setIsGenerating(false);
+      if (isCurrentRequest()) {
+        activeGenerationRef.current = null;
+        setIsGenerating(false);
+      }
     }
   }, [
     t,
@@ -357,6 +436,10 @@ const SpriteAnimatorPage: React.FC = () => {
 
   // Handle reset
   const handleReset = useCallback(() => {
+    cancelGeneration();
+    cancelImageRead();
+    pendingLoadRef.current = null;
+    setRestoration(null);
     setSourceImage(null);
     setSpriteSheetFrames([]);
     setFrameModeFrames([]);
@@ -367,10 +450,7 @@ const SpriteAnimatorPage: React.FC = () => {
     setIsPlaying(true);
     setConfig((prev) => ({ ...prev, prompt: '' }));
     setSliceSettings(DEFAULT_SLICE_SETTINGS);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  }, [setSpriteSheetFrames, setCurrentFrameIndex, setSheetDimensions]);
+  }, [cancelGeneration, cancelImageRead, setSpriteSheetFrames, setCurrentFrameIndex, setSheetDimensions]);
 
   // Handle frame click from grid (grid index -> animation index; only when frame is included)
   const handleFrameClick = useCallback(
@@ -388,13 +468,24 @@ const SpriteAnimatorPage: React.FC = () => {
   }, []);
 
   // Project history
-  const { list: projectList, saveCurrent: saveProjectToHistory, loadProjectById, deleteProject, refreshList: refreshProjectList } = useProjectHistory();
+  const {
+    list: projectList,
+    saveCurrent: saveProjectToHistory,
+    loadProjectById,
+    deleteProject,
+    refreshList: refreshProjectList,
+    isLoading: isHistoryLoading,
+    storageError: historyStorageError,
+    migrationWarning: historyMigrationWarning,
+  } = useProjectHistory();
   const [isSavingProject, setIsSavingProject] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [bottomSaveName, setBottomSaveName] = useState('');
 
   const handleSaveProject = useCallback(
-    (name?: string) => {
+    async (name?: string): Promise<boolean> => {
+      setIsSavingProject(true);
+      setSaveError(null);
       try {
         const snapshot: Omit<SavedProject, 'id' | 'name' | 'createdAt'> = {
           config,
@@ -406,13 +497,18 @@ const SpriteAnimatorPage: React.FC = () => {
           frameOverrides: [...frameOverrides],
           frameIncluded: [...frameIncluded],
         };
-        const id = saveProjectToHistory(snapshot, name);
+        const id = await saveProjectToHistory(snapshot, name);
         if (id) {
           setError(null);
           setSaveError(null);
+          return true;
         } else {
           setSaveError(t.errorSaveProject);
+          return false;
         }
+      } catch {
+        setSaveError(t.errorSaveProject);
+        return false;
       } finally {
         setIsSavingProject(false);
       }
@@ -420,7 +516,23 @@ const SpriteAnimatorPage: React.FC = () => {
     [config, sliceSettings, removeBackground, sourceImage, spriteSheetImage, frameModeFrames, frameOverrides, frameIncluded, saveProjectToHistory, t]
   );
 
+  const loadStoredProject = useCallback(async (id: string): Promise<SavedProject | null> => {
+    cancelGeneration();
+    cancelImageRead();
+    pendingLoadRef.current = null;
+    const revision = workspaceRevisionRef.current;
+    const project = await loadProjectById(id);
+    return workspaceRevisionRef.current === revision ? project : null;
+  }, [cancelGeneration, cancelImageRead, loadProjectById]);
+
   const handleLoadProject = useCallback((project: SavedProject) => {
+    cancelGeneration();
+    cancelImageRead();
+    const revision = ++restorationRevisionRef.current;
+    setRestoration({ revision, frameOverrides: project.frameOverrides });
+    pendingLoadRef.current = { revision, frameIncluded: project.frameIncluded };
+    setFrameIncluded(project.frameIncluded);
+    setSpriteSheetFrames([]);
     setConfig(project.config);
     setSliceSettings(project.sliceSettings as typeof sliceSettings);
     setRemoveBackground(project.removeBackground);
@@ -429,16 +541,13 @@ const SpriteAnimatorPage: React.FC = () => {
     setFrameModeFrames(project.frameModeFrames);
     setError(null);
     setCurrentFrameIndex(0);
-    pendingLoadRef.current = {
-      frameOverrides: project.frameOverrides,
-      frameIncluded: project.frameIncluded,
-    };
-  }, [setCurrentFrameIndex]);
+  }, [cancelGeneration, cancelImageRead, setCurrentFrameIndex, setSpriteSheetFrames]);
 
-  const canSaveProject = generatedFrames.length > 0;
+  const isRestoringProject = config.mode === 'sheet' && restoration !== null && completedRestorationRevision !== restoration.revision;
+  const canSaveProject = generatedFrames.length > 0 && !isGenerating && !isProcessingChromaKey && !isRestoringProject && !isHistoryLoading && !historyStorageError;
 
   // Determine key status for UI
-  const hasCustomKey = useMemo(() => !!apiKey.trim(), [apiKey]);
+  const hasCustomKey = useMemo(() => !!(imageProvider === 'openrouter' ? openRouterApiKey : apiKey).trim(), [imageProvider, openRouterApiKey, apiKey]);
 
   // Handle export errors
   const handleExportError = useCallback((error: Error) => {
@@ -524,12 +633,18 @@ const SpriteAnimatorPage: React.FC = () => {
         leadingActions={
           <ProjectHistory
             list={projectList}
-            onSaveCurrent={(name) => { setIsSavingProject(true); handleSaveProject(name); }}
-            loadProjectById={loadProjectById}
+            onSaveCurrent={handleSaveProject}
+            loadProjectById={loadStoredProject}
             onLoad={handleLoadProject}
             onDelete={deleteProject}
             canSave={canSaveProject}
             isSaving={isSavingProject}
+            isLoading={isHistoryLoading}
+            storageError={historyStorageError}
+            migrationWarning={historyMigrationWarning}
+            onRetry={refreshProjectList}
+            saveError={saveError}
+            onClearSaveError={() => setSaveError(null)}
             variant="header"
           />
         }
@@ -544,6 +659,17 @@ const SpriteAnimatorPage: React.FC = () => {
         <h2 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">{t.spriteAnimatorTool}</h2>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-muted">{t.spriteAnimatorDesc}</p>
       </div>
+
+      {(historyStorageError || historyMigrationWarning) && (
+        <div className="ui-banner-warn" role={historyStorageError ? 'alert' : 'status'}>
+          <p>{historyStorageError || historyMigrationWarning}</p>
+          {historyStorageError && (
+            <button type="button" className="ui-btn-secondary" disabled={isHistoryLoading} onClick={() => { void refreshProjectList(); }}>
+              {t.projectHistoryRetry}
+            </button>
+          )}
+        </div>
+      )}
 
       <main className="workspace-grid">
         <div className="min-w-0 space-y-5">
@@ -566,6 +692,12 @@ const SpriteAnimatorPage: React.FC = () => {
             selectedResolution={outputResolution}
             setSelectedResolution={setOutputResolution}
           />
+
+          {isGenerating && (
+            <button type="button" onClick={cancelGeneration} className="ui-btn-secondary w-full" data-testid="cancel-animation-generation">
+              {t.cancel}
+            </button>
+          )}
 
           {config.mode === 'sheet' && (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5">
@@ -695,11 +827,8 @@ const SpriteAnimatorPage: React.FC = () => {
                       />
                       <button
                         type="button"
-                        onClick={() => {
-                          setIsSavingProject(true);
-                          setSaveError(null);
-                          handleSaveProject(bottomSaveName.trim() || undefined);
-                          setBottomSaveName('');
+                        onClick={async () => {
+                          if (await handleSaveProject(bottomSaveName.trim() || undefined)) setBottomSaveName('');
                         }}
                         disabled={!canSaveProject || isSavingProject}
                         className="min-h-[40px] px-4 flex items-center justify-center gap-2 rounded-lg text-sm font-semibold bg-signal text-white hover:bg-signal-hover disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation tap-highlight"

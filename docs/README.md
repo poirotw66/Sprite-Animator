@@ -18,6 +18,7 @@ Technical docs are grouped by domain. Agent workflow guides live under `workflow
 
 - [Slice & Align Flow](./animation/SLICE_AND_ALIGN_FLOW.md)
 - [Engine export formats](./animation/ENGINE_EXPORT.md)
+- [Workspace state and project history](./animation/WORKSPACE_STATE.md)
 - [Character Animation Prompt Options](./animation/CHARACTER_ANIMATION_PROMPT_OPTIONS.md)
 
 ## LINE stickers

@@ -1,5 +1,8 @@
 import { expect, test, type Page, type Route } from '@playwright/test';
 import sharp from 'sharp';
+import { en } from '../i18n/en';
+
+test.use({ locale: 'en-US' });
 
 const FAKE_OPENROUTER_KEY = 'mock-openrouter-e2e-key';
 
@@ -45,7 +48,7 @@ async function mockOpenRouterApis(page: Page): Promise<string[]> {
   return hits;
 }
 
-test('Settings can select OpenRouter and generate a sheet via mocked Image API', async ({
+test('OpenRouter generation exports and restores a saved animation after reload', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -98,4 +101,19 @@ test('Settings can select OpenRouter and generate a sheet via mocked Image API',
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: /^ZIP$/ }).click();
   expect((await download).suggestedFilename()).toMatch(/\.zip$/);
+
+  await page.getByLabel(en.projectNamePlaceholder).fill('Saved animation regression');
+  await page.getByRole('button', { name: en.saveProject, exact: true }).click();
+  await page.getByRole('button', { name: en.projectHistory, exact: true }).click();
+  await expect(page.getByText('Saved animation regression', { exact: true })).toBeVisible();
+
+  const generationCount = hits.filter((hit) => /POST .*\/images/.test(hit)).length;
+  await page.reload();
+  await expect(page.getByRole('dialog')).toBeHidden();
+  await page.getByRole('button', { name: en.projectHistory, exact: true }).click();
+  await expect(page.getByText('Saved animation regression', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: en.loadProject, exact: true }).last().click();
+  await expect(page.getByLabel(en.promptLabel)).toHaveValue('happy bounce walk cycle');
+  await expect(page.getByRole('button', { name: en.previewArea, exact: true })).toBeVisible();
+  expect(hits.filter((hit) => /POST .*\/images/.test(hit))).toHaveLength(generationCount);
 });

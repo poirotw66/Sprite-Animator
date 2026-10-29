@@ -10,6 +10,7 @@ import { logger } from '../../utils/logger';
 import type { ImageProviderId } from '../imageProviders';
 import { retryOperation, isQuotaError } from './retry';
 import type { ProgressCallback } from './types';
+import { isAbortError, throwIfAborted } from '../../utils/abort';
 
 export interface PlanAnimationStoryboardInput {
   providerId: ImageProviderId;
@@ -18,6 +19,7 @@ export interface PlanAnimationStoryboardInput {
   userPrompt: string;
   frameCount: number;
   onProgress?: ProgressCallback;
+  signal?: AbortSignal;
 }
 
 function algorithmicStoryboard(
@@ -68,7 +70,9 @@ export async function getAnimationStoryboard(
   userPrompt: string,
   frameCount: number,
   onProgress?: ProgressCallback,
+  signal?: AbortSignal,
 ): Promise<string[]> {
+  throwIfAborted(signal);
   const cleanBase64 = imageBase64.replace(
     /^data:image\/(png|jpeg|jpg|webp);base64,/,
     '',
@@ -101,16 +105,23 @@ export async function getAnimationStoryboard(
             ],
           },
           config: {
+            abortSignal: signal,
             temperature: 1,
             maxOutputTokens: 1000,
           },
         }),
       onProgress,
+      5,
+      4000,
+      signal,
     );
 
+    throwIfAborted(signal);
     const text = response.text ?? '';
     return normalizeStoryboardLines(text, frameCount, userPrompt);
   } catch (e: unknown) {
+    if (isAbortError(e)) throw e;
+    throwIfAborted(signal);
     if (isQuotaError(e)) {
       logger.error('Quota exceeded during storyboard generation. Aborting.');
       throw e;
@@ -132,8 +143,9 @@ export async function getAnimationStoryboard(
 export async function planAnimationStoryboard(
   input: PlanAnimationStoryboardInput,
 ): Promise<string[]> {
-  const { providerId, apiKey, imageBase64, userPrompt, frameCount, onProgress } =
+  const { providerId, apiKey, imageBase64, userPrompt, frameCount, onProgress, signal } =
     input;
+  throwIfAborted(signal);
 
   if (providerId === 'gemini') {
     if (!apiKey) {
@@ -146,6 +158,7 @@ export async function planAnimationStoryboard(
       userPrompt,
       frameCount,
       onProgress,
+      signal,
     );
   }
 

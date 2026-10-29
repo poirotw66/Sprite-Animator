@@ -1,115 +1,92 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { SavedProject, SavedProjectMeta } from '../types';
+import { useLanguage } from './useLanguage';
+import { ProjectHistoryStorage } from '../utils/projectHistoryStorage';
 import { logger } from '../utils/logger';
 
-const STORAGE_LIST_KEY = 'sprite_animator_project_list';
-const STORAGE_ITEM_PREFIX = 'sprite_animator_project_';
-const MAX_PROJECTS = 10;
-
-function loadList(): SavedProjectMeta[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_LIST_KEY);
-    if (!raw) return [];
-    const list = JSON.parse(raw) as SavedProjectMeta[];
-    return Array.isArray(list) ? list : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveList(list: SavedProjectMeta[]): void {
-  try {
-    localStorage.setItem(STORAGE_LIST_KEY, JSON.stringify(list));
-  } catch (e) {
-    logger.warn('Failed to save project list', e);
-  }
-}
-
-function loadProject(id: string): SavedProject | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_ITEM_PREFIX + id);
-    if (!raw) return null;
-    return JSON.parse(raw) as SavedProject;
-  } catch {
-    return null;
-  }
-}
-
-/** Returns true if saved successfully; false if localStorage threw (e.g. quota exceeded). */
-function saveProjectItem(project: SavedProject): boolean {
-  try {
-    localStorage.setItem(STORAGE_ITEM_PREFIX + project.id, JSON.stringify(project));
-    return true;
-  } catch (e) {
-    logger.warn('Failed to save project', e);
-    return false;
-  }
-}
-
-function deleteProjectItem(id: string): void {
-  try {
-    localStorage.removeItem(STORAGE_ITEM_PREFIX + id);
-  } catch {
-    // ignore
-  }
-}
-
-/**
- * Hook for project history: list, save current, load, delete.
- * Stores up to MAX_PROJECTS in localStorage (list + full snapshot per id).
- */
+/** Async history operations report success only after their IndexedDB transaction commits. */
 export function useProjectHistory() {
-  const [list, setList] = useState<SavedProjectMeta[]>(() => loadList());
+  const { t } = useLanguage();
+  const [list, setList] = useState<SavedProjectMeta[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasStorageError, setHasStorageError] = useState(false);
+  const [hasMigrationWarning, setHasMigrationWarning] = useState(false);
+  const storageRef = useRef<ProjectHistoryStorage | null>(null);
+  const mountedRef = useRef(true);
+  const pendingCountRef = useRef(0);
+  const queueRef = useRef<Promise<unknown>>(Promise.resolve());
 
-  const refreshList = useCallback(() => {
-    setList(loadList());
+  const run = useCallback(<T,>(operation: (storage: ProjectHistoryStorage) => Promise<T>, fallback: T): Promise<T> => {
+    pendingCountRef.current++;
+    if (mountedRef.current) setIsLoading(true);
+    const task = queueRef.current.then(async () => {
+      try {
+        const storage = storageRef.current ??= new ProjectHistoryStorage();
+        const value = await operation(storage);
+        if (mountedRef.current) {
+          setHasStorageError(false);
+          setHasMigrationWarning(storage.migrationWarning);
+        }
+        return value;
+      } catch (error) {
+        logger.warn('Project history operation failed', error);
+        if (mountedRef.current) setHasStorageError(true);
+        return fallback;
+      } finally {
+        pendingCountRef.current--;
+        if (mountedRef.current && pendingCountRef.current === 0) setIsLoading(false);
+      }
+    });
+    queueRef.current = task;
+    return task;
   }, []);
 
-  const saveCurrent = useCallback(
-    (snapshot: Omit<SavedProject, 'id' | 'name' | 'createdAt'>, name?: string): string | null => {
-      const id = `p_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-      const defaultName = (() => {
-        const d = new Date();
-        const Y = d.getFullYear();
-        const M = String(d.getMonth() + 1).padStart(2, '0');
-        const D = String(d.getDate()).padStart(2, '0');
-        const h = String(d.getHours()).padStart(2, '0');
-        const min = String(d.getMinutes()).padStart(2, '0');
-        const s = String(d.getSeconds()).padStart(2, '0');
-        return `${Y}-${M}-${D}_${h}-${min}-${s}`;
-      })();
-      const meta: SavedProjectMeta = {
-        id,
-        name: name?.trim() || defaultName,
-        createdAt: Date.now(),
-      };
-      const project: SavedProject = {
-        ...snapshot,
-        id: meta.id,
-        name: meta.name,
-        createdAt: meta.createdAt,
-      };
-      const ok = saveProjectItem(project);
-      if (!ok) return null;
-      const currentList = loadList();
-      const nextList = [meta, ...currentList].slice(0, MAX_PROJECTS);
-      saveList(nextList);
-      setList(nextList);
+  const refreshList = useCallback(async (): Promise<void> => {
+    await run(async (storage) => {
+      const next = await storage.list();
+      if (mountedRef.current) setList(next);
+    }, undefined);
+  }, [run]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    void refreshList();
+    return () => { mountedRef.current = false; };
+  }, [refreshList]);
+
+  const saveCurrent = useCallback(async (
+    snapshot: Omit<SavedProject, 'id' | 'name' | 'createdAt'>,
+    name?: string,
+  ): Promise<string | null> => {
+    const createdAt = Date.now();
+    const id = `p_${createdAt}_${crypto.randomUUID()}`;
+    const date = new Date(createdAt);
+    const defaultName = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}_${String(date.getHours()).padStart(2, '0')}-${String(date.getMinutes()).padStart(2, '0')}-${String(date.getSeconds()).padStart(2, '0')}`;
+    const project: SavedProject = { ...snapshot, id, name: name?.trim() || defaultName, createdAt };
+    return run(async (storage) => {
+      const next = await storage.save(project);
+      if (mountedRef.current) setList(next);
       return id;
-    },
-    []
-  );
+    }, null);
+  }, [run]);
 
-  const loadProjectById = useCallback((id: string): SavedProject | null => {
-    return loadProject(id);
-  }, []);
+  const loadProjectById = useCallback(async (id: string): Promise<SavedProject | null> =>
+    run(async (storage) => {
+      const project = await storage.load(id);
+      if (!project) throw new Error('Saved project was not found.');
+      return project;
+    }, null), [run]);
 
-  const deleteProject = useCallback((id: string) => {
-    const currentList = loadList().filter((m) => m.id !== id);
-    saveList(currentList);
-    deleteProjectItem(id);
-    setList(currentList);
-  }, []);
+  const deleteProject = useCallback(async (id: string): Promise<boolean> =>
+    run(async (storage) => {
+      const next = await storage.delete(id);
+      if (mountedRef.current) setList(next);
+      return true;
+    }, false), [run]);
 
-  return { list, saveCurrent, loadProjectById, deleteProject, refreshList };
+  return {
+    list, saveCurrent, loadProjectById, deleteProject, refreshList, isLoading,
+    storageError: hasStorageError ? t.projectHistoryStorageError : null,
+    migrationWarning: hasMigrationWarning ? t.projectHistoryMigrationWarning : null,
+  };
 }

@@ -11,6 +11,22 @@ describe('retryOperation', () => {
     expect(result).toBe('ok');
   });
 
+  it('does not call an operation with a cancelled signal', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const operation = vi.fn(async () => 'unexpected');
+    await expect(retryOperation(operation, undefined, 5, 0, controller.signal)).rejects.toMatchObject({ name: 'AbortError' });
+    expect(operation).not.toHaveBeenCalled();
+  });
+
+  it('rejects a late success when cancellation happened during the operation', async () => {
+    const controller = new AbortController();
+    await expect(retryOperation(async () => {
+      controller.abort();
+      return 'old result';
+    }, undefined, 5, 0, controller.signal)).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
   it('retries on quota-like errors and then succeeds', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const onStatusUpdate = vi.fn();

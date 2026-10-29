@@ -11,7 +11,7 @@ import {
   getImageProvider,
   type ImageProviderId,
 } from '../imageProviders';
-import { wait } from './retry';
+import { abortableDelay, isAbortError, throwIfAborted } from '../../utils/abort';
 import { planAnimationStoryboard } from './storyboard';
 import { API_KEY_MISSING_MESSAGE } from './types';
 import type { ProgressCallback } from './types';
@@ -57,6 +57,7 @@ export async function generateAnimationFrames(
 
   const providerId = options?.providerId ?? 'gemini';
   const signal = options?.signal;
+  throwIfAborted(signal);
   const provider = getImageProvider(providerId);
 
   const frameDescriptions = await planAnimationStoryboard({
@@ -66,7 +67,9 @@ export async function generateAnimationFrames(
     userPrompt: prompt,
     frameCount,
     onProgress,
+    signal,
   });
+  throwIfAborted(signal);
 
   const generateFrame = async (
     frameDesc: string,
@@ -100,6 +103,8 @@ export async function generateAnimationFrames(
         onProgress,
       });
     } catch (err) {
+      throwIfAborted(signal);
+      if (isAbortError(err)) throw err;
       throw formatImageProviderError(providerId, err);
     }
   };
@@ -108,9 +113,10 @@ export async function generateAnimationFrames(
   let previousFrame: string | null = null;
 
   if (onProgress) onProgress('分鏡規劃完成，準備繪製...');
-  await wait(2000);
+  await abortableDelay(2000, signal);
 
   for (let i = 0; i < frameDescriptions.length; i++) {
+    throwIfAborted(signal);
     const desc = frameDescriptions[i]!;
     try {
       if (onProgress) {
@@ -125,7 +131,7 @@ export async function generateAnimationFrames(
             `等待 API 冷卻 (${Math.round(interFrameDelayMs / 1000)}秒)... 準備繪製第 ${i + 1} 幀`,
           );
         }
-        await wait(interFrameDelayMs);
+        await abortableDelay(interFrameDelayMs, signal);
         if (onProgress) {
           onProgress(
             `正在繪製第 ${i + 1} / ${frameDescriptions.length} 幀...`,
@@ -134,9 +140,11 @@ export async function generateAnimationFrames(
       }
 
       const frameResult = await generateFrame(desc, i, previousFrame);
+      throwIfAborted(signal);
       results.push(frameResult);
       previousFrame = frameResult;
     } catch (error: unknown) {
+      if (isAbortError(error)) throw error;
       logger.error(`Generation failed at frame ${i + 1}`, error);
       throw error;
     }

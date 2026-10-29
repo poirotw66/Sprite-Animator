@@ -2,30 +2,15 @@ import { useState, useEffect } from 'react';
 import type { ImageResolution } from '../utils/constants';
 import { getLocalDevelopmentGeminiApiKey } from '../utils/localDevelopmentGeminiApiKey';
 import { loadSessionCredentials, saveSessionCredentials } from '../utils/credentialStorage';
+import type { ImageProviderId } from '../services/imageProviders';
 import {
-  defaultModelForProvider,
-  defaultResolutionForProviderModel,
-  isImageProviderId,
-  resolutionsForModel,
-  resolveModelForProvider,
-  type ImageProviderId,
-} from '../services/imageProviders';
-
-const MODEL_STORAGE_KEY = 'gemini_model';
-const PROVIDER_STORAGE_KEY = 'image_provider';
-const OUTPUT_RESOLUTION_STORAGE_KEY = 'gemini_output_resolution';
-const STYLE_PREVIEW_RESOLUTION_STORAGE_KEY = 'gemini_style_preview_resolution';
-
-/** Map retired preview model ids to stable API names. */
-const LEGACY_MODEL_IDS: Record<string, string> = {
-  'gemini-3-pro-image-preview': 'gemini-3-pro-image',
-  'gemini-3.1-flash-image-preview': 'gemini-3.1-flash-image',
-};
-
-function resolveStoredProvider(stored: string | null): ImageProviderId {
-  if (stored && isImageProviderId(stored)) return stored;
-  return 'gemini';
-}
+  loadPreferredImageProvider,
+  loadProviderSettings,
+  normalizeProviderSettings,
+  savePreferredImageProvider,
+  saveProviderSettings,
+  type ProviderSettings,
+} from '../utils/providerSettingsStorage';
 
 export interface SaveSettingsArgs {
   apiKey: string;
@@ -38,151 +23,82 @@ export interface SaveSettingsArgs {
 }
 
 /**
- * Custom hook for managing application settings including API key and model selection.
- * Keys stay in sessionStorage (never bundled). Provider preference is in localStorage.
+ * Provider-specific settings and session-only credentials. A fixed provider lets
+ * Gemini-only tools share Gemini preferences without changing animation routing.
  */
-export const useSettings = () => {
+export const useSettings = (fixedProvider?: ImageProviderId) => {
   const [apiKey, setApiKey] = useState('');
   const [openRouterApiKey, setOpenRouterApiKey] = useState('');
-  const [imageProvider, setImageProvider] = useState<ImageProviderId>('gemini');
-  const [selectedModel, setSelectedModel] = useState(defaultModelForProvider('gemini'));
-  const [outputResolution, setOutputResolution] = useState<ImageResolution>(
-    defaultResolutionForProviderModel('gemini', defaultModelForProvider('gemini')),
+  const [imageProvider, setActiveProvider] = useState<ImageProviderId>(
+    () => fixedProvider ?? loadPreferredImageProvider(),
   );
-  const [stylePreviewResolution, setStylePreviewResolution] =
-    useState<ImageResolution>('1K');
+  const [profiles, setProfiles] = useState<Record<ImageProviderId, ProviderSettings>>(() => ({
+    gemini: loadProviderSettings('gemini'),
+    openrouter: loadProviderSettings('openrouter'),
+  }));
   const [hfToken, setHfToken] = useState('');
   const [showSettings, setShowSettings] = useState(false);
+  const activeProfile = profiles[imageProvider];
 
   useEffect(() => {
     const credentials = loadSessionCredentials();
-    const storedProvider = resolveStoredProvider(
-      localStorage.getItem(PROVIDER_STORAGE_KEY),
-    );
-    const storedModelRaw = localStorage.getItem(MODEL_STORAGE_KEY);
-    const storedModelMigrated = storedModelRaw
-      ? (LEGACY_MODEL_IDS[storedModelRaw] ?? storedModelRaw)
-      : null;
-    const storedResolution = localStorage.getItem(
-      OUTPUT_RESOLUTION_STORAGE_KEY,
-    ) as ImageResolution | null;
-    const storedStylePreviewResolution = localStorage.getItem(
-      STYLE_PREVIEW_RESOLUTION_STORAGE_KEY,
-    ) as ImageResolution | null;
+    setApiKey(credentials.apiKey);
+    setOpenRouterApiKey(credentials.openRouterApiKey);
+    setHfToken(credentials.hfToken);
+    const provider = fixedProvider ?? loadPreferredImageProvider();
+    const hasKey = provider === 'openrouter'
+      ? !!credentials.openRouterApiKey
+      : !!credentials.apiKey || !!getLocalDevelopmentGeminiApiKey();
+    setShowSettings(!hasKey);
+    // Persist validated legacy migration without rewriting another tool's provider.
+    saveProviderSettings('gemini', loadProviderSettings('gemini'));
+    saveProviderSettings('openrouter', loadProviderSettings('openrouter'));
+  }, [fixedProvider]);
 
-    if (credentials.apiKey) setApiKey(credentials.apiKey);
-    if (credentials.openRouterApiKey) {
-      setOpenRouterApiKey(credentials.openRouterApiKey);
-    }
-    if (credentials.hfToken) setHfToken(credentials.hfToken);
+  const setImageProvider = (provider: ImageProviderId) => {
+    setActiveProvider(fixedProvider ?? provider);
+  };
 
-    setImageProvider(storedProvider);
-    localStorage.setItem(PROVIDER_STORAGE_KEY, storedProvider);
+  const updateProfile = (patch: Partial<ProviderSettings>) => {
+    setProfiles((previous) => ({
+      ...previous,
+      [imageProvider]: normalizeProviderSettings(imageProvider, {
+        ...previous[imageProvider],
+        ...patch,
+      }),
+    }));
+  };
 
-    const model = resolveModelForProvider(storedProvider, storedModelMigrated);
-    setSelectedModel(model);
-    if (!storedModelRaw || model !== storedModelRaw) {
-      localStorage.setItem(MODEL_STORAGE_KEY, model);
-    }
-
-    const allowed = resolutionsForModel(storedProvider, model);
-    const resolution =
-      storedResolution && allowed.includes(storedResolution)
-        ? storedResolution
-        : defaultResolutionForProviderModel(storedProvider, model);
-    setOutputResolution(resolution);
-    if (!storedResolution || !allowed.includes(storedResolution)) {
-      localStorage.setItem(OUTPUT_RESOLUTION_STORAGE_KEY, resolution);
-    }
-
-    const stylePreviewResolution =
-      storedStylePreviewResolution &&
-      allowed.includes(storedStylePreviewResolution)
-        ? storedStylePreviewResolution
-        : ('1K' as ImageResolution);
-    setStylePreviewResolution(stylePreviewResolution);
-    if (
-      !storedStylePreviewResolution ||
-      !allowed.includes(storedStylePreviewResolution)
-    ) {
-      localStorage.setItem(
-        STYLE_PREVIEW_RESOLUTION_STORAGE_KEY,
-        stylePreviewResolution,
-      );
-    }
-
-    const hasGemini =
-      !!credentials.apiKey || !!getLocalDevelopmentGeminiApiKey();
-    const hasOpenRouter = !!credentials.openRouterApiKey;
-    if (storedProvider === 'openrouter' ? !hasOpenRouter : !hasGemini) {
-      setShowSettings(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    const allowed = resolutionsForModel(imageProvider, selectedModel);
-    if (!allowed.includes(outputResolution)) {
-      const fallback = defaultResolutionForProviderModel(
-        imageProvider,
-        selectedModel,
-      );
-      setOutputResolution(fallback);
-      localStorage.setItem(OUTPUT_RESOLUTION_STORAGE_KEY, fallback);
-    }
-    if (!allowed.includes(stylePreviewResolution)) {
-      setStylePreviewResolution('1K');
-      localStorage.setItem(STYLE_PREVIEW_RESOLUTION_STORAGE_KEY, '1K');
-    }
-  }, [imageProvider, selectedModel, outputResolution, stylePreviewResolution]);
+  const setSelectedModel = (model: string) => updateProfile({ model });
+  const setOutputResolution = (outputResolution: ImageResolution) => updateProfile({ outputResolution });
+  const setStylePreviewResolution = (stylePreviewResolution: ImageResolution) => updateProfile({ stylePreviewResolution });
 
   const saveSettings = (args: SaveSettingsArgs) => {
-    const provider = args.imageProvider ?? imageProvider;
+    const provider = fixedProvider ?? args.imageProvider ?? imageProvider;
     const trimmedKey = args.apiKey.trim();
     const trimmedOpenRouter = (args.openRouterApiKey ?? openRouterApiKey).trim();
-    const trimmedToken = (args.hfToken ?? '').trim();
-    const model = resolveModelForProvider(provider, args.model);
-    const allowed = resolutionsForModel(provider, model);
-    const res =
-      args.outputResolution != null && allowed.includes(args.outputResolution)
-        ? args.outputResolution
-        : defaultResolutionForProviderModel(provider, model);
-    const previewRes =
-      args.stylePreviewResolution != null &&
-      allowed.includes(args.stylePreviewResolution)
-        ? args.stylePreviewResolution
-        : ('1K' as ImageResolution);
+    const trimmedToken = (args.hfToken ?? hfToken).trim();
+    const profile = normalizeProviderSettings(provider, {
+      model: args.model,
+      outputResolution: args.outputResolution,
+      stylePreviewResolution: args.stylePreviewResolution,
+    });
 
     setApiKey(trimmedKey);
     setOpenRouterApiKey(trimmedOpenRouter);
-    setImageProvider(provider);
-    setSelectedModel(model);
-    setOutputResolution(res);
-    setStylePreviewResolution(previewRes);
     setHfToken(trimmedToken);
-
+    setActiveProvider(provider);
+    setProfiles((previous) => ({ ...previous, [provider]: profile }));
     saveSessionCredentials(trimmedKey, trimmedToken, trimmedOpenRouter);
-
-    localStorage.setItem(PROVIDER_STORAGE_KEY, provider);
-    localStorage.setItem(MODEL_STORAGE_KEY, model);
-    localStorage.setItem(OUTPUT_RESOLUTION_STORAGE_KEY, res);
-    localStorage.setItem(STYLE_PREVIEW_RESOLUTION_STORAGE_KEY, previewRes);
+    saveProviderSettings(provider, profile);
+    if (!fixedProvider) savePreferredImageProvider(provider);
     setShowSettings(false);
   };
 
-  /** Key for the currently selected image provider (Sprite Animator). */
-  const getEffectiveApiKey = (): string => {
-    if (imageProvider === 'openrouter') {
-      return openRouterApiKey.trim();
-    }
-    const userKey = apiKey.trim();
-    return userKey || getLocalDevelopmentGeminiApiKey();
-  };
-
-  /** Always Gemini — used by LINE sticker / comic paths. */
-  const getEffectiveGeminiApiKey = (): string => {
-    const userKey = apiKey.trim();
-    return userKey || getLocalDevelopmentGeminiApiKey();
-  };
+  const getEffectiveGeminiApiKey = (): string => apiKey.trim() || getLocalDevelopmentGeminiApiKey();
+  const getEffectiveApiKey = (): string => imageProvider === 'openrouter'
+    ? openRouterApiKey.trim()
+    : getEffectiveGeminiApiKey();
 
   return {
     apiKey,
@@ -191,11 +107,11 @@ export const useSettings = () => {
     setOpenRouterApiKey,
     imageProvider,
     setImageProvider,
-    selectedModel,
+    selectedModel: activeProfile.model,
     setSelectedModel,
-    outputResolution,
+    outputResolution: activeProfile.outputResolution,
     setOutputResolution,
-    stylePreviewResolution,
+    stylePreviewResolution: activeProfile.stylePreviewResolution,
     setStylePreviewResolution,
     hfToken,
     setHfToken,
