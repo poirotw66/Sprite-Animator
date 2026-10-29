@@ -28,8 +28,17 @@ Explicit job fields may override it.
   resume an already-reviewed job.
 - Actual Gemini generation must be requested by the user. A request to inspect,
   plan, or validate is not permission to generate.
-- Never add `--upload` or invoke `line-sticker-upload` unless the user explicitly
-  asks to upload. Upload and review submission are separate permissions.
+- Generate new or changed images without `--upload`: that flag invokes upload
+  immediately after generation, before agent content review. For a combined
+  generate-and-upload request, finish generation and content review, then invoke
+  `line-sticker-upload` separately for the authorized package. Existing upload
+  authorization remains valid; do not ask for it again. Upload and review
+  submission are separate permissions.
+- After finalization, review every final sticker's text, character, action, and
+  cropping using [content review](../line-sticker-maker/references/content-review.md).
+  Packaging completion and `qaReport.pass` are structural evidence, not content
+  approval. Report unverified checks and pending defects separately; accepted
+  exceptions retain their failed checks.
 
 **Shortcut — sheets already background-removed (已去背):** do **not** run Gemini
 generation or chroma again. Slice with V2 and `--already-keyed`:

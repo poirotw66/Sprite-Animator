@@ -18,9 +18,14 @@ Google Drive and Playwright scripts live at:
 
 - Input inspection and local preflight are read-only.
 - Drive staging, Creators Market form creation, and ZIP upload mutate external
-  systems. Confirm the exact package and requested step before running them.
+  systems. Resolve the exact package and requested step from the user's existing
+  authorization; ask only when either is missing or ambiguous.
 - Review submission is a separate, highest-impact step. Never infer `submit` from
   “upload”, and never enable automatic submission without explicit authorization.
+- Upload authorization does not authorize paid image generation. If the selected
+  package is missing or incomplete, stop the dependent upload. Use
+  `line-sticker-pipeline` for production or `line-sticker-maker` for recovery only
+  within the user's authorization for that work.
 - Batch upload requires an explicitly named directory/range; do not infer it from
   a request concerning one set.
 
@@ -70,50 +75,67 @@ If that file is **missing**, Drive is skipped automatically. During provision,
 `SPRITE_SHEETS_DIR` sprite sheets are packed into one ZIP and uploaded via the
 Creators Market **夾帶** (`attachments[]`) control instead.
 
-## Workflow with line-sticker-maker
+## Workflow from an existing package
 
 ```text
-line-sticker-maker (generate.mts)
-  → <out>/                         ← local pack (zip, md, sprite_sheets)
-  → sync-upload-input (auto by default)
+selected completed package <out>/  ← local pack (zip, md, sprite_sheets)
+  → read-only package preflight
+  → sync-upload-input (only if local staging is missing or stale)
   → .line-upload/input/706/{Set Name}/
   → <out>/.env.batch/{Set_Name}.env
   → run-line-upload.mts            ← merges credentials.env → batch → Python steps
 ```
 
-### 1. Generate stickers
+### 1. Inspect the selected package
 
-```bash
-npx tsx scripts/line-sticker/generate.mts \
-  --config skills/line-sticker-maker/examples/demo-job.config.json \
-  --out output/my-set
-```
+Resolve the package path and requested upload step before running commands.
+Inspect the existing ZIP, listing metadata and sprite sheets for that same set;
+check that the batch env's package paths identify those artifacts without
+printing credentials or session data. For repository-produced sets, inspect the
+manifest's completion status, grid scores and QA report. Keep independent content
+review and disclosed exceptions separate from successful packaging or automatic
+QA; missing review evidence is unverified. Stop the dependent upload for missing
+files, structural failures, or unresolved or unverified content checks. A package
+with structural failures remains incomplete.
+Use the [content review rules](../line-sticker-maker/references/content-review.md)
+to resolve review gaps and record any explicitly accepted exceptions; a package
+with unresolved defects remains a review candidate.
+
+This inspection does not generate, repair or repack images. Reuse a valid existing
+package and its matching config; do not substitute the demo config or another set.
 
 ### 2. Manual sync (if needed)
 
 ```bash
 npx tsx scripts/line-sticker/sync-upload-input.mts \
   --source output/my-set \
-  --config skills/line-sticker-maker/examples/demo-job.config.json
+  --config output/my-set/job.config.json
 ```
+
+Use the selected package's actual job config path when it differs. This command
+writes local staging and batch metadata; it is separate from read-only preflight.
+Skip it when staging already matches, preserving existing runtime IDs.
 
 ### 3. Upload to LINE
 
 ```bash
 npx tsx scripts/line-sticker/run-line-upload.mts \
-  --env output/my-set/.env.batch/Set_Name.env
+  --env output/my-set/.env.batch/Set_Name.env --submit false
 ```
 
 Visible browser and save pauses are **opt-in** via `--interactive true` on `run-line-upload.mts`.
 Default: headless Playwright, no Enter prompts, ZIP pause 0s. Automatic submission
 must remain disabled unless the user explicitly requests review submission.
+Pass `--submit false` for upload-only work even when a saved batch env or source
+config previously enabled submission. Use `--submit true` only for an explicitly
+authorized combined upload-and-submit request, or the separate submit step below.
 
 Single step:
 
 ```bash
-npx tsx .../run-line-upload.mts --env <out>/.env.batch/Set_Name.env --step gdrive
-npx tsx .../run-line-upload.mts --env <out>/.env.batch/Set_Name.env --step provision
-npx tsx .../run-line-upload.mts --env <out>/.env.batch/Set_Name.env --step zip
+npx tsx .../run-line-upload.mts --env <out>/.env.batch/Set_Name.env --step gdrive --submit false
+npx tsx .../run-line-upload.mts --env <out>/.env.batch/Set_Name.env --step provision --submit false
+npx tsx .../run-line-upload.mts --env <out>/.env.batch/Set_Name.env --step zip --submit false
 npx tsx .../run-line-upload.mts --env <out>/.env.batch/Set_Name.env --step submit
 ```
 

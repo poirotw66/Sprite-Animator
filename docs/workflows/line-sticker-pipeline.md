@@ -9,7 +9,7 @@ Headless only (no browser). Reuses app modules and scripts under `scripts/line-s
 - `.agents/skills/` and `.claude/skills/` are generated runtime mirrors. Run
   `npm run skills:sync:line-sticker` after changing a canonical skill.
 - `utils/lineStickerProductionPreset.ts` is the single source for headless defaults:
-  2K when supported, guided layout, automatic green/magenta selection with `core` chroma removal, blocking chroma/content QA, programmatic text with
+  2K when supported, guided layout, automatic green/magenta selection with `core` chroma removal, blocking automated frame/chroma QA, programmatic text with
   canvas composition, sheet-1 style anchoring, grid score 0.8, and 3 total attempts.
 - A field explicitly provided in `job.config.json` overrides the production preset.
 
@@ -82,7 +82,7 @@ Options:
 | `--title-zh` / `--desc-zh` | LINE 商店標題與說明（預設取自 phrase-set `name`） |
 | `--title-en` / `--desc-en` | English shop listing |
 | `--job path/to/job.config.json` | skip auto-config; use existing job file |
-| `--upload` | after generate, run LINE upload (needs local Python/Playwright setup) |
+| `--upload` | immediately run LINE upload after generation (needs Python/Playwright); the agent workflow omits this flag to review content before a separate authorized upload |
 
 `run-from-inputs.mts` writes `<out>/job.config.json` + copies phrase-set, then calls `generate.mts`.
 
@@ -94,9 +94,10 @@ Pipeline:
 - [ ] 2. Ensure GEMINI_API_KEY (repo `.env` / `.env.local` / env var)
 - [ ] 2b. (Upload) Fill `.secrets/line-sticker/credentials.env` once (`LINE_*` required; Google Drive OAuth JSON optional — without it, provision 夾帶 sprite-sheet ZIP)
 - [ ] 3. Dry-run: run-from-inputs.mts --dry-run
-- [ ] 4. Generate for real
-- [ ] 5. Spot-check stickers/ + manifest.json gridScores
-- [ ] 6. Confirm `manifest.json` has `completionStatus: "completed"` and `qaReport.pass: true`; `qaMode: "report"` may intentionally produce `completed_with_warnings`
+- [ ] 4. Generate for real without --upload; keep content review before external upload
+- [ ] 5. Check stickers/ + manifest.json gridScores for structural results
+- [ ] 6. Confirm packaging status: `manifest.json` has `completionStatus: "completed"` and `qaReport.pass: true`; `qaMode: "report"` may intentionally produce `completed_with_warnings`. This does not establish content approval.
+- [ ] 6b. Review every final sticker at delivery size: record independent text, character, action, and cropping checks in content-review.json. Missing evidence is unverified; unresolved defects stay pending acceptance.
 - [ ] 7. Confirm requested/resolved chroma are recorded; reslice/finalize must use the resolved value
 
 Finalize uses `.finalize-staging/<run-id>` and publishes stickers, QA, and upload
@@ -151,9 +152,17 @@ npx tsx scripts/line-sticker/run-from-inputs.mts \
   stickers/sticker-01.png …
   manifest.json
   qa-report.json
+  content-review.json              # agent-authored review of final sticker content
   {Set Name}.zip
   .env.batch/{Set_Name}.env
 ```
+
+Follow [content review](../../skills/line-sticker-maker/references/content-review.md)
+for the review record, evidence, and exception handling. Cover the actual configured
+output count, including single-sheet jobs. Keep structural/packaging completion
+separate from content results; a passed alpha/grid/chroma check cannot establish
+correct text, identity, or action. Report a review candidate when content remains
+failed or unverified, rather than declaring it approved for upload.
 
 ### Step 5b — Re-slice after chroma fixes (no Gemini)
 
@@ -170,14 +179,21 @@ npx tsx scripts/line-sticker/finalize.mts \
 
 `reslice-sheet.mts` reuses the resolved chroma color and algorithm stored in the
 manifest. Use `--chroma green|magenta` only when an explicit override is needed.
+After reslicing, caption changes, regeneration, or finalization changes the final
+images, repeat the content checks for every affected sticker and update the review
+record against those files. Existing approval does not transfer to changed images.
 
 ### Step 6 — Upload (optional)
 
 See **`skills/line-sticker-upload/SKILL.md`**.
+After content review, invoke upload separately for the explicitly authorized
+package. A combined generate-and-upload request already supplies upload
+authorization; continue within that scope without requesting it again. Review
+submission remains a separately authorized step.
 
 ```bash
 npx tsx scripts/line-sticker/run-line-upload.mts \
-  --env <out>/.env.batch/Set_Name.env
+  --env <out>/.env.batch/Set_Name.env --submit false
 ```
 
 ## Related skills

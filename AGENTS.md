@@ -12,8 +12,8 @@
 | 4×5 透明貼圖圖集／20 格精靈圖 | `skills/line-sticker-sprite-sheet/SKILL.md` |
 | 角色參考圖／設定圖 | `skills/line-sticker-character-ref/SKILL.md` |
 | 貼圖文案／phrase-set JSON | `skills/line-sticker-phrase-design/SKILL.md` |
-| 從參考圖製作整套貼圖 | `skills/line-sticker-maker/SKILL.md` |
-| 圖片 + JSON／完整生成與修復流程 | `skills/line-sticker-pipeline/SKILL.md` |
+| 從參考圖與文案／圖片 + JSON 製作整套貼圖 | `skills/line-sticker-pipeline/SKILL.md` |
+| 進階 job config 操作／單張重生／既有作業修復、重切、finalize／既有圖集轉換 | `skills/line-sticker-maker/SKILL.md` |
 | 每日量產／登記／主題輪替 | `skills/line-sticker-daily-factory/SKILL.md` |
 | Drive staging／LINE 上傳／送審 | `skills/line-sticker-upload/SKILL.md` |
 

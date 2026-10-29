@@ -74,8 +74,13 @@ For reslicing and config/manifest details, read
 
 1. Preserve the recorded resolved chroma unless the user requests an override.
 2. Prefer reslicing before spending another image-generation call.
-3. Confirm `manifest.json` completion status, grid scores, and `qaReport.pass`.
-4. Report the output path and any warnings or failed stage.
-5. Do not upload or submit for review unless separately and explicitly requested.
+3. Confirm `manifest.json` completion status, grid scores, and `qaReport.pass` as
+   structural/packaging evidence; these do not approve sticker content.
+4. Review every final sticker's text, character, action, and cropping using
+   [content review](references/content-review.md), including after recovery.
+   Missing checks remain unverified; unresolved defects remain pending acceptance.
+5. Report packaging results, content-review results, and accepted exceptions
+   separately, with output and review-record paths.
+6. Do not upload or submit for review unless separately and explicitly requested.
 
 API key: `GEMINI_API_KEY` in the environment or repo `.env` / `.env.local`.
